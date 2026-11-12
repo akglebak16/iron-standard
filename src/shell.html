@@ -1,0 +1,34 @@
+<title>Железный Стяг</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/*CSS*/
+</style>
+<canvas id="cv"></canvas>
+<div id="whud" hidden>
+  <div id="wlog" class="log"></div>
+  <div id="wtop" class="plank">
+    <div class="stat" id="sGold" title="Золото"></div><div class="stat" id="sFood" title="Провизия"></div><div class="stat" id="sMen" title="Размер отряда"></div><div class="stat" id="sDate"></div>
+    <div id="wspeed"><button class="chip" id="bPause" title="Пауза (пробел)"></button><button class="chip" data-sp="1">×1</button><button class="chip" data-sp="2">×2</button><button class="chip" data-sp="4">×4</button></div>
+  </div>
+  <div id="wmenu">
+    <button class="btn sm plank thin" data-act="party"></button><button class="btn sm plank thin" data-act="hero"></button><button class="btn sm plank thin" data-act="journal"></button><button class="btn sm plank thin" data-act="menu"></button>
+  </div>
+  <div id="wloc" class="plank" hidden></div>
+</div>
+<div id="bhud" hidden>
+  <div id="blog" title="Нажми, чтобы раскрыть"></div>
+  <div id="btop" class="plank"><div class="side"><img id="crA" alt=""><b id="cntA">0</b></div><div id="btimer">0:00</div><div class="side"><b id="cntB">0</b><img id="crB" alt=""></div></div>
+  <div id="bbtns"></div>
+  <div id="bhero" class="plank"></div>
+  <div id="borders"><div id="bords"></div><div id="bgroups" class="plank"></div></div>
+  <div id="bmini" class="plank thin"><canvas width="380" height="250"></canvas></div>
+  <div id="touch" hidden><div id="joy"><i></i></div><div class="tb" id="tbA">Удар</div><div class="tb" id="tbB">Блок</div><div class="tb" id="tbS">Бег</div></div>
+</div>
+<div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div></div></div>
+<div id="modal" hidden></div>
+<div id="tip" hidden></div>
+<div id="load">Кую железо…</div>
+<script>
+/*JS*/
+</script>
