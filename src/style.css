@@ -135,3 +135,5 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 .isw.gear{background:linear-gradient(180deg,#5b4128,#3a2a1a);color:var(--brass)}
 .price.cheap{color:#9fe27c}.price.dear{color:#ff8d79}
 .pbar.cargo.over i{background:var(--blood)}
+#tbW{right:110px;bottom:236px;width:60px;height:60px;font-size:13px;background:#6a4d30cc}
+.row.sm .ds.tr{color:#8f8466;font-size:12px}.card.slot h3{display:flex;align-items:center;gap:6px;font-size:17px}.card.slot .nm{font:700 17px var(--disp);color:var(--parch)}.card.slot .ds{font-size:13px;color:var(--parch2)}.card.slot .ds.tr{color:#8f8466;font-size:12px}
