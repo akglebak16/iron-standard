@@ -164,12 +164,9 @@ ACT.tsell = function (d) {
   keepScroll(renderTown);
 };
 
-/* ---------- вкладка «Герой»: краткая сводка ---------- */
-function gearCard(H) {
-  const hd = heroDef(H), W = hd.wpn;
-  return '<div class="card"><h3>Снаряжение</h3><div class="mini">' + SLOTS.map(k => { const it = eqItem(H, k); return it ? '<span class="mt" style="--tc:' + tierOf(it).c + '" title="' + SLOT_NAME[k] + ': ' + it.name + '">' + itemIc(it) + '</span>' : '<span class="mt void" title="' + SLOT_NAME[k] + ': пусто">' + ic(SLOT_ICON[k]) + '</span>'; }).join('') + '</div>' +
-    '<div class="kv"><span>Броня</span><b>' + hd.arm + '</b></div><div class="kv"><span>Урон</span><b>' + Math.round(hd.dmg) + ' · ' + DTYPE[W.dt].n.toLowerCase() + '</b></div>' +
-    '<div style="margin-top:8px"><button class="btn sm" data-act="ptab" data-t="inv">Открыть обоз</button></div><p class="note">В бою клавиша X меняет оружие.</p></div>';
+/* ---------- ряд мини-плиток надетого (для окна героя) ---------- */
+function miniGear(H) {
+  return '<div class="mini">' + SLOTS.map(k => { const it = eqItem(H, k); return it ? '<span class="mt" style="--tc:' + tierOf(it).c + '" title="' + SLOT_NAME[k] + ': ' + it.name + '">' + itemIc(it) + '</span>' : '<span class="mt void" title="' + SLOT_NAME[k] + ': пусто">' + ic(SLOT_ICON[k]) + '</span>'; }).join('') + '</div>';
 }
 
 /* ---------- вкладка «Обоз»: кукла героя и рюкзак ---------- */
