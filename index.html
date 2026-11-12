@@ -1781,7 +1781,7 @@ ACT.inv = function () { openPanel('inv'); };
 let MODE = 'title', cv, cx;
 const WC = { x: WW / 2, y: WH / 2, z: .9, free: false };
 const SAVE_KEY = 'zhelezny-styag-save-2';
-function resize() { const d = Math.min(window.devicePixelRatio || 1, 2); VIEW.w = window.innerWidth; VIEW.h = window.innerHeight; VIEW.dpr = d; cv.width = Math.round(VIEW.w * d); cv.height = Math.round(VIEW.h * d); }
+function resize() { const d = Math.min(window.devicePixelRatio || 1, 2); VIEW.w = (cv && cv.clientWidth) || window.innerWidth; VIEW.h = (cv && cv.clientHeight) || window.innerHeight; VIEW.dpr = d; cv.width = Math.round(VIEW.w * d); cv.height = Math.round(VIEW.h * d); }
 function w2s(x, y) { return { x: (x - WC.x) * WC.z + VIEW.w / 2, y: (y - WC.y) * WC.z + VIEW.h / 2 }; }
 function s2wW(sx, sy) { return { x: WC.x + (sx - VIEW.w / 2) / WC.z, y: WC.y + (sy - VIEW.h / 2) / WC.z }; }
 
@@ -1982,7 +1982,7 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 function init() {
-  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
+  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); try { new ResizeObserver(() => resize()).observe(cv); } catch (e) { } bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
   el('modal').hidden = true; setTimeout(() => { startDemo(); el('title').hidden = false; buildTitleMenu(); showLoad(false); }, 50); requestAnimationFrame(frame);
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { }); init();
