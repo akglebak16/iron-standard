@@ -49,7 +49,7 @@ function netMsg(m) {
       for (const a of m.players) {
         seen[a[0]] = 1; let Q = G.players.find(q => q.id === a[0]); if (!Q) { Q = netMkPlayer(a[0]); G.players.push(Q); }
         Q.tx = a[2]; Q.ty = a[3]; if (Q.first) { Q.x = Q.tx; Q.y = Q.ty; Q.first = false; } Q.fx = a[4];
-        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; Q.fname = a[12] || ''; }
+        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; Q.fname = a[12] || ''; Q.bid = a[13] || 0; }
       }
       G.players = G.players.filter(q => q.id === NET.you || seen[q.id]);
       const old = new Map(G.parties.map(p => [p.id, p])), next = [];
@@ -68,7 +68,8 @@ function netMsg(m) {
       break;
     }
     case 'enc': netDefer(() => { const p = G.parties.find(x => x.id === m.p.id) || m.p; p.troops = m.p.troops; closeModal(); openEncounter(p, m.forced); }); break;
-    case 'bs': netDefer(() => { closeModal(); auInit(); NET.bid = m.id; NET.ik = ''; NET.it = 0; enterBattle(Object.assign({}, m.cfg)); }); break;
+    case 'bs': netDefer(() => { closeModal(); auInit(); NET.bid = m.id; NET.ik = ''; NET.it = 0; enterBattle(Object.assign({}, m.cfg), m.coop); }); break;
+    case 'bj': if (B && !B.cfg.demo) { joinBattle(m.coop); buildBattleHud(); } break;
     case 'b': netSnap(m); break;
     case 'br': netDefer(() => { closeModal(); UI.res = m.r; showResult(m.r, null); }); break;
     case 'toast': toast(m.s); break;

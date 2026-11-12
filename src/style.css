@@ -226,3 +226,5 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 .perk.rd{border-color:#9bd25b66}.perk.rd .pf{color:var(--parch2)}
 .perk.lk{opacity:.55;border-style:dashed;border-color:#ffffff2e;filter:grayscale(.35)}.perk.lk .pf{color:#b0a07c}
 .perk:disabled{color:var(--parch)}
+#wjoin{position:absolute;left:50%;bottom:max(86px,calc(env(safe-area-inset-bottom,0px) + 86px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:17px}
+#wjoin[hidden]{display:none}

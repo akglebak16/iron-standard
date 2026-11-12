@@ -27,6 +27,7 @@ function startBattle(cfg) {
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
   const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > 75 ? 75 / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
+  for (const u of B.units) if (u.side === 0) u.own = cfg.heroPid;
   if (cfg.hero) {
     const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
     h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
@@ -58,6 +59,19 @@ function nearestFoeDist(x, y, side) { let b = 1e9; for (const u of B.units) if (
 function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; if (SERVER) ev(['l', txt, kind]); }
 function ev(a) { if (SERVER && B && B.ev) B.ev.push(a); }
 const NOINP = { dx: 0, dy: 0, face: undefined, atk: 0, blk: 0, spr: 0 };
+/* второй игрок присоединяется к бою на стороне 0 (общая функция: сервер и клиент-зеркало строят одинаково) */
+function joinBattle(c2) {
+  const W = B.W, H = B.H, fac = c2.pfac || 'player'; let tot = 0; for (const s of c2.pl) tot += s.n; const sc = tot > 40 ? 40 / tot : 1, first = B.units.length;
+  for (const s of c2.pl) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[0][t.grp]; const u = mkUnit(0, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); u.own = c2.pid; } }
+  const hd = heroDef(c2.hero), h = mkUnit(0, hd, 'player', 700, H / 2 + 70, SERVER ? null : getHeroSprite(c2.hero, hd.mounted));
+  h.isHero = true; h.ai = !!c2.heroAI; h.pid = c2.pid; h.own = c2.pid; h.inp = null; h.name = c2.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (c2.hero.hp === undefined ? 1 : c2.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero2 = h;
+  const mb = (c2.hero.lead || 0) * 4; for (let i = first; i < B.units.length; i++) { const u = B.units[i]; if (!u.isHero) { u.mbase += mb; u.morale = u.mbase; } }
+  for (const g of B.groups[0]) layout(g, true);
+  for (let i = first; i < B.units.length; i++) { const u = B.units[i]; if (u.isHero) continue; const p = slotPos(u); u.x = p[0]; u.y = p[1]; }
+  if (B.count0) B.count0[0] = B.start[0];
+  blog(c2.hero.name + ' присоединился к бою', 2);
+  return h;
+}
 function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
@@ -169,7 +183,7 @@ function kill(t, src) {
   if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
-  if (t.isHero && t.side === 0 && !t.ai) { B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) g2.order = 'charge'; for (const u of B.units) if (u.side === 0) u.morale -= 7; B.hudDirty = true; }
+  if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) g2.order = 'charge'; for (const u of B.units) if (u.side === 0) u.morale -= 7; B.hudDirty = true; }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += t.t.tier * 10 + (t.t.mounted ? 5 : 0);
@@ -280,13 +294,19 @@ function battleCamera(rdt) {
   if (B.shake > 0) B.shake -= rdt;
 }
 function finishBattle() {
-  const surv = B.cfg.hero ? perkFx(B.cfg.hero).surv : 0, res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
-  for (const u of B.units) {
-    if (u.isHero && u.side === 0) continue; const id = u.t.id;
-    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
-    else { if (u.dead && !u.gone) res.enemyDead++; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; }
-  }
-  const cb = B.cfg.onEnd; if (cb) cb(res);
+  const mk = (pid, hero) => {
+    const surv = hero && hero.fx ? hero.fx.surv : 0;
+    const res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: hero ? !!hero.dead : B.heroDown, heroHp: hero ? clamp(hero.hp / hero.maxHp, 0, 1) : 1, heroKills: hero ? hero.kills : 0, time: B.t, enemyLeft: {} };
+    for (const u of B.units) {
+      if (u.isHero && u.side === 0) continue; const id = u.t.id;
+      if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
+      else { if (u.dead && !u.gone) res.enemyDead++; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; }
+    }
+    return res;
+  };
+  const cb = B.cfg.onEnd, cg = B.cfg.onEndGuest, h2 = B.hero2;
+  if (cb) cb(mk(B.cfg.heroPid, B.hero));
+  if (cg && h2) cg(mk(h2.pid, h2));
 }
 function s2w(sx, sy) { const c = B.cam; return { x: c.x + (sx - VIEW.w / 2) / c.z, y: c.y + (sy - VIEW.h / 2) / c.z }; }
 
@@ -311,7 +331,7 @@ function battleDraw(g) {
     if (u.bump > 0) { const b = Math.sin((1 - u.bump) * Math.PI) * 7; ox = Math.cos(u.face) * b; oy += Math.sin(u.face) * b; }
     g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(u.x + 3, u.y + 3, u.r * 1.25, u.r * .5, 0, 0, TAU); g.fill();
     if (!demo) {
-      if (u.isHero && !u.ai) { g.strokeStyle = '#ffd86a'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
+      if (u.isHero && !u.ai) { g.strokeStyle = u === B.hero ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
       else { g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(120,170,220,.6)'); g.lineWidth = u.leader ? 2.6 : 1.5; ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
     }
     g.save(); g.translate(u.x + ox, u.y + oy); if (u.flee) g.globalAlpha = .75; g.scale(u.dir * US, US); g.drawImage(u.flash > 0 ? sp.flash : sp.cv, -sp.ax, -sp.ay); g.restore();

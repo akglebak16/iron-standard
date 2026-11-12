@@ -49,7 +49,7 @@ function meMsg(P) {
     in: P.in, busy: P.busy, wage: sim.wageDay(P), cap: sim.sizeCap(P.hero), log: P.log.slice(-8), path: P.path.slice(P.pi).map(p => [Math.round(p.x), Math.round(p.y)]), bid: bt ? bt.id : 0 };
 }
 function worldMsg() {
-  const players = G.players.filter(P => !P.away).map(P => [P.id, P.name, rnd2(P.x), rnd2(P.y), P.fx < 0 ? -1 : 1, P.banner, P.culture, P.in ? 1 : 0, P.busy ? 1 : 0, P.troops.reduce((a, s) => a + s.n, 0), sim.leaderType(P), P.hero.horse ? 1 : 0, (facOf(P) || {}).name || '']);
+  const players = G.players.filter(P => !P.away).map(P => [P.id, P.name, rnd2(P.x), rnd2(P.y), P.fx < 0 ? -1 : 1, P.banner, P.culture, P.in ? 1 : 0, P.busy ? 1 : 0, P.troops.reduce((a, s) => a + s.n, 0), sim.leaderType(P), P.hero.horse ? 1 : 0, (facOf(P) || {}).name || '', (battleOf(P) || {}).id || 0]);
   const parties = G.parties.filter(p => !p.hide).map(p => [p.id, p.kind, p.fac, rnd2(p.x), rnd2(p.y), p.fx < 0 ? -1 : 1, p.name, p.troops.map(s => [s.type, s.n]), p.lock ? 1 : 0]);
   const camps = G.settles.filter(s => s.kind === 'camp').map(s => [s.id, s.camp ? s.camp.id : 0, s.cleared ? 1 : 0]);
   return { t: 'w', day: G.day, hour: G.hour, hf: G.hourAcc, paused: G.paused, speed: G.speed, players, parties, camps, vote: vote ? { k: vote.k, v: vote.v, by: vote.byName, yes: vote.yes.size } : null };
@@ -57,7 +57,8 @@ function worldMsg() {
 function townMsg(s) { return { t: 'town', sid: s.id, recruits: s.recruits, board: s.board || [], market: sim.hasMarket(s) ? sim.marketOf(s) : null }; }
 function pushTown(sid) { const s = sim.settleById(sid); if (!s) return; for (const c of online()) if (c.P.in === sid) send(c, townMsg(s)); }
 function sendMe(P) { const c = connOf(P); if (c) send(c, meMsg(P)); }
-function battleOf(P) { for (const b of battles.values()) if (b.P === P) return b; return null; }
+function battleOf(P) { for (const b of battles.values()) if (b.P === P || b.G === P) return b; return null; }
+function heroOf(bt, P) { return bt.B.units.find(u => u.isHero && u.side === 0 && u.pid === P.id) || null; }
 function sysChat(txt) { bcast({ t: 'chat', from: '', txt }); }
 
 /* ---------- встречи ---------- */
@@ -92,30 +93,45 @@ function startBattle(P, p) {
   sim.B = null; bt.B = sim.startBattle(cfg); battles.set(bt.id, bt);
   send(connOf(P), startMsg(bt));
 }
-function startMsg(bt) { const c = bt.cfg; return { t: 'bs', id: bt.id, cfg: { pl: c.pl, en: c.en, pfac: c.pfac, efac: c.efac, biome: c.biome, forest: c.forest, title: c.title, hero: c.hero, leader: c.leader, seed: c.seed } }; }
+function startMsg(bt) { const c = bt.cfg; return { t: 'bs', id: bt.id, coop: bt.coop || null, cfg: { pl: c.pl, en: c.en, pfac: c.pfac, efac: c.efac, biome: c.biome, forest: c.forest, title: c.title, hero: c.hero, leader: c.leader, seed: c.seed } }; }
+function heroInfo(bt, P) { const h = heroOf(bt, P); return h ? { hp: Math.round(h.hp), mhp: Math.round(h.maxHp), st: Math.round(h.stam), sa: Math.round((h.swingA || 0) * 100) / 100, down: h.dead ? 1 : 0 } : null; }
 function snap(bt, fin) {
   const B = bt.B, u = B.units.map(x => (x.dead || x.gone) ? [(x.dead ? 1 : 0) | (x.gone ? 4 : 0)] : [rnd2(x.x), rnd2(x.y), Math.round(x.vx), Math.round(x.vy), Math.round(x.face * 100) / 100, Math.max(0, Math.round(x.hp)), (x.flee ? 2 : 0) | (x.blocking ? 8 : 0) | (x.ai ? 16 : 0) | (x.flash > 0 ? 32 : 0), Math.round(Math.max(0, x.swing || 0) * 100) / 100, Math.round(x.bump * 100) / 100]);
-  const h = B.hero, hm = h ? { hp: Math.round(h.hp), mhp: Math.round(h.maxHp), st: Math.round(h.stam), sa: Math.round((h.swingA || 0) * 100) / 100, down: B.heroDown ? 1 : 0 } : null;
   let n0 = 0, n1 = 0; for (const x of B.units) if (!x.dead && !x.gone && !x.flee) { if (x.side) n1++; else n0++; }
-  const m = { t: 'b', id: bt.id, tm: Math.round(B.t * 100) / 100, u, ev: B.ev, h: hm, n: [n0, n1], over: B.over ? 1 : 0, win: B.win ? 1 : 0, fin: fin ? 1 : 0 };
+  const m = { t: 'b', id: bt.id, tm: Math.round(B.t * 100) / 100, u, ev: B.ev, h: null, n: [n0, n1], over: B.over ? 1 : 0, win: B.win ? 1 : 0, fin: fin ? 1 : 0 };
   B.ev = []; return m;
 }
-function giveHeroInput(bt, m) { const h = bt.B.hero; if (!h || h.ai || !bt.P) return; const f = x => (typeof x === 'number' && isFinite(x)) ? x : 0; h.inp = { dx: f(m.dx), dy: f(m.dy), face: typeof m.face === 'number' && isFinite(m.face) ? m.face : undefined, atk: m.atk ? 1 : 0, blk: m.blk ? 1 : 0, spr: m.spr ? 1 : 0 }; }
+function sendSnap(bt, fin) {
+  const m = snap(bt, fin);
+  for (const P of [bt.P, bt.G]) { if (!P) continue; const c = connOf(P); if (!c) continue; m.h = heroInfo(bt, P); c.send(JSON.stringify(m)); }
+}
+function giveHeroInput(bt, m, P) { const h = heroOf(bt, P); if (!h || h.ai) return; const f = x => (typeof x === 'number' && isFinite(x)) ? x : 0; h.inp = { dx: f(m.dx), dy: f(m.dy), face: typeof m.face === 'number' && isFinite(m.face) ? m.face : undefined, atk: m.atk ? 1 : 0, blk: m.blk ? 1 : 0, spr: m.spr ? 1 : 0 }; }
 function battleTick(dt) {
   for (const bt of [...battles.values()]) {
     sim.B = bt.B; const B = bt.B;
-    if (B.hero && !connOf(bt.P)) B.hero.ai = true;
+    for (const q of [bt.P, bt.G]) { if (!q || connOf(q)) continue; const hh = heroOf(bt, q); if (hh) hh.ai = true; }
     sim.battleUpdate(dt);
     if (!battles.has(bt.id)) continue;
     bt.tick++;
-    if (bt.tick % 2 === 0) { const c = connOf(bt.P); const m = snap(bt, false); if (c) send(c, m); }
+    if (bt.tick % 2 === 0) sendSnap(bt, false);
   }
 }
 function endBattle(bt, res) {
-  const B = bt.B, P = bt.P, p = bt.p; const c = connOf(P);
-  if (c) send(c, snap(bt, true));
+  const B = bt.B, P = bt.P, p = bt.p;
+  sendSnap(bt, true);
   battles.delete(bt.id);
   finishWith(P, p, res, B.t);
+}
+function endGuest(bt, res) { if (bt.G) finishWith(bt.G, bt.p, res, bt.B.t); }
+function joinBattle(c, m) {
+  const P = c.P, bt = battles.get(+m.id), bad = s => send(c, { t: 'toast', s });
+  if (!bt || bt.B.over || bt.G) return bad('Присоединиться к этому бою нельзя');
+  if (P.busy || P.in) return bad('Сейчас ты занят');
+  if (Math.hypot(P.x - bt.P.x, P.y - bt.P.y) > 120) return bad('Слишком далеко от друга: подойди ближе');
+  const coop = { pid: P.id, pl: P.troops.map(s => ({ type: s.type, n: s.n })), hero: sim.heroBattle(P.hero), pfac: 'player' };
+  sim.B = bt.B; sim.joinBattle(coop);
+  bt.coop = coop; bt.G = P; bt.cfg.onEndGuest = res => endGuest(bt, res); P.busy = 'battle'; P.path = []; P.tid = null; P.sid = null;
+  send(connOf(bt.P), { t: 'bj', coop: bt.coop }); send(c, startMsg(bt)); sendMe(P); sendMe(bt.P);
 }
 function finishWith(P, p, res, tm) {
   if (!res.time) res.time = tm;
@@ -173,7 +189,7 @@ function handleJoin(c, m) {
   c.P = P; P.away = false; conns.add(c);
   send(c, initMsg(P)); send(c, worldMsg()); sendMe(P);
   const bt = battleOf(P);
-  if (bt) { if (bt.B.hero) bt.B.hero.ai = false; send(c, startMsg(bt)); }
+  if (bt) { const hh = heroOf(bt, P); if (hh) hh.ai = false; send(c, startMsg(bt)); }
   else if (P.pendRes) send(c, P.pendRes);
   else if (P.in) { const s = sim.settleById(P.in); if (s) send(c, Object.assign(townMsg(s), { open: 1 })); }
   sysChat(P.name + ' вошёл в мир');
@@ -207,11 +223,13 @@ function handle(c, m) {
     case 'upg': if (P.busy !== 'battle' && sim.doUpgrade(P, String(m.type), String(m.up))) sendMe(P); break;
     case 'dismiss': if (P.busy !== 'battle' && sim.TROOPS[m.type]) { const s = P.troops.find(x => x.type === m.type); if (s) { s.n--; if (s.n <= 0) P.troops.splice(P.troops.indexOf(s), 1); sendMe(P); } } break;
     case 'attr': if (sim.doAttr(P, String(m.k))) sendMe(P); break;
+    case 'perk': if (sim.doPerk(P, String(m.id))) sendMe(P); break;
     case 'enc': if (P.busy === 'enc') resolveEnc(P, String(m.a)); break;
     case 'ack': if (P.busy === 'res') { P.busy = null; P.pendRes = null; sendMe(P); } break;
-    case 'inp': { const bt = battleOf(P); if (bt) giveHeroInput(bt, m); break; }
+    case 'inp': { const bt = battleOf(P); if (bt) giveHeroInput(bt, m, P); break; }
     case 'ord': { const bt = battleOf(P); if (bt && ['hold', 'follow', 'charge', 'back'].includes(m.ord)) { sim.B = bt.B; sim.giveOrder(m.ord, +m.wx || 0, +m.wy || 0, [0, 1, 2, 3].includes(m.sel) ? m.sel : 3); } break; }
     case 'retreat': { const bt = battleOf(P); if (bt && !bt.B.over) { sim.B = bt.B; bt.B.over = bt.B.t; bt.B.win = false; } break; }
+    case 'bjoin': joinBattle(c, m); break;
     case 'prop': propose(c, m); break;
     case 'vote': castVote(c, !!m.yes); break;
     case 'chat': { const txt = String(m.txt || '').slice(0, 200).trim(); if (txt) bcast({ t: 'chat', from: P.name, txt }); break; }
@@ -227,7 +245,7 @@ attach(server, c => {
     P.away = true; P.path = []; P.tid = null; P.sid = null;
     if (P.busy === 'enc') resolveEnc(P, P.enc && P.enc.hostile ? 'auto' : 'greet');
     if (P.in) P.in = null;
-    const bt = battleOf(P); if (bt && bt.B.hero) bt.B.hero.ai = true;
+    const bt = battleOf(P); const hh = bt && heroOf(bt, P); if (hh) hh.ai = true;
     if (vote && vote.by === P.id) vote = null;
     sysChat(P.name + ' вышел из мира');
   };

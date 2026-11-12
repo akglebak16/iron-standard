@@ -27,3 +27,12 @@ ACT.faccept = function () { NET.send({ t: 'faccept' }); };
 ACT.fdecline = function () { NET.send({ t: 'fdecline' }); };
 ACT.fleave = function () { NET.send({ t: 'fleave' }); };
 function netInvite() { const P = G && G.player; if (P && P.finv && !P.finvSeen) { P.finvSeen = P.finv.fid; toast(P.finv.from + ' зовёт во фракцию «' + P.finv.name + '» (Герой → Союз)'); } else if (P && !P.finv) P.finvSeen = null; }
+
+function netJoinUI() {
+  const w = el('wjoin'); if (!w) return; const P = G && G.player, o = allyOther();
+  const ok = NET.on && MODE === 'world' && P && o && o.bid && !P.busy && !P.in && !UI.open && Math.hypot(o.x - P.x, o.y - P.y) <= 120;
+  if (!ok) { if (!w.hidden) { w.hidden = true; w.dataset.b = ''; } return; }
+  if (w.dataset.b !== String(o.bid)) { w.dataset.b = String(o.bid); w.innerHTML = '<span><b>' + o.name.replace(/</g, '&lt;') + '</b> в бою</span><button class="btn sm pri" data-act="bjoin" data-id="' + o.bid + '">Присоединиться</button>'; }
+  w.hidden = false;
+}
+ACT.bjoin = function (d) { NET.send({ t: 'bjoin', id: +d.id }); };

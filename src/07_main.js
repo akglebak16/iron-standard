@@ -37,8 +37,8 @@ function launchBattle(p) {
   const cfg = Object.assign(battleCfgFor(P, p), { party: p, onEnd: res => battleEnded(res, p) });
   enterBattle(cfg);
 }
-function enterBattle(cfg) {
-  startBattle(cfg); MODE = 'battle'; el('whud').hidden = true; el('title').hidden = true; el('bhud').hidden = false; B.cam.z = clamp(VIEW.h / 700, .75, 1.35); IN.atk = IN.block = false; IN.keys = {};
+function enterBattle(cfg, coop) {
+  startBattle(cfg); if (coop) { joinBattle(coop); const mh = B.units.find(u => u.isHero && u.pid === NET.you); if (mh) B.hero = mh; } MODE = 'battle'; el('whud').hidden = true; el('title').hidden = true; el('bhud').hidden = false; B.cam.z = clamp(VIEW.h / 700, .75, 1.35); IN.atk = IN.block = false; IN.keys = {};
   el('crA').src = crestURL('player'); el('crB').src = crestURL(cfg.efac); el('blog').innerHTML = ''; buildBattleHud(); B.hudDirty = true; B.logDirty = true; el('touch').hidden = !IN.touch;
 }
 function readHeroInput() {
@@ -85,7 +85,7 @@ function updateBattleHud() {
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed; drawMinimap(el('bmini').firstElementChild);
 }
 function updateWorldHud(force) {
-  if (!G) return; netVoteUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
+  if (!G) return; netVoteUI(); netJoinUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
