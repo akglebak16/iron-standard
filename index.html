@@ -120,6 +120,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 #title .sub{font:600 clamp(15px,2.2vw,22px) var(--disp);letter-spacing:.2em;color:var(--parch);text-shadow:0 2px 0 #000,0 0 12px #000;margin-bottom:14px}
 #title .menu{display:flex;flex-direction:column;gap:10px;width:min(330px,100%)}
 #title .menu .btn{font-size:21px;padding:14px 16px}
+#title .plat{margin-top:4px;font:600 14px var(--body);letter-spacing:.08em;color:var(--parch2);text-shadow:0 1px 0 #000,0 0 8px #000}
 #load{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:#0b0805;font:700 28px var(--disp);color:var(--brass);letter-spacing:.1em}
 #toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:70;padding:10px 18px;font:700 20px var(--disp);color:var(--parch);pointer-events:none;animation:tin .25s ease-out}
 @keyframes tin{from{opacity:0;transform:translate(-50%,-10px)}}
@@ -216,7 +217,7 @@ div.tile{cursor:default}div.tile:hover{filter:none}
   <div id="bmini" class="plank thin"><canvas width="380" height="250"></canvas></div>
   <div id="touch" hidden><div id="joy"><i></i></div><div class="tb" id="tbA">Удар</div><div class="tb" id="tbB">Блок</div><div class="tb" id="tbS">Бег</div><div class="tb" id="tbW">Оружие</div></div>
 </div>
-<div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div></div></div>
+<div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div><div class="plat">Игра для компьютера · клавиатура и мышь</div></div></div>
 <div id="modal" hidden></div>
 <div id="tip" hidden></div>
 <div id="load">Кую железо…</div>
@@ -1671,7 +1672,7 @@ const ACT = {
   begin() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный'; closeModal(); startNew({ name: nm, banner: CR.banner, culture: CR.culture }); },
   qpick(d) { QK[d.k] = d.v; renderQuick(); }, qgo() { closeModal(); startQuick(); },
   again() { closeModal(); startQuick(); }, endq() { closeModal(); gotoTitle(); },
-  help() { openModal('<div class="whead"><h2>Как играть</h2></div><div class="wbody"><div class="cols"><div class="card"><h3>Карта мира</h3><div class="kv"><span>Идти</span><b>клик / касание</b></div><div class="kv"><span>Пауза</span><b>Пробел</b></div><div class="kv"><span>Ждать на месте</span><b>Z</b></div><div class="kv"><span>Отряд / герой / обоз / журнал</span><b>P / H / I / J</b></div><div class="kv"><span>Скорость</span><b>1, 2, 3</b></div><p class="note">Клик по лагерю или отряду начнёт погоню. Деньги уходят на жалованье, еду берут в городах.</p></div><div class="card"><h3>В бою</h3><div class="kv"><span>Движение</span><b>W A S D</b></div><div class="kv"><span>Удар</span><b>левая кнопка</b></div><div class="kv"><span>Блок щитом</span><b>правая кнопка</b></div><div class="kv"><span>Бег</span><b>Shift</b></div><div class="kv"><span>Сменить оружие</span><b>X</b></div><div class="kv"><span>Выбрать отряд</span><b>1 2 3 4</b></div><div class="kv"><span>Приказы</span><b>Q держать · E за мной · R атака · F отход</b></div><p class="note">Блок работает только по лицу. Удар в спину бьёт сильнее. Конница ломает строй на разгоне, копейщики её останавливают.</p></div></div></div><div class="wfoot"><button class="btn pri" data-act="tomenu">Понятно</button></div>'); },
+  help() { openModal('<div class="whead"><h2>Как играть<span class="sub">Игра только для компьютера: клавиатура и мышь</span></h2></div><div class="wbody"><div class="cols"><div class="card"><h3>Карта мира</h3><div class="kv"><span>Идти</span><b>клик</b></div><div class="kv"><span>Пауза</span><b>Пробел</b></div><div class="kv"><span>Ждать на месте</span><b>Z</b></div><div class="kv"><span>Отряд / герой / обоз / журнал</span><b>P / H / I / J</b></div><div class="kv"><span>Скорость</span><b>1, 2, 3</b></div><p class="note">Клик по лагерю или отряду начнёт погоню. Деньги уходят на жалованье, еду берут в городах.</p></div><div class="card"><h3>В бою</h3><div class="kv"><span>Движение</span><b>W A S D</b></div><div class="kv"><span>Удар</span><b>левая кнопка</b></div><div class="kv"><span>Блок щитом</span><b>правая кнопка</b></div><div class="kv"><span>Бег</span><b>Shift</b></div><div class="kv"><span>Сменить оружие</span><b>X</b></div><div class="kv"><span>Выбрать отряд</span><b>1 2 3 4</b></div><div class="kv"><span>Приказы</span><b>Q держать · E за мной · R атака · F отход</b></div><p class="note">Блок работает только по лицу. Удар в спину бьёт сильнее. Конница ломает строй на разгоне, копейщики её останавливают.</p></div></div></div><div class="wfoot"><button class="btn pri" data-act="tomenu">Понятно</button></div>'); },
   cont2() { closeModal(); afterBattle(); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; auInit(); const a = t.dataset.act; if (ACT[a]) { ACT[a](t.dataset, t); } });
