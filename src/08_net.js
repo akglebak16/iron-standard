@@ -35,12 +35,12 @@ function netMsg(m) {
     }
     case 'me': {
       const P = G && G.player; if (!P) break;
-      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]); P.inv = m.inv;
-      P.gold = m.gold; P.food = m.food; P.troops = m.troops; P.hero = m.hero; P.quests = m.quests; P.rel = m.rel; P.stats = m.stats; P.name = m.name; P.culture = m.culture; P.banner = m.banner; P.in = m.in; P.busy = m.busy;
+      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv, P.fac, P.finv]); P.inv = m.inv;
+      P.gold = m.gold; P.food = m.food; P.troops = m.troops; P.hero = m.hero; P.quests = m.quests; P.rel = m.rel; P.stats = m.stats; P.name = m.name; P.culture = m.culture; P.banner = m.banner; P.in = m.in; P.busy = m.busy; P.fac = m.fac; P.finv = m.finv; P.fname = m.fac ? m.fac.name : '';
       const lg = JSON.stringify(m.log); if (lg !== NET.lastLog) { NET.lastLog = lg; P.log = m.log; P.logDirty = true; }
       P.path = m.path.map(a => ({ x: a[0], y: a[1] })); P.pi = 0;
       const b = BANNERS[P.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2;
-      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]) !== old) netRefresh();
+      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv, P.fac, P.finv]) !== old) { netRefresh(); netInvite(); }
       break;
     }
     case 'w': {
@@ -49,7 +49,7 @@ function netMsg(m) {
       for (const a of m.players) {
         seen[a[0]] = 1; let Q = G.players.find(q => q.id === a[0]); if (!Q) { Q = netMkPlayer(a[0]); G.players.push(Q); }
         Q.tx = a[2]; Q.ty = a[3]; if (Q.first) { Q.x = Q.tx; Q.y = Q.ty; Q.first = false; } Q.fx = a[4];
-        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; }
+        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; Q.fname = a[12] || ''; }
       }
       G.players = G.players.filter(q => q.id === NET.you || seen[q.id]);
       const old = new Map(G.parties.map(p => [p.id, p])), next = [];

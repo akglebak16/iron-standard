@@ -26,7 +26,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data'), SAVE_FILE = pa
 let loaded = false;
 try { const d = JSON.parse(fs.readFileSync(SAVE_FILE, 'utf8')); sim.loadWorld(d); loaded = true; console.log('Мир загружен: день ' + d.day + ', игроков ' + d.players.length); } catch (e) { if (e.code !== 'ENOENT') console.error('Не удалось загрузить мир:', e.message); }
 if (!loaded) sim.newWorld(+process.env.SEED || 0);
-const G = sim.G; G.hourAcc = G.hourAcc || 0; G.speed = G.speed || 1; G.paused = false;
+const G = sim.G; G.factions = G.factions || []; G.hourAcc = G.hourAcc || 0; G.speed = G.speed || 1; G.paused = false;
 const conns = new Set();             // активные соединения с игроком
 const battles = new Map();           // id -> бой
 let bid = 1, vote = null;
@@ -41,13 +41,15 @@ const rnd2 = n => Math.round(n * 10) / 10;
 function staticSettle(s) { const o = {}; for (const k in s) if (k !== 'recruits' && k !== 'board' && k !== 'camp') o[k] = s[k]; return o; }
 function initMsg(P) { return { t: 'init', you: P.id, seed: G.seed, roads: G.roads, settles: G.settles.map(staticSettle), day: DAY_SEC }; }
 
+const facOf = P => P.fid ? G.factions.find(F => F.id === P.fid) : null;
+function facInfo(P) { const F = facOf(P); return F ? { id: F.id, name: F.name, members: G.players.filter(q => q.fid === F.id).map(q => q.name) } : null; }
 function meMsg(P) {
   const bt = battleOf(P);
-  return { t: 'me', inv: P.inv || {}, gold: P.gold, food: P.food, troops: P.troops, hero: P.hero, quests: P.quests, rel: P.rel, stats: P.stats, name: P.name, culture: P.culture, banner: P.banner,
+  return { t: 'me', fac: facInfo(P), finv: P.finv || null, inv: P.inv || {}, gold: P.gold, food: P.food, troops: P.troops, hero: P.hero, quests: P.quests, rel: P.rel, stats: P.stats, name: P.name, culture: P.culture, banner: P.banner,
     in: P.in, busy: P.busy, wage: sim.wageDay(P), cap: sim.sizeCap(P.hero), log: P.log.slice(-8), path: P.path.slice(P.pi).map(p => [Math.round(p.x), Math.round(p.y)]), bid: bt ? bt.id : 0 };
 }
 function worldMsg() {
-  const players = G.players.filter(P => !P.away).map(P => [P.id, P.name, rnd2(P.x), rnd2(P.y), P.fx < 0 ? -1 : 1, P.banner, P.culture, P.in ? 1 : 0, P.busy ? 1 : 0, P.troops.reduce((a, s) => a + s.n, 0), sim.leaderType(P), P.hero.horse ? 1 : 0]);
+  const players = G.players.filter(P => !P.away).map(P => [P.id, P.name, rnd2(P.x), rnd2(P.y), P.fx < 0 ? -1 : 1, P.banner, P.culture, P.in ? 1 : 0, P.busy ? 1 : 0, P.troops.reduce((a, s) => a + s.n, 0), sim.leaderType(P), P.hero.horse ? 1 : 0, (facOf(P) || {}).name || '']);
   const parties = G.parties.filter(p => !p.hide).map(p => [p.id, p.kind, p.fac, rnd2(p.x), rnd2(p.y), p.fx < 0 ? -1 : 1, p.name, p.troops.map(s => [s.type, s.n]), p.lock ? 1 : 0]);
   const camps = G.settles.filter(s => s.kind === 'camp').map(s => [s.id, s.camp ? s.camp.id : 0, s.cleared ? 1 : 0]);
   return { t: 'w', day: G.day, hour: G.hour, hf: G.hourAcc, paused: G.paused, speed: G.speed, players, parties, camps, vote: vote ? { k: vote.k, v: vote.v, by: vote.byName, yes: vote.yes.size } : null };
@@ -123,6 +125,24 @@ function finishWith(P, p, res, tm) {
   const c = connOf(P); if (c) { send(c, P.pendRes); } sendMe(P);
 }
 
+/* ---------- передачи другу ---------- */
+function giveTo(c, m) {
+  const P = c.P, o = online().map(x => x.P).find(q => q !== P), bad = s => send(c, { t: 'toast', s });
+  if (!o) return bad('Друг сейчас не в игре');
+  if (['battle', 'enc', 'res'].includes(P.busy) || ['battle', 'enc', 'res'].includes(o.busy)) return bad('Сейчас нельзя: кто-то занят встречей или боем');
+  if (Math.hypot(P.x - o.x, P.y - o.y) > 90) return bad('Друг слишком далеко: подойди ближе');
+  const n = Math.max(1, Math.min(100000, Math.floor(+m.n) || 0)); let txt = '';
+  if (m.k === 'gold') { const k = Math.min(n, P.gold); if (k < 1) return bad('Нет золота'); P.gold -= k; o.gold += k; txt = k + ' золота'; }
+  else if (m.k === 'food') { const k = Math.min(n, P.food); if (k < 1) return bad('Нет провизии'); P.food -= k; o.food += k; txt = k + ' провизии'; }
+  else if (m.k === 'troop') {
+    const t = sim.TROOPS[m.type], s = P.troops.find(x => x.type === m.type); if (!t || !s) return bad('Таких бойцов нет');
+    const k = Math.min(n, s.n, sim.sizeCap(o.hero) - sim.troopCount(o.troops)); if (k < 1) return bad('У друга нет места в отряде');
+    s.n -= k; if (s.n <= 0) P.troops.splice(P.troops.indexOf(s), 1); const f = o.troops.find(x => x.type === m.type); if (f) f.n += k; else o.troops.push({ type: m.type, n: k }); txt = k + ' × ' + t.name;
+  } else return;
+  sim.logW('Ты передал другу (' + o.name + '): ' + txt + '.', 0, P); sim.logW(P.name + ' передал тебе: ' + txt + '.', 3, o);
+  sendMe(P); sendMe(o); send(connOf(o), { t: 'toast', s: P.name + ' передал тебе: ' + txt }); send(c, { t: 'toast', s: 'Передано: ' + txt });
+}
+
 /* ---------- голосование ---------- */
 function applyVote(v) { if (v.k === 'pause') G.paused = !!v.v; else if (v.k === 'speed') { G.speed = v.v; G.paused = false; } }
 function propose(c, m) {
@@ -177,6 +197,13 @@ function handle(c, m) {
       sendMe(P); pushTown(s.id); break; }
     case 'equip': if (P.busy !== 'battle' && sim.ITEM[m.id] && sim.doEquip(P, String(m.id))) { send(c, { t: 'toast', s: 'Надето: ' + sim.ITEM[m.id].name }); sendMe(P); } break;
     case 'unhorse': if (P.busy !== 'battle' && sim.doUnequipHorse(P)) { send(c, { t: 'toast', s: 'Конь отправлен в обоз' }); sendMe(P); } break;
+    case 'give': giveTo(c, m); break;
+    case 'fcreate': { if (P.fid) break; const nm = String(m.name || '').trim().slice(0, 20); if (!nm) { send(c, { t: 'toast', s: 'Назови фракцию' }); break; } if (G.factions.some(F => F.name.toLowerCase() === nm.toLowerCase())) { send(c, { t: 'toast', s: 'Такое имя уже занято' }); break; }
+      const F = { id: G.nid++, name: nm, banner: P.banner, rel: P.rel }; G.factions.push(F); P.fid = F.id; sim.logW('Основана фракция «' + nm + '».', 3, P); sendMe(P); sysChat(P.name + ' основал фракцию «' + nm + '»'); break; }
+    case 'finvite': { const F = facOf(P); if (!F) break; const o = online().map(x => x.P).find(q => q !== P); if (!o) { send(c, { t: 'toast', s: 'Друг сейчас не в игре' }); break; } if (o.fid) { send(c, { t: 'toast', s: 'Друг уже во фракции' }); break; } o.finv = { fid: F.id, from: P.name, name: F.name }; sendMe(o); send(c, { t: 'toast', s: 'Приглашение отправлено' }); break; }
+    case 'faccept': { const inv = P.finv, F = inv && G.factions.find(x => x.id === inv.fid); P.finv = null; if (!F || P.fid) { sendMe(P); break; } P.fid = F.id; P.banner = F.banner; P.rel = F.rel; sim.logW('Ты вступил во фракцию «' + F.name + '».', 3, P); for (const q of G.players) if (q.fid === F.id) { sendMe(q); } sysChat(P.name + ' вступил во фракцию «' + F.name + '»'); break; }
+    case 'fdecline': { P.finv = null; sendMe(P); break; }
+    case 'fleave': { const F = facOf(P); if (!F) break; P.fid = null; P.rel = JSON.parse(JSON.stringify(F.rel)); sim.logW('Ты покинул фракцию «' + F.name + '».', 1, P); if (!G.players.some(q => q.fid === F.id)) G.factions.splice(G.factions.indexOf(F), 1); for (const q of G.players) sendMe(q); sysChat(P.name + ' покинул фракцию «' + F.name + '»'); break; }
     case 'upg': if (P.busy !== 'battle' && sim.doUpgrade(P, String(m.type), String(m.up))) sendMe(P); break;
     case 'dismiss': if (P.busy !== 'battle' && sim.TROOPS[m.type]) { const s = P.troops.find(x => x.type === m.type); if (s) { s.n--; if (s.n <= 0) P.troops.splice(P.troops.indexOf(s), 1); sendMe(P); } } break;
     case 'attr': if (sim.doAttr(P, String(m.k))) sendMe(P); break;

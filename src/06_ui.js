@@ -82,6 +82,8 @@ function renderPanel() {
     body += '<div class="cols"><div class="card"><h3>' + H.name + '</h3><div class="kv"><span>Уровень</span><b>' + H.lvl + '</b></div><div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div><div class="kv"><span>Опыт</span><b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></div><div class="kv"><span>Здоровье</span><b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></div><div class="kv"><span>Урон / броня</span><b>' + hd.dmg + ' / ' + hd.arm + '</b></div><div class="kv"><span>Размер отряда</span><b>' + cap + '</b></div></div>' +
       '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
       '<div class="card"><h3>Снаряжение</h3><div class="kv"><span>Оружие</span><b>' + ws.n + '</b></div><div class="kv"><span>Доспех</span><b>' + ar.n + '</b></div><div class="kv"><span>Щит</span><b>' + sh.n + '</b></div><div class="kv"><span>Конь</span><b>' + hs.n + '</b></div><p class="note">Покупай снаряжение в городах.</p></div></div>';
+  } else if (tab === 'ally') {
+    body += allyBody();
   } else if (tab === 'inv') {
     body += invBody();
   } else if (tab === 'journal') {
@@ -89,7 +91,7 @@ function renderPanel() {
     body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
-  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']];
+  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (NET.on) tabs.push(['ally', 'Союз']);
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
 }
 

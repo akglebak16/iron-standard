@@ -11,11 +11,14 @@ function dumpWorld() {
   const O = { ver: 1, seed: G.seed, nid: G.nid, day: G.day, hour: G.hour, hourAcc: G.hourAcc || 0, speed: G.speed, roads: G.roads, stats: G.stats, log: G.log,
     settles: G.settles.map(s => Object.assign({}, s, { camp: s.camp ? s.camp.id : null })),
     parties: G.parties.map(p => Object.assign({}, p, { lock: null })),
-    players: G.players.map(P => Object.assign({}, P, { away: true, busy: null, in: null, enc: null, pendRes: null, resT: null, tid: null, sid: null, path: [], pi: 0 })) };
+    factions: (G.factions || []).map(F => Object.assign({}, F)),
+    players: G.players.map(P => Object.assign({}, P, { rel: P.fid ? null : P.rel, finv: null, away: true, busy: null, in: null, enc: null, pendRes: null, resT: null, tid: null, sid: null, path: [], pi: 0 })) };
   return JSON.stringify(O);
 }
 function loadWorld(d) {
-  G = { seed: d.seed, nid: d.nid, day: d.day, hour: d.hour, acc: 0, speed: d.speed || 1, paused: false, parties: d.parties, settles: d.settles, roads: d.roads, players: d.players, player: null, log: d.log || [], stats: d.stats || { wins: 0, kills: 0 }, ver: 2, hourAcc: d.hourAcc || 0 };
+  G = { seed: d.seed, nid: d.nid, day: d.day, hour: d.hour, acc: 0, speed: d.speed || 1, paused: false, parties: d.parties, settles: d.settles, roads: d.roads, players: d.players, player: null, log: d.log || [], stats: d.stats || { wins: 0, kills: 0 }, ver: 2, hourAcc: d.hourAcc || 0, factions: d.factions || [] };
+  for (const F of G.factions) for (const P of G.players) if (P.fid === F.id) P.rel = F.rel;
+  for (const P of G.players) if (!P.rel) { P.fid = null; P.rel = { nord: 0, emp: 0, khan: 0, bandit: -100 }; }
   genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); return G;
 }
 return {

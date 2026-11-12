@@ -1425,12 +1425,12 @@ function netMsg(m) {
     }
     case 'me': {
       const P = G && G.player; if (!P) break;
-      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]); P.inv = m.inv;
-      P.gold = m.gold; P.food = m.food; P.troops = m.troops; P.hero = m.hero; P.quests = m.quests; P.rel = m.rel; P.stats = m.stats; P.name = m.name; P.culture = m.culture; P.banner = m.banner; P.in = m.in; P.busy = m.busy;
+      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv, P.fac, P.finv]); P.inv = m.inv;
+      P.gold = m.gold; P.food = m.food; P.troops = m.troops; P.hero = m.hero; P.quests = m.quests; P.rel = m.rel; P.stats = m.stats; P.name = m.name; P.culture = m.culture; P.banner = m.banner; P.in = m.in; P.busy = m.busy; P.fac = m.fac; P.finv = m.finv; P.fname = m.fac ? m.fac.name : '';
       const lg = JSON.stringify(m.log); if (lg !== NET.lastLog) { NET.lastLog = lg; P.log = m.log; P.logDirty = true; }
       P.path = m.path.map(a => ({ x: a[0], y: a[1] })); P.pi = 0;
       const b = BANNERS[P.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2;
-      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]) !== old) netRefresh();
+      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv, P.fac, P.finv]) !== old) { netRefresh(); netInvite(); }
       break;
     }
     case 'w': {
@@ -1439,7 +1439,7 @@ function netMsg(m) {
       for (const a of m.players) {
         seen[a[0]] = 1; let Q = G.players.find(q => q.id === a[0]); if (!Q) { Q = netMkPlayer(a[0]); G.players.push(Q); }
         Q.tx = a[2]; Q.ty = a[3]; if (Q.first) { Q.x = Q.tx; Q.y = Q.ty; Q.first = false; } Q.fx = a[4];
-        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; }
+        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; Q.fname = a[12] || ''; }
       }
       G.players = G.players.filter(q => q.id === NET.you || seen[q.id]);
       const old = new Map(G.parties.map(p => [p.id, p])), next = [];
@@ -1638,6 +1638,8 @@ function renderPanel() {
     body += '<div class="cols"><div class="card"><h3>' + H.name + '</h3><div class="kv"><span>Уровень</span><b>' + H.lvl + '</b></div><div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div><div class="kv"><span>Опыт</span><b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></div><div class="kv"><span>Здоровье</span><b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></div><div class="kv"><span>Урон / броня</span><b>' + hd.dmg + ' / ' + hd.arm + '</b></div><div class="kv"><span>Размер отряда</span><b>' + cap + '</b></div></div>' +
       '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
       '<div class="card"><h3>Снаряжение</h3><div class="kv"><span>Оружие</span><b>' + ws.n + '</b></div><div class="kv"><span>Доспех</span><b>' + ar.n + '</b></div><div class="kv"><span>Щит</span><b>' + sh.n + '</b></div><div class="kv"><span>Конь</span><b>' + hs.n + '</b></div><p class="note">Покупай снаряжение в городах.</p></div></div>';
+  } else if (tab === 'ally') {
+    body += allyBody();
   } else if (tab === 'inv') {
     body += invBody();
   } else if (tab === 'journal') {
@@ -1645,7 +1647,7 @@ function renderPanel() {
     body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
-  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']];
+  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (NET.on) tabs.push(['ally', 'Союз']);
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
 }
 
@@ -1777,6 +1779,36 @@ ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx
 ACT.unhorse = function () { if (NET.on) { NET.send({ t: 'unhorse' }); sfx('click'); return; } if (doUnequipHorse(G.player)) { sfx('click'); toast('Конь отправлен в обоз'); } keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };
 
+/* ================= сетевой интерфейс: союз с другом (передачи, фракция) ================= */
+function allyOther() { return G && G.players.find(q => q.id !== NET.you) || null; }
+function allyBody() {
+  const P = G.player, o = allyOther(); let b = '';
+  if (!o) return '<div class="note">Друг сейчас не в игре.</div>';
+  const d = Math.round(Math.hypot(o.x - P.x, o.y - P.y)), near = d <= 90, busy = P.busy || o.busy;
+  b += '<div class="note"><b>' + o.name.replace(/</g, '&lt;') + '</b>' + (o.fname ? ' [' + o.fname.replace(/</g, '&lt;') + ']' : '') + ' · расстояние ' + d + (near ? ' — можно передавать' : ' — нужно подойти ближе (до 90)') + '</div>';
+  const dis = near && !busy ? '' : ' disabled';
+  b += '<h3>Передать золото и еду</h3><div class="row sm"><div class="grow"><div class="nm">Золото</div><div class="ds">у тебя ' + fmt(P.gold) + '</div></div>' + [50, 200, 1000].map(n => '<button class="btn sm" data-act="give" data-k="gold" data-n="' + n + '"' + dis + '>' + n + '</button>').join('') + '<button class="btn sm" data-act="give" data-k="gold" data-n="999999"' + dis + '>Все</button></div>';
+  b += '<div class="row sm"><div class="grow"><div class="nm">Провизия</div><div class="ds">у тебя ' + P.food + '</div></div>' + [10, 30].map(n => '<button class="btn sm" data-act="give" data-k="food" data-n="' + n + '"' + dis + '>' + n + '</button>').join('') + '<button class="btn sm" data-act="give" data-k="food" data-n="999999"' + dis + '>Все</button></div>';
+  b += '<h3 style="margin-top:14px">Передать бойцов</h3>';
+  for (const s of P.troops) { const t = TROOPS[s.type]; b += '<div class="row sm"><div class="grow"><div class="nm">' + t.name + '</div><div class="ds">в отряде ' + s.n + '</div></div><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="1"' + dis + '>1</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="5"' + dis + '>5</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="999"' + dis + '>Все</button></div>'; }
+  b += '<h3 style="margin-top:14px">Фракция</h3>';
+  const F = P.fac;
+  if (F) {
+    b += '<div class="note">Ты во фракции <b>«' + F.name.replace(/</g, '&lt;') + '»</b>. Участники: ' + F.members.map(x => x.replace(/</g, '&lt;')).join(', ') + '. Знамя и репутация у вас общие.</div><div style="display:flex;gap:8px;flex-wrap:wrap">' + (F.members.length < 2 && o && !o.fname ? '<button class="btn sm pri" data-act="finvite">Пригласить друга</button>' : '') + '<button class="btn sm danger" data-act="fleave">Покинуть фракцию</button></div>';
+  } else {
+    b += '<div class="note">Основай фракцию: общее знамя, имя и репутация с королевствами. Друга можно пригласить, а можно остаться отдельно.</div><div style="display:flex;gap:8px;align-items:center"><input type="text" id="fname" maxlength="20" placeholder="Название фракции" style="flex:1" autocomplete="off"><button class="btn sm pri" data-act="fcreate">Основать</button></div>';
+    if (P.finv) b += '<div class="note" style="margin-top:10px">Тебя зовут во фракцию «' + P.finv.name.replace(/</g, '&lt;') + '» (' + P.finv.from.replace(/</g, '&lt;') + ').</div><div style="display:flex;gap:8px"><button class="btn sm pri" data-act="faccept">Вступить</button><button class="btn sm" data-act="fdecline">Отказаться</button></div>';
+  }
+  return b;
+}
+ACT.give = function (d) { NET.send({ t: 'give', k: d.k, type: d.t, n: +d.n }); sfx('coin'); };
+ACT.fcreate = function () { const i = el('fname'); NET.send({ t: 'fcreate', name: i ? i.value : '' }); };
+ACT.finvite = function () { NET.send({ t: 'finvite' }); };
+ACT.faccept = function () { NET.send({ t: 'faccept' }); };
+ACT.fdecline = function () { NET.send({ t: 'fdecline' }); };
+ACT.fleave = function () { NET.send({ t: 'fleave' }); };
+function netInvite() { const P = G && G.player; if (P && P.finv && !P.finvSeen) { P.finvSeen = P.finv.fid; toast(P.finv.from + ' зовёт во фракцию «' + P.finv.name + '» (Герой → Союз)'); } else if (P && !P.finv) P.finvSeen = null; }
+
 /* ================= главный цикл ================= */
 let MODE = 'title', cv, cx;
 const WC = { x: WW / 2, y: WH / 2, z: .9, free: false };
@@ -1907,7 +1939,7 @@ function drawWorld(g) {
   for (const it of list) {
     if (it.s) { const s = it.s, sp = settleSprite(s), k = s.kind === 'town' ? .72 : s.kind === 'castle' ? .7 : .6; if (s.kind === 'camp' && s.cleared) g.globalAlpha = .5; g.drawImage(sp.cv, s.x - sp.ax * k, s.y - sp.ay * k, sp.cv.width * k, sp.cv.height * k); g.globalAlpha = 1; label(s.name, s.x, s.y + 22, s.kind === 'camp' ? '#e59a8c' : '#f0e6c8', s.kind === 'village' ? 13 : 16); }
     else if (it.p) { const p = it.p; let sp, k = .34; if (p.kind === 'caravan') { const c = caravanSprite(); g.drawImage(c.cv, p.x - c.ax * .5, p.y - c.ay * .5, 55, 35); label('Караван', p.x, p.y + 16, '#d8c9a2', 12); continue; } sp = getSprite(leaderType(p), 0, p.fac); const dir = p.fx < 0 ? -1 : 1; g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(p.x + 2, p.y + 3, 20, 7, 0, 0, TAU); g.fill(); g.save(); g.translate(p.x, p.y + Math.sin(G.day * 24 + G.hour + p.id) * 0); g.scale(dir * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, p.x + 14, p.y + 2, p.fac, 9); label(p.kind === 'bandit' ? 'Разбойники' : p.name, p.x, p.y + 17, p.kind === 'bandit' ? '#e59a8c' : '#f0e6c8', 12); }
-    else { const Q = it.pl, me = Q === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name, Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
+    else { const Q = it.pl, me = Q === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name + (Q.fname ? ' [' + Q.fname + ']' : ''), Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   const h = G.hour, night = h >= 21 || h < 4 ? .34 : h >= 19 ? (h - 18) * .1 : h < 6 ? (6 - h) * .1 : 0; if (night > 0) { g.fillStyle = 'rgba(8,16,48,' + night + ')'; g.fillRect(0, 0, cv.width, cv.height); }
