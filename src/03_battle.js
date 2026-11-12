@@ -6,10 +6,10 @@ const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, tou
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
-  const Gr = heroGear(h), W = Gr.W, m = Gr.mounted;
-  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? W.range : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: W.acc || .05, anticav: W.anticav ? 1 : 0,
-    cd: W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1), hp: 100 + h.vit * 14, arm: Gr.arm, dmg: W.dmg + h.str * (W.rng ? W.bs : 3),
-    spd: m ? Gr.horse.v : 86 + h.agi * 3, block: Gr.block };
+  const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
+  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
+    cd: (W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1)) * (1 - F.cd), hp: Math.round((100 + h.vit * 14) * (1 + F.hp)), arm: Gr.arm + F.arm, dmg: (W.dmg + h.str * (W.rng ? W.bs : 3)) * (1 + F.dmg + heavy),
+    spd: (m ? Gr.horse.v : 86 + h.agi * 3) * (1 + F.run), block: Gr.block };
 }
 function mkUnit(side, t, fac, x, y, sp) {
   const u = { id: B.units.length, side, t, fac, x, y, vx: 0, vy: 0, face: side ? Math.PI : 0, dir: side ? -1 : 1, hp: t.hp, maxHp: t.hp, arm: t.arm, dmg: t.dmg, block: t.block,
@@ -30,7 +30,8 @@ function startBattle(cfg) {
   if (cfg.hero) {
     const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
     h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
-    const mb = (cfg.hero.lead || 0) * 4; for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; }
+    const F = perkFx(cfg.hero), mb = (cfg.hero.cha || cfg.hero.lead || 0) * 4 + F.morale; h.fx = F;
+    for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; if (F.ally) u.dmg *= 1 + F.ally; }
   }
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
   for (const s of B.groups) for (const g of s) layout(g, true);
@@ -160,10 +161,11 @@ function hurt(t, dmg, src, pierce) {
   t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4); ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
+  if (t.hp <= 0 && t.isHero && t.fx && t.fx.lastStand && !t.lsUsed) { t.lsUsed = true; t.hp = Math.max(1, t.maxHp * t.fx.lastStand); if (!SERVER) ftext(t.x, t.y - 62, 'Не сдаюсь!', '#f1d27a'); blog(t.name + ' поднялся на ноги', 0); }
   if (t.hp <= 0) kill(t, src);
 }
 function kill(t, src) {
-  t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); }
+  t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
   if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
@@ -202,15 +204,15 @@ function heroStrike(h) {
     else {
       e.x += Math.cos(a) * 5 * kb; e.y += Math.sin(a) * 5 * kb; let dmg = h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? fall : 1);
       if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); }
-      hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, W.pb) : .1); sfx('hit', e);
+      hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, (W.pb || 0) + (h.fx ? h.fx.mpierce : 0)) : .1 + (h.fx ? h.fx.mpierce : 0)); sfx('hit', e);
     }
     if (++hits >= maxHits) break;
   }
 }
 function heroShoot(h) { // выстрел или бросок в сторону курсора: цель выбирается в узком конусе (формат ввода h.inp не меняется)
-  const W = h.t.wpn, R = W.range, a0 = h.swingA; let best = null, bs = 1e9;
+  const W = h.t.wpn, R = h.t.range || W.range, a0 = h.swingA; let best = null, bs = 1e9;
   for (const e of B.units) { if (e.side === h.side || !alive(e)) continue; const dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy); if (d > R || d < 14) continue; const da = Math.abs(angDiff(Math.atan2(dy, dx), a0)); if (da > .2) continue; const sc = da * 420 + d * .12; if (sc < bs) { bs = sc; best = e; } }
-  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (W.acc || .05);
+  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (h.t.acc || W.acc || .05);
   const px = best ? best.x + best.vx * dur * .8 : h.x + Math.cos(a0) * d, py = best ? best.y + best.vy * dur * .8 : h.y + Math.sin(a0) * d;
   B.arrows.push({ x0: h.x, y0: h.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: h.side, dmg: h.dmg, src: h, pierce: W.pb || 0, dt: W.dt, xb: W.wt === 'xbow', jv: W.wt === 'throw' });
   h.bump = .5; sfx('bow', h); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), h.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
@@ -278,10 +280,10 @@ function battleCamera(rdt) {
   if (B.shake > 0) B.shake -= rdt;
 }
 function finishBattle() {
-  const res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
+  const surv = B.cfg.hero ? perkFx(B.cfg.hero).surv : 0, res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
   for (const u of B.units) {
     if (u.isHero && u.side === 0) continue; const id = u.t.id;
-    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
+    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
     else { if (u.dead && !u.gone) res.enemyDead++; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; }
   }
   const cb = B.cfg.onEnd; if (cb) cb(res);

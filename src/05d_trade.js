@@ -30,7 +30,7 @@ function invOf(P) { return P.inv || (P.inv = {}); }
 function invN(P, id) { return invOf(P)[id] || 0; }
 function invAdd(P, id, n) { const I = invOf(P), v = (I[id] || 0) + n; if (v > 0) I[id] = v; else delete I[id]; }
 function invWeight(P) { const I = invOf(P); let w = 0; for (const id in I) if (ITEM[id]) w += ITEM[id].w * I[id]; return Math.round(w * 10) / 10; }
-function cargoCap(P) { const H = P.hero; return 60 + troopCount(P.troops) * 3 + H.str * 6 + (eqItem(H, 'horse') ? 30 : 0); }
+function cargoCap(P) { const H = P.hero; return Math.round((60 + troopCount(P.troops) * 3 + H.str * 6 + (eqItem(H, 'horse') ? 30 : 0)) * (1 + perkFx(H).cargo)); }
 function invIds(P, kind) { return Object.keys(invOf(P)).filter(id => ITEM[id] && ITEM[id].kind === kind).sort((a, b) => ITEM[a].price - ITEM[b].price); }
 function equippedId(P, slot) { const id = heroEq(P.hero)[slot]; return id && ITEM[id] ? id : null; }
 
@@ -77,8 +77,11 @@ function regionMod(s, id) {
 }
 function stockMod(s, id) { if (ITEM[id].kind !== 'goods') return 1; return clamp(1.5 - .5 * (marketOf(s).stock[id] || 0) / Math.max(12, goodTarget(s, id)), .6, 1.6); } // знаменатель не меньше 12, чтобы партия в 10 штук не обрушивала цену на «бедном» рынке
 function relMod(P, s) { return clamp((P.rel && P.rel[s.fac]) || 0, -100, 100) * .0006; } // дружба до ±6% к цене
-function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)))); }
-function sellPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)))); }
+function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)) * (1 - perkFx(P.hero).buy))); }
+function sellPrice(P, s, id) { // продажа никогда не выгоднее покупки в том же городе: дружба и перк «Торговец» не должны давать вечный двигатель
+  const it = ITEM[id], raw = Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)) * (1 + perkFx(P.hero).sell));
+  return Math.max(1, Math.min(raw, Math.floor(buyPrice(P, s, id) * .93)));
+}
 function priceLevel(s, id) { if (ITEM[id].kind !== 'goods') return ''; const r = regionMod(s, id) * stockMod(s, id); return r < .88 ? 'low' : r > 1.12 ? 'high' : ''; } // цена здесь ниже/выше обычной
 
 /* ---------- сделки: цена пересчитывается на каждую единицу, поэтому крупная партия дорожает/дешевеет ---------- */

@@ -78,7 +78,7 @@ function partyStr(p) { return strength(p.troops); }
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
-function sizeCap(h) { return 20 + h.lead * 5 + (h.lvl - 1) * 3; }
+function sizeCap(h) { heroFix(h); return 20 + h.cha * 5 + (h.lvl - 1) * 3 + perkFx(h).size; }
 function leaderType(p) { let b = null, bs = -1; for (const s of p.troops) { const t = TROOPS[s.type], v = t.tier * 10 + s.n * .01; if (v > bs) { bs = v; b = s.type; } } return b; }
 function addT(list, type, n) { const f = list.find(s => s.type === type); if (f) f.n += n; else list.push({ type, n }); }
 function remT(list, type, n) { const f = list.find(s => s.type === type); if (!f) return; f.n -= n; if (f.n <= 0) list.splice(list.indexOf(f), 1); }
@@ -97,7 +97,7 @@ function newWorld(seed) {
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
   return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
-    hero: { name: nm, lvl: 1, xp: 0, pts: 2, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
+    hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
 function addPlayer(o) { const P = mkPlayer(o); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
 function newGame(o) { newWorld(o.seed); const P = addPlayer(o); G.player = P; FACTIONS.player.c1 = BANNERS[P.banner].c1; FACTIONS.player.c2 = BANNERS[P.banner].c2; return G; }
@@ -115,12 +115,12 @@ function genQuests() {
 }
 function questText(q) { const s = settleById(q.sid), f = settleById(q.from); return q.type === 'camp' ? 'Разгромить разбойников: «' + s.name + '»' : 'Доставить груз в ' + s.name; }
 function acceptQuest(P, q) { const t = settleById(q.from); if (P.quests.length >= 4) return 'Не больше четырёх заданий одновременно.'; if (t.board.indexOf(q) < 0) return 'Задание уже взято.'; t.board.splice(t.board.indexOf(q), 1); P.quests.push(q); return null; }
-function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { P.gold += q.reward; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + q.reward + ' золота.', 3, P); } }
+function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { const rw = Math.round(q.reward * (1 + perkFx(P.hero).quest)); P.gold += rw; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + rw + ' золота.', 3, P); } }
 
 /* ---------- ход времени ---------- */
 function speedOf(p) {
   let m = 1, base = 17, any = false, mo = true; for (const s of p.troops) { any = true; if (!TROOPS[s.type].mounted) mo = false; } if (any && mo) base = 22;
-  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; }
+  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; base *= 1 + perkFx(p.hero).map; }
   const k = cellOf(p.x, p.y), t = WT.cells[k]; m = t === 2 ? .72 : t === 3 ? .78 : 1; if (WT.bio[k] === 1) m *= .85; if (WT.road[k]) m *= 1.3; if (p.kind === 'bandit') m *= 1.04; return base * m;
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
@@ -174,7 +174,7 @@ function autoFight(a, b) {
 }
 function hourTick() {
   G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
-  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014; P.hero.hp = Math.min(1, P.hero.hp + heal); }
+  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = (P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014) * (1 + ((P.hero.int || 1) - 1) * .04 + perkFx(P.hero).heal); P.hero.hp = Math.min(1, P.hero.hp + heal); }
   for (const s of G.settles) { if (s.kind === 'camp') { if (s.cleared) { s.respawn -= 1; if (s.respawn <= 0) respawnCamp(s); } continue; } s.rt += 1; if (s.rt >= 72) { s.rt = 0; genRecruits(s); } }
   // спавны
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
@@ -184,10 +184,10 @@ function hourTick() {
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); }
 function playerDay(P) {
-  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = Math.round(wage / 3);
+  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = wageDay(P);
   if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
   if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
   for (const q of P.quests.slice()) if (G.day > q.dl) { P.quests.splice(P.quests.indexOf(q), 1); P.rel[q.fac] = Math.max(-100, P.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1, P); }
   for (const f of ['nord', 'emp', 'khan']) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }
-function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3); }
+function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3 * (1 - perkFx(P.hero).wage)); }
