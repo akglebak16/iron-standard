@@ -135,3 +135,14 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 .isw.gear{background:linear-gradient(180deg,#5b4128,#3a2a1a);color:var(--brass)}
 .price.cheap{color:#9fe27c}.price.dear{color:#ff8d79}
 .pbar.cargo.over i{background:var(--blood)}
+
+/* ---- сеть ---- */
+#votebar{position:absolute;left:50%;top:max(64px,calc(env(safe-area-inset-top,0px) + 56px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:16px}
+#votebar[hidden]{display:none}
+#chat{position:absolute;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));width:min(360px,60vw);z-index:25;pointer-events:none}
+#chat[hidden]{display:none}
+#chatlog{font-size:15px;line-height:1.25;color:#f0e6c8;text-shadow:0 1px 2px #000,0 0 4px #000;max-height:22vh;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;margin-bottom:4px}
+#chatlog b{color:#bfe4ff}#chatlog i{color:#d8c9a2}
+#chatin{pointer-events:auto;width:100%;box-sizing:border-box;background:rgba(20,14,8,.78);color:#f0e6c8;border:1px solid #6a5835;padding:5px 8px;font:inherit;font-size:15px;opacity:.55}
+#chatin:focus{opacity:1;outline:none;border-color:#e0b85a}
+#chat.bt{bottom:max(150px,calc(env(safe-area-inset-bottom,0px) + 150px));width:min(300px,40vw)}

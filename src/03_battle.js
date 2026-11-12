@@ -62,6 +62,7 @@ function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 /* ---------- приказы ---------- */
 function giveOrder(ord, wx, wy, selArg) {
   if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  if (!SERVER && NET.on) { NET.send({ t: 'ord', ord, wx, wy, sel: sl }); if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t }; sfx(ord === 'charge' ? 'horn' : 'order'); return; }
   const foe = centroid(1), gs = B.groups[0].filter(g => sl === 3 || g.k === sl); let any = false;
   for (const g of gs) {
     if (!g.units.some(fit)) continue; any = true;
