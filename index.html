@@ -130,6 +130,15 @@ input[type=range]{width:100%;accent-color:var(--brass)}
   #borders{bottom:max(96px,calc(env(safe-area-inset-bottom,0px) + 90px))}#joy{bottom:200px}.grp{width:62px}.ord{width:46px;height:46px}.sq{width:44px;height:44px}.whead h2{font-size:23px}.wbody{padding:10px}
 }
 @media (prefers-reduced-motion:reduce){#toast{animation:none}.bar i{transition:none}}
+/* инвентарь и торговля */
+.trade{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin-top:8px}
+@media (max-width:760px){.trade{grid-template-columns:1fr}}
+.row.sm{padding:5px 8px;gap:8px;margin-bottom:4px}
+.row.sm .nm{font-size:16px}.row.sm .ds{font-size:13px}.row.sm .cnt{font-size:20px;min-width:30px}.row.sm .grow{min-width:110px}
+.isw{width:26px;height:26px;border-radius:3px;border:2px solid #000b;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 1px #ffffff30}
+.isw.gear{background:linear-gradient(180deg,#5b4128,#3a2a1a);color:var(--brass)}
+.price.cheap{color:#9fe27c}.price.dear{color:#ff8d79}
+.pbar.cargo.over i{background:var(--blood)}
 
 </style>
 <canvas id="cv"></canvas>
@@ -140,7 +149,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
     <div id="wspeed"><button class="chip" id="bPause" title="Пауза (пробел)"></button><button class="chip" data-sp="1">×1</button><button class="chip" data-sp="2">×2</button><button class="chip" data-sp="4">×4</button></div>
   </div>
   <div id="wmenu">
-    <button class="btn sm plank thin" data-act="party"></button><button class="btn sm plank thin" data-act="hero"></button><button class="btn sm plank thin" data-act="journal"></button><button class="btn sm plank thin" data-act="menu"></button>
+    <button class="btn sm plank thin" data-act="party"></button><button class="btn sm plank thin" data-act="hero"></button><button class="btn sm plank thin" data-act="inv"></button><button class="btn sm plank thin" data-act="journal"></button><button class="btn sm plank thin" data-act="menu"></button>
   </div>
   <div id="wloc" class="plank" hidden></div>
 </div>
@@ -1222,6 +1231,147 @@ function applyBattleResult(P, res, p) {
   return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl };
 }
 
+/* ================= инвентарь и торговля: логика (без DOM) ================= */
+/* Хранение: P.inv = { id: количество } — всё, что лежит в обозе (не надето).
+   Рынок поселения: s.market = { day, gold, stock: { id: количество } }, создаётся лениво при первом заходе,
+   поэтому старые сохранения грузятся без миграции. Надетое снаряжение по-прежнему хранится индексами
+   в P.hero.weapon/armor/shield/horse, бой и сервер ничего не знают об обозе. */
+
+const GOODS = {
+  grain:   { n: 'Зерно',    p: 14,  w: 1,   c: '#c9a24a', raw: 1, make: ['emp'],  need: ['nord', 'khan'] },
+  salt:    { n: 'Соль',     p: 40,  w: 1,   c: '#dfe3e6', make: ['khan'], need: ['nord', 'emp'] },
+  ale:     { n: 'Эль',      p: 28,  w: 1.5, c: '#a8741f', make: ['nord'], need: ['emp', 'khan'] },
+  iron:    { n: 'Железо',   p: 60,  w: 2,   c: '#7e868e', make: ['nord'], need: ['emp', 'khan'] },
+  leather: { n: 'Кожа',     p: 45,  w: 1,   c: '#7a4e2c', raw: 1, make: ['khan'], need: ['nord', 'emp'] },
+  furs:    { n: 'Меха',     p: 110, w: 1,   c: '#5b4636', raw: 1, make: ['nord'], need: ['emp', 'khan'] },
+  cloth:   { n: 'Сукно',    p: 75,  w: 1,   c: '#6d5aa0', make: ['emp'],  need: ['nord', 'khan'] },
+  wine:    { n: 'Вино',     p: 90,  w: 1.5, c: '#8a1f3a', lux: 1, make: ['emp'],  need: ['nord', 'khan'] },
+  spice:   { n: 'Пряности', p: 220, w: .3,  c: '#c4622a', lux: 1, make: ['khan'], need: ['nord', 'emp'] }
+};
+const GEAR_W = { weapon: [3, 3.5, 3.5, 4], armor: [6, 14, 18, 26], shield: [3, 4, 5], horse: [0, 0, 0] };
+const GEAR_BASE = { weapon: 40, armor: 35, shield: 25, horse: 0 }; // цена бесплатных стартовых вещей (в GEAR у них p: 0)
+const GEAR_APPEAR = [.85, .6, .4, .22];  // шанс, что вещь такого уровня есть у торговца при создании рынка
+const GEAR_DAILY = [.14, .1, .06, .03];  // шанс, что отсутствующая вещь появится за день
+const MK_GOLD = { town: 2600, castle: 1400, village: 800 };
+const MK_GOODS = { town: 16, castle: 5, village: 9 };
+
+/* каталог: id → предмет. Снаряжение строится из GEAR (id вида 'weapon:2'), товары — из GOODS */
+const ITEM = {};
+for (const k of Object.keys(GEAR)) GEAR[k].forEach((g, i) => {
+  if (k === 'horse' && !i) return; // «Пеший» — не предмет
+  ITEM[k + ':' + i] = { id: k + ':' + i, kind: 'gear', slot: k, idx: i, name: g.n, v: g.v, price: g.p || GEAR_BASE[k], w: (GEAR_W[k] || [])[i] || 0 };
+});
+for (const k of Object.keys(GOODS)) ITEM[k] = { id: k, kind: 'goods', name: GOODS[k].n, price: GOODS[k].p, w: GOODS[k].w, c: GOODS[k].c };
+
+/* ---------- обоз героя ---------- */
+function invOf(P) { return P.inv || (P.inv = {}); }
+function invN(P, id) { return invOf(P)[id] || 0; }
+function invAdd(P, id, n) { const I = invOf(P), v = (I[id] || 0) + n; if (v > 0) I[id] = v; else delete I[id]; }
+function invWeight(P) { const I = invOf(P); let w = 0; for (const id in I) if (ITEM[id]) w += ITEM[id].w * I[id]; return Math.round(w * 10) / 10; }
+function cargoCap(P) { const H = P.hero; return 60 + troopCount(P.troops) * 3 + H.str * 6 + (H.horse ? 30 : 0); }
+function invIds(P, kind) { return Object.keys(invOf(P)).filter(id => ITEM[id] && ITEM[id].kind === kind).sort((a, b) => ITEM[a].price - ITEM[b].price); }
+function equippedId(P, slot) { const id = slot + ':' + P.hero[slot]; return ITEM[id] ? id : null; }
+
+/* ---------- рынок поселения ---------- */
+function hasMarket(s) { return s && s.kind !== 'camp' && s.fac !== 'bandit'; }
+function goodTarget(s, id) {
+  const g = GOODS[id]; let t = MK_GOODS[s.kind] || 8;
+  if (g.make.includes(s.fac)) t *= 1.7; else if (g.need.includes(s.fac)) t *= .45;
+  if (s.kind === 'village' && !g.raw) t *= .5;
+  if (s.kind === 'castle' && !['grain', 'ale', 'salt', 'iron'].includes(id)) t *= .4;
+  return Math.max(1, Math.round(t));
+}
+function gearPool(s) {
+  const max = s.kind === 'village' ? 1 : s.kind === 'town' ? 2 : 3, out = [];
+  for (const id in ITEM) { const it = ITEM[id]; if (it.kind !== 'gear') continue; if (it.slot === 'horse' ? (s.kind === 'village' ? it.idx <= 1 : true) : it.idx <= max) out.push(id); }
+  return out;
+}
+function mkMarket(s) {
+  const m = { day: G.day, gold: Math.round((MK_GOLD[s.kind] || 800) * rnd(.7, 1.1)), stock: {} };
+  for (const id in GOODS) m.stock[id] = Math.round(goodTarget(s, id) * rnd(.6, 1.4));
+  for (const id of gearPool(s)) if (Math.random() < GEAR_APPEAR[ITEM[id].idx]) m.stock[id] = rint(1, 2);
+  return m;
+}
+function marketDay(s, m) {
+  m.gold += Math.round(((MK_GOLD[s.kind] || 800) - m.gold) * .12) + 20;
+  for (const id in GOODS) { const t = goodTarget(s, id), v = m.stock[id] || 0; m.stock[id] = Math.max(0, v + Math.round((t - v) * .22 + rnd(-1.4, 1.4))); }
+  for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < GEAR_DAILY[ITEM[id].idx]) m.stock[id] = 1; }
+}
+function marketOf(s) { // ленивое создание и догон по дням (до 20 дней за раз)
+  if (!s.market) s.market = mkMarket(s);
+  const m = s.market, d = Math.min(20, Math.max(0, G.day - m.day));
+  for (let k = 0; k < d; k++) marketDay(s, m);
+  m.day = G.day; return m;
+}
+
+/* ---------- цены ---------- */
+function regionMod(s, id) {
+  const g = GOODS[id]; if (!g) return 1;
+  let m = g.make.includes(s.fac) ? .78 : g.need.includes(s.fac) ? 1.22 : 1;
+  if (s.kind === 'village' && g.raw) m *= .9; if (s.kind === 'town' && g.lux) m *= 1.08;
+  return m;
+}
+function stockMod(s, id) { if (ITEM[id].kind !== 'goods') return 1; return clamp(1.5 - .5 * (marketOf(s).stock[id] || 0) / Math.max(12, goodTarget(s, id)), .6, 1.6); } // знаменатель не меньше 12, чтобы партия в 10 штук не обрушивала цену на «бедном» рынке
+function relMod(P, s) { return clamp((P.rel && P.rel[s.fac]) || 0, -100, 100) * .0006; } // дружба до ±6% к цене
+function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)))); }
+function sellPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)))); }
+function priceLevel(s, id) { if (ITEM[id].kind !== 'goods') return ''; const r = regionMod(s, id) * stockMod(s, id); return r < .88 ? 'low' : r > 1.12 ? 'high' : ''; } // цена здесь ниже/выше обычной
+
+/* ---------- сделки: цена пересчитывается на каждую единицу, поэтому крупная партия дорожает/дешевеет ---------- */
+function doBuy(P, s, id, n) {
+  const it = ITEM[id]; if (!it || !hasMarket(s)) return { n: 0, sum: 0, why: 'none' };
+  const m = marketOf(s), cap = cargoCap(P); let w = invWeight(P), k = 0, sum = 0, why = '';
+  while (k < n) {
+    if ((m.stock[id] || 0) < 1) { why = 'stock'; break; }
+    const pr = buyPrice(P, s, id);
+    if (P.gold < pr) { why = 'gold'; break; }
+    if (w + it.w > cap + 1e-6) { why = 'weight'; break; }
+    P.gold -= pr; sum += pr; m.stock[id]--; m.gold += pr; w += it.w; invAdd(P, id, 1); k++;
+  }
+  return { n: k, sum, why };
+}
+function doSell(P, s, id, n) {
+  const it = ITEM[id]; if (!it || !hasMarket(s)) return { n: 0, sum: 0, why: 'none' };
+  const m = marketOf(s); let k = 0, sum = 0, why = '';
+  while (k < n) {
+    if (invN(P, id) < 1) break;
+    const pr = sellPrice(P, s, id);
+    if (m.gold < pr) { why = 'merchant'; break; }
+    P.gold += pr; sum += pr; m.gold -= pr; m.stock[id] = (m.stock[id] || 0) + 1; invAdd(P, id, -1); k++;
+  }
+  return { n: k, sum, why };
+}
+const TRADE_WHY = { stock: 'У торговца больше нет этого товара.', gold: 'Не хватает золота.', weight: 'В обозе не хватает места.', merchant: 'У торговца кончились деньги.', none: 'Здесь не торгуют.' };
+
+/* ---------- экипировка ---------- */
+function doEquip(P, id) {
+  const it = ITEM[id]; if (!it || it.kind !== 'gear' || invN(P, id) < 1) return false;
+  const old = equippedId(P, it.slot); invAdd(P, id, -1); if (old) invAdd(P, old, 1); P.hero[it.slot] = it.idx; return true;
+}
+function doUnequipHorse(P) { const old = equippedId(P, 'horse'); if (!old) return false; invAdd(P, old, 1); P.hero.horse = 0; return true; }
+
+/* ---------- трофеи после победы ---------- */
+function rollLoot(P, p) {
+  let tot = 0, tsum = 0, mounted = 0; for (const s of p.troops) { const t = TROOPS[s.type]; tot += s.n; tsum += t.tier * s.n; if (t.mounted) mounted += s.n; }
+  if (!tot) return [];
+  const avg = tsum / tot, rolls = clamp(Math.round(tot * .12), 1, 6), got = {}, ids = Object.keys(GOODS), cap = cargoCap(P); let w = invWeight(P);
+  for (let i = 0; i < rolls; i++) {
+    let id, n = 1;
+    if (p.kind === 'caravan' || Math.random() < .3) {
+      const own = ids.filter(g => GOODS[g].make.includes(p.fac)); id = pick(p.kind === 'caravan' && own.length ? own : ids); n = clamp(Math.round(rint(120, 300) / GOODS[id].p), 1, 14);
+    } else {
+      const slot = mounted && Math.random() < .12 ? 'horse' : pick(['weapon', 'weapon', 'armor', 'armor', 'shield']), top = Math.min(GEAR[slot].length - 1, Math.round(avg));
+      let idx = Math.floor(Math.pow(Math.random(), 1.6) * (top + 1)); if (slot === 'horse') idx = Math.max(1, idx); id = slot + ':' + idx;
+    }
+    if (!ITEM[id]) continue;
+    while (n > 0 && w + ITEM[id].w * n > cap + 1e-6) n--; // что не влезает в обоз, остаётся на поле
+    if (n < 1) continue;
+    w += ITEM[id].w * n; invAdd(P, id, n); got[id] = (got[id] || 0) + n;
+  }
+  return Object.keys(got).map(id => ({ id, n: got[id] }));
+}
+function dropText(list) { return list.map(d => ITEM[d.id].name + (d.n > 1 ? ' ×' + d.n : '')).join(', '); }
+
 /* ================= интерфейс ================= */
 const el = id => document.getElementById(id);
 const ICONS = {
@@ -1275,11 +1425,8 @@ function renderTown() {
     body += '<div class="note">В отряде ' + cnt + ' из ' + cap + ' бойцов. Свободных рекрутов: ' + troopCount(s.recruits) + '. Новые люди приходят каждые три дня.</div>';
     if (!s.recruits.length) body += '<div class="note">Сегодня здесь никто не хочет воевать.</div>';
     for (const r of s.recruits) { const t = TROOPS[r.type], ok = P.gold >= t.cost && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < t.cost ? 'no' : '') + '">' + ic('coin') + t.cost + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
-  } else if (tab === 'gear') {
-    body += '<div class="note">Снаряжение героя. Лучшее оружие и броня решают исход поединков.</div><div class="cols">';
-    for (const k of ['weapon', 'armor', 'shield', 'horse']) { const cur = H[k], arr = GEAR[k], nx = arr[cur + 1], u = GEAR_UNIT[k]; body += '<div class="card"><h3>' + GEAR_LABEL[k] + '</h3><div class="kv"><span>Сейчас</span><b>' + arr[cur].n + '</b></div><div class="kv"><span>' + u + '</span><b>' + (k === 'shield' ? Math.round(arr[cur].v * 100) + '%' : arr[cur].v) + '</b></div>';
-      if (nx) body += '<div class="kv"><span>Следующее</span><b>' + nx.n + '</b></div><div class="kv"><span>' + u + '</span><b class="up">' + (k === 'shield' ? Math.round(nx.v * 100) + '%' : nx.v) + '</b></div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center"><span class="price ' + (P.gold < nx.p ? 'no' : '') + '">' + ic('coin') + nx.p + '</span><button class="btn sm" data-act="buygear" data-k="' + k + '" ' + (P.gold >= nx.p ? '' : 'disabled') + '>Купить</button></div>'; else body += '<div class="note">Лучше уже не бывает.</div>'; body += '</div>'; }
-    body += '</div>';
+  } else if (tab === 'trade') {
+    body += tradeBody(s);
   } else if (tab === 'market') {
     body += '<div class="note">Золото: ' + fmt(P.gold) + '. Провизии: ' + P.food + ', отряду нужно около ' + Math.ceil(cnt / 6) + ' в день.</div><div class="cols">' +
       [[10, 22], [30, 60], [80, 150]].map(a => '<div class="card"><h3>' + a[0] + ' провизии</h3><div style="display:flex;justify-content:space-between;align-items:center"><span class="price ' + (P.gold < a[1] ? 'no' : '') + '">' + ic('coin') + a[1] + '</span><button class="btn sm" data-act="food" data-n="' + a[0] + '" data-p="' + a[1] + '" ' + (P.gold >= a[1] ? '' : 'disabled') + '>Купить</button></div></div>').join('') +
@@ -1290,7 +1437,7 @@ function renderTown() {
     for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + (q.type === 'camp' ? 'Расстояние: ' + Math.round(Math.hypot(settleById(q.sid).x - s.x, settleById(q.sid).y - s.y) / 10) / 10 + ' лиг' : 'Груз уже погружен') + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
     if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
-  const tabs = [['recruit', 'Рекруты'], ['gear', 'Снаряжение'], ['market', 'Рынок'], ['quests', 'Задания']];
+  const tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок'], ['quests', 'Задания']];
   openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.player.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
@@ -1308,12 +1455,14 @@ function renderPanel() {
     body += '<div class="cols"><div class="card"><h3>' + H.name + '</h3><div class="kv"><span>Уровень</span><b>' + H.lvl + '</b></div><div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div><div class="kv"><span>Опыт</span><b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></div><div class="kv"><span>Здоровье</span><b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></div><div class="kv"><span>Урон / броня</span><b>' + hd.dmg + ' / ' + hd.arm + '</b></div><div class="kv"><span>Размер отряда</span><b>' + cap + '</b></div></div>' +
       '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
       '<div class="card"><h3>Снаряжение</h3><div class="kv"><span>Оружие</span><b>' + ws.n + '</b></div><div class="kv"><span>Доспех</span><b>' + ar.n + '</b></div><div class="kv"><span>Щит</span><b>' + sh.n + '</b></div><div class="kv"><span>Конь</span><b>' + hs.n + '</b></div><p class="note">Покупай снаряжение в городах.</p></div></div>';
+  } else if (tab === 'inv') {
+    body += invBody();
   } else if (tab === 'journal') {
     body += '<h3>Задания</h3>'; if (!G.player.quests.length) body += '<div class="note">Нет активных заданий. Загляни на доску в городе.</div>'; for (const q of G.player.quests) { const s = settleById(q.sid); body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Заказчик: ' + FACTIONS[q.fac].name + ' · срок: день ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
     body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
-  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['journal', 'Журнал']];
+  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']];
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
 }
 
@@ -1360,7 +1509,7 @@ const ACT = {
   begin() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный'; closeModal(); startNew({ name: nm, banner: CR.banner, culture: CR.culture }); },
   qpick(d) { QK[d.k] = d.v; renderQuick(); }, qgo() { closeModal(); startQuick(); },
   again() { closeModal(); startQuick(); }, endq() { closeModal(); gotoTitle(); },
-  help() { openModal('<div class="whead"><h2>Как играть</h2></div><div class="wbody"><div class="cols"><div class="card"><h3>Карта мира</h3><div class="kv"><span>Идти</span><b>клик / касание</b></div><div class="kv"><span>Пауза</span><b>Пробел</b></div><div class="kv"><span>Ждать на месте</span><b>Z</b></div><div class="kv"><span>Отряд / герой / журнал</span><b>P / H / J</b></div><div class="kv"><span>Скорость</span><b>1, 2, 3</b></div><p class="note">Клик по лагерю или отряду начнёт погоню. Деньги уходят на жалованье, еду берут в городах.</p></div><div class="card"><h3>В бою</h3><div class="kv"><span>Движение</span><b>W A S D</b></div><div class="kv"><span>Удар</span><b>левая кнопка</b></div><div class="kv"><span>Блок щитом</span><b>правая кнопка</b></div><div class="kv"><span>Бег</span><b>Shift</b></div><div class="kv"><span>Выбрать отряд</span><b>1 2 3 4</b></div><div class="kv"><span>Приказы</span><b>Q держать · E за мной · R атака · F отход</b></div><p class="note">Блок работает только по лицу. Удар в спину бьёт сильнее. Конница ломает строй на разгоне, копейщики её останавливают.</p></div></div></div><div class="wfoot"><button class="btn pri" data-act="tomenu">Понятно</button></div>'); },
+  help() { openModal('<div class="whead"><h2>Как играть</h2></div><div class="wbody"><div class="cols"><div class="card"><h3>Карта мира</h3><div class="kv"><span>Идти</span><b>клик / касание</b></div><div class="kv"><span>Пауза</span><b>Пробел</b></div><div class="kv"><span>Ждать на месте</span><b>Z</b></div><div class="kv"><span>Отряд / герой / обоз / журнал</span><b>P / H / I / J</b></div><div class="kv"><span>Скорость</span><b>1, 2, 3</b></div><p class="note">Клик по лагерю или отряду начнёт погоню. Деньги уходят на жалованье, еду берут в городах.</p></div><div class="card"><h3>В бою</h3><div class="kv"><span>Движение</span><b>W A S D</b></div><div class="kv"><span>Удар</span><b>левая кнопка</b></div><div class="kv"><span>Блок щитом</span><b>правая кнопка</b></div><div class="kv"><span>Бег</span><b>Shift</b></div><div class="kv"><span>Выбрать отряд</span><b>1 2 3 4</b></div><div class="kv"><span>Приказы</span><b>Q держать · E за мной · R атака · F отход</b></div><p class="note">Блок работает только по лицу. Удар в спину бьёт сильнее. Конница ломает строй на разгоне, копейщики её останавливают.</p></div></div></div><div class="wfoot"><button class="btn pri" data-act="tomenu">Понятно</button></div>'); },
   cont2() { closeModal(); afterBattle(); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; auInit(); const a = t.dataset.act; if (ACT[a]) { ACT[a](t.dataset, t); } });
@@ -1380,6 +1529,66 @@ function renderQuick() {
   openModal('<div class="whead"><h2>Быстрый бой<span class="sub">Сразу на поле: ты ведёшь своего героя, остальные слушаются приказов</span></h2></div><div class="wbody"><div class="note">Твоя армия</div>' + pick('me', [['nord', 'Нордмарк'], ['emp', 'Империя'], ['khan', 'Ханство']]) + '<div class="note">Противник</div>' + pick('foe', [['nord', 'Нордмарк'], ['emp', 'Империя'], ['khan', 'Ханство'], ['bandit', 'Разбойники']]) + '<div class="note">Размер армий</div>' + pick('size', [[20, 'Отряд (20)'], [40, 'Войско (40)'], [70, 'Великая битва (70)']]) + '</div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="qgo">В бой</button></div>', 'narrow');
 }
 function openQuick() { renderQuick(); }
+
+/* ================= инвентарь и торговля: интерфейс ================= */
+const SLOT_ORDER = ['weapon', 'armor', 'shield', 'horse'];
+const SLOT_ICON = { weapon: 'sword', armor: 'helm', shield: 'shield', horse: 'horse' };
+function statText(it) { return it.kind === 'gear' ? GEAR_UNIT[it.slot] + ' ' + (it.slot === 'shield' ? Math.round(it.v * 100) + '%' : it.v) : ''; }
+function itemSw(it) { return it.kind === 'goods' ? '<span class="isw" style="background:' + it.c + '"></span>' : '<span class="isw gear">' + ic(SLOT_ICON[it.slot], 16) + '</span>'; }
+function cargoBar(P) { const w = invWeight(P), c = cargoCap(P); return '<div class="kv"><span>Обоз</span><b class="' + (w > c ? 'dn' : '') + '">' + w + ' / ' + c + '</b></div><div class="pbar cargo' + (w > c ? ' over' : '') + '"><i style="width:' + clamp(w / c * 100, 0, 100) + '%"></i></div>'; }
+function gearDelta(P, it) { // насколько вещь лучше надетой
+  const eq = equippedId(P, it.slot), cur = eq ? ITEM[eq].v : 0, d = it.v - cur, sh = it.slot === 'shield', n = sh ? Math.round(d * 100) + '%' : Math.round(d * 10) / 10;
+  return d > 0 ? '<b class="up">+' + n + '</b>' : d < 0 ? '<b class="dn">' + n + '</b>' : '<b>=</b>';
+}
+function keepScroll(fn) { const b = document.querySelector('#modal .wbody'), t = b ? b.scrollTop : 0; fn(); const n = document.querySelector('#modal .wbody'); if (n) n.scrollTop = t; }
+
+/* ---------- вкладка «Торговля» в городе, замке и деревне ---------- */
+function tradeRow(s, P, id, side) {
+  const it = ITEM[id], m = marketOf(s), buy = side === 'buy', have = buy ? (m.stock[id] || 0) : invN(P, id), pr = buy ? buyPrice(P, s, id) : sellPrice(P, s, id), lv = priceLevel(s, id);
+  const tone = !lv ? '' : (buy ? lv === 'low' : lv === 'high') ? 'cheap' : 'dear';
+  const ok = buy ? have > 0 && P.gold >= pr : have > 0 && m.gold >= pr;
+  const note = it.kind === 'gear' ? statText(it) + ' (' + gearDelta(P, it) + ' к надетому) · вес ' + it.w : 'вес ' + it.w + (lv ? ' · здесь ' + (lv === 'low' ? 'дёшево' : 'дорого') : '');
+  const nn = it.kind === 'gear' ? [1] : [1, 5, 99], lab = n => n === 99 ? (buy ? 'Макс.' : 'Все') : '×' + n;
+  const btns = nn.map(n => '<button class="btn sm" data-act="' + (buy ? 'tbuy' : 'tsell') + '" data-id="' + id + '" data-n="' + n + '" ' + (ok ? '' : 'disabled') + '>' + lab(n) + '</button>').join('');
+  return '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">' + note + '</div></div><div class="cnt">' + have + '</div><span class="price ' + tone + '" title="' + (buy ? 'Цена покупки' : 'Цена продажи') + '">' + ic('coin') + pr + '</span><div class="acts">' + btns + '</div></div>';
+}
+function tradeBody(s) {
+  const P = G.player; if (!hasMarket(s)) return '<div class="note">Здесь не торгуют.</div>';
+  const m = marketOf(s), ord = (a, b) => (ITEM[a].kind === ITEM[b].kind ? ITEM[a].price - ITEM[b].price : ITEM[a].kind === 'goods' ? -1 : 1);
+  const mine = invIds(P, 'goods').concat(invIds(P, 'gear')), theirs = Object.keys(m.stock).filter(id => ITEM[id] && m.stock[id] > 0).sort(ord);
+  return '<div class="note">Золото: ' + fmt(P.gold) + ' · у торговца: ' + fmt(m.gold) + '. Цена зависит от края и от запаса на складе: вози дешёвое туда, где за него дают больше. Чем крупнее партия, тем сильнее она сдвигает цену.</div>' + cargoBar(P) +
+    '<div class="trade"><div><h3>Твой обоз</h3>' + (mine.length ? mine.map(id => tradeRow(s, P, id, 'sell')).join('') : '<div class="note">Обоз пуст. Купи товар здесь или добудь трофеи в бою.</div>') + '</div>' +
+    '<div><h3>Торговец</h3>' + (theirs.length ? theirs.map(id => tradeRow(s, P, id, 'buy')).join('') : '<div class="note">Прилавок пуст.</div>') + '</div></div>';
+}
+ACT.tbuy = function (d) {
+  const P = G.player, n = +d.n, r = doBuy(P, UI.town.s, d.id, n);
+  if (r.n) { sfx('coin'); toast('Куплено: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99) toast(TRADE_WHY[r.why] || ''); } else toast(TRADE_WHY[r.why] || 'Не вышло');
+  keepScroll(renderTown);
+};
+ACT.tsell = function (d) {
+  const P = G.player, n = +d.n, r = doSell(P, UI.town.s, d.id, n);
+  if (r.n) { sfx('coin'); toast('Продано: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99 && r.why) toast(TRADE_WHY[r.why]); } else toast(TRADE_WHY[r.why] || 'Не вышло');
+  keepScroll(renderTown);
+};
+
+/* ---------- вкладка «Обоз» в панели героя ---------- */
+function invBody() {
+  const P = G.player, H = P.hero;
+  let b = '<div class="note">Снаряжение героя и обоз. Провизия: ' + P.food + ' (вес не занимает). Продавать вещи можно в городах, замках и деревнях, а добычу из боёв стоит нести туда, где за неё дают больше.</div><h3>Надето</h3><div class="cols">';
+  for (const k of SLOT_ORDER) {
+    const id = equippedId(P, k), it = id && ITEM[id];
+    b += '<div class="card"><h3>' + GEAR_LABEL[k] + '</h3>' + (it ? '<div class="kv"><span>' + it.name + '</span><b>' + statText(it) + '</b></div>' : '<div class="note">' + (k === 'horse' ? 'Пеший' : 'Пусто') + '</div>') + (k === 'horse' && it ? '<button class="btn sm" data-act="unhorse">Спешиться и убрать в обоз</button>' : '') + '</div>';
+  }
+  b += '</div><h3 style="margin-top:14px">Обоз</h3>' + cargoBar(P);
+  const goods = invIds(P, 'goods'), gear = invIds(P, 'gear');
+  if (!goods.length && !gear.length) b += '<div class="note">Обоз пуст.</div>';
+  for (const id of gear) { const it = ITEM[id]; b += '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">' + GEAR_LABEL[it.slot] + ' · ' + statText(it) + ' (' + gearDelta(P, it) + ' к надетому) · вес ' + it.w + '</div></div><div class="cnt">' + invN(P, id) + '</div><div class="acts"><button class="btn sm" data-act="equip" data-id="' + id + '">Надеть</button></div></div>'; }
+  for (const id of goods) { const it = ITEM[id], n = invN(P, id); b += '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">Товар · вес ' + Math.round(it.w * n * 10) / 10 + ' · обычная цена ' + it.price + '</div></div><div class="cnt">' + n + '</div></div>'; }
+  return b;
+}
+ACT.equip = function (d) { if (doEquip(G.player, d.id)) { sfx('order'); toast('Надето: ' + ITEM[d.id].name); } keepScroll(renderPanel); };
+ACT.unhorse = function () { if (doUnequipHorse(G.player)) { sfx('click'); toast('Конь отправлен в обоз'); } keepScroll(renderPanel); };
+ACT.inv = function () { openPanel('inv'); };
 
 /* ================= главный цикл ================= */
 let MODE = 'title', cv, cx;
@@ -1433,11 +1642,11 @@ function readHeroInput() {
 function autoPlayer(p) { battleEnded(autoResult(G.player, p), p); }
 function battleEnded(res, p) {
   if (B && B.cfg.quick) return quickEnded(res);
-  const P = G.player; P.busy = null; UI.res = applyBattleResult(P, res, p); showResult(UI.res, p);
+  const P = G.player; P.busy = null; UI.res = applyBattleResult(P, res, p); if (UI.res.win) { UI.res.drops = rollLoot(P, p); if (UI.res.drops.length) logW('Трофеи: ' + dropText(UI.res.drops) + '.', 3, P); } showResult(UI.res, p);
 }
 function showResult(r, p) {
   const res = r.res, H = G.player.hero; const left = Object.keys(res.dead).map(k => '<div class="kv"><span>' + TROOPS[k].name + '</span><b class="dn">−' + res.dead[k] + '</b></div>').join('');
-  openModal('<div class="whead"><h2>' + (r.win ? 'Победа' : 'Поражение') + '<span class="sub">' + (res.auto ? 'Расчётный бой' : 'Битва длилась ' + Math.floor(res.time / 60) + ' мин ' + Math.round(res.time % 60) + ' сек') + '</span></h2><span class="tag ' + (r.win ? 'g' : 'r') + '">' + (r.win ? 'Враг разбит' : 'Отряд отступил') + '</span></div><div class="wbody"><div class="cols"><div class="card"><h3>Итоги</h3><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b class="dn">' + r.lost + '</b></div><div class="kv"><span>Раненые вернулись в строй</span><b>' + r.wounded + '</b></div>' + (res.heroKills ? '<div class="kv"><span>Побед героя в бою</span><b>' + res.heroKills + '</b></div>' : '') + (r.win ? '<div class="kv"><span>Добыча</span><b class="up">+' + r.loot + ' золота</b></div>' : '<div class="kv"><span>Потеряно золота</span><b class="dn">−' + (res.lostGold || 0) + '</b></div>') + '<div class="kv"><span>Опыт героя</span><b>+' + (res.gx || Math.round(res.xp * .5)) + '</b></div>' + (r.lvl ? '<div class="kv"><span>Новый уровень</span><b class="up">' + H.lvl + '</b></div>' : '') + '</div>' + (left ? '<div class="card"><h3>Потери</h3>' + left + '</div>' : '') + '</div>' + (res.woke ? '<div class="note" style="margin-top:10px">Ты очнулся в городе ' + res.woke + '. Отряд разбит, но жив.</div>' : '') + '</div><div class="wfoot"><button class="btn pri" data-act="cont2">Продолжить</button></div>', 'narrow');
+  openModal('<div class="whead"><h2>' + (r.win ? 'Победа' : 'Поражение') + '<span class="sub">' + (res.auto ? 'Расчётный бой' : 'Битва длилась ' + Math.floor(res.time / 60) + ' мин ' + Math.round(res.time % 60) + ' сек') + '</span></h2><span class="tag ' + (r.win ? 'g' : 'r') + '">' + (r.win ? 'Враг разбит' : 'Отряд отступил') + '</span></div><div class="wbody"><div class="cols"><div class="card"><h3>Итоги</h3><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b class="dn">' + r.lost + '</b></div><div class="kv"><span>Раненые вернулись в строй</span><b>' + r.wounded + '</b></div>' + (res.heroKills ? '<div class="kv"><span>Побед героя в бою</span><b>' + res.heroKills + '</b></div>' : '') + (r.win ? '<div class="kv"><span>Добыча</span><b class="up">+' + r.loot + ' золота</b></div>' : '<div class="kv"><span>Потеряно золота</span><b class="dn">−' + (res.lostGold || 0) + '</b></div>') + '' + (r.drops && r.drops.length ? '<div class="kv"><span>Трофеи</span><b class="up" style="text-align:right">' + dropText(r.drops) + '</b></div>' : '') + '<div class="kv"><span>Опыт героя</span><b>+' + (res.gx || Math.round(res.xp * .5)) + '</b></div>' + (r.lvl ? '<div class="kv"><span>Новый уровень</span><b class="up">' + H.lvl + '</b></div>' : '') + '</div>' + (left ? '<div class="card"><h3>Потери</h3>' + left + '</div>' : '') + '</div>' + (res.woke ? '<div class="note" style="margin-top:10px">Ты очнулся в городе ' + res.woke + '. Отряд разбит, но жив.</div>' : '') + '</div><div class="wfoot"><button class="btn pri" data-act="cont2">Продолжить</button></div>', 'narrow');
 }
 function afterBattle() { MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0) toast('Есть свободные очки умений'); saveGame(true); }
 function startQuick() {
@@ -1472,7 +1681,7 @@ function updateWorldHud(force) {
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
-  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts ? ' +' + P.hero.pts : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>';
+  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts ? ' +' + P.hero.pts : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>'; document.querySelector('[data-act=inv]').innerHTML = ic('bag') + '<span>Обоз</span>';
   if (P.logDirty || G.logDirty) { P.logDirty = G.logDirty = false; el('wlog').innerHTML = P.log.slice(-4).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   // ближайшее поселение
   let near = null; for (const s of G.settles) { if (s.kind === 'camp') continue; if (Math.hypot(s.x - P.x, s.y - P.y) < 46) near = s; }
@@ -1539,7 +1748,7 @@ function bindInput() {
     } else if (MODE === 'world' && G) {
       if (e.code === 'Escape') { if (UI.open) { if (UI.enc) return; if (UI.town || UI.panel) { ACT.closepanel(); if (!UI.town) closeModal(); } else closeModal(); } else openMenu(); return; }
       if (UI.open) return;
-      if (e.code === 'Space') { G.paused = !G.paused; updateWorldHud(); } else if (e.code === 'KeyC') WC.free = false; else if (e.code === 'KeyP') { openPanel('troops'); } else if (e.code === 'KeyH') openPanel('hero'); else if (e.code === 'KeyJ') openPanel('journal'); else if (e.code === 'KeyZ') { G.wait = !G.wait; toast(G.wait ? 'Отряд ждёт' : 'Снова в путь'); }
+      if (e.code === 'Space') { G.paused = !G.paused; updateWorldHud(); } else if (e.code === 'KeyC') WC.free = false; else if (e.code === 'KeyP') { openPanel('troops'); } else if (e.code === 'KeyH') openPanel('hero'); else if (e.code === 'KeyJ') openPanel('journal'); else if (e.code === 'KeyI') openPanel('inv'); else if (e.code === 'KeyZ') { G.wait = !G.wait; toast(G.wait ? 'Отряд ждёт' : 'Снова в путь'); }
       else if (e.code >= 'Digit1' && e.code <= 'Digit3') { G.speed = [1, 2, 4][+e.code.slice(5) - 1]; updateWorldHud(); }
     }
   });
