@@ -22,8 +22,11 @@ const server = http.createServer((req, res) => {
 });
 
 /* ---------- состояние ---------- */
-sim.newWorld(+process.env.SEED || 0);
-const G = sim.G; G.hourAcc = 0; G.speed = 1; G.paused = false;
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data'), SAVE_FILE = path.join(DATA_DIR, 'world.json');
+let loaded = false;
+try { const d = JSON.parse(fs.readFileSync(SAVE_FILE, 'utf8')); sim.loadWorld(d); loaded = true; console.log('Мир загружен: день ' + d.day + ', игроков ' + d.players.length); } catch (e) { if (e.code !== 'ENOENT') console.error('Не удалось загрузить мир:', e.message); }
+if (!loaded) sim.newWorld(+process.env.SEED || 0);
+const G = sim.G; G.hourAcc = G.hourAcc || 0; G.speed = G.speed || 1; G.paused = false;
 const conns = new Set();             // активные соединения с игроком
 const battles = new Map();           // id -> бой
 let bid = 1, vote = null;
@@ -228,5 +231,8 @@ setInterval(() => {
   if (wtick % 150 === 0) for (const c of conns) c.ping();
 }, 100);
 
+function saveWorld() { try { fs.mkdirSync(DATA_DIR, { recursive: true }); const tmp = SAVE_FILE + '.tmp'; fs.writeFileSync(tmp, sim.dumpWorld()); fs.renameSync(tmp, SAVE_FILE); } catch (e) { console.error('Не удалось сохранить мир:', e.message); } }
+setInterval(saveWorld, 30000);
+for (const sg of ['SIGTERM', 'SIGINT']) process.on(sg, () => { saveWorld(); process.exit(0); });
 const DBG = { sim, G, battles, conns, get vote() { return vote; } };
 server.listen(PORT, () => console.log('Железный Стяг: сервер на порту ' + PORT + (CODE ? ' (код комнаты задан)' : '')));
