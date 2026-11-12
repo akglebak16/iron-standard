@@ -238,6 +238,8 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 .perk.lk{opacity:.62;border-style:dashed;border-color:#ffffff2e;filter:grayscale(.3)}.perk.lk .pf{color:#b0a07c}.perk.on.lk{opacity:1;filter:none;border-style:solid;border-color:#d1a84c99;box-shadow:none}
 .perk.max{background:radial-gradient(circle at 30% 0%,#6b5326,#33260f 75%)}.perk.max .pf{color:var(--brass)}
 .perk:disabled{color:var(--parch)}
+#wjoin{position:absolute;left:50%;bottom:max(86px,calc(env(safe-area-inset-bottom,0px) + 86px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:17px}
+#wjoin[hidden]{display:none}
 
 </style>
 <canvas id="cv"></canvas>
@@ -264,6 +266,7 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 <div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div><div class="plat">Игра для компьютера · клавиатура и мышь</div></div></div>
 <div id="modal" hidden></div>
 <div id="votebar" class="plank" hidden></div>
+<div id="wjoin" class="plank" hidden></div>
 <div id="chat" hidden><div id="chatlog"></div><input id="chatin" maxlength="200" placeholder="Enter — написать другу" autocomplete="off"></div>
 <div id="tip" hidden></div>
 <div id="load">Кую железо…</div>
@@ -848,7 +851,7 @@ const VIEW = { w: 800, h: 600, dpr: 1 };
 const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, touch: false, sprint: false };
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
-const BATTLE_CAP = 150; // юнитов на сторону в бою
+const BATTLE_CAP = 150, JOIN_CAP = 40; // юнитов на сторону в бою; и сколько юнитов приводит второй игрок, присоединившийся к бою
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
   const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
   return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
@@ -873,6 +876,8 @@ function startBattle(cfg) {
   // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
   const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > BATTLE_CAP ? BATTLE_CAP / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
+  for (const u of B.units) if (u.side === 0) u.own = cfg.heroPid;
+  for (const g of B.groups[0]) g.own = cfg.heroPid;
   if (cfg.hero) {
     const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
     h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
@@ -886,6 +891,7 @@ function startBattle(cfg) {
   if (!cfg.demo) { blog(cfg.title || 'Битва началась', 2); sfx('horn'); }
   return B;
 }
+function myPid() { return B.hero ? B.hero.pid : undefined; }
 function alive(u) { return !u.dead && !u.gone; }
 function fit(u) { return !u.dead && !u.gone && !u.flee; }
 function layout(g, init) {
@@ -904,13 +910,28 @@ function nearestFoeDist(x, y, side) { let b = 1e9; for (const u of B.units) if (
 function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; if (SERVER) ev(['l', txt, kind]); }
 function ev(a) { if (SERVER && B && B.ev) B.ev.push(a); }
 const NOINP = { dx: 0, dy: 0, face: undefined, atk: 0, blk: 0, spr: 0 };
+/* второй игрок присоединяется к бою на стороне 0 (общая функция: сервер и клиент-зеркало строят одинаково) */
+function joinBattle(c2) {
+  const W = B.W, H = B.H, fac = c2.pfac || 'player'; let tot = 0; for (const s of c2.pl) tot += s.n; const sc = tot > JOIN_CAP ? JOIN_CAP / tot : 1, first = B.units.length;
+  const NG = [0, 1, 2].map(k => { const g0 = B.groups[0][k], ng = Object.assign({}, g0, { units: [], own: c2.pid, order: 'hold', cy: k === 2 ? H - g0.cy : g0.cy + 330 }); B.groups[0].push(ng); return ng; });
+  for (const s of c2.pl) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[0][t.grp]; const u = mkUnit(0, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[0] += k - 1; } u.own = c2.pid; g.units.pop(); u.grp = NG[t.grp]; NG[t.grp].units.push(u); } }
+  const hd = heroDef(c2.hero), h = mkUnit(0, hd, 'player', 700, H / 2 + 70, SERVER ? null : getHeroSprite(c2.hero, hd.mounted));
+  h.isHero = true; h.ai = !!c2.heroAI; h.pid = c2.pid; h.own = c2.pid; h.inp = null; h.name = c2.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (c2.hero.hp === undefined ? 1 : c2.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero2 = h;
+  const F2 = perkFx(c2.hero), mb = (c2.hero.cha || c2.hero.lead || 0) * 4 + F2.morale; h.fx = F2; // харизма и перки второго героя, как у первого в startBattle
+  for (let i = first; i < B.units.length; i++) { const u = B.units[i]; if (!u.isHero) { u.mbase += mb; u.morale = u.mbase; if (F2.ally) u.dmg *= 1 + F2.ally; } }
+  for (const g of B.groups[0]) layout(g, true);
+  for (let i = first; i < B.units.length; i++) { const u = B.units[i]; if (u.isHero) continue; const p = slotPos(u); u.x = p[0]; u.y = p[1]; }
+  if (B.count0) B.count0[0] = B.men[0];
+  blog(c2.hero.name + ' присоединился к бою', 2);
+  return h;
+}
 function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
-function giveOrder(ord, wx, wy, selArg) {
+function giveOrder(ord, wx, wy, selArg, pid) {
   if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
   if (!SERVER && NET.on) { NET.send({ t: 'ord', ord, wx, wy, sel: sl }); if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t }; sfx(ord === 'charge' ? 'horn' : 'order'); return; }
-  const foe = centroid(1), gs = B.groups[0].filter(g => sl === 3 || g.k === sl); let any = false;
+  const foe = centroid(1), gs = B.groups[0].filter(g => g.own === pid && (sl === 3 || g.k === sl)); let any = false;
   for (const g of gs) {
     if (!g.units.some(fit)) continue; any = true;
     if (ord === 'hold') { g.order = 'hold'; g.cx = wx; g.cy = wy; if (sl === 3) { const f = foe ? Math.atan2(foe.y - wy, foe.x - wx) : 0; g.cx -= Math.cos(f) * (g.k === 1 ? 95 : 0) - Math.sin(f) * (g.k === 2 ? 240 : 0); g.cy -= Math.sin(f) * (g.k === 1 ? 95 : 0) + Math.cos(f) * (g.k === 2 ? 240 : 0); } if (foe) g.dir = Math.atan2(foe.y - g.cy, foe.x - g.cx); layout(g); }
@@ -921,7 +942,8 @@ function giveOrder(ord, wx, wy, selArg) {
   if (!any) return;
   if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t };
   const who = ['Пехота', 'Стрелки', 'Конница', 'Все отряды'][sl];
-  blog(who + ': ' + { hold: 'держать позицию', follow: 'за мной', charge: 'в атаку!', back: 'отойти назад' }[ord], 2); sfx(ord === 'charge' ? 'horn' : 'order'); B.hudDirty = true;
+  const lh = [B.hero, B.hero2].find(h => h && h.pid === pid), pre = B.hero2 && lh ? lh.name + ' · ' : '';
+  blog(pre + who + ': ' + { hold: 'держать позицию', follow: 'за мной', charge: 'в атаку!', back: 'отойти назад' }[ord], 2); sfx(ord === 'charge' ? 'horn' : 'order'); B.hudDirty = true;
 }
 function centroidOf(g) { let x = 0, y = 0, n = 0; for (const u of g.units) if (fit(u) && !u.isHero) { x += u.x; y += u.y; n++; } return n ? { x: x / n, y: y / n } : { x: g.cx, y: g.cy }; }
 function sideBrain(s, dt) {
@@ -936,8 +958,7 @@ function sideBrain(s, dt) {
   }
 }
 function playerFollow() {
-  const h = B.hero; if (!h || h.dead) return; const foe = centroid(1); const d = foe ? Math.atan2(foe.y - h.y, foe.x - h.x) : h.face;
-  for (const g of B.groups[0]) if (g.order === 'follow') { const off = g.k === 0 ? 50 : g.k === 1 ? 135 : 60, side = g.k === 2 ? 170 : 0; g.dir = d; g.cx = h.x - Math.cos(d) * off - Math.sin(d) * side; g.cy = h.y - Math.sin(d) * off + Math.cos(d) * side; }
+  for (const g of B.groups[0]) if (g.order === 'follow') { const h = B.hero2 && g.own === B.hero2.pid ? B.hero2 : B.hero; if (!h || h.dead) continue; const foe = centroid(1), d = foe ? Math.atan2(foe.y - h.y, foe.x - h.x) : h.face; const off = g.k === 0 ? 50 : g.k === 1 ? 135 : 60, side = g.k === 2 ? 170 : 0; g.dir = d; g.cx = h.x - Math.cos(d) * off - Math.sin(d) * side; g.cy = h.y - Math.sin(d) * off + Math.cos(d) * side; }
 }
 
 /* ---------- бойцы ---------- */
@@ -1015,7 +1036,7 @@ function kill(t, src) {
   if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
-  if (t.isHero && t.side === 0 && !t.ai) { B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) g2.order = 'charge'; for (const u of B.units) if (u.side === 0) u.morale -= 7; B.hudDirty = true; }
+  if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) if (g2.own === t.pid) g2.order = 'charge'; for (const u of B.units) if (u.side === 0 && u.own === t.pid) u.morale -= 7; B.hudDirty = true; }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1);
@@ -1126,15 +1147,21 @@ function battleCamera(rdt) {
   if (B.shake > 0) B.shake -= rdt;
 }
 function finishBattle() {
-  const surv = B.cfg.hero ? perkFx(B.cfg.hero).surv : 0, res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: Math.round(B.men[1]), xp: Math.round(B.xp), heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
-  for (const u of B.units) {
-    if (u.isHero && u.side === 0) continue; const id = u.t.id, w = u.w || 1; // w: сколько бойцов заменяет юнит (см. fill в startBattle)
-    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + w; } else res.left[id] = (res.left[id] || 0) + w; }
-    else { if (u.dead && !u.gone) res.enemyDead += w; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + w; }
-  }
-  for (const m of [res.dead, res.wounded, res.left, res.enemyLeft]) for (const id in m) { m[id] = Math.round(m[id]); if (!m[id]) delete m[id]; }
-  res.enemyDead = Math.round(res.enemyDead);
-  const cb = B.cfg.onEnd; if (cb) cb(res);
+  const mk = (pid, hero) => {
+    const surv = hero && hero.fx ? hero.fx.surv : 0;
+    const res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: Math.round(B.men[1]), xp: Math.round(B.xp), heroDown: hero ? !!hero.dead : B.heroDown, heroHp: hero ? clamp(hero.hp / hero.maxHp, 0, 1) : 1, heroKills: hero ? hero.kills : 0, time: B.t, enemyLeft: {} };
+    for (const u of B.units) {
+      if (u.isHero && u.side === 0) continue; const id = u.t.id, w = u.w || 1; // w: сколько бойцов заменяет юнит (см. fill в startBattle)
+      if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + w; } else res.left[id] = (res.left[id] || 0) + w; }
+      else { if (u.dead && !u.gone) res.enemyDead += w; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + w; }
+    }
+    for (const m of [res.dead, res.wounded, res.left, res.enemyLeft]) for (const id in m) { m[id] = Math.round(m[id]); if (!m[id]) delete m[id]; }
+    res.enemyDead = Math.round(res.enemyDead);
+    return res;
+  };
+  const cb = B.cfg.onEnd, cg = B.cfg.onEndGuest, h2 = B.hero2;
+  if (cb) cb(mk(B.cfg.heroPid, B.hero));
+  if (cg && h2) cg(mk(h2.pid, h2));
 }
 function s2w(sx, sy) { const c = B.cam; return { x: c.x + (sx - VIEW.w / 2) / c.z, y: c.y + (sy - VIEW.h / 2) / c.z }; }
 
@@ -1159,8 +1186,8 @@ function battleDraw(g) {
     if (u.bump > 0) { const b = Math.sin((1 - u.bump) * Math.PI) * 7; ox = Math.cos(u.face) * b; oy += Math.sin(u.face) * b; }
     g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(u.x + 3, u.y + 3, u.r * 1.25, u.r * .5, 0, 0, TAU); g.fill();
     if (!demo) {
-      if (u.isHero && !u.ai) { g.strokeStyle = '#ffd86a'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
-      else { g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(120,170,220,.6)'); g.lineWidth = u.leader ? 2.6 : 1.5; ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
+      if (u.isHero && !u.ai) { g.strokeStyle = u === B.hero ? '#ffd86a' : '#7ee07a'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
+      else { const al = !u.side && B.hero2 && u.own !== myPid(); g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : al ? 'rgba(110,214,110,.8)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(110,165,235,.75)'); g.lineWidth = u.leader ? 2.6 : 1.5; ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
     }
     g.save(); g.translate(u.x + ox, u.y + oy); if (u.flee) g.globalAlpha = .75; g.scale(u.dir * US, US); g.drawImage(u.flash > 0 ? sp.flash : sp.cv, -sp.ax, -sp.ay); g.restore();
     if (u.hp < u.maxHp && !demo) { const w = u.r * 1.9, hy = u.y - (sp.m ? 70 : 52); g.fillStyle = 'rgba(15,10,6,.8)'; g.fillRect(u.x - w / 2 - 1, hy - 1, w + 2, 5); g.fillStyle = u.side ? '#c23a2c' : '#7fb04a'; g.fillRect(u.x - w / 2, hy, w * clamp(u.hp / u.maxHp, 0, 1), 3); }
@@ -1181,7 +1208,7 @@ function battleDraw(g) {
 }
 function drawMinimap(c) {
   const g = c.getContext('2d'), w = c.width, h = c.height, sx = w / B.W, sy = h / B.H; g.clearRect(0, 0, w, h); g.globalAlpha = .9; g.drawImage(B.ground, 0, 0, w, h); g.globalAlpha = 1; g.fillStyle = 'rgba(10,8,4,.25)'; g.fillRect(0, 0, w, h);
-  for (const u of B.units) { if (u.dead || u.gone) continue; g.fillStyle = u.side ? '#e0432f' : (u.isHero ? '#fff' : '#f3d36c'); const s = u.isHero ? 5 : u.t.mounted ? 4 : 3; g.fillRect(u.x * sx - s / 2, u.y * sy - s / 2, s, s); }
+  for (const u of B.units) { if (u.dead || u.gone) continue; g.fillStyle = u.side ? '#e0432f' : B.hero2 && u.own !== myPid() ? '#6fe06a' : (u.isHero ? '#fff' : '#5fa8f5'); const s = u.isHero ? 5 : u.t.mounted ? 4 : 3; g.fillRect(u.x * sx - s / 2, u.y * sy - s / 2, s, s); }
   const cam = B.cam; g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1; g.strokeRect((cam.x - VIEW.w / 2 / cam.z) * sx, (cam.y - VIEW.h / 2 / cam.z) * sy, VIEW.w / cam.z * sx, VIEW.h / cam.z * sy);
 }
 
@@ -1772,7 +1799,7 @@ function netMsg(m) {
       for (const a of m.players) {
         seen[a[0]] = 1; let Q = G.players.find(q => q.id === a[0]); if (!Q) { Q = netMkPlayer(a[0]); G.players.push(Q); }
         Q.tx = a[2]; Q.ty = a[3]; if (Q.first) { Q.x = Q.tx; Q.y = Q.ty; Q.first = false; } Q.fx = a[4];
-        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; Q.fname = a[12] || ''; }
+        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; Q.fname = a[12] || ''; Q.bid = a[13] || 0; }
       }
       G.players = G.players.filter(q => q.id === NET.you || seen[q.id]);
       const old = new Map(G.parties.map(p => [p.id, p])), next = [];
@@ -1791,7 +1818,8 @@ function netMsg(m) {
       break;
     }
     case 'enc': netDefer(() => { const p = G.parties.find(x => x.id === m.p.id) || m.p; p.troops = m.p.troops; closeModal(); openEncounter(p, m.forced); }); break;
-    case 'bs': netDefer(() => { closeModal(); auInit(); NET.bid = m.id; NET.ik = ''; NET.it = 0; enterBattle(Object.assign({}, m.cfg)); }); break;
+    case 'bs': netDefer(() => { closeModal(); auInit(); NET.bid = m.id; NET.ik = ''; NET.it = 0; enterBattle(Object.assign({}, m.cfg), m.coop); }); break;
+    case 'bj': if (B && !B.cfg.demo) { joinBattle(m.coop); buildBattleHud(); } break;
     case 'b': netSnap(m); break;
     case 'br': netDefer(() => { closeModal(); UI.res = m.r; showResult(m.r, null); }); break;
     case 'toast': toast(m.s); break;
@@ -2020,7 +2048,7 @@ const ACT = {
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
   tomenu() { if (NET.on) netLeave(); closeModal(); gotoTitle(); },
   newgame() { CR.mp = false; openCreate(); }, mp() { CR.mp = true; openCreate(); },
-  mpgo() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный', code = el('crcode') ? el('crcode').value.trim() : ''; try { localStorage.setItem('zs-mp', JSON.stringify({ name: nm, code })); } catch (e) { } closeModal(); netStart({ name: nm, code, banner: CR.banner, culture: CR.culture }); },
+  mpgo() { const rep = el('crrep') ? el('crrep').checked : false, nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный', code = el('crcode') ? el('crcode').value.trim() : ''; try { localStorage.setItem('zs-mp', JSON.stringify({ name: nm, code })); } catch (e) { } closeModal(); netStart({ name: nm, code, banner: CR.banner, culture: CR.culture, replace: rep }); },
   vyes() { NET.send({ t: 'vote', yes: 1 }); }, vno() { NET.send({ t: 'vote', yes: 0 }); }, cont() { loadGame(); }, quick() { openQuick(); },
   pickb(d) { CR.banner = +d.i; renderCreate(); }, pickc(d) { CR.culture = d.c; renderCreate(); },
   begin() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный'; closeModal(); startNew({ name: nm, banner: CR.banner, culture: CR.culture }); },
@@ -2035,8 +2063,8 @@ document.addEventListener('click', e => { const t = e.target.closest('[data-act]
 function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' && !NET.on ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
 let CR = { banner: 0, culture: 'nord', name: 'Ярослав', mp: false, code: '' }; try { const sv = JSON.parse(localStorage.getItem('zs-mp') || 'null'); if (sv) { CR.name = sv.name || CR.name; CR.code = sv.code || ''; } } catch (e) { }
 function renderCreate() {
-  const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm; if (el('crcode')) CR.code = el('crcode').value;
-  openModal('<div class="whead"><h2>Создай героя<span class="sub">Ты командир наёмного отряда без земли и титула</span></h2></div><div class="wbody"><div class="note">Имя</div><input type="text" id="crname" maxlength="18" value="' + CR.name.replace(/"/g, '') + '" autocomplete="off">' + (CR.mp ? '<div class="note" style="margin-top:14px">Код комнаты (если задан на сервере)</div><input type="text" id="crcode" maxlength="40" value="' + (CR.code || '').replace(/"/g, '') + '" autocomplete="off">' : '') + '<div class="note" style="margin-top:14px">Цвета твоего стяга</div><div style="display:flex;gap:10px;flex-wrap:wrap">' + BANNERS.map((b, i) => '<button class="sw ' + (i === CR.banner ? 'on' : '') + '" style="background:' + b.c1 + ';--c2:' + b.c2 + '" data-act="pickb" data-i="' + i + '" title="' + b.n + '" aria-label="' + b.n + '"></button>').join('') + '</div><div class="note" style="margin-top:14px">Откуда ты родом</div><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+  const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm; if (el('crcode')) CR.code = el('crcode').value; if (el('crrep')) CR.rep = el('crrep').checked;
+  openModal('<div class="whead"><h2>Создай героя<span class="sub">Ты командир наёмного отряда без земли и титула</span></h2></div><div class="wbody"><div class="note">Имя</div><input type="text" id="crname" maxlength="18" value="' + CR.name.replace(/"/g, '') + '" autocomplete="off">' + (CR.mp ? '<div class="note" style="margin-top:14px">Код комнаты (если задан на сервере)</div><input type="text" id="crcode" maxlength="40" value="' + (CR.code || '').replace(/"/g, '') + '" autocomplete="off"><label class="note" style="display:block;margin-top:10px"><input type="checkbox" id="crrep"' + (CR.rep ? ' checked' : '') + '> Если в мире уже двое — заменить того, кто сейчас не в игре (его персонаж удалится)</label>' : '') + '<div class="note" style="margin-top:14px">Цвета твоего стяга</div><div style="display:flex;gap:10px;flex-wrap:wrap">' + BANNERS.map((b, i) => '<button class="sw ' + (i === CR.banner ? 'on' : '') + '" style="background:' + b.c1 + ';--c2:' + b.c2 + '" data-act="pickb" data-i="' + i + '" title="' + b.n + '" aria-label="' + b.n + '"></button>').join('') + '</div><div class="note" style="margin-top:14px">Откуда ты родом</div><div style="display:flex;gap:10px;flex-wrap:wrap">' +
     ['nord', 'emp', 'khan'].map(c => '<button class="cult ' + (c === CR.culture ? 'on' : '') + '" data-act="pickc" data-c="' + c + '"><h3>' + FACTIONS[c].name + '</h3><p>' + { nord: 'Крепкая пехота, секиры и щиты. Охотники-лучники.', emp: 'Броня, дисциплина и арбалеты. Дорогие, но стойкие бойцы.', khan: 'Быстрые всадники и конные лучники. Ты начинаешь верхом.' }[c] + '</p></button>').join('') + '</div></div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="' + (CR.mp ? 'mpgo' : 'begin') + '">' + (CR.mp ? 'В мир' : 'В путь') + '</button></div>');
 }
 function openCreate() { FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2; renderCreate(); }
@@ -2332,6 +2360,11 @@ function allyBody() {
   b += '<div class="row sm"><div class="grow"><div class="nm">Провизия</div><div class="ds">у тебя ' + P.food + '</div></div>' + [10, 30].map(n => '<button class="btn sm" data-act="give" data-k="food" data-n="' + n + '"' + dis + '>' + n + '</button>').join('') + '<button class="btn sm" data-act="give" data-k="food" data-n="999999"' + dis + '>Все</button></div>';
   b += '<h3 style="margin-top:14px">Передать бойцов</h3>';
   for (const s of P.troops) { const t = TROOPS[s.type]; b += '<div class="row sm"><div class="grow"><div class="nm">' + t.name + '</div><div class="ds">в отряде ' + s.n + '</div></div><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="1"' + dis + '>1</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="5"' + dis + '>5</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="999"' + dis + '>Все</button></div>'; }
+  const gear = invIds(P, 'gear'), goods = invIds(P, 'goods'), gb = (id, n, l) => '<button class="btn sm" data-act="give" data-k="item" data-t="' + id + '" data-n="' + n + '"' + dis + '>' + l + '</button>';
+  b += '<h3 style="margin-top:14px">Передать вещи из обоза</h3>';
+  if (!gear.length && !goods.length) b += '<div class="note">В обозе пусто. Надетое сначала нужно снять (вещи в обозе передаются, надетые — нет).</div>';
+  for (const id of gear) b += '<div class="row sm"><div class="grow"><div class="nm">' + ITEM[id].name + '</div><div class="ds">снаряжение · в обозе ' + invN(P, id) + '</div></div>' + gb(id, 1, 'Отдать') + '</div>';
+  for (const id of goods) b += '<div class="row sm"><div class="grow"><div class="nm">' + ITEM[id].name + '</div><div class="ds">товар · в обозе ' + invN(P, id) + '</div></div>' + gb(id, 1, '1') + gb(id, 5, '5') + gb(id, 999, 'Все') + '</div>';
   b += '<h3 style="margin-top:14px">Фракция</h3>';
   const F = P.fac;
   if (F) {
@@ -2349,6 +2382,15 @@ ACT.faccept = function () { NET.send({ t: 'faccept' }); };
 ACT.fdecline = function () { NET.send({ t: 'fdecline' }); };
 ACT.fleave = function () { NET.send({ t: 'fleave' }); };
 function netInvite() { const P = G && G.player; if (P && P.finv && !P.finvSeen) { P.finvSeen = P.finv.fid; toast(P.finv.from + ' зовёт во фракцию «' + P.finv.name + '» (Герой → Союз)'); } else if (P && !P.finv) P.finvSeen = null; }
+
+function netJoinUI() {
+  const w = el('wjoin'); if (!w) return; const P = G && G.player, o = allyOther();
+  const ok = NET.on && MODE === 'world' && P && o && o.bid && !P.busy && !P.in && !UI.open && Math.hypot(o.x - P.x, o.y - P.y) <= 120;
+  if (!ok) { if (!w.hidden) { w.hidden = true; w.dataset.b = ''; } return; }
+  if (w.dataset.b !== String(o.bid)) { w.dataset.b = String(o.bid); w.innerHTML = '<span><b>' + o.name.replace(/</g, '&lt;') + '</b> в бою</span><button class="btn sm pri" data-act="bjoin" data-id="' + o.bid + '">Присоединиться</button>'; }
+  w.hidden = false;
+}
+ACT.bjoin = function (d) { NET.send({ t: 'bjoin', id: +d.id }); };
 
 /* ================= главный цикл ================= */
 let MODE = 'title', cv, cx;
@@ -2389,8 +2431,8 @@ function launchBattle(p) {
   const cfg = Object.assign(battleCfgFor(P, p), { party: p, onEnd: res => battleEnded(res, p) });
   enterBattle(cfg);
 }
-function enterBattle(cfg) {
-  startBattle(cfg); MODE = 'battle'; el('whud').hidden = true; el('title').hidden = true; el('bhud').hidden = false; B.cam.z = clamp(VIEW.h / 700, .75, 1.35); IN.atk = IN.block = false; IN.keys = {};
+function enterBattle(cfg, coop) {
+  startBattle(cfg); if (coop) { joinBattle(coop); const mh = B.units.find(u => u.isHero && u.pid === NET.you); if (mh) B.hero = mh; } MODE = 'battle'; el('whud').hidden = true; el('title').hidden = true; el('bhud').hidden = false; B.cam.z = clamp(VIEW.h / 700, .75, 1.35); IN.atk = IN.block = false; IN.keys = {};
   el('crA').src = crestURL('player'); el('crB').src = crestURL(cfg.efac); el('blog').innerHTML = ''; buildBattleHud(); B.hudDirty = true; B.logDirty = true; el('touch').hidden = !IN.touch;
 }
 function readHeroInput() {
@@ -2434,13 +2476,13 @@ function updateBattleHud() {
   el('cntA').textContent = a; el('cntB').textContent = b; const t = Math.floor(B.t); el('btimer').textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   const h = B.hero; if (h) { el('hn').textContent = h.name; el('hs').textContent = B.heroDown ? 'ранен' : (G && G.player && !B.cfg.quick ? 'уровень ' + G.player.hero.lvl + ' · ' : '') + (h.t.wpn ? h.t.wpn.name + (heroEq(B.cfg.hero).ranged ? ' [X]' : '') : ''); const hp = clamp(h.hp / h.maxHp, 0, 1); el('bhp').style.setProperty('--p', hp * 100 + '%'); el('thp').textContent = Math.max(0, Math.round(h.hp)) + ' / ' + Math.round(h.maxHp); el('bst').style.setProperty('--p', h.stam + '%'); el('tst').textContent = 'Силы ' + Math.round(h.stam) + ' / 100'; el('bar').style.setProperty('--p', '100%'); el('tar').textContent = 'Броня ' + h.arm + (h.block ? ' · щит ' + Math.round(h.block * 100) + '%' : ''); let ml = 'Твёрдый'; const army = a / Math.max(1, B.count0[0]); ml = army > .75 ? 'Твёрдый' : army > .5 ? 'Держится' : army > .3 ? 'Колеблется' : 'Паникует'; el('bmo').style.setProperty('--p', clamp(army * 130, 6, 100) + '%'); el('tmo').textContent = 'Мораль: ' + ml; }
   if (h && B.cfg.hero) { const eq = heroEq(B.cfg.hero), sel = B.cfg.hero.sel === 'ranged' && eq.ranged ? 'ranged' : 'melee', nm = eq.melee ? EQ[eq.melee].name : 'Кулаки', nr = eq.ranged ? EQ[eq.ranged].name : 'нет дальнего'; const wk = sel + '|' + nm + '|' + nr; if (B.wk !== wk) { B.wk = wk; el('wnm').textContent = nm; el('wnr').textContent = nr; el('wbm').classList.toggle('on', sel === 'melee'); el('wbr').classList.toggle('on', sel === 'ranged'); el('wbr').classList.toggle('off', !eq.ranged); } }
-  const c = [0, 0, 0]; for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero) c[u.t.grp] += u.w || 1; for (let k = 0; k < 3; k++) c[k] = Math.round(c[k]); for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
+  const c = [0, 0, 0]; const mp = myPid(); for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero && u.own === mp) c[u.t.grp] += u.w || 1; for (let k = 0; k < 3; k++) c[k] = Math.round(c[k]); for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
   for (const g of document.querySelectorAll('#bgroups .grp')) g.classList.toggle('on', +g.dataset.g === B.sel);
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed; drawMinimap(el('bmini').firstElementChild);
 }
 function updateWorldHud(force) {
-  if (!G) return; netVoteUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
+  if (!G) return; netVoteUI(); netJoinUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);

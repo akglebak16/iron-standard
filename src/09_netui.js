@@ -10,6 +10,11 @@ function allyBody() {
   b += '<div class="row sm"><div class="grow"><div class="nm">Провизия</div><div class="ds">у тебя ' + P.food + '</div></div>' + [10, 30].map(n => '<button class="btn sm" data-act="give" data-k="food" data-n="' + n + '"' + dis + '>' + n + '</button>').join('') + '<button class="btn sm" data-act="give" data-k="food" data-n="999999"' + dis + '>Все</button></div>';
   b += '<h3 style="margin-top:14px">Передать бойцов</h3>';
   for (const s of P.troops) { const t = TROOPS[s.type]; b += '<div class="row sm"><div class="grow"><div class="nm">' + t.name + '</div><div class="ds">в отряде ' + s.n + '</div></div><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="1"' + dis + '>1</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="5"' + dis + '>5</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="999"' + dis + '>Все</button></div>'; }
+  const gear = invIds(P, 'gear'), goods = invIds(P, 'goods'), gb = (id, n, l) => '<button class="btn sm" data-act="give" data-k="item" data-t="' + id + '" data-n="' + n + '"' + dis + '>' + l + '</button>';
+  b += '<h3 style="margin-top:14px">Передать вещи из обоза</h3>';
+  if (!gear.length && !goods.length) b += '<div class="note">В обозе пусто. Надетое сначала нужно снять (вещи в обозе передаются, надетые — нет).</div>';
+  for (const id of gear) b += '<div class="row sm"><div class="grow"><div class="nm">' + ITEM[id].name + '</div><div class="ds">снаряжение · в обозе ' + invN(P, id) + '</div></div>' + gb(id, 1, 'Отдать') + '</div>';
+  for (const id of goods) b += '<div class="row sm"><div class="grow"><div class="nm">' + ITEM[id].name + '</div><div class="ds">товар · в обозе ' + invN(P, id) + '</div></div>' + gb(id, 1, '1') + gb(id, 5, '5') + gb(id, 999, 'Все') + '</div>';
   b += '<h3 style="margin-top:14px">Фракция</h3>';
   const F = P.fac;
   if (F) {
@@ -27,3 +32,12 @@ ACT.faccept = function () { NET.send({ t: 'faccept' }); };
 ACT.fdecline = function () { NET.send({ t: 'fdecline' }); };
 ACT.fleave = function () { NET.send({ t: 'fleave' }); };
 function netInvite() { const P = G && G.player; if (P && P.finv && !P.finvSeen) { P.finvSeen = P.finv.fid; toast(P.finv.from + ' зовёт во фракцию «' + P.finv.name + '» (Герой → Союз)'); } else if (P && !P.finv) P.finvSeen = null; }
+
+function netJoinUI() {
+  const w = el('wjoin'); if (!w) return; const P = G && G.player, o = allyOther();
+  const ok = NET.on && MODE === 'world' && P && o && o.bid && !P.busy && !P.in && !UI.open && Math.hypot(o.x - P.x, o.y - P.y) <= 120;
+  if (!ok) { if (!w.hidden) { w.hidden = true; w.dataset.b = ''; } return; }
+  if (w.dataset.b !== String(o.bid)) { w.dataset.b = String(o.bid); w.innerHTML = '<span><b>' + o.name.replace(/</g, '&lt;') + '</b> в бою</span><button class="btn sm pri" data-act="bjoin" data-id="' + o.bid + '">Присоединиться</button>'; }
+  w.hidden = false;
+}
+ACT.bjoin = function (d) { NET.send({ t: 'bjoin', id: +d.id }); };
