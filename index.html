@@ -58,6 +58,11 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:700;letter-spacing:.04em;marg
 .sq .ico{width:26px;height:26px}
 #bhero{position:absolute;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));width:min(380px,44vw);padding:8px 12px 10px}
 #bhero .nm{font:700 30px var(--disp);color:var(--parch);text-shadow:0 2px 0 #000;letter-spacing:.04em;margin-bottom:5px;display:flex;align-items:baseline;gap:10px}
+#bhero .wsw{position:relative;display:flex;gap:6px;margin-top:6px;padding-right:18px}
+#bhero .wb{flex:1;min-width:0;display:flex;align-items:center;gap:6px;padding:4px 8px;background:#1a1510;border:2px solid #0d0905;color:var(--parch2);font:600 13px var(--body);cursor:pointer}
+#bhero .wb .ico{width:18px;height:18px;flex:none}#bhero .wb .wn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bhero .wb:hover{filter:brightness(1.25)}#bhero .wb.on{border-color:var(--brass);color:var(--parch);box-shadow:0 0 8px #d1a84c66}#bhero .wb.off{opacity:.5}
+#bhero .wsw .kb{position:absolute;right:0;top:50%;transform:translateY(-50%);font:700 13px var(--body);color:var(--brass)}
 #bhero .nm small{font:500 14px var(--body);color:var(--parch2)}
 .bar{position:relative;height:25px;background:#1a1510;border:2px solid #0d0905;margin:3px 0;overflow:hidden}
 .bar i{position:absolute;inset:0 auto 0 0;width:var(--p,100%);transition:width .15s;background-size:12px 12px}
@@ -221,14 +226,17 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 .acell .ad{font-size:13px;color:var(--parch2);line-height:1.3}.acell .nx{margin-top:auto;font-size:12px;color:#8f8466}
 .perks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .perk{display:flex;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;font:inherit;color:var(--parch);background:radial-gradient(circle at 30% 0%,#54402b,#2c1f14 75%);border:2px solid #0009;border-radius:4px;box-shadow:inset 0 0 0 1px #ffffff12;cursor:default;min-width:0}
-.perk .pt{font:700 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--parch2)}
+.perk .pt{display:flex;align-items:center;justify-content:space-between;gap:6px;font:700 10.5px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--parch2)}
+.perk .pips{display:flex;gap:3px}.perk .pips i{width:11px;height:11px;transform:rotate(45deg);border:1.5px solid #ffffff55;background:#0006;border-radius:1px}.perk .pips i.on{background:var(--brass);border-color:#f3dc92;box-shadow:0 0 6px #d1a84caa}
+.perk .rq u{text-decoration:none;color:#8f8466}.perk .rq u.d{color:var(--brass)}.perk .rq u.n{color:#ff8d79}.perk .rq u.ok{color:#9bd25b}
 .perk .pn{font:700 17px/1.1 var(--disp);text-shadow:0 1px 0 #000}
-.perk .pd{flex:1;font-size:12.5px;line-height:1.28;color:var(--parch2)}
+.perk .pd{flex:1;font-size:12.5px;line-height:1.28;color:var(--parch2)}.perk .pd b{font-weight:700;color:var(--parch)}.perk .pd b.cur{color:var(--brass)}.perk .pd b.nxt{color:#cfe8a6;text-decoration:underline dotted}.perk .pd i{font-style:normal;color:#8f8466;margin:0 1px}
 .perk .pf{margin-top:2px;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;color:#ff8d79}
 .perk.on{border-color:var(--brass);box-shadow:0 0 12px #d1a84c55,inset 0 0 0 1px #ffffff22}.perk.on .pn{color:var(--brass)}.perk.on .pf{color:var(--brass)}
 .perk.av{border-color:#9bd25b;box-shadow:0 0 10px #9bd25b55,inset 0 0 0 1px #9bd25b33;cursor:pointer}.perk.av:hover{filter:brightness(1.22)}.perk.av .pf{color:#9bd25b}
 .perk.rd{border-color:#9bd25b66}.perk.rd .pf{color:var(--parch2)}
-.perk.lk{opacity:.55;border-style:dashed;border-color:#ffffff2e;filter:grayscale(.35)}.perk.lk .pf{color:#b0a07c}
+.perk.lk{opacity:.62;border-style:dashed;border-color:#ffffff2e;filter:grayscale(.3)}.perk.lk .pf{color:#b0a07c}.perk.on.lk{opacity:1;filter:none;border-style:solid;border-color:#d1a84c99;box-shadow:none}
+.perk.max{background:radial-gradient(circle at 30% 0%,#6b5326,#33260f 75%)}.perk.max .pf{color:var(--brass)}
 .perk:disabled{color:var(--parch)}
 
 </style>
@@ -470,44 +478,84 @@ function heroArmor(H) { let a = 0; for (const k of ['head', 'body', 'hands', 'le
 function heroGear(H) { const W = heroWield(H), S = heroShield(H), horse = eqItem(H, 'horse'); return { W, S, horse, mounted: !!horse, arm: heroArmor(H), block: S ? S.v : (W.parry || 0) }; }
 
 /* ================= герой: атрибуты, перки, очки =================
-   Общий для клиента и сервера: без DOM. Пять атрибутов (ATTRS в 01_core.js), у каждого четыре перка с порогами.
-   Перк берётся за очко перков, когда атрибут достиг порога. Очки: за уровень +2 очка атрибутов и +1 очко перков.
+   Общий для клиента и сервера: без DOM. Пять атрибутов (ATTRS в 01_core.js), у каждого четыре перка.
+   Все перки доступны с самого начала, у каждого три ранга (уровня). Каждый следующий ранг требует своего уровня атрибута
+   и стоит одно очко перков. Очки: за уровень +2 очка атрибутов и +1 очко перков.
    Герой хранит: H.str/vit/agi/int/cha, H.pts (очки атрибутов), H.pp (очки перков), H.perks (список id изученных).
+   Ранг перка = сколько раз его id встречается в H.perks: ['grip', 'grip', 'tough'] это «Крепкая хватка» II и «Закалка» I.
+   Так формат совместим с первой версией перков (там каждый id был один раз = ранг I) и с сохранениями и сетью.
    Старые герои (Лидерство, без Интеллекта и перков) чинятся лениво через heroFix(H), поэтому старые сохранения грузятся без миграции. */
 
 const PTS_LEVEL = 2, PP_LEVEL = 1, PTS_START = 2, PP_START = 1; // очки за уровень и на старте
-const PERK_REQ = [3, 5, 8, 11];                                 // пороги атрибута для 1–4 перка (справочно, у каждого перка своё поле req)
+const PERK_MAX = 3;                                              // рангов у каждого перка
 
-/* fx — что перк прибавляет (складывается по всем изученным). Значения в долях (0.12 = +12%), кроме arm, size, morale (единицы). */
+/* req: уровень атрибута для рангов I, II, III. «Обычные» перки 3/6/9, самые сильные 4/7/10.
+   fx: что перк даёт на каждом ранге (итоговое значение на этом ранге, не прибавка). Доли: 0.12 = +12%; arm, size, morale в единицах. */
+const REQ_A = [3, 6, 9], REQ_B = [4, 7, 10];
 const PERKS = [
   // Сила
-  { id: 'grip',      a: 'str', req: 3,  n: 'Крепкая хватка',    d: 'Двуручное и древковое оружие бьёт на 12% сильнее.', fx: { heavy: .12 } },
-  { id: 'packhorse', a: 'str', req: 5,  n: 'Тяжеловоз',         d: 'Обоз вмещает на 25% больше груза.', fx: { cargo: .25 } },
-  { id: 'breaker',   a: 'str', req: 8,  n: 'Сокрушитель',       d: 'Удары ближнего боя игнорируют ещё 8% брони.', fx: { mpierce: .08 } },
-  { id: 'butcher',   a: 'str', req: 11, n: 'Мясник',            d: 'За каждого сражённого врага герой восстанавливает 4% здоровья.', fx: { killHeal: .04 } },
+  { id: 'grip',      a: 'str', n: 'Крепкая хватка',     req: REQ_A, fx: { heavy: [.06, .12, .18] } },
+  { id: 'packhorse', a: 'str', n: 'Тяжеловоз',          req: REQ_A, fx: { cargo: [.12, .25, .4] } },
+  { id: 'breaker',   a: 'str', n: 'Сокрушитель',        req: REQ_A, fx: { mpierce: [.04, .08, .12] } },
+  { id: 'butcher',   a: 'str', n: 'Мясник',             req: REQ_B, fx: { killHeal: [.02, .04, .06] } },
   // Стойкость
-  { id: 'tough',     a: 'vit', req: 3,  n: 'Закалка',           d: 'Здоровье героя выше на 12%.', fx: { hp: .12 } },
-  { id: 'hide',      a: 'vit', req: 5,  n: 'Толстая кожа',      d: 'Броня героя выше на 5.', fx: { arm: 5 } },
-  { id: 'recover',   a: 'vit', req: 8,  n: 'Живучий',           d: 'Герой лечится на карте на 60% быстрее.', fx: { heal: .6 } },
-  { id: 'lastStand', a: 'vit', req: 11, n: 'Последний рубеж',   d: 'Раз за бой, когда здоровье падает до нуля, герой встаёт с 30% здоровья.', fx: { lastStand: .3 } },
+  { id: 'tough',     a: 'vit', n: 'Закалка',            req: REQ_A, fx: { hp: [.06, .12, .18] } },
+  { id: 'hide',      a: 'vit', n: 'Толстая кожа',       req: REQ_A, fx: { arm: [3, 6, 9] } },
+  { id: 'recover',   a: 'vit', n: 'Живучий',            req: REQ_A, fx: { heal: [.3, .6, 1] } },
+  { id: 'lastStand', a: 'vit', n: 'Последний рубеж',    req: REQ_B, fx: { lastStand: [.2, .3, .45] } },
   // Ловкость
-  { id: 'quick',     a: 'agi', req: 3,  n: 'Быстрые руки',      d: 'Удары и выстрелы на 8% быстрее.', fx: { cd: .08 } },
-  { id: 'eagle',     a: 'agi', req: 5,  n: 'Меткий глаз',       d: 'Разброс стрел и болтов меньше на 35%, дальность больше на 10%.', fx: { acc: .35, range: .1 } },
-  { id: 'light',     a: 'agi', req: 8,  n: 'Лёгкая поступь',    d: 'Отряд идёт по карте на 8% быстрее, погоню легче оставить позади, бег в бою быстрее на 5%.', fx: { map: .08, flee: .1, run: .05 } },
-  { id: 'master',    a: 'agi', req: 11, n: 'Мастер оружия',     d: 'Любое оружие бьёт на 12% сильнее.', fx: { dmg: .12 } },
+  { id: 'quick',     a: 'agi', n: 'Быстрые руки',       req: REQ_A, fx: { cd: [.04, .08, .12] } },
+  { id: 'eagle',     a: 'agi', n: 'Меткий глаз',        req: REQ_A, fx: { acc: [.2, .35, .5], range: [.05, .1, .15] } },
+  { id: 'light',     a: 'agi', n: 'Лёгкая поступь',     req: REQ_A, fx: { map: [.04, .08, .12], flee: [.05, .1, .15], run: [.03, .05, .08] } },
+  { id: 'master',    a: 'agi', n: 'Мастер оружия',      req: REQ_B, fx: { dmg: [.06, .12, .18] } },
   // Интеллект
-  { id: 'surgery',   a: 'int', req: 3,  n: 'Хирургия',          d: 'Среди павших бойцов больше остаются ранеными и возвращаются в строй (+20% к доле раненых).', fx: { surv: .2 } },
-  { id: 'learner',   a: 'int', req: 5,  n: 'Сообразительный',   d: 'Опыта за бои на 15% больше.', fx: { xp: .15 } },
-  { id: 'merchant',  a: 'int', req: 8,  n: 'Торговец',          d: 'Покупаешь на 5% дешевле, продаёшь на 5% дороже.', fx: { buy: .05, sell: .05 } },
-  { id: 'tactician', a: 'int', req: 11, n: 'Тактик',            d: 'Бойцы отряда бьют на 8% сильнее и держатся твёрже (мораль +6).', fx: { ally: .08, morale: 6 } },
+  { id: 'surgery',   a: 'int', n: 'Хирургия',           req: REQ_A, fx: { surv: [.1, .2, .3] } },
+  { id: 'learner',   a: 'int', n: 'Сообразительный',    req: REQ_A, fx: { xp: [.08, .15, .25] } },
+  { id: 'merchant',  a: 'int', n: 'Торговец',           req: REQ_A, fx: { buy: [.03, .05, .08], sell: [.03, .05, .08] } },
+  { id: 'tactician', a: 'int', n: 'Тактик',             req: REQ_B, fx: { ally: [.04, .08, .12], morale: [3, 6, 9] } },
   // Харизма
-  { id: 'inspire',   a: 'cha', req: 3,  n: 'Вдохновляющий',     d: 'Мораль бойцов отряда выше на 12.', fx: { morale: 12 } },
-  { id: 'recruiter', a: 'cha', req: 5,  n: 'Вербовщик',         d: 'Найм и улучшение войск дешевле на 15%.', fx: { hire: .15 } },
-  { id: 'commander', a: 'cha', req: 8,  n: 'Командир',          d: 'Отряд больше на 10 бойцов, жалованье ниже на 10%.', fx: { size: 10, wage: .1 } },
-  { id: 'famous',    a: 'cha', req: 11, n: 'Знаменитый наёмник', d: 'Награды за задания и добыча после боя больше на 20%.', fx: { quest: .2, loot: .2 } }
+  { id: 'inspire',   a: 'cha', n: 'Вдохновляющий',      req: REQ_A, fx: { morale: [6, 12, 18] } },
+  { id: 'recruiter', a: 'cha', n: 'Вербовщик',          req: REQ_A, fx: { hire: [.08, .15, .25] } },
+  { id: 'commander', a: 'cha', n: 'Командир',           req: REQ_A, fx: { size: [5, 10, 15], wage: [.05, .1, .15] } },
+  { id: 'famous',    a: 'cha', n: 'Знаменитый наёмник', req: REQ_B, fx: { quest: [.1, .2, .3], loot: [.1, .2, .3] } }
 ];
 const PERK = {}; for (const p of PERKS) PERK[p.id] = p;
 const FX_ZERO = Object.freeze({ heavy: 0, cargo: 0, mpierce: 0, killHeal: 0, hp: 0, arm: 0, heal: 0, lastStand: 0, cd: 0, acc: 0, range: 0, map: 0, flee: 0, run: 0, dmg: 0, surv: 0, xp: 0, buy: 0, sell: 0, ally: 0, morale: 0, hire: 0, size: 0, wage: 0, quest: 0, loot: 0 });
+
+/* Как эффект выглядит в тексте: t — фраза, u — единица, m — множитель (доли показываем в процентах).
+   Из этого собирается описание перка сразу для всех трёх рангов: «бьёт сильнее на 6 / 12 / 18%». */
+const FX_TXT = {
+  heavy: { t: 'Двуручное и древковое оружие бьёт сильнее на', u: '%', m: 100 },
+  cargo: { t: 'Обоз вмещает больше груза на', u: '%', m: 100 },
+  mpierce: { t: 'Удары ближнего боя игнорируют ещё', u: '% брони', m: 100 },
+  killHeal: { t: 'За каждого сражённого врага здоровье растёт на', u: '%', m: 100 },
+  hp: { t: 'Здоровье героя выше на', u: '%', m: 100 },
+  arm: { t: 'Броня героя выше на', u: '', m: 1 },
+  heal: { t: 'Герой лечится на карте быстрее на', u: '%', m: 100 },
+  lastStand: { t: 'Раз за бой при смертельном ударе герой встаёт со здоровьем', u: '%', m: 100 },
+  cd: { t: 'Удары и выстрелы быстрее на', u: '%', m: 100 },
+  acc: { t: 'Разброс стрел и болтов меньше на', u: '%', m: 100 },
+  range: { t: 'дальность стрельбы больше на', u: '%', m: 100 },
+  map: { t: 'Отряд идёт по карте быстрее на', u: '%', m: 100 },
+  flee: { t: 'шанс уйти от погони выше на', u: '%', m: 100 },
+  run: { t: 'бег в бою быстрее на', u: '%', m: 100 },
+  dmg: { t: 'Любое оружие бьёт сильнее на', u: '%', m: 100 },
+  surv: { t: 'Среди павших бойцов больше раненых, которые вернутся в строй:', u: '%', m: 100 },
+  xp: { t: 'Опыта за бои больше на', u: '%', m: 100 },
+  buy: { t: 'Покупка дешевле на', u: '%', m: 100 },
+  sell: { t: 'продажа дороже на', u: '%', m: 100 },
+  ally: { t: 'Бойцы отряда бьют сильнее на', u: '%', m: 100 },
+  morale: { t: 'мораль бойцов выше на', u: '', m: 1 },
+  hire: { t: 'Найм и улучшение войск дешевле на', u: '%', m: 100 },
+  size: { t: 'Отряд больше на', u: '', m: 1 },
+  wage: { t: 'жалованье ниже на', u: '%', m: 100 },
+  quest: { t: 'Награды за задания больше на', u: '%', m: 100 },
+  loot: { t: 'добыча после боя больше на', u: '%', m: 100 }
+};
+/* Описание перка кусками: [{ t, v: [значение I, II, III], u }]. Интерфейс сам подсвечивает значение текущего ранга. */
+function perkParts(p) { return Object.keys(p.fx).map((k, i) => { const f = FX_TXT[k]; return { t: i ? f.t : f.t[0].toUpperCase() + f.t.slice(1), v: p.fx[k].map(x => Math.round(x * f.m)), u: f.u }; }); }
+/* Описание одним текстом для выбранного ранга (1..3): удобно для подсказок и проверок */
+function perkText(p, rank) { return perkParts(p).map(x => x.t + ' ' + x.v[rank - 1] + x.u).join(', ') + '.'; }
 
 /* Старые герои: Лидерство стало Харизмой, Интеллекта не было, перков не было.
    Очки перков за уже набранные уровни выдаются задним числом (по одному за уровень). */
@@ -520,21 +568,25 @@ function heroFix(H) {
   return H;
 }
 
+/* Ранг перка у героя: 0 (не изучен) .. PERK_MAX */
+function perkRank(H, id) { let n = 0; const a = H && H.perks; if (a) for (let i = 0; i < a.length; i++) if (a[i] === id) n++; return Math.min(n, PERK_MAX); }
+const hasPerk = (H, id) => perkRank(H, id) > 0;
+
 /* Сумма эффектов изученных перков. Кэш в WeakMap, а не в самом герое, чтобы в сохранение и в сеть не попадало лишнего. */
 const FXC = new WeakMap();
 function perkFx(H) {
   const ids = H && H.perks; if (!ids || !ids.length) return FX_ZERO;
   const key = ids.join(','), c = FXC.get(H); if (c && c.k === key) return c.f;
-  const f = Object.assign({}, FX_ZERO); for (const id of ids) { const p = PERK[id]; if (p) for (const k in p.fx) f[k] += p.fx[k]; }
+  const f = Object.assign({}, FX_ZERO), seen = {};
+  for (const id of ids) { const p = PERK[id]; if (!p || seen[id]) continue; seen[id] = 1; const r = perkRank(H, id); if (r > 0) for (const k in p.fx) f[k] += p.fx[k][r - 1]; }
   FXC.set(H, { k: key, f }); return f;
 }
-const hasPerk = (H, id) => !!(H && H.perks && H.perks.includes(id));
 
-/* Можно ли взять перк: '' если да, иначе причина (для кнопок и подсказок) */
+/* Можно ли поднять перк на следующий ранг: '' если да, иначе причина (для кнопок и подсказок) */
 function perkWhy(H, id) {
   heroFix(H); const p = PERK[id]; if (!p) return 'Нет такого перка.';
-  if (H.perks.includes(id)) return 'Уже изучено.';
-  if (H[p.a] < p.req) return 'Нужно: ' + ATTRS[p.a][0] + ' ' + p.req + '.';
+  const r = perkRank(H, id); if (r >= PERK_MAX) return 'Максимальный уровень.';
+  if (H[p.a] < p.req[r]) return 'Нужно: ' + ATTRS[p.a][0] + ' ' + p.req[r] + '.';
   if (H.pp < 1) return 'Нет очков перков.';
   return '';
 }
@@ -796,6 +848,7 @@ const VIEW = { w: 800, h: 600, dpr: 1 };
 const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, touch: false, sprint: false };
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
+const BATTLE_CAP = 150; // юнитов на сторону в бою
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
   const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
   return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
@@ -805,18 +858,20 @@ function heroDef(h) { // параметры героя считаются из �
 function mkUnit(side, t, fac, x, y, sp) {
   const u = { id: B.units.length, side, t, fac, x, y, vx: 0, vy: 0, face: side ? Math.PI : 0, dir: side ? -1 : 1, hp: t.hp, maxHp: t.hp, arm: t.arm, dmg: t.dmg, block: t.block,
     spd: t.spd * rnd(.94, 1.06), r: t.mounted ? 19 : 12.5, mass: t.mounted ? 3 : 1, cd: rnd(0, 1.2), wind: -1, windT: null, tgt: null, rt: rnd(0, .5), dead: false, flee: false, gone: false,
-    morale: 0, mbase: 72 + t.tier * 14, bump: 0, flash: 0, sp, name: null, lx: 0, ly: 0, grp: null, kills: 0, ph: rnd(0, 6), ccd: 0, wav: false, isHero: false, ai: true, blocking: false, swing: 0, stam: 100 };
-  u.morale = u.mbase; u.grp = B.groups[side][t.grp]; u.grp.units.push(u); B.units.push(u); B.start[side]++; return u;
+    morale: 0, mbase: 72 + t.tier * 14, bump: 0, flash: 0, sp, name: null, lx: 0, ly: 0, grp: null, kills: 0, ph: rnd(0, 6), ccd: 0, wav: false, isHero: false, ai: true, blocking: false, swing: 0, stam: 100, w: 1 };
+  u.morale = u.mbase; u.grp = B.groups[side][t.grp]; u.grp.units.push(u); B.units.push(u); B.start[side]++; B.men[side]++; return u;
 }
 function startBattle(cfg) {
   const W = 2600, H = 1700, seed = cfg.seed || rint(1, 1e9), R = mulberry(seed);
-  B = { W, H, cfg, ev: [], units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
+  B = { W, H, cfg, ev: [], units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], men: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
   if (!SERVER) { B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d'); }
   const ts = SERVER ? [null, null, null] : [treeSprite(cfg.biome, seed + 1), treeSprite(cfg.biome, seed + 2), treeSprite(cfg.biome, seed + 3)], bs = SERVER ? [null, null] : [bushSprite(cfg.biome, seed + 4), bushSprite(cfg.biome, seed + 5)];
   const nt = cfg.biome === 'steppe' ? 5 : 15;
   for (let i = 0; i < nt + 16; i++) { const x = 80 + R() * (W - 160), y = 60 + R() * (H - 120); if (Math.abs(y - H / 2) < 330 && x > 330 && x < W - 330 && i < nt) continue; if (i < nt) B.trees.push({ x, y, r: 15, cv: ts[i % 3], w: 100, h: 125, ax: 51, ay: 116, tree: true }); else B.trees.push({ x, y, r: 0, cv: bs[i % 2], w: 60, h: 46, ax: 30, ay: 38 }); }
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
-  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > 75 ? 75 / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); } } };
+  // Больше BATTLE_CAP юнитов на сторону не рисуем: лишние бойцы сливаются в более крепких. Юнит, который заменяет k бойцов, получает здоровье и урон ×k
+  // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
+  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > BATTLE_CAP ? BATTLE_CAP / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.hero) {
     const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
@@ -827,7 +882,7 @@ function startBattle(cfg) {
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
   for (const s of B.groups) for (const g of s) layout(g, true);
   for (const u of B.units) { if (u.isHero) continue; const p = slotPos(u); u.x = p[0]; u.y = p[1]; }
-  B.count0 = B.start.slice();
+  B.count0 = B.men.slice();
   if (!cfg.demo) { blog(cfg.title || 'Битва началась', 2); sfx('horn'); }
   return B;
 }
@@ -963,7 +1018,7 @@ function kill(t, src) {
   if (t.isHero && t.side === 0 && !t.ai) { B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) g2.order = 'charge'; for (const u of B.units) if (u.side === 0) u.morale -= 7; B.hudDirty = true; }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
-  if (t.side === 1) B.xp += t.t.tier * 10 + (t.t.mounted ? 5 : 0);
+  if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1);
 }
 function paintCorpse(t) {
   const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
@@ -1071,12 +1126,14 @@ function battleCamera(rdt) {
   if (B.shake > 0) B.shake -= rdt;
 }
 function finishBattle() {
-  const surv = B.cfg.hero ? perkFx(B.cfg.hero).surv : 0, res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
+  const surv = B.cfg.hero ? perkFx(B.cfg.hero).surv : 0, res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: Math.round(B.men[1]), xp: Math.round(B.xp), heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
   for (const u of B.units) {
-    if (u.isHero && u.side === 0) continue; const id = u.t.id;
-    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
-    else { if (u.dead && !u.gone) res.enemyDead++; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; }
+    if (u.isHero && u.side === 0) continue; const id = u.t.id, w = u.w || 1; // w: сколько бойцов заменяет юнит (см. fill в startBattle)
+    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + w; } else res.left[id] = (res.left[id] || 0) + w; }
+    else { if (u.dead && !u.gone) res.enemyDead += w; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + w; }
   }
+  for (const m of [res.dead, res.wounded, res.left, res.enemyLeft]) for (const id in m) { m[id] = Math.round(m[id]); if (!m[id]) delete m[id]; }
+  res.enemyDead = Math.round(res.enemyDead);
   const cb = B.cfg.onEnd; if (cb) cb(res);
 }
 function s2w(sx, sy) { const c = B.cam; return { x: c.x + (sx - VIEW.w / 2) / c.z, y: c.y + (sy - VIEW.h / 2) / c.z }; }
@@ -1258,6 +1315,8 @@ function genRecruits(s) {
 }
 function lordName(fac) { const f = FACTIONS[fac]; return f.title[0].toUpperCase() + f.title.slice(1) + ' ' + unitName(fac); }
 function partyStr(p) { return strength(p.troops); }
+/* Армии лордов: большие, как в Mount & Blade. Начальный размер, размер нового лорда (после гибели прежнего) и до скольких лорд пополняется в своих землях */
+const LORD_MIN = 150, LORD_MAX = 220, LORD_NEW_MIN = 110, LORD_NEW_MAX = 170, LORD_FULL = 190;
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
@@ -1273,7 +1332,7 @@ const CULT = {
 function newWorld(seed) {
   seed = seed || rint(1, 1e9); G = { seed, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
   genWorld(seed); genSettlements(); genRoads(); for (const s of G.settles) { genRecruits(s); if (s.kind === 'camp') respawnCamp(s); }
-  for (const f of ['nord', 'emp', 'khan']) { const hs = G.settles.filter(s => s.fac === f); for (let i = 0; i < 3; i++) { const h = hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(22, 40), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
+  for (const f of ['nord', 'emp', 'khan']) { const hs = G.settles.filter(s => s.fac === f); for (let i = 0; i < 3; i++) { const h = hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(LORD_MIN, LORD_MAX), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
   for (let i = 0; i < 2; i++) { const t = pick(G.settles.filter(s => s.kind === 'town')); spawnCaravan(t); }
   genQuests(); return G;
 }
@@ -1308,15 +1367,19 @@ function speedOf(p) {
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
 function pathTo(p, x, y) { const pa = findPath(p.x, p.y, x, y); p.path = pa || []; p.pi = 0; return !!pa; }
+/* Отряд уже занят встречей или боем другого игрока (мультиплеер): вступать с ним в бой второй раз нельзя, иначе враги двоятся.
+   Блокировка от игрока, который вышел или свободен, считается устаревшей и отряд не держит. В одиночной игре p.lock не ставится. */
+function lockedByOther(p, P) { if (!p.lock || p.lock === P.id) return false; const Q = G.players.find(q => q.id === p.lock); return !!(Q && !Q.away && (Q.busy === 'enc' || Q.busy === 'battle')); }
 function stepWorld(dh) {
-  const evs = [];
+  const evs = [], claimed = new Set(); // claimed: отряды, с которыми встреча уже создана в этом такте
+  const meet = (P, p, forced) => { if (claimed.has(p) || lockedByOther(p, P)) return false; claimed.add(p); evs.push({ type: 'meet', P, p, forced }); return true; };
   for (const P of G.players) {
     if (P.away || P.in || P.busy) continue;
     let tg = P.tid != null ? partyById(P.tid) : null; if (P.tid != null && (!tg || tg.hide)) { P.tid = null; P.path = []; tg = null; }
     if (tg) { P.rp = (P.rp || 0) - dh; if (P.rp <= 0) { P.rp = .6; if (losClear(P.x, P.y, tg.x, tg.y)) P.path = [{ x: tg.x, y: tg.y }]; else P.path = findPath(P.x, P.y, tg.x, tg.y) || []; P.pi = 0; } }
     if (P.path.length && P.pi < P.path.length) { const arrived = moveAlong(P, dh); if (arrived && !tg) { P.path = []; if (P.sid != null) { const s = settleById(P.sid); P.sid = null; if (s && Math.hypot(s.x - P.x, s.y - P.y) < 40) { evs.push({ type: 'enter', P, s }); continue; } } } }
-    if (tg && Math.hypot(tg.x - P.x, tg.y - P.y) < 24) { P.tid = null; P.path = []; evs.push({ type: 'meet', P, p: tg, forced: false }); continue; }
-    for (const p of G.parties) { if (p.hide || p.kind === 'camp' || p.lock) continue; if (Math.hypot(p.x - P.x, p.y - P.y) < 22 && isHostileToPlayer(p, P) && p.cd <= 0) { evs.push({ type: 'meet', P, p, forced: true }); break; } }
+    if (tg && Math.hypot(tg.x - P.x, tg.y - P.y) < 24) { P.tid = null; P.path = []; if (!meet(P, tg, false)) logW('Этот отряд уже в бою с другом.', 0, P); continue; }
+    for (const p of G.parties) { if (p.hide || p.kind === 'camp' || p.lock) continue; if (Math.hypot(p.x - P.x, p.y - P.y) < 22 && isHostileToPlayer(p, P) && p.cd <= 0 && meet(P, p, true)) break; }
   }
   // ИИ
   for (const p of G.parties.slice()) { if (!G.parties.includes(p)) continue; aiParty(p, dh); }
@@ -1327,7 +1390,7 @@ function isHostileToPlayer(p, P) { if (p.kind === 'bandit' || p.kind === 'camp')
 function hostile(a, b) { if (a.kind === 'caravan' && b.kind === 'caravan') return false; if (a.kind === 'bandit' && b.fac !== 'bandit') return true; if (b.kind === 'bandit' && a.fac !== 'bandit') return true; return a.fac !== b.fac && atWar(a.fac, b.fac) && a.kind !== 'caravan' && b.kind !== 'caravan'; }
 function aiParty(p, dh) {
   if (p.kind === 'camp') return; p.cd -= dh; if (p.lock) return;
-  if (p.hide) { p.wait -= dh; if (p.wait <= 0) { p.hide = false; const h = settleById(p.home); if (h) { const need = Math.max(0, 34 - troopCount(p.troops)); if (need > 0 && h.fac === p.fac) { const add = genTroops(p.fac, Math.min(need, rint(4, 10)), .6); for (const a of add) addT(p.troops, a.type, a.n); } } if (p.kind === 'lord') p.state = 'idle'; } return; }
+  if (p.hide) { p.wait -= dh; if (p.wait <= 0) { p.hide = false; const h = settleById(p.home); if (h) { const lord = p.kind === 'lord', need = Math.max(0, (lord ? LORD_FULL : 34) - troopCount(p.troops)); if (need > 0 && h.fac === p.fac) { const add = genTroops(p.fac, Math.min(need, lord ? rint(10, 25) : rint(4, 10)), .6); for (const a of add) addT(p.troops, a.type, a.n); } } if (p.kind === 'lord') p.state = 'idle'; } return; }
   p.ai = (p.ai || 0) - dh;
   if (p.ai <= 0) { p.ai = rnd(.8, 1.6);
     const me = partyStr(p);
@@ -1363,7 +1426,7 @@ function hourTick() {
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
   if (G.hour % 6 === 0) { if (bands < 5) { const cs = G.settles.filter(s => s.kind === 'camp' && s.camp); if (cs.length && Math.random() < .5) { const c = pick(cs); mkParty('bandit', 'bandit', unitName('bandit') + ' и шайка', c.x + rnd(-30, 30), c.y + rnd(20, 40), genTroops('bandit', rint(9, 18), .4), { home: c.id }); } }
     if (cars < 4 && Math.random() < .5) spawnCaravan(pick(G.settles.filter(s => s.kind === 'town'))); }
-  for (const f of ['nord', 'emp', 'khan']) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; if (n < 3 && G.hour === 12) { const h = pick(G.settles.filter(s => s.fac === f && s.kind !== 'village')); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(18, 30), .6), { home: h.id }); } }
+  for (const f of ['nord', 'emp', 'khan']) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; if (n < 3 && G.hour === 12) { const h = pick(G.settles.filter(s => s.fac === f && s.kind !== 'village')); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id }); } }
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); }
 function playerDay(P) {
@@ -2206,8 +2269,8 @@ ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); s
 ACT.inv = function () { openPanel('inv'); };
 
 /* ================= окно героя: атрибуты и перки =================
-   Пять строк: слева атрибут (значение и «+»), справа четыре перка с порогами. Перк берётся за очко перков,
-   когда атрибут достиг порога. Логика и каталог перков: 01c_perks.js. */
+   Пять строк: слева атрибут (значение и «+»), справа четыре перка по три уровня. Каждый уровень перка требует своего
+   значения атрибута и стоит очко перков. Логика и каталог перков: 01c_perks.js. */
 const ATTR_ICON = { str: 'hands', vit: 'heart', agi: 'charge', int: 'book', cha: 'flag' };
 const ATTR_NOW = {
   str: H => '+' + H.str * 3 + ' к урону',
@@ -2216,19 +2279,28 @@ const ATTR_NOW = {
   int: H => '+' + (H.int - 1) * 3 + '% к опыту',
   cha: H => '+' + H.cha * 5 + ' к отряду, мораль +' + H.cha * 4
 };
-const ROMAN = ['I', 'II', 'III', 'IV'];
+const ROMAN = ['I', 'II', 'III'];
 
-function perkCard(H, p, i) {
-  const learned = H.perks.includes(p.id), why = learned ? '' : perkWhy(H, p.id), can = !learned && !why, ready = !learned && H[p.a] >= p.req;
-  const cls = 'perk ' + (learned ? 'on' : can ? 'av' : ready ? 'rd' : 'lk'), foot = learned ? 'Изучено' : can ? 'Изучить · 1 очко' : why.replace(/\.$/, '');
-  return '<button class="' + cls + '" ' + (can ? 'data-act="perk" data-id="' + p.id + '"' : 'disabled') + '><span class="pt">' + ROMAN[i] + ' · ' + ATTRS[p.a][0] + ' ' + p.req + '</span><b class="pn">' + p.n + '</b><span class="pd">' + p.d + '</span><span class="pf">' + foot + '</span></button>';
+/* Описание перка для всех трёх рангов: «бьёт сильнее на 6 / 12 / 18%», значение текущего ранга золотое, следующего подчёркнуто */
+function perkDescHtml(p, rank) {
+  return perkParts(p).map(x => x.t + ' ' + x.v.map((v, i) => '<b class="' + (i === rank - 1 ? 'cur' : i === rank ? 'nxt' : '') + '">' + v + '</b>').join('<i>/</i>') + x.u).join(', ') + '.';
+}
+function perkCard(H, p) {
+  const rank = perkRank(H, p.id), maxed = rank >= PERK_MAX, why = maxed ? '' : perkWhy(H, p.id), can = !maxed && !why, met = !maxed && H[p.a] >= p.req[rank];
+  const cls = 'perk' + (rank ? ' on' : '') + (maxed ? ' max' : '') + (can ? ' av' : met ? ' rd' : !maxed ? ' lk' : '');
+  const foot = maxed ? 'Максимум' : can ? (rank ? 'Улучшить до ' + ROMAN[rank] : 'Изучить') + ' · 1 очко' : why.replace(/\.$/, '');
+  const pips = ROMAN.map((r, i) => '<i class="' + (i < rank ? 'on' : '') + '"></i>').join('');
+  const reqs = p.req.map((q, i) => '<u class="' + (i < rank ? 'd' : i === rank ? (H[p.a] >= q ? 'ok' : 'n') : '') + '">' + q + '</u>').join(' · ');
+  const tip = ROMAN.map((r, i) => 'Уровень ' + r + ' (' + ATTRS[p.a][0] + ' ' + p.req[i] + '): ' + perkText(p, i + 1)).join('\n');
+  return '<button class="' + cls + '" title="' + tip + '" ' + (can ? 'data-act="perk" data-id="' + p.id + '"' : 'disabled') + '><span class="pt"><span class="pips">' + pips + '</span><span class="rq" title="Нужный уровень атрибута для каждого ранга">' + reqs + '</span></span><b class="pn">' + p.n + '</b><span class="pd">' + perkDescHtml(p, rank) + '</span><span class="pf">' + foot + '</span></button>';
 }
 function attrRow(H, k) {
-  const list = PERKS.filter(p => p.a === k), nx = list.find(p => !H.perks.includes(p.id) && H[k] < p.req);
+  const list = PERKS.filter(p => p.a === k), pend = list.filter(p => perkRank(H, p.id) < PERK_MAX).map(p => p.req[perkRank(H, p.id)]), lock = pend.filter(q => H[k] > 0 && H[k] < q);
+  const nxt = !pend.length ? 'Все перки на максимуме' : lock.length ? 'Следующий уровень перка на ' + Math.min(...lock) + ' (ещё ' + (Math.min(...lock) - H[k]) + ')' : 'Все доступные уровни перков открыты';
   return '<div class="arow"><div class="acell"><div class="ahd">' + ic(ATTR_ICON[k], 26) + '<b>' + ATTRS[k][0] + '</b><span class="v">' + H[k] + '</span>' +
     '<button class="btn sm" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + ' title="Потратить очко атрибутов">+</button></div>' +
-    '<div class="ad">' + ATTRS[k][1] + '. Сейчас: ' + ATTR_NOW[k](H) + '.</div>' + (nx ? '<div class="nx">Следующий перк на ' + nx.req + ' (ещё ' + (nx.req - H[k]) + ')</div>' : '<div class="nx">Все перки доступны</div>') + '</div>' +
-    '<div class="perks">' + list.map((p, i) => perkCard(H, p, i)).join('') + '</div></div>';
+    '<div class="ad">' + ATTRS[k][1] + '. Сейчас: ' + ATTR_NOW[k](H) + '.</div><div class="nx">' + nxt + '</div></div>' +
+    '<div class="perks">' + list.map(p => perkCard(H, p)).join('') + '</div></div>';
 }
 function heroBody() {
   const P = G.player, H = heroFix(P.hero), hd = heroDef(H), Gr = heroGear(H), sp = getHeroSprite(H, Gr.mounted); if (!sp.url) sp.url = sp.cv.toDataURL();
@@ -2239,7 +2311,7 @@ function heroBody() {
     miniGear(H) + '</div>' +
     '<div class="hpts"><div class="pchip' + (H.pts ? ' hot' : '') + '">Очки атрибутов<b>' + H.pts + '</b></div><div class="pchip' + (H.pp ? ' hot' : '') + '">Очки перков<b>' + H.pp + '</b></div>' +
     '<button class="btn sm" data-act="ptab" data-t="inv">Открыть обоз</button></div></div>' +
-    '<div class="note" style="margin:10px 0 0">За уровень: +' + PTS_LEVEL + ' очка атрибутов и +' + PP_LEVEL + ' очко перков. Перк открывается, когда атрибут дорастёт до порога, и стоит одно очко перков. В бою клавиша X меняет оружие.</div>' +
+    '<div class="note" style="margin:10px 0 0">Все перки доступны сразу. У каждого три уровня: следующий уровень требует более высокого значения атрибута и стоит одно очко перков. За уровень героя: +' + PTS_LEVEL + ' очка атрибутов и +' + PP_LEVEL + ' очко перков. В бою оружие меняется клавишей X или кнопкой в панели героя.</div>' +
     Object.keys(ATTRS).map(k => attrRow(H, k)).join('');
 }
 ACT.perk = function (d) {
@@ -2325,7 +2397,9 @@ function readHeroInput() {
   const h = B && B.hero; if (!h || B.cfg.demo) return; const k = IN.keys; let dx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0), dy = (k.KeyS || k.ArrowDown ? 1 : 0) - (k.KeyW || k.ArrowUp ? 1 : 0);
   if (IN.jx || IN.jy) { dx = IN.jx; dy = IN.jy; }
   const w = IN.touch ? null : s2w(IN.mx, IN.my); let face; if (w) face = Math.atan2(w.y - h.y, w.x - h.x); else if (dx || dy) face = Math.atan2(dy, dx);
-  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0, sw: (k.KeyX || IN.sw) ? 1 : 0 };
+  let sw = (k.KeyX || IN.sw) ? 1 : 0;
+  if (IN.swTo) { if (B.cfg.hero.sel === IN.swTo || --IN.swT <= 0) IN.swTo = null; else { IN.swP = !IN.swP; if (IN.swP) sw = 1; } } // кнопка в панели героя: импульсы, пока не закончится замах и смена не пройдёт
+  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0, sw };
 }
 function autoPlayer(p) { battleEnded(autoResult(G.player, p), p); }
 function battleEnded(res, p) {
@@ -2347,7 +2421,7 @@ function quickEnded(res) { openModal('<div class="whead"><h2>' + (res.win ? 'П�
 function buildBattleHud() {
   const hero = B.cfg.hero, bt = el('bbtns'), dm = B.cfg.demo;
   bt.innerHTML = '<div class="sq plank thin" data-b="pause" title="Пауза (P)">' + ic('pause') + '</div><div class="sq plank thin" data-b="speed" title="Скорость (T)">' + ic('hourglass') + '<span class="kb" id="spv">×1</span></div><div class="sq plank thin" data-b="retreat" title="Отступить">' + ic('retreat') + '</div><div class="sq plank thin" data-b="menu" title="Меню (Esc)">' + ic('gear') + '</div>';
-  el('bhero').innerHTML = '<div class="nm"><span id="hn"></span><small id="hs"></small></div><div class="bgrid"><div class="bar st"><i id="bst"></i><span id="tst"></span></div><div class="bar mo"><i id="bmo"></i><span id="tmo"></span></div><div class="bar ar"><i id="bar"></i><span id="tar"></span></div><div class="bar hp"><i id="bhp"></i><span id="thp"></span></div></div>';
+  el('bhero').innerHTML = '<div class="nm"><span id="hn"></span><small id="hs"></small></div><div class="bgrid"><div class="bar st"><i id="bst"></i><span id="tst"></span></div><div class="bar mo"><i id="bmo"></i><span id="tmo"></span></div><div class="bar ar"><i id="bar"></i><span id="tar"></span></div><div class="bar hp"><i id="bhp"></i><span id="thp"></span></div></div><div class="wsw" id="wsw" title="Смена оружия: клавиша X или клик"><div class="wb" data-w="melee" id="wbm">' + ic('sword') + '<span class="wn" id="wnm"></span></div><div class="wb" data-w="ranged" id="wbr">' + ic('bow') + '<span class="wn" id="wnr"></span></div><span class="kb">X</span></div>';
   const gs = [[0, 'Пехота', 'inf'], [1, 'Стрелки', 'arc'], [2, 'Конница', 'cav'], [3, 'Все', null]];
   el('bgroups').innerHTML = gs.map(g => '<div class="grp" data-g="' + g[0] + '"><span class="kb">' + (g[0] + 1) + '</span><img alt="" id="gi' + g[0] + '"><b id="gc' + g[0] + '">0</b>' + g[1] + '</div>').join('');
   el('bords').innerHTML = [['hold', 'hold', 'Q', 'Держать позицию'], ['follow', 'follow', 'E', 'За мной'], ['charge', 'charge', 'R', 'В атаку'], ['back', 'back', 'F', 'Отойти']].map(o => '<div class="ord" data-o="' + o[0] + '" title="' + o[3] + ' (' + o[2] + ')">' + ic(o[1]) + '<span class="kb">' + o[2] + '</span></div>').join('');
@@ -2356,10 +2430,11 @@ function buildBattleHud() {
   el('bhero').hidden = dm || !hero; el('borders').hidden = dm; el('bbtns').hidden = dm; el('btop').hidden = false;
 }
 function updateBattleHud() {
-  if (!B) return; const n = B.n || B.start; let a = 0, b = 0; for (const u of B.units) if (fit(u)) { if (u.side) b++; else a++; }
+  if (!B) return; const n = B.n || B.start; let a = 0, b = 0; for (const u of B.units) if (fit(u)) { if (u.side) b += u.w || 1; else a += u.w || 1; } a = Math.round(a); b = Math.round(b);
   el('cntA').textContent = a; el('cntB').textContent = b; const t = Math.floor(B.t); el('btimer').textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   const h = B.hero; if (h) { el('hn').textContent = h.name; el('hs').textContent = B.heroDown ? 'ранен' : (G && G.player && !B.cfg.quick ? 'уровень ' + G.player.hero.lvl + ' · ' : '') + (h.t.wpn ? h.t.wpn.name + (heroEq(B.cfg.hero).ranged ? ' [X]' : '') : ''); const hp = clamp(h.hp / h.maxHp, 0, 1); el('bhp').style.setProperty('--p', hp * 100 + '%'); el('thp').textContent = Math.max(0, Math.round(h.hp)) + ' / ' + Math.round(h.maxHp); el('bst').style.setProperty('--p', h.stam + '%'); el('tst').textContent = 'Силы ' + Math.round(h.stam) + ' / 100'; el('bar').style.setProperty('--p', '100%'); el('tar').textContent = 'Броня ' + h.arm + (h.block ? ' · щит ' + Math.round(h.block * 100) + '%' : ''); let ml = 'Твёрдый'; const army = a / Math.max(1, B.count0[0]); ml = army > .75 ? 'Твёрдый' : army > .5 ? 'Держится' : army > .3 ? 'Колеблется' : 'Паникует'; el('bmo').style.setProperty('--p', clamp(army * 130, 6, 100) + '%'); el('tmo').textContent = 'Мораль: ' + ml; }
-  const c = [0, 0, 0]; for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero) c[u.t.grp]++; for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
+  if (h && B.cfg.hero) { const eq = heroEq(B.cfg.hero), sel = B.cfg.hero.sel === 'ranged' && eq.ranged ? 'ranged' : 'melee', nm = eq.melee ? EQ[eq.melee].name : 'Кулаки', nr = eq.ranged ? EQ[eq.ranged].name : 'нет дальнего'; const wk = sel + '|' + nm + '|' + nr; if (B.wk !== wk) { B.wk = wk; el('wnm').textContent = nm; el('wnr').textContent = nr; el('wbm').classList.toggle('on', sel === 'melee'); el('wbr').classList.toggle('on', sel === 'ranged'); el('wbr').classList.toggle('off', !eq.ranged); } }
+  const c = [0, 0, 0]; for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero) c[u.t.grp] += u.w || 1; for (let k = 0; k < 3; k++) c[k] = Math.round(c[k]); for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
   for (const g of document.querySelectorAll('#bgroups .grp')) g.classList.toggle('on', +g.dataset.g === B.sel);
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed; drawMinimap(el('bmini').firstElementChild);
@@ -2462,6 +2537,10 @@ function bindInput() {
   // кнопки интерфейса
   el('wspeed').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; auInit(); if (NET.on) { NET.send(b.id === 'bPause' ? { t: 'prop', k: 'pause', v: !G.paused } : { t: 'prop', k: 'speed', v: +b.dataset.sp }); return; } if (b.id === 'bPause') G.paused = !G.paused; else G.speed = +b.dataset.sp; sfx('click'); updateWorldHud(); });
   el('bbtns').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b || !B) return; sfx('click'); const a = b.dataset.b; if (NET.on && (a === 'pause' || a === 'speed')) toast('В сетевой игре бой нельзя ставить на паузу'); else if (a === 'pause') B.paused = !B.paused; else if (a === 'speed') cycleSpeed(); else if (a === 'menu') { if (!NET.on) B.paused = true; openMenu(); } else if (a === 'retreat') { if (NET.on) NET.send({ t: 'retreat' }); else if (!B.over) { B.over = B.t; B.win = false; blog('Отряд отступает!', 1); } } });
+  el('bhero').addEventListener('click', e => { const w = e.target.closest('.wb'); if (!w || !B || !B.hero || B.cfg.demo) return; const eq = heroEq(B.cfg.hero), to = w.dataset.w;
+    if (NET.on) return toast('В сетевом бою смена оружия пока недоступна');
+    if (to === 'ranged' && !eq.ranged) return toast('Дальнего оружия нет. Лук, арбалет или метательные копья можно надеть в обозе (I).');
+    if (B.cfg.hero.sel === to || (to === 'melee' && B.cfg.hero.sel !== 'ranged')) return; IN.swTo = to; IN.swT = 90; IN.swP = false; sfx('click'); });
   el('bgroups').addEventListener('click', e => { const g = e.target.closest('.grp'); if (g && B) { B.sel = +g.dataset.g; sfx('click'); } });
   el('bords').addEventListener('click', e => { const o = e.target.closest('.ord'); if (!o || !B || !B.hero) return; const h = B.hero, foe = centroid(1), a = foe ? Math.atan2(foe.y - h.y, foe.x - h.x) : 0; giveOrder(o.dataset.o, h.x + Math.cos(a) * 60, h.y + Math.sin(a) * 60); });
   el('blog').addEventListener('click', () => el('blog').classList.toggle('open'));
