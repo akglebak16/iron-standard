@@ -1,6 +1,6 @@
 /* ================= игровая логика, общая для клиента и сервера ================= */
 function xpNeed(l) { return 100 + l * 80; }
-function heroBattle(H) { return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, lead: H.lead, armor: H.armor, weapon: H.weapon, shield: H.shield, horse: H.horse, hp: H.hp, seed: H.seed }; }
+function heroBattle(H) { return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, lead: H.lead, eq: Object.assign({}, heroEq(H)), sel: H.sel || 'melee', hp: H.hp, seed: H.seed }; } // снаряжение — слотами (см. 01b_gear.js)
 function townEnter(P, s) {
   P.in = s.id; P.path = []; P.pi = 0; P.tid = null; P.sid = null;
   for (const q of P.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);

@@ -177,8 +177,8 @@ function buildSprite(L, pal, seed) {
 }
 function palOf(fac) { const f = FACTIONS[fac]; return { c1: f.c1, c2: f.c2 }; }
 function getSprite(type, variant, fac) { const k = type + '|' + variant + '|' + fac + '|' + FACTIONS[fac].c1; if (!SPR[k]) SPR[k] = buildSprite(TROOPS[type].look, palOf(fac), hashStr(type) + variant * 977); return SPR[k]; }
-function heroLook(h) { const a = h.armor; return { helm: ['cap', 'nasal', 'spectacle', 'great'][a], armor: ['padded', 'mail', 'scale', 'plate'][a], weapon: h.horse && h.weapon >= 1 ? 'sword' : 'sword', shield: ['round', 'round', 'kite'][h.shield], horse: h.horse ? (h.horse === 2 ? 'barded' : 'chestnut') : null, beard: 1 }; }
-function getHeroSprite(h, mounted) { const k = 'hero|' + h.armor + h.weapon + h.shield + (mounted ? h.horse : 0) + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
+function heroLook(h) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), hd = EQ[eq.head], bd = EQ[eq.body], hs = EQ[eq.horse]; return { helm: hd ? hd.look : 'none', armor: bd ? bd.look : 'tunic', weapon: W.look || null, shield: S ? S.look : 'none', horse: hs ? hs.look : null, beard: 1 }; }
+function getHeroSprite(h, mounted) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), k = 'hero|' + [eq.head, eq.body, W.id, S && S.id, mounted ? eq.horse : ''].join(',') + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
 function corpseOf(sp) { if (!sp.corpse) sp.corpse = sp.mk(false); return sp.corpse; }
 const PORT = {};
 function portrait(type, fac) { const k = type + fac + FACTIONS[fac].c1; if (!PORT[k]) PORT[k] = getSprite(type, 0, fac).cv.toDataURL(); return PORT[k]; }

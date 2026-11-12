@@ -5,11 +5,11 @@ const VIEW = { w: 800, h: 600, dpr: 1 };
 const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, touch: false, sprint: false };
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
-function heroDef(h) {
-  const m = !!h.horse;
-  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: 0, reach: 9, fac: 'player', up: [],
-    cd: Math.max(.3, .56 - h.agi * .03), hp: 100 + h.vit * 14, arm: GEAR.armor[h.armor].v, dmg: GEAR.weapon[h.weapon].v + h.str * 3,
-    spd: m ? GEAR.horse[h.horse].v : 86 + h.agi * 3, block: GEAR.shield[h.shield].v };
+function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
+  const Gr = heroGear(h), W = Gr.W, m = Gr.mounted;
+  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? W.range : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: W.acc || .05, anticav: W.anticav ? 1 : 0,
+    cd: W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1), hp: 100 + h.vit * 14, arm: Gr.arm, dmg: W.dmg + h.str * (W.rng ? W.bs : 3),
+    spd: m ? Gr.horse.v : 86 + h.agi * 3, block: Gr.block };
 }
 function mkUnit(side, t, fac, x, y, sp) {
   const u = { id: B.units.length, side, t, fac, x, y, vx: 0, vy: 0, face: side ? Math.PI : 0, dir: side ? -1 : 1, hp: t.hp, maxHp: t.hp, arm: t.arm, dmg: t.dmg, block: t.block,
@@ -140,7 +140,7 @@ function blocked(t, fromA, kind) {
 function strike(a, t) {
   let dmg = (a.t.range ? (a.t.mdmg || a.dmg * .6) : a.dmg) * rnd(.8, 1.2); const fromA = Math.atan2(a.y - t.y, a.x - t.x), rear = Math.abs(angDiff(fromA, t.face)) > 2.1;
   if (!rear && blocked(t, fromA, 'melee')) { fxSpark(t.x + Math.cos(fromA) * 10, t.y + Math.sin(fromA) * 10 - 14); sfx('clang', t); if (t === B.hero) ftext(t.x, t.y - 44, 'Блок', '#d8d2c4'); return; }
-  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; hurt(t, dmg, a, 0); sfx('hit', t);
+  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; if (a.t.wpn) { dmg *= dtMul(a.t.wpn.dt, t.arm); hurt(t, dmg, a, dtPierce(a.t.wpn.dt, t.arm, a.t.wpn.pb)); } else hurt(t, dmg, a, 0); sfx('hit', t);
 }
 function chargeHit(a, e, v) {
   a.ccd = 1.7; let dmg = a.dmg * (.6 + v / 150); const fromA = Math.atan2(a.y - e.y, a.x - e.x), front = Math.abs(angDiff(fromA, e.face)) < 1.1;
@@ -151,8 +151,8 @@ function chargeHit(a, e, v) {
 }
 function shoot(u, e, d) {
   const dur = d / 430 + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = d * u.t.acc;
-  B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || 0, xb: u.t.look && u.t.look.weapon === 'xbow' });
-  u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0]);
+  B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || (u.t.wpn && u.t.wpn.pb) || 0, dt: u.t.wpn && u.t.wpn.dt, jv: !!(u.t.wpn && u.t.wpn.wt === 'throw'), xb: (u.t.look && u.t.look.weapon === 'xbow') || !!(u.t.wpn && u.t.wpn.wt === 'xbow') });
+  u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
 }
 function hurt(t, dmg, src, pierce) {
   if (t.dead) return; const arm = t.arm * (1 - (pierce || 0)), d = Math.max(1, Math.round(dmg * (1 - arm / (arm + 55))));
@@ -181,24 +181,43 @@ function heroControl(h, dt) {
   const ml = Math.hypot(mx, my); if (ml > 1) { mx /= ml; my /= ml; }
   if (typeof I.face === 'number') h.face = I.face;
   h.blocking = !!I.blk && h.wind < 0;
+  if (I.sw && !h.swHeld && h.wind < 0) swapWield(h); h.swHeld = !!I.sw;
   let sp = h.spd; const sprint = I.spr && ml > .2 && h.stam > 2 && !h.blocking;
   if (sprint) { sp *= h.t.mounted ? 1.2 : 1.4; h.stam = Math.max(0, h.stam - 26 * dt); } else h.stam = Math.min(100, h.stam + (ml > .2 ? 9 : 18) * dt);
   if (h.blocking) sp *= .55; if (h.swing > 0 && !h.t.mounted) sp *= .7;
   const k = Math.min(1, (h.t.mounted ? (ml > .1 ? 1.7 : .9) : 12) * dt); h.vx += (mx * sp - h.vx) * k; h.vy += (my * sp - h.vy) * k;
-  if (I.atk && h.cd <= 0 && h.wind < 0 && !h.blocking) { h.wind = .13; h.cd = h.t.cd; h.swing = .26; h.bump = 1; h.swingA = h.face; sfx('swing'); }
+  if (I.atk && h.cd <= 0 && h.wind < 0 && !h.blocking) { const rw = h.t.wpn && h.t.wpn.rng; h.wind = rw ? .2 : .13; h.cd = h.t.cd; h.swing = rw ? 0 : .26; h.bump = 1; h.swingA = h.face; if (!rw) sfx('swing'); }
   if (h.wind >= 0) { h.wind -= dt; if (h.wind < 0) heroStrike(h); }
   h.swing -= dt;
   if (h.t.mounted && h.ccd <= 0) { const v = Math.hypot(h.vx, h.vy); if (v > 95) { const va = Math.atan2(h.vy, h.vx); for (const e of B.units) { if (e.side !== 1 || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d < h.r + e.r + 5 && Math.abs(angDiff(Math.atan2(e.y - h.y, e.x - h.x), va)) < .9) { chargeHit(h, e, v); h.ccd = .9; break; } } } }
 }
 function heroStrike(h) {
-  const R = 30 + h.t.reach + (h.t.mounted ? 8 : 0); let hits = 0;
+  const W = h.t.wpn; if (W && W.rng) return heroShoot(h);
+  const R = 30 + h.t.reach + (h.t.mounted ? 8 : 0), arc = W ? W.arc : 1, maxHits = W ? W.cleave : 3, fall = W ? W.fall : .7, kb = W && W.kb ? W.kb : 1; let hits = 0;
   for (const e of B.units) {
-    if (e.side === h.side || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d > R + e.r) continue; const a = Math.atan2(e.y - h.y, e.x - h.x); if (Math.abs(angDiff(a, h.swingA)) > 1.0) continue;
+    if (e.side === h.side || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d > R + e.r) continue; const a = Math.atan2(e.y - h.y, e.x - h.x); if (Math.abs(angDiff(a, h.swingA)) > arc) continue;
     const fromA = a + Math.PI, rear = Math.abs(angDiff(fromA, e.face)) > 2.1;
-    if (!rear && blocked(e, fromA, 'melee') && Math.random() < .75) { fxSpark(e.x - Math.cos(a) * 8, e.y - Math.sin(a) * 8 - 14); sfx('clang', e); ftext(e.x, e.y - 44, 'Блок', '#b9b2a5'); }
-    else { e.x += Math.cos(a) * 5; e.y += Math.sin(a) * 5; hurt(e, h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? .7 : 1), h, .1); sfx('hit', e); }
-    if (++hits >= 3) break;
+    if (!rear && blocked(e, fromA, 'melee') && Math.random() < .75 - (W && W.brk || 0)) { fxSpark(e.x - Math.cos(a) * 8, e.y - Math.sin(a) * 8 - 14); sfx('clang', e); ftext(e.x, e.y - 44, 'Блок', '#b9b2a5'); }
+    else {
+      e.x += Math.cos(a) * 5 * kb; e.y += Math.sin(a) * 5 * kb; let dmg = h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? fall : 1);
+      if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); }
+      hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, W.pb) : .1); sfx('hit', e);
+    }
+    if (++hits >= maxHits) break;
   }
+}
+function heroShoot(h) { // выстрел или бросок в сторону курсора: цель выбирается в узком конусе (формат ввода h.inp не меняется)
+  const W = h.t.wpn, R = W.range, a0 = h.swingA; let best = null, bs = 1e9;
+  for (const e of B.units) { if (e.side === h.side || !alive(e)) continue; const dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy); if (d > R || d < 14) continue; const da = Math.abs(angDiff(Math.atan2(dy, dx), a0)); if (da > .2) continue; const sc = da * 420 + d * .12; if (sc < bs) { bs = sc; best = e; } }
+  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (W.acc || .05);
+  const px = best ? best.x + best.vx * dur * .8 : h.x + Math.cos(a0) * d, py = best ? best.y + best.vy * dur * .8 : h.y + Math.sin(a0) * d;
+  B.arrows.push({ x0: h.x, y0: h.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: h.side, dmg: h.dmg, src: h, pierce: W.pb || 0, dt: W.dt, xb: W.wt === 'xbow', jv: W.wt === 'throw' });
+  h.bump = .5; sfx('bow', h); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), h.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
+}
+function swapWield(h) { // ближнее ↔ дальнее оружие (клавиша X)
+  const cfg = B.cfg.hero, eq = heroEq(cfg), to = cfg.sel === 'ranged' ? 'melee' : 'ranged'; if (to === 'ranged' && !eq.ranged) { ftext(h.x, h.y - 52, 'Нет дальнего оружия', '#d8d2c4'); return; }
+  cfg.sel = to; const hd = heroDef(cfg); h.t = hd; h.dmg = hd.dmg; h.arm = hd.arm; h.block = hd.block; h.cd = Math.max(h.cd, .35); h.swing = 0; if (!SERVER) h.sp = getHeroSprite(cfg, hd.mounted);
+  ftext(h.x, h.y - 52, hd.wpn.name, '#f1e3b0'); sfx('click'); ev(['w', h.id, to === 'ranged' ? 1 : 0]); B.hudDirty = true;
 }
 /* ---------- эффекты ---------- */
 function fxBlood(x, y, n) { if (SERVER || B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
@@ -230,8 +249,8 @@ function battleUpdate(rdt) {
   for (let i = B.arrows.length - 1; i >= 0; i--) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
-    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15), a.src, a.pierce); sfx('arrowhit', hit); } }
-    else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
+    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
+    else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(a.jv ? -18 : -9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
   for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
   for (let i = B.texts.length - 1; i >= 0; i--) { const p = B.texts[i]; p.l -= dt; p.y -= 26 * dt; if (p.l <= 0) B.texts.splice(i, 1); }
@@ -303,7 +322,7 @@ function battleDraw(g) {
   g.lineCap = 'round';
   for (const a of B.arrows) { const p = a.t / a.dur, x = lerp(a.x0, a.x1, p), y = lerp(a.y0, a.y1, p), dd = Math.hypot(a.x1 - a.x0, a.y1 - a.y0), hgt = Math.sin(p * Math.PI) * dd * (a.xb ? .08 : .17), an = Math.atan2(a.y1 - a.y0 - Math.cos(p * Math.PI) * dd * .17 * 1.2, a.x1 - a.x0);
     g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, y + 14); g.lineTo(x - Math.cos(an) * 8, y + 14); g.stroke();
-    g.strokeStyle = '#2a1c10'; g.lineWidth = 1.7; g.beginPath(); g.moveTo(x, y - hgt); g.lineTo(x - Math.cos(an) * 12, y - hgt - Math.sin(an) * 12); g.stroke(); g.strokeStyle = '#efe9d6'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(x - Math.cos(an) * 10, y - hgt - Math.sin(an) * 10); g.lineTo(x - Math.cos(an) * 13, y - hgt - Math.sin(an) * 13); g.stroke(); }
+    const ln = a.jv ? 22 : 12; g.strokeStyle = '#2a1c10'; g.lineWidth = a.jv ? 2.6 : 1.7; g.beginPath(); g.moveTo(x, y - hgt); g.lineTo(x - Math.cos(an) * ln, y - hgt - Math.sin(an) * ln); g.stroke(); g.strokeStyle = '#efe9d6'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(x - Math.cos(an) * 10, y - hgt - Math.sin(an) * 10); g.lineTo(x - Math.cos(an) * 13, y - hgt - Math.sin(an) * 13); g.stroke(); }
   for (const p of B.fx) { g.globalAlpha = Math.min(1, p.l * 3); g.fillStyle = p.c; if (p.k) { ell(g, p.x, p.y, p.s, p.s * .7); g.fill(); } else g.fillRect(p.x, p.y, p.s, p.s); } g.globalAlpha = 1;
   g.font = '700 15px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center';
   for (const p of B.texts) { g.globalAlpha = Math.min(1, p.l * 2.5); g.lineWidth = 3; g.strokeStyle = 'rgba(15,10,6,.85)'; g.strokeText(p.s, p.x, p.y); g.fillStyle = p.c; g.fillText(p.s, p.x, p.y); } g.globalAlpha = 1;
