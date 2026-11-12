@@ -79,6 +79,8 @@ function renderPanel() {
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
   } else if (tab === 'hero') {
     body += heroBody();
+  } else if (tab === 'ally') {
+    body += allyBody();
   } else if (tab === 'inv') {
     body += invBody();
   } else if (tab === 'journal') {
@@ -86,7 +88,7 @@ function renderPanel() {
     body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
-  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']];
+  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (NET.on) tabs.push(['ally', 'Союз']);
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
 }
 

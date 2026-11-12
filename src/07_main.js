@@ -2,7 +2,7 @@
 let MODE = 'title', cv, cx;
 const WC = { x: WW / 2, y: WH / 2, z: .9, free: false };
 const SAVE_KEY = 'zhelezny-styag-save-2';
-function resize() { const d = Math.min(window.devicePixelRatio || 1, 2); VIEW.w = window.innerWidth; VIEW.h = window.innerHeight; VIEW.dpr = d; cv.width = Math.round(VIEW.w * d); cv.height = Math.round(VIEW.h * d); }
+function resize() { const d = Math.min(window.devicePixelRatio || 1, 2); VIEW.w = (cv && cv.clientWidth) || window.innerWidth; VIEW.h = (cv && cv.clientHeight) || window.innerHeight; VIEW.dpr = d; cv.width = Math.round(VIEW.w * d); cv.height = Math.round(VIEW.h * d); }
 function w2s(x, y) { return { x: (x - WC.x) * WC.z + VIEW.w / 2, y: (y - WC.y) * WC.z + VIEW.h / 2 }; }
 function s2wW(sx, sy) { return { x: WC.x + (sx - VIEW.w / 2) / WC.z, y: WC.y + (sy - VIEW.h / 2) / WC.z }; }
 
@@ -128,7 +128,7 @@ function drawWorld(g) {
   for (const it of list) {
     if (it.s) { const s = it.s, sp = settleSprite(s), k = s.kind === 'town' ? .72 : s.kind === 'castle' ? .7 : .6; if (s.kind === 'camp' && s.cleared) g.globalAlpha = .5; g.drawImage(sp.cv, s.x - sp.ax * k, s.y - sp.ay * k, sp.cv.width * k, sp.cv.height * k); g.globalAlpha = 1; label(s.name, s.x, s.y + 22, s.kind === 'camp' ? '#e59a8c' : '#f0e6c8', s.kind === 'village' ? 13 : 16); }
     else if (it.p) { const p = it.p; let sp, k = .34; if (p.kind === 'caravan') { const c = caravanSprite(); g.drawImage(c.cv, p.x - c.ax * .5, p.y - c.ay * .5, 55, 35); label('Караван', p.x, p.y + 16, '#d8c9a2', 12); continue; } sp = getSprite(leaderType(p), 0, p.fac); const dir = p.fx < 0 ? -1 : 1; g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(p.x + 2, p.y + 3, 20, 7, 0, 0, TAU); g.fill(); g.save(); g.translate(p.x, p.y + Math.sin(G.day * 24 + G.hour + p.id) * 0); g.scale(dir * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, p.x + 14, p.y + 2, p.fac, 9); label(p.kind === 'bandit' ? 'Разбойники' : p.name, p.x, p.y + 17, p.kind === 'bandit' ? '#e59a8c' : '#f0e6c8', 12); }
-    else { const Q = it.pl, me = Q === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name, Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
+    else { const Q = it.pl, me = Q === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name + (Q.fname ? ' [' + Q.fname + ']' : ''), Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   const h = G.hour, night = h >= 21 || h < 4 ? .34 : h >= 19 ? (h - 18) * .1 : h < 6 ? (6 - h) * .1 : 0; if (night > 0) { g.fillStyle = 'rgba(8,16,48,' + night + ')'; g.fillRect(0, 0, cv.width, cv.height); }
@@ -203,7 +203,7 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 function init() {
-  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
+  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); try { new ResizeObserver(() => resize()).observe(cv); } catch (e) { } bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
   el('modal').hidden = true; setTimeout(() => { startDemo(); el('title').hidden = false; buildTitleMenu(); showLoad(false); }, 50); requestAnimationFrame(frame);
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { }); init();
