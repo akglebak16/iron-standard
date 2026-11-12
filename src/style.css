@@ -54,6 +54,11 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:700;letter-spacing:.04em;marg
 .sq .ico{width:26px;height:26px}
 #bhero{position:absolute;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));width:min(380px,44vw);padding:8px 12px 10px}
 #bhero .nm{font:700 30px var(--disp);color:var(--parch);text-shadow:0 2px 0 #000;letter-spacing:.04em;margin-bottom:5px;display:flex;align-items:baseline;gap:10px}
+#bhero .wsw{position:relative;display:flex;gap:6px;margin-top:6px;padding-right:18px}
+#bhero .wb{flex:1;min-width:0;display:flex;align-items:center;gap:6px;padding:4px 8px;background:#1a1510;border:2px solid #0d0905;color:var(--parch2);font:600 13px var(--body);cursor:pointer}
+#bhero .wb .ico{width:18px;height:18px;flex:none}#bhero .wb .wn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bhero .wb:hover{filter:brightness(1.25)}#bhero .wb.on{border-color:var(--brass);color:var(--parch);box-shadow:0 0 8px #d1a84c66}#bhero .wb.off{opacity:.5}
+#bhero .wsw .kb{position:absolute;right:0;top:50%;transform:translateY(-50%);font:700 13px var(--body);color:var(--brass)}
 #bhero .nm small{font:500 14px var(--body);color:var(--parch2)}
 .bar{position:relative;height:25px;background:#1a1510;border:2px solid #0d0905;margin:3px 0;overflow:hidden}
 .bar i{position:absolute;inset:0 auto 0 0;width:var(--p,100%);transition:width .15s;background-size:12px 12px}
