@@ -152,11 +152,13 @@ function tradeDock(s) {
 }
 ACT.tsel = function (d) { const dbl = dblTap(d, 't|' + d.side + '|' + d.id); if (dbl) return dbl(d); UI.tsel = { side: d.side, id: d.id }; keepScroll(renderTown); };
 ACT.tbuy = function (d) {
+  if (NET.on) { NET.send({ t: 'tbuy', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doBuy(P, UI.town.s, d.id, n);
   if (r.n) { sfx('coin'); toast('Куплено: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99) toast(TRADE_WHY[r.why] || ''); } else toast(TRADE_WHY[r.why] || 'Не вышло');
   keepScroll(renderTown);
 };
 ACT.tsell = function (d) {
+  if (NET.on) { NET.send({ t: 'tsell', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doSell(P, UI.town.s, d.id, n);
   if (r.n) { sfx('coin'); toast('Продано: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99 && r.why) toast(TRADE_WHY[r.why]); } else toast(TRADE_WHY[r.why] || 'Не вышло');
   keepScroll(renderTown);
@@ -215,7 +217,7 @@ function invDock() {
 }
 ACT.isel = function (d) { const dbl = dblTap(d, 'i|' + (d.id || d.k)); if (dbl) return dbl(d); UI.isel = d.from === 'slot' ? { from: 'slot', k: d.k } : { from: 'bag', id: d.id }; keepScroll(renderPanel); };
 ACT.bagf = function (d) { UI.bagF = d.f; keepScroll(renderPanel); };
-ACT.equip = function (d) { const it = ITEM[d.id], r = doEquip(G.player, d.id); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
-ACT.unequip = function (d) { const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
-ACT.wield = function (d) { if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
+ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } const it = ITEM[d.id], r = doEquip(G.player, d.id); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
+ACT.unequip = function (d) { if (NET.on) { NET.send({ t: 'unequip', slot: d.slot }); sfx('click'); return; } const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
+ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); sfx('click'); return; } if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };

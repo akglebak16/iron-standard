@@ -37,11 +37,12 @@ function troopRow(s, extra) { const t = TROOPS[s.type]; return '<div class="row"
 
 let UI = { open: null, town: null, enc: null, tab: 'troops' };
 function openModal(html, cls) { const m = el('modal'); m.innerHTML = '<div class="win plank ' + (cls || '') + '">' + html + '</div>'; m.hidden = false; UI.open = true; m.scrollTop = 0; }
-function closeModal() { el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; if (G && G.player) G.player.in = null; }
+function closeModal() { if (NET.on && G && G.player && G.player.in) NET.send({ t: 'leave' }); el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; if (G && G.player) G.player.in = null; }
 function mmode() { return MODE; }
 
 /* ---------- город ---------- */
 function openTown(s) {
+  if (NET.on) { NET.send({ t: 'enter', id: s.id }); return; }
   const P = G.player; townEnter(P, s); G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); saveGame(true);
 }
 function renderTown() {
@@ -109,28 +110,30 @@ function openEncounter(p, forced) {
 const ACT = {
   ttab(d) { UI.town.tab = d.t; renderTown(); },
   leave() { closeModal(); },
-  hire(d) { if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
-  buygear(d) { if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
-  food(d) { if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
-  rest() { const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
-  accept(d) { const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
+  hire(d) { if (NET.on) { NET.send({ t: 'hire', type: d.t, n: +d.n }); sfx('coin'); return; } if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
+  buygear(d) { if (NET.on) { NET.send({ t: 'gear', k: d.k }); sfx('coin'); return; } if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
+  food(d) { if (NET.on) { NET.send({ t: 'food', n: +d.n, p: +d.p }); sfx('coin'); return; } if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
+  rest() { if (NET.on) { toast('В сетевой игре отдых недоступен'); return; } const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
+  accept(d) { if (NET.on) { NET.send({ t: 'accept', q: +d.q }); sfx('order'); return; } const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
   party() { const back = UI.town; UI.back = back; openPanel('troops'); },
   hero() { openPanel('hero'); }, journal() { openPanel('journal'); },
   ptab(d) { UI.panel = d.t; renderPanel(); },
-  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
-  upg(d) { const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
-  dismiss(d) { remT(G.player.troops, d.t, 1); renderPanel(); },
-  attr(d) { if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
+  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.panel = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
+  upg(d) { if (NET.on) { NET.send({ t: 'upg', type: d.t, up: d.u }); sfx('coin'); return; } const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
+  dismiss(d) { if (NET.on) { NET.send({ t: 'dismiss', type: d.t }); return; } remT(G.player.troops, d.t, 1); renderPanel(); },
+  attr(d) { if (NET.on) { NET.send({ t: 'attr', k: d.k }); sfx('order'); return; } if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
   menu() { openMenu(); },
-  greet() { const p = UI.enc.p; p.cd = 3; closeModal(); },
-  attack() { const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
-  fight() { const p = UI.enc.p; closeModal(); launchBattle(p); },
-  auto() { const p = UI.enc.p; closeModal(); autoPlayer(p); },
-  flee() { const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
+  greet() { if (NET.on) { NET.send({ t: 'enc', a: 'greet' }); closeModal(); return; } const p = UI.enc.p; p.cd = 3; closeModal(); },
+  attack() { if (NET.on) { NET.send({ t: 'enc', a: 'attack' }); closeModal(); return; } const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
+  fight() { if (NET.on) { NET.send({ t: 'enc', a: 'fight' }); closeModal(); return; } const p = UI.enc.p; closeModal(); launchBattle(p); },
+  auto() { if (NET.on) { NET.send({ t: 'enc', a: 'auto' }); closeModal(); return; } const p = UI.enc.p; closeModal(); autoPlayer(p); },
+  flee() { if (NET.on) { NET.send({ t: 'enc', a: 'flee' }); closeModal(); return; } const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
   resume() { closeModal(); }, save() { saveGame(); toast('Игра сохранена'); },
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
-  tomenu() { closeModal(); gotoTitle(); },
-  newgame() { openCreate(); }, cont() { loadGame(); }, quick() { openQuick(); },
+  tomenu() { if (NET.on) netLeave(); closeModal(); gotoTitle(); },
+  newgame() { CR.mp = false; openCreate(); }, mp() { CR.mp = true; openCreate(); },
+  mpgo() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный', code = el('crcode') ? el('crcode').value.trim() : ''; try { localStorage.setItem('zs-mp', JSON.stringify({ name: nm, code })); } catch (e) { } closeModal(); netStart({ name: nm, code, banner: CR.banner, culture: CR.culture }); },
+  vyes() { NET.send({ t: 'vote', yes: 1 }); }, vno() { NET.send({ t: 'vote', yes: 0 }); }, cont() { loadGame(); }, quick() { openQuick(); },
   pickb(d) { CR.banner = +d.i; renderCreate(); }, pickc(d) { CR.culture = d.c; renderCreate(); },
   begin() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный'; closeModal(); startNew({ name: nm, banner: CR.banner, culture: CR.culture }); },
   qpick(d) { QK[d.k] = d.v; renderQuick(); }, qgo() { closeModal(); startQuick(); },
@@ -141,12 +144,12 @@ const ACT = {
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; auInit(); const a = t.dataset.act; if (ACT[a]) { ACT[a](t.dataset, t); } });
 
 /* ---------- меню, создание, быстрый бой ---------- */
-function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
-let CR = { banner: 0, culture: 'nord', name: 'Ярослав' };
+function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' && !NET.on ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
+let CR = { banner: 0, culture: 'nord', name: 'Ярослав', mp: false, code: '' }; try { const sv = JSON.parse(localStorage.getItem('zs-mp') || 'null'); if (sv) { CR.name = sv.name || CR.name; CR.code = sv.code || ''; } } catch (e) { }
 function renderCreate() {
-  const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm;
-  openModal('<div class="whead"><h2>Создай героя<span class="sub">Ты командир наёмного отряда без земли и титула</span></h2></div><div class="wbody"><div class="note">Имя</div><input type="text" id="crname" maxlength="18" value="' + CR.name.replace(/"/g, '') + '" autocomplete="off"><div class="note" style="margin-top:14px">Цвета твоего стяга</div><div style="display:flex;gap:10px;flex-wrap:wrap">' + BANNERS.map((b, i) => '<button class="sw ' + (i === CR.banner ? 'on' : '') + '" style="background:' + b.c1 + ';--c2:' + b.c2 + '" data-act="pickb" data-i="' + i + '" title="' + b.n + '" aria-label="' + b.n + '"></button>').join('') + '</div><div class="note" style="margin-top:14px">Откуда ты родом</div><div style="display:flex;gap:10px;flex-wrap:wrap">' +
-    ['nord', 'emp', 'khan'].map(c => '<button class="cult ' + (c === CR.culture ? 'on' : '') + '" data-act="pickc" data-c="' + c + '"><h3>' + FACTIONS[c].name + '</h3><p>' + { nord: 'Крепкая пехота, секиры и щиты. Охотники-лучники.', emp: 'Броня, дисциплина и арбалеты. Дорогие, но стойкие бойцы.', khan: 'Быстрые всадники и конные лучники. Ты начинаешь верхом.' }[c] + '</p></button>').join('') + '</div></div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="begin">В путь</button></div>');
+  const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm; if (el('crcode')) CR.code = el('crcode').value;
+  openModal('<div class="whead"><h2>Создай героя<span class="sub">Ты командир наёмного отряда без земли и титула</span></h2></div><div class="wbody"><div class="note">Имя</div><input type="text" id="crname" maxlength="18" value="' + CR.name.replace(/"/g, '') + '" autocomplete="off">' + (CR.mp ? '<div class="note" style="margin-top:14px">Код комнаты (если задан на сервере)</div><input type="text" id="crcode" maxlength="40" value="' + (CR.code || '').replace(/"/g, '') + '" autocomplete="off">' : '') + '<div class="note" style="margin-top:14px">Цвета твоего стяга</div><div style="display:flex;gap:10px;flex-wrap:wrap">' + BANNERS.map((b, i) => '<button class="sw ' + (i === CR.banner ? 'on' : '') + '" style="background:' + b.c1 + ';--c2:' + b.c2 + '" data-act="pickb" data-i="' + i + '" title="' + b.n + '" aria-label="' + b.n + '"></button>').join('') + '</div><div class="note" style="margin-top:14px">Откуда ты родом</div><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+    ['nord', 'emp', 'khan'].map(c => '<button class="cult ' + (c === CR.culture ? 'on' : '') + '" data-act="pickc" data-c="' + c + '"><h3>' + FACTIONS[c].name + '</h3><p>' + { nord: 'Крепкая пехота, секиры и щиты. Охотники-лучники.', emp: 'Броня, дисциплина и арбалеты. Дорогие, но стойкие бойцы.', khan: 'Быстрые всадники и конные лучники. Ты начинаешь верхом.' }[c] + '</p></button>').join('') + '</div></div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="' + (CR.mp ? 'mpgo' : 'begin') + '">' + (CR.mp ? 'В мир' : 'В путь') + '</button></div>');
 }
 function openCreate() { FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2; renderCreate(); }
 let QK = { me: 'nord', foe: 'emp', size: 40 };

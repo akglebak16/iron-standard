@@ -61,6 +61,7 @@ function marketDay(s, m) {
   for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < gearOdds(s, id, GEAR_DAILY)) m.stock[id] = 1; }
 }
 function marketOf(s) { // ленивое создание и догон по дням (до 20 дней за раз)
+  if (NET.on && s.market) return s.market; // в сети рынком владеет сервер
   if (!s.market) s.market = mkMarket(s);
   const m = s.market, d = Math.min(20, Math.max(0, G.day - m.day));
   for (let k = 0; k < d; k++) marketDay(s, m);
@@ -117,6 +118,7 @@ function doEquip(P, id) { // → { ok, note }; предмет берётся и�
   return { ok: true, note };
 }
 function doUnequip(P, slot) { const H = P.hero, eq = heroEq(H), id = eq[slot]; if (!id) return false; invAdd(P, id, 1); eq[slot] = null; if (slot === 'horse') syncLegacy(H); if (slot === 'ranged' && H.sel === 'ranged') H.sel = 'melee'; return true; }
+function doUnequipHorse(P) { return doUnequip(P, 'horse'); } // оставлено для сервера (server/sim.js импортирует эту функцию)
 function doWield(P, sel) { const H = P.hero; if (sel === 'ranged' && !heroEq(H).ranged) return false; H.sel = sel; return true; } // какое оружие в руках в начале боя
 
 /* ---------- трофеи после победы ---------- */

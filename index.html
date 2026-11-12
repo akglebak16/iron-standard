@@ -195,6 +195,17 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 .mini{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .mt{width:38px;height:38px;display:grid;place-items:center;border:2px solid var(--tc,#0009);border-radius:3px;background:radial-gradient(circle at 50% 30%,#54402b,#1a120b);color:#e2d6b4}.mt .ico{width:24px;height:24px}.mt.void{opacity:.4;border-style:dashed;border-color:#ffffff30;background:#0003}
 
+/* ---- сеть ---- */
+#votebar{position:absolute;left:50%;top:max(64px,calc(env(safe-area-inset-top,0px) + 56px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:16px}
+#votebar[hidden]{display:none}
+#chat{position:absolute;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));width:min(360px,60vw);z-index:25;pointer-events:none}
+#chat[hidden]{display:none}
+#chatlog{font-size:15px;line-height:1.25;color:#f0e6c8;text-shadow:0 1px 2px #000,0 0 4px #000;max-height:22vh;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;margin-bottom:4px}
+#chatlog b{color:#bfe4ff}#chatlog i{color:#d8c9a2}
+#chatin{pointer-events:auto;width:100%;box-sizing:border-box;background:rgba(20,14,8,.78);color:#f0e6c8;border:1px solid #6a5835;padding:5px 8px;font:inherit;font-size:15px;opacity:.55}
+#chatin:focus{opacity:1;outline:none;border-color:#e0b85a}
+#chat.bt{bottom:max(150px,calc(env(safe-area-inset-bottom,0px) + 150px));width:min(300px,40vw)}
+
 </style>
 <canvas id="cv"></canvas>
 <div id="whud" hidden>
@@ -219,12 +230,15 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 </div>
 <div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div><div class="plat">Игра для компьютера · клавиатура и мышь</div></div></div>
 <div id="modal" hidden></div>
+<div id="votebar" class="plank" hidden></div>
+<div id="chat" hidden><div id="chatlog"></div><input id="chatin" maxlength="200" placeholder="Enter — написать другу" autocomplete="off"></div>
 <div id="tip" hidden></div>
 <div id="load">Кую железо…</div>
 <script>
 'use strict';
 /* ================= утилиты ================= */
 const SERVER = typeof __SRV !== 'undefined';
+const NET = { on: false, ws: null, avail: false, q: [] };
 const TAU = Math.PI * 2;
 const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
 const rint = (a, b) => Math.floor(rnd(a, b + 1));
@@ -740,6 +754,7 @@ function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 /* ---------- приказы ---------- */
 function giveOrder(ord, wx, wy, selArg) {
   if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  if (!SERVER && NET.on) { NET.send({ t: 'ord', ord, wx, wy, sel: sl }); if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t }; sfx(ord === 'charge' ? 'horn' : 'order'); return; }
   const foe = centroid(1), gs = B.groups[0].filter(g => sl === 3 || g.k === sl); let any = false;
   for (const g of gs) {
     if (!g.units.some(fit)) continue; any = true;
@@ -1455,6 +1470,7 @@ function marketDay(s, m) {
   for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < gearOdds(s, id, GEAR_DAILY)) m.stock[id] = 1; }
 }
 function marketOf(s) { // ленивое создание и догон по дням (до 20 дней за раз)
+  if (NET.on && s.market) return s.market; // в сети рынком владеет сервер
   if (!s.market) s.market = mkMarket(s);
   const m = s.market, d = Math.min(20, Math.max(0, G.day - m.day));
   for (let k = 0; k < d; k++) marketDay(s, m);
@@ -1511,6 +1527,7 @@ function doEquip(P, id) { // → { ok, note }; предмет берётся и�
   return { ok: true, note };
 }
 function doUnequip(P, slot) { const H = P.hero, eq = heroEq(H), id = eq[slot]; if (!id) return false; invAdd(P, id, 1); eq[slot] = null; if (slot === 'horse') syncLegacy(H); if (slot === 'ranged' && H.sel === 'ranged') H.sel = 'melee'; return true; }
+function doUnequipHorse(P) { return doUnequip(P, 'horse'); } // оставлено для сервера (server/sim.js импортирует эту функцию)
 function doWield(P, sel) { const H = P.hero; if (sel === 'ranged' && !heroEq(H).ranged) return false; H.sel = sel; return true; } // какое оружие в руках в начале боя
 
 /* ---------- трофеи после победы ---------- */
@@ -1534,6 +1551,172 @@ function rollLoot(P, p) {
   return Object.keys(got).map(id => ({ id, n: got[id] }));
 }
 function dropText(list) { return list.map(d => ITEM[d.id].name + (d.n > 1 ? ' ×' + d.n : '')).join(', '); }
+
+/* ================= сетевая игра на двоих: клиентская часть =================
+   Клиент — «зеркало»: рисует то, что присылает сервер, и отправляет команды. */
+NET.send = function (o) { if (NET.ws && NET.ws.readyState === 1) NET.ws.send(JSON.stringify(o)); };
+NET.chat = [];
+function netProbe() {
+  try { if (location.protocol.indexOf('http') !== 0) return; fetch('/health', { cache: 'no-store' }).then(r => r.text()).then(t => { if (t === 'ok') { NET.avail = true; if (MODE === 'title') buildTitleMenu(); } }).catch(() => { }); } catch (e) { }
+}
+function netStart(o) {
+  MODE = 'loading'; B = null; el('title').hidden = true; showLoad(true);
+  NET.on = true; NET.q = []; NET.vote = null; NET.chat = []; NET.err = null; NET.lastLog = '';
+  const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host); NET.ws = ws;
+  ws.onopen = () => NET.send(Object.assign({ t: 'join' }, o));
+  ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } try { netMsg(m); } catch (x) { console.error(x); } };
+  ws.onclose = () => { if (NET.ws === ws) netLost(); };
+  el('chat').hidden = false; netChatDraw();
+}
+function netLeave() { const ws = NET.ws; NET.on = false; NET.ws = null; if (ws) try { ws.close(); } catch (e) { } el('chat').hidden = true; el('votebar').hidden = true; G = null; B = null; }
+function netLost() { if (!NET.on) return; const msg = NET.err || 'Соединение потеряно'; NET.on = false; NET.ws = null; showLoad(false); closeModal(); el('chat').hidden = true; el('votebar').hidden = true; G = null; B = null; gotoTitle(); toast(msg); }
+function netDefer(f) { if (MODE === 'loading' || !G) NET.q.push(f); else f(); }
+function netFlush() { const q = NET.q; NET.q = []; for (const f of q) try { f(); } catch (e) { console.error(e); } }
+function netMkPlayer(id) {
+  return { id, x: 0, y: 0, tx: 0, ty: 0, fx: 1, path: [], pi: 0, troops: [], gold: 0, food: 0, tid: null, sid: null, in: null, busy: null, name: '', culture: 'nord', banner: 0, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 }, first: true,
+    hero: { name: '', lvl: 1, xp: 0, pts: 0, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: 0, hp: 1, seed: id * 7 + 3 } };
+}
+function netFac(Q) { const k = 'p2_' + Q.banner; if (!FACTIONS[k]) { const b = BANNERS[Q.banner] || BANNERS[0]; FACTIONS[k] = Object.assign({}, FACTIONS.player, { c1: b.c1, c2: b.c2 }); } return k; }
+function netRefresh() { if (!UI.open || UI.enc || UI.res) return; keepScroll(() => { if (UI.panel) renderPanel(); else if (UI.town) renderTown(); }); }
+
+function netMsg(m) {
+  switch (m.t) {
+    case 'err': NET.err = m.s; try { NET.ws.close(); } catch (e) { } netLost(); break;
+    case 'init': {
+      G = { seed: m.seed, day: 1, hour: 8, hourAcc: 0, paused: false, speed: 1, parties: [], settles: m.settles.map(s => Object.assign(s, { recruits: [], board: [], camp: null, cleared: false })), roads: m.roads, players: [], player: null, log: [], nid: 1, stats: { wins: 0, kills: 0 }, wait: false };
+      genWorld(m.seed); markRoads();
+      const P = netMkPlayer(m.you); G.players.push(P); G.player = P; NET.you = m.you; enterWorld(); break;
+    }
+    case 'me': {
+      const P = G && G.player; if (!P) break;
+      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]); P.inv = m.inv;
+      P.gold = m.gold; P.food = m.food; P.troops = m.troops; P.hero = m.hero; P.quests = m.quests; P.rel = m.rel; P.stats = m.stats; P.name = m.name; P.culture = m.culture; P.banner = m.banner; P.in = m.in; P.busy = m.busy;
+      const lg = JSON.stringify(m.log); if (lg !== NET.lastLog) { NET.lastLog = lg; P.log = m.log; P.logDirty = true; }
+      P.path = m.path.map(a => ({ x: a[0], y: a[1] })); P.pi = 0;
+      const b = BANNERS[P.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2;
+      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]) !== old) netRefresh();
+      break;
+    }
+    case 'w': {
+      if (!G) break; G.day = m.day; G.hour = m.hour; G.hourAcc = m.hf; G.paused = m.paused; G.speed = m.speed; NET.vote = m.vote;
+      const seen = {};
+      for (const a of m.players) {
+        seen[a[0]] = 1; let Q = G.players.find(q => q.id === a[0]); if (!Q) { Q = netMkPlayer(a[0]); G.players.push(Q); }
+        Q.tx = a[2]; Q.ty = a[3]; if (Q.first) { Q.x = Q.tx; Q.y = Q.ty; Q.first = false; } Q.fx = a[4];
+        if (Q.id !== NET.you) { Q.name = a[1]; Q.banner = a[5]; Q.culture = a[6]; Q.in = a[7] ? 1 : 0; Q.busy = a[8] ? 'x' : null; Q.troops = [{ type: a[10], n: a[9] }]; Q.hero.horse = a[11]; Q.hero.name = a[1]; }
+      }
+      G.players = G.players.filter(q => q.id === NET.you || seen[q.id]);
+      const old = new Map(G.parties.map(p => [p.id, p])), next = [];
+      for (const a of m.parties) {
+        let p = old.get(a[0]); if (!p) p = { id: a[0], x: a[3], y: a[4], path: [], pi: 0, hide: false, cd: 0 };
+        p.kind = a[1]; p.fac = a[2]; p.tx = a[3]; p.ty = a[4]; p.fx = a[5]; p.name = a[6]; p.troops = a[7].map(s => ({ type: s[0], n: s[1] })); p.lock = a[8]; next.push(p);
+      }
+      G.parties = next;
+      for (const c of m.camps) { const s = G.settles.find(s => s.id === c[0]); if (s) { s.camp = c[1] ? G.parties.find(p => p.id === c[1]) || null : null; s.cleared = !!c[2]; } }
+      break;
+    }
+    case 'town': {
+      const s = G && G.settles.find(s => s.id === m.sid); if (!s) break; s.recruits = m.recruits; s.board = m.board; if (m.market) s.market = m.market;
+      if (m.open) netDefer(() => { G.player.in = null; closeModal(); G.player.in = s.id; G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); });
+      else if (UI.town && UI.town.s === s && UI.open && !UI.panel) keepScroll(renderTown);
+      break;
+    }
+    case 'enc': netDefer(() => { const p = G.parties.find(x => x.id === m.p.id) || m.p; p.troops = m.p.troops; closeModal(); openEncounter(p, m.forced); }); break;
+    case 'bs': netDefer(() => { closeModal(); auInit(); NET.bid = m.id; NET.ik = ''; NET.it = 0; enterBattle(Object.assign({}, m.cfg)); }); break;
+    case 'b': netSnap(m); break;
+    case 'br': netDefer(() => { closeModal(); UI.res = m.r; showResult(m.r, null); }); break;
+    case 'toast': toast(m.s); break;
+    case 'chat': NET.chat.push({ from: m.from, txt: m.txt }); if (NET.chat.length > 30) NET.chat.shift(); netChatDraw(); break;
+  }
+}
+
+/* ---------- карта мира ---------- */
+function netWorldClick(w) {
+  const P = G.player; if (P.busy || P.in) return; WC.free = false; auInit();
+  let tp = null, bd = 34; for (const p of G.parties) { if (p.hide) continue; const d = Math.hypot(p.x - w.x, p.y - w.y); if (d < bd) { bd = d; tp = p; } }
+  if (tp) { NET.send({ t: 'goT', id: tp.id }); return; }
+  let ts = null; bd = 50; for (const s of G.settles) { const d = Math.hypot(s.x - w.x, s.y - w.y); if (d < bd) { bd = d; ts = s; } }
+  if (ts && ts.kind === 'camp') { if (ts.camp) NET.send({ t: 'goT', id: ts.camp.id }); else toast('Логово пусто'); return; }
+  if (ts) { NET.send({ t: 'goS', id: ts.id }); return; }
+  NET.send({ t: 'go', x: clamp(w.x, 10, WW - 10), y: clamp(w.y, 10, WH - 10) });
+}
+function netSmooth(dt) {
+  const k = Math.min(1, dt * 9);
+  const sm = e => { if (e.tx === undefined) return; const dx = e.tx - e.x, dy = e.ty - e.y; if (dx * dx + dy * dy > 90000) { e.x = e.tx; e.y = e.ty; } else { e.x += dx * k; e.y += dy * k; } };
+  for (const q of G.players) sm(q); for (const p of G.parties) sm(p);
+}
+function netWorldUpdate(dt) {
+  if (!G) return; if (NET.bt) { NET.bt = 0; el('chat').classList.remove('bt'); } netSmooth(dt); const P = G.player;
+  while (P.pi < P.path.length && Math.hypot(P.path[P.pi].x - P.x, P.path[P.pi].y - P.y) < 14) P.pi++;
+  if (!WC.free) { WC.x += (P.x - WC.x) * Math.min(1, dt * 5); WC.y += (P.y - WC.y) * Math.min(1, dt * 5); }
+  const hw = VIEW.w / 2 / WC.z, hh = VIEW.h / 2 / WC.z; WC.x = hw * 2 >= WW ? WW / 2 : clamp(WC.x, hw, WW - hw); WC.y = hh * 2 >= WH ? WH / 2 : clamp(WC.y, hh, WH - hh);
+}
+
+/* ---------- бой (зеркало) ---------- */
+function netSnap(m) {
+  if (!B || NET.bid !== m.id || B.cfg.demo) return;
+  B.t = m.tm;
+  for (let i = 0; i < m.u.length; i++) {
+    const a = m.u[i], u = B.units[i]; if (!u) continue;
+    if (a.length === 1) { if ((a[0] & 1) && !u.dead) { u.dead = true; u.hp = 0; paintCorpse(u); } if (a[0] & 4) u.gone = true; continue; }
+    u.tx = a[0]; u.ty = a[1]; if (!u.nx) { u.x = u.tx; u.y = u.ty; u.nx = 1; }
+    u.vx = a[2]; u.vy = a[3]; u.face = a[4]; u.hp = a[5]; const f = a[6]; u.flee = !!(f & 2); u.blocking = !!(f & 8); if (u.isHero) u.ai = !!(f & 16); if (f & 32) u.flash = .1; u.swing = a[7]; u.bump = a[8];
+  }
+  if (m.h && B.hero) { const h = B.hero; h.hp = m.h.hp; h.maxHp = m.h.mhp; h.stam = m.h.st; h.swingA = m.h.sa; B.heroDown = !!m.h.down; }
+  for (const e of m.ev) {
+    switch (e[0]) {
+      case 'h': { const u = B.units[e[1]]; if (u) { u.flash = .13; fxBlood(u.x, u.y - 16, 4); if (u === B.hero) B.shake = .18; } break; }
+      case 'k': { const u = B.units[e[1]]; if (u && !u.dead) { u.dead = true; u.hp = 0; paintCorpse(u); fxBlood(u.x, u.y - 14, 12); } break; }
+      case 'a': B.arrows.push({ x0: e[1], y0: e[2], x1: e[3], y1: e[4], t: 0, dur: e[5], side: e[6], xb: e[7], dmg: 0 }); break;
+      case 'b': fxSpark(e[1], e[2]); break;
+      case 'd': fxDust(e[1], e[2]); break;
+      case 't': ftext(e[1], e[2], e[3], e[4]); break;
+      case 'l': blog(e[1], e[2]); break;
+      case 's': sfx(e[1], B.units[e[2]] || undefined); break;
+    }
+  }
+  if (m.over && !B.over) { B.over = B.t; B.win = !!m.win; }
+  B.hudDirty = true;
+}
+function netBattleUpdate(dt) {
+  if (!B) return; if (!NET.bt) { NET.bt = 1; el('chat').classList.add('bt'); } B.paused = false; B.speed = 1; dt = Math.min(dt, .1); B.t += dt;
+  const k = Math.min(1, dt * 14);
+  for (const u of B.units) {
+    if (u.dead || u.gone) continue;
+    if (u.tx !== undefined) { u.x += (u.tx - u.x) * k; u.y += (u.ty - u.y) * k; }
+    u.flash -= dt; if (u.bump > 0) u.bump = Math.max(0, u.bump - dt * 4.2); if (u.swing > 0) u.swing -= dt;
+    const c = Math.cos(u.face); if (c > .25) u.dir = 1; else if (c < -.25) u.dir = -1;
+  }
+  for (let i = B.arrows.length - 1; i >= 0; i--) { const a = B.arrows[i]; a.t += dt; if (a.t >= a.dur) B.arrows.splice(i, 1); }
+  for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
+  for (let i = B.texts.length - 1; i >= 0; i--) { const p = B.texts[i]; p.l -= dt; p.y -= 26 * dt; if (p.l <= 0) B.texts.splice(i, 1); }
+  // ввод героя
+  readHeroInput(); const h = B.hero;
+  if (h && h.inp && !B.heroDown && !B.over && !UI.open) {
+    const I = h.inp, key = [I.dx, I.dy, I.atk, I.blk, I.spr, Math.round((I.face || 0) * 25)].join();
+    NET.it -= dt; if ((key !== NET.ik && NET.it <= 0) || NET.it < -.25) { NET.ik = key; NET.it = .05; NET.send({ t: 'inp', dx: I.dx, dy: I.dy, face: I.face, atk: I.atk, blk: I.blk, spr: I.spr }); }
+  }
+  battleCamera(dt);
+}
+
+/* ---------- голосование и чат ---------- */
+function netVoteUI() {
+  const v = el('votebar'); if (!v) return; if (!NET.on || !NET.vote) { if (!v.hidden) { v.hidden = true; v.dataset.s = ''; } return; }
+  const x = NET.vote, what = x.k === 'pause' ? (x.v ? 'пауза' : 'снять паузу') : 'скорость ×' + x.v, mine = G && G.player && x.by === G.player.name;
+  const html = '<span><b>' + x.by.replace(/</g, '&lt;') + '</b> предлагает: ' + what + '</span>' + (mine ? '<span class="note">ждём ответа друга…</span>' : '<button class="btn sm pri" data-act="vyes">Да</button><button class="btn sm" data-act="vno">Нет</button>');
+  if (v.dataset.s !== html) { v.dataset.s = html; v.innerHTML = html; } v.hidden = false;
+}
+function netChatDraw() {
+  const l = el('chatlog'); if (!l) return; l.innerHTML = NET.chat.slice(-7).map(c => c.from ? '<div><b>' + c.from.replace(/</g, '&lt;') + ':</b> ' + c.txt.replace(/</g, '&lt;') + '</div>' : '<div><i>' + c.txt.replace(/</g, '&lt;') + '</i></div>').join('');
+}
+function netKey(e) {
+  if (e.target && e.target.id === 'chatin') {
+    if (e.code === 'Enter') { const i = e.target, t = i.value.trim(); if (t) NET.send({ t: 'chat', txt: t }); i.value = ''; i.blur(); } else if (e.code === 'Escape') { e.target.value = ''; e.target.blur(); }
+    return true;
+  }
+  if (NET.on && e.code === 'Enter' && !UI.open && (MODE === 'world' || MODE === 'battle')) { el('chatin').focus(); e.preventDefault(); return true; }
+  return false;
+}
 
 /* ================= интерфейс ================= */
 const el = id => document.getElementById(id);
@@ -1574,11 +1757,12 @@ function troopRow(s, extra) { const t = TROOPS[s.type]; return '<div class="row"
 
 let UI = { open: null, town: null, enc: null, tab: 'troops' };
 function openModal(html, cls) { const m = el('modal'); m.innerHTML = '<div class="win plank ' + (cls || '') + '">' + html + '</div>'; m.hidden = false; UI.open = true; m.scrollTop = 0; }
-function closeModal() { el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; if (G && G.player) G.player.in = null; }
+function closeModal() { if (NET.on && G && G.player && G.player.in) NET.send({ t: 'leave' }); el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; if (G && G.player) G.player.in = null; }
 function mmode() { return MODE; }
 
 /* ---------- город ---------- */
 function openTown(s) {
+  if (NET.on) { NET.send({ t: 'enter', id: s.id }); return; }
   const P = G.player; townEnter(P, s); G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); saveGame(true);
 }
 function renderTown() {
@@ -1646,28 +1830,30 @@ function openEncounter(p, forced) {
 const ACT = {
   ttab(d) { UI.town.tab = d.t; renderTown(); },
   leave() { closeModal(); },
-  hire(d) { if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
-  buygear(d) { if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
-  food(d) { if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
-  rest() { const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
-  accept(d) { const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
+  hire(d) { if (NET.on) { NET.send({ t: 'hire', type: d.t, n: +d.n }); sfx('coin'); return; } if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
+  buygear(d) { if (NET.on) { NET.send({ t: 'gear', k: d.k }); sfx('coin'); return; } if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
+  food(d) { if (NET.on) { NET.send({ t: 'food', n: +d.n, p: +d.p }); sfx('coin'); return; } if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
+  rest() { if (NET.on) { toast('В сетевой игре отдых недоступен'); return; } const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
+  accept(d) { if (NET.on) { NET.send({ t: 'accept', q: +d.q }); sfx('order'); return; } const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
   party() { const back = UI.town; UI.back = back; openPanel('troops'); },
   hero() { openPanel('hero'); }, journal() { openPanel('journal'); },
   ptab(d) { UI.panel = d.t; renderPanel(); },
-  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
-  upg(d) { const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
-  dismiss(d) { remT(G.player.troops, d.t, 1); renderPanel(); },
-  attr(d) { if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
+  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.panel = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
+  upg(d) { if (NET.on) { NET.send({ t: 'upg', type: d.t, up: d.u }); sfx('coin'); return; } const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
+  dismiss(d) { if (NET.on) { NET.send({ t: 'dismiss', type: d.t }); return; } remT(G.player.troops, d.t, 1); renderPanel(); },
+  attr(d) { if (NET.on) { NET.send({ t: 'attr', k: d.k }); sfx('order'); return; } if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
   menu() { openMenu(); },
-  greet() { const p = UI.enc.p; p.cd = 3; closeModal(); },
-  attack() { const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
-  fight() { const p = UI.enc.p; closeModal(); launchBattle(p); },
-  auto() { const p = UI.enc.p; closeModal(); autoPlayer(p); },
-  flee() { const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
+  greet() { if (NET.on) { NET.send({ t: 'enc', a: 'greet' }); closeModal(); return; } const p = UI.enc.p; p.cd = 3; closeModal(); },
+  attack() { if (NET.on) { NET.send({ t: 'enc', a: 'attack' }); closeModal(); return; } const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
+  fight() { if (NET.on) { NET.send({ t: 'enc', a: 'fight' }); closeModal(); return; } const p = UI.enc.p; closeModal(); launchBattle(p); },
+  auto() { if (NET.on) { NET.send({ t: 'enc', a: 'auto' }); closeModal(); return; } const p = UI.enc.p; closeModal(); autoPlayer(p); },
+  flee() { if (NET.on) { NET.send({ t: 'enc', a: 'flee' }); closeModal(); return; } const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
   resume() { closeModal(); }, save() { saveGame(); toast('Игра сохранена'); },
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
-  tomenu() { closeModal(); gotoTitle(); },
-  newgame() { openCreate(); }, cont() { loadGame(); }, quick() { openQuick(); },
+  tomenu() { if (NET.on) netLeave(); closeModal(); gotoTitle(); },
+  newgame() { CR.mp = false; openCreate(); }, mp() { CR.mp = true; openCreate(); },
+  mpgo() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный', code = el('crcode') ? el('crcode').value.trim() : ''; try { localStorage.setItem('zs-mp', JSON.stringify({ name: nm, code })); } catch (e) { } closeModal(); netStart({ name: nm, code, banner: CR.banner, culture: CR.culture }); },
+  vyes() { NET.send({ t: 'vote', yes: 1 }); }, vno() { NET.send({ t: 'vote', yes: 0 }); }, cont() { loadGame(); }, quick() { openQuick(); },
   pickb(d) { CR.banner = +d.i; renderCreate(); }, pickc(d) { CR.culture = d.c; renderCreate(); },
   begin() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный'; closeModal(); startNew({ name: nm, banner: CR.banner, culture: CR.culture }); },
   qpick(d) { QK[d.k] = d.v; renderQuick(); }, qgo() { closeModal(); startQuick(); },
@@ -1678,12 +1864,12 @@ const ACT = {
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; auInit(); const a = t.dataset.act; if (ACT[a]) { ACT[a](t.dataset, t); } });
 
 /* ---------- меню, создание, быстрый бой ---------- */
-function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
-let CR = { banner: 0, culture: 'nord', name: 'Ярослав' };
+function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' && !NET.on ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
+let CR = { banner: 0, culture: 'nord', name: 'Ярослав', mp: false, code: '' }; try { const sv = JSON.parse(localStorage.getItem('zs-mp') || 'null'); if (sv) { CR.name = sv.name || CR.name; CR.code = sv.code || ''; } } catch (e) { }
 function renderCreate() {
-  const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm;
-  openModal('<div class="whead"><h2>Создай героя<span class="sub">Ты командир наёмного отряда без земли и титула</span></h2></div><div class="wbody"><div class="note">Имя</div><input type="text" id="crname" maxlength="18" value="' + CR.name.replace(/"/g, '') + '" autocomplete="off"><div class="note" style="margin-top:14px">Цвета твоего стяга</div><div style="display:flex;gap:10px;flex-wrap:wrap">' + BANNERS.map((b, i) => '<button class="sw ' + (i === CR.banner ? 'on' : '') + '" style="background:' + b.c1 + ';--c2:' + b.c2 + '" data-act="pickb" data-i="' + i + '" title="' + b.n + '" aria-label="' + b.n + '"></button>').join('') + '</div><div class="note" style="margin-top:14px">Откуда ты родом</div><div style="display:flex;gap:10px;flex-wrap:wrap">' +
-    ['nord', 'emp', 'khan'].map(c => '<button class="cult ' + (c === CR.culture ? 'on' : '') + '" data-act="pickc" data-c="' + c + '"><h3>' + FACTIONS[c].name + '</h3><p>' + { nord: 'Крепкая пехота, секиры и щиты. Охотники-лучники.', emp: 'Броня, дисциплина и арбалеты. Дорогие, но стойкие бойцы.', khan: 'Быстрые всадники и конные лучники. Ты начинаешь верхом.' }[c] + '</p></button>').join('') + '</div></div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="begin">В путь</button></div>');
+  const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm; if (el('crcode')) CR.code = el('crcode').value;
+  openModal('<div class="whead"><h2>Создай героя<span class="sub">Ты командир наёмного отряда без земли и титула</span></h2></div><div class="wbody"><div class="note">Имя</div><input type="text" id="crname" maxlength="18" value="' + CR.name.replace(/"/g, '') + '" autocomplete="off">' + (CR.mp ? '<div class="note" style="margin-top:14px">Код комнаты (если задан на сервере)</div><input type="text" id="crcode" maxlength="40" value="' + (CR.code || '').replace(/"/g, '') + '" autocomplete="off">' : '') + '<div class="note" style="margin-top:14px">Цвета твоего стяга</div><div style="display:flex;gap:10px;flex-wrap:wrap">' + BANNERS.map((b, i) => '<button class="sw ' + (i === CR.banner ? 'on' : '') + '" style="background:' + b.c1 + ';--c2:' + b.c2 + '" data-act="pickb" data-i="' + i + '" title="' + b.n + '" aria-label="' + b.n + '"></button>').join('') + '</div><div class="note" style="margin-top:14px">Откуда ты родом</div><div style="display:flex;gap:10px;flex-wrap:wrap">' +
+    ['nord', 'emp', 'khan'].map(c => '<button class="cult ' + (c === CR.culture ? 'on' : '') + '" data-act="pickc" data-c="' + c + '"><h3>' + FACTIONS[c].name + '</h3><p>' + { nord: 'Крепкая пехота, секиры и щиты. Охотники-лучники.', emp: 'Броня, дисциплина и арбалеты. Дорогие, но стойкие бойцы.', khan: 'Быстрые всадники и конные лучники. Ты начинаешь верхом.' }[c] + '</p></button>').join('') + '</div></div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="' + (CR.mp ? 'mpgo' : 'begin') + '">' + (CR.mp ? 'В мир' : 'В путь') + '</button></div>');
 }
 function openCreate() { FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2; renderCreate(); }
 let QK = { me: 'nord', foe: 'emp', size: 40 };
@@ -1847,11 +2033,13 @@ function tradeDock(s) {
 }
 ACT.tsel = function (d) { const dbl = dblTap(d, 't|' + d.side + '|' + d.id); if (dbl) return dbl(d); UI.tsel = { side: d.side, id: d.id }; keepScroll(renderTown); };
 ACT.tbuy = function (d) {
+  if (NET.on) { NET.send({ t: 'tbuy', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doBuy(P, UI.town.s, d.id, n);
   if (r.n) { sfx('coin'); toast('Куплено: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99) toast(TRADE_WHY[r.why] || ''); } else toast(TRADE_WHY[r.why] || 'Не вышло');
   keepScroll(renderTown);
 };
 ACT.tsell = function (d) {
+  if (NET.on) { NET.send({ t: 'tsell', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doSell(P, UI.town.s, d.id, n);
   if (r.n) { sfx('coin'); toast('Продано: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99 && r.why) toast(TRADE_WHY[r.why]); } else toast(TRADE_WHY[r.why] || 'Не вышло');
   keepScroll(renderTown);
@@ -1910,9 +2098,9 @@ function invDock() {
 }
 ACT.isel = function (d) { const dbl = dblTap(d, 'i|' + (d.id || d.k)); if (dbl) return dbl(d); UI.isel = d.from === 'slot' ? { from: 'slot', k: d.k } : { from: 'bag', id: d.id }; keepScroll(renderPanel); };
 ACT.bagf = function (d) { UI.bagF = d.f; keepScroll(renderPanel); };
-ACT.equip = function (d) { const it = ITEM[d.id], r = doEquip(G.player, d.id); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
-ACT.unequip = function (d) { const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
-ACT.wield = function (d) { if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
+ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } const it = ITEM[d.id], r = doEquip(G.player, d.id); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
+ACT.unequip = function (d) { if (NET.on) { NET.send({ t: 'unequip', slot: d.slot }); sfx('click'); return; } const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
+ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); sfx('click'); return; } if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };
 
 /* ================= главный цикл ================= */
@@ -1925,7 +2113,7 @@ function s2wW(sx, sy) { return { x: WC.x + (sx - VIEW.w / 2) / WC.z, y: WC.y + (
 
 /* ---------- сохранение ---------- */
 function markRoads() { WT.road.fill(0); for (const seg of G.roads) for (let i = 0; i < seg.length - 1; i++) { const n = Math.ceil(Math.hypot(seg[i + 1].x - seg[i].x, seg[i + 1].y - seg[i].y) / 8); for (let k = 0; k <= n; k++) WT.road[cellOf(lerp(seg[i].x, seg[i + 1].x, k / n), lerp(seg[i].y, seg[i + 1].y, k / n))] = 1; } }
-function saveGame(silent) { if (!G || MODE !== 'world') return; try { const copy = Object.assign({}, G, { settles: G.settles.map(s => Object.assign({}, s, { camp: s.camp ? s.camp.id : null })), logDirty: false, player: null, players: G.players.map(P => Object.assign({}, P, { in: null })) }); localStorage.setItem(SAVE_KEY, JSON.stringify(copy)); } catch (e) { if (!silent) toast('Не удалось сохранить'); } }
+function saveGame(silent) { if (!G || MODE !== 'world' || NET.on) return; try { const copy = Object.assign({}, G, { settles: G.settles.map(s => Object.assign({}, s, { camp: s.camp ? s.camp.id : null })), logDirty: false, player: null, players: G.players.map(P => Object.assign({}, P, { in: null })) }); localStorage.setItem(SAVE_KEY, JSON.stringify(copy)); } catch (e) { if (!silent) toast('Не удалось сохранить'); } }
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 function loadGame() {
   let raw; try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { } if (!raw) return toast('Сохранения нет');
@@ -1936,11 +2124,11 @@ function startNew(o) { MODE = 'loading'; B = null; el('title').hidden = true; sh
 function enterWorld() {
   MODE = 'loading'; B = null; showLoad(true); setTimeout(() => {
     WT.img = paintTerrain(); MODE = 'world'; B = null; const P = G.player; WC.x = P.x; WC.y = P.y; WC.z = clamp(VIEW.h / 900, .7, 1.25); WC.free = false; G.paused = false; G.wait = false; G.hourAcc = 0;
-    el('title').hidden = true; el('bhud').hidden = true; el('whud').hidden = false; el('wlog').innerHTML = ''; G.player.logDirty = true; UI.back = null; showLoad(false); updateWorldHud(true);
+    el('title').hidden = true; el('bhud').hidden = true; el('whud').hidden = false; el('wlog').innerHTML = ''; G.player.logDirty = true; UI.back = null; showLoad(false); updateWorldHud(true); netFlush();
   }, 30);
 }
 function gotoTitle() { MODE = 'title'; el('whud').hidden = true; el('bhud').hidden = true; el('title').hidden = false; closeModal(); startDemo(); buildTitleMenu(); }
-function buildTitleMenu() { el('tmenu').innerHTML = '<button class="btn pri" data-act="newgame">Новая игра</button>' + (hasSave() ? '<button class="btn" data-act="cont">Продолжить</button>' : '') + '<button class="btn" data-act="quick">Быстрый бой</button><button class="btn" data-act="help">Как играть</button><button class="btn" data-act="snd">Звук: ' + (AU.on ? 'вкл' : 'выкл') + '</button>'; }
+function buildTitleMenu() { el('tmenu').innerHTML = '<button class="btn pri" data-act="newgame">Новая игра</button>' + (NET.avail ? '<button class="btn pri" data-act="mp">Играть вдвоём</button>' : '') + (hasSave() ? '<button class="btn" data-act="cont">Продолжить</button>' : '') + '<button class="btn" data-act="quick">Быстрый бой</button><button class="btn" data-act="help">Как играть</button><button class="btn" data-act="snd">Звук: ' + (AU.on ? 'вкл' : 'выкл') + '</button>'; }
 ACT.snd = function () { auSetOn(!AU.on); if (MODE === 'title') buildTitleMenu(); else openMenu(); };
 function startDemo() {
   const fs = ['nord', 'emp', 'khan'], a = pick(fs), b = pick(fs.filter(x => x !== a)); FACTIONS.player.c1 = FACTIONS.player.c1 || '#c08a2e';
@@ -1973,7 +2161,7 @@ function showResult(r, p) {
   const res = r.res, H = G.player.hero; const left = Object.keys(res.dead).map(k => '<div class="kv"><span>' + TROOPS[k].name + '</span><b class="dn">−' + res.dead[k] + '</b></div>').join('');
   openModal('<div class="whead"><h2>' + (r.win ? 'Победа' : 'Поражение') + '<span class="sub">' + (res.auto ? 'Расчётный бой' : 'Битва длилась ' + Math.floor(res.time / 60) + ' мин ' + Math.round(res.time % 60) + ' сек') + '</span></h2><span class="tag ' + (r.win ? 'g' : 'r') + '">' + (r.win ? 'Враг разбит' : 'Отряд отступил') + '</span></div><div class="wbody"><div class="cols"><div class="card"><h3>Итоги</h3><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b class="dn">' + r.lost + '</b></div><div class="kv"><span>Раненые вернулись в строй</span><b>' + r.wounded + '</b></div>' + (res.heroKills ? '<div class="kv"><span>Побед героя в бою</span><b>' + res.heroKills + '</b></div>' : '') + (r.win ? '<div class="kv"><span>Добыча</span><b class="up">+' + r.loot + ' золота</b></div>' : '<div class="kv"><span>Потеряно золота</span><b class="dn">−' + (res.lostGold || 0) + '</b></div>') + '' + (r.drops && r.drops.length ? '<div class="kv"><span>Трофеи</span><b class="up" style="text-align:right">' + dropText(r.drops) + '</b></div>' : '') + '<div class="kv"><span>Опыт героя</span><b>+' + (res.gx || Math.round(res.xp * .5)) + '</b></div>' + (r.lvl ? '<div class="kv"><span>Новый уровень</span><b class="up">' + H.lvl + '</b></div>' : '') + '</div>' + (left ? '<div class="card"><h3>Потери</h3>' + left + '</div>' : '') + '</div>' + (res.woke ? '<div class="note" style="margin-top:10px">Ты очнулся в городе ' + res.woke + '. Отряд разбит, но жив.</div>' : '') + '</div><div class="wfoot"><button class="btn pri" data-act="cont2">Продолжить</button></div>', 'narrow');
 }
-function afterBattle() { MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0) toast('Есть свободные очки умений'); saveGame(true); }
+function afterBattle() { if (NET.on) NET.send({ t: 'ack' }); MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0) toast('Есть свободные очки умений'); saveGame(true); }
 function startQuick() {
   const H = { name: 'Ты', str: 3, vit: 3, agi: 2, lead: 2, eq: { head: 'head_nasal', body: 'body_mail', hands: 'hands_leather', legs: 'legs_boots', melee: 'sword_knight', ranged: 'bow_long', shield: 'shield_banded', horse: QK.me === 'khan' ? 'horse_riding' : null }, sel: 'melee', hp: 1, seed: 7 }; FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2;
   enterBattle({ pl: genTroops(QK.me, QK.size, .6), en: genTroops(QK.foe, QK.size + 4, QK.foe === 'bandit' ? .35 : .6), pfac: 'player', efac: QK.foe, biome: FACTIONS[QK.me].biome, hero: H, leader: lordName(QK.foe), title: 'Быстрый бой', quick: true, seed: rint(1, 1e9), onEnd: quickEnded });
@@ -2002,7 +2190,7 @@ function updateBattleHud() {
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed; drawMinimap(el('bmini').firstElementChild);
 }
 function updateWorldHud(force) {
-  if (!G) return; const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
+  if (!G) return; netVoteUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
@@ -2015,7 +2203,7 @@ function updateWorldHud(force) {
 
 /* ---------- мир: ввод, шаги, отрисовка ---------- */
 function worldClick(sx, sy) {
-  if (!G || UI.open) return; const w = s2wW(sx, sy), P = G.player; auInit(); P.tid = null; P.sid = null; G.wait = false; WC.free = false;
+  if (!G || UI.open) return; const w = s2wW(sx, sy), P = G.player; if (NET.on) return netWorldClick(w); auInit(); P.tid = null; P.sid = null; G.wait = false; WC.free = false;
   let tp = null, bd = 34; for (const p of G.parties) { if (p.hide) continue; const d = Math.hypot(p.x - w.x, p.y - w.y); if (d < bd) { bd = d; tp = p; } }
   if (tp) { P.tid = tp.id; P.path = findPath(P.x, P.y, tp.x, tp.y) || []; P.pi = 0; P.rp = .6; return; }
   let ts = null; bd = 50; for (const s of G.settles) { const d = Math.hypot(s.x - w.x, s.y - w.y); if (d < bd) { bd = d; ts = s; } }
@@ -2024,6 +2212,7 @@ function worldClick(sx, sy) {
   const tx = clamp(w.x, 10, WW - 10), ty = clamp(w.y, 10, WH - 10); const path = findPath(P.x, P.y, tx, ty); if (!path) return toast('Туда не пройти'); P.path = path; P.pi = 0;
 }
 function worldUpdate(dt) {
+  if (NET.on) return netWorldUpdate(dt);
   if (!G || UI.open) return; const P = G.player, moving = (P.path.length && P.pi < P.path.length) || P.tid != null;
   if (!G.paused && (moving || G.wait)) {
     G.acc += dt * 1.2 * G.speed; G.hourAcc = G.hourAcc || 0; let guard = 0;
@@ -2038,13 +2227,13 @@ function drawWorld(g) {
   g.setTransform(d * z, 0, 0, d * z, d * (VIEW.w / 2 - WC.x * z), d * (VIEW.h / 2 - WC.y * z)); g.drawImage(WT.img, 0, 0);
   const x0 = WC.x - VIEW.w / 2 / z - 120, x1 = WC.x + VIEW.w / 2 / z + 120, y0 = WC.y - VIEW.h / 2 / z - 120, y1 = WC.y + VIEW.h / 2 / z + 160;
   if (P.path.length && P.pi < P.path.length) { g.setLineDash([8, 7]); g.lineCap = 'round'; g.beginPath(); g.moveTo(P.x, P.y); for (let i = P.pi; i < P.path.length; i++) g.lineTo(P.path[i].x, P.path[i].y); g.strokeStyle = 'rgba(20,12,4,.8)'; g.lineWidth = 5; g.stroke(); g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.stroke(); g.setLineDash([]); const e = P.path[P.path.length - 1]; g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.beginPath(); g.arc(e.x, e.y, 9, 0, TAU); g.stroke(); }
-  const list = []; for (const s of G.settles) if (s.x > x0 && s.x < x1 && s.y > y0 && s.y < y1) list.push({ y: s.y, s }); for (const p of G.parties) if (!p.hide && p.kind !== 'camp' && p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) list.push({ y: p.y, p }); list.push({ y: P.y, pl: 1 }); list.sort((a, b) => a.y - b.y);
+  const list = []; for (const s of G.settles) if (s.x > x0 && s.x < x1 && s.y > y0 && s.y < y1) list.push({ y: s.y, s }); for (const p of G.parties) if (!p.hide && p.kind !== 'camp' && p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) list.push({ y: p.y, p }); for (const Q of G.players) { if (Q !== P && (Q.in || Q.away)) continue; list.push({ y: Q.y, pl: Q }); } list.sort((a, b) => a.y - b.y);
   g.textAlign = 'center'; g.lineJoin = 'round';
   const label = (t, x, y, c, sz) => { g.font = '700 ' + (sz || 15) + 'px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.lineWidth = 4; g.strokeStyle = 'rgba(14,9,4,.9)'; g.strokeText(t, x, y); g.fillStyle = c || '#f0e6c8'; g.fillText(t, x, y); };
   for (const it of list) {
     if (it.s) { const s = it.s, sp = settleSprite(s), k = s.kind === 'town' ? .72 : s.kind === 'castle' ? .7 : .6; if (s.kind === 'camp' && s.cleared) g.globalAlpha = .5; g.drawImage(sp.cv, s.x - sp.ax * k, s.y - sp.ay * k, sp.cv.width * k, sp.cv.height * k); g.globalAlpha = 1; label(s.name, s.x, s.y + 22, s.kind === 'camp' ? '#e59a8c' : '#f0e6c8', s.kind === 'village' ? 13 : 16); }
     else if (it.p) { const p = it.p; let sp, k = .34; if (p.kind === 'caravan') { const c = caravanSprite(); g.drawImage(c.cv, p.x - c.ax * .5, p.y - c.ay * .5, 55, 35); label('Караван', p.x, p.y + 16, '#d8c9a2', 12); continue; } sp = getSprite(leaderType(p), 0, p.fac); const dir = p.fx < 0 ? -1 : 1; g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(p.x + 2, p.y + 3, 20, 7, 0, 0, TAU); g.fill(); g.save(); g.translate(p.x, p.y + Math.sin(G.day * 24 + G.hour + p.id) * 0); g.scale(dir * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, p.x + 14, p.y + 2, p.fac, 9); label(p.kind === 'bandit' ? 'Разбойники' : p.name, p.x, p.y + 17, p.kind === 'bandit' ? '#e59a8c' : '#f0e6c8', 12); }
-    else { const H = P.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4; g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(P.x + 2, P.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = '#ffd86a'; g.lineWidth = 2; g.beginPath(); g.ellipse(P.x, P.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(P.x, P.y); g.scale((P.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, P.x + 16, P.y + 2, 'player', 11); label(P.name, P.x, P.y + 19, '#ffe9a0', 14); }
+    else { const Q = it.pl, me = Q === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name, Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   const h = G.hour, night = h >= 21 || h < 4 ? .34 : h >= 19 ? (h - 18) * .1 : h < 6 ? (6 - h) * .1 : 0; if (night > 0) { g.fillStyle = 'rgba(8,16,48,' + night + ')'; g.fillRect(0, 0, cv.width, cv.height); }
@@ -2062,22 +2251,23 @@ function worldTip(sx, sy) {
 let drag = null;
 function bindInput() {
   window.addEventListener('keydown', e => {
+    if (netKey(e)) return;
     auInit(); IN.keys[e.code] = true; if (['Space', 'Tab', 'ArrowUp', 'ArrowDown'].includes(e.code) && !(e.target && e.target.tagName === 'INPUT')) e.preventDefault();
     if (e.target && e.target.tagName === 'INPUT') return;
     if (MODE === 'battle' && B && !B.cfg.demo) {
-      if (e.code === 'Escape') { if (!UI.open) { B.paused = true; openMenu(); } else { closeModal(); B.paused = false; } return; }
+      if (e.code === 'Escape') { if (!UI.open) { if (!NET.on) B.paused = true; openMenu(); } else { closeModal(); B.paused = false; } return; }
       if (UI.open) return;
       const k = e.code; if (k >= 'Digit1' && k <= 'Digit4') { B.sel = +k.slice(5) - 1; B.hudDirty = true; sfx('click'); }
       else if (k === 'KeyQ') { const w = s2w(IN.mx, IN.my); giveOrder('hold', w.x, w.y); } else if (k === 'KeyE') giveOrder('follow'); else if (k === 'KeyR') giveOrder('charge'); else if (k === 'KeyF') giveOrder('back');
-      else if (k === 'KeyP') { B.paused = !B.paused; } else if (k === 'KeyT') cycleSpeed();
+      else if (k === 'KeyP') { if (!NET.on) B.paused = !B.paused; } else if (k === 'KeyT') { if (!NET.on) cycleSpeed(); }
     } else if (MODE === 'world' && G) {
       if (e.code === 'Escape') { if (UI.open) { if (UI.enc) return; if (UI.town || UI.panel) { ACT.closepanel(); if (!UI.town) closeModal(); } else closeModal(); } else openMenu(); return; }
       if (UI.open) return;
-      if (e.code === 'Space') { G.paused = !G.paused; updateWorldHud(); } else if (e.code === 'KeyC') WC.free = false; else if (e.code === 'KeyP') { openPanel('troops'); } else if (e.code === 'KeyH') openPanel('hero'); else if (e.code === 'KeyJ') openPanel('journal'); else if (e.code === 'KeyI') openPanel('inv'); else if (e.code === 'KeyZ') { G.wait = !G.wait; toast(G.wait ? 'Отряд ждёт' : 'Снова в путь'); }
-      else if (e.code >= 'Digit1' && e.code <= 'Digit3') { G.speed = [1, 2, 4][+e.code.slice(5) - 1]; updateWorldHud(); }
+      if (e.code === 'Space') { if (NET.on) NET.send({ t: 'prop', k: 'pause', v: !G.paused }); else { G.paused = !G.paused; updateWorldHud(); } } else if (e.code === 'KeyC') WC.free = false; else if (e.code === 'KeyP') { openPanel('troops'); } else if (e.code === 'KeyH') openPanel('hero'); else if (e.code === 'KeyJ') openPanel('journal'); else if (e.code === 'KeyI') openPanel('inv'); else if (e.code === 'KeyZ') { G.wait = !G.wait; toast(G.wait ? 'Отряд ждёт' : 'Снова в путь'); }
+      else if (e.code >= 'Digit1' && e.code <= 'Digit3') { const sp = [1, 2, 4][+e.code.slice(5) - 1]; if (NET.on) NET.send({ t: 'prop', k: 'speed', v: sp }); else { G.speed = sp; updateWorldHud(); } }
     }
   });
-  window.addEventListener('keyup', e => { IN.keys[e.code] = false; });
+  window.addEventListener('keyup', e => { if (e.target && e.target.id === 'chatin') return; IN.keys[e.code] = false; });
   cv.addEventListener('contextmenu', e => e.preventDefault());
   cv.addEventListener('mousemove', e => { IN.mx = e.clientX; IN.my = e.clientY; if (MODE === 'world') { if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 6) drag.moved = true; if (drag.moved) { WC.free = true; WC.x = drag.cx - dx / WC.z; WC.y = drag.cy - dy / WC.z; } } worldTip(e.clientX, e.clientY); } });
   cv.addEventListener('mouseleave', () => { el('tip').hidden = true; });
@@ -2095,8 +2285,8 @@ function bindInput() {
   cv.addEventListener('touchmove', e => { if (MODE === 'world' && drag && e.touches.length === 1) { const t = e.touches[0], dx = t.clientX - drag.x, dy = t.clientY - drag.y; if (Math.hypot(dx, dy) > 10) drag.moved = true; if (drag.moved) { WC.free = true; WC.x = drag.cx - dx / WC.z; WC.y = drag.cy - dy / WC.z; } } }, { passive: true });
   cv.addEventListener('touchend', e => { if (MODE === 'world' && drag && !drag.moved) { const t = e.changedTouches[0]; worldClick(t.clientX, t.clientY); } drag = null; });
   // кнопки интерфейса
-  el('wspeed').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; auInit(); if (b.id === 'bPause') G.paused = !G.paused; else G.speed = +b.dataset.sp; sfx('click'); updateWorldHud(); });
-  el('bbtns').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b || !B) return; sfx('click'); const a = b.dataset.b; if (a === 'pause') B.paused = !B.paused; else if (a === 'speed') cycleSpeed(); else if (a === 'menu') { B.paused = true; openMenu(); } else if (a === 'retreat') { if (!B.over) { B.over = B.t; B.win = false; blog('Отряд отступает!', 1); } } });
+  el('wspeed').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; auInit(); if (NET.on) { NET.send(b.id === 'bPause' ? { t: 'prop', k: 'pause', v: !G.paused } : { t: 'prop', k: 'speed', v: +b.dataset.sp }); return; } if (b.id === 'bPause') G.paused = !G.paused; else G.speed = +b.dataset.sp; sfx('click'); updateWorldHud(); });
+  el('bbtns').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b || !B) return; sfx('click'); const a = b.dataset.b; if (NET.on && (a === 'pause' || a === 'speed')) toast('В сетевой игре бой нельзя ставить на паузу'); else if (a === 'pause') B.paused = !B.paused; else if (a === 'speed') cycleSpeed(); else if (a === 'menu') { if (!NET.on) B.paused = true; openMenu(); } else if (a === 'retreat') { if (NET.on) NET.send({ t: 'retreat' }); else if (!B.over) { B.over = B.t; B.win = false; blog('Отряд отступает!', 1); } } });
   el('bgroups').addEventListener('click', e => { const g = e.target.closest('.grp'); if (g && B) { B.sel = +g.dataset.g; sfx('click'); } });
   el('bords').addEventListener('click', e => { const o = e.target.closest('.ord'); if (!o || !B || !B.hero) return; const h = B.hero, foe = centroid(1), a = foe ? Math.atan2(foe.y - h.y, foe.x - h.x) : 0; giveOrder(o.dataset.o, h.x + Math.cos(a) * 60, h.y + Math.sin(a) * 60); });
   el('blog').addEventListener('click', () => el('blog').classList.toggle('open'));
@@ -2112,13 +2302,13 @@ function frame(ts) {
   const dt = Math.min(.1, (ts - lastT) / 1000 || 0); lastT = ts; const g = cx;
   try {
     if (MODE === 'title') { if (B) { battleUpdate(dt); battleDraw(g); if (B.over && B.t - B.over > 3) startDemo(); } musicTick(dt, 'world'); }
-    else if (MODE === 'battle' && B) { if (!UI.open || B.over) { readHeroInput(); battleUpdate(dt); } battleDraw(g); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
+    else if (MODE === 'battle' && B) { if (NET.on) netBattleUpdate(dt); else if (!UI.open || B.over) { readHeroInput(); battleUpdate(dt); } battleDraw(g); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
     else if (MODE === 'world' && G) { worldUpdate(dt); drawWorld(g); hudT -= dt; if (hudT <= 0) { hudT = .15; updateWorldHud(); } musicTick(dt, 'world'); }
   } catch (e) { console.error(e); if (!window.__err) { window.__err = 1; } }
   requestAnimationFrame(frame);
 }
 function init() {
-  cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
+  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
   el('modal').hidden = true; setTimeout(() => { startDemo(); el('title').hidden = false; buildTitleMenu(); showLoad(false); }, 50); requestAnimationFrame(frame);
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { }); init();
