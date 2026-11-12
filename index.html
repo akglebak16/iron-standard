@@ -120,6 +120,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 #title .sub{font:600 clamp(15px,2.2vw,22px) var(--disp);letter-spacing:.2em;color:var(--parch);text-shadow:0 2px 0 #000,0 0 12px #000;margin-bottom:14px}
 #title .menu{display:flex;flex-direction:column;gap:10px;width:min(330px,100%)}
 #title .menu .btn{font-size:21px;padding:14px 16px}
+#title .plat{margin-top:4px;font:600 14px var(--body);letter-spacing:.08em;color:var(--parch2);text-shadow:0 1px 0 #000,0 0 8px #000}
 #load{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:#0b0805;font:700 28px var(--disp);color:var(--brass);letter-spacing:.1em}
 #toast{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:70;padding:10px 18px;font:700 20px var(--disp);color:var(--parch);pointer-events:none;animation:tin .25s ease-out}
 @keyframes tin{from{opacity:0;transform:translate(-50%,-10px)}}
@@ -131,14 +132,68 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 }
 @media (prefers-reduced-motion:reduce){#toast{animation:none}.bar i{transition:none}}
 /* инвентарь и торговля */
-.trade{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin-top:8px}
-@media (max-width:760px){.trade{grid-template-columns:1fr}}
-.row.sm{padding:5px 8px;gap:8px;margin-bottom:4px}
-.row.sm .nm{font-size:16px}.row.sm .ds{font-size:13px}.row.sm .cnt{font-size:20px;min-width:30px}.row.sm .grow{min-width:110px}
-.isw{width:26px;height:26px;border-radius:3px;border:2px solid #000b;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 1px #ffffff30}
-.isw.gear{background:linear-gradient(180deg,#5b4128,#3a2a1a);color:var(--brass)}
-.price.cheap{color:#9fe27c}.price.dear{color:#ff8d79}
+#tbW{right:110px;bottom:236px;width:60px;height:60px;font-size:13px;background:#6a4d30cc}
 .pbar.cargo.over i{background:var(--blood)}
+.price.cheap{color:#9fe27c}.price.dear{color:#ff8d79}
+.inv{display:grid;grid-template-columns:minmax(300px,368px) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.inv{grid-template-columns:1fr}}
+.inv h3,.trade h3{font-size:19px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* плитки */
+.tile{position:relative;display:grid;place-items:center;width:100%;aspect-ratio:1;min-width:0;padding:0;margin:0;font:inherit;color:var(--parch);cursor:pointer;border-radius:4px;border:2px solid var(--tc,#0009);background:radial-gradient(circle at 50% 30%,#54402b 0%,#2c1f14 68%,#1a120b 100%);box-shadow:inset 0 0 0 1px #ffffff14,inset 0 -12px 16px #0006;overflow:hidden;transition:filter .12s}
+.tile:hover{filter:brightness(1.2)}
+.tile .ico{width:62%;height:62%;color:#e2d6b4;filter:drop-shadow(0 2px 1px #000b);vertical-align:0}
+.tile.g .ico{color:color-mix(in srgb,var(--ic,#c9a24a) 72%,#fff 28%)}
+.tile.hp .ico{margin-bottom:11px}
+.tile.empty{background:#00000038;border:2px dashed #ffffff22;box-shadow:none}.tile.empty .ico{color:#ffffff;opacity:.16;margin-bottom:8px}
+.tile.void{background:#0000002a;border:2px solid #ffffff0d;box-shadow:none;cursor:default}.tile.void:hover{filter:none}
+div.tile{cursor:default}div.tile:hover{filter:none}
+.tile.on{outline:2px solid var(--brass);outline-offset:1px;box-shadow:0 0 14px #d1a84c99,inset 0 0 0 1px #ffffff22}
+.tile.fit{border-color:#9bd25b;box-shadow:0 0 10px #9bd25b66,inset 0 0 0 1px #9bd25b44}
+.tile .qty{position:absolute;right:4px;top:2px;font:700 13px var(--disp);color:#fff3cf;text-shadow:0 1px 0 #000,0 0 3px #000}
+.tile .lab{position:absolute;left:0;right:0;bottom:3px;font:700 10px var(--body);letter-spacing:.05em;text-transform:uppercase;text-align:center;color:var(--parch2);opacity:.75;pointer-events:none}
+.tile .rib{position:absolute;left:3px;right:3px;bottom:3px;white-space:nowrap;font:700 9px/1.5 var(--body);font-style:normal;letter-spacing:.05em;text-transform:uppercase;text-align:center;background:#000b;color:var(--parch2);border-radius:2px;pointer-events:none}
+.tile .rib.g{background:#2f5a1df0;color:#d8f0bf}
+.tile .pr{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;gap:3px;padding:1px 0 2px;font:700 12px var(--disp);color:var(--brass);background:#000c;pointer-events:none}
+.tile .pr .ico{width:11px;height:11px;margin:0;filter:none;color:inherit}
+.tile .pr.cheap{color:#9fe27c}.tile .pr.dear{color:#ff8d79}.tile .pr.no{color:#b86a5c}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:6px;margin-top:6px}
+/* кукла героя */
+.doll{display:grid;grid-template-columns:74px minmax(0,1fr) 74px;gap:8px;padding:10px;background:radial-gradient(ellipse at 50% 62%,#6a4d3066,#0000 68%),#0000002e;border:2px solid #0008;border-radius:4px}
+.doll .col{display:grid;gap:8px;align-content:start}
+.fig{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:306px;padding-bottom:2px}
+.fig:before{content:"";position:absolute;left:12%;right:12%;bottom:44px;height:18px;background:radial-gradient(ellipse,#000a,#0000 70%)}
+.fig img{position:relative;display:block;height:228px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 4px #0009)}
+.fig .who{position:relative;margin-top:8px;font:700 18px var(--disp);color:var(--parch);text-align:center;text-shadow:0 2px 0 #000;letter-spacing:.03em}
+.fig .who small{display:block;font:500 12px var(--body);color:var(--parch2);text-shadow:none;letter-spacing:0}
+.stt{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:6px}
+.stt div{padding:3px 6px;background:#0000003a;border:1px solid #0008;border-radius:3px;text-align:center;min-width:0}
+.stt span{display:block;font-size:10.5px;color:var(--parch2);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stt b{font:700 16px var(--disp);color:var(--parch)}
+.fl{margin-left:auto;display:inline-flex;gap:4px}.fbtn{font:700 12px var(--body);letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;color:var(--parch2);background:#0000004a;border:1px solid #0009;border-radius:3px;cursor:pointer}
+.fbtn.on{color:var(--brass);background:#6a4d3099;border-color:var(--brass2)}.fbtn:hover{filter:brightness(1.25)}
+/* карточка вещи */
+.dock{flex:none;display:flex;gap:14px;align-items:center;padding:10px 18px;border-top:3px solid var(--ink);background:linear-gradient(180deg,#00000050,#0000002a);min-height:100px;max-height:44vh;overflow:auto;touch-action:pan-y}
+.dock>.tile{width:76px;flex:none}.dock.hint .tile{opacity:.7}
+.dinfo{flex:1;min-width:190px}
+.dnm{font:700 22px/1.1 var(--disp);text-shadow:0 2px 0 #000}
+.dsub{font-size:13px;color:var(--parch2);margin:2px 0 6px}
+.dstats{display:flex;flex-wrap:wrap;gap:3px 16px;font-size:14px}.dstats span{color:var(--parch2)}.dstats b{color:var(--parch);margin-left:5px}.dstats small{font-size:12px;font-weight:700}
+.ptags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.ptags em{font:700 11px var(--body);font-style:normal;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:2px;background:#0006;color:#e6c780;border:1px solid #d1a84c44}
+.pbars{display:grid;grid-template-columns:repeat(3,minmax(70px,1fr));gap:10px;margin-top:8px;max-width:420px}
+.pbars div{font-size:11px;color:var(--parch2);letter-spacing:.02em}.pbars b{color:var(--parch);float:right}
+.pbars i{display:block;height:7px;margin-top:3px;background:#120d08;border:1px solid #000;border-radius:2px;overflow:hidden}
+.pbars u{display:block;height:100%;background:linear-gradient(90deg,#8b6420,#e0b85c)}
+.dacts{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:120px}
+.dprice{display:flex;align-items:baseline;gap:5px;font:700 22px var(--disp);color:var(--brass)}.dprice .ico{align-self:center}.dprice small{font:500 12px var(--body);color:var(--parch2)}.dprice.cheap{color:#9fe27c}.dprice.dear{color:#ff8d79}
+@media (max-width:600px){.tile .rib{font-size:8px;letter-spacing:0}.tab{font-size:15px;padding:8px 11px}.dock.hint{display:none}.dock{padding:8px 12px;gap:10px;flex-wrap:wrap;max-height:40vh;min-height:0}.dock>.tile{width:52px}.dnm{font-size:19px}.dnote{display:none}.dstats{gap:2px 12px;font-size:13px}.dacts{flex-direction:row;flex-wrap:wrap;width:100%;min-width:0;align-items:center}.pbars{gap:6px;margin-top:6px}.doll{grid-template-columns:62px minmax(0,1fr) 62px;gap:6px;padding:8px}.fig{min-height:270px}.fig img{height:190px}}
+/* торговля */
+.tbar{display:grid;grid-template-columns:1fr minmax(170px,240px);gap:14px;align-items:end}
+@media (max-width:600px){.tbar{grid-template-columns:1fr}}
+.trade{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:10px}
+@media (max-width:760px){.trade{grid-template-columns:1fr}}
+/* сводка во вкладке «Герой» */
+.mini{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
+.mt{width:38px;height:38px;display:grid;place-items:center;border:2px solid var(--tc,#0009);border-radius:3px;background:radial-gradient(circle at 50% 30%,#54402b,#1a120b);color:#e2d6b4}.mt .ico{width:24px;height:24px}.mt.void{opacity:.4;border-style:dashed;border-color:#ffffff30;background:#0003}
 
 /* ---- сеть ---- */
 #votebar{position:absolute;left:50%;top:max(64px,calc(env(safe-area-inset-top,0px) + 56px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:16px}
@@ -150,6 +205,31 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 #chatin{pointer-events:auto;width:100%;box-sizing:border-box;background:rgba(20,14,8,.78);color:#f0e6c8;border:1px solid #6a5835;padding:5px 8px;font:inherit;font-size:15px;opacity:.55}
 #chatin:focus{opacity:1;outline:none;border-color:#e0b85a}
 #chat.bt{bottom:max(150px,calc(env(safe-area-inset-bottom,0px) + 150px));width:min(300px,40vw)}
+
+/* окно героя: атрибуты и перки */
+.win.wide{width:min(1040px,100%)}
+.hhead{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:10px 16px;background:#00000040;border:2px solid #0008;border-radius:4px}
+.hhead img{height:112px;width:auto;filter:drop-shadow(0 4px 3px #0009)}
+.hn{font:700 26px var(--disp);color:var(--parch);text-shadow:0 2px 0 #000;margin-bottom:4px}.hn small{font:500 14px var(--body);color:var(--parch2);margin-left:10px;text-shadow:none}
+.hst{display:flex;flex-wrap:wrap;gap:3px 18px;margin:4px 0 8px;font-size:14px}.hst span{color:var(--parch2)}.hst b{color:var(--parch);margin-left:6px}
+.hpts{display:grid;gap:6px;min-width:190px}
+.pchip{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 10px;border:2px solid #0008;border-radius:3px;background:#0004;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--parch2)}
+.pchip b{font:700 22px var(--disp);color:var(--parch)}.pchip.hot{border-color:var(--brass2);background:#6a4d3055}.pchip.hot b{color:var(--brass)}
+.arow{display:grid;grid-template-columns:216px minmax(0,1fr);gap:12px;margin-top:10px;align-items:stretch}
+.acell{padding:10px 12px;background:linear-gradient(180deg,#00000040,#00000060);border:2px solid #0008;border-radius:4px;display:flex;flex-direction:column;gap:5px}
+.ahd{display:flex;align-items:center;gap:8px}.ahd .ico{width:26px;height:26px;color:var(--brass)}.ahd b{font:700 20px var(--disp);flex:1}.ahd .v{font:700 28px var(--disp);color:var(--parch);line-height:1}
+.acell .ad{font-size:13px;color:var(--parch2);line-height:1.3}.acell .nx{margin-top:auto;font-size:12px;color:#8f8466}
+.perks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.perk{display:flex;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;font:inherit;color:var(--parch);background:radial-gradient(circle at 30% 0%,#54402b,#2c1f14 75%);border:2px solid #0009;border-radius:4px;box-shadow:inset 0 0 0 1px #ffffff12;cursor:default;min-width:0}
+.perk .pt{font:700 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--parch2)}
+.perk .pn{font:700 17px/1.1 var(--disp);text-shadow:0 1px 0 #000}
+.perk .pd{flex:1;font-size:12.5px;line-height:1.28;color:var(--parch2)}
+.perk .pf{margin-top:2px;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;color:#ff8d79}
+.perk.on{border-color:var(--brass);box-shadow:0 0 12px #d1a84c55,inset 0 0 0 1px #ffffff22}.perk.on .pn{color:var(--brass)}.perk.on .pf{color:var(--brass)}
+.perk.av{border-color:#9bd25b;box-shadow:0 0 10px #9bd25b55,inset 0 0 0 1px #9bd25b33;cursor:pointer}.perk.av:hover{filter:brightness(1.22)}.perk.av .pf{color:#9bd25b}
+.perk.rd{border-color:#9bd25b66}.perk.rd .pf{color:var(--parch2)}
+.perk.lk{opacity:.55;border-style:dashed;border-color:#ffffff2e;filter:grayscale(.35)}.perk.lk .pf{color:#b0a07c}
+.perk:disabled{color:var(--parch)}
 #wjoin{position:absolute;left:50%;bottom:max(86px,calc(env(safe-area-inset-bottom,0px) + 86px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:17px}
 #wjoin[hidden]{display:none}
 
@@ -173,9 +253,9 @@ input[type=range]{width:100%;accent-color:var(--brass)}
   <div id="bhero" class="plank"></div>
   <div id="borders"><div id="bords"></div><div id="bgroups" class="plank"></div></div>
   <div id="bmini" class="plank thin"><canvas width="380" height="250"></canvas></div>
-  <div id="touch" hidden><div id="joy"><i></i></div><div class="tb" id="tbA">Удар</div><div class="tb" id="tbB">Блок</div><div class="tb" id="tbS">Бег</div></div>
+  <div id="touch" hidden><div id="joy"><i></i></div><div class="tb" id="tbA">Удар</div><div class="tb" id="tbB">Блок</div><div class="tb" id="tbS">Бег</div><div class="tb" id="tbW">Оружие</div></div>
 </div>
-<div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div></div></div>
+<div id="title" hidden><div class="box"><h1>Железный<br>Стяг</h1><div class="sub">ВОЙНА · НАЁМНИКИ · СЛАВА</div><div class="menu" id="tmenu"></div><div class="plat">Игра для компьютера · клавиатура и мышь</div></div></div>
 <div id="modal" hidden></div>
 <div id="votebar" class="plank" hidden></div>
 <div id="wjoin" class="plank" hidden></div>
@@ -290,7 +370,7 @@ const GEAR = {
 };
 const GEAR_LABEL = { weapon: 'Оружие', armor: 'Доспех', shield: 'Щит', horse: 'Конь' };
 const GEAR_UNIT = { weapon: 'урон', armor: 'броня', shield: 'блок', horse: 'скорость' };
-const ATTRS = { str: ['Сила', '+3 к урону'], vit: ['Стойкость', '+14 к здоровью'], agi: ['Ловкость', 'быстрее удар и шаг'], lead: ['Лидерство', '+5 к размеру отряда, выше мораль'] };
+const ATTRS = { str: ['Сила', '+3 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
 function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
 function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1); } return s; }
@@ -304,6 +384,167 @@ function genTroops(fac, n, quality) { // quality 0..1
   }
   return Object.keys(out).map(k => ({ type: k, n: out[k] }));
 }
+
+/* ================= снаряжение героя: слоты, оружие, типы урона =================
+   Общий для клиента и сервера: без DOM. Герой носит предметы в слотах H.eq = { slot: id|null },
+   какое оружие в руках — H.sel ('melee' | 'ranged'). Старые герои (индексы armor/weapon/shield/horse)
+   переезжают в слоты лениво при первом обращении к heroEq(H), поэтому старые сохранения грузятся без миграции. */
+
+const SLOTS = ['head', 'body', 'hands', 'legs', 'melee', 'ranged', 'shield', 'horse'];
+const SLOT_NAME = { head: 'Голова', body: 'Тело', hands: 'Руки', legs: 'Ноги', melee: 'Ближний бой', ranged: 'Дальний бой', shield: 'Щит', horse: 'Конь' };
+const WTYPE = { sword: 'Меч', axe: 'Топор', mace: 'Булава', spear: 'Копьё', twohand: 'Двуручное', polearm: 'Древковое', bow: 'Лук', xbow: 'Арбалет', throw: 'Метательное', fist: 'Кулаки' };
+
+/* Тип урона → доля брони, которую удар игнорирует, по классу брони цели: лёгкая (<18), средняя (18–37), тяжёлая (38+) */
+const DTYPE = {
+  cut:    { n: 'Рубящий', p: [0, .06, 0],     note: '+15% урона по лёгкой броне, тяжёлую почти не берёт' },
+  pierce: { n: 'Колющий', p: [.18, .38, .22], note: 'лучше всех пробивает среднюю броню (кольчуги)' },
+  blunt:  { n: 'Дробящий', p: [.10, .26, .42], note: 'лучше всех пробивает латы, сильнее отбрасывает' }
+};
+function armClass(a) { return a < 18 ? 0 : a < 38 ? 1 : 2; }
+function dtPierce(dt, arm, extra) { const d = DTYPE[dt]; return clamp((d ? d.p[armClass(arm)] : 0) + (extra || 0), 0, .8); }
+function dtMul(dt, arm) { return dt === 'cut' && armClass(arm) === 0 ? 1.15 : 1; }
+
+/* ---------- каталог ---------- */
+const EQ = {};
+{ // помощники каталога живут в блоке, чтобы не занимать глобальные имена (PA, SP и т. п. уже есть в других файлах)
+function E(id, name, slot, tier, price, w, o) { return (EQ[id] = Object.assign({ id, name, slot, tier, price, w }, o || {})); }
+const armorPiece = (slot, tier, list) => list.forEach((a, i) => E(a[0], a[1], slot, i, a[2], a[3], { v: a[4], look: a[5], f: a[6] }));
+// голова: v — броня, look — рисунок шлема
+armorPiece('head', 0, [['head_cap', 'Кожаный подшлемник', 30, 1, 3, 'cap'], ['head_nasal', 'Шлем с наносником', 140, 2.5, 6, 'nasal'], ['head_kettle', 'Шлем-котелок', 380, 3.5, 9, 'kettle'], ['head_great', 'Закрытый шлем', 950, 5, 13, 'great']]);
+armorPiece('body', 0, [['body_padded', 'Стёганка', 35, 6, 12, 'padded'], ['body_mail', 'Кольчуга', 340, 14, 30, 'mail'], ['body_scale', 'Чешуйчатый доспех', 900, 18, 46, 'scale'], ['body_plate', 'Латы', 2100, 26, 64, 'plate']]);
+armorPiece('hands', 0, [['hands_leather', 'Кожаные перчатки', 25, .5, 2], ['hands_reinf', 'Усиленные рукавицы', 110, 1, 3], ['hands_mail', 'Кольчужные перчатки', 300, 1.5, 5], ['hands_plate', 'Латные перчатки', 720, 2, 7]]);
+armorPiece('legs', 0, [['legs_boots', 'Кожаные сапоги', 35, 1.5, 3], ['legs_greaves', 'Сапоги с наколенниками', 150, 2.5, 5], ['legs_mail', 'Кольчужные чулки', 400, 4, 7], ['legs_plate', 'Латные поножи', 900, 6, 10]]);
+// щиты: v — шанс блока
+E('shield_buckler', 'Баклер', 'shield', 0, 60, 2, { v: .42, look: 'small' });
+E('shield_plank', 'Дощатый щит', 'shield', 0, 25, 3, { v: .5, look: 'round' });
+E('shield_banded', 'Окованный щит', 'shield', 1, 240, 4, { v: .68, look: 'round' });
+E('shield_heraldic', 'Гербовый щит', 'shield', 2, 700, 5.5, { v: .84, look: 'kite' });
+// кони: v — скорость
+E('horse_riding', 'Походный конь', 'horse', 1, 520, 0, { v: 150, look: 'chestnut' });
+E('horse_steppe', 'Степной конь', 'horse', 2, 800, 0, { v: 160, look: 'dun', f: ['khan'] });
+E('horse_war', 'Боевой скакун', 'horse', 2, 1500, 0, { v: 172, look: 'barded' });
+
+/* Оружие ближнего боя. dmg — урон; spd — множитель времени замаха (больше = медленнее); reach — прибавка к дальности;
+   hands — 1 или 2 (с двуручным нельзя щит); arc — ширина удара; cleave — сколько целей заденет; brk — пробивает блок щитом;
+   kb — отбрасывание; anticav — бонус против конницы; parry — шанс блока оружием без щита */
+const melee = (o, base) => (id, name, tier, price, dmg, w, x) => E(id, name, 'melee', tier, price, w, Object.assign({ dmg, spd: 1, reach: 0, hands: 1, arc: 1, cleave: 3, fall: .7 }, base, o, x));
+const SW = melee({}, { wt: 'sword', dt: 'cut', parry: .22, look: 'sword' });
+const AX = melee({}, { wt: 'axe', dt: 'cut', spd: 1.1, brk: .4, parry: .12, look: 'axe' });
+const MC = melee({}, { wt: 'mace', dt: 'blunt', spd: 1.1, kb: 2.2, parry: .12, look: 'mace' });
+const SP = melee({}, { wt: 'spear', dt: 'pierce', spd: 1.1, reach: 20, arc: .7, cleave: 2, anticav: 1, parry: .2, look: 'spear' });
+const TH = melee({}, { wt: 'twohand', hands: 2, spd: 1.4, reach: 8, arc: 1.25, cleave: 4, fall: .8, parry: .32 });
+const PA = melee({}, { wt: 'polearm', dt: 'pierce', hands: 2, spd: 1.5, reach: 36, arc: .5, cleave: 2, anticav: 1, parry: .3 });
+SW('sword_old', 'Старый меч', 0, 40, 20, 3); SW('sword_knight', 'Рыцарский меч', 1, 380, 28, 3.5, { f: ['emp'] });
+SW('sword_master', 'Клинок мастера', 2, 1150, 38, 3.5); SW('sword_damask', 'Булатный клинок', 3, 2600, 50, 3.5, { f: ['khan'] });
+SW('sabre', 'Сабля', 1, 330, 27, 3, { spd: .92, look: 'sabre', f: ['khan'] });
+AX('axe_work', 'Рабочий топор', 0, 90, 24, 3.5, { f: ['nord'] }); AX('axe_battle', 'Боевой топор', 1, 420, 34, 4, { f: ['nord'] }); AX('axe_bearded', 'Бородатая секира', 2, 1250, 44, 4.5, { f: ['nord'] });
+MC('club', 'Дубина', 0, 60, 22, 4, { look: 'club' }); MC('mace', 'Булава', 1, 400, 31, 4); MC('mace_flanged', 'Шестопёр', 2, 1100, 41, 4.5);
+SP('spear_hunt', 'Охотничье копьё', 0, 80, 24, 3.5); SP('spear_war', 'Боевое копьё', 1, 340, 33, 4, { f: ['emp', 'nord'] });
+TH('tw_sword', 'Двуручный меч', 2, 1300, 56, 7, { dt: 'cut', look: 'sword' }); TH('tw_claymore', 'Клеймор', 3, 2800, 68, 8, { dt: 'cut', spd: 1.45, reach: 10, look: 'sword' });
+TH('tw_axe', 'Двуручная секира', 2, 1500, 62, 8, { dt: 'cut', spd: 1.5, brk: .5, look: 'axe', f: ['nord'] }); TH('tw_hammer', 'Боевой молот', 2, 1400, 60, 9, { dt: 'blunt', spd: 1.5, kb: 2.8, look: 'mace' });
+PA('pike', 'Пика', 1, 600, 42, 6, { reach: 40, look: 'spear', f: ['emp'] }); PA('halberd', 'Алебарда', 2, 950, 48, 7, { dt: 'cut', spd: 1.35, reach: 28, arc: .7, cleave: 3, look: 'halberd', f: ['emp'] });
+
+/* Оружие дальнего боя (боеприпасы бесконечные). cd — перезарядка, сек; range — дальность; acc — разброс; pb — доп. пробитие;
+   bs — сколько урона даёт каждая единица силы */
+const ranged = (id, name, tier, price, dmg, w, o) => E(id, name, 'ranged', tier, price, w, Object.assign({ rng: 1, dt: 'pierce', dmg, hands: 2, parry: 0, bs: 1.2 }, o));
+ranged('bow_hunt', 'Охотничий лук', 0, 120, 17, 1.5, { wt: 'bow', cd: .9, range: 330, acc: .05, look: 'bow', f: ['nord'] });
+ranged('bow_long', 'Длинный лук', 1, 560, 26, 2, { wt: 'bow', cd: 1.15, range: 420, acc: .04, look: 'bow', f: ['nord'] });
+ranged('bow_comp', 'Составной лук', 2, 1300, 33, 2, { wt: 'bow', cd: 1, range: 400, acc: .035, look: 'bow', f: ['khan'] });
+ranged('xbow_light', 'Лёгкий арбалет', 1, 700, 30, 4, { wt: 'xbow', cd: 2, range: 360, acc: .03, pb: .12, bs: 0, look: 'xbow', f: ['emp'] });
+ranged('xbow_heavy', 'Тяжёлый арбалет', 2, 1700, 46, 6, { wt: 'xbow', cd: 2.9, range: 380, acc: .025, pb: .22, bs: 0, look: 'xbow', f: ['emp'] });
+ranged('jav_dart', 'Дротики', 0, 110, 26, 2.5, { wt: 'throw', hands: 1, cd: 1.2, range: 210, acc: .06, bs: 2, look: 'spear' });
+ranged('jav_spear', 'Метательные копья', 1, 420, 38, 3.5, { wt: 'throw', hands: 1, cd: 1.4, range: 230, acc: .05, bs: 2, look: 'spear', f: ['nord', 'khan'] });
+ranged('jav_heavy', 'Тяжёлые метательные копья', 2, 980, 50, 4.5, { wt: 'throw', hands: 1, cd: 1.6, range: 240, acc: .045, pb: .1, bs: 2, look: 'spear', f: ['khan'] });
+}
+
+/* ---------- герой и его слоты ---------- */
+const LEGACY_EQ = { weapon: ['sword_old', 'sword_knight', 'sword_master', 'sword_damask'], armor: ['body_padded', 'body_mail', 'body_scale', 'body_plate'], shield: ['shield_plank', 'shield_banded', 'shield_heraldic'], horse: [null, 'horse_riding', 'horse_war'] };
+function syncLegacy(H) { H.horse = H.eq.horse ? (H.eq.horse === 'horse_war' ? 2 : 1) : 0; } // индекс коня нужен карте мира (скорость отряда) и старому коду
+function heroEq(H) {
+  if (H.eq) return H.eq;
+  H.eq = { head: 'head_cap', body: LEGACY_EQ.armor[H.armor] || null, hands: null, legs: null, melee: LEGACY_EQ.weapon[H.weapon] || 'sword_old', ranged: null, shield: LEGACY_EQ.shield[H.shield] || null, horse: LEGACY_EQ.horse[H.horse] || null };
+  H.sel = 'melee'; syncLegacy(H); return H.eq;
+}
+function eqItem(H, slot) { const id = heroEq(H)[slot]; return id && EQ[id] ? EQ[id] : null; }
+const FIST = { id: 'fist', name: 'Кулаки', slot: 'melee', wt: 'fist', dt: 'blunt', dmg: 8, spd: .9, reach: -3, hands: 1, arc: 1, cleave: 3, fall: .7, parry: .1, look: null };
+function heroWield(H) { const eq = heroEq(H); if (H.sel === 'ranged' && eq.ranged && EQ[eq.ranged]) return EQ[eq.ranged]; return (eq.melee && EQ[eq.melee]) || FIST; }
+function heroShield(H) { const s = eqItem(H, 'shield'); return s && heroWield(H).hands < 2 ? s : null; } // двуручное оружие и щит несовместимы
+function heroArmor(H) { let a = 0; for (const k of ['head', 'body', 'hands', 'legs']) { const it = eqItem(H, k); if (it) a += it.v; } return a; }
+function heroGear(H) { const W = heroWield(H), S = heroShield(H), horse = eqItem(H, 'horse'); return { W, S, horse, mounted: !!horse, arm: heroArmor(H), block: S ? S.v : (W.parry || 0) }; }
+
+/* ================= герой: атрибуты, перки, очки =================
+   Общий для клиента и сервера: без DOM. Пять атрибутов (ATTRS в 01_core.js), у каждого четыре перка с порогами.
+   Перк берётся за очко перков, когда атрибут достиг порога. Очки: за уровень +2 очка атрибутов и +1 очко перков.
+   Герой хранит: H.str/vit/agi/int/cha, H.pts (очки атрибутов), H.pp (очки перков), H.perks (список id изученных).
+   Старые герои (Лидерство, без Интеллекта и перков) чинятся лениво через heroFix(H), поэтому старые сохранения грузятся без миграции. */
+
+const PTS_LEVEL = 2, PP_LEVEL = 1, PTS_START = 2, PP_START = 1; // очки за уровень и на старте
+const PERK_REQ = [3, 5, 8, 11];                                 // пороги атрибута для 1–4 перка (справочно, у каждого перка своё поле req)
+
+/* fx — что перк прибавляет (складывается по всем изученным). Значения в долях (0.12 = +12%), кроме arm, size, morale (единицы). */
+const PERKS = [
+  // Сила
+  { id: 'grip',      a: 'str', req: 3,  n: 'Крепкая хватка',    d: 'Двуручное и древковое оружие бьёт на 12% сильнее.', fx: { heavy: .12 } },
+  { id: 'packhorse', a: 'str', req: 5,  n: 'Тяжеловоз',         d: 'Обоз вмещает на 25% больше груза.', fx: { cargo: .25 } },
+  { id: 'breaker',   a: 'str', req: 8,  n: 'Сокрушитель',       d: 'Удары ближнего боя игнорируют ещё 8% брони.', fx: { mpierce: .08 } },
+  { id: 'butcher',   a: 'str', req: 11, n: 'Мясник',            d: 'За каждого сражённого врага герой восстанавливает 4% здоровья.', fx: { killHeal: .04 } },
+  // Стойкость
+  { id: 'tough',     a: 'vit', req: 3,  n: 'Закалка',           d: 'Здоровье героя выше на 12%.', fx: { hp: .12 } },
+  { id: 'hide',      a: 'vit', req: 5,  n: 'Толстая кожа',      d: 'Броня героя выше на 5.', fx: { arm: 5 } },
+  { id: 'recover',   a: 'vit', req: 8,  n: 'Живучий',           d: 'Герой лечится на карте на 60% быстрее.', fx: { heal: .6 } },
+  { id: 'lastStand', a: 'vit', req: 11, n: 'Последний рубеж',   d: 'Раз за бой, когда здоровье падает до нуля, герой встаёт с 30% здоровья.', fx: { lastStand: .3 } },
+  // Ловкость
+  { id: 'quick',     a: 'agi', req: 3,  n: 'Быстрые руки',      d: 'Удары и выстрелы на 8% быстрее.', fx: { cd: .08 } },
+  { id: 'eagle',     a: 'agi', req: 5,  n: 'Меткий глаз',       d: 'Разброс стрел и болтов меньше на 35%, дальность больше на 10%.', fx: { acc: .35, range: .1 } },
+  { id: 'light',     a: 'agi', req: 8,  n: 'Лёгкая поступь',    d: 'Отряд идёт по карте на 8% быстрее, погоню легче оставить позади, бег в бою быстрее на 5%.', fx: { map: .08, flee: .1, run: .05 } },
+  { id: 'master',    a: 'agi', req: 11, n: 'Мастер оружия',     d: 'Любое оружие бьёт на 12% сильнее.', fx: { dmg: .12 } },
+  // Интеллект
+  { id: 'surgery',   a: 'int', req: 3,  n: 'Хирургия',          d: 'Среди павших бойцов больше остаются ранеными и возвращаются в строй (+20% к доле раненых).', fx: { surv: .2 } },
+  { id: 'learner',   a: 'int', req: 5,  n: 'Сообразительный',   d: 'Опыта за бои на 15% больше.', fx: { xp: .15 } },
+  { id: 'merchant',  a: 'int', req: 8,  n: 'Торговец',          d: 'Покупаешь на 5% дешевле, продаёшь на 5% дороже.', fx: { buy: .05, sell: .05 } },
+  { id: 'tactician', a: 'int', req: 11, n: 'Тактик',            d: 'Бойцы отряда бьют на 8% сильнее и держатся твёрже (мораль +6).', fx: { ally: .08, morale: 6 } },
+  // Харизма
+  { id: 'inspire',   a: 'cha', req: 3,  n: 'Вдохновляющий',     d: 'Мораль бойцов отряда выше на 12.', fx: { morale: 12 } },
+  { id: 'recruiter', a: 'cha', req: 5,  n: 'Вербовщик',         d: 'Найм и улучшение войск дешевле на 15%.', fx: { hire: .15 } },
+  { id: 'commander', a: 'cha', req: 8,  n: 'Командир',          d: 'Отряд больше на 10 бойцов, жалованье ниже на 10%.', fx: { size: 10, wage: .1 } },
+  { id: 'famous',    a: 'cha', req: 11, n: 'Знаменитый наёмник', d: 'Награды за задания и добыча после боя больше на 20%.', fx: { quest: .2, loot: .2 } }
+];
+const PERK = {}; for (const p of PERKS) PERK[p.id] = p;
+const FX_ZERO = Object.freeze({ heavy: 0, cargo: 0, mpierce: 0, killHeal: 0, hp: 0, arm: 0, heal: 0, lastStand: 0, cd: 0, acc: 0, range: 0, map: 0, flee: 0, run: 0, dmg: 0, surv: 0, xp: 0, buy: 0, sell: 0, ally: 0, morale: 0, hire: 0, size: 0, wage: 0, quest: 0, loot: 0 });
+
+/* Старые герои: Лидерство стало Харизмой, Интеллекта не было, перков не было.
+   Очки перков за уже набранные уровни выдаются задним числом (по одному за уровень). */
+function heroFix(H) {
+  if (!H) return H;
+  if (H.cha === undefined) H.cha = H.lead || 1;
+  if (H.int === undefined) H.int = 1;
+  if (!H.perks) H.perks = [];
+  if (H.pp === undefined) H.pp = Math.max(0, (H.lvl || 1) - H.perks.length);
+  return H;
+}
+
+/* Сумма эффектов изученных перков. Кэш в WeakMap, а не в самом герое, чтобы в сохранение и в сеть не попадало лишнего. */
+const FXC = new WeakMap();
+function perkFx(H) {
+  const ids = H && H.perks; if (!ids || !ids.length) return FX_ZERO;
+  const key = ids.join(','), c = FXC.get(H); if (c && c.k === key) return c.f;
+  const f = Object.assign({}, FX_ZERO); for (const id of ids) { const p = PERK[id]; if (p) for (const k in p.fx) f[k] += p.fx[k]; }
+  FXC.set(H, { k: key, f }); return f;
+}
+const hasPerk = (H, id) => !!(H && H.perks && H.perks.includes(id));
+
+/* Можно ли взять перк: '' если да, иначе причина (для кнопок и подсказок) */
+function perkWhy(H, id) {
+  heroFix(H); const p = PERK[id]; if (!p) return 'Нет такого перка.';
+  if (H.perks.includes(id)) return 'Уже изучено.';
+  if (H[p.a] < p.req) return 'Нужно: ' + ATTRS[p.a][0] + ' ' + p.req + '.';
+  if (H.pp < 1) return 'Нет очков перков.';
+  return '';
+}
+
+/* Цены найма и улучшения с учётом перка «Вербовщик» */
+const hireCost = (P, type) => Math.max(1, Math.round(TROOPS[type].cost * (1 - perkFx(P.hero).hire)));
+const upgCost = (P, type) => Math.max(1, Math.round(TROOPS[type].upCost * (1 - perkFx(P.hero).hire)));
 
 /* ================= рисованная графика: бюсты на подставках ================= */
 const OL = '#1b130c';
@@ -484,8 +725,8 @@ function buildSprite(L, pal, seed) {
 }
 function palOf(fac) { const f = FACTIONS[fac]; return { c1: f.c1, c2: f.c2 }; }
 function getSprite(type, variant, fac) { const k = type + '|' + variant + '|' + fac + '|' + FACTIONS[fac].c1; if (!SPR[k]) SPR[k] = buildSprite(TROOPS[type].look, palOf(fac), hashStr(type) + variant * 977); return SPR[k]; }
-function heroLook(h) { const a = h.armor; return { helm: ['cap', 'nasal', 'spectacle', 'great'][a], armor: ['padded', 'mail', 'scale', 'plate'][a], weapon: h.horse && h.weapon >= 1 ? 'sword' : 'sword', shield: ['round', 'round', 'kite'][h.shield], horse: h.horse ? (h.horse === 2 ? 'barded' : 'chestnut') : null, beard: 1 }; }
-function getHeroSprite(h, mounted) { const k = 'hero|' + h.armor + h.weapon + h.shield + (mounted ? h.horse : 0) + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
+function heroLook(h) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), hd = EQ[eq.head], bd = EQ[eq.body], hs = EQ[eq.horse]; return { helm: hd ? hd.look : 'none', armor: bd ? bd.look : 'tunic', weapon: W.look || null, shield: S ? S.look : 'none', horse: hs ? hs.look : null, beard: 1 }; }
+function getHeroSprite(h, mounted) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), k = 'hero|' + [eq.head, eq.body, W.id, S && S.id, mounted ? eq.horse : ''].join(',') + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
 function corpseOf(sp) { if (!sp.corpse) sp.corpse = sp.mk(false); return sp.corpse; }
 const PORT = {};
 function portrait(type, fac) { const k = type + fac + FACTIONS[fac].c1; if (!PORT[k]) PORT[k] = getSprite(type, 0, fac).cv.toDataURL(); return PORT[k]; }
@@ -558,11 +799,11 @@ const VIEW = { w: 800, h: 600, dpr: 1 };
 const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, touch: false, sprint: false };
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
-function heroDef(h) {
-  const m = !!h.horse;
-  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: 0, reach: 9, fac: 'player', up: [],
-    cd: Math.max(.3, .56 - h.agi * .03), hp: 100 + h.vit * 14, arm: GEAR.armor[h.armor].v, dmg: GEAR.weapon[h.weapon].v + h.str * 3,
-    spd: m ? GEAR.horse[h.horse].v : 86 + h.agi * 3, block: GEAR.shield[h.shield].v };
+function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
+  const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
+  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
+    cd: (W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1)) * (1 - F.cd), hp: Math.round((100 + h.vit * 14) * (1 + F.hp)), arm: Gr.arm + F.arm, dmg: (W.dmg + h.str * (W.rng ? W.bs : 3)) * (1 + F.dmg + heavy),
+    spd: (m ? Gr.horse.v : 86 + h.agi * 3) * (1 + F.run), block: Gr.block };
 }
 function mkUnit(side, t, fac, x, y, sp) {
   const u = { id: B.units.length, side, t, fac, x, y, vx: 0, vy: 0, face: side ? Math.PI : 0, dir: side ? -1 : 1, hp: t.hp, maxHp: t.hp, arm: t.arm, dmg: t.dmg, block: t.block,
@@ -584,7 +825,8 @@ function startBattle(cfg) {
   if (cfg.hero) {
     const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
     h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
-    const mb = (cfg.hero.lead || 0) * 4; for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; }
+    const F = perkFx(cfg.hero), mb = (cfg.hero.cha || cfg.hero.lead || 0) * 4 + F.morale; h.fx = F;
+    for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; if (F.ally) u.dmg *= 1 + F.ally; }
   }
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
   for (const s of B.groups) for (const g of s) layout(g, true);
@@ -708,7 +950,7 @@ function blocked(t, fromA, kind) {
 function strike(a, t) {
   let dmg = (a.t.range ? (a.t.mdmg || a.dmg * .6) : a.dmg) * rnd(.8, 1.2); const fromA = Math.atan2(a.y - t.y, a.x - t.x), rear = Math.abs(angDiff(fromA, t.face)) > 2.1;
   if (!rear && blocked(t, fromA, 'melee')) { fxSpark(t.x + Math.cos(fromA) * 10, t.y + Math.sin(fromA) * 10 - 14); sfx('clang', t); if (t === B.hero) ftext(t.x, t.y - 44, 'Блок', '#d8d2c4'); return; }
-  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; hurt(t, dmg, a, 0); sfx('hit', t);
+  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; if (a.t.wpn) { dmg *= dtMul(a.t.wpn.dt, t.arm); hurt(t, dmg, a, dtPierce(a.t.wpn.dt, t.arm, a.t.wpn.pb)); } else hurt(t, dmg, a, 0); sfx('hit', t);
 }
 function chargeHit(a, e, v) {
   a.ccd = 1.7; let dmg = a.dmg * (.6 + v / 150); const fromA = Math.atan2(a.y - e.y, a.x - e.x), front = Math.abs(angDiff(fromA, e.face)) < 1.1;
@@ -719,18 +961,19 @@ function chargeHit(a, e, v) {
 }
 function shoot(u, e, d) {
   const dur = d / 430 + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = d * u.t.acc;
-  B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || 0, xb: u.t.look && u.t.look.weapon === 'xbow' });
-  u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0]);
+  B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || (u.t.wpn && u.t.wpn.pb) || 0, dt: u.t.wpn && u.t.wpn.dt, jv: !!(u.t.wpn && u.t.wpn.wt === 'throw'), xb: (u.t.look && u.t.look.weapon === 'xbow') || !!(u.t.wpn && u.t.wpn.wt === 'xbow') });
+  u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
 }
 function hurt(t, dmg, src, pierce) {
   if (t.dead) return; const arm = t.arm * (1 - (pierce || 0)), d = Math.max(1, Math.round(dmg * (1 - arm / (arm + 55))));
   t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4); ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
+  if (t.hp <= 0 && t.isHero && t.fx && t.fx.lastStand && !t.lsUsed) { t.lsUsed = true; t.hp = Math.max(1, t.maxHp * t.fx.lastStand); if (!SERVER) ftext(t.x, t.y - 62, 'Не сдаюсь!', '#f1d27a'); blog(t.name + ' поднялся на ноги', 0); }
   if (t.hp <= 0) kill(t, src);
 }
 function kill(t, src) {
-  t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); }
+  t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
   if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
@@ -749,24 +992,43 @@ function heroControl(h, dt) {
   const ml = Math.hypot(mx, my); if (ml > 1) { mx /= ml; my /= ml; }
   if (typeof I.face === 'number') h.face = I.face;
   h.blocking = !!I.blk && h.wind < 0;
+  if (I.sw && !h.swHeld && h.wind < 0) swapWield(h); h.swHeld = !!I.sw;
   let sp = h.spd; const sprint = I.spr && ml > .2 && h.stam > 2 && !h.blocking;
   if (sprint) { sp *= h.t.mounted ? 1.2 : 1.4; h.stam = Math.max(0, h.stam - 26 * dt); } else h.stam = Math.min(100, h.stam + (ml > .2 ? 9 : 18) * dt);
   if (h.blocking) sp *= .55; if (h.swing > 0 && !h.t.mounted) sp *= .7;
   const k = Math.min(1, (h.t.mounted ? (ml > .1 ? 1.7 : .9) : 12) * dt); h.vx += (mx * sp - h.vx) * k; h.vy += (my * sp - h.vy) * k;
-  if (I.atk && h.cd <= 0 && h.wind < 0 && !h.blocking) { h.wind = .13; h.cd = h.t.cd; h.swing = .26; h.bump = 1; h.swingA = h.face; sfx('swing'); }
+  if (I.atk && h.cd <= 0 && h.wind < 0 && !h.blocking) { const rw = h.t.wpn && h.t.wpn.rng; h.wind = rw ? .2 : .13; h.cd = h.t.cd; h.swing = rw ? 0 : .26; h.bump = 1; h.swingA = h.face; if (!rw) sfx('swing'); }
   if (h.wind >= 0) { h.wind -= dt; if (h.wind < 0) heroStrike(h); }
   h.swing -= dt;
   if (h.t.mounted && h.ccd <= 0) { const v = Math.hypot(h.vx, h.vy); if (v > 95) { const va = Math.atan2(h.vy, h.vx); for (const e of B.units) { if (e.side !== 1 || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d < h.r + e.r + 5 && Math.abs(angDiff(Math.atan2(e.y - h.y, e.x - h.x), va)) < .9) { chargeHit(h, e, v); h.ccd = .9; break; } } } }
 }
 function heroStrike(h) {
-  const R = 30 + h.t.reach + (h.t.mounted ? 8 : 0); let hits = 0;
+  const W = h.t.wpn; if (W && W.rng) return heroShoot(h);
+  const R = 30 + h.t.reach + (h.t.mounted ? 8 : 0), arc = W ? W.arc : 1, maxHits = W ? W.cleave : 3, fall = W ? W.fall : .7, kb = W && W.kb ? W.kb : 1; let hits = 0;
   for (const e of B.units) {
-    if (e.side === h.side || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d > R + e.r) continue; const a = Math.atan2(e.y - h.y, e.x - h.x); if (Math.abs(angDiff(a, h.swingA)) > 1.0) continue;
+    if (e.side === h.side || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d > R + e.r) continue; const a = Math.atan2(e.y - h.y, e.x - h.x); if (Math.abs(angDiff(a, h.swingA)) > arc) continue;
     const fromA = a + Math.PI, rear = Math.abs(angDiff(fromA, e.face)) > 2.1;
-    if (!rear && blocked(e, fromA, 'melee') && Math.random() < .75) { fxSpark(e.x - Math.cos(a) * 8, e.y - Math.sin(a) * 8 - 14); sfx('clang', e); ftext(e.x, e.y - 44, 'Блок', '#b9b2a5'); }
-    else { e.x += Math.cos(a) * 5; e.y += Math.sin(a) * 5; hurt(e, h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? .7 : 1), h, .1); sfx('hit', e); }
-    if (++hits >= 3) break;
+    if (!rear && blocked(e, fromA, 'melee') && Math.random() < .75 - (W && W.brk || 0)) { fxSpark(e.x - Math.cos(a) * 8, e.y - Math.sin(a) * 8 - 14); sfx('clang', e); ftext(e.x, e.y - 44, 'Блок', '#b9b2a5'); }
+    else {
+      e.x += Math.cos(a) * 5 * kb; e.y += Math.sin(a) * 5 * kb; let dmg = h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? fall : 1);
+      if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); }
+      hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, (W.pb || 0) + (h.fx ? h.fx.mpierce : 0)) : .1 + (h.fx ? h.fx.mpierce : 0)); sfx('hit', e);
+    }
+    if (++hits >= maxHits) break;
   }
+}
+function heroShoot(h) { // выстрел или бросок в сторону курсора: цель выбирается в узком конусе (формат ввода h.inp не меняется)
+  const W = h.t.wpn, R = h.t.range || W.range, a0 = h.swingA; let best = null, bs = 1e9;
+  for (const e of B.units) { if (e.side === h.side || !alive(e)) continue; const dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy); if (d > R || d < 14) continue; const da = Math.abs(angDiff(Math.atan2(dy, dx), a0)); if (da > .2) continue; const sc = da * 420 + d * .12; if (sc < bs) { bs = sc; best = e; } }
+  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (h.t.acc || W.acc || .05);
+  const px = best ? best.x + best.vx * dur * .8 : h.x + Math.cos(a0) * d, py = best ? best.y + best.vy * dur * .8 : h.y + Math.sin(a0) * d;
+  B.arrows.push({ x0: h.x, y0: h.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: h.side, dmg: h.dmg, src: h, pierce: W.pb || 0, dt: W.dt, xb: W.wt === 'xbow', jv: W.wt === 'throw' });
+  h.bump = .5; sfx('bow', h); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), h.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
+}
+function swapWield(h) { // ближнее ↔ дальнее оружие (клавиша X)
+  const cfg = B.cfg.hero, eq = heroEq(cfg), to = cfg.sel === 'ranged' ? 'melee' : 'ranged'; if (to === 'ranged' && !eq.ranged) { ftext(h.x, h.y - 52, 'Нет дальнего оружия', '#d8d2c4'); return; }
+  cfg.sel = to; const hd = heroDef(cfg); h.t = hd; h.dmg = hd.dmg; h.arm = hd.arm; h.block = hd.block; h.cd = Math.max(h.cd, .35); h.swing = 0; if (!SERVER) h.sp = getHeroSprite(cfg, hd.mounted);
+  ftext(h.x, h.y - 52, hd.wpn.name, '#f1e3b0'); sfx('click'); ev(['w', h.id, to === 'ranged' ? 1 : 0]); B.hudDirty = true;
 }
 /* ---------- эффекты ---------- */
 function fxBlood(x, y, n) { if (SERVER || B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
@@ -798,8 +1060,8 @@ function battleUpdate(rdt) {
   for (let i = B.arrows.length - 1; i >= 0; i--) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
-    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15), a.src, a.pierce); sfx('arrowhit', hit); } }
-    else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
+    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
+    else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(a.jv ? -18 : -9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
   for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
   for (let i = B.texts.length - 1; i >= 0; i--) { const p = B.texts[i]; p.l -= dt; p.y -= 26 * dt; if (p.l <= 0) B.texts.splice(i, 1); }
@@ -827,10 +1089,11 @@ function battleCamera(rdt) {
 }
 function finishBattle() {
   const mk = (pid, hero) => {
+    const surv = hero && hero.fx ? hero.fx.surv : 0;
     const res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: hero ? !!hero.dead : B.heroDown, heroHp: hero ? clamp(hero.hp / hero.maxHp, 0, 1) : 1, heroKills: hero ? hero.kills : 0, time: B.t, enemyLeft: {} };
     for (const u of B.units) {
       if (u.isHero && u.side === 0) continue; const id = u.t.id;
-      if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
+      if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
       else { if (u.dead && !u.gone) res.enemyDead++; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; }
     }
     return res;
@@ -876,7 +1139,7 @@ function battleDraw(g) {
   g.lineCap = 'round';
   for (const a of B.arrows) { const p = a.t / a.dur, x = lerp(a.x0, a.x1, p), y = lerp(a.y0, a.y1, p), dd = Math.hypot(a.x1 - a.x0, a.y1 - a.y0), hgt = Math.sin(p * Math.PI) * dd * (a.xb ? .08 : .17), an = Math.atan2(a.y1 - a.y0 - Math.cos(p * Math.PI) * dd * .17 * 1.2, a.x1 - a.x0);
     g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, y + 14); g.lineTo(x - Math.cos(an) * 8, y + 14); g.stroke();
-    g.strokeStyle = '#2a1c10'; g.lineWidth = 1.7; g.beginPath(); g.moveTo(x, y - hgt); g.lineTo(x - Math.cos(an) * 12, y - hgt - Math.sin(an) * 12); g.stroke(); g.strokeStyle = '#efe9d6'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(x - Math.cos(an) * 10, y - hgt - Math.sin(an) * 10); g.lineTo(x - Math.cos(an) * 13, y - hgt - Math.sin(an) * 13); g.stroke(); }
+    const ln = a.jv ? 22 : 12; g.strokeStyle = '#2a1c10'; g.lineWidth = a.jv ? 2.6 : 1.7; g.beginPath(); g.moveTo(x, y - hgt); g.lineTo(x - Math.cos(an) * ln, y - hgt - Math.sin(an) * ln); g.stroke(); g.strokeStyle = '#efe9d6'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(x - Math.cos(an) * 10, y - hgt - Math.sin(an) * 10); g.lineTo(x - Math.cos(an) * 13, y - hgt - Math.sin(an) * 13); g.stroke(); }
   for (const p of B.fx) { g.globalAlpha = Math.min(1, p.l * 3); g.fillStyle = p.c; if (p.k) { ell(g, p.x, p.y, p.s, p.s * .7); g.fill(); } else g.fillRect(p.x, p.y, p.s, p.s); } g.globalAlpha = 1;
   g.font = '700 15px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center';
   for (const p of B.texts) { g.globalAlpha = Math.min(1, p.l * 2.5); g.lineWidth = 3; g.strokeStyle = 'rgba(15,10,6,.85)'; g.strokeText(p.s, p.x, p.y); g.fillStyle = p.c; g.fillText(p.s, p.x, p.y); } g.globalAlpha = 1;
@@ -1021,7 +1284,7 @@ function partyStr(p) { return strength(p.troops); }
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
-function sizeCap(h) { return 20 + h.lead * 5 + (h.lvl - 1) * 3; }
+function sizeCap(h) { heroFix(h); return 20 + h.cha * 5 + (h.lvl - 1) * 3 + perkFx(h).size; }
 function leaderType(p) { let b = null, bs = -1; for (const s of p.troops) { const t = TROOPS[s.type], v = t.tier * 10 + s.n * .01; if (v > bs) { bs = v; b = s.type; } } return b; }
 function addT(list, type, n) { const f = list.find(s => s.type === type); if (f) f.n += n; else list.push({ type, n }); }
 function remT(list, type, n) { const f = list.find(s => s.type === type); if (!f) return; f.n -= n; if (f.n <= 0) list.splice(list.indexOf(f), 1); }
@@ -1040,7 +1303,7 @@ function newWorld(seed) {
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
   return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
-    hero: { name: nm, lvl: 1, xp: 0, pts: 2, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
+    hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
 function addPlayer(o) { const P = mkPlayer(o); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
 function newGame(o) { newWorld(o.seed); const P = addPlayer(o); G.player = P; FACTIONS.player.c1 = BANNERS[P.banner].c1; FACTIONS.player.c2 = BANNERS[P.banner].c2; return G; }
@@ -1058,12 +1321,12 @@ function genQuests() {
 }
 function questText(q) { const s = settleById(q.sid), f = settleById(q.from); return q.type === 'camp' ? 'Разгромить разбойников: «' + s.name + '»' : 'Доставить груз в ' + s.name; }
 function acceptQuest(P, q) { const t = settleById(q.from); if (P.quests.length >= 4) return 'Не больше четырёх заданий одновременно.'; if (t.board.indexOf(q) < 0) return 'Задание уже взято.'; t.board.splice(t.board.indexOf(q), 1); P.quests.push(q); return null; }
-function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { P.gold += q.reward; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + q.reward + ' золота.', 3, P); } }
+function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { const rw = Math.round(q.reward * (1 + perkFx(P.hero).quest)); P.gold += rw; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + rw + ' золота.', 3, P); } }
 
 /* ---------- ход времени ---------- */
 function speedOf(p) {
   let m = 1, base = 17, any = false, mo = true; for (const s of p.troops) { any = true; if (!TROOPS[s.type].mounted) mo = false; } if (any && mo) base = 22;
-  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; }
+  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; base *= 1 + perkFx(p.hero).map; }
   const k = cellOf(p.x, p.y), t = WT.cells[k]; m = t === 2 ? .72 : t === 3 ? .78 : 1; if (WT.bio[k] === 1) m *= .85; if (WT.road[k]) m *= 1.3; if (p.kind === 'bandit') m *= 1.04; return base * m;
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
@@ -1117,7 +1380,7 @@ function autoFight(a, b) {
 }
 function hourTick() {
   G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
-  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014; P.hero.hp = Math.min(1, P.hero.hp + heal); }
+  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = (P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014) * (1 + ((P.hero.int || 1) - 1) * .04 + perkFx(P.hero).heal); P.hero.hp = Math.min(1, P.hero.hp + heal); }
   for (const s of G.settles) { if (s.kind === 'camp') { if (s.cleared) { s.respawn -= 1; if (s.respawn <= 0) respawnCamp(s); } continue; } s.rt += 1; if (s.rt >= 72) { s.rt = 0; genRecruits(s); } }
   // спавны
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
@@ -1127,13 +1390,13 @@ function hourTick() {
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); }
 function playerDay(P) {
-  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = Math.round(wage / 3);
+  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = wageDay(P);
   if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
   if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
   for (const q of P.quests.slice()) if (G.day > q.dl) { P.quests.splice(P.quests.indexOf(q), 1); P.rel[q.fac] = Math.max(-100, P.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1, P); }
   for (const f of ['nord', 'emp', 'khan']) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }
-function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3); }
+function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3 * (1 - perkFx(P.hero).wage)); }
 
 /* ---------- ландшафт: картинка ---------- */
 function paintTerrain() {
@@ -1204,7 +1467,8 @@ function caravanSprite() { if (SS_CACHE.car) return SS_CACHE.car; const c = mkCa
 
 /* ================= игровая логика, общая для клиента и сервера ================= */
 function xpNeed(l) { return 100 + l * 80; }
-function heroBattle(H) { return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, lead: H.lead, armor: H.armor, weapon: H.weapon, shield: H.shield, horse: H.horse, hp: H.hp, seed: H.seed }; }
+const xpMul = H => 1 + ((H.int || 1) - 1) * .03 + perkFx(H).xp; // опыт: +3% за очко Интеллекта и перк «Сообразительный»
+function heroBattle(H) { heroFix(H); return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, int: H.int, cha: H.cha, perks: H.perks.slice(), eq: Object.assign({}, heroEq(H)), sel: H.sel || 'melee', hp: H.hp, seed: H.seed }; } // снаряжение — слотами (см. 01b_gear.js)
 function townEnter(P, s) {
   P.in = s.id; P.path = []; P.pi = 0; P.tid = null; P.sid = null;
   for (const q of P.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);
@@ -1212,23 +1476,24 @@ function townEnter(P, s) {
 }
 function doHire(P, s, type, n) {
   const r = s.recruits.find(x => x.type === type), t = TROOPS[type]; if (!r) return false;
-  n = Math.min(n, r.n, Math.floor(P.gold / t.cost), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return false;
-  P.gold -= n * t.cost; addT(P.troops, type, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); return true;
+  const c = hireCost(P, type); n = Math.min(n, r.n, Math.floor(P.gold / c), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return false;
+  P.gold -= n * c; addT(P.troops, type, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); return true;
 }
 function doGear(P, k) { const H = P.hero, nx = GEAR[k] && GEAR[k][H[k] + 1]; if (!nx || P.gold < nx.p) return false; P.gold -= nx.p; H[k]++; return true; }
 function doFood(P, n, price) { const opt = [[10, 22], [30, 60], [80, 150]].find(o => o[0] === n && o[1] === price); if (!opt || P.gold < price) return false; P.gold -= price; P.food += n; return true; }
 function doUpgrade(P, type, up) {
-  const t = TROOPS[type], s = P.troops.find(x => x.type === type); if (!s || !t.up.includes(up)) return 0; const n = Math.min(s.n, Math.floor(P.gold / t.upCost)); if (n < 1) return 0;
-  P.gold -= n * t.upCost; remT(P.troops, type, n); addT(P.troops, up, n); return n;
+  const t = TROOPS[type], s = P.troops.find(x => x.type === type); if (!s || !t.up.includes(up)) return 0; const c = upgCost(P, type), n = Math.min(s.n, Math.floor(P.gold / c)); if (n < 1) return 0;
+  P.gold -= n * c; remT(P.troops, type, n); addT(P.troops, up, n); return n;
 }
-function doAttr(P, k) { const H = P.hero; if (!ATTRS[k] || H.pts < 1) return false; H.pts--; H[k]++; return true; }
+function doAttr(P, k) { const H = heroFix(P.hero); if (!ATTRS[k] || H.pts < 1) return false; H.pts--; H[k]++; return true; }
+function doPerk(P, id) { const H = P.hero; if (perkWhy(H, id)) return false; H.pp--; H.perks.push(id); return true; } // перки: см. 01c_perks.js
 function doAccept(P, s, qid) { const q = (s.board || []).find(x => x.id === qid); if (!q) return 'Задание уже взято.'; return acceptQuest(P, q); }
 
 /* ---------- встреча и бой ---------- */
 function relativePowerOf(P, p) { const a = strength(P.troops) + 8, b = p.str !== undefined && !p.troops ? p.str : partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); }
 function encFlee(P, p) {
-  const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0), .12, .9);
+  const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0) + perkFx(P.hero).flee, .12, .9);
   if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; p.lock = null; const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); return true; }
   return false;
 }
@@ -1237,42 +1502,42 @@ function battleCfgFor(P, p) {
     title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9) };
 }
 function autoResult(P, p) {
-  const H = P.hero, sa = strength(P.troops) + 10, sb = partyStr(p), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + 10, sb = partyStr(p), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
   const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
-  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
+  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
   if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
   return res;
 }
 function applyBattleResult(P, res, p) {
-  const H = P.hero; let loot = 0, lvl = 0;
+  const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0;
   for (const k in res.dead) remT(P.troops, k, res.dead[k]);
   H.hp = clamp(res.heroHp, .22, 1);
   const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
   if (res.win) {
     let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
-    loot = Math.round(sv * rnd(.7, 1.1) + (p.gold || 0)); if (p.kind === 'camp') loot += 120; P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
-    P.stats.wins++; P.stats.kills += res.enemyDead; const gx = res.xp + 12 + res.heroKills * 4; H.xp += gx; res.gx = gx;
+    loot = Math.round((sv * rnd(.7, 1.1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
+    P.stats.wins++; P.stats.kills += res.enemyDead; const gx = Math.round((res.xp + 12 + res.heroKills * 4) * xpMul(H)); H.xp += gx; res.gx = gx;
     const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
     if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
     if (p.kind === 'bandit' || p.kind === 'camp') P.rel[P.culture] = Math.min(100, P.rel[P.culture] + 1);
     logW('Победа над отрядом «' + p.name + '». Добыча: ' + loot + ' золота.', 3, P);
   } else {
-    const keep = Math.round(P.gold * .25); res.lostGold = keep; P.gold -= keep; H.xp += Math.round(res.xp * .5);
+    const keep = Math.round(P.gold * .25); res.lostGold = keep; P.gold -= keep; H.xp += Math.round(res.xp * .5 * xpMul(H));
     if (res.enemyLeft && Object.keys(res.enemyLeft).length) p.troops = Object.keys(res.enemyLeft).map(k => ({ type: k, n: res.enemyLeft[k] }));
     p.cd = 10; p.state = 'idle'; p.path = []; p.lock = null;
     if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
     logW('Ты потерпел поражение от «' + p.name + '».', 1, P);
   }
-  while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts++; lvl++; }
-  if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Распредели очко умений.', 3, P); }
+  while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts += PTS_LEVEL; H.pp += PP_LEVEL; lvl++; }
+  if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Очки: атрибуты +' + PTS_LEVEL * lvl + ', перки +' + PP_LEVEL * lvl + '.', 3, P); }
   return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl };
 }
 
 /* ================= инвентарь и торговля: логика (без DOM) ================= */
 /* Хранение: P.inv = { id: количество } — всё, что лежит в обозе (не надето).
    Рынок поселения: s.market = { day, gold, stock: { id: количество } }, создаётся лениво при первом заходе,
-   поэтому старые сохранения грузятся без миграции. Надетое снаряжение по-прежнему хранится индексами
-   в P.hero.weapon/armor/shield/horse, бой и сервер ничего не знают об обозе. */
+   поэтому старые сохранения грузятся без миграции. Надетое хранится в слотах героя P.hero.eq (см. 01b_gear.js),
+   бой и сервер ничего не знают об обозе. */
 
 const GOODS = {
   grain:   { n: 'Зерно',    p: 14,  w: 1,   c: '#c9a24a', raw: 1, make: ['emp'],  need: ['nord', 'khan'] },
@@ -1285,19 +1550,14 @@ const GOODS = {
   wine:    { n: 'Вино',     p: 90,  w: 1.5, c: '#8a1f3a', lux: 1, make: ['emp'],  need: ['nord', 'khan'] },
   spice:   { n: 'Пряности', p: 220, w: .3,  c: '#c4622a', lux: 1, make: ['khan'], need: ['nord', 'emp'] }
 };
-const GEAR_W = { weapon: [3, 3.5, 3.5, 4], armor: [6, 14, 18, 26], shield: [3, 4, 5], horse: [0, 0, 0] };
-const GEAR_BASE = { weapon: 40, armor: 35, shield: 25, horse: 0 }; // цена бесплатных стартовых вещей (в GEAR у них p: 0)
-const GEAR_APPEAR = [.85, .6, .4, .22];  // шанс, что вещь такого уровня есть у торговца при создании рынка
-const GEAR_DAILY = [.14, .1, .06, .03];  // шанс, что отсутствующая вещь появится за день
+const GEAR_APPEAR = [.6, .42, .28, .16];  // шанс, что вещь такого уровня есть у торговца при создании рынка (до поправки на фракцию)
+const GEAR_DAILY = [.13, .09, .06, .035]; // шанс, что отсутствующая вещь появится за день
 const MK_GOLD = { town: 2600, castle: 1400, village: 800 };
 const MK_GOODS = { town: 16, castle: 5, village: 9 };
 
-/* каталог: id → предмет. Снаряжение строится из GEAR (id вида 'weapon:2'), товары — из GOODS */
+/* каталог: id → предмет. Снаряжение берётся из EQ (01b_gear.js), товары — из GOODS */
 const ITEM = {};
-for (const k of Object.keys(GEAR)) GEAR[k].forEach((g, i) => {
-  if (k === 'horse' && !i) return; // «Пеший» — не предмет
-  ITEM[k + ':' + i] = { id: k + ':' + i, kind: 'gear', slot: k, idx: i, name: g.n, v: g.v, price: g.p || GEAR_BASE[k], w: (GEAR_W[k] || [])[i] || 0 };
-});
+for (const id in EQ) ITEM[id] = Object.assign({ kind: 'gear' }, EQ[id]);
 for (const k of Object.keys(GOODS)) ITEM[k] = { id: k, kind: 'goods', name: GOODS[k].n, price: GOODS[k].p, w: GOODS[k].w, c: GOODS[k].c };
 
 /* ---------- обоз героя ---------- */
@@ -1305,9 +1565,9 @@ function invOf(P) { return P.inv || (P.inv = {}); }
 function invN(P, id) { return invOf(P)[id] || 0; }
 function invAdd(P, id, n) { const I = invOf(P), v = (I[id] || 0) + n; if (v > 0) I[id] = v; else delete I[id]; }
 function invWeight(P) { const I = invOf(P); let w = 0; for (const id in I) if (ITEM[id]) w += ITEM[id].w * I[id]; return Math.round(w * 10) / 10; }
-function cargoCap(P) { const H = P.hero; return 60 + troopCount(P.troops) * 3 + H.str * 6 + (H.horse ? 30 : 0); }
+function cargoCap(P) { const H = P.hero; return Math.round((60 + troopCount(P.troops) * 3 + H.str * 6 + (eqItem(H, 'horse') ? 30 : 0)) * (1 + perkFx(H).cargo)); }
 function invIds(P, kind) { return Object.keys(invOf(P)).filter(id => ITEM[id] && ITEM[id].kind === kind).sort((a, b) => ITEM[a].price - ITEM[b].price); }
-function equippedId(P, slot) { const id = slot + ':' + P.hero[slot]; return ITEM[id] ? id : null; }
+function equippedId(P, slot) { const id = heroEq(P.hero)[slot]; return id && ITEM[id] ? id : null; }
 
 /* ---------- рынок поселения ---------- */
 function hasMarket(s) { return s && s.kind !== 'camp' && s.fac !== 'bandit'; }
@@ -1318,21 +1578,22 @@ function goodTarget(s, id) {
   if (s.kind === 'castle' && !['grain', 'ale', 'salt', 'iron'].includes(id)) t *= .4;
   return Math.max(1, Math.round(t));
 }
-function gearPool(s) {
+function gearPool(s) { // что вообще может продаваться в поселении: деревня до 1 уровня, город до 2, замок до 3
   const max = s.kind === 'village' ? 1 : s.kind === 'town' ? 2 : 3, out = [];
-  for (const id in ITEM) { const it = ITEM[id]; if (it.kind !== 'gear') continue; if (it.slot === 'horse' ? (s.kind === 'village' ? it.idx <= 1 : true) : it.idx <= max) out.push(id); }
+  for (const id in ITEM) { const it = ITEM[id]; if (it.kind === 'gear' && it.tier <= max) out.push(id); }
   return out;
 }
+function gearOdds(s, id, table) { const it = ITEM[id]; return table[it.tier] * (it.f ? (it.f.includes(s.fac) ? 1.5 : .45) : 1); } // местные товары попадаются чаще
 function mkMarket(s) {
   const m = { day: G.day, gold: Math.round((MK_GOLD[s.kind] || 800) * rnd(.7, 1.1)), stock: {} };
   for (const id in GOODS) m.stock[id] = Math.round(goodTarget(s, id) * rnd(.6, 1.4));
-  for (const id of gearPool(s)) if (Math.random() < GEAR_APPEAR[ITEM[id].idx]) m.stock[id] = rint(1, 2);
+  for (const id of gearPool(s)) if (Math.random() < gearOdds(s, id, GEAR_APPEAR)) m.stock[id] = rint(1, 2);
   return m;
 }
 function marketDay(s, m) {
   m.gold += Math.round(((MK_GOLD[s.kind] || 800) - m.gold) * .12) + 20;
   for (const id in GOODS) { const t = goodTarget(s, id), v = m.stock[id] || 0; m.stock[id] = Math.max(0, v + Math.round((t - v) * .22 + rnd(-1.4, 1.4))); }
-  for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < GEAR_DAILY[ITEM[id].idx]) m.stock[id] = 1; }
+  for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < gearOdds(s, id, GEAR_DAILY)) m.stock[id] = 1; }
 }
 function marketOf(s) { // ленивое создание и догон по дням (до 20 дней за раз)
   if (NET.on && s.market) return s.market; // в сети рынком владеет сервер
@@ -1351,8 +1612,11 @@ function regionMod(s, id) {
 }
 function stockMod(s, id) { if (ITEM[id].kind !== 'goods') return 1; return clamp(1.5 - .5 * (marketOf(s).stock[id] || 0) / Math.max(12, goodTarget(s, id)), .6, 1.6); } // знаменатель не меньше 12, чтобы партия в 10 штук не обрушивала цену на «бедном» рынке
 function relMod(P, s) { return clamp((P.rel && P.rel[s.fac]) || 0, -100, 100) * .0006; } // дружба до ±6% к цене
-function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)))); }
-function sellPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)))); }
+function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)) * (1 - perkFx(P.hero).buy))); }
+function sellPrice(P, s, id) { // продажа никогда не выгоднее покупки в том же городе: дружба и перк «Торговец» не должны давать вечный двигатель
+  const it = ITEM[id], raw = Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)) * (1 + perkFx(P.hero).sell));
+  return Math.max(1, Math.min(raw, Math.floor(buyPrice(P, s, id) * .93)));
+}
 function priceLevel(s, id) { if (ITEM[id].kind !== 'goods') return ''; const r = regionMod(s, id) * stockMod(s, id); return r < .88 ? 'low' : r > 1.12 ? 'high' : ''; } // цена здесь ниже/выше обычной
 
 /* ---------- сделки: цена пересчитывается на каждую единицу, поэтому крупная партия дорожает/дешевеет ---------- */
@@ -1382,11 +1646,18 @@ function doSell(P, s, id, n) {
 const TRADE_WHY = { stock: 'У торговца больше нет этого товара.', gold: 'Не хватает золота.', weight: 'В обозе не хватает места.', merchant: 'У торговца кончились деньги.', none: 'Здесь не торгуют.' };
 
 /* ---------- экипировка ---------- */
-function doEquip(P, id) {
-  const it = ITEM[id]; if (!it || it.kind !== 'gear' || invN(P, id) < 1) return false;
-  const old = equippedId(P, it.slot); invAdd(P, id, -1); if (old) invAdd(P, old, 1); P.hero[it.slot] = it.idx; return true;
+function doEquip(P, id) { // → { ok, note }; предмет берётся из обоза, прежний из слота уходит в обоз
+  const it = ITEM[id], H = P.hero; if (!it || it.kind !== 'gear' || invN(P, id) < 1) return { ok: false, note: '' };
+  const eq = heroEq(H), melee = eq.melee && EQ[eq.melee]; let note = '';
+  if (it.slot === 'shield' && melee && melee.hands === 2) return { ok: false, note: 'Со двуручным оружием щит не носят.' };
+  const old = eq[it.slot]; invAdd(P, id, -1); if (old) invAdd(P, old, 1); eq[it.slot] = id;
+  if (it.slot === 'melee' && it.hands === 2 && eq.shield) { invAdd(P, eq.shield, 1); eq.shield = null; note = 'Щит убран в обоз: двуручное оружие.'; }
+  if (it.slot === 'horse') syncLegacy(H);
+  return { ok: true, note };
 }
-function doUnequipHorse(P) { const old = equippedId(P, 'horse'); if (!old) return false; invAdd(P, old, 1); P.hero.horse = 0; return true; }
+function doUnequip(P, slot) { const H = P.hero, eq = heroEq(H), id = eq[slot]; if (!id) return false; invAdd(P, id, 1); eq[slot] = null; if (slot === 'horse') syncLegacy(H); if (slot === 'ranged' && H.sel === 'ranged') H.sel = 'melee'; return true; }
+function doUnequipHorse(P) { return doUnequip(P, 'horse'); } // оставлено для сервера (server/sim.js импортирует эту функцию)
+function doWield(P, sel) { const H = P.hero; if (sel === 'ranged' && !heroEq(H).ranged) return false; H.sel = sel; return true; } // какое оружие в руках в начале боя
 
 /* ---------- трофеи после победы ---------- */
 function rollLoot(P, p) {
@@ -1398,8 +1669,8 @@ function rollLoot(P, p) {
     if (p.kind === 'caravan' || Math.random() < .3) {
       const own = ids.filter(g => GOODS[g].make.includes(p.fac)); id = pick(p.kind === 'caravan' && own.length ? own : ids); n = clamp(Math.round(rint(120, 300) / GOODS[id].p), 1, 14);
     } else {
-      const slot = mounted && Math.random() < .12 ? 'horse' : pick(['weapon', 'weapon', 'armor', 'armor', 'shield']), top = Math.min(GEAR[slot].length - 1, Math.round(avg));
-      let idx = Math.floor(Math.pow(Math.random(), 1.6) * (top + 1)); if (slot === 'horse') idx = Math.max(1, idx); id = slot + ':' + idx;
+      const top = clamp(Math.round(avg), 0, 3), pool = Object.keys(ITEM).filter(k => ITEM[k].kind === 'gear' && ITEM[k].tier <= top && (ITEM[k].slot !== 'horse' || mounted)), ws = pool.map(k => (ITEM[k].f && ITEM[k].f.includes(p.fac) ? 2.2 : 1) / (1 + ITEM[k].tier));
+      let r = Math.random() * ws.reduce((a, b) => a + b, 0), j = 0; while (j < pool.length - 1 && (r -= ws[j]) > 0) j++; id = pool[j];
     }
     if (!ITEM[id]) continue;
     while (n > 0 && w + ITEM[id].w * n > cap + 1e-6) n--; // что не влезает в обоз, остаётся на поле
@@ -1630,7 +1901,7 @@ function renderTown() {
   if (tab === 'recruit') {
     body += '<div class="note">В отряде ' + cnt + ' из ' + cap + ' бойцов. Свободных рекрутов: ' + troopCount(s.recruits) + '. Новые люди приходят каждые три дня.</div>';
     if (!s.recruits.length) body += '<div class="note">Сегодня здесь никто не хочет воевать.</div>';
-    for (const r of s.recruits) { const t = TROOPS[r.type], ok = P.gold >= t.cost && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < t.cost ? 'no' : '') + '">' + ic('coin') + t.cost + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
+    for (const r of s.recruits) { const t = TROOPS[r.type], hc = hireCost(P, r.type), ok = P.gold >= hc && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < hc ? 'no' : '') + '">' + ic('coin') + hc + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
   } else if (tab === 'trade') {
     body += tradeBody(s);
   } else if (tab === 'market') {
@@ -1644,7 +1915,7 @@ function renderTown() {
     if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
   const tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок'], ['quests', 'Задания']];
-  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.player.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
+  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.player.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'trade' ? tradeDock(s) : '') + '<div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
 /* ---------- отряд и герой ---------- */
@@ -1654,13 +1925,10 @@ function renderPanel() {
   if (tab === 'troops') {
     body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay(G.player) + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
     sortT(P.troops); if (!P.troops.length) body += '<div class="note">У тебя нет отряда. Найми людей в городе.</div>';
-    for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = t.upCost; acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
+    for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = upgCost(P, s.type); acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
   } else if (tab === 'hero') {
-    const ws = GEAR.weapon[H.weapon], ar = GEAR.armor[H.armor], sh = GEAR.shield[H.shield], hs = GEAR.horse[H.horse], hd = heroDef(H);
-    body += '<div class="cols"><div class="card"><h3>' + H.name + '</h3><div class="kv"><span>Уровень</span><b>' + H.lvl + '</b></div><div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div><div class="kv"><span>Опыт</span><b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></div><div class="kv"><span>Здоровье</span><b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></div><div class="kv"><span>Урон / броня</span><b>' + hd.dmg + ' / ' + hd.arm + '</b></div><div class="kv"><span>Размер отряда</span><b>' + cap + '</b></div></div>' +
-      '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
-      '<div class="card"><h3>Снаряжение</h3><div class="kv"><span>Оружие</span><b>' + ws.n + '</b></div><div class="kv"><span>Доспех</span><b>' + ar.n + '</b></div><div class="kv"><span>Щит</span><b>' + sh.n + '</b></div><div class="kv"><span>Конь</span><b>' + hs.n + '</b></div><p class="note">Покупай снаряжение в городах.</p></div></div>';
+    body += heroBody();
   } else if (tab === 'ally') {
     body += allyBody();
   } else if (tab === 'inv') {
@@ -1671,7 +1939,7 @@ function renderPanel() {
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
   const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (NET.on) tabs.push(['ally', 'Союз']);
-  openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
+  openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
 }
 
 /* ---------- встреча ---------- */
@@ -1702,7 +1970,7 @@ const ACT = {
   closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.panel = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
   upg(d) { if (NET.on) { NET.send({ t: 'upg', type: d.t, up: d.u }); sfx('coin'); return; } const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
   dismiss(d) { if (NET.on) { NET.send({ t: 'dismiss', type: d.t }); return; } remT(G.player.troops, d.t, 1); renderPanel(); },
-  attr(d) { if (NET.on) { NET.send({ t: 'attr', k: d.k }); sfx('order'); return; } if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
+  attr(d) { if (NET.on) { NET.send({ t: 'attr', k: d.k }); sfx('order'); return; } if (doAttr(G.player, d.k)) { sfx('order'); keepScroll(renderPanel); } },
   menu() { openMenu(); },
   greet() { if (NET.on) { NET.send({ t: 'enc', a: 'greet' }); closeModal(); return; } const p = UI.enc.p; p.cd = 3; closeModal(); },
   attack() { if (NET.on) { NET.send({ t: 'enc', a: 'attack' }); closeModal(); return; } const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
@@ -1719,7 +1987,7 @@ const ACT = {
   begin() { const nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный'; closeModal(); startNew({ name: nm, banner: CR.banner, culture: CR.culture }); },
   qpick(d) { QK[d.k] = d.v; renderQuick(); }, qgo() { closeModal(); startQuick(); },
   again() { closeModal(); startQuick(); }, endq() { closeModal(); gotoTitle(); },
-  help() { openModal('<div class="whead"><h2>Как играть</h2></div><div class="wbody"><div class="cols"><div class="card"><h3>Карта мира</h3><div class="kv"><span>Идти</span><b>клик / касание</b></div><div class="kv"><span>Пауза</span><b>Пробел</b></div><div class="kv"><span>Ждать на месте</span><b>Z</b></div><div class="kv"><span>Отряд / герой / обоз / журнал</span><b>P / H / I / J</b></div><div class="kv"><span>Скорость</span><b>1, 2, 3</b></div><p class="note">Клик по лагерю или отряду начнёт погоню. Деньги уходят на жалованье, еду берут в городах.</p></div><div class="card"><h3>В бою</h3><div class="kv"><span>Движение</span><b>W A S D</b></div><div class="kv"><span>Удар</span><b>левая кнопка</b></div><div class="kv"><span>Блок щитом</span><b>правая кнопка</b></div><div class="kv"><span>Бег</span><b>Shift</b></div><div class="kv"><span>Выбрать отряд</span><b>1 2 3 4</b></div><div class="kv"><span>Приказы</span><b>Q держать · E за мной · R атака · F отход</b></div><p class="note">Блок работает только по лицу. Удар в спину бьёт сильнее. Конница ломает строй на разгоне, копейщики её останавливают.</p></div></div></div><div class="wfoot"><button class="btn pri" data-act="tomenu">Понятно</button></div>'); },
+  help() { openModal('<div class="whead"><h2>Как играть<span class="sub">Игра только для компьютера: клавиатура и мышь</span></h2></div><div class="wbody"><div class="cols"><div class="card"><h3>Карта мира</h3><div class="kv"><span>Идти</span><b>клик</b></div><div class="kv"><span>Пауза</span><b>Пробел</b></div><div class="kv"><span>Ждать на месте</span><b>Z</b></div><div class="kv"><span>Отряд / герой / обоз / журнал</span><b>P / H / I / J</b></div><div class="kv"><span>Скорость</span><b>1, 2, 3</b></div><p class="note">Клик по лагерю или отряду начнёт погоню. Деньги уходят на жалованье, еду берут в городах.</p></div><div class="card"><h3>В бою</h3><div class="kv"><span>Движение</span><b>W A S D</b></div><div class="kv"><span>Удар</span><b>левая кнопка</b></div><div class="kv"><span>Блок щитом</span><b>правая кнопка</b></div><div class="kv"><span>Бег</span><b>Shift</b></div><div class="kv"><span>Сменить оружие</span><b>X</b></div><div class="kv"><span>Выбрать отряд</span><b>1 2 3 4</b></div><div class="kv"><span>Приказы</span><b>Q держать · E за мной · R атака · F отход</b></div><p class="note">Блок работает только по лицу. Удар в спину бьёт сильнее. Конница ломает строй на разгоне, копейщики её останавливают.</p></div></div></div><div class="wfoot"><button class="btn pri" data-act="tomenu">Понятно</button></div>'); },
   cont2() { closeModal(); afterBattle(); }
 };
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; auInit(); const a = t.dataset.act; if (ACT[a]) { ACT[a](t.dataset, t); } });
@@ -1740,36 +2008,159 @@ function renderQuick() {
 }
 function openQuick() { renderQuick(); }
 
-/* ================= инвентарь и торговля: интерфейс ================= */
-const SLOT_ORDER = ['weapon', 'armor', 'shield', 'horse'];
-const SLOT_ICON = { weapon: 'sword', armor: 'helm', shield: 'shield', horse: 'horse' };
-function statText(it) { return it.kind === 'gear' ? GEAR_UNIT[it.slot] + ' ' + (it.slot === 'shield' ? Math.round(it.v * 100) + '%' : it.v) : ''; }
-function itemSw(it) { return it.kind === 'goods' ? '<span class="isw" style="background:' + it.c + '"></span>' : '<span class="isw gear">' + ic(SLOT_ICON[it.slot], 16) + '</span>'; }
-function cargoBar(P) { const w = invWeight(P), c = cargoCap(P); return '<div class="kv"><span>Обоз</span><b class="' + (w > c ? 'dn' : '') + '">' + w + ' / ' + c + '</b></div><div class="pbar cargo' + (w > c ? ' over' : '') + '"><i style="width:' + clamp(w / c * 100, 0, 100) + '%"></i></div>'; }
-function gearDelta(P, it) { // насколько вещь лучше надетой
-  const eq = equippedId(P, it.slot), cur = eq ? ITEM[eq].v : 0, d = it.v - cur, sh = it.slot === 'shield', n = sh ? Math.round(d * 100) + '%' : Math.round(d * 10) / 10;
-  return d > 0 ? '<b class="up">+' + n + '</b>' : d < 0 ? '<b class="dn">' + n + '</b>' : '<b>=</b>';
+/* ================= инвентарь и торговля: интерфейс =================
+   Окно «Обоз»: кукла героя со слотами по бокам, рюкзак сеткой плиток и карточка выбранной вещи внизу окна.
+   Вкладка «Торговля»: те же плитки, цена на плитке, карточка внизу с кнопками. Двойной щелчок по плитке:
+   надеть / снять, купить / продать одну штуку. Выбор хранится в UI.isel (обоз) и UI.tsel (торговля). */
+
+/* ---------- иконки предметов ---------- */
+const bodyBase = '<path d="M8 3l4 2 4-2 5 4-3 4-2-1v11H8V10l-2 1-3-4z"/>';
+const dotsAt = (xs, ys, r) => ys.map(y => xs.map(x => '<circle cx="' + x + '" cy="' + y + '" r="' + r + '"/>').join('')).join('');
+Object.assign(ICONS, {
+  body: bodyBase,
+  hands: '<path d="M7 21v-8l-2-3 2-1 2 3V4h2v7V3h2v8V4h2v8V6h2v9l-2 6z"/>',
+  legs: '<path d="M9 3h6v10l5 3v5H5v-4l4-2z"/>',
+  // доспехи: общий силуэт и узор по виду
+  b_padded: bodyBase + '<path d="M10 8v13M12 6v15M14 8v13" stroke="#0008" stroke-width="1" fill="none"/>',
+  b_mail: bodyBase + '<g fill="#0009">' + dotsAt([10, 12, 14], [9, 12, 15, 18], .7) + '</g>',
+  b_scale: bodyBase + '<path d="' + [9, 12, 15, 18].map(y => [9.2, 11.6, 14].map(x => 'M' + x + ' ' + y + 'a1.200 1.200 0 0 0 2.400 0').join('')).join('') + '" stroke="#0009" stroke-width=".9" fill="none"/>',
+  b_plate: bodyBase + '<path d="M8 9h8M8 13h8M8 17h8M12 6v15" stroke="#0009" stroke-width="1.200" fill="none"/>',
+  // шлемы
+  h_cap: '<path d="M3.500 17c0-6.500 3.500-11 8.500-11s8.500 4.500 8.500 11z"/><path d="M3.500 14.500h17" stroke="#0008" stroke-width="1" fill="none"/>',
+  h_nasal: '<path d="M4 15c0-6 3-10 8-10s8 4 8 10v4H4z"/><path d="M11.100 9h1.800v10h-1.800z" fill="#0009"/>',
+  h_kettle: '<path d="M12 3c4.500 0 7 3.500 7 8v1h4v2.500H1V12h4v-1c0-4.500 2.500-8 7-8z"/>',
+  h_great: '<path d="M5.500 2.500h13V16l-3 5.500h-7L5.500 16z"/><path d="M7.500 9.500h9v2h-9z" fill="#0009"/><path d="M12 13v6" stroke="#0007" stroke-width="1.100"/>',
+  // щиты
+  sh_round: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="7" fill="none" stroke="#0007" stroke-width="1"/><circle cx="12" cy="12" r="3.200" fill="#0008"/>',
+  sh_small: '<circle cx="12" cy="12" r="7.500"/><circle cx="12" cy="12" r="2.600" fill="#0008"/>',
+  // оружие
+  twohand: '<path d="M12 1l2.800 3.400V14H9.200V4.400z"/><path d="M6 14h12v2.400H6z"/><path d="M10.800 16.400h2.400v4.400h-2.400z"/><circle cx="12" cy="22" r="1.500"/>',
+  axe: '<g transform="rotate(35 12 12)"><path d="M10.900 2.500h2.200V22h-2.200z"/><path d="M13 3.500c5.500.4 8.500 3 8.500 6.800S18.500 16.600 13 17c2.200-3 2.200-10 0-13.500z"/></g>',
+  hammer: '<g transform="rotate(35 12 12)"><path d="M10.900 6h2.200v16h-2.200z"/><path d="M5.500 2h13v6h-13z"/></g>',
+  mace: '<g transform="rotate(35 12 12)"><path d="M10.900 9h2.200v13h-2.200z"/><circle cx="12" cy="6" r="3.800"/><path d="M12 .2l1.600 2h-3.200zM6.400 6l2-1.600v3.200zM17.600 6l-2-1.600v3.200z"/></g>',
+  club: '<g transform="rotate(35 12 12)"><path d="M12 1.500c2.800 0 4.200 2 4.200 4.800 0 2.600-1.200 4.200-2.200 5.200L13.400 22h-2.800l-.6-10.500c-1-1-2.200-2.600-2.200-5.200C7.800 3.500 9.200 1.500 12 1.500z"/></g>',
+  spear: '<g transform="rotate(35 12 12)"><path d="M11.200 7h1.600v16h-1.600z"/><path d="M12 .8l3 7h-6z"/></g>',
+  pike: '<g transform="rotate(35 12 12)"><path d="M11.400 5h1.200v18h-1.200z"/><path d="M12 .5l2 5h-4z"/><path d="M9.600 5h4.800v1.200H9.600z"/></g>',
+  halberd: '<g transform="rotate(35 12 12)"><path d="M11.200 5h1.600v18h-1.600z"/><path d="M12 .5l1.800 4.500h-3.600z"/><path d="M12.800 6.500c4.200 0 6.200 1.600 6.200 4s-2 4-6.200 4c1.200-2 1.200-6 0-8z"/></g>',
+  jav: '<g transform="rotate(45 12 12)"><path d="M11.300 6h1.400v14h-1.400z"/><path d="M12 .8l2.200 5.400H9.800z"/><path d="M12 16.500l-3 5.500h6z"/></g>',
+  xbow: '<path d="M1.500 9.500C6 3.500 18 3.500 22.500 9.500" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M1.800 9.500L12 13l10.200-3.500" fill="none" stroke="currentColor" stroke-width="1.200"/><path d="M10.800 5.500h2.400V22h-2.400z"/><path d="M12 .8l2 4.200h-4z"/>',
+  // товары
+  grain: '<path d="M12 2c2 2 2 4 0 6-2-2-2-4 0-6zM12 8c2 2 2 4 0 6-2-2-2-4 0-6zM7.500 6c2.200.3 3.600 1.800 4 4-2.200-.3-3.700-1.800-4-4zM16.500 6c-2.200.3-3.600 1.800-4 4 2.200-.3 3.700-1.800 4-4zM7.500 12c2.200.3 3.600 1.800 4 4-2.200-.3-3.700-1.800-4-4zM16.500 12c-2.200.3-3.600 1.800-4 4 2.200-.3 3.700-1.800 4-4z"/><path d="M11.300 14h1.400v8h-1.400z"/>',
+  sack: '<path d="M8 2h8l-1.500 3c3 1.500 5 5 5 9 0 5-3 8-7.500 8S4.500 19 4.500 14c0-4 2-7.500 5-9z"/><path d="M8.500 6h7" stroke="#0008" stroke-width="1.500"/>',
+  ale: '<path d="M4 6h12v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M16 9h2.500a2.500 2.500 0 0 1 0 5H16v-2h2.500a.5.500 0 0 0 0-1H16z"/><path d="M4 6c0-2.500 2-3.500 4-3.500s2.200 1 4 1 4-1 4 2.500z"/>',
+  ingot: '<path d="M2 20l2.500-6h8l2.500 6zM9 14l2.500-6h8l2.500 6z"/>',
+  hide: '<path d="M5 4l4 2h6l4-2 3 5-3 3 1 3-3 1 .5 5H7.500L8 16l-3-1 1-3-3-3z"/>',
+  pelt: '<path d="M7 3c2 1.500 8 1.500 10 0l4 6-3 3 2 6-4-1-1 5h-6l-1-5-4 1 2-6-3-3z"/>',
+  roll: '<path d="M7 5h11a3 7 0 0 1 0 14H7a3 7 0 0 1 0-14z"/><ellipse cx="7" cy="12" rx="3" ry="7" fill="#0006"/>',
+  bottle: '<path d="M10 2h4v5c2 1 3 2.500 3 5v8a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-8c0-2.500 1-4 3-5z"/>',
+  jar: '<path d="M8 2h8v3H8zM6.500 6h11c1 2 1.500 4 1.500 6.500 0 4-2 7.500-4 9.500H9c-2-2-4-5.500-4-9.500 0-2.500.5-4.500 1.500-6.500z"/>'
+});
+const SLOT_ICON = { head: 'helm', body: 'body', hands: 'hands', legs: 'legs', melee: 'sword', ranged: 'bow', shield: 'shield', horse: 'horse' };
+const GOOD_IC = { grain: 'grain', salt: 'sack', ale: 'ale', iron: 'ingot', leather: 'hide', furs: 'pelt', cloth: 'roll', wine: 'bottle', spice: 'jar' };
+const TIER = [{ n: 'Простое', c: '#a89f8a' }, { n: 'Добротное', c: '#8fc24f' }, { n: 'Редкое', c: '#5fa0e6' }, { n: 'Мастерское', c: '#e5902a' }];
+const tierOf = it => it && it.slot ? TIER[Math.min(3, it.tier || 0)] : null; // предметы каталога (EQ) и вещи из ITEM; у товаров слота нет
+function iconKey(it) {
+  if (it.kind === 'goods') return GOOD_IC[it.id] || 'sack';
+  switch (it.slot) {
+    case 'melee': case 'ranged':
+      if (it.wt === 'twohand') return it.look === 'axe' ? 'axe' : it.look === 'mace' ? 'hammer' : 'twohand';
+      if (it.wt === 'polearm') return it.look === 'halberd' ? 'halberd' : 'pike';
+      if (it.wt === 'mace') return it.look === 'club' ? 'club' : 'mace';
+      return { sword: 'sword', axe: 'axe', spear: 'spear', bow: 'bow', xbow: 'xbow', throw: 'jav' }[it.wt] || 'sword';
+    case 'head': return 'h_' + it.look;
+    case 'body': return 'b_' + it.look;
+    case 'shield': return it.look === 'round' ? 'sh_round' : it.look === 'small' ? 'sh_small' : 'shield';
+    default: return SLOT_ICON[it.slot];
+  }
 }
+function itemIc(it, s) { const k = iconKey(it); return ic(ICONS[k] ? k : (SLOT_ICON[it.slot] || 'bag'), s); }
+
+const pc = v => Math.round(v * 100) + '%';
+function cargoBar(P) { const w = invWeight(P), c = cargoCap(P); return '<div class="kv"><span>Обоз</span><b class="' + (w > c ? 'dn' : '') + '">' + w + ' / ' + c + '</b></div><div class="pbar cargo' + (w > c ? ' over' : '') + '"><i style="width:' + clamp(w / c * 100, 0, 100) + '%"></i></div>'; }
+function swingLabel(spd) { return spd < 1 ? 'быстрый' : spd <= 1.1 ? 'обычный' : spd <= 1.35 ? 'медленный' : 'тяжёлый'; }
 function keepScroll(fn) { const b = document.querySelector('#modal .wbody'), t = b ? b.scrollTop : 0; fn(); const n = document.querySelector('#modal .wbody'); if (n) n.scrollTop = t; }
+const slotOrd = id => SLOTS.indexOf(ITEM[id].slot);
+const byGear = (a, c) => slotOrd(a) - slotOrd(c) || ITEM[a].price - ITEM[c].price;
+
+/* Двойной щелчок считаем сами: после первого щелчка окно перерисовывается, и родное событие dblclick до новой плитки не доходит.
+   Плитка с data-dbl="действие" по второму быстрому нажатию выполняет это действие. */
+let lastTap = { k: '', t: 0 };
+function dblTap(d, key) { const now = Date.now(), hit = lastTap.k === key && now - lastTap.t < 420; lastTap = hit ? { k: '', t: 0 } : { k: key, t: now }; return hit && d.dbl && ACT[d.dbl]; }
+
+/* ---------- плитка предмета ---------- */
+function tile(o) {
+  const it = o.it, t = tierOf(it), cls = ['tile'];
+  if (o.on) cls.push('on'); if (o.fit) cls.push('fit'); if (!it) cls.push('empty'); if (it && it.kind === 'goods') cls.push('g'); if (o.price !== undefined) cls.push('hp');
+  const st = '--tc:' + (t ? t.c : it ? '#8a7a58' : '#ffffff22') + (it && it.kind === 'goods' ? ';--ic:' + it.c : ''), tag = o.attr ? 'button' : 'div';
+  let h = '<' + tag + ' class="' + cls.join(' ') + '" style="' + st + '"' + (o.title ? ' title="' + o.title + '"' : '') + ' ' + (o.attr || '') + '>' + (it ? itemIc(it) : ic(o.ghost || 'bag'));
+  if (o.qty > 1) h += '<b class="qty">' + o.qty + '</b>';
+  if (o.price !== undefined) h += '<span class="pr ' + (o.tone || '') + '">' + ic('coin') + fmt(o.price) + '</span>';
+  if (o.rib) h += '<i class="rib ' + (o.rib[1] || '') + '">' + o.rib[0] + '</i>';
+  if (o.lab) h += '<span class="lab">' + o.lab + '</span>';
+  return h + '</' + tag + '>';
+}
+const voidTiles = n => '<div class="tile void"></div>'.repeat(Math.max(0, n));
+
+/* ---------- карточка вещи (внизу окна) ---------- */
+const stat = (l, v, d) => '<span>' + l + '<b>' + v + (d || '') + '</b></span>';
+function pierceBars(W) {
+  const nm = ['Лёгкая броня', 'Средняя', 'Тяжёлая'];
+  return '<div class="pbars">' + [0, 1, 2].map(i => { const p = dtPierce(W.dt, [0, 20, 40][i], W.pb); return '<div>' + nm[i] + ' <b>' + pc(p) + '</b><i><u style="width:' + clamp(p / .55 * 100, 3, 100) + '%"></u></i></div>'; }).join('') + '</div>';
+}
+function cmpDelta(it, cur, key) { // насколько вещь лучше надетой в том же слоте
+  const d = (it[key] || 0) - (cur ? cur[key] || 0 : 0); if (!d) return ''; const n = it.slot === 'shield' ? Math.round(d * 100) + '%' : Math.round(d * 10) / 10;
+  return ' <small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲ +' : '▼ ') + n + '</small>';
+}
+function itemDock(it, o) {
+  o = o || {}; const t = tierOf(it), cur = o.cmp ? eqItem(G.player.hero, it.slot) : null, st = [], tr = []; let sub;
+  if (it.kind === 'goods') { sub = 'Товар'; st.push(stat('Вес', it.w), stat('Обычная цена', it.price)); }
+  else {
+    sub = SLOT_NAME[it.slot] + (it.dt ? ' · ' + WTYPE[it.wt] + ' · ' + DTYPE[it.dt].n.toLowerCase() + ' урон' : '') + ' · ' + t.n;
+    if (it.dmg !== undefined) {
+      st.push(stat('Урон', it.dmg, o.cmp ? cmpDelta(it, cur, 'dmg') : ''), stat('Хват', it.hands === 2 ? 'двуручное' : 'одноручное'));
+      if (it.rng) st.push(stat('Дальность', it.range), stat('Перезарядка', it.cd + ' с')); else st.push(stat('Темп', swingLabel(it.spd)), stat('Длина', it.reach ? '+' + it.reach : 'обычная'));
+    } else if (it.slot === 'shield') st.push(stat('Блок', pc(it.v), o.cmp ? cmpDelta(it, cur, 'v') : ''));
+    else if (it.slot === 'horse') st.push(stat('Скорость', it.v, o.cmp ? cmpDelta(it, cur, 'v') : ''));
+    else st.push(stat('Броня', '+' + it.v, o.cmp ? cmpDelta(it, cur, 'v') : ''));
+    if (it.w) st.push(stat('Вес', it.w));
+    if (it.brk) tr.push('пробивает блок щитом'); if (it.kb >= 2) tr.push('сильно отбрасывает'); if (it.anticav) tr.push('бонус против конницы'); if (it.cleave >= 4) tr.push('задевает до ' + it.cleave + ' целей');
+    if (it.dmg !== undefined && it.hands === 2 && !it.rng) tr.push('щит не носят'); if (it.rng && it.hands === 2) tr.push('щит уходит за спину'); if (it.rng) tr.push('боеприпасы бесконечные');
+  }
+  return '<div class="dock">' + tile({ it }) + '<div class="dinfo"><div class="dnm" style="color:' + (t ? t.c : 'var(--parch)') + '">' + it.name + '</div><div class="dsub">' + sub + (o.sub ? ' · ' + o.sub : '') + '</div><div class="dstats">' + st.join('') + '</div>' +
+    (tr.length ? '<div class="ptags">' + tr.map(x => '<em>' + x + '</em>').join('') + '</div>' : '') + (it.dt ? pierceBars(it) : '') + (it.dt ? '<div class="dsub dnote" style="margin:4px 0 0">' + DTYPE[it.dt].note + '</div>' : '') + '</div>' +
+    (o.acts ? '<div class="dacts">' + o.acts + '</div>' : '') + '</div>';
+}
+const dockHint = (txt, tl) => '<div class="dock hint">' + tile({ ghost: tl || 'bag' }) + '<div class="dinfo"><div class="note" style="margin:0">' + txt + '</div></div></div>';
 
 /* ---------- вкладка «Торговля» в городе, замке и деревне ---------- */
-function tradeRow(s, P, id, side) {
+function tradeTile(s, P, id, side) {
   const it = ITEM[id], m = marketOf(s), buy = side === 'buy', have = buy ? (m.stock[id] || 0) : invN(P, id), pr = buy ? buyPrice(P, s, id) : sellPrice(P, s, id), lv = priceLevel(s, id);
-  const tone = !lv ? '' : (buy ? lv === 'low' : lv === 'high') ? 'cheap' : 'dear';
-  const ok = buy ? have > 0 && P.gold >= pr : have > 0 && m.gold >= pr;
-  const note = it.kind === 'gear' ? statText(it) + ' (' + gearDelta(P, it) + ' к надетому) · вес ' + it.w : 'вес ' + it.w + (lv ? ' · здесь ' + (lv === 'low' ? 'дёшево' : 'дорого') : '');
-  const nn = it.kind === 'gear' ? [1] : [1, 5, 99], lab = n => n === 99 ? (buy ? 'Макс.' : 'Все') : '×' + n;
-  const btns = nn.map(n => '<button class="btn sm" data-act="' + (buy ? 'tbuy' : 'tsell') + '" data-id="' + id + '" data-n="' + n + '" ' + (ok ? '' : 'disabled') + '>' + lab(n) + '</button>').join('');
-  return '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">' + note + '</div></div><div class="cnt">' + have + '</div><span class="price ' + tone + '" title="' + (buy ? 'Цена покупки' : 'Цена продажи') + '">' + ic('coin') + pr + '</span><div class="acts">' + btns + '</div></div>';
+  const tone = !lv ? '' : (buy ? lv === 'low' : lv === 'high') ? 'cheap' : 'dear', can = buy ? P.gold >= pr : m.gold >= pr, on = UI.tsel && UI.tsel.side === side && UI.tsel.id === id;
+  return tile({ it, on, qty: have, price: pr, tone: can ? tone : 'no', title: it.name, attr: 'data-act="tsel" data-side="' + side + '" data-id="' + id + '" data-n="1" data-dbl="' + (buy ? 'tbuy' : 'tsell') + '"' });
+}
+function tradeLists(s) {
+  const P = G.player, m = marketOf(s), ord = (a, b) => (ITEM[a].kind === ITEM[b].kind ? (ITEM[a].kind === 'gear' ? slotOrd(a) - slotOrd(b) : 0) || ITEM[a].price - ITEM[b].price : ITEM[a].kind === 'goods' ? -1 : 1);
+  return { mine: invIds(P, 'goods').concat(invIds(P, 'gear')).sort(ord), theirs: Object.keys(m.stock).filter(id => ITEM[id] && m.stock[id] > 0).sort(ord) };
 }
 function tradeBody(s) {
   const P = G.player; if (!hasMarket(s)) return '<div class="note">Здесь не торгуют.</div>';
-  const m = marketOf(s), ord = (a, b) => (ITEM[a].kind === ITEM[b].kind ? ITEM[a].price - ITEM[b].price : ITEM[a].kind === 'goods' ? -1 : 1);
-  const mine = invIds(P, 'goods').concat(invIds(P, 'gear')), theirs = Object.keys(m.stock).filter(id => ITEM[id] && m.stock[id] > 0).sort(ord);
-  return '<div class="note">Золото: ' + fmt(P.gold) + ' · у торговца: ' + fmt(m.gold) + '. Цена зависит от края и от запаса на складе: вози дешёвое туда, где за него дают больше. Чем крупнее партия, тем сильнее она сдвигает цену.</div>' + cargoBar(P) +
-    '<div class="trade"><div><h3>Твой обоз</h3>' + (mine.length ? mine.map(id => tradeRow(s, P, id, 'sell')).join('') : '<div class="note">Обоз пуст. Купи товар здесь или добудь трофеи в бою.</div>') + '</div>' +
-    '<div><h3>Торговец</h3>' + (theirs.length ? theirs.map(id => tradeRow(s, P, id, 'buy')).join('') : '<div class="note">Прилавок пуст.</div>') + '</div></div>';
+  const m = marketOf(s), L = tradeLists(s);
+  return '<div class="tbar"><div class="note" style="margin:0">Золото: <b>' + fmt(P.gold) + '</b> · у торговца: <b>' + fmt(m.gold) + '</b>. Цены зависят от края и от запаса на складе, крупная партия сдвигает цену. Надетое не продаётся: сними его в окне «Обоз».</div><div>' + cargoBar(P) + '</div></div>' +
+    '<div class="trade"><div><h3>Торговец</h3><div class="igrid">' + L.theirs.map(id => tradeTile(s, P, id, 'buy')).join('') + voidTiles(12 - L.theirs.length) + '</div></div>' +
+    '<div><h3>Твой обоз</h3><div class="igrid">' + L.mine.map(id => tradeTile(s, P, id, 'sell')).join('') + voidTiles(12 - L.mine.length) + '</div>' + (L.mine.length ? '' : '<div class="note">Обоз пуст. Купи товар или добудь трофеи в бою.</div>') + '</div></div>';
 }
+function tradeDock(s) {
+  const P = G.player; if (!hasMarket(s)) return '';
+  const m = marketOf(s), sel = UI.tsel, hint = dockHint('Выбери вещь на прилавке или в своём обозе. Двойной щелчок покупает или продаёт одну штуку.', 'coin');
+  if (!sel || !ITEM[sel.id]) return hint;
+  const it = ITEM[sel.id], buy = sel.side === 'buy', have = buy ? (m.stock[sel.id] || 0) : invN(P, sel.id); if (have < 1) { UI.tsel = null; return hint; }
+  const pr = buy ? buyPrice(P, s, sel.id) : sellPrice(P, s, sel.id), lv = priceLevel(s, sel.id), ok = buy ? P.gold >= pr : m.gold >= pr, tone = !lv ? '' : (buy ? lv === 'low' : lv === 'high') ? 'cheap' : 'dear';
+  const nn = it.kind === 'gear' ? [1] : [1, 5, 99], lab = n => n === 99 ? (buy ? 'Макс.' : 'Все') : (buy ? 'Купить' : 'Продать') + (n > 1 ? ' ×' + n : it.kind === 'gear' ? '' : ' ×1');
+  const acts = '<div class="dprice ' + tone + '" title="' + (buy ? 'Цена покупки' : 'Цена продажи') + '">' + ic('coin') + '<b>' + fmt(pr) + '</b><small>' + (buy ? 'за штуку' : 'за штуку') + (lv ? ' · здесь ' + (lv === 'low' ? 'дёшево' : 'дорого') : '') + '</small></div>' +
+    nn.map(n => '<button class="btn sm' + (n === 1 ? ' pri' : '') + '" data-act="' + (buy ? 'tbuy' : 'tsell') + '" data-id="' + sel.id + '" data-n="' + n + '" ' + (ok ? '' : 'disabled') + '>' + (n === 1 && it.kind === 'gear' ? (buy ? 'Купить' : 'Продать') : lab(n)) + '</button>').join('');
+  return itemDock(it, { cmp: it.kind === 'gear', acts, sub: buy ? 'на прилавке: ' + have + ' · у тебя: ' + invN(P, sel.id) : 'у тебя: ' + have });
+}
+ACT.tsel = function (d) { const dbl = dblTap(d, 't|' + d.side + '|' + d.id); if (dbl) return dbl(d); UI.tsel = { side: d.side, id: d.id }; keepScroll(renderTown); };
 ACT.tbuy = function (d) {
   if (NET.on) { NET.send({ t: 'tbuy', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doBuy(P, UI.town.s, d.id, n);
@@ -1783,24 +2174,103 @@ ACT.tsell = function (d) {
   keepScroll(renderTown);
 };
 
-/* ---------- вкладка «Обоз» в панели героя ---------- */
-function invBody() {
-  const P = G.player, H = P.hero;
-  let b = '<div class="note">Снаряжение героя и обоз. Провизия: ' + P.food + ' (вес не занимает). Продавать вещи можно в городах, замках и деревнях, а добычу из боёв стоит нести туда, где за неё дают больше.</div><h3>Надето</h3><div class="cols">';
-  for (const k of SLOT_ORDER) {
-    const id = equippedId(P, k), it = id && ITEM[id];
-    b += '<div class="card"><h3>' + GEAR_LABEL[k] + '</h3>' + (it ? '<div class="kv"><span>' + it.name + '</span><b>' + statText(it) + '</b></div>' : '<div class="note">' + (k === 'horse' ? 'Пеший' : 'Пусто') + '</div>') + (k === 'horse' && it ? '<button class="btn sm" data-act="unhorse">Спешиться и убрать в обоз</button>' : '') + '</div>';
-  }
-  b += '</div><h3 style="margin-top:14px">Обоз</h3>' + cargoBar(P);
-  const goods = invIds(P, 'goods'), gear = invIds(P, 'gear');
-  if (!goods.length && !gear.length) b += '<div class="note">Обоз пуст.</div>';
-  for (const id of gear) { const it = ITEM[id]; b += '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">' + GEAR_LABEL[it.slot] + ' · ' + statText(it) + ' (' + gearDelta(P, it) + ' к надетому) · вес ' + it.w + '</div></div><div class="cnt">' + invN(P, id) + '</div><div class="acts"><button class="btn sm" data-act="equip" data-id="' + id + '">Надеть</button></div></div>'; }
-  for (const id of goods) { const it = ITEM[id], n = invN(P, id); b += '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">Товар · вес ' + Math.round(it.w * n * 10) / 10 + ' · обычная цена ' + it.price + '</div></div><div class="cnt">' + n + '</div></div>'; }
-  return b;
+/* ---------- ряд мини-плиток надетого (для окна героя) ---------- */
+function miniGear(H) {
+  return '<div class="mini">' + SLOTS.map(k => { const it = eqItem(H, k); return it ? '<span class="mt" style="--tc:' + tierOf(it).c + '" title="' + SLOT_NAME[k] + ': ' + it.name + '">' + itemIc(it) + '</span>' : '<span class="mt void" title="' + SLOT_NAME[k] + ': пусто">' + ic(SLOT_ICON[k]) + '</span>'; }).join('') + '</div>';
 }
-ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } if (doEquip(G.player, d.id)) { sfx('order'); toast('Надето: ' + ITEM[d.id].name); } keepScroll(renderPanel); };
-ACT.unhorse = function () { if (NET.on) { NET.send({ t: 'unhorse' }); sfx('click'); return; } if (doUnequipHorse(G.player)) { sfx('click'); toast('Конь отправлен в обоз'); } keepScroll(renderPanel); };
+
+/* ---------- вкладка «Обоз»: кукла героя и рюкзак ---------- */
+function slotTile(P, k) {
+  const H = P.hero, it = eqItem(H, k), w = heroWield(H), s = UI.isel, on = s && s.from === 'slot' && s.k === k, fit = s && s.from === 'bag' && ITEM[s.id] && ITEM[s.id].slot === k; let rib = null;
+  if (it && (k === 'melee' || k === 'ranged')) rib = w === it ? ['в руках', 'g'] : ['за спиной'];
+  if (it && k === 'shield' && heroShield(H) === null) rib = ['за спиной'];
+  return tile({ it, on, fit, rib, ghost: SLOT_ICON[k], lab: it ? '' : SLOT_NAME[k], title: SLOT_NAME[k] + (it ? ': ' + it.name : ''), attr: 'data-act="isel" data-from="slot" data-k="' + k + '"' + (it ? ' data-dbl="unequip" data-slot="' + k + '"' : '') });
+}
+function bagTile(P, id) {
+  const it = ITEM[id], s = UI.isel, on = s && s.from === 'bag' && s.id === id, fit = s && s.from === 'slot' && it.slot === s.k;
+  return tile({ it, on, fit, qty: invN(P, id), title: it.name, attr: 'data-act="isel" data-from="bag" data-id="' + id + '"' + (it.kind === 'gear' ? ' data-dbl="equip"' : '') });
+}
+const BAG_FILTERS = [['all', 'Всё'], ['weapon', 'Оружие'], ['armor', 'Броня'], ['goods', 'Товары']];
+function bagIds(P, f) {
+  const gear = invIds(P, 'gear').sort(byGear), goods = invIds(P, 'goods'), wp = id => ITEM[id].slot === 'melee' || ITEM[id].slot === 'ranged';
+  return f === 'weapon' ? gear.filter(wp) : f === 'armor' ? gear.filter(id => !wp(id)) : f === 'goods' ? goods : gear.concat(goods);
+}
+function invBody() {
+  const P = G.player, H = P.hero, hd = heroDef(H), W = hd.wpn, Gr = heroGear(H), sp = getHeroSprite(H, Gr.mounted); if (!sp.url) sp.url = sp.cv.toDataURL();
+  const f = UI.bagF || 'all', ids = bagIds(P, f);
+  const stt = [['Броня', hd.arm], ['Урон', Math.round(hd.dmg)], ['Блок', pc(Gr.block)], [W.rng ? 'Перезарядка' : 'Удар', Math.round(hd.cd * 100) / 100 + ' с'], [W.rng ? 'Дальность' : 'Длина', W.rng ? W.range : 30 + hd.reach], ['Урон по типу', DTYPE[W.dt].n]];
+  return '<div class="inv"><div><div class="doll"><div class="col">' + ['head', 'body', 'hands', 'legs'].map(k => slotTile(P, k)).join('') + '</div>' +
+    '<div class="fig"><img alt="" src="' + sp.url + '"><div class="who">' + H.name + '<small>Уровень ' + H.lvl + (Gr.mounted ? ' · верхом' : '') + '</small></div></div>' +
+    '<div class="col">' + ['melee', 'ranged', 'shield', 'horse'].map(k => slotTile(P, k)).join('') + '</div></div>' +
+    '<div class="stt">' + stt.map(x => '<div><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('') + '</div></div>' +
+    '<div><h3>Рюкзак<span class="fl">' + BAG_FILTERS.map(x => '<button class="fbtn' + (x[0] === f ? ' on' : '') + '" data-act="bagf" data-f="' + x[0] + '">' + x[1] + '</button>').join('') + '</span></h3>' + cargoBar(P) +
+    '<div class="igrid">' + ids.map(id => bagTile(P, id)).join('') + voidTiles(Math.max(24, Math.ceil(ids.length / 6) * 6) - ids.length) + '</div>' +
+    (ids.length ? '' : '<div class="note">' + (f === 'all' ? 'Обоз пуст.' : 'В этой вкладке пусто.') + '</div>') + '<div class="note">Провизия: ' + P.food + ' (вес не занимает). Двойной щелчок по вещи: надеть, по слоту: снять. В бою X меняет оружие.</div></div></div>';
+}
+function invDock() {
+  const P = G.player, H = P.hero, s = UI.isel, hint = dockHint('Выбери слот куклы или вещь в рюкзаке. Подходящие вещи подсветятся зелёной рамкой.', 'bag');
+  if (!s) return hint;
+  if (s.from === 'slot') {
+    const it = eqItem(H, s.k), w = heroWield(H); let acts = '';
+    if (!it) { const n = invIds(P, 'gear').filter(id => ITEM[id].slot === s.k).length; return '<div class="dock hint">' + tile({ ghost: SLOT_ICON[s.k] }) + '<div class="dinfo"><div class="dnm" style="color:var(--parch2)">' + SLOT_NAME[s.k] + ': пусто</div><div class="dsub">' + (n ? 'В рюкзаке подходящих вещей: ' + n + ' (подсвечены).' : 'В рюкзаке ничего подходящего.') + (s.k === 'melee' ? ' Без оружия герой дерётся кулаками.' : '') + '</div></div></div>'; }
+    acts += '<button class="btn sm pri" data-act="unequip" data-slot="' + s.k + '">Снять</button>';
+    if ((s.k === 'melee' || s.k === 'ranged') && w !== it) acts += '<button class="btn sm" data-act="wield" data-sel="' + s.k + '">Взять в руки</button>';
+    return itemDock(it, { acts, sub: 'надето' });
+  }
+  const it = ITEM[s.id]; if (!it || invN(P, s.id) < 1) { UI.isel = null; return hint; }
+  if (it.kind === 'goods') return itemDock(it, { sub: 'в обозе: ' + invN(P, s.id) + ' · общий вес ' + Math.round(it.w * invN(P, s.id) * 10) / 10 });
+  const mel = eqItem(H, 'melee'), blocked = it.slot === 'shield' && mel && mel.hands === 2, hint2 = blocked ? '<div class="dsub dn">С двуручным оружием щит не носят.</div>' : it.slot === 'melee' && it.hands === 2 && eqItem(H, 'shield') ? '<div class="dsub">Щит уйдёт в рюкзак.</div>' : '';
+  return itemDock(it, { cmp: true, sub: invN(P, s.id) > 1 ? 'в рюкзаке: ' + invN(P, s.id) : '', acts: hint2 + '<button class="btn sm pri" data-act="equip" data-id="' + s.id + '" ' + (blocked ? 'disabled' : '') + '>Надеть</button>' });
+}
+ACT.isel = function (d) { const dbl = dblTap(d, 'i|' + (d.id || d.k)); if (dbl) return dbl(d); UI.isel = d.from === 'slot' ? { from: 'slot', k: d.k } : { from: 'bag', id: d.id }; keepScroll(renderPanel); };
+ACT.bagf = function (d) { UI.bagF = d.f; keepScroll(renderPanel); };
+ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } const it = ITEM[d.id], r = doEquip(G.player, d.id); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
+ACT.unequip = function (d) { if (NET.on) { NET.send({ t: 'unequip', slot: d.slot }); sfx('click'); return; } const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
+ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); sfx('click'); return; } if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };
+
+/* ================= окно героя: атрибуты и перки =================
+   Пять строк: слева атрибут (значение и «+»), справа четыре перка с порогами. Перк берётся за очко перков,
+   когда атрибут достиг порога. Логика и каталог перков: 01c_perks.js. */
+const ATTR_ICON = { str: 'hands', vit: 'heart', agi: 'charge', int: 'book', cha: 'flag' };
+const ATTR_NOW = {
+  str: H => '+' + H.str * 3 + ' к урону',
+  vit: H => '+' + H.vit * 14 + ' к здоровью',
+  agi: H => '+' + H.agi * 3 + ' к скорости бега',
+  int: H => '+' + (H.int - 1) * 3 + '% к опыту',
+  cha: H => '+' + H.cha * 5 + ' к отряду, мораль +' + H.cha * 4
+};
+const ROMAN = ['I', 'II', 'III', 'IV'];
+
+function perkCard(H, p, i) {
+  const learned = H.perks.includes(p.id), why = learned ? '' : perkWhy(H, p.id), can = !learned && !why, ready = !learned && H[p.a] >= p.req;
+  const cls = 'perk ' + (learned ? 'on' : can ? 'av' : ready ? 'rd' : 'lk'), foot = learned ? 'Изучено' : can ? 'Изучить · 1 очко' : why.replace(/\.$/, '');
+  return '<button class="' + cls + '" ' + (can ? 'data-act="perk" data-id="' + p.id + '"' : 'disabled') + '><span class="pt">' + ROMAN[i] + ' · ' + ATTRS[p.a][0] + ' ' + p.req + '</span><b class="pn">' + p.n + '</b><span class="pd">' + p.d + '</span><span class="pf">' + foot + '</span></button>';
+}
+function attrRow(H, k) {
+  const list = PERKS.filter(p => p.a === k), nx = list.find(p => !H.perks.includes(p.id) && H[k] < p.req);
+  return '<div class="arow"><div class="acell"><div class="ahd">' + ic(ATTR_ICON[k], 26) + '<b>' + ATTRS[k][0] + '</b><span class="v">' + H[k] + '</span>' +
+    '<button class="btn sm" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + ' title="Потратить очко атрибутов">+</button></div>' +
+    '<div class="ad">' + ATTRS[k][1] + '. Сейчас: ' + ATTR_NOW[k](H) + '.</div>' + (nx ? '<div class="nx">Следующий перк на ' + nx.req + ' (ещё ' + (nx.req - H[k]) + ')</div>' : '<div class="nx">Все перки доступны</div>') + '</div>' +
+    '<div class="perks">' + list.map((p, i) => perkCard(H, p, i)).join('') + '</div></div>';
+}
+function heroBody() {
+  const P = G.player, H = heroFix(P.hero), hd = heroDef(H), Gr = heroGear(H), sp = getHeroSprite(H, Gr.mounted); if (!sp.url) sp.url = sp.cv.toDataURL();
+  const cnt = troopCount(P.troops), F = perkFx(H);
+  return '<div class="hhead"><img alt="" src="' + sp.url + '"><div><div class="hn">' + H.name + '<small>Уровень ' + H.lvl + '</small></div>' +
+    '<div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div>' +
+    '<div class="hst"><span>Опыт<b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></span><span>Здоровье<b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></span><span>Урон<b>' + Math.round(hd.dmg) + '</b></span><span>Броня<b>' + hd.arm + '</b></span><span>Отряд<b>' + cnt + ' / ' + sizeCap(H) + '</b></span></div>' +
+    miniGear(H) + '</div>' +
+    '<div class="hpts"><div class="pchip' + (H.pts ? ' hot' : '') + '">Очки атрибутов<b>' + H.pts + '</b></div><div class="pchip' + (H.pp ? ' hot' : '') + '">Очки перков<b>' + H.pp + '</b></div>' +
+    '<button class="btn sm" data-act="ptab" data-t="inv">Открыть обоз</button></div></div>' +
+    '<div class="note" style="margin:10px 0 0">За уровень: +' + PTS_LEVEL + ' очка атрибутов и +' + PP_LEVEL + ' очко перков. Перк открывается, когда атрибут дорастёт до порога, и стоит одно очко перков. В бою клавиша X меняет оружие.</div>' +
+    Object.keys(ATTRS).map(k => attrRow(H, k)).join('');
+}
+ACT.perk = function (d) {
+  if (NET.on) { NET.send({ t: 'perk', id: d.id }); sfx('order'); return; }
+  if (doPerk(G.player, d.id)) { sfx('level'); toast('Перк изучен: ' + PERK[d.id].n); }
+  keepScroll(renderPanel);
+};
 
 /* ================= сетевой интерфейс: союз с другом (передачи, фракция) ================= */
 function allyOther() { return G && G.players.find(q => q.id !== NET.you) || null; }
@@ -1888,7 +2358,7 @@ function readHeroInput() {
   const h = B && B.hero; if (!h || B.cfg.demo) return; const k = IN.keys; let dx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0), dy = (k.KeyS || k.ArrowDown ? 1 : 0) - (k.KeyW || k.ArrowUp ? 1 : 0);
   if (IN.jx || IN.jy) { dx = IN.jx; dy = IN.jy; }
   const w = IN.touch ? null : s2w(IN.mx, IN.my); let face; if (w) face = Math.atan2(w.y - h.y, w.x - h.x); else if (dx || dy) face = Math.atan2(dy, dx);
-  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0 };
+  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0, sw: (k.KeyX || IN.sw) ? 1 : 0 };
 }
 function autoPlayer(p) { battleEnded(autoResult(G.player, p), p); }
 function battleEnded(res, p) {
@@ -1899,9 +2369,9 @@ function showResult(r, p) {
   const res = r.res, H = G.player.hero; const left = Object.keys(res.dead).map(k => '<div class="kv"><span>' + TROOPS[k].name + '</span><b class="dn">−' + res.dead[k] + '</b></div>').join('');
   openModal('<div class="whead"><h2>' + (r.win ? 'Победа' : 'Поражение') + '<span class="sub">' + (res.auto ? 'Расчётный бой' : 'Битва длилась ' + Math.floor(res.time / 60) + ' мин ' + Math.round(res.time % 60) + ' сек') + '</span></h2><span class="tag ' + (r.win ? 'g' : 'r') + '">' + (r.win ? 'Враг разбит' : 'Отряд отступил') + '</span></div><div class="wbody"><div class="cols"><div class="card"><h3>Итоги</h3><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b class="dn">' + r.lost + '</b></div><div class="kv"><span>Раненые вернулись в строй</span><b>' + r.wounded + '</b></div>' + (res.heroKills ? '<div class="kv"><span>Побед героя в бою</span><b>' + res.heroKills + '</b></div>' : '') + (r.win ? '<div class="kv"><span>Добыча</span><b class="up">+' + r.loot + ' золота</b></div>' : '<div class="kv"><span>Потеряно золота</span><b class="dn">−' + (res.lostGold || 0) + '</b></div>') + '' + (r.drops && r.drops.length ? '<div class="kv"><span>Трофеи</span><b class="up" style="text-align:right">' + dropText(r.drops) + '</b></div>' : '') + '<div class="kv"><span>Опыт героя</span><b>+' + (res.gx || Math.round(res.xp * .5)) + '</b></div>' + (r.lvl ? '<div class="kv"><span>Новый уровень</span><b class="up">' + H.lvl + '</b></div>' : '') + '</div>' + (left ? '<div class="card"><h3>Потери</h3>' + left + '</div>' : '') + '</div>' + (res.woke ? '<div class="note" style="margin-top:10px">Ты очнулся в городе ' + res.woke + '. Отряд разбит, но жив.</div>' : '') + '</div><div class="wfoot"><button class="btn pri" data-act="cont2">Продолжить</button></div>', 'narrow');
 }
-function afterBattle() { if (NET.on) NET.send({ t: 'ack' }); MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0) toast('Есть свободные очки умений'); saveGame(true); }
+function afterBattle() { if (NET.on) NET.send({ t: 'ack' }); MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0 || G.player.hero.pp > 0) toast('Есть свободные очки: атрибуты и перки в окне героя (H)'); saveGame(true); }
 function startQuick() {
-  const H = { name: 'Ты', str: 3, vit: 3, agi: 2, lead: 2, armor: 1, weapon: 1, shield: 1, horse: QK.me === 'khan' ? 1 : 0, hp: 1, seed: 7 }; FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2;
+  const H = { name: 'Ты', str: 3, vit: 3, agi: 2, int: 2, cha: 2, perks: [], eq: { head: 'head_nasal', body: 'body_mail', hands: 'hands_leather', legs: 'legs_boots', melee: 'sword_knight', ranged: 'bow_long', shield: 'shield_banded', horse: QK.me === 'khan' ? 'horse_riding' : null }, sel: 'melee', hp: 1, seed: 7 }; FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2;
   enterBattle({ pl: genTroops(QK.me, QK.size, .6), en: genTroops(QK.foe, QK.size + 4, QK.foe === 'bandit' ? .35 : .6), pfac: 'player', efac: QK.foe, biome: FACTIONS[QK.me].biome, hero: H, leader: lordName(QK.foe), title: 'Быстрый бой', quick: true, seed: rint(1, 1e9), onEnd: quickEnded });
 }
 function quickEnded(res) { openModal('<div class="whead"><h2>' + (res.win ? 'Победа' : 'Поражение') + '</h2></div><div class="wbody"><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b>' + Object.values(res.dead).reduce((a, b) => a + b, 0) + '</b></div><div class="kv"><span>Побед героя</span><b>' + res.heroKills + '</b></div></div><div class="wfoot"><button class="btn" data-act="endq">В меню</button><button class="btn pri" data-act="again">Ещё бой</button></div>', 'narrow'); }
@@ -1921,7 +2391,7 @@ function buildBattleHud() {
 function updateBattleHud() {
   if (!B) return; const n = B.n || B.start; let a = 0, b = 0; for (const u of B.units) if (fit(u)) { if (u.side) b++; else a++; }
   el('cntA').textContent = a; el('cntB').textContent = b; const t = Math.floor(B.t); el('btimer').textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
-  const h = B.hero; if (h) { el('hn').textContent = h.name; el('hs').textContent = B.heroDown ? 'ранен' : (G && G.player && !B.cfg.quick ? 'уровень ' + G.player.hero.lvl : ''); const hp = clamp(h.hp / h.maxHp, 0, 1); el('bhp').style.setProperty('--p', hp * 100 + '%'); el('thp').textContent = Math.max(0, Math.round(h.hp)) + ' / ' + Math.round(h.maxHp); el('bst').style.setProperty('--p', h.stam + '%'); el('tst').textContent = 'Силы ' + Math.round(h.stam) + ' / 100'; el('bar').style.setProperty('--p', '100%'); el('tar').textContent = 'Броня ' + h.arm + (h.block ? ' · щит ' + Math.round(h.block * 100) + '%' : ''); let ml = 'Твёрдый'; const army = a / Math.max(1, B.count0[0]); ml = army > .75 ? 'Твёрдый' : army > .5 ? 'Держится' : army > .3 ? 'Колеблется' : 'Паникует'; el('bmo').style.setProperty('--p', clamp(army * 130, 6, 100) + '%'); el('tmo').textContent = 'Мораль: ' + ml; }
+  const h = B.hero; if (h) { el('hn').textContent = h.name; el('hs').textContent = B.heroDown ? 'ранен' : (G && G.player && !B.cfg.quick ? 'уровень ' + G.player.hero.lvl + ' · ' : '') + (h.t.wpn ? h.t.wpn.name + (heroEq(B.cfg.hero).ranged ? ' [X]' : '') : ''); const hp = clamp(h.hp / h.maxHp, 0, 1); el('bhp').style.setProperty('--p', hp * 100 + '%'); el('thp').textContent = Math.max(0, Math.round(h.hp)) + ' / ' + Math.round(h.maxHp); el('bst').style.setProperty('--p', h.stam + '%'); el('tst').textContent = 'Силы ' + Math.round(h.stam) + ' / 100'; el('bar').style.setProperty('--p', '100%'); el('tar').textContent = 'Броня ' + h.arm + (h.block ? ' · щит ' + Math.round(h.block * 100) + '%' : ''); let ml = 'Твёрдый'; const army = a / Math.max(1, B.count0[0]); ml = army > .75 ? 'Твёрдый' : army > .5 ? 'Держится' : army > .3 ? 'Колеблется' : 'Паникует'; el('bmo').style.setProperty('--p', clamp(army * 130, 6, 100) + '%'); el('tmo').textContent = 'Мораль: ' + ml; }
   const c = [0, 0, 0]; for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero) c[u.t.grp]++; for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
   for (const g of document.querySelectorAll('#bgroups .grp')) g.classList.toggle('on', +g.dataset.g === B.sel);
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
@@ -1932,7 +2402,7 @@ function updateWorldHud(force) {
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
-  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts ? ' +' + P.hero.pts : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>'; document.querySelector('[data-act=inv]').innerHTML = ic('bag') + '<span>Обоз</span>';
+  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts + (P.hero.pp || 0) ? ' +' + (P.hero.pts + (P.hero.pp || 0)) : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>'; document.querySelector('[data-act=inv]').innerHTML = ic('bag') + '<span>Обоз</span>';
   if (P.logDirty || G.logDirty) { P.logDirty = G.logDirty = false; el('wlog').innerHTML = P.log.slice(-4).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   // ближайшее поселение
   let near = null; for (const s of G.settles) { if (s.kind === 'camp') continue; if (Math.hypot(s.x - P.x, s.y - P.y) < 46) near = s; }
@@ -2018,7 +2488,7 @@ function bindInput() {
   joy.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === jid) jset(t); }, { passive: false });
   const jend = e => { for (const t of e.changedTouches) if (t.identifier === jid) { jid = null; IN.jx = IN.jy = 0; joy.firstElementChild.style.transform = ''; } }; joy.addEventListener('touchend', jend); joy.addEventListener('touchcancel', jend);
   const hold = (id, fn) => { const b = el(id); b.addEventListener('touchstart', e => { e.preventDefault(); IN.touch = true; fn(true); }, { passive: false }); b.addEventListener('touchend', () => fn(false)); b.addEventListener('touchcancel', () => fn(false)); b.addEventListener('mousedown', () => fn(true)); b.addEventListener('mouseup', () => fn(false)); };
-  hold('tbA', v => IN.atk = v); hold('tbB', v => IN.block = v); hold('tbS', v => IN.sprint = v);
+  hold('tbA', v => IN.atk = v); hold('tbB', v => IN.block = v); hold('tbS', v => IN.sprint = v); hold('tbW', v => IN.sw = v);
   cv.addEventListener('touchstart', e => { IN.touch = true; auInit(); if (MODE === 'world' && e.touches.length === 1) { const t = e.touches[0]; drag = { x: t.clientX, y: t.clientY, cx: WC.x, cy: WC.y, moved: false }; } }, { passive: true });
   cv.addEventListener('touchmove', e => { if (MODE === 'world' && drag && e.touches.length === 1) { const t = e.touches[0], dx = t.clientX - drag.x, dy = t.clientY - drag.y; if (Math.hypot(dx, dy) > 10) drag.moved = true; if (drag.moved) { WC.free = true; WC.x = drag.cx - dx / WC.z; WC.y = drag.cy - dy / WC.z; } } }, { passive: true });
   cv.addEventListener('touchend', e => { if (MODE === 'world' && drag && !drag.moved) { const t = e.changedTouches[0]; worldClick(t.clientX, t.clientY); } drag = null; });
