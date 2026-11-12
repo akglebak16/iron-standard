@@ -1,5 +1,6 @@
 'use strict';
 /* ================= утилиты ================= */
+const SERVER = typeof __SRV !== 'undefined';
 const TAU = Math.PI * 2;
 const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
 const rint = (a, b) => Math.floor(rnd(a, b + 1));

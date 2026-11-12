@@ -42,9 +42,7 @@ function mmode() { return MODE; }
 
 /* ---------- город ---------- */
 function openTown(s) {
-  const P = G.player; P.in = s; P.path = []; P.tid = null; G.wait = false; UI.town = { s, tab: 'recruit' };
-  for (const q of G.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(q, true);
-  G.rel[s.fac] = Math.min(100, G.rel[s.fac] + .5); sfx('click'); renderTown(); saveGame(true);
+  const P = G.player; townEnter(P, s); G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); saveGame(true);
 }
 function renderTown() {
   const { s, tab } = UI.town, P = G.player, H = P.hero, f = FACTIONS[s.fac], cap = sizeCap(H), cnt = troopCount(P.troops);
@@ -66,19 +64,18 @@ function renderTown() {
     const bd = s.board || []; body += '<div class="note">Заказы города. Награду выплачивают сразу, как дело сделано.</div>';
     if (!bd.length) body += '<div class="note">Доска пуста.</div>';
     for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + (q.type === 'camp' ? 'Расстояние: ' + Math.round(Math.hypot(settleById(q.sid).x - s.x, settleById(q.sid).y - s.y) / 10) / 10 + ' лиг' : 'Груз уже погружен') + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
-    if (G.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
+    if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
   const tabs = [['recruit', 'Рекруты'], ['gear', 'Снаряжение'], ['market', 'Рынок'], ['quests', 'Задания']];
-  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
+  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.player.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
 /* ---------- отряд и герой ---------- */
 function openPanel(tab) { UI.panel = tab || UI.panel || 'troops'; renderPanel(); }
-function xpNeed(l) { return 100 + l * 80; }
 function renderPanel() {
   const P = G.player, H = P.hero, tab = UI.panel, cap = sizeCap(H), cnt = troopCount(P.troops); let body = '';
   if (tab === 'troops') {
-    body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay() + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
+    body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay(G.player) + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
     sortT(P.troops); if (!P.troops.length) body += '<div class="note">У тебя нет отряда. Найми людей в городе.</div>';
     for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = t.upCost; acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
@@ -88,19 +85,19 @@ function renderPanel() {
       '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
       '<div class="card"><h3>Снаряжение</h3><div class="kv"><span>Оружие</span><b>' + ws.n + '</b></div><div class="kv"><span>Доспех</span><b>' + ar.n + '</b></div><div class="kv"><span>Щит</span><b>' + sh.n + '</b></div><div class="kv"><span>Конь</span><b>' + hs.n + '</b></div><p class="note">Покупай снаряжение в городах.</p></div></div>';
   } else if (tab === 'journal') {
-    body += '<h3>Задания</h3>'; if (!G.quests.length) body += '<div class="note">Нет активных заданий. Загляни на доску в городе.</div>'; for (const q of G.quests) { const s = settleById(q.sid); body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Заказчик: ' + FACTIONS[q.fac].name + ' · срок: день ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
-    body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.rel[f]) + ' (' + Math.round(G.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
-      '<h3 style="margin-top:14px">Хроника</h3>' + G.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
+    body += '<h3>Задания</h3>'; if (!G.player.quests.length) body += '<div class="note">Нет активных заданий. Загляни на доску в городе.</div>'; for (const q of G.player.quests) { const s = settleById(q.sid); body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Заказчик: ' + FACTIONS[q.fac].name + ' · срок: день ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
+    body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
+      '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
   const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['journal', 'Журнал']];
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
 }
 
 /* ---------- встреча ---------- */
-function relativePower(p) { const a = strength(G.player.troops) + 8, b = partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
+function relativePowerOld(p) { const a = strength(G.player.troops) + 8, b = partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function openEncounter(p, forced) {
-  const hostileP = isHostileToPlayer(p) || p.kind === 'camp'; UI.enc = { p, forced, hostile: hostileP }; G.player.path = []; G.player.tid = null; G.wait = false;
-  const pw = relativePower(p), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
+  const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp'; UI.enc = { p, forced, hostile: hostileP }; G.player.path = []; G.player.tid = null; G.wait = false;
+  const pw = relativePowerOf(G.player, p), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
   const title = p.kind === 'camp' ? 'Логово разбойников' : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? 'Разбойники' : p.name;
   let btns;
   if (hostileP) btns = '<button class="btn" data-act="flee">Бежать</button><button class="btn" data-act="auto">Рассчитать бой</button><button class="btn pri" data-act="fight">В бой!</button>';
@@ -113,24 +110,24 @@ function openEncounter(p, forced) {
 const ACT = {
   ttab(d) { UI.town.tab = d.t; renderTown(); },
   leave() { closeModal(); },
-  hire(d) { const s = UI.town.s, P = G.player, r = s.recruits.find(x => x.type === d.t), t = TROOPS[d.t]; if (!r) return; let n = Math.min(+d.n, r.n, Math.floor(P.gold / t.cost), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return; P.gold -= n * t.cost; addT(P.troops, d.t, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); sfx('coin'); renderTown(); },
-  buygear(d) { const P = G.player, H = P.hero, nx = GEAR[d.k][H[d.k] + 1]; if (!nx || P.gold < nx.p) return; P.gold -= nx.p; H[d.k]++; sfx('coin'); renderTown(); },
-  food(d) { const P = G.player; if (P.gold < +d.p) return; P.gold -= +d.p; P.food += +d.n; sfx('coin'); renderTown(); },
+  hire(d) { if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
+  buygear(d) { if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
+  food(d) { if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
   rest() { const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
-  accept(d) { const s = UI.town.s, q = (s.board || []).find(x => x.id === +d.q); if (!q) return; const r = acceptQuest(q); if (r) toast(r); else sfx('order'); renderTown(); },
+  accept(d) { const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
   party() { const back = UI.town; UI.back = back; openPanel('troops'); },
   hero() { openPanel('hero'); }, journal() { openPanel('journal'); },
   ptab(d) { UI.panel = d.t; renderPanel(); },
-  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.town = b; G.player.in = b.s; renderTown(); } else closeModal(); },
-  upg(d) { const P = G.player, t = TROOPS[d.t], c = t.upCost, s = P.troops.find(x => x.type === d.t); if (!s) return; const n = Math.min(s.n, Math.floor(P.gold / c)); if (n < 1) return; P.gold -= n * c; remT(P.troops, d.t, n); addT(P.troops, d.u, n); sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); renderPanel(); },
+  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
+  upg(d) { const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
   dismiss(d) { remT(G.player.troops, d.t, 1); renderPanel(); },
-  attr(d) { const H = G.player.hero; if (H.pts > 0) { H.pts--; H[d.k]++; sfx('order'); renderPanel(); } },
+  attr(d) { if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
   menu() { openMenu(); },
   greet() { const p = UI.enc.p; p.cd = 3; closeModal(); },
-  attack() { const e = UI.enc, p = e.p; G.rel[p.fac] = Math.max(-100, G.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1); e.hostile = true; ACT.fight(); },
+  attack() { const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
   fight() { const p = UI.enc.p; closeModal(); launchBattle(p); },
   auto() { const p = UI.enc.p; closeModal(); autoPlayer(p); },
-  flee() { const e = UI.enc, p = e.p, P = G.player; const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0), .12, .9); if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; closeModal(); toast('Ты оторвался от погони'); const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
+  flee() { const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
   resume() { closeModal(); }, save() { saveGame(); toast('Игра сохранена'); },
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
   tomenu() { closeModal(); gotoTitle(); },

@@ -19,17 +19,17 @@ function mkUnit(side, t, fac, x, y, sp) {
 }
 function startBattle(cfg) {
   const W = 2600, H = 1700, seed = cfg.seed || rint(1, 1e9), R = mulberry(seed);
-  B = { W, H, cfg, units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
-  B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d');
-  const ts = [treeSprite(cfg.biome, seed + 1), treeSprite(cfg.biome, seed + 2), treeSprite(cfg.biome, seed + 3)], bs = [bushSprite(cfg.biome, seed + 4), bushSprite(cfg.biome, seed + 5)];
+  B = { W, H, cfg, ev: [], units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
+  if (!SERVER) { B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d'); }
+  const ts = SERVER ? [null, null, null] : [treeSprite(cfg.biome, seed + 1), treeSprite(cfg.biome, seed + 2), treeSprite(cfg.biome, seed + 3)], bs = SERVER ? [null, null] : [bushSprite(cfg.biome, seed + 4), bushSprite(cfg.biome, seed + 5)];
   const nt = cfg.biome === 'steppe' ? 5 : 15;
   for (let i = 0; i < nt + 16; i++) { const x = 80 + R() * (W - 160), y = 60 + R() * (H - 120); if (Math.abs(y - H / 2) < 330 && x > 330 && x < W - 330 && i < nt) continue; if (i < nt) B.trees.push({ x, y, r: 15, cv: ts[i % 3], w: 100, h: 125, ax: 51, ay: 116, tree: true }); else B.trees.push({ x, y, r: 0, cv: bs[i % 2], w: 60, h: 46, ax: 30, ay: 38 }); }
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
-  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > 75 ? 75 / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), getSprite(s.type, rint(0, 3), fac)); } } };
+  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > 75 ? 75 / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.hero) {
-    const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, getHeroSprite(cfg.hero, hd.mounted));
-    h.isHero = true; h.ai = false; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
+    const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
+    h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
     const mb = (cfg.hero.lead || 0) * 4; for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; }
   }
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
@@ -54,23 +54,25 @@ function layout(g, init) {
 function slotPos(u) { const g = u.grp, c = Math.cos(g.dir), s = Math.sin(g.dir); return [clamp(g.cx - s * u.lx + c * u.ly, 30, B.W - 30), clamp(g.cy + c * u.lx + s * u.ly, 30, B.H - 30)]; }
 function centroid(side) { let x = 0, y = 0, n = 0; for (const u of B.units) if (u.side === side && fit(u)) { x += u.x; y += u.y; n++; } return n ? { x: x / n, y: y / n, n } : null; }
 function nearestFoeDist(x, y, side) { let b = 1e9; for (const u of B.units) if (u.side === side && fit(u)) { const d = Math.hypot(u.x - x, u.y - y); if (d < b) b = d; } return b; }
-function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; }
+function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; if (SERVER) ev(['l', txt, kind]); }
+function ev(a) { if (SERVER && B && B.ev) B.ev.push(a); }
+const NOINP = { dx: 0, dy: 0, face: undefined, atk: 0, blk: 0, spr: 0 };
 function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
-function giveOrder(ord, wx, wy) {
-  if (!B || B.cfg.demo || B.heroDown && false) return;
-  const foe = centroid(1), gs = B.groups[0].filter(g => B.sel === 3 || g.k === B.sel); let any = false;
+function giveOrder(ord, wx, wy, selArg) {
+  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  const foe = centroid(1), gs = B.groups[0].filter(g => sl === 3 || g.k === sl); let any = false;
   for (const g of gs) {
     if (!g.units.some(fit)) continue; any = true;
-    if (ord === 'hold') { g.order = 'hold'; g.cx = wx; g.cy = wy; if (B.sel === 3) { const f = foe ? Math.atan2(foe.y - wy, foe.x - wx) : 0; g.cx -= Math.cos(f) * (g.k === 1 ? 95 : 0) - Math.sin(f) * (g.k === 2 ? 240 : 0); g.cy -= Math.sin(f) * (g.k === 1 ? 95 : 0) + Math.cos(f) * (g.k === 2 ? 240 : 0); } if (foe) g.dir = Math.atan2(foe.y - g.cy, foe.x - g.cx); layout(g); }
+    if (ord === 'hold') { g.order = 'hold'; g.cx = wx; g.cy = wy; if (sl === 3) { const f = foe ? Math.atan2(foe.y - wy, foe.x - wx) : 0; g.cx -= Math.cos(f) * (g.k === 1 ? 95 : 0) - Math.sin(f) * (g.k === 2 ? 240 : 0); g.cy -= Math.sin(f) * (g.k === 1 ? 95 : 0) + Math.cos(f) * (g.k === 2 ? 240 : 0); } if (foe) g.dir = Math.atan2(foe.y - g.cy, foe.x - g.cx); layout(g); }
     else if (ord === 'back') { g.order = 'hold'; g.back = true; const d = foe ? Math.atan2(foe.y - g.cy, foe.x - g.cx) : 0; const c = centroidOf(g); g.cx = clamp(c.x - Math.cos(d) * 300, 80, B.W - 80); g.cy = clamp(c.y - Math.sin(d) * 300, 80, B.H - 80); layout(g); }
     else { g.order = ord; if (ord === 'follow') layout(g); }
     if (ord !== 'back') g.back = false;
   }
   if (!any) return;
   if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t };
-  const who = ['Пехота', 'Стрелки', 'Конница', 'Все отряды'][B.sel];
+  const who = ['Пехота', 'Стрелки', 'Конница', 'Все отряды'][sl];
   blog(who + ': ' + { hold: 'держать позицию', follow: 'за мной', charge: 'в атаку!', back: 'отойти назад' }[ord], 2); sfx(ord === 'charge' ? 'horn' : 'order'); B.hudDirty = true;
 }
 function centroidOf(g) { let x = 0, y = 0, n = 0; for (const u of g.units) if (fit(u) && !u.isHero) { x += u.x; y += u.y; n++; } return n ? { x: x / n, y: y / n } : { x: g.cx, y: g.cy }; }
@@ -150,20 +152,18 @@ function chargeHit(a, e, v) {
 function shoot(u, e, d) {
   const dur = d / 430 + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = d * u.t.acc;
   B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || 0, xb: u.t.look && u.t.look.weapon === 'xbow' });
-  u.bump = .5; sfx('bow', u);
+  u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0]);
 }
 function hurt(t, dmg, src, pierce) {
   if (t.dead) return; const arm = t.arm * (1 - (pierce || 0)), d = Math.max(1, Math.round(dmg * (1 - arm / (arm + 55))));
-  t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4);
+  t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4); ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
   if (t.hp <= 0) kill(t, src);
 }
 function kill(t, src) {
   t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); }
-  const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
-  g.save(); g.translate(t.x, t.y); g.fillStyle = 'rgba(96,14,10,.5)'; g.beginPath(); g.ellipse(rnd(-4, 4), rnd(-2, 4), rnd(15, 24), rnd(8, 12), rnd(0, 3), 0, TAU); g.fill();
-  if (!(t.isHero && t.side === 0)) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); g.globalAlpha = .28; g.globalCompositeOperation = 'source-atop'; } g.restore();
+  if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) g2.order = 'charge'; for (const u of B.units) if (u.side === 0) u.morale -= 7; B.hudDirty = true; }
@@ -171,17 +171,21 @@ function kill(t, src) {
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += t.t.tier * 10 + (t.t.mounted ? 5 : 0);
 }
+function paintCorpse(t) {
+  const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
+  g.save(); g.translate(t.x, t.y); g.fillStyle = 'rgba(96,14,10,.5)'; g.beginPath(); g.ellipse(rnd(-4, 4), rnd(-2, 4), rnd(15, 24), rnd(8, 12), rnd(0, 3), 0, TAU); g.fill();
+  if (!(t.isHero && t.side === 0)) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); } g.restore();
+}
 function heroControl(h, dt) {
-  let mx = (IN.keys.KeyD || IN.keys.ArrowRight ? 1 : 0) - (IN.keys.KeyA || IN.keys.ArrowLeft ? 1 : 0) + IN.jx, my = (IN.keys.KeyS || IN.keys.ArrowDown ? 1 : 0) - (IN.keys.KeyW || IN.keys.ArrowUp ? 1 : 0) + IN.jy;
+  const I = h.inp || NOINP; let mx = I.dx || 0, my = I.dy || 0;
   const ml = Math.hypot(mx, my); if (ml > 1) { mx /= ml; my /= ml; }
-  if (IN.touch) { let best = null, bd = 170; for (const e of B.units) if (e.side === 1 && alive(e)) { const d = Math.hypot(e.x - h.x, e.y - h.y); if (d < bd) { bd = d; best = e; } } if (best) h.face = Math.atan2(best.y - h.y, best.x - h.x); else if (ml > .2) h.face = Math.atan2(my, mx); }
-  else { const w = s2w(IN.mx, IN.my); h.face = Math.atan2(w.y - h.y, w.x - h.x); }
-  h.blocking = IN.block && h.wind < 0;
-  let sp = h.spd; const sprint = (IN.keys.ShiftLeft || IN.keys.ShiftRight || IN.sprint) && ml > .2 && h.stam > 2 && !h.blocking;
+  if (typeof I.face === 'number') h.face = I.face;
+  h.blocking = !!I.blk && h.wind < 0;
+  let sp = h.spd; const sprint = I.spr && ml > .2 && h.stam > 2 && !h.blocking;
   if (sprint) { sp *= h.t.mounted ? 1.2 : 1.4; h.stam = Math.max(0, h.stam - 26 * dt); } else h.stam = Math.min(100, h.stam + (ml > .2 ? 9 : 18) * dt);
   if (h.blocking) sp *= .55; if (h.swing > 0 && !h.t.mounted) sp *= .7;
   const k = Math.min(1, (h.t.mounted ? (ml > .1 ? 1.7 : .9) : 12) * dt); h.vx += (mx * sp - h.vx) * k; h.vy += (my * sp - h.vy) * k;
-  if ((IN.atk || IN.keys.Space) && h.cd <= 0 && h.wind < 0 && !h.blocking) { h.wind = .13; h.cd = h.t.cd; h.swing = .26; h.bump = 1; h.swingA = h.face; sfx('swing'); }
+  if (I.atk && h.cd <= 0 && h.wind < 0 && !h.blocking) { h.wind = .13; h.cd = h.t.cd; h.swing = .26; h.bump = 1; h.swingA = h.face; sfx('swing'); }
   if (h.wind >= 0) { h.wind -= dt; if (h.wind < 0) heroStrike(h); }
   h.swing -= dt;
   if (h.t.mounted && h.ccd <= 0) { const v = Math.hypot(h.vx, h.vy); if (v > 95) { const va = Math.atan2(h.vy, h.vx); for (const e of B.units) { if (e.side !== 1 || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d < h.r + e.r + 5 && Math.abs(angDiff(Math.atan2(e.y - h.y, e.x - h.x), va)) < .9) { chargeHit(h, e, v); h.ccd = .9; break; } } } }
@@ -197,10 +201,10 @@ function heroStrike(h) {
   }
 }
 /* ---------- эффекты ---------- */
-function fxBlood(x, y, n) { if (B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
-function fxSpark(x, y) { for (let i = 0; i < 6; i++) B.fx.push({ k: 0, x, y, vx: rnd(-90, 90), vy: rnd(-90, 60), l: rnd(.12, .28), c: '#ffe9a8', s: 1.5 }); }
-function fxDust(x, y) { for (let i = 0; i < 6; i++) B.fx.push({ k: 1, x: x + rnd(-10, 10), y: y + rnd(-4, 6), vx: rnd(-25, 25), vy: rnd(-25, -5), l: rnd(.4, .8), c: '#b8a880', s: rnd(4, 8) }); }
-function ftext(x, y, s, c) { if (B.texts.length < 40) B.texts.push({ x, y, s, c, l: .9 }); }
+function fxBlood(x, y, n) { if (SERVER || B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
+function fxSpark(x, y) { if (SERVER) { ev(['b', Math.round(x), Math.round(y)]); return; } for (let i = 0; i < 6; i++) B.fx.push({ k: 0, x, y, vx: rnd(-90, 90), vy: rnd(-90, 60), l: rnd(.12, .28), c: '#ffe9a8', s: 1.5 }); }
+function fxDust(x, y) { if (SERVER) { ev(['d', Math.round(x), Math.round(y)]); return; } for (let i = 0; i < 6; i++) B.fx.push({ k: 1, x: x + rnd(-10, 10), y: y + rnd(-4, 6), vx: rnd(-25, 25), vy: rnd(-25, -5), l: rnd(.4, .8), c: '#b8a880', s: rnd(4, 8) }); }
+function ftext(x, y, s, c) { if (SERVER) { ev(['t', Math.round(x), Math.round(y), s, c]); return; } if (B.texts.length < 40) B.texts.push({ x, y, s, c, l: .9 }); }
 
 /* ---------- шаг симуляции ---------- */
 function battleUpdate(rdt) {
@@ -227,7 +231,7 @@ function battleUpdate(rdt) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
     if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15), a.src, a.pierce); sfx('arrowhit', hit); } }
-    else { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
+    else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
   for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
   for (let i = B.texts.length - 1; i >= 0; i--) { const p = B.texts[i]; p.l -= dt; p.y -= 26 * dt; if (p.l <= 0) B.texts.splice(i, 1); }
@@ -242,7 +246,10 @@ function battleUpdate(rdt) {
     if ((!f0 || !f1) && !B.over) { B.over = B.t; B.win = f0 && !f1; if (!demo) { blog(B.win ? 'Победа! Враг разбит.' : 'Отряд разбит…', B.win ? 0 : 1); sfx(B.win ? 'horn' : 'horn2'); } }
   }
   if (B.over && B.t - B.over > 2.2 && !B.done) { B.done = true; finishBattle(); }
-  // камера
+  if (!SERVER) battleCamera(rdt);
+}
+function battleCamera(rdt) {
+  const demo = B.cfg.demo;
   const cam = B.cam; let fx = cam.x, fy = cam.y;
   if (B.hero && !B.heroDown) { const w = IN.touch ? { x: B.hero.x, y: B.hero.y } : s2w(IN.mx, IN.my); fx = B.hero.x + clamp((w.x - B.hero.x) * .22, -140, 140); fy = B.hero.y + clamp((w.y - B.hero.y) * .22, -100, 100); }
   else { const a = centroid(0), b = centroid(1), c = a && b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : a || b; if (c) { fx = c.x + (demo ? Math.sin(B.t * .13) * 120 : 0); fy = c.y + (demo ? Math.cos(B.t * .1) * 60 : 0); } }

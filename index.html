@@ -160,6 +160,7 @@ input[type=range]{width:100%;accent-color:var(--brass)}
 <script>
 'use strict';
 /* ================= утилиты ================= */
+const SERVER = typeof __SRV !== 'undefined';
 const TAU = Math.PI * 2;
 const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
 const rint = (a, b) => Math.floor(rnd(a, b + 1));
@@ -545,17 +546,17 @@ function mkUnit(side, t, fac, x, y, sp) {
 }
 function startBattle(cfg) {
   const W = 2600, H = 1700, seed = cfg.seed || rint(1, 1e9), R = mulberry(seed);
-  B = { W, H, cfg, units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
-  B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d');
-  const ts = [treeSprite(cfg.biome, seed + 1), treeSprite(cfg.biome, seed + 2), treeSprite(cfg.biome, seed + 3)], bs = [bushSprite(cfg.biome, seed + 4), bushSprite(cfg.biome, seed + 5)];
+  B = { W, H, cfg, ev: [], units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
+  if (!SERVER) { B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d'); }
+  const ts = SERVER ? [null, null, null] : [treeSprite(cfg.biome, seed + 1), treeSprite(cfg.biome, seed + 2), treeSprite(cfg.biome, seed + 3)], bs = SERVER ? [null, null] : [bushSprite(cfg.biome, seed + 4), bushSprite(cfg.biome, seed + 5)];
   const nt = cfg.biome === 'steppe' ? 5 : 15;
   for (let i = 0; i < nt + 16; i++) { const x = 80 + R() * (W - 160), y = 60 + R() * (H - 120); if (Math.abs(y - H / 2) < 330 && x > 330 && x < W - 330 && i < nt) continue; if (i < nt) B.trees.push({ x, y, r: 15, cv: ts[i % 3], w: 100, h: 125, ax: 51, ay: 116, tree: true }); else B.trees.push({ x, y, r: 0, cv: bs[i % 2], w: 60, h: 46, ax: 30, ay: 38 }); }
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
-  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > 75 ? 75 / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), getSprite(s.type, rint(0, 3), fac)); } } };
+  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > 75 ? 75 / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.hero) {
-    const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, getHeroSprite(cfg.hero, hd.mounted));
-    h.isHero = true; h.ai = false; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
+    const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
+    h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
     const mb = (cfg.hero.lead || 0) * 4; for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; }
   }
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
@@ -580,23 +581,25 @@ function layout(g, init) {
 function slotPos(u) { const g = u.grp, c = Math.cos(g.dir), s = Math.sin(g.dir); return [clamp(g.cx - s * u.lx + c * u.ly, 30, B.W - 30), clamp(g.cy + c * u.lx + s * u.ly, 30, B.H - 30)]; }
 function centroid(side) { let x = 0, y = 0, n = 0; for (const u of B.units) if (u.side === side && fit(u)) { x += u.x; y += u.y; n++; } return n ? { x: x / n, y: y / n, n } : null; }
 function nearestFoeDist(x, y, side) { let b = 1e9; for (const u of B.units) if (u.side === side && fit(u)) { const d = Math.hypot(u.x - x, u.y - y); if (d < b) b = d; } return b; }
-function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; }
+function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; if (SERVER) ev(['l', txt, kind]); }
+function ev(a) { if (SERVER && B && B.ev) B.ev.push(a); }
+const NOINP = { dx: 0, dy: 0, face: undefined, atk: 0, blk: 0, spr: 0 };
 function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
-function giveOrder(ord, wx, wy) {
-  if (!B || B.cfg.demo || B.heroDown && false) return;
-  const foe = centroid(1), gs = B.groups[0].filter(g => B.sel === 3 || g.k === B.sel); let any = false;
+function giveOrder(ord, wx, wy, selArg) {
+  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  const foe = centroid(1), gs = B.groups[0].filter(g => sl === 3 || g.k === sl); let any = false;
   for (const g of gs) {
     if (!g.units.some(fit)) continue; any = true;
-    if (ord === 'hold') { g.order = 'hold'; g.cx = wx; g.cy = wy; if (B.sel === 3) { const f = foe ? Math.atan2(foe.y - wy, foe.x - wx) : 0; g.cx -= Math.cos(f) * (g.k === 1 ? 95 : 0) - Math.sin(f) * (g.k === 2 ? 240 : 0); g.cy -= Math.sin(f) * (g.k === 1 ? 95 : 0) + Math.cos(f) * (g.k === 2 ? 240 : 0); } if (foe) g.dir = Math.atan2(foe.y - g.cy, foe.x - g.cx); layout(g); }
+    if (ord === 'hold') { g.order = 'hold'; g.cx = wx; g.cy = wy; if (sl === 3) { const f = foe ? Math.atan2(foe.y - wy, foe.x - wx) : 0; g.cx -= Math.cos(f) * (g.k === 1 ? 95 : 0) - Math.sin(f) * (g.k === 2 ? 240 : 0); g.cy -= Math.sin(f) * (g.k === 1 ? 95 : 0) + Math.cos(f) * (g.k === 2 ? 240 : 0); } if (foe) g.dir = Math.atan2(foe.y - g.cy, foe.x - g.cx); layout(g); }
     else if (ord === 'back') { g.order = 'hold'; g.back = true; const d = foe ? Math.atan2(foe.y - g.cy, foe.x - g.cx) : 0; const c = centroidOf(g); g.cx = clamp(c.x - Math.cos(d) * 300, 80, B.W - 80); g.cy = clamp(c.y - Math.sin(d) * 300, 80, B.H - 80); layout(g); }
     else { g.order = ord; if (ord === 'follow') layout(g); }
     if (ord !== 'back') g.back = false;
   }
   if (!any) return;
   if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t };
-  const who = ['Пехота', 'Стрелки', 'Конница', 'Все отряды'][B.sel];
+  const who = ['Пехота', 'Стрелки', 'Конница', 'Все отряды'][sl];
   blog(who + ': ' + { hold: 'держать позицию', follow: 'за мной', charge: 'в атаку!', back: 'отойти назад' }[ord], 2); sfx(ord === 'charge' ? 'horn' : 'order'); B.hudDirty = true;
 }
 function centroidOf(g) { let x = 0, y = 0, n = 0; for (const u of g.units) if (fit(u) && !u.isHero) { x += u.x; y += u.y; n++; } return n ? { x: x / n, y: y / n } : { x: g.cx, y: g.cy }; }
@@ -676,20 +679,18 @@ function chargeHit(a, e, v) {
 function shoot(u, e, d) {
   const dur = d / 430 + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = d * u.t.acc;
   B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || 0, xb: u.t.look && u.t.look.weapon === 'xbow' });
-  u.bump = .5; sfx('bow', u);
+  u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0]);
 }
 function hurt(t, dmg, src, pierce) {
   if (t.dead) return; const arm = t.arm * (1 - (pierce || 0)), d = Math.max(1, Math.round(dmg * (1 - arm / (arm + 55))));
-  t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4);
+  t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4); ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
   if (t.hp <= 0) kill(t, src);
 }
 function kill(t, src) {
   t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); }
-  const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
-  g.save(); g.translate(t.x, t.y); g.fillStyle = 'rgba(96,14,10,.5)'; g.beginPath(); g.ellipse(rnd(-4, 4), rnd(-2, 4), rnd(15, 24), rnd(8, 12), rnd(0, 3), 0, TAU); g.fill();
-  if (!(t.isHero && t.side === 0)) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); g.globalAlpha = .28; g.globalCompositeOperation = 'source-atop'; } g.restore();
+  if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) g2.order = 'charge'; for (const u of B.units) if (u.side === 0) u.morale -= 7; B.hudDirty = true; }
@@ -697,17 +698,21 @@ function kill(t, src) {
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += t.t.tier * 10 + (t.t.mounted ? 5 : 0);
 }
+function paintCorpse(t) {
+  const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
+  g.save(); g.translate(t.x, t.y); g.fillStyle = 'rgba(96,14,10,.5)'; g.beginPath(); g.ellipse(rnd(-4, 4), rnd(-2, 4), rnd(15, 24), rnd(8, 12), rnd(0, 3), 0, TAU); g.fill();
+  if (!(t.isHero && t.side === 0)) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); } g.restore();
+}
 function heroControl(h, dt) {
-  let mx = (IN.keys.KeyD || IN.keys.ArrowRight ? 1 : 0) - (IN.keys.KeyA || IN.keys.ArrowLeft ? 1 : 0) + IN.jx, my = (IN.keys.KeyS || IN.keys.ArrowDown ? 1 : 0) - (IN.keys.KeyW || IN.keys.ArrowUp ? 1 : 0) + IN.jy;
+  const I = h.inp || NOINP; let mx = I.dx || 0, my = I.dy || 0;
   const ml = Math.hypot(mx, my); if (ml > 1) { mx /= ml; my /= ml; }
-  if (IN.touch) { let best = null, bd = 170; for (const e of B.units) if (e.side === 1 && alive(e)) { const d = Math.hypot(e.x - h.x, e.y - h.y); if (d < bd) { bd = d; best = e; } } if (best) h.face = Math.atan2(best.y - h.y, best.x - h.x); else if (ml > .2) h.face = Math.atan2(my, mx); }
-  else { const w = s2w(IN.mx, IN.my); h.face = Math.atan2(w.y - h.y, w.x - h.x); }
-  h.blocking = IN.block && h.wind < 0;
-  let sp = h.spd; const sprint = (IN.keys.ShiftLeft || IN.keys.ShiftRight || IN.sprint) && ml > .2 && h.stam > 2 && !h.blocking;
+  if (typeof I.face === 'number') h.face = I.face;
+  h.blocking = !!I.blk && h.wind < 0;
+  let sp = h.spd; const sprint = I.spr && ml > .2 && h.stam > 2 && !h.blocking;
   if (sprint) { sp *= h.t.mounted ? 1.2 : 1.4; h.stam = Math.max(0, h.stam - 26 * dt); } else h.stam = Math.min(100, h.stam + (ml > .2 ? 9 : 18) * dt);
   if (h.blocking) sp *= .55; if (h.swing > 0 && !h.t.mounted) sp *= .7;
   const k = Math.min(1, (h.t.mounted ? (ml > .1 ? 1.7 : .9) : 12) * dt); h.vx += (mx * sp - h.vx) * k; h.vy += (my * sp - h.vy) * k;
-  if ((IN.atk || IN.keys.Space) && h.cd <= 0 && h.wind < 0 && !h.blocking) { h.wind = .13; h.cd = h.t.cd; h.swing = .26; h.bump = 1; h.swingA = h.face; sfx('swing'); }
+  if (I.atk && h.cd <= 0 && h.wind < 0 && !h.blocking) { h.wind = .13; h.cd = h.t.cd; h.swing = .26; h.bump = 1; h.swingA = h.face; sfx('swing'); }
   if (h.wind >= 0) { h.wind -= dt; if (h.wind < 0) heroStrike(h); }
   h.swing -= dt;
   if (h.t.mounted && h.ccd <= 0) { const v = Math.hypot(h.vx, h.vy); if (v > 95) { const va = Math.atan2(h.vy, h.vx); for (const e of B.units) { if (e.side !== 1 || !alive(e)) continue; const d = Math.hypot(e.x - h.x, e.y - h.y); if (d < h.r + e.r + 5 && Math.abs(angDiff(Math.atan2(e.y - h.y, e.x - h.x), va)) < .9) { chargeHit(h, e, v); h.ccd = .9; break; } } } }
@@ -723,10 +728,10 @@ function heroStrike(h) {
   }
 }
 /* ---------- эффекты ---------- */
-function fxBlood(x, y, n) { if (B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
-function fxSpark(x, y) { for (let i = 0; i < 6; i++) B.fx.push({ k: 0, x, y, vx: rnd(-90, 90), vy: rnd(-90, 60), l: rnd(.12, .28), c: '#ffe9a8', s: 1.5 }); }
-function fxDust(x, y) { for (let i = 0; i < 6; i++) B.fx.push({ k: 1, x: x + rnd(-10, 10), y: y + rnd(-4, 6), vx: rnd(-25, 25), vy: rnd(-25, -5), l: rnd(.4, .8), c: '#b8a880', s: rnd(4, 8) }); }
-function ftext(x, y, s, c) { if (B.texts.length < 40) B.texts.push({ x, y, s, c, l: .9 }); }
+function fxBlood(x, y, n) { if (SERVER || B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
+function fxSpark(x, y) { if (SERVER) { ev(['b', Math.round(x), Math.round(y)]); return; } for (let i = 0; i < 6; i++) B.fx.push({ k: 0, x, y, vx: rnd(-90, 90), vy: rnd(-90, 60), l: rnd(.12, .28), c: '#ffe9a8', s: 1.5 }); }
+function fxDust(x, y) { if (SERVER) { ev(['d', Math.round(x), Math.round(y)]); return; } for (let i = 0; i < 6; i++) B.fx.push({ k: 1, x: x + rnd(-10, 10), y: y + rnd(-4, 6), vx: rnd(-25, 25), vy: rnd(-25, -5), l: rnd(.4, .8), c: '#b8a880', s: rnd(4, 8) }); }
+function ftext(x, y, s, c) { if (SERVER) { ev(['t', Math.round(x), Math.round(y), s, c]); return; } if (B.texts.length < 40) B.texts.push({ x, y, s, c, l: .9 }); }
 
 /* ---------- шаг симуляции ---------- */
 function battleUpdate(rdt) {
@@ -753,7 +758,7 @@ function battleUpdate(rdt) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
     if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15), a.src, a.pierce); sfx('arrowhit', hit); } }
-    else { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
+    else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
   for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
   for (let i = B.texts.length - 1; i >= 0; i--) { const p = B.texts[i]; p.l -= dt; p.y -= 26 * dt; if (p.l <= 0) B.texts.splice(i, 1); }
@@ -768,7 +773,10 @@ function battleUpdate(rdt) {
     if ((!f0 || !f1) && !B.over) { B.over = B.t; B.win = f0 && !f1; if (!demo) { blog(B.win ? 'Победа! Враг разбит.' : 'Отряд разбит…', B.win ? 0 : 1); sfx(B.win ? 'horn' : 'horn2'); } }
   }
   if (B.over && B.t - B.over > 2.2 && !B.done) { B.done = true; finishBattle(); }
-  // камера
+  if (!SERVER) battleCamera(rdt);
+}
+function battleCamera(rdt) {
+  const demo = B.cfg.demo;
   const cam = B.cam; let fx = cam.x, fy = cam.y;
   if (B.hero && !B.heroDown) { const w = IN.touch ? { x: B.hero.x, y: B.hero.y } : s2w(IN.mx, IN.my); fx = B.hero.x + clamp((w.x - B.hero.x) * .22, -140, 140); fy = B.hero.y + clamp((w.y - B.hero.y) * .22, -100, 100); }
   else { const a = centroid(0), b = centroid(1), c = a && b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : a || b; if (c) { fx = c.x + (demo ? Math.sin(B.t * .13) * 120 : 0); fy = c.y + (demo ? Math.cos(B.t * .1) * 60 : 0); } }
@@ -976,22 +984,23 @@ function sortT(list) { list.sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].
 const CULT = {
   nord: { start: [['n1', 6], ['n2a', 2], ['n2s', 2]], horse: 0 }, emp: { start: [['e1', 6], ['e2a', 3], ['e2s', 1]], horse: 0 }, khan: { start: [['k1', 5], ['k2a', 3], ['k2c', 2]], horse: 1 }
 };
-function newGame(o) {
-  const seed = o.seed || rint(1, 1e9); G = { seed, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], log: [], quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 }, ver: 1 };
+function newWorld(seed) {
+  seed = seed || rint(1, 1e9); G = { seed, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
   genWorld(seed); genSettlements(); genRoads(); for (const s of G.settles) { genRecruits(s); if (s.kind === 'camp') respawnCamp(s); }
-  const home = G.settles.find(s => s.fac === o.culture && s.kind === 'town');
-  const troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] }));
-  const pl = { x: home.x + 10, y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: o.name || 'Безымянный', culture: o.culture, banner: o.banner || 0,
-    hero: { name: o.name || 'Безымянный', lvl: 1, xp: 0, pts: 2, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
-  G.player = pl; FACTIONS.player.c1 = BANNERS[pl.banner].c1; FACTIONS.player.c2 = BANNERS[pl.banner].c2;
   for (const f of ['nord', 'emp', 'khan']) { const hs = G.settles.filter(s => s.fac === f); for (let i = 0; i < 3; i++) { const h = hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(22, 40), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
   for (let i = 0; i < 2; i++) { const t = pick(G.settles.filter(s => s.kind === 'town')); spawnCaravan(t); }
-  genQuests(); logW('Ты прибыл в ' + home.name + '. Собери отряд и заработай имя.');
-  return G;
+  genQuests(); return G;
 }
+function mkPlayer(o) {
+  const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
+  return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
+    hero: { name: nm, lvl: 1, xp: 0, pts: 2, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
+}
+function addPlayer(o) { const P = mkPlayer(o); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
+function newGame(o) { newWorld(o.seed); const P = addPlayer(o); G.player = P; FACTIONS.player.c1 = BANNERS[P.banner].c1; FACTIONS.player.c2 = BANNERS[P.banner].c2; return G; }
 function respawnCamp(c) { c.camp = mkParty('camp', 'bandit', 'Лагерь: ' + c.name, c.x, c.y, genTroops('bandit', rint(12, 20), .4), { home: c.id, hide: false }); c.cleared = false; c.camp.camp = c.id; }
 function spawnCaravan(t) { const dst = pick(G.settles.filter(s => s.kind === 'town' && s !== t)); const p = mkParty('caravan', t.fac, 'Караван', t.x + 10, t.y + 20, genTroops(t.fac, rint(3, 5), .3), { home: t.id, sid: dst.id, state: 'travel' }); p.path = findPath(p.x, p.y, dst.x, dst.y) || []; p.pi = 0; return p; }
-function logW(txt, kind) { G.log.push({ txt, kind: kind || 0, d: G.day }); if (G.log.length > 40) G.log.shift(); G.logDirty = true; }
+function logW(txt, kind, P) { const L = P ? P.log : G.log; L.push({ txt, kind: kind || 0, d: G.day }); if (L.length > 40) L.shift(); if (P) { P.logDirty = true; P.logN = (P.logN || 0) + 1; } else G.logDirty = true; }
 function relName(v) { return v <= -60 ? 'Враждебные' : v <= -20 ? 'Недружелюбные' : v < 20 ? 'Нейтральные' : v < 50 ? 'Дружелюбные' : 'Союзные'; }
 
 /* ---------- задания ---------- */
@@ -1002,35 +1011,36 @@ function genQuests() {
     else { const d = pick(G.settles.filter(x => x.kind !== 'camp' && x !== s)); const dist = Math.hypot(d.x - s.x, d.y - s.y); s.board.push({ id: G.nid++, type: 'deliver', sid: d.id, from: s.id, fac: s.fac, reward: Math.round(90 + dist * .22), day: G.day, dl: G.day + Math.ceil(dist / 150) + 4 }); } } }
 }
 function questText(q) { const s = settleById(q.sid), f = settleById(q.from); return q.type === 'camp' ? 'Разгромить разбойников: «' + s.name + '»' : 'Доставить груз в ' + s.name; }
-function acceptQuest(q) { const t = settleById(q.from); if (G.quests.length >= 4) return 'Не больше четырёх заданий одновременно.'; t.board.splice(t.board.indexOf(q), 1); G.quests.push(q); return null; }
-function questDone(q, why) { G.quests.splice(G.quests.indexOf(q), 1); if (why) { G.player.gold += q.reward; G.rel[q.fac] = Math.min(100, G.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + q.reward + ' золота.', 3); } }
+function acceptQuest(P, q) { const t = settleById(q.from); if (P.quests.length >= 4) return 'Не больше четырёх заданий одновременно.'; if (t.board.indexOf(q) < 0) return 'Задание уже взято.'; t.board.splice(t.board.indexOf(q), 1); P.quests.push(q); return null; }
+function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { P.gold += q.reward; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + q.reward + ' золота.', 3, P); } }
 
 /* ---------- ход времени ---------- */
 function speedOf(p) {
   let m = 1, base = 17, any = false, mo = true; for (const s of p.troops) { any = true; if (!TROOPS[s.type].mounted) mo = false; } if (any && mo) base = 22;
-  if (p === G.player) { base = (G.player.hero.horse && mo ? 22 : base) + 1; if (G.player.food <= 0) base *= .85; if (G.player.troops.length > 14) base *= .96; }
+  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; }
   const k = cellOf(p.x, p.y), t = WT.cells[k]; m = t === 2 ? .72 : t === 3 ? .78 : 1; if (WT.bio[k] === 1) m *= .85; if (WT.road[k]) m *= 1.3; if (p.kind === 'bandit') m *= 1.04; return base * m;
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
 function pathTo(p, x, y) { const pa = findPath(p.x, p.y, x, y); p.path = pa || []; p.pi = 0; return !!pa; }
 function stepWorld(dh) {
-  const P = G.player;
-  if (!P.in) {
-    let tg = P.tid != null ? partyById(P.tid) : null; if (P.tid != null && !tg) { P.tid = null; P.path = []; }
+  const evs = [];
+  for (const P of G.players) {
+    if (P.away || P.in || P.busy) continue;
+    let tg = P.tid != null ? partyById(P.tid) : null; if (P.tid != null && (!tg || tg.hide)) { P.tid = null; P.path = []; tg = null; }
     if (tg) { P.rp = (P.rp || 0) - dh; if (P.rp <= 0) { P.rp = .6; if (losClear(P.x, P.y, tg.x, tg.y)) P.path = [{ x: tg.x, y: tg.y }]; else P.path = findPath(P.x, P.y, tg.x, tg.y) || []; P.pi = 0; } }
-    if (P.path.length && P.pi < P.path.length) { const arrived = moveAlong(P, dh); if (arrived && !tg) { P.path = []; if (P.sid != null) { const s = settleById(P.sid); P.sid = null; if (s && Math.hypot(s.x - P.x, s.y - P.y) < 40) return { type: 'enter', s }; } } }
-    if (tg && Math.hypot(tg.x - P.x, tg.y - P.y) < 24) { P.tid = null; P.path = []; return { type: 'meet', p: tg, forced: false }; }
-    for (const p of G.parties) { if (p.hide || p.kind === 'camp') continue; if (Math.hypot(p.x - P.x, p.y - P.y) < 22 && isHostileToPlayer(p) && p.cd <= 0) return { type: 'meet', p, forced: true }; }
+    if (P.path.length && P.pi < P.path.length) { const arrived = moveAlong(P, dh); if (arrived && !tg) { P.path = []; if (P.sid != null) { const s = settleById(P.sid); P.sid = null; if (s && Math.hypot(s.x - P.x, s.y - P.y) < 40) { evs.push({ type: 'enter', P, s }); continue; } } } }
+    if (tg && Math.hypot(tg.x - P.x, tg.y - P.y) < 24) { P.tid = null; P.path = []; evs.push({ type: 'meet', P, p: tg, forced: false }); continue; }
+    for (const p of G.parties) { if (p.hide || p.kind === 'camp' || p.lock) continue; if (Math.hypot(p.x - P.x, p.y - P.y) < 22 && isHostileToPlayer(p, P) && p.cd <= 0) { evs.push({ type: 'meet', P, p, forced: true }); break; } }
   }
   // ИИ
   for (const p of G.parties.slice()) { if (!G.parties.includes(p)) continue; aiParty(p, dh); }
-  for (let i = 0; i < G.parties.length; i++) { const a = G.parties[i]; if (a.hide || a.kind === 'camp' || !G.parties.includes(a)) continue; for (let j = i + 1; j < G.parties.length; j++) { const b = G.parties[j]; if (b.hide || b.kind === 'camp' || !G.parties.includes(b)) continue; if (Math.hypot(a.x - b.x, a.y - b.y) < 15 && hostile(a, b)) { autoFight(a, b); break; } } }
-  return null;
+  for (let i = 0; i < G.parties.length; i++) { const a = G.parties[i]; if (a.hide || a.kind === 'camp' || a.lock || !G.parties.includes(a)) continue; for (let j = i + 1; j < G.parties.length; j++) { const b = G.parties[j]; if (b.hide || b.kind === 'camp' || b.lock || !G.parties.includes(b)) continue; if (Math.hypot(a.x - b.x, a.y - b.y) < 15 && hostile(a, b)) { autoFight(a, b); break; } } }
+  return evs;
 }
-function isHostileToPlayer(p) { if (p.kind === 'bandit' || p.kind === 'camp') return true; if (p.kind === 'caravan') return false; return G.rel[p.fac] < -20; }
+function isHostileToPlayer(p, P) { if (p.kind === 'bandit' || p.kind === 'camp') return true; if (p.kind === 'caravan') return false; return P.rel[p.fac] < -20; }
 function hostile(a, b) { if (a.kind === 'caravan' && b.kind === 'caravan') return false; if (a.kind === 'bandit' && b.fac !== 'bandit') return true; if (b.kind === 'bandit' && a.fac !== 'bandit') return true; return a.fac !== b.fac && atWar(a.fac, b.fac) && a.kind !== 'caravan' && b.kind !== 'caravan'; }
 function aiParty(p, dh) {
-  if (p.kind === 'camp') return; p.cd -= dh;
+  if (p.kind === 'camp') return; p.cd -= dh; if (p.lock) return;
   if (p.hide) { p.wait -= dh; if (p.wait <= 0) { p.hide = false; const h = settleById(p.home); if (h) { const need = Math.max(0, 34 - troopCount(p.troops)); if (need > 0 && h.fac === p.fac) { const add = genTroops(p.fac, Math.min(need, rint(4, 10)), .6); for (const a of add) addT(p.troops, a.type, a.n); } } if (p.kind === 'lord') p.state = 'idle'; } return; }
   p.ai = (p.ai || 0) - dh;
   if (p.ai <= 0) { p.ai = rnd(.8, 1.6);
@@ -1038,21 +1048,20 @@ function aiParty(p, dh) {
     // охота / бегство
     let tgt = null, tb = 1e9, threat = null;
     for (const o of G.parties) { if (o === p || o.hide || o.kind === 'camp') continue; if (!hostile(p, o)) continue; const d = Math.hypot(o.x - p.x, o.y - p.y); if (d > 260) continue; const so = partyStr(o); if (so < me * (p.kind === 'bandit' ? .9 : .75)) { if (d < tb) { tb = d; tgt = o; } } else if (so > me * 1.2 && d < 190) threat = o; }
-    const P = G.player; if (!P.in && hostileToPlayerAI(p)) { const d = Math.hypot(P.x - p.x, P.y - p.y); if (d < 230) { const sp = strength(P.troops) * 1.0 + 6; if (sp < me * .95) { if (d < tb) { tgt = { id: -1, x: P.x, y: P.y, pl: true }; tb = d; } } else if (sp > me * 1.25 && d < 180) threat = P; } }
+    for (const Q of G.players) { if (Q.in || Q.away || Q.busy || !isHostileToPlayer(p, Q)) continue; const d = Math.hypot(Q.x - p.x, Q.y - p.y); if (d < 230) { const sp = strength(Q.troops) * 1.0 + 6; if (sp < me * .95) { if (d < tb) { tgt = { id: -1, x: Q.x, y: Q.y, pl: Q.id }; tb = d; } } else if (sp > me * 1.25 && d < 180) threat = Q; } }
     if (threat && !tgt) { const a = Math.atan2(p.y - threat.y, p.x - threat.x); const tx = clamp(p.x + Math.cos(a) * 220, 60, WW - 60), ty = clamp(p.y + Math.sin(a) * 220, 60, WH - 60); pathTo(p, tx, ty); p.state = 'flee'; p.tid = null; return; }
-    if (tgt) { p.tid = tgt.pl ? -1 : tgt.id; p.state = 'hunt'; pathTo(p, tgt.x, tgt.y); return; }
-    if (p.state === 'hunt' || p.state === 'flee') { p.state = 'idle'; p.tid = null; p.path = []; }
+    if (tgt) { p.tid = tgt.pl ? null : tgt.id; p.tpl = tgt.pl || null; p.state = 'hunt'; pathTo(p, tgt.x, tgt.y); return; }
+    if (p.state === 'hunt' || p.state === 'flee') { p.state = 'idle'; p.tid = null; p.tpl = null; p.path = []; }
     if (p.state === 'idle' && p.pi >= p.path.length) {
       if (p.kind === 'lord') { p.wait -= 1.2; if (p.wait <= 0) { const home = settleById(p.home), targets = G.settles.filter(s => s.fac === p.fac && s.kind !== 'camp'); const d = pick(targets); p.sid = d.id; p.state = 'travel'; pathTo(p, d.x, d.y); } }
       else if (p.kind === 'bandit') { const c = settleById(p.home); const a = rnd(0, TAU), r = rnd(80, 340), tx = clamp((c ? c.x : p.x) + Math.cos(a) * r, 60, WW - 60), ty = clamp((c ? c.y : p.y) + Math.sin(a) * r, 60, WH - 60); if (!pathTo(p, tx, ty)) p.path = []; p.state = 'roam'; }
       else if (p.kind === 'caravan') { p.state = 'travel'; }
     }
   }
-  if (p.state === 'hunt') { if (p.tid === -1) { if (!G.player.in) { if (Math.hypot(G.player.x - p.x, G.player.y - p.y) > 300) { p.state = 'idle'; p.path = []; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, G.player.x, G.player.y); } } else { p.state = 'idle'; p.path = []; } } else { const t = partyById(p.tid); if (!t || t.hide) { p.state = 'idle'; p.path = []; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, t.x, t.y); } } }
+  if (p.state === 'hunt') { if (p.tpl) { const Q = G.players.find(q => q.id === p.tpl); if (!Q || Q.in || Q.away || Q.busy || Math.hypot(Q.x - p.x, Q.y - p.y) > 300) { p.state = 'idle'; p.path = []; p.tpl = null; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, Q.x, Q.y); } } else { const t = partyById(p.tid); if (!t || t.hide) { p.state = 'idle'; p.path = []; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, t.x, t.y); } } }
   if (p.pi < p.path.length) { const done = moveAlong(p, dh); if (done) { if (p.state === 'travel') { const s = settleById(p.sid); if (s && Math.hypot(s.x - p.x, s.y - p.y) < 40) { if (p.kind === 'caravan') { if (s.fac !== 'bandit') { G.parties.splice(G.parties.indexOf(p), 1); return; } } p.hide = true; p.wait = rint(5, 20); p.home = s.id; p.x = s.x; p.y = s.y; p.state = 'idle'; p.path = []; } } else if (p.state === 'roam') { p.state = 'idle'; p.wait = 0; } } }
   else if (p.state === 'travel' && p.kind === 'caravan') { const s = settleById(p.sid); if (s) pathTo(p, s.x, s.y); else G.parties.splice(G.parties.indexOf(p), 1); }
 }
-function hostileToPlayerAI(p) { return isHostileToPlayer(p); }
 function autoFight(a, b) {
   const sa = partyStr(a) * rnd(.8, 1.25), sb = partyStr(b) * rnd(.8, 1.25), w = sa >= sb ? a : b, l = w === a ? b : a, r = Math.min(sa, sb) / Math.max(sa, sb), wl = Math.min(.85, r * .85);
   for (const s of w.troops.slice()) { let d = 0; for (let i = 0; i < s.n; i++) if (Math.random() < wl) d++; remT(w.troops, s.type, d); }
@@ -1061,8 +1070,8 @@ function autoFight(a, b) {
   w.state = 'idle'; w.path = []; w.pi = 0; w.cd = 3; w.gold += 20;
 }
 function hourTick() {
-  const P = G.player; G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
-  const heal = P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014; P.hero.hp = Math.min(1, P.hero.hp + heal);
+  G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
+  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014; P.hero.hp = Math.min(1, P.hero.hp + heal); }
   for (const s of G.settles) { if (s.kind === 'camp') { if (s.cleared) { s.respawn -= 1; if (s.respawn <= 0) respawnCamp(s); } continue; } s.rt += 1; if (s.rt >= 72) { s.rt = 0; genRecruits(s); } }
   // спавны
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
@@ -1070,14 +1079,15 @@ function hourTick() {
     if (cars < 4 && Math.random() < .5) spawnCaravan(pick(G.settles.filter(s => s.kind === 'town'))); }
   for (const f of ['nord', 'emp', 'khan']) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; if (n < 3 && G.hour === 12) { const h = pick(G.settles.filter(s => s.fac === f && s.kind !== 'village')); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(18, 30), .6), { home: h.id }); } }
 }
-function dayTick() {
-  const P = G.player; const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = Math.round(wage / 3);
-  if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1); } }
-  if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1); } else logW('Закончилась провизия!', 1); }
-  for (const q of G.quests.slice()) if (G.day > q.dl) { G.quests.splice(G.quests.indexOf(q), 1); G.rel[q.fac] = Math.max(-100, G.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1); }
-  genQuests(); for (const f of ['nord', 'emp', 'khan']) G.rel[f] = G.rel[f] > 0 ? G.rel[f] - .1 : G.rel[f] < 0 ? Math.min(0, G.rel[f] + .25) : 0;
+function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); }
+function playerDay(P) {
+  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = Math.round(wage / 3);
+  if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
+  if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
+  for (const q of P.quests.slice()) if (G.day > q.dl) { P.quests.splice(P.quests.indexOf(q), 1); P.rel[q.fac] = Math.max(-100, P.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1, P); }
+  for (const f of ['nord', 'emp', 'khan']) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }
-function wageDay() { let w = 0; for (const s of G.player.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3); }
+function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3); }
 
 /* ---------- ландшафт: картинка ---------- */
 function paintTerrain() {
@@ -1146,6 +1156,72 @@ function settleSprite(s) {
 function caravanSprite() { if (SS_CACHE.car) return SS_CACHE.car; const c = mkCanvas(110, 70), g = c.getContext('2d'); g.lineJoin = 'round'; g.fillStyle = 'rgba(0,0,0,.25)'; ell(g, 52, 58, 40, 7); g.fill(); g.fillStyle = '#7a5a36'; g.fillRect(24, 28, 50, 20); g.strokeStyle = OL; g.lineWidth = 1.6; g.strokeRect(24, 28, 50, 20); for (let i = 0; i < 4; i++) { ell(g, 36 + i * 11, 24, 8, 6); fs(g, ['#a8823c', '#6a4a2c', '#b9a06a', '#8a6a3a'][i], 1.2); } for (const x of [34, 66]) { ell(g, x, 52, 8, 8); fs(g, '#4a3420', 1.6); line(g, [x, 44, x, 60], '#2a1d12', 1.4); line(g, [x - 8, 52, x + 8, 52], '#2a1d12', 1.4); } line(g, [74, 40, 94, 46], '#4a3420', 2.4);
   g.beginPath(); g.moveTo(94, 52); g.quadraticCurveTo(94, 34, 102, 36); g.lineTo(104, 30); g.lineTo(108, 36); g.lineTo(108, 50); g.lineTo(104, 58); g.lineTo(98, 58); g.closePath(); fs(g, '#7c6a58', 1.4); return SS_CACHE.car = { cv: c, ax: 55, ay: 56 }; }
 
+/* ================= игровая логика, общая для клиента и сервера ================= */
+function xpNeed(l) { return 100 + l * 80; }
+function heroBattle(H) { return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, lead: H.lead, armor: H.armor, weapon: H.weapon, shield: H.shield, horse: H.horse, hp: H.hp, seed: H.seed }; }
+function townEnter(P, s) {
+  P.in = s.id; P.path = []; P.pi = 0; P.tid = null; P.sid = null;
+  for (const q of P.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);
+  P.rel[s.fac] = Math.min(100, P.rel[s.fac] + .5);
+}
+function doHire(P, s, type, n) {
+  const r = s.recruits.find(x => x.type === type), t = TROOPS[type]; if (!r) return false;
+  n = Math.min(n, r.n, Math.floor(P.gold / t.cost), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return false;
+  P.gold -= n * t.cost; addT(P.troops, type, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); return true;
+}
+function doGear(P, k) { const H = P.hero, nx = GEAR[k] && GEAR[k][H[k] + 1]; if (!nx || P.gold < nx.p) return false; P.gold -= nx.p; H[k]++; return true; }
+function doFood(P, n, price) { const opt = [[10, 22], [30, 60], [80, 150]].find(o => o[0] === n && o[1] === price); if (!opt || P.gold < price) return false; P.gold -= price; P.food += n; return true; }
+function doUpgrade(P, type, up) {
+  const t = TROOPS[type], s = P.troops.find(x => x.type === type); if (!s || !t.up.includes(up)) return 0; const n = Math.min(s.n, Math.floor(P.gold / t.upCost)); if (n < 1) return 0;
+  P.gold -= n * t.upCost; remT(P.troops, type, n); addT(P.troops, up, n); return n;
+}
+function doAttr(P, k) { const H = P.hero; if (!ATTRS[k] || H.pts < 1) return false; H.pts--; H[k]++; return true; }
+function doAccept(P, s, qid) { const q = (s.board || []).find(x => x.id === qid); if (!q) return 'Задание уже взято.'; return acceptQuest(P, q); }
+
+/* ---------- встреча и бой ---------- */
+function relativePowerOf(P, p) { const a = strength(P.troops) + 8, b = p.str !== undefined && !p.troops ? p.str : partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
+function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); }
+function encFlee(P, p) {
+  const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0), .12, .9);
+  if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; p.lock = null; const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); return true; }
+  return false;
+}
+function battleCfgFor(P, p) {
+  return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
+    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9) };
+}
+function autoResult(P, p) {
+  const H = P.hero, sa = strength(P.troops) + 10, sb = partyStr(p), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
+  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
+  if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
+  return res;
+}
+function applyBattleResult(P, res, p) {
+  const H = P.hero; let loot = 0, lvl = 0;
+  for (const k in res.dead) remT(P.troops, k, res.dead[k]);
+  H.hp = clamp(res.heroHp, .22, 1);
+  const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
+  if (res.win) {
+    let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
+    loot = Math.round(sv * rnd(.7, 1.1) + (p.gold || 0)); if (p.kind === 'camp') loot += 120; P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
+    P.stats.wins++; P.stats.kills += res.enemyDead; const gx = res.xp + 12 + res.heroKills * 4; H.xp += gx; res.gx = gx;
+    const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
+    if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
+    if (p.kind === 'bandit' || p.kind === 'camp') P.rel[P.culture] = Math.min(100, P.rel[P.culture] + 1);
+    logW('Победа над отрядом «' + p.name + '». Добыча: ' + loot + ' золота.', 3, P);
+  } else {
+    const keep = Math.round(P.gold * .25); res.lostGold = keep; P.gold -= keep; H.xp += Math.round(res.xp * .5);
+    if (res.enemyLeft && Object.keys(res.enemyLeft).length) p.troops = Object.keys(res.enemyLeft).map(k => ({ type: k, n: res.enemyLeft[k] }));
+    p.cd = 10; p.state = 'idle'; p.path = []; p.lock = null;
+    if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
+    logW('Ты потерпел поражение от «' + p.name + '».', 1, P);
+  }
+  while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts++; lvl++; }
+  if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Распредели очко умений.', 3, P); }
+  return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl };
+}
+
 /* ================= интерфейс ================= */
 const el = id => document.getElementById(id);
 const ICONS = {
@@ -1190,9 +1266,7 @@ function mmode() { return MODE; }
 
 /* ---------- город ---------- */
 function openTown(s) {
-  const P = G.player; P.in = s; P.path = []; P.tid = null; G.wait = false; UI.town = { s, tab: 'recruit' };
-  for (const q of G.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(q, true);
-  G.rel[s.fac] = Math.min(100, G.rel[s.fac] + .5); sfx('click'); renderTown(); saveGame(true);
+  const P = G.player; townEnter(P, s); G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); saveGame(true);
 }
 function renderTown() {
   const { s, tab } = UI.town, P = G.player, H = P.hero, f = FACTIONS[s.fac], cap = sizeCap(H), cnt = troopCount(P.troops);
@@ -1214,19 +1288,18 @@ function renderTown() {
     const bd = s.board || []; body += '<div class="note">Заказы города. Награду выплачивают сразу, как дело сделано.</div>';
     if (!bd.length) body += '<div class="note">Доска пуста.</div>';
     for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + (q.type === 'camp' ? 'Расстояние: ' + Math.round(Math.hypot(settleById(q.sid).x - s.x, settleById(q.sid).y - s.y) / 10) / 10 + ' лиг' : 'Груз уже погружен') + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
-    if (G.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
+    if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
   const tabs = [['recruit', 'Рекруты'], ['gear', 'Снаряжение'], ['market', 'Рынок'], ['quests', 'Задания']];
-  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
+  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.player.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
 /* ---------- отряд и герой ---------- */
 function openPanel(tab) { UI.panel = tab || UI.panel || 'troops'; renderPanel(); }
-function xpNeed(l) { return 100 + l * 80; }
 function renderPanel() {
   const P = G.player, H = P.hero, tab = UI.panel, cap = sizeCap(H), cnt = troopCount(P.troops); let body = '';
   if (tab === 'troops') {
-    body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay() + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
+    body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay(G.player) + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
     sortT(P.troops); if (!P.troops.length) body += '<div class="note">У тебя нет отряда. Найми людей в городе.</div>';
     for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = t.upCost; acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
@@ -1236,19 +1309,19 @@ function renderPanel() {
       '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
       '<div class="card"><h3>Снаряжение</h3><div class="kv"><span>Оружие</span><b>' + ws.n + '</b></div><div class="kv"><span>Доспех</span><b>' + ar.n + '</b></div><div class="kv"><span>Щит</span><b>' + sh.n + '</b></div><div class="kv"><span>Конь</span><b>' + hs.n + '</b></div><p class="note">Покупай снаряжение в городах.</p></div></div>';
   } else if (tab === 'journal') {
-    body += '<h3>Задания</h3>'; if (!G.quests.length) body += '<div class="note">Нет активных заданий. Загляни на доску в городе.</div>'; for (const q of G.quests) { const s = settleById(q.sid); body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Заказчик: ' + FACTIONS[q.fac].name + ' · срок: день ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
-    body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.rel[f]) + ' (' + Math.round(G.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
-      '<h3 style="margin-top:14px">Хроника</h3>' + G.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
+    body += '<h3>Задания</h3>'; if (!G.player.quests.length) body += '<div class="note">Нет активных заданий. Загляни на доску в городе.</div>'; for (const q of G.player.quests) { const s = settleById(q.sid); body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Заказчик: ' + FACTIONS[q.fac].name + ' · срок: день ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
+    body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
+      '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
   const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['journal', 'Журнал']];
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div><div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
 }
 
 /* ---------- встреча ---------- */
-function relativePower(p) { const a = strength(G.player.troops) + 8, b = partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
+function relativePowerOld(p) { const a = strength(G.player.troops) + 8, b = partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function openEncounter(p, forced) {
-  const hostileP = isHostileToPlayer(p) || p.kind === 'camp'; UI.enc = { p, forced, hostile: hostileP }; G.player.path = []; G.player.tid = null; G.wait = false;
-  const pw = relativePower(p), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
+  const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp'; UI.enc = { p, forced, hostile: hostileP }; G.player.path = []; G.player.tid = null; G.wait = false;
+  const pw = relativePowerOf(G.player, p), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
   const title = p.kind === 'camp' ? 'Логово разбойников' : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? 'Разбойники' : p.name;
   let btns;
   if (hostileP) btns = '<button class="btn" data-act="flee">Бежать</button><button class="btn" data-act="auto">Рассчитать бой</button><button class="btn pri" data-act="fight">В бой!</button>';
@@ -1261,24 +1334,24 @@ function openEncounter(p, forced) {
 const ACT = {
   ttab(d) { UI.town.tab = d.t; renderTown(); },
   leave() { closeModal(); },
-  hire(d) { const s = UI.town.s, P = G.player, r = s.recruits.find(x => x.type === d.t), t = TROOPS[d.t]; if (!r) return; let n = Math.min(+d.n, r.n, Math.floor(P.gold / t.cost), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return; P.gold -= n * t.cost; addT(P.troops, d.t, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); sfx('coin'); renderTown(); },
-  buygear(d) { const P = G.player, H = P.hero, nx = GEAR[d.k][H[d.k] + 1]; if (!nx || P.gold < nx.p) return; P.gold -= nx.p; H[d.k]++; sfx('coin'); renderTown(); },
-  food(d) { const P = G.player; if (P.gold < +d.p) return; P.gold -= +d.p; P.food += +d.n; sfx('coin'); renderTown(); },
+  hire(d) { if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
+  buygear(d) { if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
+  food(d) { if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
   rest() { const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
-  accept(d) { const s = UI.town.s, q = (s.board || []).find(x => x.id === +d.q); if (!q) return; const r = acceptQuest(q); if (r) toast(r); else sfx('order'); renderTown(); },
+  accept(d) { const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
   party() { const back = UI.town; UI.back = back; openPanel('troops'); },
   hero() { openPanel('hero'); }, journal() { openPanel('journal'); },
   ptab(d) { UI.panel = d.t; renderPanel(); },
-  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.town = b; G.player.in = b.s; renderTown(); } else closeModal(); },
-  upg(d) { const P = G.player, t = TROOPS[d.t], c = t.upCost, s = P.troops.find(x => x.type === d.t); if (!s) return; const n = Math.min(s.n, Math.floor(P.gold / c)); if (n < 1) return; P.gold -= n * c; remT(P.troops, d.t, n); addT(P.troops, d.u, n); sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); renderPanel(); },
+  closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
+  upg(d) { const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
   dismiss(d) { remT(G.player.troops, d.t, 1); renderPanel(); },
-  attr(d) { const H = G.player.hero; if (H.pts > 0) { H.pts--; H[d.k]++; sfx('order'); renderPanel(); } },
+  attr(d) { if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
   menu() { openMenu(); },
   greet() { const p = UI.enc.p; p.cd = 3; closeModal(); },
-  attack() { const e = UI.enc, p = e.p; G.rel[p.fac] = Math.max(-100, G.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1); e.hostile = true; ACT.fight(); },
+  attack() { const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
   fight() { const p = UI.enc.p; closeModal(); launchBattle(p); },
   auto() { const p = UI.enc.p; closeModal(); autoPlayer(p); },
-  flee() { const e = UI.enc, p = e.p, P = G.player; const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0), .12, .9); if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; closeModal(); toast('Ты оторвался от погони'); const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
+  flee() { const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
   resume() { closeModal(); }, save() { saveGame(); toast('Игра сохранена'); },
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
   tomenu() { closeModal(); gotoTitle(); },
@@ -1311,25 +1384,25 @@ function openQuick() { renderQuick(); }
 /* ================= главный цикл ================= */
 let MODE = 'title', cv, cx;
 const WC = { x: WW / 2, y: WH / 2, z: .9, free: false };
-const SAVE_KEY = 'zhelezny-styag-save-1';
+const SAVE_KEY = 'zhelezny-styag-save-2';
 function resize() { const d = Math.min(window.devicePixelRatio || 1, 2); VIEW.w = window.innerWidth; VIEW.h = window.innerHeight; VIEW.dpr = d; cv.width = Math.round(VIEW.w * d); cv.height = Math.round(VIEW.h * d); }
 function w2s(x, y) { return { x: (x - WC.x) * WC.z + VIEW.w / 2, y: (y - WC.y) * WC.z + VIEW.h / 2 }; }
 function s2wW(sx, sy) { return { x: WC.x + (sx - VIEW.w / 2) / WC.z, y: WC.y + (sy - VIEW.h / 2) / WC.z }; }
 
 /* ---------- сохранение ---------- */
 function markRoads() { WT.road.fill(0); for (const seg of G.roads) for (let i = 0; i < seg.length - 1; i++) { const n = Math.ceil(Math.hypot(seg[i + 1].x - seg[i].x, seg[i + 1].y - seg[i].y) / 8); for (let k = 0; k <= n; k++) WT.road[cellOf(lerp(seg[i].x, seg[i + 1].x, k / n), lerp(seg[i].y, seg[i + 1].y, k / n))] = 1; } }
-function saveGame(silent) { if (!G || MODE !== 'world') return; try { const copy = Object.assign({}, G, { settles: G.settles.map(s => Object.assign({}, s, { camp: s.camp ? s.camp.id : null })), logDirty: false }); copy.player = Object.assign({}, G.player, { in: null }); localStorage.setItem(SAVE_KEY, JSON.stringify(copy)); } catch (e) { if (!silent) toast('Не удалось сохранить'); } }
+function saveGame(silent) { if (!G || MODE !== 'world') return; try { const copy = Object.assign({}, G, { settles: G.settles.map(s => Object.assign({}, s, { camp: s.camp ? s.camp.id : null })), logDirty: false, player: null, players: G.players.map(P => Object.assign({}, P, { in: null })) }); localStorage.setItem(SAVE_KEY, JSON.stringify(copy)); } catch (e) { if (!silent) toast('Не удалось сохранить'); } }
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 function loadGame() {
   let raw; try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { } if (!raw) return toast('Сохранения нет');
-  try { const d = JSON.parse(raw); G = d; genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); const b = BANNERS[G.player.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2; closeModal(); enterWorld(); } catch (e) { console.error(e); toast('Сохранение повреждено'); }
+  try { const d = JSON.parse(raw); G = d; genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); G.player = G.players[0]; const b = BANNERS[G.player.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2; closeModal(); enterWorld(); } catch (e) { console.error(e); toast('Сохранение повреждено'); }
 }
 function showLoad(on) { el('load').hidden = !on; }
 function startNew(o) { MODE = 'loading'; B = null; el('title').hidden = true; showLoad(true); setTimeout(() => { newGame(o); enterWorld(); }, 30); }
 function enterWorld() {
   MODE = 'loading'; B = null; showLoad(true); setTimeout(() => {
     WT.img = paintTerrain(); MODE = 'world'; B = null; const P = G.player; WC.x = P.x; WC.y = P.y; WC.z = clamp(VIEW.h / 900, .7, 1.25); WC.free = false; G.paused = false; G.wait = false; G.hourAcc = 0;
-    el('title').hidden = true; el('bhud').hidden = true; el('whud').hidden = false; el('wlog').innerHTML = ''; G.logDirty = true; UI.back = null; showLoad(false); updateWorldHud(true);
+    el('title').hidden = true; el('bhud').hidden = true; el('whud').hidden = false; el('wlog').innerHTML = ''; G.player.logDirty = true; UI.back = null; showLoad(false); updateWorldHud(true);
   }, 30);
 }
 function gotoTitle() { MODE = 'title'; el('whud').hidden = true; el('bhud').hidden = true; el('title').hidden = false; closeModal(); startDemo(); buildTitleMenu(); }
@@ -1343,46 +1416,24 @@ function startDemo() {
 
 /* ---------- бой: запуск и итоги ---------- */
 function launchBattle(p) {
-  const P = G.player, H = P.hero; auInit();
-  const cfg = { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2, title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, party: p, hero: heroBattle(H), leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9), onEnd: res => battleEnded(res, p) };
+  const P = G.player; auInit(); P.busy = 'battle';
+  const cfg = Object.assign(battleCfgFor(P, p), { party: p, onEnd: res => battleEnded(res, p) });
   enterBattle(cfg);
 }
-function heroBattle(H) { return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, lead: H.lead, armor: H.armor, weapon: H.weapon, shield: H.shield, horse: H.horse, hp: H.hp, seed: H.seed }; }
 function enterBattle(cfg) {
   startBattle(cfg); MODE = 'battle'; el('whud').hidden = true; el('title').hidden = true; el('bhud').hidden = false; B.cam.z = clamp(VIEW.h / 700, .75, 1.35); IN.atk = IN.block = false; IN.keys = {};
   el('crA').src = crestURL('player'); el('crB').src = crestURL(cfg.efac); el('blog').innerHTML = ''; buildBattleHud(); B.hudDirty = true; B.logDirty = true; el('touch').hidden = !IN.touch;
 }
-function autoPlayer(p) {
-  const P = G.player, H = P.hero, sa = strength(P.troops) + 10, sb = partyStr(p), wnd = H.hp;
-  const cfg = { pl: P.troops, en: p.troops }; const me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
-  const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true };
-  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
-  if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { const k = Math.floor(s.n * (1 - r * .8)); res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
-  battleEnded(res, p);
+function readHeroInput() {
+  const h = B && B.hero; if (!h || B.cfg.demo) return; const k = IN.keys; let dx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0), dy = (k.KeyS || k.ArrowDown ? 1 : 0) - (k.KeyW || k.ArrowUp ? 1 : 0);
+  if (IN.jx || IN.jy) { dx = IN.jx; dy = IN.jy; }
+  const w = IN.touch ? null : s2w(IN.mx, IN.my); let face; if (w) face = Math.atan2(w.y - h.y, w.x - h.x); else if (dx || dy) face = Math.atan2(dy, dx);
+  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0 };
 }
+function autoPlayer(p) { battleEnded(autoResult(G.player, p), p); }
 function battleEnded(res, p) {
   if (B && B.cfg.quick) return quickEnded(res);
-  const P = G.player, H = P.hero, lines = []; let loot = 0, lvl = 0;
-  for (const k in res.dead) remT(P.troops, k, res.dead[k]);
-  H.hp = clamp(res.heroHp, .22, 1);
-  const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
-  if (res.win) {
-    let sv = 0; for (const s of p.troops) sv += TROOPS[s.type].tier * 7 + 4 + (TROOPS[s.type].mounted ? 9 : 0) * s.n * 0 + s.n * 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
-    loot = Math.round(sv * rnd(.7, 1.1) + (p.gold || 0)); if (p.kind === 'camp') loot += 120; P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
-    G.stats.wins++; G.stats.kills += res.enemyDead; const gx = res.xp + 12 + res.heroKills * 4; H.xp += gx; res.gx = gx;
-    const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
-    if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; } for (const q of G.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(q, true); }
-    if (p.kind === 'bandit' || p.kind === 'camp') G.rel[P.culture] = Math.min(100, G.rel[P.culture] + 1);
-    logW('Победа над отрядом «' + p.name + '». Добыча: ' + loot + ' золота.', 3);
-  } else {
-    const keep = Math.round(P.gold * .25); res.lostGold = keep; P.gold -= keep; H.xp += Math.round(res.xp * .5);
-    if (res.enemyLeft && Object.keys(res.enemyLeft).length) { p.troops = Object.keys(res.enemyLeft).map(k => ({ type: k, n: res.enemyLeft[k] })); } p.cd = 10; p.state = 'idle'; p.path = [];
-    if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
-    logW('Ты потерпел поражение от «' + p.name + '».', 1);
-  }
-  while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts++; lvl++; }
-  if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Распредели очко умений.', 3); }
-  UI.res = { res, loot, lvl, lost, wounded, win: res.win }; showResult(UI.res, p);
+  const P = G.player; P.busy = null; UI.res = applyBattleResult(P, res, p); showResult(UI.res, p);
 }
 function showResult(r, p) {
   const res = r.res, H = G.player.hero; const left = Object.keys(res.dead).map(k => '<div class="kv"><span>' + TROOPS[k].name + '</span><b class="dn">−' + res.dead[k] + '</b></div>').join('');
@@ -1417,12 +1468,12 @@ function updateBattleHud() {
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed; drawMinimap(el('bmini').firstElementChild);
 }
 function updateWorldHud(force) {
-  if (!G) return; const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay();
+  if (!G) return; const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
   document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts ? ' +' + P.hero.pts : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>';
-  if (G.logDirty) { G.logDirty = false; el('wlog').innerHTML = G.log.slice(-4).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
+  if (P.logDirty || G.logDirty) { P.logDirty = G.logDirty = false; el('wlog').innerHTML = P.log.slice(-4).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   // ближайшее поселение
   let near = null; for (const s of G.settles) { if (s.kind === 'camp') continue; if (Math.hypot(s.x - P.x, s.y - P.y) < 46) near = s; }
   const w = el('wloc'); if (near && !UI.open) { w.hidden = false; w.innerHTML = '<span class="lab">' + near.name + '</span><button class="btn sm pri" id="bEnter">Войти</button>'; el('bEnter').onclick = () => openTown(near); } else w.hidden = true;
@@ -1442,7 +1493,7 @@ function worldUpdate(dt) {
   if (!G || UI.open) return; const P = G.player, moving = (P.path.length && P.pi < P.path.length) || P.tid != null;
   if (!G.paused && (moving || G.wait)) {
     G.acc += dt * 1.2 * G.speed; G.hourAcc = G.hourAcc || 0; let guard = 0;
-    while (G.acc >= .2 && guard++ < 40) { G.acc -= .2; const ev = stepWorld(.2); G.hourAcc += .2; if (G.hourAcc >= 1) { G.hourAcc -= 1; hourTick(); G.logDirty = true; if (G.hour === 0) { saveGame(true); } } if (ev) { handleEvent(ev); break; } }
+    while (G.acc >= .2 && guard++ < 40) { G.acc -= .2; const evs = stepWorld(.2); G.hourAcc += .2; if (G.hourAcc >= 1) { G.hourAcc -= 1; hourTick(); P.logDirty = true; if (G.hour === 0) { saveGame(true); } } if (evs.length) { handleEvent(evs[0]); break; } }
   }
   if (!WC.free) { WC.x += (P.x - WC.x) * Math.min(1, dt * 5); WC.y += (P.y - WC.y) * Math.min(1, dt * 5); }
   const hw = VIEW.w / 2 / WC.z, hh = VIEW.h / 2 / WC.z; WC.x = hw * 2 >= WW ? WW / 2 : clamp(WC.x, hw, WW - hw); WC.y = hh * 2 >= WH ? WH / 2 : clamp(WC.y, hh, WH - hh);
@@ -1468,7 +1519,7 @@ function drawWorld(g) {
 function worldTip(sx, sy) {
   const tip = el('tip'); if (MODE !== 'world' || UI.open) { tip.hidden = true; return; } const w = s2wW(sx, sy); let html = null;
   for (const p of G.parties) { if (p.hide || Math.hypot(p.x - w.x, p.y - w.y) > 30) continue; const pw = relativePower(p), hs = isHostileToPlayer(p); html = '<b>' + (p.kind === 'bandit' ? 'Разбойники' : p.name) + '</b><br>' + FACTIONS[p.fac].name + ' · ' + troopCount(p.troops) + ' бойцов<br><span class="tag ' + pw[1] + '">' + pw[0] + '</span>' + (hs ? '<span class="tag r">враг</span>' : ''); break; }
-  if (!html) for (const s of G.settles) { if (Math.hypot(s.x - w.x, s.y - w.y) > 46) continue; html = '<b>' + s.name + '</b><br>' + KIND[s.kind] + ' · ' + FACTIONS[s.fac].gen + (s.kind === 'camp' ? (s.camp ? '<br>Охраняет ' + troopCount(s.camp.troops) + ' головорезов' : '<br>Опустошено') : '<br>Отношение: ' + relName(G.rel[s.fac])); break; }
+  if (!html) for (const s of G.settles) { if (Math.hypot(s.x - w.x, s.y - w.y) > 46) continue; html = '<b>' + s.name + '</b><br>' + KIND[s.kind] + ' · ' + FACTIONS[s.fac].gen + (s.kind === 'camp' ? (s.camp ? '<br>Охраняет ' + troopCount(s.camp.troops) + ' головорезов' : '<br>Опустошено') : '<br>Отношение: ' + relName(G.player.rel[s.fac])); break; }
   if (!html) { const t = terrAt(w.x, w.y); if (t === 0 || t === 4) html = null; }
   if (html) { tip.innerHTML = html; tip.hidden = false; tip.style.left = Math.min(sx + 18, VIEW.w - 270) + 'px'; tip.style.top = Math.min(sy + 14, VIEW.h - 100) + 'px'; } else tip.hidden = true;
 }
@@ -1527,7 +1578,7 @@ function frame(ts) {
   const dt = Math.min(.1, (ts - lastT) / 1000 || 0); lastT = ts; const g = cx;
   try {
     if (MODE === 'title') { if (B) { battleUpdate(dt); battleDraw(g); if (B.over && B.t - B.over > 3) startDemo(); } musicTick(dt, 'world'); }
-    else if (MODE === 'battle' && B) { if (!UI.open || B.over) battleUpdate(dt); battleDraw(g); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
+    else if (MODE === 'battle' && B) { if (!UI.open || B.over) { readHeroInput(); battleUpdate(dt); } battleDraw(g); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
     else if (MODE === 'world' && G) { worldUpdate(dt); drawWorld(g); hudT -= dt; if (hudT <= 0) { hudT = .15; updateWorldHud(); } musicTick(dt, 'world'); }
   } catch (e) { console.error(e); if (!window.__err) { window.__err = 1; } }
   requestAnimationFrame(frame);
