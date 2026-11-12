@@ -206,6 +206,31 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 #chatin:focus{opacity:1;outline:none;border-color:#e0b85a}
 #chat.bt{bottom:max(150px,calc(env(safe-area-inset-bottom,0px) + 150px));width:min(300px,40vw)}
 
+/* окно героя: атрибуты и перки */
+.win.wide{width:min(1040px,100%)}
+.hhead{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:10px 16px;background:#00000040;border:2px solid #0008;border-radius:4px}
+.hhead img{height:112px;width:auto;filter:drop-shadow(0 4px 3px #0009)}
+.hn{font:700 26px var(--disp);color:var(--parch);text-shadow:0 2px 0 #000;margin-bottom:4px}.hn small{font:500 14px var(--body);color:var(--parch2);margin-left:10px;text-shadow:none}
+.hst{display:flex;flex-wrap:wrap;gap:3px 18px;margin:4px 0 8px;font-size:14px}.hst span{color:var(--parch2)}.hst b{color:var(--parch);margin-left:6px}
+.hpts{display:grid;gap:6px;min-width:190px}
+.pchip{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:5px 10px;border:2px solid #0008;border-radius:3px;background:#0004;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--parch2)}
+.pchip b{font:700 22px var(--disp);color:var(--parch)}.pchip.hot{border-color:var(--brass2);background:#6a4d3055}.pchip.hot b{color:var(--brass)}
+.arow{display:grid;grid-template-columns:216px minmax(0,1fr);gap:12px;margin-top:10px;align-items:stretch}
+.acell{padding:10px 12px;background:linear-gradient(180deg,#00000040,#00000060);border:2px solid #0008;border-radius:4px;display:flex;flex-direction:column;gap:5px}
+.ahd{display:flex;align-items:center;gap:8px}.ahd .ico{width:26px;height:26px;color:var(--brass)}.ahd b{font:700 20px var(--disp);flex:1}.ahd .v{font:700 28px var(--disp);color:var(--parch);line-height:1}
+.acell .ad{font-size:13px;color:var(--parch2);line-height:1.3}.acell .nx{margin-top:auto;font-size:12px;color:#8f8466}
+.perks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.perk{display:flex;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;font:inherit;color:var(--parch);background:radial-gradient(circle at 30% 0%,#54402b,#2c1f14 75%);border:2px solid #0009;border-radius:4px;box-shadow:inset 0 0 0 1px #ffffff12;cursor:default;min-width:0}
+.perk .pt{font:700 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--parch2)}
+.perk .pn{font:700 17px/1.1 var(--disp);text-shadow:0 1px 0 #000}
+.perk .pd{flex:1;font-size:12.5px;line-height:1.28;color:var(--parch2)}
+.perk .pf{margin-top:2px;font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;color:#ff8d79}
+.perk.on{border-color:var(--brass);box-shadow:0 0 12px #d1a84c55,inset 0 0 0 1px #ffffff22}.perk.on .pn{color:var(--brass)}.perk.on .pf{color:var(--brass)}
+.perk.av{border-color:#9bd25b;box-shadow:0 0 10px #9bd25b55,inset 0 0 0 1px #9bd25b33;cursor:pointer}.perk.av:hover{filter:brightness(1.22)}.perk.av .pf{color:#9bd25b}
+.perk.rd{border-color:#9bd25b66}.perk.rd .pf{color:var(--parch2)}
+.perk.lk{opacity:.55;border-style:dashed;border-color:#ffffff2e;filter:grayscale(.35)}.perk.lk .pf{color:#b0a07c}
+.perk:disabled{color:var(--parch)}
+
 </style>
 <canvas id="cv"></canvas>
 <div id="whud" hidden>
@@ -342,7 +367,7 @@ const GEAR = {
 };
 const GEAR_LABEL = { weapon: 'Оружие', armor: 'Доспех', shield: 'Щит', horse: 'Конь' };
 const GEAR_UNIT = { weapon: 'урон', armor: 'броня', shield: 'блок', horse: 'скорость' };
-const ATTRS = { str: ['Сила', '+3 к урону'], vit: ['Стойкость', '+14 к здоровью'], agi: ['Ловкость', 'быстрее удар и шаг'], lead: ['Лидерство', '+5 к размеру отряда, выше мораль'] };
+const ATTRS = { str: ['Сила', '+3 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
 function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
 function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1); } return s; }
@@ -443,6 +468,80 @@ function heroWield(H) { const eq = heroEq(H); if (H.sel === 'ranged' && eq.range
 function heroShield(H) { const s = eqItem(H, 'shield'); return s && heroWield(H).hands < 2 ? s : null; } // двуручное оружие и щит несовместимы
 function heroArmor(H) { let a = 0; for (const k of ['head', 'body', 'hands', 'legs']) { const it = eqItem(H, k); if (it) a += it.v; } return a; }
 function heroGear(H) { const W = heroWield(H), S = heroShield(H), horse = eqItem(H, 'horse'); return { W, S, horse, mounted: !!horse, arm: heroArmor(H), block: S ? S.v : (W.parry || 0) }; }
+
+/* ================= герой: атрибуты, перки, очки =================
+   Общий для клиента и сервера: без DOM. Пять атрибутов (ATTRS в 01_core.js), у каждого четыре перка с порогами.
+   Перк берётся за очко перков, когда атрибут достиг порога. Очки: за уровень +2 очка атрибутов и +1 очко перков.
+   Герой хранит: H.str/vit/agi/int/cha, H.pts (очки атрибутов), H.pp (очки перков), H.perks (список id изученных).
+   Старые герои (Лидерство, без Интеллекта и перков) чинятся лениво через heroFix(H), поэтому старые сохранения грузятся без миграции. */
+
+const PTS_LEVEL = 2, PP_LEVEL = 1, PTS_START = 2, PP_START = 1; // очки за уровень и на старте
+const PERK_REQ = [3, 5, 8, 11];                                 // пороги атрибута для 1–4 перка (справочно, у каждого перка своё поле req)
+
+/* fx — что перк прибавляет (складывается по всем изученным). Значения в долях (0.12 = +12%), кроме arm, size, morale (единицы). */
+const PERKS = [
+  // Сила
+  { id: 'grip',      a: 'str', req: 3,  n: 'Крепкая хватка',    d: 'Двуручное и древковое оружие бьёт на 12% сильнее.', fx: { heavy: .12 } },
+  { id: 'packhorse', a: 'str', req: 5,  n: 'Тяжеловоз',         d: 'Обоз вмещает на 25% больше груза.', fx: { cargo: .25 } },
+  { id: 'breaker',   a: 'str', req: 8,  n: 'Сокрушитель',       d: 'Удары ближнего боя игнорируют ещё 8% брони.', fx: { mpierce: .08 } },
+  { id: 'butcher',   a: 'str', req: 11, n: 'Мясник',            d: 'За каждого сражённого врага герой восстанавливает 4% здоровья.', fx: { killHeal: .04 } },
+  // Стойкость
+  { id: 'tough',     a: 'vit', req: 3,  n: 'Закалка',           d: 'Здоровье героя выше на 12%.', fx: { hp: .12 } },
+  { id: 'hide',      a: 'vit', req: 5,  n: 'Толстая кожа',      d: 'Броня героя выше на 5.', fx: { arm: 5 } },
+  { id: 'recover',   a: 'vit', req: 8,  n: 'Живучий',           d: 'Герой лечится на карте на 60% быстрее.', fx: { heal: .6 } },
+  { id: 'lastStand', a: 'vit', req: 11, n: 'Последний рубеж',   d: 'Раз за бой, когда здоровье падает до нуля, герой встаёт с 30% здоровья.', fx: { lastStand: .3 } },
+  // Ловкость
+  { id: 'quick',     a: 'agi', req: 3,  n: 'Быстрые руки',      d: 'Удары и выстрелы на 8% быстрее.', fx: { cd: .08 } },
+  { id: 'eagle',     a: 'agi', req: 5,  n: 'Меткий глаз',       d: 'Разброс стрел и болтов меньше на 35%, дальность больше на 10%.', fx: { acc: .35, range: .1 } },
+  { id: 'light',     a: 'agi', req: 8,  n: 'Лёгкая поступь',    d: 'Отряд идёт по карте на 8% быстрее, погоню легче оставить позади, бег в бою быстрее на 5%.', fx: { map: .08, flee: .1, run: .05 } },
+  { id: 'master',    a: 'agi', req: 11, n: 'Мастер оружия',     d: 'Любое оружие бьёт на 12% сильнее.', fx: { dmg: .12 } },
+  // Интеллект
+  { id: 'surgery',   a: 'int', req: 3,  n: 'Хирургия',          d: 'Среди павших бойцов больше остаются ранеными и возвращаются в строй (+20% к доле раненых).', fx: { surv: .2 } },
+  { id: 'learner',   a: 'int', req: 5,  n: 'Сообразительный',   d: 'Опыта за бои на 15% больше.', fx: { xp: .15 } },
+  { id: 'merchant',  a: 'int', req: 8,  n: 'Торговец',          d: 'Покупаешь на 5% дешевле, продаёшь на 5% дороже.', fx: { buy: .05, sell: .05 } },
+  { id: 'tactician', a: 'int', req: 11, n: 'Тактик',            d: 'Бойцы отряда бьют на 8% сильнее и держатся твёрже (мораль +6).', fx: { ally: .08, morale: 6 } },
+  // Харизма
+  { id: 'inspire',   a: 'cha', req: 3,  n: 'Вдохновляющий',     d: 'Мораль бойцов отряда выше на 12.', fx: { morale: 12 } },
+  { id: 'recruiter', a: 'cha', req: 5,  n: 'Вербовщик',         d: 'Найм и улучшение войск дешевле на 15%.', fx: { hire: .15 } },
+  { id: 'commander', a: 'cha', req: 8,  n: 'Командир',          d: 'Отряд больше на 10 бойцов, жалованье ниже на 10%.', fx: { size: 10, wage: .1 } },
+  { id: 'famous',    a: 'cha', req: 11, n: 'Знаменитый наёмник', d: 'Награды за задания и добыча после боя больше на 20%.', fx: { quest: .2, loot: .2 } }
+];
+const PERK = {}; for (const p of PERKS) PERK[p.id] = p;
+const FX_ZERO = Object.freeze({ heavy: 0, cargo: 0, mpierce: 0, killHeal: 0, hp: 0, arm: 0, heal: 0, lastStand: 0, cd: 0, acc: 0, range: 0, map: 0, flee: 0, run: 0, dmg: 0, surv: 0, xp: 0, buy: 0, sell: 0, ally: 0, morale: 0, hire: 0, size: 0, wage: 0, quest: 0, loot: 0 });
+
+/* Старые герои: Лидерство стало Харизмой, Интеллекта не было, перков не было.
+   Очки перков за уже набранные уровни выдаются задним числом (по одному за уровень). */
+function heroFix(H) {
+  if (!H) return H;
+  if (H.cha === undefined) H.cha = H.lead || 1;
+  if (H.int === undefined) H.int = 1;
+  if (!H.perks) H.perks = [];
+  if (H.pp === undefined) H.pp = Math.max(0, (H.lvl || 1) - H.perks.length);
+  return H;
+}
+
+/* Сумма эффектов изученных перков. Кэш в WeakMap, а не в самом герое, чтобы в сохранение и в сеть не попадало лишнего. */
+const FXC = new WeakMap();
+function perkFx(H) {
+  const ids = H && H.perks; if (!ids || !ids.length) return FX_ZERO;
+  const key = ids.join(','), c = FXC.get(H); if (c && c.k === key) return c.f;
+  const f = Object.assign({}, FX_ZERO); for (const id of ids) { const p = PERK[id]; if (p) for (const k in p.fx) f[k] += p.fx[k]; }
+  FXC.set(H, { k: key, f }); return f;
+}
+const hasPerk = (H, id) => !!(H && H.perks && H.perks.includes(id));
+
+/* Можно ли взять перк: '' если да, иначе причина (для кнопок и подсказок) */
+function perkWhy(H, id) {
+  heroFix(H); const p = PERK[id]; if (!p) return 'Нет такого перка.';
+  if (H.perks.includes(id)) return 'Уже изучено.';
+  if (H[p.a] < p.req) return 'Нужно: ' + ATTRS[p.a][0] + ' ' + p.req + '.';
+  if (H.pp < 1) return 'Нет очков перков.';
+  return '';
+}
+
+/* Цены найма и улучшения с учётом перка «Вербовщик» */
+const hireCost = (P, type) => Math.max(1, Math.round(TROOPS[type].cost * (1 - perkFx(P.hero).hire)));
+const upgCost = (P, type) => Math.max(1, Math.round(TROOPS[type].upCost * (1 - perkFx(P.hero).hire)));
 
 /* ================= рисованная графика: бюсты на подставках ================= */
 const OL = '#1b130c';
@@ -698,10 +797,10 @@ const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, tou
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
-  const Gr = heroGear(h), W = Gr.W, m = Gr.mounted;
-  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? W.range : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: W.acc || .05, anticav: W.anticav ? 1 : 0,
-    cd: W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1), hp: 100 + h.vit * 14, arm: Gr.arm, dmg: W.dmg + h.str * (W.rng ? W.bs : 3),
-    spd: m ? Gr.horse.v : 86 + h.agi * 3, block: Gr.block };
+  const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
+  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
+    cd: (W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1)) * (1 - F.cd), hp: Math.round((100 + h.vit * 14) * (1 + F.hp)), arm: Gr.arm + F.arm, dmg: (W.dmg + h.str * (W.rng ? W.bs : 3)) * (1 + F.dmg + heavy),
+    spd: (m ? Gr.horse.v : 86 + h.agi * 3) * (1 + F.run), block: Gr.block };
 }
 function mkUnit(side, t, fac, x, y, sp) {
   const u = { id: B.units.length, side, t, fac, x, y, vx: 0, vy: 0, face: side ? Math.PI : 0, dir: side ? -1 : 1, hp: t.hp, maxHp: t.hp, arm: t.arm, dmg: t.dmg, block: t.block,
@@ -722,7 +821,8 @@ function startBattle(cfg) {
   if (cfg.hero) {
     const hd = heroDef(cfg.hero), h = mkUnit(0, hd, 'player', 730, H / 2, SERVER ? null : getHeroSprite(cfg.hero, hd.mounted));
     h.isHero = true; h.ai = !!cfg.heroAI; h.pid = cfg.heroPid; h.inp = null; h.name = cfg.hero.name; h.hp = Math.max(hd.hp * .3, hd.hp * (cfg.hero.hp === undefined ? 1 : cfg.hero.hp)); h.spd = hd.spd; h.mbase = h.morale = 999; h.cd = 0; B.hero = h; B.cam.x = h.x + 200; B.cam.y = h.y;
-    const mb = (cfg.hero.lead || 0) * 4; for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; }
+    const F = perkFx(cfg.hero), mb = (cfg.hero.cha || cfg.hero.lead || 0) * 4 + F.morale; h.fx = F;
+    for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; if (F.ally) u.dmg *= 1 + F.ally; }
   }
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
   for (const s of B.groups) for (const g of s) layout(g, true);
@@ -852,10 +952,11 @@ function hurt(t, dmg, src, pierce) {
   t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4); ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
+  if (t.hp <= 0 && t.isHero && t.fx && t.fx.lastStand && !t.lsUsed) { t.lsUsed = true; t.hp = Math.max(1, t.maxHp * t.fx.lastStand); if (!SERVER) ftext(t.x, t.y - 62, 'Не сдаюсь!', '#f1d27a'); blog(t.name + ' поднялся на ноги', 0); }
   if (t.hp <= 0) kill(t, src);
 }
 function kill(t, src) {
-  t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); }
+  t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
   if (!SERVER) paintCorpse(t); ev(['k', t.id]);
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
@@ -894,15 +995,15 @@ function heroStrike(h) {
     else {
       e.x += Math.cos(a) * 5 * kb; e.y += Math.sin(a) * 5 * kb; let dmg = h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? fall : 1);
       if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); }
-      hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, W.pb) : .1); sfx('hit', e);
+      hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, (W.pb || 0) + (h.fx ? h.fx.mpierce : 0)) : .1 + (h.fx ? h.fx.mpierce : 0)); sfx('hit', e);
     }
     if (++hits >= maxHits) break;
   }
 }
 function heroShoot(h) { // выстрел или бросок в сторону курсора: цель выбирается в узком конусе (формат ввода h.inp не меняется)
-  const W = h.t.wpn, R = W.range, a0 = h.swingA; let best = null, bs = 1e9;
+  const W = h.t.wpn, R = h.t.range || W.range, a0 = h.swingA; let best = null, bs = 1e9;
   for (const e of B.units) { if (e.side === h.side || !alive(e)) continue; const dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy); if (d > R || d < 14) continue; const da = Math.abs(angDiff(Math.atan2(dy, dx), a0)); if (da > .2) continue; const sc = da * 420 + d * .12; if (sc < bs) { bs = sc; best = e; } }
-  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (W.acc || .05);
+  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (h.t.acc || W.acc || .05);
   const px = best ? best.x + best.vx * dur * .8 : h.x + Math.cos(a0) * d, py = best ? best.y + best.vy * dur * .8 : h.y + Math.sin(a0) * d;
   B.arrows.push({ x0: h.x, y0: h.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: h.side, dmg: h.dmg, src: h, pierce: W.pb || 0, dt: W.dt, xb: W.wt === 'xbow', jv: W.wt === 'throw' });
   h.bump = .5; sfx('bow', h); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), h.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
@@ -970,10 +1071,10 @@ function battleCamera(rdt) {
   if (B.shake > 0) B.shake -= rdt;
 }
 function finishBattle() {
-  const res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
+  const surv = B.cfg.hero ? perkFx(B.cfg.hero).surv : 0, res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: B.start[1], xp: B.xp, heroDown: B.heroDown, heroHp: B.hero ? clamp(B.hero.hp / B.hero.maxHp, 0, 1) : 1, heroKills: B.hero ? B.hero.kills : 0, time: B.t, enemyLeft: {} };
   for (const u of B.units) {
     if (u.isHero && u.side === 0) continue; const id = u.t.id;
-    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
+    if (u.side === 0) { if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + 1; } else res.left[id] = (res.left[id] || 0) + 1; }
     else { if (u.dead && !u.gone) res.enemyDead++; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; }
   }
   const cb = B.cfg.onEnd; if (cb) cb(res);
@@ -1160,7 +1261,7 @@ function partyStr(p) { return strength(p.troops); }
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
-function sizeCap(h) { return 20 + h.lead * 5 + (h.lvl - 1) * 3; }
+function sizeCap(h) { heroFix(h); return 20 + h.cha * 5 + (h.lvl - 1) * 3 + perkFx(h).size; }
 function leaderType(p) { let b = null, bs = -1; for (const s of p.troops) { const t = TROOPS[s.type], v = t.tier * 10 + s.n * .01; if (v > bs) { bs = v; b = s.type; } } return b; }
 function addT(list, type, n) { const f = list.find(s => s.type === type); if (f) f.n += n; else list.push({ type, n }); }
 function remT(list, type, n) { const f = list.find(s => s.type === type); if (!f) return; f.n -= n; if (f.n <= 0) list.splice(list.indexOf(f), 1); }
@@ -1179,7 +1280,7 @@ function newWorld(seed) {
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
   return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
-    hero: { name: nm, lvl: 1, xp: 0, pts: 2, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
+    hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
 function addPlayer(o) { const P = mkPlayer(o); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
 function newGame(o) { newWorld(o.seed); const P = addPlayer(o); G.player = P; FACTIONS.player.c1 = BANNERS[P.banner].c1; FACTIONS.player.c2 = BANNERS[P.banner].c2; return G; }
@@ -1197,12 +1298,12 @@ function genQuests() {
 }
 function questText(q) { const s = settleById(q.sid), f = settleById(q.from); return q.type === 'camp' ? 'Разгромить разбойников: «' + s.name + '»' : 'Доставить груз в ' + s.name; }
 function acceptQuest(P, q) { const t = settleById(q.from); if (P.quests.length >= 4) return 'Не больше четырёх заданий одновременно.'; if (t.board.indexOf(q) < 0) return 'Задание уже взято.'; t.board.splice(t.board.indexOf(q), 1); P.quests.push(q); return null; }
-function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { P.gold += q.reward; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + q.reward + ' золота.', 3, P); } }
+function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { const rw = Math.round(q.reward * (1 + perkFx(P.hero).quest)); P.gold += rw; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + rw + ' золота.', 3, P); } }
 
 /* ---------- ход времени ---------- */
 function speedOf(p) {
   let m = 1, base = 17, any = false, mo = true; for (const s of p.troops) { any = true; if (!TROOPS[s.type].mounted) mo = false; } if (any && mo) base = 22;
-  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; }
+  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; base *= 1 + perkFx(p.hero).map; }
   const k = cellOf(p.x, p.y), t = WT.cells[k]; m = t === 2 ? .72 : t === 3 ? .78 : 1; if (WT.bio[k] === 1) m *= .85; if (WT.road[k]) m *= 1.3; if (p.kind === 'bandit') m *= 1.04; return base * m;
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
@@ -1256,7 +1357,7 @@ function autoFight(a, b) {
 }
 function hourTick() {
   G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
-  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014; P.hero.hp = Math.min(1, P.hero.hp + heal); }
+  for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = (P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014) * (1 + ((P.hero.int || 1) - 1) * .04 + perkFx(P.hero).heal); P.hero.hp = Math.min(1, P.hero.hp + heal); }
   for (const s of G.settles) { if (s.kind === 'camp') { if (s.cleared) { s.respawn -= 1; if (s.respawn <= 0) respawnCamp(s); } continue; } s.rt += 1; if (s.rt >= 72) { s.rt = 0; genRecruits(s); } }
   // спавны
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
@@ -1266,13 +1367,13 @@ function hourTick() {
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); }
 function playerDay(P) {
-  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = Math.round(wage / 3);
+  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = wageDay(P);
   if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
   if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
   for (const q of P.quests.slice()) if (G.day > q.dl) { P.quests.splice(P.quests.indexOf(q), 1); P.rel[q.fac] = Math.max(-100, P.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1, P); }
   for (const f of ['nord', 'emp', 'khan']) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }
-function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3); }
+function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3 * (1 - perkFx(P.hero).wage)); }
 
 /* ---------- ландшафт: картинка ---------- */
 function paintTerrain() {
@@ -1343,7 +1444,8 @@ function caravanSprite() { if (SS_CACHE.car) return SS_CACHE.car; const c = mkCa
 
 /* ================= игровая логика, общая для клиента и сервера ================= */
 function xpNeed(l) { return 100 + l * 80; }
-function heroBattle(H) { return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, lead: H.lead, eq: Object.assign({}, heroEq(H)), sel: H.sel || 'melee', hp: H.hp, seed: H.seed }; } // снаряжение — слотами (см. 01b_gear.js)
+const xpMul = H => 1 + ((H.int || 1) - 1) * .03 + perkFx(H).xp; // опыт: +3% за очко Интеллекта и перк «Сообразительный»
+function heroBattle(H) { heroFix(H); return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, int: H.int, cha: H.cha, perks: H.perks.slice(), eq: Object.assign({}, heroEq(H)), sel: H.sel || 'melee', hp: H.hp, seed: H.seed }; } // снаряжение — слотами (см. 01b_gear.js)
 function townEnter(P, s) {
   P.in = s.id; P.path = []; P.pi = 0; P.tid = null; P.sid = null;
   for (const q of P.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);
@@ -1351,23 +1453,24 @@ function townEnter(P, s) {
 }
 function doHire(P, s, type, n) {
   const r = s.recruits.find(x => x.type === type), t = TROOPS[type]; if (!r) return false;
-  n = Math.min(n, r.n, Math.floor(P.gold / t.cost), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return false;
-  P.gold -= n * t.cost; addT(P.troops, type, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); return true;
+  const c = hireCost(P, type); n = Math.min(n, r.n, Math.floor(P.gold / c), sizeCap(P.hero) - troopCount(P.troops)); if (n < 1) return false;
+  P.gold -= n * c; addT(P.troops, type, n); r.n -= n; if (r.n <= 0) s.recruits.splice(s.recruits.indexOf(r), 1); return true;
 }
 function doGear(P, k) { const H = P.hero, nx = GEAR[k] && GEAR[k][H[k] + 1]; if (!nx || P.gold < nx.p) return false; P.gold -= nx.p; H[k]++; return true; }
 function doFood(P, n, price) { const opt = [[10, 22], [30, 60], [80, 150]].find(o => o[0] === n && o[1] === price); if (!opt || P.gold < price) return false; P.gold -= price; P.food += n; return true; }
 function doUpgrade(P, type, up) {
-  const t = TROOPS[type], s = P.troops.find(x => x.type === type); if (!s || !t.up.includes(up)) return 0; const n = Math.min(s.n, Math.floor(P.gold / t.upCost)); if (n < 1) return 0;
-  P.gold -= n * t.upCost; remT(P.troops, type, n); addT(P.troops, up, n); return n;
+  const t = TROOPS[type], s = P.troops.find(x => x.type === type); if (!s || !t.up.includes(up)) return 0; const c = upgCost(P, type), n = Math.min(s.n, Math.floor(P.gold / c)); if (n < 1) return 0;
+  P.gold -= n * c; remT(P.troops, type, n); addT(P.troops, up, n); return n;
 }
-function doAttr(P, k) { const H = P.hero; if (!ATTRS[k] || H.pts < 1) return false; H.pts--; H[k]++; return true; }
+function doAttr(P, k) { const H = heroFix(P.hero); if (!ATTRS[k] || H.pts < 1) return false; H.pts--; H[k]++; return true; }
+function doPerk(P, id) { const H = P.hero; if (perkWhy(H, id)) return false; H.pp--; H.perks.push(id); return true; } // перки: см. 01c_perks.js
 function doAccept(P, s, qid) { const q = (s.board || []).find(x => x.id === qid); if (!q) return 'Задание уже взято.'; return acceptQuest(P, q); }
 
 /* ---------- встреча и бой ---------- */
 function relativePowerOf(P, p) { const a = strength(P.troops) + 8, b = p.str !== undefined && !p.troops ? p.str : partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); }
 function encFlee(P, p) {
-  const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0), .12, .9);
+  const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0) + perkFx(P.hero).flee, .12, .9);
   if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; p.lock = null; const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); return true; }
   return false;
 }
@@ -1376,34 +1479,34 @@ function battleCfgFor(P, p) {
     title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9) };
 }
 function autoResult(P, p) {
-  const H = P.hero, sa = strength(P.troops) + 10, sb = partyStr(p), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + 10, sb = partyStr(p), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
   const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
-  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
+  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
   if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
   return res;
 }
 function applyBattleResult(P, res, p) {
-  const H = P.hero; let loot = 0, lvl = 0;
+  const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0;
   for (const k in res.dead) remT(P.troops, k, res.dead[k]);
   H.hp = clamp(res.heroHp, .22, 1);
   const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
   if (res.win) {
     let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
-    loot = Math.round(sv * rnd(.7, 1.1) + (p.gold || 0)); if (p.kind === 'camp') loot += 120; P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
-    P.stats.wins++; P.stats.kills += res.enemyDead; const gx = res.xp + 12 + res.heroKills * 4; H.xp += gx; res.gx = gx;
+    loot = Math.round((sv * rnd(.7, 1.1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
+    P.stats.wins++; P.stats.kills += res.enemyDead; const gx = Math.round((res.xp + 12 + res.heroKills * 4) * xpMul(H)); H.xp += gx; res.gx = gx;
     const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
     if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
     if (p.kind === 'bandit' || p.kind === 'camp') P.rel[P.culture] = Math.min(100, P.rel[P.culture] + 1);
     logW('Победа над отрядом «' + p.name + '». Добыча: ' + loot + ' золота.', 3, P);
   } else {
-    const keep = Math.round(P.gold * .25); res.lostGold = keep; P.gold -= keep; H.xp += Math.round(res.xp * .5);
+    const keep = Math.round(P.gold * .25); res.lostGold = keep; P.gold -= keep; H.xp += Math.round(res.xp * .5 * xpMul(H));
     if (res.enemyLeft && Object.keys(res.enemyLeft).length) p.troops = Object.keys(res.enemyLeft).map(k => ({ type: k, n: res.enemyLeft[k] }));
     p.cd = 10; p.state = 'idle'; p.path = []; p.lock = null;
     if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
     logW('Ты потерпел поражение от «' + p.name + '».', 1, P);
   }
-  while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts++; lvl++; }
-  if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Распредели очко умений.', 3, P); }
+  while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts += PTS_LEVEL; H.pp += PP_LEVEL; lvl++; }
+  if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Очки: атрибуты +' + PTS_LEVEL * lvl + ', перки +' + PP_LEVEL * lvl + '.', 3, P); }
   return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl };
 }
 
@@ -1439,7 +1542,7 @@ function invOf(P) { return P.inv || (P.inv = {}); }
 function invN(P, id) { return invOf(P)[id] || 0; }
 function invAdd(P, id, n) { const I = invOf(P), v = (I[id] || 0) + n; if (v > 0) I[id] = v; else delete I[id]; }
 function invWeight(P) { const I = invOf(P); let w = 0; for (const id in I) if (ITEM[id]) w += ITEM[id].w * I[id]; return Math.round(w * 10) / 10; }
-function cargoCap(P) { const H = P.hero; return 60 + troopCount(P.troops) * 3 + H.str * 6 + (eqItem(H, 'horse') ? 30 : 0); }
+function cargoCap(P) { const H = P.hero; return Math.round((60 + troopCount(P.troops) * 3 + H.str * 6 + (eqItem(H, 'horse') ? 30 : 0)) * (1 + perkFx(H).cargo)); }
 function invIds(P, kind) { return Object.keys(invOf(P)).filter(id => ITEM[id] && ITEM[id].kind === kind).sort((a, b) => ITEM[a].price - ITEM[b].price); }
 function equippedId(P, slot) { const id = heroEq(P.hero)[slot]; return id && ITEM[id] ? id : null; }
 
@@ -1486,8 +1589,11 @@ function regionMod(s, id) {
 }
 function stockMod(s, id) { if (ITEM[id].kind !== 'goods') return 1; return clamp(1.5 - .5 * (marketOf(s).stock[id] || 0) / Math.max(12, goodTarget(s, id)), .6, 1.6); } // знаменатель не меньше 12, чтобы партия в 10 штук не обрушивала цену на «бедном» рынке
 function relMod(P, s) { return clamp((P.rel && P.rel[s.fac]) || 0, -100, 100) * .0006; } // дружба до ±6% к цене
-function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)))); }
-function sellPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)))); }
+function buyPrice(P, s, id) { const it = ITEM[id]; return Math.max(1, Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? 1.25 : 1.08) * (1 - relMod(P, s)) * (1 - perkFx(P.hero).buy))); }
+function sellPrice(P, s, id) { // продажа никогда не выгоднее покупки в том же городе: дружба и перк «Торговец» не должны давать вечный двигатель
+  const it = ITEM[id], raw = Math.round(it.price * regionMod(s, id) * stockMod(s, id) * (it.kind === 'gear' ? .5 : .92) * (1 + relMod(P, s)) * (1 + perkFx(P.hero).sell));
+  return Math.max(1, Math.min(raw, Math.floor(buyPrice(P, s, id) * .93)));
+}
 function priceLevel(s, id) { if (ITEM[id].kind !== 'goods') return ''; const r = regionMod(s, id) * stockMod(s, id); return r < .88 ? 'low' : r > 1.12 ? 'high' : ''; } // цена здесь ниже/выше обычной
 
 /* ---------- сделки: цена пересчитывается на каждую единицу, поэтому крупная партия дорожает/дешевеет ---------- */
@@ -1771,7 +1877,7 @@ function renderTown() {
   if (tab === 'recruit') {
     body += '<div class="note">В отряде ' + cnt + ' из ' + cap + ' бойцов. Свободных рекрутов: ' + troopCount(s.recruits) + '. Новые люди приходят каждые три дня.</div>';
     if (!s.recruits.length) body += '<div class="note">Сегодня здесь никто не хочет воевать.</div>';
-    for (const r of s.recruits) { const t = TROOPS[r.type], ok = P.gold >= t.cost && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < t.cost ? 'no' : '') + '">' + ic('coin') + t.cost + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
+    for (const r of s.recruits) { const t = TROOPS[r.type], hc = hireCost(P, r.type), ok = P.gold >= hc && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < hc ? 'no' : '') + '">' + ic('coin') + hc + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
   } else if (tab === 'trade') {
     body += tradeBody(s);
   } else if (tab === 'market') {
@@ -1795,13 +1901,10 @@ function renderPanel() {
   if (tab === 'troops') {
     body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay(G.player) + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
     sortT(P.troops); if (!P.troops.length) body += '<div class="note">У тебя нет отряда. Найми людей в городе.</div>';
-    for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = t.upCost; acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
+    for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = upgCost(P, s.type); acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
   } else if (tab === 'hero') {
-    const hd = heroDef(H);
-    body += '<div class="cols"><div class="card"><h3>' + H.name + '</h3><div class="kv"><span>Уровень</span><b>' + H.lvl + '</b></div><div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div><div class="kv"><span>Опыт</span><b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></div><div class="kv"><span>Здоровье</span><b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></div><div class="kv"><span>Урон / броня</span><b>' + hd.dmg + ' / ' + hd.arm + '</b></div><div class="kv"><span>Размер отряда</span><b>' + cap + '</b></div></div>' +
-      '<div class="card"><h3>Умения <small class="tag g">' + (H.pts ? 'Очков: ' + H.pts : 'нет очков') + '</small></h3>' + Object.keys(ATTRS).map(k => '<div class="kv"><span>' + ATTRS[k][0] + ' <small>' + ATTRS[k][1] + '</small></span><b>' + H[k] + ' <button class="btn sm" style="padding:2px 9px" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + '>+</button></b></div>').join('') + '</div>' +
-      gearCard(H) + '</div>';
+    body += heroBody();
   } else if (tab === 'inv') {
     body += invBody();
   } else if (tab === 'journal') {
@@ -1810,7 +1913,7 @@ function renderPanel() {
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
   const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']];
-  openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>');
+  openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
 }
 
 /* ---------- встреча ---------- */
@@ -1841,7 +1944,7 @@ const ACT = {
   closepanel() { if (UI.back) { const b = UI.back; UI.back = null; UI.panel = null; UI.town = b; G.player.in = b.s.id; renderTown(); } else closeModal(); },
   upg(d) { if (NET.on) { NET.send({ t: 'upg', type: d.t, up: d.u }); sfx('coin'); return; } const n = doUpgrade(G.player, d.t, d.u); if (n) { sfx('coin'); toast(n + ' × ' + TROOPS[d.u].name); } renderPanel(); },
   dismiss(d) { if (NET.on) { NET.send({ t: 'dismiss', type: d.t }); return; } remT(G.player.troops, d.t, 1); renderPanel(); },
-  attr(d) { if (NET.on) { NET.send({ t: 'attr', k: d.k }); sfx('order'); return; } if (doAttr(G.player, d.k)) { sfx('order'); renderPanel(); } },
+  attr(d) { if (NET.on) { NET.send({ t: 'attr', k: d.k }); sfx('order'); return; } if (doAttr(G.player, d.k)) { sfx('order'); keepScroll(renderPanel); } },
   menu() { openMenu(); },
   greet() { if (NET.on) { NET.send({ t: 'enc', a: 'greet' }); closeModal(); return; } const p = UI.enc.p; p.cd = 3; closeModal(); },
   attack() { if (NET.on) { NET.send({ t: 'enc', a: 'attack' }); closeModal(); return; } const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
@@ -2045,12 +2148,9 @@ ACT.tsell = function (d) {
   keepScroll(renderTown);
 };
 
-/* ---------- вкладка «Герой»: краткая сводка ---------- */
-function gearCard(H) {
-  const hd = heroDef(H), W = hd.wpn;
-  return '<div class="card"><h3>Снаряжение</h3><div class="mini">' + SLOTS.map(k => { const it = eqItem(H, k); return it ? '<span class="mt" style="--tc:' + tierOf(it).c + '" title="' + SLOT_NAME[k] + ': ' + it.name + '">' + itemIc(it) + '</span>' : '<span class="mt void" title="' + SLOT_NAME[k] + ': пусто">' + ic(SLOT_ICON[k]) + '</span>'; }).join('') + '</div>' +
-    '<div class="kv"><span>Броня</span><b>' + hd.arm + '</b></div><div class="kv"><span>Урон</span><b>' + Math.round(hd.dmg) + ' · ' + DTYPE[W.dt].n.toLowerCase() + '</b></div>' +
-    '<div style="margin-top:8px"><button class="btn sm" data-act="ptab" data-t="inv">Открыть обоз</button></div><p class="note">В бою клавиша X меняет оружие.</p></div>';
+/* ---------- ряд мини-плиток надетого (для окна героя) ---------- */
+function miniGear(H) {
+  return '<div class="mini">' + SLOTS.map(k => { const it = eqItem(H, k); return it ? '<span class="mt" style="--tc:' + tierOf(it).c + '" title="' + SLOT_NAME[k] + ': ' + it.name + '">' + itemIc(it) + '</span>' : '<span class="mt void" title="' + SLOT_NAME[k] + ': пусто">' + ic(SLOT_ICON[k]) + '</span>'; }).join('') + '</div>';
 }
 
 /* ---------- вкладка «Обоз»: кукла героя и рюкзак ---------- */
@@ -2102,6 +2202,49 @@ ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx
 ACT.unequip = function (d) { if (NET.on) { NET.send({ t: 'unequip', slot: d.slot }); sfx('click'); return; } const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
 ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); sfx('click'); return; } if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };
+
+/* ================= окно героя: атрибуты и перки =================
+   Пять строк: слева атрибут (значение и «+»), справа четыре перка с порогами. Перк берётся за очко перков,
+   когда атрибут достиг порога. Логика и каталог перков: 01c_perks.js. */
+const ATTR_ICON = { str: 'hands', vit: 'heart', agi: 'charge', int: 'book', cha: 'flag' };
+const ATTR_NOW = {
+  str: H => '+' + H.str * 3 + ' к урону',
+  vit: H => '+' + H.vit * 14 + ' к здоровью',
+  agi: H => '+' + H.agi * 3 + ' к скорости бега',
+  int: H => '+' + (H.int - 1) * 3 + '% к опыту',
+  cha: H => '+' + H.cha * 5 + ' к отряду, мораль +' + H.cha * 4
+};
+const ROMAN = ['I', 'II', 'III', 'IV'];
+
+function perkCard(H, p, i) {
+  const learned = H.perks.includes(p.id), why = learned ? '' : perkWhy(H, p.id), can = !learned && !why, ready = !learned && H[p.a] >= p.req;
+  const cls = 'perk ' + (learned ? 'on' : can ? 'av' : ready ? 'rd' : 'lk'), foot = learned ? 'Изучено' : can ? 'Изучить · 1 очко' : why.replace(/\.$/, '');
+  return '<button class="' + cls + '" ' + (can ? 'data-act="perk" data-id="' + p.id + '"' : 'disabled') + '><span class="pt">' + ROMAN[i] + ' · ' + ATTRS[p.a][0] + ' ' + p.req + '</span><b class="pn">' + p.n + '</b><span class="pd">' + p.d + '</span><span class="pf">' + foot + '</span></button>';
+}
+function attrRow(H, k) {
+  const list = PERKS.filter(p => p.a === k), nx = list.find(p => !H.perks.includes(p.id) && H[k] < p.req);
+  return '<div class="arow"><div class="acell"><div class="ahd">' + ic(ATTR_ICON[k], 26) + '<b>' + ATTRS[k][0] + '</b><span class="v">' + H[k] + '</span>' +
+    '<button class="btn sm" data-act="attr" data-k="' + k + '" ' + (H.pts ? '' : 'disabled') + ' title="Потратить очко атрибутов">+</button></div>' +
+    '<div class="ad">' + ATTRS[k][1] + '. Сейчас: ' + ATTR_NOW[k](H) + '.</div>' + (nx ? '<div class="nx">Следующий перк на ' + nx.req + ' (ещё ' + (nx.req - H[k]) + ')</div>' : '<div class="nx">Все перки доступны</div>') + '</div>' +
+    '<div class="perks">' + list.map((p, i) => perkCard(H, p, i)).join('') + '</div></div>';
+}
+function heroBody() {
+  const P = G.player, H = heroFix(P.hero), hd = heroDef(H), Gr = heroGear(H), sp = getHeroSprite(H, Gr.mounted); if (!sp.url) sp.url = sp.cv.toDataURL();
+  const cnt = troopCount(P.troops), F = perkFx(H);
+  return '<div class="hhead"><img alt="" src="' + sp.url + '"><div><div class="hn">' + H.name + '<small>Уровень ' + H.lvl + '</small></div>' +
+    '<div class="pbar"><i style="width:' + clamp(H.xp / xpNeed(H.lvl) * 100, 0, 100) + '%"></i></div>' +
+    '<div class="hst"><span>Опыт<b>' + H.xp + ' / ' + xpNeed(H.lvl) + '</b></span><span>Здоровье<b>' + Math.round(H.hp * hd.hp) + ' / ' + hd.hp + '</b></span><span>Урон<b>' + Math.round(hd.dmg) + '</b></span><span>Броня<b>' + hd.arm + '</b></span><span>Отряд<b>' + cnt + ' / ' + sizeCap(H) + '</b></span></div>' +
+    miniGear(H) + '</div>' +
+    '<div class="hpts"><div class="pchip' + (H.pts ? ' hot' : '') + '">Очки атрибутов<b>' + H.pts + '</b></div><div class="pchip' + (H.pp ? ' hot' : '') + '">Очки перков<b>' + H.pp + '</b></div>' +
+    '<button class="btn sm" data-act="ptab" data-t="inv">Открыть обоз</button></div></div>' +
+    '<div class="note" style="margin:10px 0 0">За уровень: +' + PTS_LEVEL + ' очка атрибутов и +' + PP_LEVEL + ' очко перков. Перк открывается, когда атрибут дорастёт до порога, и стоит одно очко перков. В бою клавиша X меняет оружие.</div>' +
+    Object.keys(ATTRS).map(k => attrRow(H, k)).join('');
+}
+ACT.perk = function (d) {
+  if (NET.on) { NET.send({ t: 'perk', id: d.id }); sfx('order'); return; }
+  if (doPerk(G.player, d.id)) { sfx('level'); toast('Перк изучен: ' + PERK[d.id].n); }
+  keepScroll(renderPanel);
+};
 
 /* ================= главный цикл ================= */
 let MODE = 'title', cv, cx;
@@ -2161,9 +2304,9 @@ function showResult(r, p) {
   const res = r.res, H = G.player.hero; const left = Object.keys(res.dead).map(k => '<div class="kv"><span>' + TROOPS[k].name + '</span><b class="dn">−' + res.dead[k] + '</b></div>').join('');
   openModal('<div class="whead"><h2>' + (r.win ? 'Победа' : 'Поражение') + '<span class="sub">' + (res.auto ? 'Расчётный бой' : 'Битва длилась ' + Math.floor(res.time / 60) + ' мин ' + Math.round(res.time % 60) + ' сек') + '</span></h2><span class="tag ' + (r.win ? 'g' : 'r') + '">' + (r.win ? 'Враг разбит' : 'Отряд отступил') + '</span></div><div class="wbody"><div class="cols"><div class="card"><h3>Итоги</h3><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b class="dn">' + r.lost + '</b></div><div class="kv"><span>Раненые вернулись в строй</span><b>' + r.wounded + '</b></div>' + (res.heroKills ? '<div class="kv"><span>Побед героя в бою</span><b>' + res.heroKills + '</b></div>' : '') + (r.win ? '<div class="kv"><span>Добыча</span><b class="up">+' + r.loot + ' золота</b></div>' : '<div class="kv"><span>Потеряно золота</span><b class="dn">−' + (res.lostGold || 0) + '</b></div>') + '' + (r.drops && r.drops.length ? '<div class="kv"><span>Трофеи</span><b class="up" style="text-align:right">' + dropText(r.drops) + '</b></div>' : '') + '<div class="kv"><span>Опыт героя</span><b>+' + (res.gx || Math.round(res.xp * .5)) + '</b></div>' + (r.lvl ? '<div class="kv"><span>Новый уровень</span><b class="up">' + H.lvl + '</b></div>' : '') + '</div>' + (left ? '<div class="card"><h3>Потери</h3>' + left + '</div>' : '') + '</div>' + (res.woke ? '<div class="note" style="margin-top:10px">Ты очнулся в городе ' + res.woke + '. Отряд разбит, но жив.</div>' : '') + '</div><div class="wfoot"><button class="btn pri" data-act="cont2">Продолжить</button></div>', 'narrow');
 }
-function afterBattle() { if (NET.on) NET.send({ t: 'ack' }); MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0) toast('Есть свободные очки умений'); saveGame(true); }
+function afterBattle() { if (NET.on) NET.send({ t: 'ack' }); MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0 || G.player.hero.pp > 0) toast('Есть свободные очки: атрибуты и перки в окне героя (H)'); saveGame(true); }
 function startQuick() {
-  const H = { name: 'Ты', str: 3, vit: 3, agi: 2, lead: 2, eq: { head: 'head_nasal', body: 'body_mail', hands: 'hands_leather', legs: 'legs_boots', melee: 'sword_knight', ranged: 'bow_long', shield: 'shield_banded', horse: QK.me === 'khan' ? 'horse_riding' : null }, sel: 'melee', hp: 1, seed: 7 }; FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2;
+  const H = { name: 'Ты', str: 3, vit: 3, agi: 2, int: 2, cha: 2, perks: [], eq: { head: 'head_nasal', body: 'body_mail', hands: 'hands_leather', legs: 'legs_boots', melee: 'sword_knight', ranged: 'bow_long', shield: 'shield_banded', horse: QK.me === 'khan' ? 'horse_riding' : null }, sel: 'melee', hp: 1, seed: 7 }; FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2;
   enterBattle({ pl: genTroops(QK.me, QK.size, .6), en: genTroops(QK.foe, QK.size + 4, QK.foe === 'bandit' ? .35 : .6), pfac: 'player', efac: QK.foe, biome: FACTIONS[QK.me].biome, hero: H, leader: lordName(QK.foe), title: 'Быстрый бой', quick: true, seed: rint(1, 1e9), onEnd: quickEnded });
 }
 function quickEnded(res) { openModal('<div class="whead"><h2>' + (res.win ? 'Победа' : 'Поражение') + '</h2></div><div class="wbody"><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b>' + Object.values(res.dead).reduce((a, b) => a + b, 0) + '</b></div><div class="kv"><span>Побед героя</span><b>' + res.heroKills + '</b></div></div><div class="wfoot"><button class="btn" data-act="endq">В меню</button><button class="btn pri" data-act="again">Ещё бой</button></div>', 'narrow'); }
@@ -2194,7 +2337,7 @@ function updateWorldHud(force) {
   el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
   el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
   el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
-  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts ? ' +' + P.hero.pts : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>'; document.querySelector('[data-act=inv]').innerHTML = ic('bag') + '<span>Обоз</span>';
+  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts + (P.hero.pp || 0) ? ' +' + (P.hero.pts + (P.hero.pp || 0)) : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>'; document.querySelector('[data-act=inv]').innerHTML = ic('bag') + '<span>Обоз</span>';
   if (P.logDirty || G.logDirty) { P.logDirty = G.logDirty = false; el('wlog').innerHTML = P.log.slice(-4).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   // ближайшее поселение
   let near = null; for (const s of G.settles) { if (s.kind === 'camp') continue; if (Math.hypot(s.x - P.x, s.y - P.y) < 46) near = s; }
