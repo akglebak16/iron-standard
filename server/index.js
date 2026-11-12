@@ -227,7 +227,7 @@ function handle(c, m) {
     case 'enc': if (P.busy === 'enc') resolveEnc(P, String(m.a)); break;
     case 'ack': if (P.busy === 'res') { P.busy = null; P.pendRes = null; sendMe(P); } break;
     case 'inp': { const bt = battleOf(P); if (bt) giveHeroInput(bt, m, P); break; }
-    case 'ord': { const bt = battleOf(P); if (bt && ['hold', 'follow', 'charge', 'back'].includes(m.ord)) { sim.B = bt.B; sim.giveOrder(m.ord, +m.wx || 0, +m.wy || 0, [0, 1, 2, 3].includes(m.sel) ? m.sel : 3); } break; }
+    case 'ord': { const bt = battleOf(P); if (bt && ['hold', 'follow', 'charge', 'back'].includes(m.ord)) { sim.B = bt.B; sim.giveOrder(m.ord, +m.wx || 0, +m.wy || 0, [0, 1, 2, 3].includes(m.sel) ? m.sel : 3, P.id); } break; }
     case 'retreat': { const bt = battleOf(P); if (bt && !bt.B.over) { sim.B = bt.B; bt.B.over = bt.B.t; bt.B.win = false; } break; }
     case 'bjoin': joinBattle(c, m); break;
     case 'prop': propose(c, m); break;
