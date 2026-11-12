@@ -186,7 +186,13 @@ function handleJoin(c, m) {
   let P = G.players.find(q => q.name.toLowerCase() === name.toLowerCase());
   if (P) { if (connOf(P)) return send(c, { t: 'err', s: 'Это имя уже в игре' }); }
   else {
-    if (G.players.length >= MAX_PLAYERS) return send(c, { t: 'err', s: 'В мире уже двое. Войди под своим именем.' });
+    if (G.players.length >= MAX_PLAYERS) {
+      const old = G.players.find(q => !connOf(q) && !battleOf(q));
+      if (!m.replace || !old) return send(c, { t: 'err', s: 'В мире уже двое (' + G.players.map(q => q.name).join(', ') + '). Войди под своим именем, либо отметь «заменить» на экране создания героя (удалит того, кто не в игре).' });
+      const F = facOf(old); G.players.splice(G.players.indexOf(old), 1);
+      if (F && !G.players.some(q => q.fid === F.id)) G.factions.splice(G.factions.indexOf(F), 1);
+      sysChat('Персонаж ' + old.name + ' удалён (место занято)'); saveWorld();
+    }
     const cult = ['nord', 'emp', 'khan'].includes(m.culture) ? m.culture : 'nord';
     P = sim.addPlayer({ name, culture: cult, banner: Math.max(0, Math.min(sim.BANNERS.length - 1, +m.banner || 0)) });
   }
