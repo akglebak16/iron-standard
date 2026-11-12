@@ -125,15 +125,19 @@ function speedOf(p) {
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
 function pathTo(p, x, y) { const pa = findPath(p.x, p.y, x, y); p.path = pa || []; p.pi = 0; return !!pa; }
+/* Отряд уже занят встречей или боем другого игрока (мультиплеер): вступать с ним в бой второй раз нельзя, иначе враги двоятся.
+   Блокировка от игрока, который вышел или свободен, считается устаревшей и отряд не держит. В одиночной игре p.lock не ставится. */
+function lockedByOther(p, P) { if (!p.lock || p.lock === P.id) return false; const Q = G.players.find(q => q.id === p.lock); return !!(Q && !Q.away && (Q.busy === 'enc' || Q.busy === 'battle')); }
 function stepWorld(dh) {
-  const evs = [];
+  const evs = [], claimed = new Set(); // claimed: отряды, с которыми встреча уже создана в этом такте
+  const meet = (P, p, forced) => { if (claimed.has(p) || lockedByOther(p, P)) return false; claimed.add(p); evs.push({ type: 'meet', P, p, forced }); return true; };
   for (const P of G.players) {
     if (P.away || P.in || P.busy) continue;
     let tg = P.tid != null ? partyById(P.tid) : null; if (P.tid != null && (!tg || tg.hide)) { P.tid = null; P.path = []; tg = null; }
     if (tg) { P.rp = (P.rp || 0) - dh; if (P.rp <= 0) { P.rp = .6; if (losClear(P.x, P.y, tg.x, tg.y)) P.path = [{ x: tg.x, y: tg.y }]; else P.path = findPath(P.x, P.y, tg.x, tg.y) || []; P.pi = 0; } }
     if (P.path.length && P.pi < P.path.length) { const arrived = moveAlong(P, dh); if (arrived && !tg) { P.path = []; if (P.sid != null) { const s = settleById(P.sid); P.sid = null; if (s && Math.hypot(s.x - P.x, s.y - P.y) < 40) { evs.push({ type: 'enter', P, s }); continue; } } } }
-    if (tg && Math.hypot(tg.x - P.x, tg.y - P.y) < 24) { P.tid = null; P.path = []; evs.push({ type: 'meet', P, p: tg, forced: false }); continue; }
-    for (const p of G.parties) { if (p.hide || p.kind === 'camp' || p.lock) continue; if (Math.hypot(p.x - P.x, p.y - P.y) < 22 && isHostileToPlayer(p, P) && p.cd <= 0) { evs.push({ type: 'meet', P, p, forced: true }); break; } }
+    if (tg && Math.hypot(tg.x - P.x, tg.y - P.y) < 24) { P.tid = null; P.path = []; if (!meet(P, tg, false)) logW('Этот отряд уже в бою с другом.', 0, P); continue; }
+    for (const p of G.parties) { if (p.hide || p.kind === 'camp' || p.lock) continue; if (Math.hypot(p.x - P.x, p.y - P.y) < 22 && isHostileToPlayer(p, P) && p.cd <= 0 && meet(P, p, true)) break; }
   }
   // ИИ
   for (const p of G.parties.slice()) { if (!G.parties.includes(p)) continue; aiParty(p, dh); }
