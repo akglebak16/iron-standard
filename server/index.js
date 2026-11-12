@@ -154,6 +154,10 @@ function giveTo(c, m) {
     const t = sim.TROOPS[m.type], s = P.troops.find(x => x.type === m.type); if (!t || !s) return bad('Таких бойцов нет');
     const k = Math.min(n, s.n, sim.sizeCap(o.hero) - sim.troopCount(o.troops)); if (k < 1) return bad('У друга нет места в отряде');
     s.n -= k; if (s.n <= 0) P.troops.splice(P.troops.indexOf(s), 1); const f = o.troops.find(x => x.type === m.type); if (f) f.n += k; else o.troops.push({ type: m.type, n: k }); txt = k + ' × ' + t.name;
+  } else if (m.k === 'item') {
+    const id = String(m.type), it = sim.ITEM[id], have = sim.invN(P, id); if (!it || have < 1) return bad('Такой вещи нет в обозе');
+    const room = Math.floor((sim.cargoCap(o) - sim.invWeight(o)) / Math.max(.1, it.w) + 1e-6), k = Math.min(n, have, room); if (k < 1) return bad('У друга нет места в обозе');
+    sim.invAdd(P, id, -k); sim.invAdd(o, id, k); txt = k + ' × ' + it.name;
   } else return;
   sim.logW('Ты передал другу (' + o.name + '): ' + txt + '.', 0, P); sim.logW(P.name + ' передал тебе: ' + txt + '.', 3, o);
   sendMe(P); sendMe(o); send(connOf(o), { t: 'toast', s: P.name + ' передал тебе: ' + txt }); send(c, { t: 'toast', s: 'Передано: ' + txt });

@@ -26,7 +26,7 @@ return {
   get G() { return G; }, set G(v) { G = v; }, get B() { return B; }, set B(v) { B = v; }, get WT() { return WT; },
   newWorld, addPlayer, mkPlayer, stepWorld, hourTick, findPath, losClear, settleById, partyById, genWorld, markRoadsFrom: null,
   townEnter, doHire, doGear, doFood, doUpgrade, doAttr, doPerk, doAccept, encAttack, encFlee, battleCfgFor, autoResult, applyBattleResult, isHostileToPlayer,
-  doBuy, doSell, doEquip, doUnequipHorse, rollLoot, dropText, marketOf, hasMarket, ITEM, TRADE_WHY, invN,
+  doBuy, doSell, doEquip, doUnequipHorse, rollLoot, dropText, marketOf, hasMarket, ITEM, TRADE_WHY, invN, invAdd, invWeight, cargoCap,
   heroBattle, startBattle, joinBattle, battleUpdate, giveOrder, speedOf, sizeCap, troopCount, strength, partyStr, leaderType, wageDay, logW, relName, FACTIONS, TROOPS, GEAR, BANNERS, WW, WH, cellOf, TCOST, heroDef,
 };`;
 function load() {

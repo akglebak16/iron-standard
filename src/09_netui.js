@@ -10,6 +10,11 @@ function allyBody() {
   b += '<div class="row sm"><div class="grow"><div class="nm">Провизия</div><div class="ds">у тебя ' + P.food + '</div></div>' + [10, 30].map(n => '<button class="btn sm" data-act="give" data-k="food" data-n="' + n + '"' + dis + '>' + n + '</button>').join('') + '<button class="btn sm" data-act="give" data-k="food" data-n="999999"' + dis + '>Все</button></div>';
   b += '<h3 style="margin-top:14px">Передать бойцов</h3>';
   for (const s of P.troops) { const t = TROOPS[s.type]; b += '<div class="row sm"><div class="grow"><div class="nm">' + t.name + '</div><div class="ds">в отряде ' + s.n + '</div></div><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="1"' + dis + '>1</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="5"' + dis + '>5</button><button class="btn sm" data-act="give" data-k="troop" data-t="' + s.type + '" data-n="999"' + dis + '>Все</button></div>'; }
+  const gear = invIds(P, 'gear'), goods = invIds(P, 'goods'), gb = (id, n, l) => '<button class="btn sm" data-act="give" data-k="item" data-t="' + id + '" data-n="' + n + '"' + dis + '>' + l + '</button>';
+  b += '<h3 style="margin-top:14px">Передать вещи из обоза</h3>';
+  if (!gear.length && !goods.length) b += '<div class="note">В обозе пусто. Надетое сначала нужно снять (вещи в обозе передаются, надетые — нет).</div>';
+  for (const id of gear) b += '<div class="row sm"><div class="grow"><div class="nm">' + ITEM[id].name + '</div><div class="ds">снаряжение · в обозе ' + invN(P, id) + '</div></div>' + gb(id, 1, 'Отдать') + '</div>';
+  for (const id of goods) b += '<div class="row sm"><div class="grow"><div class="nm">' + ITEM[id].name + '</div><div class="ds">товар · в обозе ' + invN(P, id) + '</div></div>' + gb(id, 1, '1') + gb(id, 5, '5') + gb(id, 999, 'Все') + '</div>';
   b += '<h3 style="margin-top:14px">Фракция</h3>';
   const F = P.fac;
   if (F) {
