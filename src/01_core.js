@@ -105,7 +105,7 @@ const GEAR = {
 };
 const GEAR_LABEL = { weapon: 'Оружие', armor: 'Доспех', shield: 'Щит', horse: 'Конь' };
 const GEAR_UNIT = { weapon: 'урон', armor: 'броня', shield: 'блок', horse: 'скорость' };
-const ATTRS = { str: ['Сила', '+3 к урону'], vit: ['Стойкость', '+14 к здоровью'], agi: ['Ловкость', 'быстрее удар и шаг'], lead: ['Лидерство', '+5 к размеру отряда, выше мораль'] };
+const ATTRS = { str: ['Сила', '+3 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
 function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
 function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1); } return s; }
