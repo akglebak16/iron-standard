@@ -65,6 +65,7 @@ function marketDay(s, m) {
   for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < GEAR_DAILY[ITEM[id].idx]) m.stock[id] = 1; }
 }
 function marketOf(s) { // ленивое создание и догон по дням (до 20 дней за раз)
+  if (NET.on && s.market) return s.market; // в сети рынком владеет сервер
   if (!s.market) s.market = mkMarket(s);
   const m = s.market, d = Math.min(20, Math.max(0, G.day - m.day));
   for (let k = 0; k < d; k++) marketDay(s, m);

@@ -23,7 +23,7 @@ function netMkPlayer(id) {
     hero: { name: '', lvl: 1, xp: 0, pts: 0, str: 1, vit: 1, agi: 1, lead: 1, armor: 0, weapon: 0, shield: 0, horse: 0, hp: 1, seed: id * 7 + 3 } };
 }
 function netFac(Q) { const k = 'p2_' + Q.banner; if (!FACTIONS[k]) { const b = BANNERS[Q.banner] || BANNERS[0]; FACTIONS[k] = Object.assign({}, FACTIONS.player, { c1: b.c1, c2: b.c2 }); } return k; }
-function netRefresh() { if (!UI.open || UI.enc || UI.res) return; if (UI.panel) renderPanel(); else if (UI.town) renderTown(); }
+function netRefresh() { if (!UI.open || UI.enc || UI.res) return; keepScroll(() => { if (UI.panel) renderPanel(); else if (UI.town) renderTown(); }); }
 
 function netMsg(m) {
   switch (m.t) {
@@ -35,12 +35,12 @@ function netMsg(m) {
     }
     case 'me': {
       const P = G && G.player; if (!P) break;
-      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests]);
+      const old = JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]); P.inv = m.inv;
       P.gold = m.gold; P.food = m.food; P.troops = m.troops; P.hero = m.hero; P.quests = m.quests; P.rel = m.rel; P.stats = m.stats; P.name = m.name; P.culture = m.culture; P.banner = m.banner; P.in = m.in; P.busy = m.busy;
       const lg = JSON.stringify(m.log); if (lg !== NET.lastLog) { NET.lastLog = lg; P.log = m.log; P.logDirty = true; }
       P.path = m.path.map(a => ({ x: a[0], y: a[1] })); P.pi = 0;
       const b = BANNERS[P.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2;
-      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests]) !== old) netRefresh();
+      if (JSON.stringify([P.gold, P.food, P.troops, P.hero, P.quests, P.inv]) !== old) netRefresh();
       break;
     }
     case 'w': {
@@ -62,9 +62,9 @@ function netMsg(m) {
       break;
     }
     case 'town': {
-      const s = G && G.settles.find(s => s.id === m.sid); if (!s) break; s.recruits = m.recruits; s.board = m.board;
+      const s = G && G.settles.find(s => s.id === m.sid); if (!s) break; s.recruits = m.recruits; s.board = m.board; if (m.market) s.market = m.market;
       if (m.open) netDefer(() => { G.player.in = null; closeModal(); G.player.in = s.id; G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); });
-      else if (UI.town && UI.town.s === s && UI.open && !UI.panel) renderTown();
+      else if (UI.town && UI.town.s === s && UI.open && !UI.panel) keepScroll(renderTown);
       break;
     }
     case 'enc': netDefer(() => { const p = G.parties.find(x => x.id === m.p.id) || m.p; p.troops = m.p.troops; closeModal(); openEncounter(p, m.forced); }); break;

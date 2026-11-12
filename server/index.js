@@ -40,7 +40,7 @@ function initMsg(P) { return { t: 'init', you: P.id, seed: G.seed, roads: G.road
 
 function meMsg(P) {
   const bt = battleOf(P);
-  return { t: 'me', gold: P.gold, food: P.food, troops: P.troops, hero: P.hero, quests: P.quests, rel: P.rel, stats: P.stats, name: P.name, culture: P.culture, banner: P.banner,
+  return { t: 'me', inv: P.inv || {}, gold: P.gold, food: P.food, troops: P.troops, hero: P.hero, quests: P.quests, rel: P.rel, stats: P.stats, name: P.name, culture: P.culture, banner: P.banner,
     in: P.in, busy: P.busy, wage: sim.wageDay(P), cap: sim.sizeCap(P.hero), log: P.log.slice(-8), path: P.path.slice(P.pi).map(p => [Math.round(p.x), Math.round(p.y)]), bid: bt ? bt.id : 0 };
 }
 function worldMsg() {
@@ -49,7 +49,7 @@ function worldMsg() {
   const camps = G.settles.filter(s => s.kind === 'camp').map(s => [s.id, s.camp ? s.camp.id : 0, s.cleared ? 1 : 0]);
   return { t: 'w', day: G.day, hour: G.hour, hf: G.hourAcc, paused: G.paused, speed: G.speed, players, parties, camps, vote: vote ? { k: vote.k, v: vote.v, by: vote.byName, yes: vote.yes.size } : null };
 }
-function townMsg(s) { return { t: 'town', sid: s.id, recruits: s.recruits, board: s.board || [] }; }
+function townMsg(s) { return { t: 'town', sid: s.id, recruits: s.recruits, board: s.board || [], market: sim.hasMarket(s) ? sim.marketOf(s) : null }; }
 function pushTown(sid) { const s = sim.settleById(sid); if (!s) return; for (const c of online()) if (c.P.in === sid) send(c, townMsg(s)); }
 function sendMe(P) { const c = connOf(P); if (c) send(c, meMsg(P)); }
 function battleOf(P) { for (const b of battles.values()) if (b.P === P) return b; return null; }
@@ -115,6 +115,7 @@ function endBattle(bt, res) {
 function finishWith(P, p, res, tm) {
   if (!res.time) res.time = tm;
   const R = sim.applyBattleResult(P, res, p);
+  if (R.win) { R.drops = sim.rollLoot(P, p); if (R.drops.length) sim.logW('Трофеи: ' + sim.dropText(R.drops) + '.', 3, P); }
   P.busy = 'res'; P.resT = Date.now(); P.pendRes = { t: 'br', r: R, p: { name: p.name } };
   const c = connOf(P); if (c) { send(c, P.pendRes); } sendMe(P);
 }
@@ -168,6 +169,11 @@ function handle(c, m) {
     case 'gear': if (P.in && sim.doGear(P, String(m.k))) sendMe(P); break;
     case 'food': if (P.in && sim.doFood(P, +m.n, +m.p)) sendMe(P); break;
     case 'accept': { const s = P.in && sim.settleById(P.in); if (s) { const r = sim.doAccept(P, s, +m.q); if (r) send(c, { t: 'toast', s: r }); sendMe(P); pushTown(s.id); } break; }
+    case 'tbuy': case 'tsell': { const s = P.in && sim.settleById(P.in); if (!s || !sim.ITEM[m.id]) break; const n = Math.max(1, Math.min(99, +m.n || 1)), buy = m.t === 'tbuy', r = buy ? sim.doBuy(P, s, m.id, n) : sim.doSell(P, s, m.id, n), nm = sim.ITEM[m.id].name;
+      if (r.n) send(c, { t: 'toast', s: (buy ? 'Куплено: ' : 'Продано: ') + nm + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + r.sum }); else send(c, { t: 'toast', s: sim.TRADE_WHY[r.why] || 'Не вышло' });
+      sendMe(P); pushTown(s.id); break; }
+    case 'equip': if (P.busy !== 'battle' && sim.ITEM[m.id] && sim.doEquip(P, String(m.id))) { send(c, { t: 'toast', s: 'Надето: ' + sim.ITEM[m.id].name }); sendMe(P); } break;
+    case 'unhorse': if (P.busy !== 'battle' && sim.doUnequipHorse(P)) { send(c, { t: 'toast', s: 'Конь отправлен в обоз' }); sendMe(P); } break;
     case 'upg': if (P.busy !== 'battle' && sim.doUpgrade(P, String(m.type), String(m.up))) sendMe(P); break;
     case 'dismiss': if (P.busy !== 'battle' && sim.TROOPS[m.type]) { const s = P.troops.find(x => x.type === m.type); if (s) { s.n--; if (s.n <= 0) P.troops.splice(P.troops.indexOf(s), 1); sendMe(P); } } break;
     case 'attr': if (sim.doAttr(P, String(m.k))) sendMe(P); break;

@@ -29,11 +29,13 @@ function tradeBody(s) {
     '<div><h3>Торговец</h3>' + (theirs.length ? theirs.map(id => tradeRow(s, P, id, 'buy')).join('') : '<div class="note">Прилавок пуст.</div>') + '</div></div>';
 }
 ACT.tbuy = function (d) {
+  if (NET.on) { NET.send({ t: 'tbuy', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doBuy(P, UI.town.s, d.id, n);
   if (r.n) { sfx('coin'); toast('Куплено: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99) toast(TRADE_WHY[r.why] || ''); } else toast(TRADE_WHY[r.why] || 'Не вышло');
   keepScroll(renderTown);
 };
 ACT.tsell = function (d) {
+  if (NET.on) { NET.send({ t: 'tsell', id: d.id, n: +d.n }); sfx('coin'); return; }
   const P = G.player, n = +d.n, r = doSell(P, UI.town.s, d.id, n);
   if (r.n) { sfx('coin'); toast('Продано: ' + ITEM[d.id].name + (r.n > 1 ? ' ×' + r.n : '') + ' за ' + fmt(r.sum)); if (r.n < n && n < 99 && r.why) toast(TRADE_WHY[r.why]); } else toast(TRADE_WHY[r.why] || 'Не вышло');
   keepScroll(renderTown);
@@ -54,6 +56,6 @@ function invBody() {
   for (const id of goods) { const it = ITEM[id], n = invN(P, id); b += '<div class="row sm">' + itemSw(it) + '<div class="grow"><div class="nm">' + it.name + '</div><div class="ds">Товар · вес ' + Math.round(it.w * n * 10) / 10 + ' · обычная цена ' + it.price + '</div></div><div class="cnt">' + n + '</div></div>'; }
   return b;
 }
-ACT.equip = function (d) { if (doEquip(G.player, d.id)) { sfx('order'); toast('Надето: ' + ITEM[d.id].name); } keepScroll(renderPanel); };
-ACT.unhorse = function () { if (doUnequipHorse(G.player)) { sfx('click'); toast('Конь отправлен в обоз'); } keepScroll(renderPanel); };
+ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } if (doEquip(G.player, d.id)) { sfx('order'); toast('Надето: ' + ITEM[d.id].name); } keepScroll(renderPanel); };
+ACT.unhorse = function () { if (NET.on) { NET.send({ t: 'unhorse' }); sfx('click'); return; } if (doUnequipHorse(G.player)) { sfx('click'); toast('Конь отправлен в обоз'); } keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };
