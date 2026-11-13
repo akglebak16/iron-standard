@@ -216,7 +216,7 @@ function kill(t, src) {
 function paintCorpse(t) {
   const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
   g.save(); g.translate(t.x, t.y); g.fillStyle = 'rgba(96,14,10,.5)'; g.beginPath(); g.ellipse(rnd(-4, 4), rnd(-2, 4), rnd(15, 24), rnd(8, 12), rnd(0, 3), 0, TAU); g.fill();
-  if (!(t.isHero && t.side === 0) && !t.comp) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); } g.restore();
+  g.restore(); if (!(t.isHero && t.side === 0) && !t.comp) fallAdd(sp, t.x, t.y, t.sp.ax, t.sp.ay, rot, k, .88);
 }
 function heroControl(h, dt) {
   const I = h.inp || NOINP; let mx = I.dx || 0, my = I.dy || 0;
@@ -341,6 +341,31 @@ function finishBattle() {
 function s2w(sx, sy) { const c = B.cam; return { x: c.x + (sx - VIEW.w / 2) / c.z, y: c.y + (sy - VIEW.h / 2) / c.z }; }
 
 /* ---------- отрисовка ---------- */
+/* Боец рисуется двумя слоями: тело и рука с оружием. Рука поворачивается вокруг плеча при ударе
+   (замах назад → удар вперёд → возврат), копья колют, луки отдаёт назад. Тело слегка дышит и наклоняется на ходу. */
+function swingPose(wk, bump) {
+  const p = 1 - bump; let a = 0, dx = 0, dy = 0;
+  if (wk === 3) { const q = clamp(1 - bump * 2, 0, 1); dx = -5 * (1 - q) * (1 - q); a = -.12 * (1 - q); }
+  else if (wk === 2) { if (p < .25) { const q = p / .25; a = .1 * q; dx = -7 * q; dy = 3 * q; } else if (p < .5) { const q = (p - .25) / .25, e = 1 - (1 - q) * (1 - q); a = lerp(.1, .5, e); dx = lerp(-7, 16, e); dy = lerp(3, 2, e); } else { const q = (p - .5) / .5; a = lerp(.5, 0, q); dx = lerp(16, 0, q); dy = lerp(2, 0, q); } }
+  else { if (p < .28) { const q = p / .28; a = -.55 * Math.sin(q * Math.PI / 2); } else if (p < .55) { const q = (p - .28) / .27, e = 1 - (1 - q) * (1 - q) * (1 - q); a = lerp(-.55, 1.25, e); } else { const q = (p - .55) / .45; a = lerp(1.25, 0, q * q * (3 - 2 * q)); } }
+  return [a, dx, dy];
+}
+function drawUnitSprite(g, u, sp, mv) {
+  const br = 1 + Math.sin(B.t * 2.1 + u.ph) * .012, lean = mv > 12 ? clamp(mv / 90, 0, 1) * .055 : 0;
+  g.scale(u.dir * US, US * br); if (lean) g.rotate(lean);
+  if (u.flash > 0 || !sp.body) { g.drawImage(u.flash > 0 ? sp.flash : sp.cv, -sp.ax, -sp.ay); return; }
+  g.drawImage(sp.body, -sp.ax, -sp.ay);
+  if (u.bump > 0 && sp.wk) { const q = swingPose(sp.wk, u.bump), px = sp.piv[0] - sp.ax, py = sp.piv[1] - sp.ay; g.translate(px + q[1], py + q[2]); g.rotate(q[0]); g.drawImage(sp.wpn, -sp.piv[0], -sp.piv[1]); if (sp.wk === 1 && q[0] > .1) { g.globalAlpha *= .35; g.rotate(-.28); g.drawImage(sp.wpn, -sp.piv[0], -sp.piv[1]); } }
+  else g.drawImage(sp.wpn, -sp.ax, -sp.ay);
+}
+/* павший падает на землю за треть секунды и только потом впечатывается в поле */
+function fallAdd(cv, x, y, ax, ay, rot, k, alpha) { if (!B.falls) B.falls = []; B.falls.push({ cv, x, y, ax, ay, rot, k, alpha, t0: B.t }); }
+function fallDraw(g) {
+  if (!B.falls) return;
+  for (let i = B.falls.length - 1; i >= 0; i--) { const f = B.falls[i], p = clamp((B.t - f.t0) / .34, 0, 1), e = p * p, done = p >= 1, c = done ? B.gg : g;
+    c.save(); c.translate(f.x, f.y - Math.sin(p * Math.PI) * 5); c.rotate(f.rot * e); c.globalAlpha = done ? f.alpha : 1; c.scale(f.k, f.k); c.drawImage(f.cv, -f.ax, -f.ay + 60 * e); c.restore();
+    if (done) B.falls.splice(i, 1); }
+}
 const drawList = [];
 function battleDraw(g) {
   const cam = B.cam, z = cam.z, d = VIEW.dpr, demo = B.cfg.demo;
@@ -364,13 +389,13 @@ function battleDraw(g) {
       if (u.isHero && !u.ai) { g.strokeStyle = u === B.hero ? '#ffd86a' : '#7ee07a'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
       else { const al = !u.side && B.hero2 && u.own !== myPid(); g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : al ? 'rgba(110,214,110,.8)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(110,165,235,.75)'); g.lineWidth = u.leader ? 2.6 : 1.5; if (u.comp) { g.strokeStyle = '#7fd6c8'; g.lineWidth = 2.2; } ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
     }
-    g.save(); g.translate(u.x + ox, u.y + oy); if (u.flee) g.globalAlpha = .75; g.scale(u.dir * US, US); g.drawImage(u.flash > 0 ? sp.flash : sp.cv, -sp.ax, -sp.ay); g.restore();
+    g.save(); g.translate(u.x + ox, u.y + oy); if (u.flee) g.globalAlpha = .75; drawUnitSprite(g, u, sp, mv); g.restore();
     if (u.hp < u.maxHp && !demo) { const w = u.r * 1.9, hy = u.y - (sp.m ? 70 : 52); g.fillStyle = 'rgba(15,10,6,.8)'; g.fillRect(u.x - w / 2 - 1, hy - 1, w + 2, 5); g.fillStyle = u.side ? '#c23a2c' : '#7fb04a'; g.fillRect(u.x - w / 2, hy, w * clamp(u.hp / u.maxHp, 0, 1), 3); }
     if (u.leader && !demo) drawBanner(g, u.x - u.dir * 10, u.y - 2, u.fac, 17);
     if (u.comp && !demo) { g.font = '700 12px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center'; const ny = u.y - (sp.m ? 76 : 58); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(u.name, u.x + 1, ny + 1); g.fillStyle = '#9fe3d6'; g.fillText(u.name, u.x, ny); }
     if (u.flee && !demo) { g.fillStyle = '#f4f0e0'; g.fillRect(u.x - 1, u.y - 66, 9, 6); g.fillStyle = '#3a2a18'; g.fillRect(u.x - 2, u.y - 67, 1.5, 14); }
   }
-  goreDrawOver(g); voiceDraw(g);
+  fallDraw(g); goreDrawOver(g); voiceDraw(g);
   const h = B.hero;
   if (h && !h.dead && h.swing > 0) { const p = 1 - h.swing / .26, R = 34 + h.t.reach + (h.t.mounted ? 8 : 0), a0 = h.swingA - 1 + p * 2; g.strokeStyle = 'rgba(255,250,230,' + (.85 - p * .7) + ')'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.arc(h.x, h.y - 14, R, a0 - .7, a0); g.stroke(); }
   // стрелы

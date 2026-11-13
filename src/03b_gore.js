@@ -51,7 +51,7 @@ function goreBones(x, y, ang, n) { for (let i = 0; i < n; i++) gib({ type: 'bone
 /* труп (с головой или без) на землю; лужу рисуют B.pools */
 function paintBody(t, nohead) {
   const g = B.gg, sp = corpseOf(t.sp, nohead), k = US, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
-  g.save(); g.translate(t.x, t.y); g.rotate(rot); g.globalAlpha = .9; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); g.restore();
+  fallAdd(sp, t.x, t.y, t.sp.ax, t.sp.ay, rot, k, .9);
 }
 /* кровь при сильном ударе по живому */
 function goreHit(t, d, src) { if (!GORE.on || !t.sp) return; const col = goreCol(t); if (!col || d < t.maxHp * .18) return; const ang = src ? Math.atan2(t.y - src.y, t.x - src.x) : rnd(0, TAU); goreSpray(t.x, t.y - 20, 6 + Math.min(10, d / 6 | 0), ang, 150, col, 80); }
