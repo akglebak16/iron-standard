@@ -873,7 +873,7 @@ function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
 function giveOrder(ord, wx, wy, selArg, pid) {
-  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg; if (pid === undefined) pid = myPid(); // одиночная игра: свои отряды героя
   if (!SERVER && NET.on) { NET.send({ t: 'ord', ord, wx, wy, sel: sl }); if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t }; sfx(ord === 'charge' ? 'horn' : 'order'); return; }
   const foe = centroid(1), gs = B.groups[0].filter(g => g.own === pid && (sl === 3 || g.k === sl)); let any = false;
   for (const g of gs) {
@@ -2403,7 +2403,7 @@ function updateBattleHud() {
   const c = [0, 0, 0]; const mp = myPid(); for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero && u.own === mp) c[u.t.grp]++; for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
   for (const g of document.querySelectorAll('#bgroups .grp')) g.classList.toggle('on', +g.dataset.g === B.sel);
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
-  const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed; drawMinimap(el('bmini').firstElementChild);
+  const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed;
 }
 function updateWorldHud(force) {
   if (!G) return; netVoteUI(); netJoinUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
@@ -2432,24 +2432,30 @@ function worldUpdate(dt) {
   if (!G || UI.open) return; const P = G.player, moving = (P.path.length && P.pi < P.path.length) || P.tid != null;
   if (!G.paused && (moving || G.wait)) {
     G.acc += dt * 1.2 * G.speed; G.hourAcc = G.hourAcc || 0; let guard = 0;
-    while (G.acc >= .2 && guard++ < 40) { G.acc -= .2; const evs = stepWorld(.2); G.hourAcc += .2; if (G.hourAcc >= 1) { G.hourAcc -= 1; hourTick(); P.logDirty = true; if (G.hour === 0) { saveGame(true); } } if (evs.length) { handleEvent(evs[0]); break; } }
-  }
-  if (!WC.free) { WC.x += (P.x - WC.x) * Math.min(1, dt * 5); WC.y += (P.y - WC.y) * Math.min(1, dt * 5); }
+    while (G.acc >= .2 && guard++ < 40) { G.acc -= .2; snapWorld(); const evs = stepWorld(.2); G.hourAcc += .2; if (G.hourAcc >= 1) { G.hourAcc -= 1; hourTick(); P.logDirty = true; if (G.hour === 0) { saveGame(true); } } if (evs.length) { handleEvent(evs[0]); break; } }
+    WA = G.acc >= .2 || UI.open ? 1 : clamp(G.acc / .2, 0, 1);
+  } else if (WA < 1) WA = Math.min(1, WA + dt * 6 * G.speed); // мир встал — плавно доводим до последней точки
+  const PP = rpos(P);
+  if (!WC.free) { const k = Math.min(1, dt * 5); WC.x += (PP.x - WC.x) * k; WC.y += (PP.y - WC.y) * k; }
   const hw = VIEW.w / 2 / WC.z, hh = VIEW.h / 2 / WC.z; WC.x = hw * 2 >= WW ? WW / 2 : clamp(WC.x, hw, WW - hw); WC.y = hh * 2 >= WH ? WH / 2 : clamp(WC.y, hh, WH - hh);
 }
+/* плавность: между шагами мира рисуем объекты в промежуточной точке */
+const WPREV = new Map(); let WA = 1;
+function snapWorld() { WPREV.clear(); for (const Q of G.players) WPREV.set(Q, [Q.x, Q.y]); for (const p of G.parties) WPREV.set(p, [p.x, p.y]); }
+function rpos(o) { const q = !NET.on && WA < 1 && WPREV.get(o); if (!q || Math.abs(q[0] - o.x) + Math.abs(q[1] - o.y) > 80) return o; return { x: q[0] + (o.x - q[0]) * WA, y: q[1] + (o.y - q[1]) * WA }; }
 function handleEvent(ev) { if (ev.type === 'enter') openTown(ev.s); else if (ev.type === 'meet') openEncounter(ev.p, ev.forced); }
 function drawWorld(g) {
   const d = VIEW.dpr, z = WC.z, P = G.player; g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#16232b'; g.fillRect(0, 0, cv.width, cv.height);
   g.setTransform(d * z, 0, 0, d * z, d * (VIEW.w / 2 - WC.x * z), d * (VIEW.h / 2 - WC.y * z)); g.drawImage(WT.img, 0, 0);
   const x0 = WC.x - VIEW.w / 2 / z - 120, x1 = WC.x + VIEW.w / 2 / z + 120, y0 = WC.y - VIEW.h / 2 / z - 120, y1 = WC.y + VIEW.h / 2 / z + 160;
-  if (P.path.length && P.pi < P.path.length) { g.setLineDash([8, 7]); g.lineCap = 'round'; g.beginPath(); g.moveTo(P.x, P.y); for (let i = P.pi; i < P.path.length; i++) g.lineTo(P.path[i].x, P.path[i].y); g.strokeStyle = 'rgba(20,12,4,.8)'; g.lineWidth = 5; g.stroke(); g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.stroke(); g.setLineDash([]); const e = P.path[P.path.length - 1]; g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.beginPath(); g.arc(e.x, e.y, 9, 0, TAU); g.stroke(); }
-  const list = []; for (const s of G.settles) if (s.x > x0 && s.x < x1 && s.y > y0 && s.y < y1) list.push({ y: s.y, s }); for (const p of G.parties) if (!p.hide && p.kind !== 'camp' && p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) list.push({ y: p.y, p }); for (const Q of G.players) { if (Q !== P && (Q.in || Q.away)) continue; list.push({ y: Q.y, pl: Q }); } list.sort((a, b) => a.y - b.y);
+  if (P.path.length && P.pi < P.path.length) { g.setLineDash([8, 7]); g.lineCap = 'round'; const pp = rpos(P); g.beginPath(); g.moveTo(pp.x, pp.y); for (let i = P.pi; i < P.path.length; i++) g.lineTo(P.path[i].x, P.path[i].y); g.strokeStyle = 'rgba(20,12,4,.8)'; g.lineWidth = 5; g.stroke(); g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.stroke(); g.setLineDash([]); const e = P.path[P.path.length - 1]; g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.beginPath(); g.arc(e.x, e.y, 9, 0, TAU); g.stroke(); }
+  const list = []; for (const s of G.settles) if (s.x > x0 && s.x < x1 && s.y > y0 && s.y < y1) list.push({ y: s.y, s }); for (const p of G.parties) if (!p.hide && p.kind !== 'camp' && p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) { const r = rpos(p); list.push({ y: r.y, p, r }); } for (const Q of G.players) { if (Q !== P && (Q.in || Q.away)) continue; const r = rpos(Q); list.push({ y: r.y, pl: Q, r }); } list.sort((a, b) => a.y - b.y);
   g.textAlign = 'center'; g.lineJoin = 'round';
   const label = (t, x, y, c, sz) => { g.font = '700 ' + (sz || 15) + 'px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.lineWidth = 4; g.strokeStyle = 'rgba(14,9,4,.9)'; g.strokeText(t, x, y); g.fillStyle = c || '#f0e6c8'; g.fillText(t, x, y); };
   for (const it of list) {
     if (it.s) { const s = it.s, sp = settleSprite(s), k = s.kind === 'town' ? .72 : s.kind === 'castle' ? .7 : .6; if (s.kind === 'camp' && s.cleared) g.globalAlpha = .5; g.drawImage(sp.cv, s.x - sp.ax * k, s.y - sp.ay * k, sp.cv.width * k, sp.cv.height * k); g.globalAlpha = 1; label(s.name, s.x, s.y + 22, s.kind === 'camp' ? '#e59a8c' : '#f0e6c8', s.kind === 'village' ? 13 : 16); }
-    else if (it.p) { const p = it.p; let sp, k = .34; if (p.kind === 'caravan') { const c = caravanSprite(); g.drawImage(c.cv, p.x - c.ax * .5, p.y - c.ay * .5, 55, 35); label('Караван', p.x, p.y + 16, '#d8c9a2', 12); continue; } sp = getSprite(leaderType(p), 0, p.fac); const dir = p.fx < 0 ? -1 : 1; g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(p.x + 2, p.y + 3, 20, 7, 0, 0, TAU); g.fill(); g.save(); g.translate(p.x, p.y + Math.sin(G.day * 24 + G.hour + p.id) * 0); g.scale(dir * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, p.x + 14, p.y + 2, p.fac, 9); label(p.kind === 'bandit' ? 'Разбойники' : p.name, p.x, p.y + 17, p.kind === 'bandit' ? '#e59a8c' : '#f0e6c8', 12); }
-    else { const Q = it.pl, me = Q === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name + (Q.fname ? ' [' + Q.fname + ']' : ''), Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
+    else if (it.p) { const p = Object.assign(Object.create(it.p), { x: it.r.x, y: it.r.y }); let sp, k = .34; if (p.kind === 'caravan') { const c = caravanSprite(); g.drawImage(c.cv, p.x - c.ax * .5, p.y - c.ay * .5, 55, 35); label('Караван', p.x, p.y + 16, '#d8c9a2', 12); continue; } sp = getSprite(leaderType(p), 0, p.fac); const dir = p.fx < 0 ? -1 : 1; g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(p.x + 2, p.y + 3, 20, 7, 0, 0, TAU); g.fill(); g.save(); g.translate(p.x, p.y + Math.sin(G.day * 24 + G.hour + p.id) * 0); g.scale(dir * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, p.x + 14, p.y + 2, p.fac, 9); label(p.kind === 'bandit' ? 'Разбойники' : p.name, p.x, p.y + 17, p.kind === 'bandit' ? '#e59a8c' : '#f0e6c8', 12); }
+    else { const Q = Object.assign(Object.create(it.pl), { x: it.r.x, y: it.r.y }), me = it.pl === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name + (Q.fname ? ' [' + Q.fname + ']' : ''), Q.x, Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
   }
   g.setTransform(1, 0, 0, 1, 0, 0);
   const h = G.hour, night = h >= 21 || h < 4 ? .34 : h >= 19 ? (h - 18) * .1 : h < 6 ? (6 - h) * .1 : 0; if (night > 0) { g.fillStyle = 'rgba(8,16,48,' + night + ')'; g.fillRect(0, 0, cv.width, cv.height); }
@@ -2518,7 +2524,7 @@ function frame(ts) {
   const dt = Math.min(.1, (ts - lastT) / 1000 || 0); lastT = ts; const g = cx;
   try {
     if (MODE === 'title') { if (B) { battleUpdate(dt); battleDraw(g); if (B.over && B.t - B.over > 3) startDemo(); } musicTick(dt, 'world'); }
-    else if (MODE === 'battle' && B) { if (NET.on) netBattleUpdate(dt); else if (!UI.open || B.over) { readHeroInput(); battleUpdate(dt); } battleDraw(g); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
+    else if (MODE === 'battle' && B) { if (NET.on) netBattleUpdate(dt); else if (!UI.open || B.over) { readHeroInput(); battleUpdate(dt); } battleDraw(g); drawMinimap(el('bmini').firstElementChild); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
     else if (MODE === 'world' && G) { worldUpdate(dt); drawWorld(g); hudT -= dt; if (hudT <= 0) { hudT = .15; updateWorldHud(); } musicTick(dt, 'world'); }
   } catch (e) { console.error(e); if (!window.__err) { window.__err = 1; } }
   requestAnimationFrame(frame);

@@ -79,7 +79,7 @@ function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
 function giveOrder(ord, wx, wy, selArg, pid) {
-  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg; if (pid === undefined) pid = myPid(); // одиночная игра: свои отряды героя
   if (!SERVER && NET.on) { NET.send({ t: 'ord', ord, wx, wy, sel: sl }); if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t }; sfx(ord === 'charge' ? 'horn' : 'order'); return; }
   const foe = centroid(1), gs = B.groups[0].filter(g => g.own === pid && (sl === 3 || g.k === sl)); let any = false;
   for (const g of gs) {
