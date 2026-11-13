@@ -84,16 +84,18 @@ function updateBattleHud() {
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed;
 }
+/* перерисовываем кнопку только если её содержимое изменилось: иначе клик, попавший на момент замены, теряется */
+function setH(e, html) { if (!e || e.__h === html) return false; e.__h = html; e.innerHTML = html; return true; }
 function updateWorldHud(force) {
   if (!G) return; netVoteUI(); netJoinUI(); const P = G.player, cnt = troopCount(P.troops), cap = sizeCap(P.hero), wg = wageDay(P);
-  el('sGold').innerHTML = ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'; el('sFood').innerHTML = ic('food') + P.food; el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); el('sMen').innerHTML = ic('men') + cnt + '<small>/' + cap + '</small>';
-  el('sDate').innerHTML = '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>';
-  el('bPause').innerHTML = ic(G.paused ? 'play' : 'pause'); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
-  document.querySelector('[data-act=party]').innerHTML = ic('men') + '<span>Отряд</span>'; document.querySelector('[data-act=hero]').innerHTML = ic('helm') + '<span>Герой' + (P.hero.pts + (P.hero.pp || 0) ? ' +' + (P.hero.pts + (P.hero.pp || 0)) : '') + '</span>'; document.querySelector('[data-act=journal]').innerHTML = ic('book') + '<span>Журнал</span>'; document.querySelector('[data-act=menu]').innerHTML = ic('gear') + '<span>Меню</span>'; document.querySelector('[data-act=inv]').innerHTML = ic('bag') + '<span>Обоз</span>';
+  setH(el('sGold'), ic('coin') + fmt(P.gold) + '<small>−' + wg + '/день</small>'); setH(el('sFood'), ic('food') + P.food); el('sFood').classList.toggle('bad', P.food < Math.ceil(cnt / 6) * 2); setH(el('sMen'), ic('men') + cnt + '<small>/' + cap + '</small>');
+  setH(el('sDate'), '<span>День ' + G.day + '</span><small>' + String(G.hour).padStart(2, '0') + ':00</small>');
+  setH(el('bPause'), ic(G.paused ? 'play' : 'pause')); for (const b of document.querySelectorAll('[data-sp]')) b.classList.toggle('on', +b.dataset.sp === G.speed);
+  setH(document.querySelector('[data-act=party]'), ic('men') + '<span>Отряд</span>'); setH(document.querySelector('[data-act=hero]'), ic('helm') + '<span>Герой' + (P.hero.pts + (P.hero.pp || 0) ? ' +' + (P.hero.pts + (P.hero.pp || 0)) : '') + '</span>'); setH(document.querySelector('[data-act=journal]'), ic('book') + '<span>Журнал</span>'); setH(document.querySelector('[data-act=menu]'), ic('gear') + '<span>Меню</span>'); setH(document.querySelector('[data-act=inv]'), ic('bag') + '<span>Обоз</span>');
   if (P.logDirty || G.logDirty) { P.logDirty = G.logDirty = false; el('wlog').innerHTML = P.log.slice(-4).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   // ближайшее поселение
   let near = null; for (const s of G.settles) { if (s.kind === 'camp') continue; if (Math.hypot(s.x - P.x, s.y - P.y) < 46) near = s; }
-  const w = el('wloc'); if (near && !UI.open) { w.hidden = false; w.innerHTML = '<span class="lab">' + near.name + '</span><button class="btn sm pri" id="bEnter">Войти</button>'; el('bEnter').onclick = () => openTown(near); } else w.hidden = true;
+  const w = el('wloc'); if (near && !UI.open) { w.hidden = false; if (setH(w, '<span class="lab">' + near.name + '</span><button class="btn sm pri" id="bEnter">Войти</button>')) el('bEnter').onclick = () => openTown(near); } else w.hidden = true;
 }
 
 /* ---------- мир: ввод, шаги, отрисовка ---------- */

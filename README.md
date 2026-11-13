@@ -6,6 +6,8 @@
 
 **Играть:** `https://akglebak16.github.io/iron-standard/`
 
+Что нового — в [CHANGELOG.md](CHANGELOG.md).
+
 ![Бой](docs/battle.png)
 
 ## Что есть
