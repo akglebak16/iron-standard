@@ -22,6 +22,7 @@ function paintTerrain() {
   }
   g.putImageData(im, 0, 0);
   const full = mkCanvas(WW, WH), f = full.getContext('2d'); f.imageSmoothingEnabled = true; f.imageSmoothingQuality = 'high'; f.drawImage(c, 0, 0, WW, WH);
+  drawFarms(f);
   const R = mulberry(G.seed + 3), icons = [];
   for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const k = j * GW + i, t = W.cells[k], bio = W.bio[k], x = i * GC, y = j * GC; if (t === 2) for (let q = 0; q < 3; q++) icons.push({ k: 'tree', bio, x: x + R() * GC, y: y + R() * GC }); else if (t === 3) icons.push({ k: 'hill', bio, x: x + R() * GC, y: y + R() * GC }); else if (t === 4) icons.push({ k: 'mount', bio, x: x + R() * GC, y: y + R() * GC, s: .8 + R() * .6 }); else if (t === 1 && R() < .05) icons.push({ k: 'bush', bio, x: x + R() * GC, y: y + R() * GC }); }
   icons.sort((a, b) => a.y - b.y); f.lineJoin = 'round';
@@ -34,6 +35,33 @@ function paintTerrain() {
   // виньетка по краям карты
   const vg = f.createRadialGradient(WW / 2, WH / 2, WH * .55, WW / 2, WH / 2, WW * .62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(8,6,3,.4)'); f.fillStyle = vg; f.fillRect(0, 0, WW, WH);
   return full;
+}
+/* ---------- пашни и фермы вокруг поселений (только красота) ---------- */
+function drawFarms(f) {
+  const R = mulberry(G.seed + 7), W = WT, placed = [], okAt = (x, y) => { if (x < 30 || y < 30 || x > WW - 30 || y > WH - 30) return false; const k = cellOf(x, y); return W.cells[k] === 1 && !W.road[k] && W.bio[k] !== 1 && W.bio[k] !== 3; };
+  const CROP = [['#86683d', '#6a4f2b'], ['#b9a24f', '#9a853a'], ['#7f9a45', '#667f34'], ['#9fae56', '#82903f'], ['#78593a', '#5b4128']];
+  const corners = (x, y, ang, w, h) => { const c = Math.cos(ang), sn = Math.sin(ang); return [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].map(q => [x + q[0] * c - q[1] * sn, y + q[0] * sn + q[1] * c]); };
+  const overlap = (A, B) => { for (const P of [A, B]) for (let i = 0; i < 2; i++) { const ex = P[i + 1][0] - P[i][0], ey = P[i + 1][1] - P[i][1], pr = Q => { let lo = 1e9, hi = -1e9; for (const q of Q) { const d = q[0] * ey - q[1] * ex; lo = Math.min(lo, d); hi = Math.max(hi, d); } return [lo, hi]; }, a = pr(A), b = pr(B); if (a[1] < b[0] + 1.5 || b[1] < a[0] + 1.5) return false; } return true; };
+  f.lineJoin = 'round';
+  for (const s of G.settles) { if (s.kind === 'camp') continue;
+    const n = s.kind === 'village' ? 7 + Math.floor(R() * 4) : s.kind === 'town' ? 6 + Math.floor(R() * 4) : 3 + Math.floor(R() * 2), r0 = s.kind === 'village' ? 60 : s.kind === 'town' ? 88 : 80, base = R() * Math.PI, farm = [];
+    for (let t = 0; farm.length < n && t < 90; t++) {
+      const w = 34 + R() * 22, h = 22 + R() * 14; let x, y, ang;
+      if (!farm.length || R() < .12) { const a = R() * TAU, d = r0 + R() * 55; x = s.x + Math.cos(a) * d; y = s.y + Math.sin(a) * d * .8; ang = base + (R() < .5 ? 0 : Math.PI / 2) + (R() - .5) * .3; }
+      else { const q = farm[Math.floor(R() * farm.length)]; ang = q.ang; const sg = R() < .5 ? 1 : -1, c = Math.cos(ang), sn = Math.sin(ang); let lx, ly; if (R() < .55) { lx = sg * (q.w / 2 + w / 2 + 2.5); ly = (R() - .5) * h * .5; } else { lx = (R() - .5) * w * .5; ly = sg * (q.h / 2 + h / 2 + 2.5); } x = q.x + lx * c - ly * sn; y = q.y + lx * sn + ly * c; }
+      const C = corners(x, y, ang, w, h); if (!C.every(q => okAt(q[0], q[1])) || !okAt(x, y)) continue;
+      if (Math.hypot(s.x - x, s.y - y) < r0 - 6) continue;
+      if (G.settles.some(o => o !== s && Math.hypot(o.x - x, o.y - y) < 80)) continue;
+      if (placed.some(o => Math.hypot(o.x - x, o.y - y) < 90 && overlap(o.C, C))) continue;
+      const fl = { x, y, ang, w, h, C }; farm.push(fl); placed.push(fl);
+      const cr = CROP[Math.floor(R() * CROP.length)]; f.save(); f.translate(x, y); f.rotate(ang);
+      f.fillStyle = 'rgba(0,0,0,.14)'; f.fillRect(-w / 2 + 1.5, -h / 2 + 2, w, h);
+      f.fillStyle = cr[0]; f.fillRect(-w / 2, -h / 2, w, h);
+      f.strokeStyle = cr[1]; f.globalAlpha = .75; f.lineWidth = 1; for (let yy = -h / 2 + 3; yy < h / 2; yy += 3.4) { f.beginPath(); f.moveTo(-w / 2 + 1, yy); f.lineTo(w / 2 - 1, yy); f.stroke(); }
+      f.globalAlpha = 1; f.strokeStyle = 'rgba(38,48,18,.5)'; f.lineWidth = 1.3; f.strokeRect(-w / 2, -h / 2, w, h); f.restore();
+    }
+    if (s.kind === 'village' && farm.length) { const q = farm[0], hx = q.x + Math.cos(q.ang + 1.57) * (q.h / 2 + 11), hy = q.y + Math.sin(q.ang + 1.57) * (q.h / 2 + 11); if (okAt(hx, hy)) { house(f, hx, hy, 16, 11, '#cdbd96', '#9b7d42'); ell(f, hx + 14, hy + 2, 5, 4); f.fillStyle = '#c9a94a'; f.fill(); f.strokeStyle = OL; f.lineWidth = 1; f.stroke(); } }
+  }
 }
 /* ---------- дороги, реки, мосты ---------- */
 // Дорога — это ломаная по клеткам: сглаживаем её и слегка «разводим» шумом, чтобы вилась как настоящая. Шум зависит только от места, поэтому общие участки разных дорог совпадают
