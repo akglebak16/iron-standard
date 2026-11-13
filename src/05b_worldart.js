@@ -4,12 +4,13 @@ function paintTerrain() {
   const E = new Float32Array(w * h), Tt = new Uint8Array(w * h);
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const r = W.info(i * PX, j * PX); E[j * w + i] = r.e; Tt[j * w + i] = r.t; }
   const hex = s => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
-  const COL = { grass: hex('#6a8239'), forest: hex('#4b6a2c'), hills: hex('#86884a'), mount: hex('#857f72'), water: hex('#2f5568'), shallow: hex('#4c7a86'), snowg: hex('#d9e2e4'), snowf: hex('#a9bcae'), snowh: hex('#c1cbcd'), steppe: hex('#b09f58'), steppef: hex('#8c8a40'), steppeh: hex('#a59152') };
+  const COL = { grass: hex('#6a8239'), forest: hex('#4b6a2c'), hills: hex('#86884a'), mount: hex('#857f72'), water: hex('#2f5568'), shallow: hex('#4c7a86'), snowg: hex('#d9e2e4'), snowf: hex('#a9bcae'), snowh: hex('#c1cbcd'), steppe: hex('#b09f58'), steppef: hex('#8c8a40'), steppeh: hex('#a59152'), sand: hex('#cdb078'), sandh: hex('#b99a62') };
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    const k = j * w + i, x = i * PX, y = j * PX, t = Tt[k], bio = W.biomeAt(x, y); let col;
+    const k = j * w + i, x = i * PX, y = j * PX, t = Tt[k], bio = t === 0 ? 'grass' : W.biomeAt(x, y); let col;
     if (t === 0) { col = E[k] > .27 ? COL.shallow : COL.water; const m = (E[k] - .1) / .2; if (E[k] <= .27) { col = [lerp(COL.water[0] - 8, COL.water[0], clamp(m, 0, 1)), lerp(COL.water[1] - 10, COL.water[1], clamp(m, 0, 1)), lerp(COL.water[2] - 8, COL.water[2], clamp(m, 0, 1))]; } }
     else if (bio === 'snow') col = t === 2 ? COL.snowf : t === 3 ? COL.snowh : t === 4 ? COL.mount : COL.snowg;
     else if (bio === 'steppe') col = t === 2 ? COL.steppef : t === 3 ? COL.steppeh : t === 4 ? COL.mount : COL.steppe;
+    else if (bio === 'arid') col = t === 2 ? COL.forest : t === 3 ? COL.sandh : t === 4 ? COL.mount : COL.sand;
     else col = t === 2 ? COL.forest : t === 3 ? COL.hills : t === 4 ? COL.mount : COL.grass;
     const il = i > 0 ? E[k - 1] : E[k], ir = i < w - 1 ? E[k + 1] : E[k], iu = j > 0 ? E[k - w] : E[k], idn = j < h - 1 ? E[k + w] : E[k];
     let sh = t === 0 ? 0 : ((il - ir) + (iu - idn)) * 3.2; const n = (nD(x / 22, y / 22) - .5) * 30 + (nD(x / 6 + 40, y / 6) - .5) * 14;
@@ -26,9 +27,9 @@ function paintTerrain() {
   icons.sort((a, b) => a.y - b.y); f.lineJoin = 'round';
   for (const ic of icons) { const { x, y } = ic;
     if (ic.k === 'tree') { f.fillStyle = 'rgba(0,0,0,.22)'; ell(f, x + 2, y + 1, 6, 2.4); f.fill(); if (ic.bio === 1) { poly(f, [x, y - 15, x + 6, y, x - 6, y]); fs(f, '#2f4a3a', 1.2); poly(f, [x, y - 15, x + 3, y - 8, x - 3, y - 8]); fs(f, '#e9f0f1', .5); } else { f.fillStyle = '#3b2a1a'; f.fillRect(x - 1, y - 3, 2.2, 4); ell(f, x, y - 8, 6, 6.4); fs(f, ic.bio === 2 ? '#707a2e' : '#33521f', 1.2); f.fillStyle = 'rgba(255,255,255,.2)'; ell(f, x - 2, y - 10, 2.6, 2.6); f.fill(); } }
-    else if (ic.k === 'hill') { f.beginPath(); f.moveTo(x - 16, y); f.quadraticCurveTo(x, y - 17, x + 16, y); f.closePath(); fs(f, ic.bio === 1 ? '#c8d2d3' : ic.bio === 2 ? '#a59152' : '#8a8f4e', 1.1); f.strokeStyle = 'rgba(0,0,0,.18)'; f.beginPath(); f.moveTo(x + 3, y - 12); f.quadraticCurveTo(x + 10, y - 8, x + 14, y - 1); f.stroke(); }
+    else if (ic.k === 'hill') { f.beginPath(); f.moveTo(x - 16, y); f.quadraticCurveTo(x, y - 17, x + 16, y); f.closePath(); fs(f, ic.bio === 1 ? '#c8d2d3' : ic.bio === 2 ? '#a59152' : ic.bio === 3 ? '#bfa268' : '#8a8f4e', 1.1); f.strokeStyle = 'rgba(0,0,0,.18)'; f.beginPath(); f.moveTo(x + 3, y - 12); f.quadraticCurveTo(x + 10, y - 8, x + 14, y - 1); f.stroke(); }
     else if (ic.k === 'mount') { const s = ic.s * 1.5; f.fillStyle = 'rgba(0,0,0,.25)'; ell(f, x + 6 * s, y, 22 * s, 4.4 * s); f.fill(); poly(f, [x - 21 * s, y, x - 3 * s, y - 34 * s, x + 6 * s, y - 24 * s, x + 13 * s, y - 30 * s, x + 25 * s, y]); fs(f, '#8f897d', 1.6); poly(f, [x - 3 * s, y - 34 * s, x + 6 * s, y - 24 * s, x + 13 * s, y - 30 * s, x + 25 * s, y, x + 7 * s, y]); fs(f, '#6c675d', 0); poly(f, [x - 6 * s, y - 28 * s, x - 3 * s, y - 34 * s, x + 2 * s, y - 28 * s, x - 1 * s, y - 25 * s]); fs(f, '#f1f3f2', .8); }
-    else { ell(f, x, y - 3, 5, 3.6); fs(f, ic.bio === 1 ? '#8ea08a' : ic.bio === 2 ? '#8c8a3e' : '#4d6b27', 1); } }
+    else { ell(f, x, y - 3, 5, 3.6); fs(f, ic.bio === 1 ? '#8ea08a' : ic.bio === 2 ? '#8c8a3e' : ic.bio === 3 ? '#9a8a4e' : '#4d6b27', 1); } }
   // дороги
   f.lineCap = 'round'; f.setLineDash([7, 6]);
   for (const seg of G.roads) { f.beginPath(); f.moveTo(seg[0].x, seg[0].y); for (let i = 1; i < seg.length; i++) f.lineTo(seg[i].x, seg[i].y); f.strokeStyle = 'rgba(40,28,14,.55)'; f.lineWidth = 4.6; f.stroke(); f.strokeStyle = 'rgba(214,190,140,.9)'; f.lineWidth = 2.6; f.stroke(); } f.setLineDash([]);
