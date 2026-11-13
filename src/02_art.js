@@ -80,6 +80,14 @@ function drawHead(g, L, v) {
   if (v.beard < 1) line(g, [36.6, 38.2, 42.6, 38], shade(skin, -.5), 1.1); else line(g, [37, 38.3, 42.2, 38.2], shade(hair, -.55), 1);
   if (v.scar) line(g, [44.5, 23, 46, 34], '#8a3a30', .9);
 }
+/* обрубок шеи: у живых — кровь и позвонок, у скелета — сломанный позвонок, у мертвеца — тёмная жижа */
+function drawStump(g, v) {
+  const sk = v.undead === 'skel', zb = v.undead === 'zombie', meat = sk ? '#cfc4a6' : zb ? '#3b4a24' : '#8f1a12';
+  g.fillStyle = sk ? '#2a251d' : shade(v.skin, -.3); poly(g, [31.5, 38, 42.5, 38, 44, 46, 30, 46]); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+  ell(g, 37, 38.5, 6, 2.6); fs(g, meat, 1.2); if (!sk) { ell(g, 37, 38.4, 4, 1.5); g.fillStyle = zb ? '#1e2612' : '#5a0c08'; g.fill(); }
+  ell(g, 37, 38.2, 1.6, 1.1); g.fillStyle = '#efe8d6'; g.fill();
+  if (!sk) { g.fillStyle = meat; for (let i = 0; i < 4; i++) { const x = 31 + i * 3.2; g.beginPath(); g.moveTo(x, 40); g.quadraticCurveTo(x + .8, 44 + i % 2 * 3, x + 1.6, 40); g.fill(); } }
+}
 function plume(g, x, y, col, big) { g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x - 4, y - (big ? 16 : 10), x - 18, y - (big ? 14 : 9), x - (big ? 22 : 15), y - 1); g.bezierCurveTo(x - 14, y - 5, x - 7, y - 4, x, y); fs(g, col, 1.2); for (let i = 0; i < 5; i++) line(g, [x - 3 - i * 3, y - 2, x - 5 - i * 3.4, y - (big ? 10 : 6)], 'rgba(0,0,0,.28)', .7); }
 function drawHelm(g, L, v, pal, R) {
   const h = L.helm, hair = v.hair;
@@ -189,8 +197,11 @@ function drawBust(g, L, pal, v, o) {
     g.save(); g.translate(4, 2);
     g.fillStyle = L.horse === 'barded' ? pal.c2 : '#3a2a1a'; g.beginPath(); g.moveTo(14, 70); g.quadraticCurveTo(36, 62, 58, 70); g.lineTo(55, 80); g.quadraticCurveTo(36, 85, 17, 80); g.closePath(); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
   } else if (o.base !== false) drawBase(g, 36, 72, 24, 8.5, pal);
+  if (o.only === 'head') { drawHead(g, L, v); drawHelm(g, L, v, pal, R); if (L.horse) g.restore(); return; } // голова отдельно (летит при обезглавливании)
   if (L.weapon === 'bow' || L.weapon === 'xbow') quiver(g);
-  drawTorso(g, L, pal, R); drawHead(g, L, v); drawHelm(g, L, v, pal, R); drawShield(g, L, pal, R); drawWeapon(g, L, pal, v);
+  drawTorso(g, L, pal, R);
+  if (o.nohead) drawStump(g, v); else { drawHead(g, L, v); drawHelm(g, L, v, pal, R); }
+  drawShield(g, L, pal, R); drawWeapon(g, L, pal, v);
   if (L.horse) g.restore();
 }
 const SPR = {}; const SS = 2;
@@ -201,15 +212,16 @@ function makeVariant(L, seed) { const R = mulberry(seed); const b = R() < (L.bea
 function buildSprite(L, pal, seed) {
   const m = !!L.horse, W = m ? 120 : 76, H = m ? 122 : 88, ax = m ? 54 : 36, ay = m ? 106 : 74, oy = m ? 26 : 5, ox = m ? 2 : 2;
   const v = makeVariant(L, seed);
-  const mk = base => { const c = mkCanvas(W * SS, H * SS), g = c.getContext('2d'); g.scale(SS, SS); g.translate(ox, oy); drawBust(g, L, pal, v, { base }); return c; };
+  const mk = (base, o2) => { const c = mkCanvas(W * SS, H * SS), g = c.getContext('2d'); g.scale(SS, SS); g.translate(ox, oy); drawBust(g, L, pal, v, Object.assign({ base }, o2)); return c; };
   const cv = mk(true), fl = mkCanvas(W * SS, H * SS), fg = fl.getContext('2d'); fg.drawImage(cv, 0, 0); fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#fff'; fg.fillRect(0, 0, fl.width, fl.height);
-  return { cv, flash: fl, ax: (ax + ox) * SS, ay: (ay + oy) * SS, w: W * SS, h: H * SS, m, corpse: null, mk };
+  return { cv, flash: fl, ax: (ax + ox) * SS, ay: (ay + oy) * SS, w: W * SS, h: H * SS, m, corpse: null, mk, v, hc: [(37.5 + ox + (m ? 4 : 0)) * SS, (29 + oy + (m ? 2 : 0)) * SS] }; // hc — центр головы на холсте
 }
 function palOf(fac) { const f = FACTIONS[fac]; return { c1: f.c1, c2: f.c2 }; }
 function getSprite(type, variant, fac) { const k = type + '|' + variant + '|' + fac + '|' + FACTIONS[fac].c1; if (!SPR[k]) SPR[k] = buildSprite(TROOPS[type].look, palOf(fac), hashStr(type) + variant * 977); return SPR[k]; }
 function heroLook(h) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), hd = EQ[eq.head], bd = EQ[eq.body], hs = EQ[eq.horse]; return { helm: hd ? hd.look : 'none', armor: bd ? bd.look : 'tunic', weapon: W.look || null, shield: S ? S.look : 'none', horse: hs ? hs.look : null, beard: h.beard === undefined ? 1 : h.beard }; }
 function getHeroSprite(h, mounted) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), k = 'hero|' + [eq.head, eq.body, W.id, S && S.id, mounted ? eq.horse : ''].join(',') + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
-function corpseOf(sp) { if (!sp.corpse) sp.corpse = sp.mk(false); return sp.corpse; }
+function corpseOf(sp, nohead) { if (nohead) return sp.corpseNH || (sp.corpseNH = sp.mk(false, { nohead: true })); if (!sp.corpse) sp.corpse = sp.mk(false); return sp.corpse; }
+function headOf(sp) { return sp.head || (sp.head = sp.mk(false, { only: 'head' })); }
 const PORT = {};
 function portrait(type, fac) { const k = type + fac + FACTIONS[fac].c1; if (!PORT[k]) PORT[k] = getSprite(type, 0, fac).cv.toDataURL(); return PORT[k]; }
 

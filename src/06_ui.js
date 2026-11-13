@@ -121,6 +121,7 @@ function openEncounter(p, forced) {
 
 /* ---------- действия по клику ---------- */
 const ACT = {
+  gore() { GORE.on = !GORE.on; try { localStorage.setItem('zs-gore', GORE.on ? '1' : '0'); } catch (e) { } openMenu(); },
   gar(d) { const s = UI.town && UI.town.s, n = garMove(G.player, s, d.t, +d.n, d.to === '1'); if (n) { sfx('click'); renderTown(); } },
   siegeask() { const s = UI.town.s; openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>Осадить ' + s.name + '?<span class="sub">Это объявление войны</span></h2></div><div class="wbody"><div class="note">Отношения с ' + FACTIONS[s.fac].gen + ' станут враждебными: их лорды начнут охотиться за тобой, ворота их городов закроются.</div></div><div class="wfoot"><button class="btn" data-act="siegeno" data-s="' + s.id + '">Передумал</button><button class="btn danger" data-act="siegeyes" data-s="' + s.id + '">Объявить войну</button></div>', 'narrow'); },
   siegeno(d) { openTown(settleById(+d.s)); },
@@ -170,7 +171,7 @@ const ACT = {
 document.addEventListener('click', e => { const t = e.target.closest('[data-act]'); if (!t || t.disabled) return; auInit(); const a = t.dataset.act; if (ACT[a]) { ACT[a](t.dataset, t); } });
 
 /* ---------- меню, создание, быстрый бой ---------- */
-function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' && !NET.on ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
+function openMenu() { openModal('<div class="whead"><h2>Пауза</h2></div><div class="wbody" style="display:flex;flex-direction:column;gap:10px"><button class="btn pri" data-act="resume">Продолжить</button>' + (MODE === 'world' && !NET.on ? '<button class="btn" data-act="save">Сохранить игру</button>' : '') + '<button class="btn" data-act="snd">Звук: ' + (AU.on ? 'включён' : 'выключен') + '</button><button class="btn" data-act="mus">Музыка: ' + (AU.music ? 'включена' : 'выключена') + '</button><button class="btn" data-act="gore">Расчленёнка: ' + (GORE.on ? 'включена' : 'выключена') + '</button><button class="btn danger" data-act="tomenu">В главное меню</button></div>', 'narrow'); }
 let CR = { banner: 0, culture: 'nord', name: 'Ярослав', mp: false, code: '' }; try { const sv = JSON.parse(localStorage.getItem('zs-mp') || 'null'); if (sv) { CR.name = sv.name || CR.name; CR.code = sv.code || ''; } } catch (e) { }
 function renderCreate() {
   const nm = el('crname') ? el('crname').value : CR.name; CR.name = nm; if (el('crcode')) CR.code = el('crcode').value; if (el('crrep')) CR.rep = el('crrep').checked;

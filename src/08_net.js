@@ -113,7 +113,7 @@ function netSnap(m) {
   for (const e of m.ev) {
     switch (e[0]) {
       case 'h': { const u = B.units[e[1]]; if (u) { u.flash = .13; fxBlood(u.x, u.y - 16, 4); if (u === B.hero) B.shake = .18; } break; }
-      case 'k': { const u = B.units[e[1]]; if (u && !u.dead) { u.dead = true; u.hp = 0; paintCorpse(u); fxBlood(u.x, u.y - 14, 12); } break; }
+      case 'k': { const u = B.units[e[1]]; if (u && !u.dead) { u.dead = true; u.hp = 0; if (!goreKill(u, null)) paintCorpse(u); fxBlood(u.x, u.y - 14, 12); } break; }
       case 'a': B.arrows.push({ x0: e[1], y0: e[2], x1: e[3], y1: e[4], t: 0, dur: e[5], side: e[6], xb: e[7], dmg: 0 }); break;
       case 'b': fxSpark(e[1], e[2]); break;
       case 'd': fxDust(e[1], e[2]); break;

@@ -135,6 +135,8 @@ async function undead(pg) {
   const b = await pg.evaluate(() => { const U = __dbg.B.units.filter(u => u.side === 1); return { n: U.length, undead: U.every(u => u.t.fac === 'undead'), brave: U.every(u => u.mbase >= 999), leader: !!U.find(u => u.leader) }; });
   ok('в бою с мертвецами: все враги — нежить, не бегут, есть некромант', b.n > 0 && b.undead && b.brave && b.leader, b);
   await pg.evaluate(() => { const l = __dbg.B.units.find(u => u.leader); kill(l, __dbg.B.hero); });
+  ok('расчленёнка: рубящий удар сносит голову, она летит, тело без головы', await pg.evaluate(() => { const B = __dbg.B, u = B.units.find(x => x.side === 1 && alive(x) && !x.leader), r = Math.random; Math.random = () => 0; B.hk = 'melee'; B.hdt = 'cut'; const n = B.gibs.length; kill(u, B.hero); Math.random = r; return B.gibs.length > n && B.gibs.some(g => g.type === 'head') && !!u.sp.corpseNH; }));
+  ok('в меню паузы есть переключатель расчленёнки', await pg.evaluate(() => { openMenu(); const b = document.querySelector('#modal [data-act=gore]'); const was = GORE.on; if (b) b.click(); const now = GORE.on; ACT.gore(); closeModal(); return !!b && now !== was && GORE.on === was; }));
   ok('гибель некроманта рассыпает часть мертвецов', await pg.evaluate(() => __dbg.B.units.filter(u => u.side === 1 && u.dead).length > 1));
   await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=cont2]'), null, { timeout: 10000 });
   await pg.evaluate(() => ACT.cont2());

@@ -21,7 +21,7 @@ function mkUnit(side, t, fac, x, y, sp) {
 function startBattle(cfg) {
   const W = 2600, H = 1700, seed = cfg.seed || rint(1, 1e9), R = mulberry(seed);
   B = { W, H, cfg, ev: [], units: [], arrows: [], fx: [], texts: [], groups: [], t: 0, over: 0, done: false, cam: { x: W / 2, y: H / 2, z: 1 }, log: [], sel: 3, trees: [], start: [0, 0], men: [0, 0], speed: 1, paused: false, hero: null, heroDown: false, flag: null, mt: 0, lt: 0, xp: 0, banner: [null, null], horn: 0 };
-  if (!SERVER) { B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d'); }
+  if (!SERVER) { B.ground = paintGround(W, H, cfg.biome, seed); B.gg = B.ground.getContext('2d'); goreInit(); }
   const ts = SERVER ? [null, null, null] : [treeSprite(cfg.biome, seed + 1), treeSprite(cfg.biome, seed + 2), treeSprite(cfg.biome, seed + 3)], bs = SERVER ? [null, null] : [bushSprite(cfg.biome, seed + 4), bushSprite(cfg.biome, seed + 5)];
   const nt = cfg.biome === 'steppe' ? 5 : cfg.biome === 'arid' ? 7 : 15;
   for (let i = 0; i < nt + 16; i++) { const x = 80 + R() * (W - 160), y = 60 + R() * (H - 120); if (Math.abs(y - H / 2) < 330 && x > 330 && x < W - 330 && i < nt) continue; if (i < nt) B.trees.push({ x, y, r: 15, cv: ts[i % 3], w: 100, h: 125, ax: 51, ay: 116, tree: true }); else B.trees.push({ x, y, r: 0, cv: bs[i % 2], w: 60, h: 46, ax: 30, ay: 38 }); }
@@ -175,14 +175,14 @@ const lookDt = t => t.wpn ? t.wpn.dt : t.look && (t.look.weapon === 'club' || t.
 function strike(a, t) {
   let dmg = (a.t.range ? (a.t.mdmg || a.dmg * .6) : a.dmg) * rnd(.8, 1.2); const fromA = Math.atan2(a.y - t.y, a.x - t.x), rear = Math.abs(angDiff(fromA, t.face)) > 2.1;
   if (!rear && blocked(t, fromA, 'melee')) { fxSpark(t.x + Math.cos(fromA) * 10, t.y + Math.sin(fromA) * 10 - 14); sfx('clang', t); if (t === B.hero) ftext(t.x, t.y - 44, 'Блок', '#d8d2c4'); return; }
-  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; dmg *= undeadMul(t, lookDt(a.t), false); if (a.t.wpn) { dmg *= dtMul(a.t.wpn.dt, t.arm); hurt(t, dmg, a, dtPierce(a.t.wpn.dt, t.arm, a.t.wpn.pb)); } else hurt(t, dmg, a, 0); sfx('hit', t);
+  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; dmg *= undeadMul(t, lookDt(a.t), false); B.hk = 'melee'; B.hdt = lookDt(a.t); if (a.t.wpn) { dmg *= dtMul(a.t.wpn.dt, t.arm); hurt(t, dmg, a, dtPierce(a.t.wpn.dt, t.arm, a.t.wpn.pb)); } else hurt(t, dmg, a, 0); sfx('hit', t);
 }
 function chargeHit(a, e, v) {
   a.ccd = 1.7; let dmg = a.dmg * (.6 + v / 150); const fromA = Math.atan2(a.y - e.y, a.x - e.x), front = Math.abs(angDiff(fromA, e.face)) < 1.1;
   if (e.t.anticav && front && !e.flee) { dmg *= .45; hurt(a, 16 * rnd(.8, 1.3), e, 0); }
   else if (front && blocked(e, fromA, 'melee')) dmg *= .4;
   const k = 15 / (e.mass || 1); e.x -= Math.cos(fromA) * k; e.y -= Math.sin(fromA) * k; a.vx *= .4; a.vy *= .4; a.cd = Math.max(a.cd, .45);
-  if (alive(e)) hurt(e, dmg, a, 0); sfx('thud', e); fxDust(e.x, e.y);
+  B.hk = 'charge'; B.hdt = 'blunt'; if (alive(e)) hurt(e, dmg, a, 0); sfx('thud', e); fxDust(e.x, e.y);
 }
 function shoot(u, e, d) {
   const dur = d / 430 + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = d * u.t.acc;
@@ -191,7 +191,7 @@ function shoot(u, e, d) {
 }
 function hurt(t, dmg, src, pierce) {
   if (t.dead) return; const arm = t.arm * (1 - (pierce || 0)), d = Math.max(1, Math.round(dmg * (1 - arm / (arm + 55))));
-  t.hp -= d; t.flash = .13; t.morale -= d * .12; fxBlood(t.x, t.y - 16, 4); ev(['h', t.id, d]);
+  t.hp -= d; t.lh = d; t.flash = .13; t.morale -= d * .12; if (!SERVER) { const bc = goreCol(t); if (bc) fxBlood(t.x, t.y - 16, 4, bc); else fxDust(t.x, t.y - 14); if (t.hp > 0) goreHit(t, d, src); } ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
   if (t.hp <= 0 && t.isHero && t.fx && t.fx.lastStand && !t.lsUsed) { t.lsUsed = true; t.hp = Math.max(1, t.maxHp * t.fx.lastStand); if (!SERVER) ftext(t.x, t.y - 62, 'Не сдаюсь!', '#f1d27a'); blog(t.name + ' поднялся на ноги', 0); }
@@ -199,8 +199,8 @@ function hurt(t, dmg, src, pierce) {
 }
 function kill(t, src) {
   t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
-  if (!SERVER) paintCorpse(t); ev(['k', t.id]);
-  fxBlood(t.x, t.y - 14, 12); sfx('death', t);
+  if (!SERVER && !goreKill(t, src)) paintCorpse(t); ev(['k', t.id]);
+  if (!SERVER && goreCol(t)) fxBlood(t.x, t.y - 14, 12, goreCol(t)); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) if (g2.own === t.pid) g2.order = 'charge'; for (const u of B.units) if (u.side === 0 && u.own === t.pid) u.morale -= 7; B.hudDirty = true; }
   else if (t.comp) { blog(t.name + ' ранен и вынесен из боя', 1); for (const u of B.units) if (u.side === 0 && Math.hypot(u.x - t.x, u.y - t.y) < 170) u.morale -= 4; B.hudDirty = true; }
@@ -238,7 +238,7 @@ function heroStrike(h) {
     if (!rear && blocked(e, fromA, 'melee') && Math.random() < .75 - (W && W.brk || 0)) { fxSpark(e.x - Math.cos(a) * 8, e.y - Math.sin(a) * 8 - 14); sfx('clang', e); ftext(e.x, e.y - 44, 'Блок', '#b9b2a5'); }
     else {
       e.x += Math.cos(a) * 5 * kb; e.y += Math.sin(a) * 5 * kb; let dmg = h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? fall : 1);
-      if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); } dmg *= undeadMul(e, W ? W.dt : 'blunt', false);
+      if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); } dmg *= undeadMul(e, W ? W.dt : 'blunt', false); B.hk = 'melee'; B.hdt = W ? W.dt : 'blunt';
       hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, (W.pb || 0) + (h.fx ? h.fx.mpierce : 0)) : .1 + (h.fx ? h.fx.mpierce : 0)); sfx('hit', e);
     }
     if (++hits >= maxHits) break;
@@ -258,7 +258,7 @@ function swapWield(h) { // ближнее ↔ дальнее оружие (кл�
   ftext(h.x, h.y - 52, hd.wpn.name, '#f1e3b0'); sfx('click'); ev(['w', h.id, to === 'ranged' ? 1 : 0]); B.hudDirty = true;
 }
 /* ---------- эффекты ---------- */
-function fxBlood(x, y, n) { if (SERVER || B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: '#8f1a12', s: rnd(1.4, 2.8) }); }
+function fxBlood(x, y, n, col) { if (SERVER || B.fx.length > 500) return; for (let i = 0; i < n; i++) B.fx.push({ k: 0, b: 1, x, y, vx: rnd(-60, 60), vy: rnd(-90, 20), l: rnd(.25, .55), c: col || '#8f1a12', s: rnd(1.4, 2.8) }); }
 function fxSpark(x, y) { if (SERVER) { ev(['b', Math.round(x), Math.round(y)]); return; } for (let i = 0; i < 6; i++) B.fx.push({ k: 0, x, y, vx: rnd(-90, 90), vy: rnd(-90, 60), l: rnd(.12, .28), c: '#ffe9a8', s: 1.5 }); }
 function fxDust(x, y) { if (SERVER) { ev(['d', Math.round(x), Math.round(y)]); return; } for (let i = 0; i < 6; i++) B.fx.push({ k: 1, x: x + rnd(-10, 10), y: y + rnd(-4, 6), vx: rnd(-25, 25), vy: rnd(-25, -5), l: rnd(.4, .8), c: '#b8a880', s: rnd(4, 8) }); }
 function ftext(x, y, s, c) { if (SERVER) { ev(['t', Math.round(x), Math.round(y), s, c]); return; } if (B.texts.length < 40) B.texts.push({ x, y, s, c, l: .9 }); }
@@ -288,10 +288,10 @@ function battleUpdate(rdt) {
   for (let i = B.arrows.length - 1; i >= 0; i--) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
-    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm) * wallCover(hit, a) * undeadMul(hit, a.dt, true), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
+    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); B.hk = 'arrow'; B.hdt = 'pierce'; if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm) * wallCover(hit, a) * undeadMul(hit, a.dt, true), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
     else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(a.jv ? -18 : -9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
-  for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
+  for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { if (p.b && GORE.on) goreSplat(p); B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
   for (let i = B.texts.length - 1; i >= 0; i--) { const p = B.texts[i]; p.l -= dt; p.y -= 26 * dt; if (p.l <= 0) B.texts.splice(i, 1); }
   // мораль
   B.mt -= dt; if (B.mt <= 0) {
@@ -304,7 +304,7 @@ function battleUpdate(rdt) {
     if ((!f0 || !f1) && !B.over) { B.over = B.t; B.win = f0 && !f1; if (!demo) { blog(B.win ? 'Победа! Враг разбит.' : 'Отряд разбит…', B.win ? 0 : 1); sfx(B.win ? 'horn' : 'horn2'); } }
   }
   if (B.over && B.t - B.over > 2.2 && !B.done) { B.done = true; finishBattle(); }
-  if (!SERVER) battleCamera(rdt);
+  if (!SERVER) { goreUpdate(dt); battleCamera(rdt); }
 }
 function battleCamera(rdt) {
   const demo = B.cfg.demo;
@@ -343,7 +343,7 @@ function battleDraw(g) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#15120c'; g.fillRect(0, 0, VIEW.w * d, VIEW.h * d);
   const shx = B.shake > 0 ? rnd(-3, 3) : 0, shy = B.shake > 0 ? rnd(-3, 3) : 0;
   g.setTransform(d * z, 0, 0, d * z, d * (VIEW.w / 2 - cam.x * z + shx), d * (VIEW.h / 2 - cam.y * z + shy));
-  g.drawImage(B.ground, 0, 0);
+  g.drawImage(B.ground, 0, 0); goreDrawUnder(g);
   const x0 = cam.x - VIEW.w / 2 / z - 80, x1 = cam.x + VIEW.w / 2 / z + 80, y0 = cam.y - VIEW.h / 2 / z - 40, y1 = cam.y + VIEW.h / 2 / z + 140;
   if (B.flag && B.t - B.flag.t < 4) { const f = B.flag, a = clamp(4 - (B.t - f.t), 0, 1); g.globalAlpha = a; g.strokeStyle = '#f1d27a'; g.lineWidth = 2; ell(g, f.x, f.y, 26, 10); g.stroke(); drawBanner(g, f.x, f.y, 'player', 15); g.globalAlpha = 1; }
   drawList.length = 0;
@@ -366,6 +366,7 @@ function battleDraw(g) {
     if (u.comp && !demo) { g.font = '700 12px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center'; const ny = u.y - (sp.m ? 76 : 58); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(u.name, u.x + 1, ny + 1); g.fillStyle = '#9fe3d6'; g.fillText(u.name, u.x, ny); }
     if (u.flee && !demo) { g.fillStyle = '#f4f0e0'; g.fillRect(u.x - 1, u.y - 66, 9, 6); g.fillStyle = '#3a2a18'; g.fillRect(u.x - 2, u.y - 67, 1.5, 14); }
   }
+  goreDrawOver(g);
   const h = B.hero;
   if (h && !h.dead && h.swing > 0) { const p = 1 - h.swing / .26, R = 34 + h.t.reach + (h.t.mounted ? 8 : 0), a0 = h.swingA - 1 + p * 2; g.strokeStyle = 'rgba(255,250,230,' + (.85 - p * .7) + ')'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.arc(h.x, h.y - 14, R, a0 - .7, a0); g.stroke(); }
   // стрелы
