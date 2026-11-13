@@ -49,7 +49,9 @@ function crisisStart() {
 }
 function crisisSpawn(s, first) {
   const C = G.crisis, mine = G.parties.filter(p => isUndead(p) && p.src === s.id), armies = mine.filter(p => p.kind === 'dead').length, raids = mine.filter(p => p.kind === 'raid').length;
-  if (armies < UNDEAD.ARMIES_AT_ONCE && C.left[s.id] > 0) { C.left[s.id]--; const p = mkParty('dead', 'undead', 'Некромант ' + unitName('undead'), s.x + rnd(-20, 20), s.y + 26, genUndead(rint(UNDEAD.ARMY_MIN, UNDEAD.ARMY_MAX), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = first ? 0 : rint(0, 4); if (!first) notifyAll('Из Чёрного кургана вышла новая армия мертвецов.', 1, s); }
+  let made = 0; // армии выходят сразу пачкой: до ARMIES_AT_ONCE одновременно
+  for (let a = armies; a < UNDEAD.ARMIES_AT_ONCE && C.left[s.id] > 0; a++) { C.left[s.id]--; made++; const p = mkParty('dead', 'undead', 'Некромант ' + unitName('undead'), s.x + rnd(-40, 40), s.y + 26 + rnd(-10, 20), genUndead(rint(UNDEAD.ARMY_MIN, UNDEAD.ARMY_MAX), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = first ? a : rint(0, 4); }
+  if (made && !first) notifyAll(made > 1 ? 'Из Чёрного кургана вышли новые армии мертвецов: ' + made + '.' : 'Из Чёрного кургана вышла новая армия мертвецов.', 1, s);
   for (let i = raids; i < UNDEAD.RAIDS_AT_ONCE && (first ? i < 2 : i < raids + 1); i++) { const p = mkParty('raid', 'undead', 'Мертвецы', s.x + rnd(-30, 30), s.y + rnd(10, 40), genUndead(rint(UNDEAD.RAID_MIN, UNDEAD.RAID_MAX), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = rint(0, 6); }
 }
 
