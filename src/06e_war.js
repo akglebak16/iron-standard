@@ -18,3 +18,19 @@ function drawWar(g, label) {
   for (const sk of G.skirm || []) { const x = sk.x, y = sk.y - 4, pu = 14 + Math.sin(t) * 2; g.save(); g.strokeStyle = 'rgba(230,70,40,.8)'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, pu, 0, TAU); g.stroke(); g.strokeStyle = '#ffd9a0'; g.lineWidth = 2.4; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - 7, y - 7); g.lineTo(x + 7, y + 7); g.moveTo(x + 7, y - 7); g.lineTo(x - 7, y + 7); g.stroke(); g.restore(); label('Бой', x, y - 22, '#ff9a7a', 12); }
   for (const s of G.settles) if (s.siege) { g.save(); g.strokeStyle = 'rgba(230,70,40,.85)'; g.lineWidth = 3; g.setLineDash([8, 5]); g.beginPath(); g.ellipse(s.x, s.y + 6, s.kind === 'castle' ? 58 : 66, 24, 0, 0, TAU); g.stroke(); g.restore(); label('Осада · ' + FACTIONS[s.siege.f].name.split(' ')[0], s.x, s.y - 52, '#ff9a7a', 13); }
 }
+
+/* переговоры с лордом: переманить весь род к сюзерену игрока */
+function parleyBody(p) {
+  const P = G.player, c = clanOf(p), T = CLAN_TR[c.trait], why = lureCan(P, p), cost = lureCost(c), ch = lureChance(P, c), lv = ch > .55 ? ['Хорошие', 'g'] : ch > .3 ? ['Средние', 'b'] : ['Низкие', 'r'];
+  return '<div class="whead"><img alt="" src="' + crestURL(c.fac) + '"><h2>' + c.name + '<span class="sub">' + FACTIONS[c.fac].name + ' · ' + clanMembers(c).length + ' лорда · ' + clanForce(c) + ' бойцов</span></h2></div><div class="wbody">' +
+    '<div class="card"><h3>' + T.n + ' род</h3><p class="note">' + T.d[0].toUpperCase() + T.d.slice(1) + '.</p><div class="kv"><span>Верность</span><b>' + (c.loy > 75 ? 'крепкая' : c.loy > 50 ? 'обычная' : c.loy > 30 ? 'шаткая' : 'на исходе') + '</b></div></div>' +
+    (why ? '<div class="note">' + why + '</div>' : '<div class="note">Весь род перейдёт к ' + FACTIONS[P.liege].gen + ' вместе с лордами и отрядами. Задаток: <b>' + cost + '</b> золота. При отказе пропадёт половина, и отношения с этой фракцией ухудшатся. Сюзерен вернёт 40% при успехе. Шансы: <span class="tag ' + lv[1] + '">' + lv[0] + '</span></div>') + '</div>' +
+    '<div class="wfoot"><button class="btn" data-act="parleyback">Назад</button>' + (why ? '' : '<button class="btn pri" data-act="lure">Предложить ' + cost + '</button>') + '</div>';
+}
+ACT.parley = function () { openModal(parleyBody(UI.enc.p), 'narrow'); };
+ACT.parleyback = function () { const e = UI.enc; openEncounter(e.p, e.forced); };
+ACT.lure = function () {
+  const e = UI.enc, r = lureTry(G.player, e.p); sfx(r.ok ? 'coin' : 'click'); toast(r.txt); closeModal();
+  if (r.ok) { e.p.cd = 3; return; }
+  if (isHostileToPlayer(e.p, G.player)) openEncounter(e.p, e.forced); else e.p.cd = 3;
+};

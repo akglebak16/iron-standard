@@ -7,6 +7,7 @@
 const WK = (a, b) => a < b ? a + '|' + b : b + '|' + a;
 const nowH = () => G.day * 24 + G.hour;
 function warInit() {
+  clanInit();
   if (G.wars) return;
   G.wars = {}; const F = worldF(); for (const a in WAR) for (const b in WAR[a]) if (a !== 'bandit' && b !== 'bandit' && F.includes(a) && F.includes(b)) G.wars[WK(a, b)] = { since: G.day };
   G.wcamp = G.wcamp || {}; G.skirm = G.skirm || [];
@@ -15,8 +16,9 @@ function holdOf(f) { let t = 0, c = 0, v = 0; for (const s of G.settles) if (s.f
 function facAlive(f) { return holdOf(f).core > 0; }
 function facsAlive() { return worldF().filter(facAlive); }
 function facPower(f) { let s = 0; for (const p of G.parties) if (p.fac === f && isNoble(p)) s += partyStr(p); const h = holdOf(f); return s + h.t * 90 + h.c * 70 + h.v * 12; }
-const warLords = f => clamp(Math.round(holdOf(f).all / 3), 1, 12);
-const warVass = f => clamp(Math.round(holdOf(f).all * .27), 1, 10);
+const CLANS_PER_F = 4, CLAN_SIZE = 2, VASS_PER_F = 4; // у каждой фракции по 4 рода по 2 лорда и по 4 вассала, независимо от размера земель
+const warLords = f => CLANS_PER_F * CLAN_SIZE;
+const warVass = f => VASS_PER_F;
 /* оборона поселения: гарнизон с множителем стен; у государства на краю гибели защитники бьются отчаянней */
 function siegeDef(s) { const h = holdOf(s.fac); return (strength(garrisonOf(s)) + 4) * (1.8 + (h.core <= 3 ? .8 : h.core <= 5 ? .35 : 0)); }
 function wlog(msg, kind) { for (const P of G.players) logW(msg, kind || 2, P); if (!SERVER && typeof toast === 'function') toast(msg); }
@@ -33,6 +35,7 @@ function warDay() {
     else { if (wc(a) >= 3 || wc(b) >= 3) continue; if (!borders(a, b)) continue; const lone = (!wc(a) ? 3 : 1) * (!wc(b) ? 2 : 1), top = (pa > pb ? pa : pb) / Math.max(1, (pa + pb) / 2); if (Math.random() < .005 * lone * top) { G.wars[k] = { since: G.day }; wlog(FACTIONS[(pa > pb ? a : b)].name + ' объявляет войну: ' + FACTIONS[(pa > pb ? b : a)].name + '.', 2); } }
   }
   for (const P of G.players) vassalDay(P);
+  clanDay();
   facTally();
 }
 function borders(a, b) { // у фракций есть соседние поселения (не дальше 900)
@@ -50,6 +53,7 @@ function warHour() {
   warInit();
   if (G.hour % 2 === 0) { for (const f of facsAlive()) warCamp(f); for (const s of G.settles) if (s.siege) siegeTick(s); }
   skirmHour();
+  if (G.hour === 12) clanRefill();
 }
 function warCamp(f) {
   const enemies = facsAlive().filter(e => e !== f && atWar(f, e)); let c = G.wcamp[f];
@@ -110,10 +114,12 @@ function warCapture(s, f, att) {
   for (const v of G.settles) if (v.kind === 'village' && v.fac === old && Math.hypot(v.x - s.x, v.y - s.y) < 170) { v.cult = sCult(v); v.fac = f; }
   wlog(FACTIONS[f].name + ' берёт ' + (t0 === 'castle' ? 'замок ' : 'город ') + s.name + ' (бывший ' + FACTIONS[old].gen + ').', 2);
   for (const P of G.players) { if (P.liege === f && P.call && !P.call.joined && att.some(p => true) && Math.hypot(P.x - s.x, P.y - s.y) < 220) { P.call.joined = true; vassalReward(P, s); } }
+  clanLoss(old, f, s);
   if (!facAlive(old)) facFall(old, f);
 }
 function facFall(old, by) {
   wlog('Государство «' + FACTIONS[old].name + '» пало.', 2);
+  for (const c of clansOf(old)) clanDefect(c, by, true); // роды павшего государства переходят к победителю
   for (const v of G.settles) if (v.fac === old) { v.cult = sCult(v); v.fac = by; }
   for (const p of G.parties.slice()) if (p.fac === old && p.kind !== 'caravan') G.parties.splice(G.parties.indexOf(p), 1); else if (p.fac === old) G.parties.splice(G.parties.indexOf(p), 1);
   delete G.wcamp[old]; for (const k of Object.keys(G.wars)) if (k.split('|').includes(old)) delete G.wars[k];
@@ -174,4 +180,86 @@ function vassalDay(P) {
   if (!P.liege) return; const f = P.liege; if (!facAlive(f)) { P.liege = null; return; }
   const pay = 16 + (P.hero.lvl || 1) * 6; P.gold += pay; vassalEnemies(P);
   if (P.call && nowH() > P.call.until) { if (!P.call.joined) { P.strikes = (P.strikes || 0) + 1; P.rel[f] = Math.max(-100, P.rel[f] - 5); logW('Ты не явился на зов сюзерена (' + P.strikes + '/3).', 1, P); if (P.strikes >= 3) leaveService(P, 'expelled'); } P.call = null; }
+}
+
+
+/* ---------- рода: у каждой фракции 4 рода по 2 лорда; род можно переманить целиком ---------- */
+const CLAN_TR = {
+  loyal: { n: 'Верный', d: 'держится присяги, почти не склонен к измене', base: 88, thr: 10, ch: .12, cost: 2, luck: .25 },
+  greedy: { n: 'Корыстный', d: 'продаётся тому, кто больше платит', base: 62, thr: 30, ch: .5, cost: .7, luck: 1 },
+  ambit: { n: 'Честолюбивый', d: 'тянется к сильному и побеждающему', base: 60, thr: 42, ch: .7, cost: 1.2, luck: 1 },
+  proud: { n: 'Обидчивый', d: 'помнит обиды и потери земель', base: 62, thr: 34, ch: .5, cost: 1.1, luck: 1 },
+  fickle: { n: 'Переменчивый', d: 'легко меняет сторону', base: 50, thr: 44, ch: 1, cost: .8, luck: 1.4 },
+};
+const CLAN_DEF_CD = 60, CLAN_FAC_CD = 30, CLAN_MIN = 2, CLAN_MAX = 6, LURE_CD = 20;
+const clansOf = f => (G.clans || []).filter(c => c.fac === f);
+const clanById = id => (G.clans || []).find(c => c.id === id);
+const clanOf = p => p && p.clan != null ? clanById(p.clan) : null;
+const clanMembers = c => G.parties.filter(p => p.kind === 'lord' && p.clan === c.id);
+const clanFree = c => clanMembers(c).every(p => !p.lock && !p.fight && !p.army);
+const clanForce = c => clanMembers(c).reduce((a, p) => a + troopCount(p.troops), 0);
+function clanLabel(n) { const g = /ий$/.test(n) ? n.slice(0, -2) + 'ия' : /[йь]$/.test(n) ? n.slice(0, -1) + 'я' : /[аеёиоуыэюя]$/.test(n) ? n : n + 'а'; return 'Дом ' + g; }
+function clanInit() {
+  if (G.clans || !G.settles || !G.parties) return;
+  G.clans = []; G.clanSw = {}; G.cid = 1;
+  const kinds = Object.keys(CLAN_TR), pool = ['loyal', 'loyal', 'greedy', 'greedy', 'ambit', 'ambit', 'proud', 'proud', 'fickle'];
+  for (const f of facsAlive()) {
+    const hs = G.settles.filter(s => s.fac === f && s.kind !== 'village' && s.kind !== 'camp'), used = new Set(), free = G.parties.filter(p => p.kind === 'lord' && p.fac === f && p.clan == null);
+    for (let i = 0; i < CLANS_PER_F; i++) {
+      let nm, k = 0; do nm = pick(FACTIONS[f].names); while (used.has(nm) && ++k < 30); used.add(nm);
+      const tr = pick(pool), h = hs[i % hs.length], c = { id: G.cid++, fac: f, name: clanLabel(nm), trait: tr, loy: CLAN_TR[tr].base + rint(-8, 8), home: h ? h.id : null, cd: 0, vac: 0 };
+      G.clans.push(c); for (let j = 0; j < CLAN_SIZE && free.length; j++) free.shift().clan = c.id;
+    }
+  }
+}
+function clanLoss(old, f, s) { // фракция потеряла поселение: роды недовольны, у победителя довольны
+  for (const c of clansOf(old)) { c.loy = Math.max(0, c.loy - (c.home === s.id ? 18 : c.trait === 'proud' ? 9 : 5)); if (c.home === s.id) { const h = G.settles.find(q => q.fac === old && q.kind !== 'village' && q.kind !== 'camp' && q !== s); c.home = h ? h.id : null; } }
+  for (const c of clansOf(f)) c.loy = Math.min(100, c.loy + 4);
+}
+function clanSettle(f, x, y) { let best = null, bd = 1e9; for (const s of G.settles) if (s.fac === f && s.kind !== 'village' && s.kind !== 'camp') { const d = Math.hypot(s.x - x, s.y - y); if (d < bd) { bd = d; best = s; } } return best; }
+function clanDefect(c, to, forced) {
+  const from = c.fac, mem = clanMembers(c), h = clanSettle(to, mem.length ? mem[0].x : 0, mem.length ? mem[0].y : 0);
+  c.fac = to; c.cd = G.day + CLAN_DEF_CD; c.loy = Math.max(55, c.loy); if (h) c.home = h.id; if (!forced) G.clanSw[from] = G.day;
+  for (const p of mem) { p.fac = to; p.name = lordName(to); p.army = false; p.arrived = false; p.state = 'idle'; p.path = []; p.pi = 0; p.tid = null; p.sid = null; if (h) { p.home = h.id; p.hide = false; p.x = h.x + rint(-10, 10); p.y = h.y + 20; } }
+  wlog(c.name + ' (' + CLAN_TR[c.trait].n.toLowerCase() + ' род) переходит от ' + FACTIONS[from].gen + ' к ' + FACTIONS[to].gen + '.', 2);
+}
+function clanDay() {
+  if (!G.clans) return;
+  const A = facsAlive();
+  for (const c of G.clans) {
+    const T = CLAN_TR[c.trait]; c.loy += c.loy < T.base ? 1 : c.loy > T.base ? -1 : 0;
+    if (!A.includes(c.fac) || G.day < c.cd || c.loy > T.thr || Math.random() > T.ch * .08) continue;
+    if (clansOf(c.fac).length <= CLAN_MIN || G.day - (G.clanSw[c.fac] || -99) < CLAN_FAC_CD || !clanFree(c)) continue;
+    let best = null, bp = 0; for (const e of A) if (e !== c.fac && atWar(c.fac, e) && clansOf(e).length < CLAN_MAX) { const pw = facPower(e); if (pw > bp) { bp = pw; best = e; } }
+    if (!best || (c.trait === 'ambit' && bp < facPower(c.fac) * 1.15)) continue;
+    clanDefect(c, best, false);
+  }
+}
+function clanRefill() { // погиб лорд: через пару дней в роду появляется новый родич
+  if (!G.clans) return;
+  for (const c of G.clans) {
+    if (!facAlive(c.fac)) continue; const n = clanMembers(c).length; if (n >= CLAN_SIZE) { c.vac = 0; continue; }
+    if (!c.vac) c.vac = G.day + (c.born ? 3 : 0); if (G.day < c.vac) continue;
+    let h = settleById(c.home); if (!h || h.fac !== c.fac) { h = clanSettle(c.fac, 0, 0); c.home = h ? h.id : null; } if (!h) continue;
+    mkParty('lord', c.fac, lordName(c.fac), h.x + 10, h.y + 20, genTroops(c.fac, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id, clan: c.id }); c.born = 1; c.vac = 0;
+  }
+}
+/* переманивание рода игроком: только вассал может звать род к своему сюзерену */
+function lureCost(c) { return Math.round((400 + clanForce(c) * 5) * CLAN_TR[c.trait].cost / 10) * 10; }
+function lureChance(P, c) {
+  const T = CLAN_TR[c.trait], L = P.liege; let ch = (100 - c.loy) / 130 + P.rel[L] / 500 + (P.hero.lvl || 1) * .008;
+  if (c.trait === 'ambit' && facPower(L) > facPower(c.fac) * 1.2) ch += .15; if (c.trait === 'proud' && c.loy < 45) ch += .1; if (c.trait === 'greedy') ch += .08;
+  return clamp(ch * T.luck, .03, .8);
+}
+function lureCan(P, p) {
+  const c = clanOf(p); if (!c) return 'Это не знатный род.'; if (!P.liege) return 'Звать род к себе может только вассал: присягни фракции.'; if (c.fac === P.liege) return 'Они и так служат твоему сюзерену.';
+  if (!facAlive(P.liege)) return 'Сюзерен пал.'; if (G.day < (P.lureDay || -99) + LURE_CD) return 'Ты недавно уже вёл переговоры. Подожди ' + (Math.ceil((P.lureDay || 0) + LURE_CD - G.day)) + ' дн.';
+  if (G.day < c.cd) return 'Род недавно сменил сторону и пока не станет метаться.'; if (clansOf(c.fac).length <= CLAN_MIN) return 'Этот дом остался без союзников и не покинет своё государство.';
+  if (clansOf(P.liege).length >= CLAN_MAX) return 'У твоего сюзерена уже слишком много родов.'; return null;
+}
+function lureTry(P, p) {
+  const c = clanOf(p), why = lureCan(P, p); if (why) return { ok: false, txt: why }; const cost = lureCost(c); if (P.gold < cost) return { ok: false, txt: 'Нужно ' + cost + ' золота.' };
+  P.lureDay = G.day; const L = P.liege, from = c.fac;
+  if (Math.random() < lureChance(P, c)) { P.gold -= cost; clanDefect(c, L, false); const back = Math.round(cost * .4); P.gold += back; P.rel[L] = Math.min(100, P.rel[L] + 6); P.rel[from] = Math.max(-100, P.rel[from] - 10); relWatch(P); logW(c.name + ' перешёл на сторону ' + FACTIONS[L].gen + '. Сюзерен возместил ' + back + ' золота.', 3, P); return { ok: true, txt: c.name + ' переходит к ' + FACTIONS[L].gen + '!' }; }
+  P.gold -= Math.round(cost * .5); P.rel[from] = Math.max(-100, P.rel[from] - 8); relWatch(P); logW('Переговоры с ' + c.name + ' провалились: золото потеряно.', 1, P); return { ok: false, txt: c.name + ' отказал и забрал половину задатка.' };
 }
