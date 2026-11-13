@@ -1,0 +1,5 @@
+---
+description: Общие правила проекта и накопленные уроки
+alwaysApply: true
+---
+Прочитай `CLAUDE.md` в корне, затем `shareness/README.md` и `shareness/lessons.md`. Правила и самообучение описаны там. Новые уроки дописывай в `shareness/lessons.md`.
