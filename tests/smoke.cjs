@@ -78,7 +78,7 @@ async function singlePlayer(pg) {
 async function sieges(pg) {
   console.log('Осады и враждебность');
   await newSinglePlayer(pg);
-  const c = await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.fac === 'emp' && x.kind === 'castle'); P.x = s.x - 60; P.y = s.y + 20; P.troops = [{ type: 'n2a', n: 20 }, { type: 'n2s', n: 20 }]; openTown(s); return s.id; });
+  const c = await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.fac === 'emp' && x.kind === 'castle'); P.x = s.x - 60; P.y = s.y + 20; P.troops = [{ type: 'n2a', n: 60 }, { type: 'n2s', n: 60 }]; openTown(s); return s.id; });
   ok('в чужом замке есть кнопка «Осадить»', !!(await pg.$('#modal [data-act=siegeask]')));
   await pg.click('#modal [data-act=siegeask]'); await pg.click('#modal [data-act=siegeyes]'); await sleep(200);
   const war = await pg.evaluate(() => ({ hostile: relHostile(G.player, 'emp'), log: G.player.log.slice(-1)[0].txt, siege: !!document.querySelector('#modal [data-act=siegeatk]') }));

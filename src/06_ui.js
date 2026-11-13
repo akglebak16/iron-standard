@@ -84,9 +84,10 @@ function openPanel(tab) { UI.panel = tab || UI.panel || 'troops'; renderPanel();
 function renderPanel() {
   const P = G.player, H = P.hero, tab = UI.panel, cap = sizeCap(H), cnt = troopCount(P.troops); let body = '';
   if (tab === 'troops') {
-    body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay(G.player) + ' в день · Улучшение стоит золота, но делает бойца сильнее.</div>';
+    body += '<div class="note">Бойцов: ' + cnt + ' из ' + cap + ' · Жалованье: ' + wageDay(G.player) + ' в день · Улучшение стоит золота, но делает бойца сильнее. Те, кого можно улучшить сейчас, стоят вверху списка.</div>';
     sortT(P.troops); if (!P.troops.length) body += '<div class="note">У тебя нет отряда. Найми людей в городе.</div>';
-    for (const s of P.troops) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = upgCost(P, s.type); acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
+    const canUp = x => TROOPS[x.type].up.length && P.gold >= upgCost(P, x.type), shown = P.troops.slice().sort((x, y) => (canUp(y) ? 1 : 0) - (canUp(x) ? 1 : 0)); // готовые к улучшению (есть куда и хватает золота) наверху
+    for (const s of shown) { const t = TROOPS[s.type]; let acts = ''; for (const u of t.up) { const ut = TROOPS[u], c = upgCost(P, s.type); acts += '<button class="btn sm" data-act="upg" data-t="' + s.type + '" data-u="' + u + '" ' + (P.gold >= c ? '' : 'disabled') + '>В ' + ut.name.toLowerCase() + ' (' + c + ')</button>'; } acts += '<button class="btn sm danger" data-act="dismiss" data-t="' + s.type + '">Распустить</button>';
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
   } else if (tab === 'hero') {
     body += heroBody();

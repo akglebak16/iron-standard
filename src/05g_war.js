@@ -298,4 +298,4 @@ function rulerHome(p) { // правитель отходит в своё пос�
   const h = settleById(p.home), s = h && h.fac === p.fac ? h : clanSettle(p.fac, p.x, p.y); if (s) { p.home = s.id; p.x = s.x; p.y = s.y + 20; p.hide = true; p.wait = rint(8, 16); }
   p.fight = null; p.state = 'idle'; p.path = []; p.pi = 0; p.cd = 6; if (troopCount(p.troops) < 90) for (const a of genTroops(p.fac, 90 - troopCount(p.troops), .6)) addT(p.troops, a.type, a.n); sortT(p.troops);
 }
-function rulerSpare(p) { if (!p.ruler || Math.random() > .85) return false; rulerHome(p); return true; } // телохранители выводят правителя из боя
+function rulerSpare(p) { if (!p.ruler || Math.random() > .78) return false; rulerHome(p); return true; } // телохранители выводят правителя из боя
