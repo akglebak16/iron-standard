@@ -68,7 +68,7 @@ function warCamp(f) {
     return;
   }
   if (!enemies.length) return;
-  const lords = warLordsOf(f).filter(p => troopCount(p.troops) >= 20); if (lords.length < 2 && lords.reduce((a, p) => a + partyStr(p), 0) < 220) return;
+  const lords = warLordsOf(f).filter(p => troopCount(p.troops) >= 20 * MK()); if (lords.length < 2 && lords.reduce((a, p) => a + partyStr(p), 0) < 220 * MK()) return;
   if (G.hour % 6 !== 0) return;
   const mine = G.settles.filter(s => s.fac === f && s.kind !== 'camp'); if (!mine.length) return;
   let best = null, bs = 1e9; const power = lords.reduce((a, p) => a + partyStr(p), 0);
@@ -108,9 +108,9 @@ function siegeTick(s) {
 }
 function warCapture(s, f, att) {
   const old = s.fac, t0 = s.kind; delete s.siege; s.cult = sCult(s);
-  const garN = s.kind === 'castle' ? 90 : 70, tot = Math.max(1, att.reduce((a, p) => a + troopCount(p.troops), 0)), share = Math.min(.5, garN / tot), take = [];
+  const garN = (s.kind === 'castle' ? 90 : 70) * MK(), tot = Math.max(1, att.reduce((a, p) => a + troopCount(p.troops), 0)), share = Math.min(.5, garN / tot), take = [];
   for (const p of att) for (const t of p.troops.slice()) { const n = Math.round(t.n * share); if (n > 0) { remT(p.troops, t.type, n); take.push([t.type, n]); } }
-  s.fac = f; s.owner = null; s.board = []; s.gar = []; for (const [ty, n] of take) addT(s.gar, ty, n); if (troopCount(s.gar) < 25) for (const a of genTroops(f, 25, .5)) addT(s.gar, a.type, a.n); sortT(s.gar); genRecruits(s); s.market = null; s.ruin = 0;
+  s.fac = f; s.owner = null; s.board = []; s.gar = []; for (const [ty, n] of take) addT(s.gar, ty, n); if (troopCount(s.gar) < 25 * MK()) for (const a of genTroops(f, 25, .5)) addT(s.gar, a.type, a.n); sortT(s.gar); genRecruits(s); s.market = null; s.ruin = 0;
   for (const p of G.parties.slice()) if (isNoble(p) && p.fac === old && p.hide && p.home === s.id) { const h = G.settles.find(q => q.fac === old && q.kind !== 'camp' && q !== s); if (h) { p.home = h.id; p.hide = false; p.x = h.x; p.y = h.y + 20; p.state = 'idle'; } else G.parties.splice(G.parties.indexOf(p), 1); }
   for (const v of G.settles) if (v.kind === 'village' && v.fac === old && Math.hypot(v.x - s.x, v.y - s.y) < 170) { v.cult = sCult(v); v.fac = f; }
   wlog(FACTIONS[f].name + ' берёт ' + (t0 === 'castle' ? 'замок ' : 'город ') + s.name + ' (бывший ' + FACTIONS[old].gen + ').', 2);
@@ -129,7 +129,7 @@ function facFall(old, by) {
 
 /* ---------- схватки отрядов ИИ: бой идёт часами ---------- */
 function warContact(a, b) {
-  const small = x => troopCount(x.troops) < 12;
+  const small = x => troopCount(x.troops) < 12 * MK();
   if (a.kind === 'caravan' || b.kind === 'caravan' || (small(a) && small(b))) return autoFight(a, b);
   warInit(); const side = (x, o) => G.parties.filter(c => c !== o && !c.hide && c.kind !== 'camp' && !c.fight && !c.lock && c.fac === x.fac && Math.hypot(c.x - x.x, c.y - x.y) < 70 && !hostile(c, o) && c.kind !== 'caravan');
   const A = side(a, b), B = side(b, a); if (!A.includes(a)) A.push(a); if (!B.includes(b)) B.push(b);
@@ -296,6 +296,6 @@ function rulerDay() {
 }
 function rulerHome(p) { // правитель отходит в своё поселение и собирает новую дружину
   const h = settleById(p.home), s = h && h.fac === p.fac ? h : clanSettle(p.fac, p.x, p.y); if (s) { p.home = s.id; p.x = s.x; p.y = s.y + 20; p.hide = true; p.wait = rint(8, 16); }
-  p.fight = null; p.state = 'idle'; p.path = []; p.pi = 0; p.cd = 6; if (troopCount(p.troops) < 90) for (const a of genTroops(p.fac, 90 - troopCount(p.troops), .6)) addT(p.troops, a.type, a.n); sortT(p.troops);
+  p.fight = null; p.state = 'idle'; p.path = []; p.pi = 0; p.cd = 6; if (troopCount(p.troops) < 90 * MK()) for (const a of genTroops(p.fac, Math.ceil((90 * MK() - troopCount(p.troops)) / MK()), .6)) addT(p.troops, a.type, a.n); sortT(p.troops);
 }
 function rulerSpare(p) { if (!p.ruler || Math.random() > .78) return false; rulerHome(p); return true; } // телохранители выводят правителя из боя

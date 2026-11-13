@@ -27,7 +27,7 @@ function buildTitleMenu() { el('tmenu').innerHTML = '<button class="btn pri" dat
 ACT.snd = function () { auSetOn(!AU.on); if (MODE === 'title') buildTitleMenu(); else openMenu(); };
 function startDemo() {
   const fs = REAL_F, a = pick(fs), b = pick(fs.filter(x => x !== a)); FACTIONS.player.c1 = FACTIONS.player.c1 || '#c08a2e';
-  startBattle({ demo: true, pl: genTroops(a, 38, .6), en: genTroops(b, 38, .6), pfac: a, efac: b, biome: pick(['grass', 'grass', 'snow', 'steppe', 'arid']), seed: rint(1, 1e9) });
+  startBattle({ demo: true, pl: genTroops(a, 38, .6, true), en: genTroops(b, 38, .6, true), pfac: a, efac: b, biome: pick(['grass', 'grass', 'snow', 'steppe', 'arid']), seed: rint(1, 1e9) });
   B.cam.z = clamp(VIEW.h / 760, .7, 1.2); B.speed = 1.4;
 }
 
@@ -62,7 +62,7 @@ function showResult(r, p) {
 function afterBattle() { if (NET.on) NET.send({ t: 'ack' }); MODE = 'world'; B = null; el('bhud').hidden = true; el('whud').hidden = false; WC.x = G.player.x; WC.y = G.player.y; if (G.player.hero.pts > 0 || G.player.hero.pp > 0) toast('Есть свободные очки: атрибуты и перки в окне героя (H)'); saveGame(true); }
 function startQuick() {
   const H = { name: 'Ты', str: 3, vit: 3, agi: 2, int: 2, cha: 2, perks: [], eq: { head: 'head_nasal', body: 'body_mail', hands: 'hands_leather', legs: 'legs_boots', melee: 'sword_knight', ranged: 'bow_long', shield: 'shield_banded', horse: QK.me === 'khan' ? 'horse_riding' : null }, sel: 'melee', hp: 1, seed: 7 }; FACTIONS.player.c1 = BANNERS[CR.banner].c1; FACTIONS.player.c2 = BANNERS[CR.banner].c2;
-  enterBattle({ pl: genTroops(QK.me, QK.size, .6), en: genTroops(QK.foe, QK.size + 4, QK.foe === 'bandit' ? .35 : .6), pfac: 'player', efac: QK.foe, biome: FACTIONS[QK.me].biome, hero: H, leader: lordName(QK.foe), title: 'Быстрый бой', quick: true, seed: rint(1, 1e9), onEnd: quickEnded });
+  enterBattle({ pl: genTroops(QK.me, QK.size, .6, true), en: genTroops(QK.foe, QK.size + 4, QK.foe === 'bandit' ? .35 : .6, true), pfac: 'player', efac: QK.foe, biome: FACTIONS[QK.me].biome, hero: H, leader: lordName(QK.foe), title: 'Быстрый бой', quick: true, seed: rint(1, 1e9), onEnd: quickEnded });
 }
 function quickEnded(res) { openModal('<div class="whead"><h2>' + (res.win ? 'Победа' : 'Поражение') + '</h2></div><div class="wbody"><div class="kv"><span>Враг убит или бежал</span><b>' + res.enemyDead + ' из ' + res.enemyTotal + '</b></div><div class="kv"><span>Твои павшие</span><b>' + Object.values(res.dead).reduce((a, b) => a + b, 0) + '</b></div><div class="kv"><span>Побед героя</span><b>' + res.heroKills + '</b></div></div><div class="wfoot"><button class="btn" data-act="endq">В меню</button><button class="btn pri" data-act="again">Ещё бой</button></div>', 'narrow'); }
 

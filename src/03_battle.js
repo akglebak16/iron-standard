@@ -5,7 +5,7 @@ const VIEW = { w: 800, h: 600, dpr: 1 };
 const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, touch: false, sprint: false };
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
-const BATTLE_CAP = 150, JOIN_CAP = 40, UNDEAD_CAP = 300; // нежити на поле больше фигур: она берёт числом // юнитов на сторону в бою; и сколько юнитов приводит второй игрок, присоединившийся к бою
+const BATTLE_CAP = SERVER ? 150 : 150 * MASS, JOIN_CAP = 40, UNDEAD_CAP = SERVER ? 300 : 300 * MASS; // нежити на поле больше фигур: она берёт числом // юнитов на сторону в бою; и сколько юнитов приводит второй игрок, присоединившийся к бою
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
   const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
   return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc) * ACC_K, shb: heroShield(h) ? shieldArrow(heroShield(h).look) : 0, anticav: W.anticav ? 1 : 0,

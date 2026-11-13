@@ -2,6 +2,8 @@
 /* ================= утилиты ================= */
 const SERVER = typeof __SRV !== 'undefined';
 const NET = { on: false, ws: null, avail: false, q: [] };
+/* масштаб массовости боёв: в одиночной игре армии, гарнизоны и лимит отряда вдвое больше; сервер и сетевая игра живут по старым числам */
+const MASS = 2, MK = () => SERVER || NET.on ? 1 : MASS;
 const TAU = Math.PI * 2;
 const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
 const rint = (a, b) => Math.floor(rnd(a, b + 1));
@@ -176,7 +178,8 @@ const ATTRS = { str: ['Сила', '+2,5 к урону за очко'], vit: ['С
 function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
 function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1) * (d.pw || 1); } return s; }
-function genTroops(fac, n, quality) { // quality 0..1
+function genTroops(fac, n, quality, raw) { // quality 0..1; raw — не масштабировать (быстрый бой, демо)
+  if (!raw && MK() > 1 && n > 1) n = Math.round(n * (fac === 'bandit' || fac === 'undead' ? 1 + (MK() - 1) * .25 : MK())); // разбойники и нежить растут лишь на четверть, чтобы начало игры оставалось по силам
   const ids = Object.keys(TROOPS).filter(k => TROOPS[k].fac === fac), out = {};
   for (let i = 0; i < n; i++) {
     const r = Math.random() + (quality - .5) * .7; const tier = r < .38 ? 1 : r < .78 ? 2 : 3;

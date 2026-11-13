@@ -325,7 +325,7 @@ function genRoads() {
       addRoad(thinPath([{ x: b.x, y: b.y }, sp, ...tail])); } }
 }
 function genRecruits(s) {
-  if (s.fac === 'bandit' || s.fac === 'undead' || s.burnt > 0) { if (s.fac !== 'bandit') s.recruits = []; return; } const f = sCult(s), out = {}, n = s.kind === 'town' ? rint(5, 9) : s.kind === 'castle' ? rint(3, 6) : rint(3, 7);
+  if (s.fac === 'bandit' || s.fac === 'undead' || s.burnt > 0) { if (s.fac !== 'bandit') s.recruits = []; return; } const f = sCult(s), out = {}, n = (s.kind === 'town' ? rint(5, 9) : s.kind === 'castle' ? rint(3, 6) : rint(3, 7)) * MK();
   for (let i = 0; i < n; i++) { const ids = Object.keys(TROOPS).filter(k => TROOPS[k].fac === f && TROOPS[k].tier <= (s.kind === 'village' ? 1 : s.kind === 'town' ? 2 : 3) && (s.kind !== 'castle' || TROOPS[k].tier >= 2) && (s.kind === 'village' || TROOPS[k].tier >= 1)); let id = pick(ids.length ? ids : Object.keys(TROOPS).filter(k => TROOPS[k].fac === f)); if (s.kind === 'village' && TROOPS[id].tier > 1) id = Object.keys(TROOPS).find(k => TROOPS[k].fac === f && TROOPS[k].tier === 1); out[id] = (out[id] || 0) + 1; }
   s.recruits = Object.keys(out).map(k => ({ type: k, n: out[k] }));
 }
@@ -345,7 +345,7 @@ function spawnVassal(f, h, n) { const lords = G.parties.filter(q => q.kind === '
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
-function sizeCap(h) { heroFix(h); return 20 + h.cha * 5 + (h.lvl - 1) * 3 + perkFx(h).size; }
+function sizeCap(h) { heroFix(h); return (20 + h.cha * 5 + (h.lvl - 1) * 3 + perkFx(h).size) * MK(); }
 function leaderType(p) { let b = null, bs = -1; for (const s of p.troops) { const t = TROOPS[s.type], v = t.tier * 10 + s.n * .01; if (v > bs) { bs = v; b = s.type; } } return b; }
 function addT(list, type, n) { const f = list.find(s => s.type === type); if (f) f.n += n; else list.push({ type, n }); }
 function remT(list, type, n) { const f = list.find(s => s.type === type); if (!f) return; f.n -= n; if (f.n <= 0) list.splice(list.indexOf(f), 1); }
@@ -442,7 +442,7 @@ function isHostileToPlayer(p, P) { if (p.kind === 'bandit' || p.kind === 'camp' 
 function hostile(a, b) { if ((a.fac === 'undead') !== (b.fac === 'undead')) return true; if (a.fac === 'undead') return false; if (a.kind === 'caravan' && b.kind === 'caravan') return false; if (a.kind === 'bandit' && b.fac !== 'bandit') return true; if (b.kind === 'bandit' && a.fac !== 'bandit') return true; return a.fac !== b.fac && atWar(a.fac, b.fac) && a.kind !== 'caravan' && b.kind !== 'caravan'; }
 function aiParty(p, dh) {
   if (p.kind === 'camp') return; p.cd -= dh; if (p.lock || p.fight) return;
-  if (p.hide) { p.wait -= dh; if (p.wait <= 0) { p.hide = false; const h = settleById(p.home); if (h) { const lord = p.kind === 'lord', need = Math.max(0, (lord ? LORD_FULL : 34) - troopCount(p.troops)); if (need > 0 && h.fac === p.fac) { const add = genTroops(p.fac, Math.min(need, lord ? rint(10, 25) : rint(4, 10)), .6); for (const a of add) addT(p.troops, a.type, a.n); } } if (p.kind === 'lord') p.state = 'idle'; } return; }
+  if (p.hide) { p.wait -= dh; if (p.wait <= 0) { p.hide = false; const h = settleById(p.home); if (h) { const lord = p.kind === 'lord', need = Math.max(0, (lord ? LORD_FULL : 34) * MK() - troopCount(p.troops)); if (need > 0 && h.fac === p.fac) { const add = genTroops(p.fac, Math.min(Math.ceil(need / MK()), lord ? rint(10, 25) : rint(4, 10)), .6); for (const a of add) addT(p.troops, a.type, a.n); } } if (p.kind === 'lord') p.state = 'idle'; } return; }
   p.ai = (p.ai || 0) - dh;
   if (p.ai <= 0) { p.ai = rnd(.8, 1.6);
     const me = partyStr(p) + (typeof warAllyStr === 'function' ? warAllyStr(p) : 0);
@@ -475,7 +475,7 @@ function vassalIdle(p) {
 }
 function vassalRest(p, s) { // у своего поселения: стоит у стен несколько часов и добирает людей
   p.state = 'idle'; p.path = []; p.pi = 0; p.wait = rint(3, 8); p.home = s.id;
-  const need = VAS_FULL - troopCount(p.troops); if (need > 0 && s.fac === p.fac) for (const a of genTroops(p.fac, Math.min(need, rint(4, 10)), .55)) addT(p.troops, a.type, a.n);
+  const need = VAS_FULL * MK() - troopCount(p.troops); if (need > 0 && s.fac === p.fac) for (const a of genTroops(p.fac, Math.min(Math.ceil(need / MK()), rint(4, 10)), .55)) addT(p.troops, a.type, a.n);
 }
 function autoFight(a, b) {
   const sa = partyStr(a) * rnd(.8, 1.25), sb = partyStr(b) * rnd(.8, 1.25), w = sa >= sb ? a : b, l = w === a ? b : a, r = Math.min(sa, sb) / Math.max(sa, sb), wl = Math.min(.85, r * .85);
@@ -527,7 +527,7 @@ function relWatch(P) {
 }
 // война: отношения сразу падают до враждебных
 function declareWar(P, f) { if (!REAL_F.includes(f)) return; P.rel[f] = Math.min(P.rel[f], -45); relWatch(P); }
-function garCap(s) { return s.kind === 'town' ? 130 : s.kind === 'castle' ? 210 : 0; } // гарнизоны фракций пополняются до 80% этого
+function garCap(s) { return (s.kind === 'town' ? 130 : s.kind === 'castle' ? 210 : 0) * MK(); } // гарнизоны фракций пополняются до 80% этого
 function garrisonOf(s) {
   if (!s.gar) { const n = s.kind === 'town' ? rint(85, 120) : s.kind === 'castle' ? rint(130, 175) : 0; s.gar = n ? genTroops(sCult(s), n, s.kind === 'castle' ? .75 : .62) : []; sortT(s.gar); }
   return s.gar;
