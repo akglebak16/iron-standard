@@ -95,7 +95,13 @@ const hasPerk = (H, id) => perkRank(H, id) > 0;
 
 /* Сумма эффектов изученных перков. Кэш в WeakMap, а не в самом герое, чтобы в сохранение и в сеть не попадало лишнего. */
 const FXC = new WeakMap();
-function perkFx(H) {
+const FXP = new WeakMap();
+function perkFx(H) { // перки героя плюс умения его спутников (05e_comps.js): спутники есть только у героя игрока в одиночной игре
+  const own = ownPerkFx(H), cf = H ? compFxForHero(H) : null; if (!cf) return own;
+  const c = FXP.get(H); if (c && c.own === own && c.k === cf.k) return c.f;
+  const f = Object.assign({}, own); for (const k in cf.f) f[k] += cf.f[k]; FXP.set(H, { own, k: cf.k, f }); return f;
+}
+function ownPerkFx(H) {
   const ids = H && H.perks; if (!ids || !ids.length) return FX_ZERO;
   const key = ids.join(','), c = FXC.get(H); if (c && c.k === key) return c.f;
   const f = Object.assign({}, FX_ZERO), seen = {};

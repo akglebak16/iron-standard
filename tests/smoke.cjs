@@ -101,6 +101,27 @@ async function sieges(pg) {
   ok('враждебный лорд отбивает владение со слабым гарнизоном', lost === 'emp', lost);
 }
 
+async function companions(pg) {
+  console.log('Спутники');
+  await newSinglePlayer(pg);
+  const t = await pg.evaluate(() => { const P = G.player; P.gold = 5000; compsInit(); const s = G.settles.find(x => x.kind === 'town' && x.fac === P.culture); G.cpos.ingrid = s.id; G.cpos.halvdan = s.id; openTown(s); ACT.ttab({ t: 'tavern' }); return s.id; });
+  ok('в городе есть таверна со спутниками', await pg.evaluate(() => document.querySelectorAll('#modal [data-act=chire]').length >= 2));
+  await pg.click('#modal [data-act=chire][data-id=ingrid]'); await pg.click('#modal [data-act=chire][data-id=halvdan]'); await sleep(150);
+  const h = await pg.evaluate(() => ({ n: G.player.comps.length, gold: G.player.gold, left: document.querySelectorAll('#modal [data-act=chire]').length }));
+  ok('спутника можно нанять: он в отряде, золото списано, в таверне его больше нет', h.n === 2 && h.gold === 5000 - 350 - 800 && h.left === 0, h);
+  ok('вкладка «Спутники» в окне отряда', await pg.evaluate(() => { closeModal(); openPanel('comps'); return document.querySelectorAll('#modal .row.comp').length === 2; }));
+  ok('в обозе можно выбрать спутника и надеть на него вещь', await pg.evaluate(() => { invAdd(G.player, 'bow_long', 1); ACT.cgear({ id: 'halvdan' }); ACT.equip({ id: 'bow_long' }); const c = compById(G.player, 'halvdan'); return !!document.querySelector('#modal .whobar') && heroEq(c).ranged === 'bow_long' && heroEq(G.player.hero).ranged !== 'bow_long'; }));
+  await pg.evaluate(() => { closeModal(); const P = G.player, p = mkParty('bandit', 'bandit', 'Тестовая шайка', P.x + 5, P.y, [{ type: 'b1', n: 8 }]); launchBattle(p); });
+  await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(400);
+  const b = await pg.evaluate(() => __dbg.B.units.filter(u => u.comp).map(u => [u.comp, u.grp.k]));
+  ok('спутники выходят в бой в своих группах (лучница — стрелки)', b.length === 2 && b.some(x => x[0] === 'ingrid' && x[1] === 1), b);
+  await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=cont2]'), null, { timeout: 10000 });
+  ok('в итогах боя есть спутники и их опыт', await pg.evaluate(() => /Спутники/.test(el('modal').innerHTML) && G.player.comps.every(c => c.xp > 0 || c.lvl > 1)));
+  await pg.evaluate(() => ACT.cont2()); await sleep(200);
+  const sv = await pg.evaluate(() => { saveGame(); const d = JSON.parse(localStorage.getItem(SAVE_KEY)); return d.players[0].comps.map(c => c.id).join(',') + '|' + !!d.cpos; });
+  ok('спутники и таверны сохраняются', sv === 'ingrid,halvdan|true', sv);
+}
+
 async function multiPlayer(pg) {
   console.log('Игра вдвоём');
   await pg.evaluate(() => netStart({ name: 'Тест', code: '', banner: 0, culture: 'nord', replace: true }));
@@ -127,6 +148,7 @@ async function multiPlayer(pg) {
     const open = async () => { const pg = await browser.newPage({ viewport: { width: 1600, height: 900 } }); pg.on('pageerror', e => errs.push(e.message)); await pg.goto('http://localhost:' + port + '/'); await pg.waitForFunction(() => window.__dbg && __dbg.MODE === 'title', null, { timeout: 15000 }); await sleep(300); return pg; };
     await singlePlayer(await open());
     await sieges(await open());
+    await companions(await open());
     await multiPlayer(await open());
   } catch (e) { console.error(e); failed++; }
   ok('нет ошибок в консоли страницы', errs.length === 0, errs.slice(0, 3));

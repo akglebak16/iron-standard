@@ -37,7 +37,7 @@ function troopRow(s, extra) { const t = TROOPS[s.type]; return '<div class="row"
 
 let UI = { open: null, town: null, enc: null, tab: 'troops' };
 function openModal(html, cls) { const m = el('modal'); m.innerHTML = '<div class="win plank ' + (cls || '') + '">' + html + '</div>'; m.hidden = false; UI.open = true; m.scrollTop = 0; }
-function closeModal() { if (NET.on && G && G.player && G.player.in) NET.send({ t: 'leave' }); el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; UI.res = null; UI.back = null; UI.isel = null; UI.tsel = null; if (G && G.player) G.player.in = null; }
+function closeModal() { if (NET.on && G && G.player && G.player.in) NET.send({ t: 'leave' }); el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; UI.res = null; UI.back = null; UI.isel = null; UI.tsel = null; UI.who = null; UI.cfire = null; if (G && G.player) G.player.in = null; }
 function mmode() { return MODE; }
 
 /* ---------- город ---------- */
@@ -65,13 +65,15 @@ function renderTown() {
     for (const t of g) body += troopRow(t, '<div class="cnt">' + t.n + '</div><div class="acts"><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="1" ' + (cnt < cap ? '' : 'disabled') + '>Забрать</button><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="99" ' + (cnt < cap ? '' : 'disabled') + '>Всех</button></div>');
     body += '<h3 style="margin:14px 0 6px">Твой отряд</h3>';
     for (const t of P.troops) body += troopRow(t, '<div class="cnt">' + t.n + '</div><div class="acts"><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="1" data-to="1" ' + (cnt > 1 ? '' : 'disabled') + '>Оставить</button><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="99" data-to="1" ' + (cnt > 1 ? '' : 'disabled') + '>Всех</button></div>');
+  } else if (tab === 'tavern') {
+    body += tavernBody(s);
   } else if (tab === 'quests') {
     const bd = s.board || []; body += '<div class="note">Заказы города. Награду выплачивают сразу, как дело сделано.</div>';
     if (!bd.length) body += '<div class="note">Доска пуста.</div>';
     for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + (q.type === 'camp' ? 'Расстояние: ' + Math.round(Math.hypot(settleById(q.sid).x - s.x, settleById(q.sid).y - s.y) / 10) / 10 + ' лиг' : 'Груз уже погружен') + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
     if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
-  const mine = s.fac === 'player', tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок']].concat(mine ? [['garrison', 'Гарнизон']] : [['quests', 'Задания']]), canSiege = !mine && !NET.on && REAL_F.includes(s.fac) && (s.kind === 'town' || s.kind === 'castle');
+  const mine = s.fac === 'player', tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок']].concat(s.kind === 'town' && !NET.on ? [['tavern', 'Таверна']] : [], mine ? [['garrison', 'Гарнизон']] : [['quests', 'Задания']]), canSiege = !mine && !NET.on && REAL_F.includes(s.fac) && (s.kind === 'town' || s.kind === 'castle');
   openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + (mine ? 'твоё владение · доход ' + settleIncome(s) + '/день · гарнизон ' + troopCount(garrisonOf(s)) : f.gen + ' · отношение: ' + relName(G.player.rel[s.fac])) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'trade' ? tradeDock(s) : '') + '<div class="wfoot">' + (canSiege ? '<button class="btn danger" data-act="siegeask" style="margin-right:auto">Осадить</button>' : '') + '<button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
@@ -86,6 +88,8 @@ function renderPanel() {
       body += troopRow(s, '<div class="cnt">' + s.n + '</div><div class="acts">' + acts + '</div>'); }
   } else if (tab === 'hero') {
     body += heroBody();
+  } else if (tab === 'comps') {
+    body += compsBody();
   } else if (tab === 'ally') {
     body += allyBody();
   } else if (tab === 'inv') {
@@ -95,7 +99,7 @@ function renderPanel() {
     body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + worldF().map(f => '<div class="card' + (relHostile(G.player, f) ? ' hostile' : '') + '"><h3>' + FACTIONS[f].name + (relHostile(G.player, f) ? ' <span class="tag r">враг</span>' : '') + '</h3><div class="kv"><span>Отношение</span><b' + (relHostile(G.player, f) ? ' class="dn"' : '') + '>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (worldF().filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
-  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (NET.on) tabs.push(['ally', 'Союз']);
+  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (!NET.on && (P.comps || []).length) tabs.splice(1, 0, ['comps', 'Спутники']); if (NET.on) tabs.push(['ally', 'Союз']);
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
 }
 

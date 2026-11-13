@@ -111,8 +111,8 @@ function doSell(P, s, id, n) {
 const TRADE_WHY = { stock: 'У торговца больше нет этого товара.', gold: 'Не хватает золота.', weight: 'В обозе не хватает места.', merchant: 'У торговца кончились деньги.', none: 'Здесь не торгуют.' };
 
 /* ---------- экипировка ---------- */
-function doEquip(P, id) { // → { ok, note }; предмет берётся из обоза, прежний из слота уходит в обоз
-  const it = ITEM[id], H = P.hero; if (!it || it.kind !== 'gear' || invN(P, id) < 1) return { ok: false, note: '' };
+function doEquip(P, id, Hx) { // → { ok, note }; предмет берётся из обоза, прежний из слота уходит в обоз. Hx — кого одеваем (спутника), по умолчанию героя
+  const it = ITEM[id], H = Hx || P.hero; if (!it || it.kind !== 'gear' || invN(P, id) < 1) return { ok: false, note: '' };
   const eq = heroEq(H), melee = eq.melee && EQ[eq.melee]; let note = '';
   if (it.slot === 'shield' && melee && melee.hands === 2) return { ok: false, note: 'Со двуручным оружием щит не носят.' };
   const old = eq[it.slot]; invAdd(P, id, -1); if (old) invAdd(P, old, 1); eq[it.slot] = id;
@@ -120,9 +120,9 @@ function doEquip(P, id) { // → { ok, note }; предмет берётся и�
   if (it.slot === 'horse') syncLegacy(H);
   return { ok: true, note };
 }
-function doUnequip(P, slot) { const H = P.hero, eq = heroEq(H), id = eq[slot]; if (!id) return false; invAdd(P, id, 1); eq[slot] = null; if (slot === 'horse') syncLegacy(H); if (slot === 'ranged' && H.sel === 'ranged') H.sel = 'melee'; return true; }
+function doUnequip(P, slot, Hx) { const H = Hx || P.hero, eq = heroEq(H), id = eq[slot]; if (!id) return false; invAdd(P, id, 1); eq[slot] = null; if (slot === 'horse') syncLegacy(H); if (slot === 'ranged' && H.sel === 'ranged') H.sel = 'melee'; return true; }
 function doUnequipHorse(P) { return doUnequip(P, 'horse'); } // оставлено для сервера (server/sim.js импортирует эту функцию)
-function doWield(P, sel) { const H = P.hero; if (sel === 'ranged' && !heroEq(H).ranged) return false; H.sel = sel; return true; } // какое оружие в руках в начале боя
+function doWield(P, sel, Hx) { const H = Hx || P.hero; if (sel === 'ranged' && !heroEq(H).ranged) return false; H.sel = sel; return true; } // какое оружие в руках в начале боя
 
 /* ---------- трофеи после победы ---------- */
 function rollLoot(P, p) {

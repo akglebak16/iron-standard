@@ -30,6 +30,7 @@ function startBattle(cfg) {
   // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
   const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > BATTLE_CAP ? BATTLE_CAP / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
+  if (cfg.comps) for (const c of cfg.comps) spawnComp(c);
   if (cfg.siege) siegeSetup();
   for (const u of B.units) if (u.side === 0) u.own = cfg.heroPid;
   for (const g of B.groups[0]) g.own = cfg.heroPid;
@@ -45,6 +46,12 @@ function startBattle(cfg) {
   B.count0 = B.men.slice();
   if (!cfg.demo) { blog(cfg.title || 'Битва началась', 2); sfx('horn'); }
   return B;
+}
+/* спутник (05e_comps.js): юнит-герой под ИИ в группе по оружию — стрелки, конница или пехота; слушается приказов своей группы */
+function spawnComp(c) {
+  const hd = heroDef(c); hd.id = 'comp:' + c.id; hd.grp = hd.mounted ? 2 : hd.range ? 1 : 0; const g = B.groups[0][hd.grp];
+  const u = mkUnit(0, hd, 'player', g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getHeroSprite(c, hd.mounted));
+  u.comp = c.id; u.name = c.name; u.hp = Math.max(hd.hp * .3, hd.hp * (c.hp === undefined ? 1 : c.hp)); u.spd = hd.spd; u.mbase = u.morale = 160; u.fx = perkFx(c); return u;
 }
 function myPid() { return B.hero ? B.hero.pid : undefined; }
 function alive(u) { return !u.dead && !u.gone; }
@@ -192,6 +199,7 @@ function kill(t, src) {
   fxBlood(t.x, t.y - 14, 12); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) if (g2.own === t.pid) g2.order = 'charge'; for (const u of B.units) if (u.side === 0 && u.own === t.pid) u.morale -= 7; B.hudDirty = true; }
+  else if (t.comp) { blog(t.name + ' ранен и вынесен из боя', 1); for (const u of B.units) if (u.side === 0 && Math.hypot(u.x - t.x, u.y - t.y) < 170) u.morale -= 4; B.hudDirty = true; }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1);
@@ -199,7 +207,7 @@ function kill(t, src) {
 function paintCorpse(t) {
   const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
   g.save(); g.translate(t.x, t.y); g.fillStyle = 'rgba(96,14,10,.5)'; g.beginPath(); g.ellipse(rnd(-4, 4), rnd(-2, 4), rnd(15, 24), rnd(8, 12), rnd(0, 3), 0, TAU); g.fill();
-  if (!(t.isHero && t.side === 0)) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); } g.restore();
+  if (!(t.isHero && t.side === 0) && !t.comp) { g.rotate(rot); g.globalAlpha = .88; g.scale(k, k); g.drawImage(sp, -t.sp.ax, -t.sp.ay + 60); } g.restore();
 }
 function heroControl(h, dt) {
   const I = h.inp || NOINP; let mx = I.dx || 0, my = I.dy || 0;
@@ -283,7 +291,7 @@ function battleUpdate(rdt) {
   // мораль
   B.mt -= dt; if (B.mt <= 0) {
     B.mt = 1; const n = [0, 0]; for (const u of B.units) if (fit(u)) n[u.side]++; B.n = n;
-    for (const u of B.units) { if (!fit(u) || (u.isHero && !u.ai)) continue; const my = n[u.side], th = n[1 - u.side] || .5, r = my / th; if (r < .5) u.morale -= 2.5; if (r < .3) u.morale -= 3.5; u.morale = Math.min(u.mbase, u.morale + (r > 1.5 ? 4 : r > .8 ? 2.5 : 1));
+    for (const u of B.units) { if (!fit(u) || (u.isHero && !u.ai) || u.comp) continue; /* спутники, как и герой, с поля не бегут */ const my = n[u.side], th = n[1 - u.side] || .5, r = my / th; if (r < .5) u.morale -= 2.5; if (r < .3) u.morale -= 3.5; u.morale = Math.min(u.mbase, u.morale + (r > 1.5 ? 4 : r > .8 ? 2.5 : 1));
       if (!u.wav && u.morale < 22) { u.wav = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' дрогнул', u.side ? 0 : 1); }
       if (u.morale <= 0 || (my <= B.start[u.side] * .2 && my < th * .5 && !u.leader && B.start[u.side] > 4)) { u.flee = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' бежит с поля боя', u.side ? 0 : 1); } }
     B.hudDirty = true;
@@ -304,10 +312,12 @@ function battleCamera(rdt) {
 }
 function finishBattle() {
   const mk = (pid, hero) => {
-    const surv = hero && hero.fx ? hero.fx.surv : 0;
-    const res = { win: B.win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: Math.round(B.men[1]), xp: Math.round(B.xp), heroDown: hero ? !!hero.dead : B.heroDown, heroHp: hero ? clamp(hero.hp / hero.maxHp, 0, 1) : 1, heroKills: hero ? hero.kills : 0, time: B.t, enemyLeft: {} };
+    const surv = (hero && hero.fx ? hero.fx.surv : 0) + (pid === B.cfg.heroPid ? B.cfg.csurv || 0 : 0); // csurv — лекарь среди спутников
+    const res = { win: B.win, dead: {}, wounded: {}, left: {}, comps: {}, enemyDead: 0, enemyTotal: Math.round(B.men[1]), xp: Math.round(B.xp), heroDown: hero ? !!hero.dead : B.heroDown, heroHp: hero ? clamp(hero.hp / hero.maxHp, 0, 1) : 1, heroKills: hero ? hero.kills : 0, time: B.t, enemyLeft: {} };
     for (const u of B.units) {
-      if (u.isHero && u.side === 0) continue; const id = u.t.id, w = u.w || 1; // w: сколько бойцов заменяет юнит (см. fill в startBattle)
+      if (u.isHero && u.side === 0) continue;
+      if (u.comp) { if (u.own === pid) res.comps[u.comp] = { hp: u.dead ? 0 : clamp(u.hp / u.maxHp, 0, 1), down: !!u.dead, kills: u.kills }; continue; }
+      const id = u.t.id, w = u.w || 1; // w: сколько бойцов заменяет юнит (см. fill в startBattle)
       if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + w; } else res.left[id] = (res.left[id] || 0) + w; }
       else { if (u.dead && !u.gone) res.enemyDead += w; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + w; }
     }
@@ -343,11 +353,12 @@ function battleDraw(g) {
     g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(u.x + 3, u.y + 3, u.r * 1.25, u.r * .5, 0, 0, TAU); g.fill();
     if (!demo) {
       if (u.isHero && !u.ai) { g.strokeStyle = u === B.hero ? '#ffd86a' : '#7ee07a'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
-      else { const al = !u.side && B.hero2 && u.own !== myPid(); g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : al ? 'rgba(110,214,110,.8)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(110,165,235,.75)'); g.lineWidth = u.leader ? 2.6 : 1.5; ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
+      else { const al = !u.side && B.hero2 && u.own !== myPid(); g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : al ? 'rgba(110,214,110,.8)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(110,165,235,.75)'); g.lineWidth = u.leader ? 2.6 : 1.5; if (u.comp) { g.strokeStyle = '#7fd6c8'; g.lineWidth = 2.2; } ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
     }
     g.save(); g.translate(u.x + ox, u.y + oy); if (u.flee) g.globalAlpha = .75; g.scale(u.dir * US, US); g.drawImage(u.flash > 0 ? sp.flash : sp.cv, -sp.ax, -sp.ay); g.restore();
     if (u.hp < u.maxHp && !demo) { const w = u.r * 1.9, hy = u.y - (sp.m ? 70 : 52); g.fillStyle = 'rgba(15,10,6,.8)'; g.fillRect(u.x - w / 2 - 1, hy - 1, w + 2, 5); g.fillStyle = u.side ? '#c23a2c' : '#7fb04a'; g.fillRect(u.x - w / 2, hy, w * clamp(u.hp / u.maxHp, 0, 1), 3); }
     if (u.leader && !demo) drawBanner(g, u.x - u.dir * 10, u.y - 2, u.fac, 17);
+    if (u.comp && !demo) { g.font = '700 12px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center'; const ny = u.y - (sp.m ? 76 : 58); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(u.name, u.x + 1, ny + 1); g.fillStyle = '#9fe3d6'; g.fillText(u.name, u.x, ny); }
     if (u.flee && !demo) { g.fillStyle = '#f4f0e0'; g.fillRect(u.x - 1, u.y - 66, 9, 6); g.fillStyle = '#3a2a18'; g.fillRect(u.x - 2, u.y - 67, 1.5, 14); }
   }
   const h = B.hero;

@@ -171,7 +171,7 @@ function miniGear(H) {
 
 /* ---------- вкладка «Обоз»: кукла героя и рюкзак ---------- */
 function slotTile(P, k) {
-  const H = P.hero, it = eqItem(H, k), w = heroWield(H), s = UI.isel, on = s && s.from === 'slot' && s.k === k, fit = s && s.from === 'bag' && ITEM[s.id] && ITEM[s.id].slot === k; let rib = null;
+  const H = invWho(P), it = eqItem(H, k), w = heroWield(H), s = UI.isel, on = s && s.from === 'slot' && s.k === k, fit = s && s.from === 'bag' && ITEM[s.id] && ITEM[s.id].slot === k; let rib = null;
   if (it && (k === 'melee' || k === 'ranged')) rib = w === it ? ['в руках', 'g'] : ['за спиной'];
   if (it && k === 'shield' && heroShield(H) === null) rib = ['за спиной'];
   return tile({ it, on, fit, rib, ghost: SLOT_ICON[k], lab: it ? '' : SLOT_NAME[k], title: SLOT_NAME[k] + (it ? ': ' + it.name : ''), attr: 'data-act="isel" data-from="slot" data-k="' + k + '"' + (it ? ' data-dbl="unequip" data-slot="' + k + '"' : '') });
@@ -186,10 +186,10 @@ function bagIds(P, f) {
   return f === 'weapon' ? gear.filter(wp) : f === 'armor' ? gear.filter(id => !wp(id)) : f === 'goods' ? goods : gear.concat(goods);
 }
 function invBody() {
-  const P = G.player, H = P.hero, hd = heroDef(H), W = hd.wpn, Gr = heroGear(H), sp = getHeroSprite(H, Gr.mounted); if (!sp.url) sp.url = sp.cv.toDataURL();
+  const P = G.player, H = invWho(P), hd = heroDef(H), W = hd.wpn, Gr = heroGear(H), sp = getHeroSprite(H, Gr.mounted); if (!sp.url) sp.url = sp.cv.toDataURL();
   const f = UI.bagF || 'all', ids = bagIds(P, f);
   const stt = [['Броня', hd.arm], ['Урон', Math.round(hd.dmg)], ['Блок', pc(Gr.block)], [W.rng ? 'Перезарядка' : 'Удар', Math.round(hd.cd * 100) / 100 + ' с'], [W.rng ? 'Дальность' : 'Длина', W.rng ? W.range : 30 + hd.reach], ['Урон по типу', DTYPE[W.dt].n]];
-  return '<div class="inv"><div><div class="doll"><div class="col">' + ['head', 'body', 'hands', 'legs'].map(k => slotTile(P, k)).join('') + '</div>' +
+  return whoBar(P) + '<div class="inv"><div><div class="doll"><div class="col">' + ['head', 'body', 'hands', 'legs'].map(k => slotTile(P, k)).join('') + '</div>' +
     '<div class="fig"><img alt="" src="' + sp.url + '"><div class="who">' + H.name + '<small>Уровень ' + H.lvl + (Gr.mounted ? ' · верхом' : '') + '</small></div></div>' +
     '<div class="col">' + ['melee', 'ranged', 'shield', 'horse'].map(k => slotTile(P, k)).join('') + '</div></div>' +
     '<div class="stt">' + stt.map(x => '<div><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('') + '</div></div>' +
@@ -198,7 +198,7 @@ function invBody() {
     (ids.length ? '' : '<div class="note">' + (f === 'all' ? 'Обоз пуст.' : 'В этой вкладке пусто.') + '</div>') + '<div class="note">Провизия: ' + P.food + ' (вес не занимает). Двойной щелчок по вещи: надеть, по слоту: снять. В бою X меняет оружие.</div></div></div>';
 }
 function invDock() {
-  const P = G.player, H = P.hero, s = UI.isel, hint = dockHint('Выбери слот куклы или вещь в рюкзаке. Подходящие вещи подсветятся зелёной рамкой.', 'bag');
+  const P = G.player, H = invWho(P), s = UI.isel, hint = dockHint('Выбери слот куклы или вещь в рюкзаке. Подходящие вещи подсветятся зелёной рамкой.', 'bag');
   if (!s) return hint;
   if (s.from === 'slot') {
     const it = eqItem(H, s.k), w = heroWield(H); let acts = '';
@@ -214,7 +214,7 @@ function invDock() {
 }
 ACT.isel = function (d) { const dbl = dblTap(d, 'i|' + (d.id || d.k)); if (dbl) return dbl(d); UI.isel = d.from === 'slot' ? { from: 'slot', k: d.k } : { from: 'bag', id: d.id }; keepScroll(renderPanel); };
 ACT.bagf = function (d) { UI.bagF = d.f; keepScroll(renderPanel); };
-ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } const it = ITEM[d.id], r = doEquip(G.player, d.id); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
-ACT.unequip = function (d) { if (NET.on) { NET.send({ t: 'unequip', slot: d.slot }); sfx('click'); return; } const id = heroEq(G.player.hero)[d.slot]; if (doUnequip(G.player, d.slot)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
-ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); sfx('click'); return; } if (doWield(G.player, d.sel)) sfx('click'); keepScroll(renderPanel); };
+ACT.equip = function (d) { if (NET.on) { NET.send({ t: 'equip', id: d.id }); sfx('order'); return; } const it = ITEM[d.id], r = doEquip(G.player, d.id, invWho(G.player)); if (r.ok) { sfx('order'); UI.isel = { from: 'slot', k: it.slot }; if (r.note) toast(r.note); } else if (r.note) toast(r.note); keepScroll(renderPanel); };
+ACT.unequip = function (d) { if (NET.on) { NET.send({ t: 'unequip', slot: d.slot }); sfx('click'); return; } const H = invWho(G.player), id = heroEq(H)[d.slot]; if (doUnequip(G.player, d.slot, H)) { sfx('click'); UI.isel = { from: 'bag', id }; } keepScroll(renderPanel); };
+ACT.wield = function (d) { if (NET.on) { NET.send({ t: 'wield', sel: d.sel }); sfx('click'); return; } if (doWield(G.player, d.sel, invWho(G.player))) sfx('click'); keepScroll(renderPanel); };
 ACT.inv = function () { openPanel('inv'); };

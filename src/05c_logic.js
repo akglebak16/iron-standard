@@ -23,7 +23,7 @@ function doPerk(P, id) { const H = P.hero; if (perkWhy(H, id)) return false; H.p
 function doAccept(P, s, qid) { const q = (s.board || []).find(x => x.id === qid); if (!q) return 'Задание уже взято.'; return acceptQuest(P, q); }
 
 /* ---------- встреча и бой ---------- */
-function relativePowerOf(P, p) { const a = strength(P.troops) + 8, b = p.str !== undefined && !p.troops ? p.str : partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
+function relativePowerOf(P, p) { const a = strength(P.troops) + compStr(P) + 8, b = p.str !== undefined && !p.troops ? p.str : partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); relWatch(P); }
 function encFlee(P, p) {
   const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0) + perkFx(P.hero).flee, .12, .9);
@@ -32,13 +32,16 @@ function encFlee(P, p) {
 }
 function battleCfgFor(P, p) {
   return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
-    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9) };
+    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9),
+    comps: compsBattle(P), csurv: compFx(P) ? compFx(P).f.surv : 0 }; // спутники и лекарь среди них: см. 05e_comps.js
+
 }
 function autoResult(P, p) {
-  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + 10, sb = partyStr(p) * (p.kind === 'siege' ? 1.35 : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + compStr(P) + 10, sb = partyStr(p) * (p.kind === 'siege' ? 1.35 : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
   const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
   for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
   if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
+  compsAuto(P, res);
   return res;
 }
 function applyBattleResult(P, res, p) {
@@ -61,11 +64,11 @@ function applyBattleResult(P, res, p) {
     if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
     logW('Ты потерпел поражение от «' + p.name + '».', 1, P);
   }
-  const cap = p.kind === 'siege' ? siegeAfter(P, res, p) : null;
+  const cap = p.kind === 'siege' ? siegeAfter(P, res, p) : null, comps = compsAfter(P, res);
   relWatch(P);
   while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts += PTS_LEVEL; H.pp += PP_LEVEL; lvl++; }
   if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Очки: атрибуты +' + PTS_LEVEL * lvl + ', перки +' + PP_LEVEL * lvl + '.', 3, P); }
-  return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl, captured: cap };
+  return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl, captured: cap, comps };
 }
 
 /* ---------- осада ---------- */

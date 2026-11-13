@@ -1,7 +1,7 @@
 // Загружает общую симуляцию (те же файлы, что и в браузере) в изолированную область видимости.
 const fs = require('fs'), path = require('path');
 const SRC = path.join(__dirname, '..', 'src');
-const FILES = ['01_core.js', '01b_gear.js', '01c_perks.js', '03_battle.js', '05_world.js', '05c_logic.js', '05d_trade.js'];
+const FILES = ['01_core.js', '01b_gear.js', '01c_perks.js', '03_battle.js', '05_world.js', '05c_logic.js', '05d_trade.js', '05e_comps.js'];
 const prelude = `
 function sfx(n, u) { if (typeof B !== 'undefined' && B && B.ev) B.ev.push(['s', n, u && u.id !== undefined ? u.id : -1]); }
 `;
