@@ -6,14 +6,16 @@
 
 const GOODS = {
   grain:   { n: 'Зерно',    p: 14,  w: 1,   c: '#c9a24a', raw: 1, make: ['emp', 'kin'],  need: ['nord', 'khan', 'emi'] },
-  salt:    { n: 'Соль',     p: 40,  w: 1,   c: '#dfe3e6', make: ['khan', 'emi'], need: ['nord', 'emp', 'kin'] },
-  ale:     { n: 'Эль',      p: 28,  w: 1.5, c: '#a8741f', make: ['nord', 'kin'], need: ['emp', 'khan', 'emi'] },
-  iron:    { n: 'Железо',   p: 60,  w: 2,   c: '#7e868e', make: ['nord'], need: ['emp', 'khan', 'kin', 'emi'] },
+  salt:    { n: 'Соль',     p: 40,  w: 1,   c: '#dfe3e6', make: ['khan', 'emi'], need: ['nord', 'emp', 'kin', 'dom', 'pact'] },
+  ale:     { n: 'Эль',      p: 28,  w: 1.5, c: '#a8741f', make: ['nord', 'kin', 'dom', 'pact'], need: ['emp', 'khan', 'emi'] },
+  iron:    { n: 'Железо',   p: 60,  w: 2,   c: '#7e868e', make: ['nord'], need: ['emp', 'khan', 'kin', 'emi', 'dom', 'pact'] },
   leather: { n: 'Кожа',     p: 45,  w: 1,   c: '#7a4e2c', raw: 1, make: ['khan', 'emi'], need: ['nord', 'emp', 'kin'] },
-  furs:    { n: 'Меха',     p: 110, w: 1,   c: '#5b4636', raw: 1, make: ['nord'], need: ['emp', 'khan', 'kin', 'emi'] },
-  cloth:   { n: 'Сукно',    p: 75,  w: 1,   c: '#6d5aa0', make: ['emp', 'kin'],  need: ['nord', 'khan', 'emi'] },
-  wine:    { n: 'Вино',     p: 90,  w: 1.5, c: '#8a1f3a', lux: 1, make: ['emp', 'kin'],  need: ['nord', 'khan', 'emi'] },
-  spice:   { n: 'Пряности', p: 220, w: .3,  c: '#c4622a', lux: 1, make: ['khan', 'emi'], need: ['nord', 'emp', 'kin'] }
+  furs:    { n: 'Меха',     p: 110, w: 1,   c: '#5b4636', raw: 1, make: ['nord', 'dom'], need: ['emp', 'khan', 'kin', 'emi', 'pact'] },
+  cloth:   { n: 'Сукно',    p: 75,  w: 1,   c: '#6d5aa0', make: ['emp', 'kin'],  need: ['nord', 'khan', 'emi', 'dom', 'pact'] },
+  wine:    { n: 'Вино',     p: 90,  w: 1.5, c: '#8a1f3a', lux: 1, make: ['emp', 'kin'],  need: ['nord', 'khan', 'emi', 'dom', 'pact'] },
+  spice:   { n: 'Пряности', p: 220, w: .3,  c: '#c4622a', lux: 1, make: ['khan', 'emi'], need: ['nord', 'emp', 'kin', 'dom', 'pact'] },
+  potato:  { n: 'Картошка', p: 12,  w: 1,   c: '#b99a5b', raw: 1, make: ['dom'], need: ['nord', 'emp', 'khan', 'kin', 'emi', 'pact'] }, // особый товар Мядельского доминиона
+  zurek:   { n: 'Журек',    p: 46,  w: 1.5, c: '#d8d0a2', make: ['pact'], need: ['nord', 'emp', 'khan', 'kin', 'emi', 'dom'] } // особый товар Варшавско-Познаньского пакта
 };
 const GEAR_APPEAR = [.6, .42, .28, .16];  // шанс, что вещь такого уровня есть у торговца при создании рынка (до поправки на фракцию)
 const GEAR_DAILY = [.13, .09, .06, .035]; // шанс, что отсутствующая вещь появится за день

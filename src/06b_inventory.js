@@ -109,7 +109,7 @@ function itemDock(it, o) {
     if (it.dmg !== undefined) {
       st.push(stat('Урон', it.dmg, o.cmp ? cmpDelta(it, cur, 'dmg') : ''), stat('Хват', it.hands === 2 ? 'двуручное' : 'одноручное'));
       if (it.rng) st.push(stat('Дальность', it.range), stat('Перезарядка', it.cd + ' с')); else st.push(stat('Темп', swingLabel(it.spd)), stat('Длина', it.reach ? '+' + it.reach : 'обычная'));
-    } else if (it.slot === 'shield') st.push(stat('Блок', pc(it.v), o.cmp ? cmpDelta(it, cur, 'v') : ''));
+    } else if (it.slot === 'shield') st.push(stat('Блок', pc(it.v), o.cmp ? cmpDelta(it, cur, 'v') : ''), stat('От стрел', '+' + pc(shieldArrow(it.look))));
     else if (it.slot === 'horse') st.push(stat('Скорость', it.v, o.cmp ? cmpDelta(it, cur, 'v') : ''));
     else st.push(stat('Броня', '+' + it.v, o.cmp ? cmpDelta(it, cur, 'v') : ''));
     if (it.w) st.push(stat('Вес', it.w));

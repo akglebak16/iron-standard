@@ -8,7 +8,7 @@ const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В 
 const BATTLE_CAP = 150, JOIN_CAP = 40, UNDEAD_CAP = 300; // нежити на поле больше фигур: она берёт числом // юнитов на сторону в бою; и сколько юнитов приводит второй игрок, присоединившийся к бою
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
   const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
-  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
+  return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc) * ACC_K, shb: heroShield(h) ? shieldArrow(heroShield(h).look) : 0, anticav: W.anticav ? 1 : 0,
     cd: (W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1)) * (1 - F.cd), hp: Math.round((100 + h.vit * 14) * (1 + F.hp)), arm: Gr.arm + F.arm, dmg: (W.dmg + h.str * (W.rng ? W.bs : 3)) * (1 + F.dmg + heavy),
     spd: (m ? Gr.horse.v : 86 + h.agi * 3) * (1 + F.run), block: Gr.block };
 }
@@ -168,7 +168,8 @@ function aiUnit(u, dt) {
   if (u.wind >= 0) { u.wind -= dt; if (u.wind < 0) { const w = u.windT; if (w && alive(w) && Math.hypot(w.x - u.x, w.y - u.y) < u.r + w.r + 16 + t.reach) strike(u, w); } }
 }
 function blocked(t, fromA, kind) {
-  let ch = t.block || 0; if (t.isHero && !t.ai) ch = t.blocking ? Math.min(.97, ch + .13) : ch * .25; else if (kind === 'arrow') ch *= .85;
+  let ch = t.block || 0, ar = kind === 'arrow', sb = t.t.shb || 0; // щит заметно лучше держит стрелы и дротики; без щита шанс ниже, чем против клинка
+  if (t.isHero && !t.ai) ch = t.blocking ? Math.min(.97, ch + .13 + (ar ? sb * 1.5 : 0)) : ch * .25 + (ar ? sb * .5 : 0); else if (ar) ch = sb ? Math.min(.88, ch * 1.25 + sb) : ch * .85;
   if (ch <= 0 || Math.abs(angDiff(fromA, t.face)) > 1.25) return false; return Math.random() < ch;
 }
 /* нежить: скелеты плохо держат дробящий удар, а стрелы пролетают сквозь рёбра; мертвецам дробящее тоже чуть больнее */
@@ -187,7 +188,7 @@ function chargeHit(a, e, v) {
   B.hk = 'charge'; B.hdt = 'blunt'; if (alive(e)) hurt(e, dmg, a, 0); sfx('thud', e); fxDust(e.x, e.y);
 }
 function shoot(u, e, d) {
-  const dur = d / 430 + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = d * u.t.acc;
+  const dur = d / (u.t.wpn && u.t.wpn.wt === 'throw' ? THROW_V : SHOT_V) + .16, px = e.x + e.vx * dur * .8, py = e.y + e.vy * dur * .8, s = 5 + d * u.t.acc;
   B.arrows.push({ x0: u.x, y0: u.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: u.side, dmg: u.dmg, src: u, pierce: u.t.pierce || (u.t.wpn && u.t.wpn.pb) || 0, dt: u.t.wpn && u.t.wpn.dt, jv: !!(u.t.wpn && u.t.wpn.wt === 'throw'), xb: (u.t.look && u.t.look.weapon === 'xbow') || !!(u.t.wpn && u.t.wpn.wt === 'xbow') });
   u.bump = .5; sfx('bow', u); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), u.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
 }
@@ -250,7 +251,7 @@ function heroStrike(h) {
 function heroShoot(h) { // выстрел или бросок в сторону курсора: цель выбирается в узком конусе (формат ввода h.inp не меняется)
   const W = h.t.wpn, R = h.t.range || W.range, a0 = h.swingA; let best = null, bs = 1e9;
   for (const e of B.units) { if (e.side === h.side || !alive(e)) continue; const dx = e.x - h.x, dy = e.y - h.y, d = Math.hypot(dx, dy); if (d > R || d < 14) continue; const da = Math.abs(angDiff(Math.atan2(dy, dx), a0)); if (da > .2) continue; const sc = da * 420 + d * .12; if (sc < bs) { bs = sc; best = e; } }
-  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? 330 : 430) + .16, s = d * (h.t.acc || W.acc || .05);
+  const d = best ? Math.hypot(best.x - h.x, best.y - h.y) : R * .7, dur = d / (W.wt === 'throw' ? THROW_V : SHOT_V) + .16, s = 5 + d * (h.t.acc || W.acc * ACC_K || .05 * ACC_K);
   const px = best ? best.x + best.vx * dur * .8 : h.x + Math.cos(a0) * d, py = best ? best.y + best.vy * dur * .8 : h.y + Math.sin(a0) * d;
   B.arrows.push({ x0: h.x, y0: h.y - 16, x1: px + (Math.random() + Math.random() - 1) * s, y1: py + (Math.random() + Math.random() - 1) * s, t: 0, dur, side: h.side, dmg: h.dmg, src: h, pierce: W.pb || 0, dt: W.dt, xb: W.wt === 'xbow', jv: W.wt === 'throw' });
   h.bump = .5; sfx('bow', h); const ar = B.arrows[B.arrows.length - 1]; ev(['a', Math.round(ar.x0), Math.round(ar.y0), Math.round(ar.x1), Math.round(ar.y1), +dur.toFixed(2), h.side, ar.xb ? 1 : 0, ar.jv ? 1 : 0]);
