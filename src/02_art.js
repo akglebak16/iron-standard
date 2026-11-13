@@ -19,7 +19,12 @@ function drawBase(g, cx, cy, rx, ry, pal) {
   g.strokeStyle = pal.c1; g.lineWidth = 2.2; ell(g, cx, cy, rx - 2.6, ry - 1.6); g.stroke();
   g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = .8; g.beginPath(); g.ellipse(cx, cy, rx - 1, ry - .6, 0, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
 }
-function torsoPath(g) { g.beginPath(); g.moveTo(21.5, 73); g.bezierCurveTo(20.5, 65, 17.5, 57, 18.5, 50.5); g.quadraticCurveTo(19.5, 46, 27, 44.6); g.lineTo(31.5, 42.6); g.lineTo(43.5, 42.6); g.lineTo(48, 44.6); g.quadraticCurveTo(55.5, 46, 56.5, 50.5); g.bezierCurveTo(57.5, 57, 54.5, 65, 53.5, 73); g.quadraticCurveTo(37.5, 79, 21.5, 73); g.closePath(); }
+/* ARMS: стройный торс с руками (true) или прежние пропорции без рук (false). Игрок выбрал прежние. */
+const ARMS = false;
+function torsoPath(g) { g.beginPath();
+  if (ARMS) { g.moveTo(21.5, 73); g.bezierCurveTo(20.5, 65, 17.5, 57, 18.5, 50.5); g.quadraticCurveTo(19.5, 46, 27, 44.6); g.lineTo(31.5, 42.6); g.lineTo(43.5, 42.6); g.lineTo(48, 44.6); g.quadraticCurveTo(55.5, 46, 56.5, 50.5); g.bezierCurveTo(57.5, 57, 54.5, 65, 53.5, 73); g.quadraticCurveTo(37.5, 79, 21.5, 73); }
+  else { g.moveTo(15, 71); g.bezierCurveTo(11, 60, 13, 50, 24, 46); g.lineTo(31, 43); g.lineTo(43, 43); g.lineTo(50, 46); g.bezierCurveTo(61, 50, 61, 60, 57, 71); g.quadraticCurveTo(36, 78, 15, 71); }
+  g.closePath(); }
 /* --- руки: плечо → локоть → кисть, цвет и фактура рукава по броне --- */
 const SH_L = [20.5, 50.5], SH_R = [54.5, 50.5];
 const FISTS = { sword: [58.4, 57.5], sabre: [58.4, 57.5], axe: [58.3, 56], mace: [58.3, 56], club: [58, 56], spear: [59, 56], halberd: [59, 52], lance: [59.4, 54], bow: [64.6, 42], xbow: [55, 55] };
@@ -230,13 +235,13 @@ function drawBust(g, L, pal, v, o) {
   const body = o.part !== 'wpn', arm = o.part !== 'body', hasSh = L.shield && L.shield !== 'none';
   if (body) {
     if (L.weapon === 'bow' || L.weapon === 'xbow') quiver(g);
-    if (hasSh) drawArm(g, SH_L, [22, 61], -1, L, pal, v, false);
+    if (ARMS && hasSh) drawArm(g, SH_L, [22, 61], -1, L, pal, v, false);
     drawTorso(g, L, pal, R);
-    if (!hasSh) { const F = L.weapon === 'halberd' ? [50, 63] : L.weapon === 'xbow' ? [46, 57.6] : [19, 70.5]; drawArm(g, SH_L, F, F[0] > 30 ? 1 : -1, L, pal, v, false); if (!sleeveOf(L, pal, v).bone) fist(g, F[0], F[1], v); }
+    if (ARMS && !hasSh) { const F = L.weapon === 'halberd' ? [50, 63] : L.weapon === 'xbow' ? [46, 57.6] : [19, 70.5]; drawArm(g, SH_L, F, F[0] > 30 ? 1 : -1, L, pal, v, false); if (!sleeveOf(L, pal, v).bone) fist(g, F[0], F[1], v); }
     if (o.nohead) drawStump(g, v); else { drawHead(g, L, v); drawHelm(g, L, v, pal, R); }
     drawShield(g, L, pal, R);
   }
-  if (arm) { const F = FISTS[L.weapon] || [59.5, 69.5]; drawArm(g, SH_R, F, 1, L, pal, v, true); if (!L.weapon && !sleeveOf(L, pal, v).bone) fist(g, F[0], F[1], v); drawWeapon(g, L, pal, v); }
+  if (arm) { const F = FISTS[L.weapon] || [59.5, 69.5]; if (ARMS) { drawArm(g, SH_R, F, 1, L, pal, v, true); if (!L.weapon && !sleeveOf(L, pal, v).bone) fist(g, F[0], F[1], v); } drawWeapon(g, L, pal, v); }
   if (L.horse) g.restore();
 }
 const SPR = {}; const SS = 2;
