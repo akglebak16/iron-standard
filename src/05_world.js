@@ -76,7 +76,7 @@ function genRecruits(s) {
 function lordName(fac) { const f = FACTIONS[fac]; return f.title[0].toUpperCase() + f.title.slice(1) + ' ' + unitName(fac); }
 function partyStr(p) { return strength(p.troops); }
 /* Армии лордов: большие, как в Mount & Blade. Начальный размер, размер нового лорда (после гибели прежнего) и до скольких лорд пополняется в своих землях */
-const LORD_MIN = 150, LORD_MAX = 220, LORD_NEW_MIN = 110, LORD_NEW_MAX = 170, LORD_FULL = 190;
+const LORD_MIN = 130, LORD_MAX = 190, LORD_NEW_MIN = 95, LORD_NEW_MAX = 145, LORD_FULL = 165;
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
