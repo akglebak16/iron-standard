@@ -39,6 +39,12 @@ const FACTIONS = {
   khan: { name: 'Кеширское ханство', gen: 'Ханства', c1: '#1e6a5e', c2: '#e6c868', emblem: 'moon', title: 'нойон', biome: 'steppe',
     names: ['Темир', 'Батур', 'Арслан', 'Тогрул', 'Алтан', 'Есен', 'Кайрат', 'Бори', 'Даян', 'Сартак', 'Очир', 'Мерген', 'Тархан', 'Булат'],
     nicks: ['Сокол', 'Быстрый', 'Косой', 'Степной Волк', 'Меткий', 'Молодой', 'Одноглазый', 'Буран'] },
+  kin: { name: 'Королевство Галлия', gen: 'Королевства', c1: '#5a3a92', c2: '#f0e2a6', emblem: 'lily', title: 'граф', biome: 'grass',
+    names: ['Гийом', 'Анри', 'Рено', 'Тибо', 'Ожье', 'Бертран', 'Гуго', 'Роже', 'Ги', 'Жеффруа', 'Ансельм', 'Эд', 'Рауль', 'Фульк'],
+    nicks: ['Храбрый', 'Рыжий', 'Толстый', 'Благочестивый', 'Лысый', 'Добрый', 'Строитель', 'Сильный'] },
+  emi: { name: 'Эмират Хайрат', gen: 'Эмирата', c1: '#c4571f', c2: '#f4e8c4', emblem: 'octa', title: 'эмир', biome: 'arid',
+    names: ['Рашид', 'Хасан', 'Идрис', 'Тарик', 'Мусса', 'Юсуф', 'Ибрагим', 'Омар', 'Салим', 'Фарид', 'Захир', 'Малик', 'Джафар', 'Камиль'],
+    nicks: ['Лев', 'Мудрый', 'Одноглазый', 'Золотой', 'Быстрый', 'Меченый', 'Щедрый', 'Пустынный'] },
   bandit: { name: 'Разбойники', gen: 'разбойников', c1: '#3b3a36', c2: '#9a2f24', emblem: 'skull', title: 'атаман', biome: 'grass',
     names: ['Гнус', 'Рябой', 'Хорёк', 'Кабан', 'Щербатый', 'Ворон', 'Клык', 'Лис', 'Шило', 'Горбун', 'Жбан', 'Косарь', 'Мясник', 'Тихон'],
     nicks: ['', '', '', 'Живодёр', 'Висельник', 'Душегуб', 'Беглый'] },
@@ -90,6 +96,25 @@ T('k2a', 'Степной стрелок', 'khan', 2, 'arc', { helm: 'furcap', ar
 T('k2c', 'Всадник', 'khan', 2, 'cav', { helm: 'furcap', armor: 'lamellar', weapon: 'sabre', shield: 'small', horse: 'dun', stache: 1 }, ['k3c'], { spd: 158 });
 T('k3h', 'Конный лучник', 'khan', 3, 'har', { helm: 'pointed', armor: 'lamellar', weapon: 'bow', horse: 'dun', stache: 1 }, []);
 T('k3c', 'Нукер', 'khan', 3, 'cav', { helm: 'pointed', armor: 'goldlam', weapon: 'lance', shield: 'small', horse: 'black', stache: 1 }, [], { spd: 154 });
+// Королевство Галлия — рыцарская конница, сержанты и длинные луки
+T('f1', 'Ополченец', 'kin', 1, 'inf', { helm: 'cap', armor: 'padded', weapon: 'sword', shield: 'round', beard: .3 }, ['f2', 'f2s', 'f2a', 'f2c']);
+T('f2', 'Сержант', 'kin', 2, 'inf', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', beard: .3 }, ['f3'], { arm: 30, hp: 66 });
+T('f3', 'Латник', 'kin', 3, 'inf', { helm: 'great', armor: 'plate', weapon: 'sword', shield: 'kite', beard: .2 }, [], { arm: 55, hp: 92, dmg: 23 });
+T('f2s', 'Копейщик', 'kin', 2, 'spr', { helm: 'kettle', armor: 'padded', weapon: 'spear', shield: 'round', beard: .4 }, ['f3s']);
+T('f3s', 'Протазанщик', 'kin', 3, 'spr', { helm: 'coif', armor: 'mailtab', weapon: 'halberd', beard: .4 }, [], { dmg: 24, block: .12 });
+T('f2a', 'Лучник', 'kin', 2, 'arc', { helm: 'cap', armor: 'padded', weapon: 'bow', beard: .5 }, ['f3a'], { range: 380 });
+T('f3a', 'Йомен', 'kin', 3, 'arc', { helm: 'coif', armor: 'mail', weapon: 'bow', beard: .5 }, [], { dmg: 20, range: 420, arm: 22 });
+T('f2c', 'Конный сержант', 'kin', 2, 'cav', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', horse: 'chestnut', beard: .3 }, ['f3c'], { arm: 29, spd: 140, hp: 76 });
+T('f3c', 'Рыцарь', 'kin', 3, 'cav', { helm: 'great', armor: 'plate', weapon: 'lance', shield: 'kite', horse: 'grey' }, [], { arm: 58, spd: 128, hp: 114, dmg: 25 });
+// Эмират Хайрат — лёгкая конница, лучники и мамлюки
+T('m1', 'Воин пустыни', 'emi', 1, 'inf', { helm: 'turban', armor: 'tunic', weapon: 'sabre', shield: 'small', beard: .8 }, ['m2', 'm2a', 'm2c'], { spd: 63 });
+T('m2', 'Гулям', 'emi', 2, 'inf', { helm: 'turban', armor: 'padded', weapon: 'sabre', shield: 'round', beard: .8 }, ['m3'], { arm: 20 });
+T('m3', 'Страж эмира', 'emi', 3, 'inf', { helm: 'turbanm', armor: 'mail', weapon: 'sabre', shield: 'round', beard: .9 }, [], { arm: 40, dmg: 22 });
+T('m2s', 'Копейщик-бербер', 'emi', 2, 'spr', { helm: 'turban', armor: 'padded', weapon: 'spear', shield: 'small', beard: .8 }, ['m3c']);
+T('m2a', 'Лучник пустыни', 'emi', 2, 'arc', { helm: 'turban', armor: 'tunic', weapon: 'bow', beard: .7 }, ['m3h'], { acc: .04 });
+T('m2c', 'Лёгкий всадник', 'emi', 2, 'cav', { helm: 'turban', armor: 'padded', weapon: 'sabre', shield: 'small', horse: 'dun', beard: .7 }, ['m3c', 'm3h'], { spd: 158, arm: 16 });
+T('m3h', 'Конный лучник', 'emi', 3, 'har', { helm: 'turbanm', armor: 'lamellar', weapon: 'bow', horse: 'dun', beard: .7 }, []);
+T('m3c', 'Мамлюк', 'emi', 3, 'cav', { helm: 'turbanm', armor: 'goldlam', weapon: 'lance', shield: 'small', horse: 'black', beard: .6 }, [], { spd: 150, arm: 40, hp: 96 });
 // Разбойники
 T('b1', 'Грабитель', 'bandit', 1, 'inf', { helm: 'hood', armor: 'tunic', weapon: 'club', beard: .6 }, [], { block: .08, hp: 40 });
 T('b2', 'Разбойник', 'bandit', 2, 'inf', { helm: 'cap', armor: 'padded', weapon: 'axe', shield: 'round', beard: .7 }, [], { arm: 16 });

@@ -12,7 +12,7 @@ function saveGame(silent) { if (!G || MODE !== 'world' || NET.on) return; try { 
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 function loadGame() {
   let raw; try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { } if (!raw) return toast('Сохранения нет');
-  try { const d = JSON.parse(raw); G = d; genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); G.player = G.players[0]; const b = BANNERS[G.player.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2; closeModal(); enterWorld(); } catch (e) { console.error(e); toast('Сохранение повреждено'); }
+  try { const d = JSON.parse(raw); G = d; if (d.rv === undefined) d.rv = 0; genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); G.player = G.players[0]; const b = BANNERS[G.player.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2; closeModal(); enterWorld(); } catch (e) { console.error(e); toast('Сохранение повреждено'); }
 }
 function showLoad(on) { el('load').hidden = !on; }
 function startNew(o) { MODE = 'loading'; B = null; el('title').hidden = true; showLoad(true); setTimeout(() => { newGame(o); enterWorld(); }, 30); }
@@ -26,8 +26,8 @@ function gotoTitle() { MODE = 'title'; el('whud').hidden = true; el('bhud').hidd
 function buildTitleMenu() { el('tmenu').innerHTML = '<button class="btn pri" data-act="newgame">Новая игра</button>' + (NET.avail ? '<button class="btn pri" data-act="mp">Играть вдвоём</button>' : '') + (hasSave() ? '<button class="btn" data-act="cont">Продолжить</button>' : '') + '<button class="btn" data-act="quick">Быстрый бой</button><button class="btn" data-act="help">Как играть</button><button class="btn" data-act="snd">Звук: ' + (AU.on ? 'вкл' : 'выкл') + '</button>'; }
 ACT.snd = function () { auSetOn(!AU.on); if (MODE === 'title') buildTitleMenu(); else openMenu(); };
 function startDemo() {
-  const fs = ['nord', 'emp', 'khan'], a = pick(fs), b = pick(fs.filter(x => x !== a)); FACTIONS.player.c1 = FACTIONS.player.c1 || '#c08a2e';
-  startBattle({ demo: true, pl: genTroops(a, 38, .6), en: genTroops(b, 38, .6), pfac: a, efac: b, biome: pick(['grass', 'grass', 'snow', 'steppe']), seed: rint(1, 1e9) });
+  const fs = REAL_F, a = pick(fs), b = pick(fs.filter(x => x !== a)); FACTIONS.player.c1 = FACTIONS.player.c1 || '#c08a2e';
+  startBattle({ demo: true, pl: genTroops(a, 38, .6), en: genTroops(b, 38, .6), pfac: a, efac: b, biome: pick(['grass', 'grass', 'snow', 'steppe', 'arid']), seed: rint(1, 1e9) });
   B.cam.z = clamp(VIEW.h / 760, .7, 1.2); B.speed = 1.4;
 }
 
@@ -45,7 +45,9 @@ function readHeroInput() {
   const h = B && B.hero; if (!h || B.cfg.demo) return; const k = IN.keys; let dx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0), dy = (k.KeyS || k.ArrowDown ? 1 : 0) - (k.KeyW || k.ArrowUp ? 1 : 0);
   if (IN.jx || IN.jy) { dx = IN.jx; dy = IN.jy; }
   const w = IN.touch ? null : s2w(IN.mx, IN.my); let face; if (w) face = Math.atan2(w.y - h.y, w.x - h.x); else if (dx || dy) face = Math.atan2(dy, dx);
-  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0, sw: (k.KeyX || IN.sw) ? 1 : 0 };
+  let sw = (k.KeyX || IN.sw) ? 1 : 0;
+  if (IN.swTo) { if (B.cfg.hero.sel === IN.swTo || --IN.swT <= 0) IN.swTo = null; else { IN.swP = !IN.swP; if (IN.swP) sw = 1; } } // кнопка в панели героя: импульсы, пока не закончится замах и смена не пройдёт
+  h.inp = { dx, dy, face, atk: IN.atk ? 1 : 0, blk: IN.block ? 1 : 0, spr: (k.ShiftLeft || k.ShiftRight || IN.sprint) ? 1 : 0, sw };
 }
 function launchSiege(p) { const P = G.player; auInit(); P.busy = 'battle'; enterBattle(Object.assign(siegeCfgFor(P, p), { party: p, onEnd: res => battleEnded(res, p) })); }
 function autoPlayer(p) { battleEnded(autoResult(G.player, p), p); }
@@ -68,7 +70,7 @@ function quickEnded(res) { openModal('<div class="whead"><h2>' + (res.win ? 'П�
 function buildBattleHud() {
   const hero = B.cfg.hero, bt = el('bbtns'), dm = B.cfg.demo;
   bt.innerHTML = '<div class="sq plank thin" data-b="pause" title="Пауза (P)">' + ic('pause') + '</div><div class="sq plank thin" data-b="speed" title="Скорость (T)">' + ic('hourglass') + '<span class="kb" id="spv">×1</span></div><div class="sq plank thin" data-b="retreat" title="Отступить">' + ic('retreat') + '</div><div class="sq plank thin" data-b="menu" title="Меню (Esc)">' + ic('gear') + '</div>';
-  el('bhero').innerHTML = '<div class="nm"><span id="hn"></span><small id="hs"></small></div><div class="bgrid"><div class="bar st"><i id="bst"></i><span id="tst"></span></div><div class="bar mo"><i id="bmo"></i><span id="tmo"></span></div><div class="bar ar"><i id="bar"></i><span id="tar"></span></div><div class="bar hp"><i id="bhp"></i><span id="thp"></span></div></div>';
+  el('bhero').innerHTML = '<div class="nm"><span id="hn"></span><small id="hs"></small></div><div class="bgrid"><div class="bar st"><i id="bst"></i><span id="tst"></span></div><div class="bar mo"><i id="bmo"></i><span id="tmo"></span></div><div class="bar ar"><i id="bar"></i><span id="tar"></span></div><div class="bar hp"><i id="bhp"></i><span id="thp"></span></div></div><div class="wsw" id="wsw" title="Смена оружия: клавиша X или клик"><div class="wb" data-w="melee" id="wbm">' + ic('sword') + '<span class="wn" id="wnm"></span></div><div class="wb" data-w="ranged" id="wbr">' + ic('bow') + '<span class="wn" id="wnr"></span></div><span class="kb">X</span></div>';
   const gs = [[0, 'Пехота', 'inf'], [1, 'Стрелки', 'arc'], [2, 'Конница', 'cav'], [3, 'Все', null]];
   el('bgroups').innerHTML = gs.map(g => '<div class="grp" data-g="' + g[0] + '"><span class="kb">' + (g[0] + 1) + '</span><img alt="" id="gi' + g[0] + '"><b id="gc' + g[0] + '">0</b>' + g[1] + '</div>').join('');
   el('bords').innerHTML = [['hold', 'hold', 'Q', 'Держать позицию'], ['follow', 'follow', 'E', 'За мной'], ['charge', 'charge', 'R', 'В атаку'], ['back', 'back', 'F', 'Отойти']].map(o => '<div class="ord" data-o="' + o[0] + '" title="' + o[3] + ' (' + o[2] + ')">' + ic(o[1]) + '<span class="kb">' + o[2] + '</span></div>').join('');
@@ -77,10 +79,11 @@ function buildBattleHud() {
   el('bhero').hidden = dm || !hero; el('borders').hidden = dm; el('bbtns').hidden = dm; el('btop').hidden = false;
 }
 function updateBattleHud() {
-  if (!B) return; const n = B.n || B.start; let a = 0, b = 0; for (const u of B.units) if (fit(u)) { if (u.side) b++; else a++; }
+  if (!B) return; const n = B.n || B.start; let a = 0, b = 0; for (const u of B.units) if (fit(u)) { if (u.side) b += u.w || 1; else a += u.w || 1; } a = Math.round(a); b = Math.round(b);
   el('cntA').textContent = a; el('cntB').textContent = b; const t = Math.floor(B.t); el('btimer').textContent = Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   const h = B.hero; if (h) { el('hn').textContent = h.name; el('hs').textContent = B.heroDown ? 'ранен' : (G && G.player && !B.cfg.quick ? 'уровень ' + G.player.hero.lvl + ' · ' : '') + (h.t.wpn ? h.t.wpn.name + (heroEq(B.cfg.hero).ranged ? ' [X]' : '') : ''); const hp = clamp(h.hp / h.maxHp, 0, 1); el('bhp').style.setProperty('--p', hp * 100 + '%'); el('thp').textContent = Math.max(0, Math.round(h.hp)) + ' / ' + Math.round(h.maxHp); el('bst').style.setProperty('--p', h.stam + '%'); el('tst').textContent = 'Силы ' + Math.round(h.stam) + ' / 100'; el('bar').style.setProperty('--p', '100%'); el('tar').textContent = 'Броня ' + h.arm + (h.block ? ' · щит ' + Math.round(h.block * 100) + '%' : ''); let ml = 'Твёрдый'; const army = a / Math.max(1, B.count0[0]); ml = army > .75 ? 'Твёрдый' : army > .5 ? 'Держится' : army > .3 ? 'Колеблется' : 'Паникует'; el('bmo').style.setProperty('--p', clamp(army * 130, 6, 100) + '%'); el('tmo').textContent = 'Мораль: ' + ml; }
-  const c = [0, 0, 0]; const mp = myPid(); for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero && u.own === mp) c[u.t.grp]++; for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
+  if (h && B.cfg.hero) { const eq = heroEq(B.cfg.hero), sel = B.cfg.hero.sel === 'ranged' && eq.ranged ? 'ranged' : 'melee', nm = eq.melee ? EQ[eq.melee].name : 'Кулаки', nr = eq.ranged ? EQ[eq.ranged].name : 'нет дальнего'; const wk = sel + '|' + nm + '|' + nr; if (B.wk !== wk) { B.wk = wk; el('wnm').textContent = nm; el('wnr').textContent = nr; el('wbm').classList.toggle('on', sel === 'melee'); el('wbr').classList.toggle('on', sel === 'ranged'); el('wbr').classList.toggle('off', !eq.ranged); } }
+  const c = [0, 0, 0]; const mp = myPid(); for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero && u.own === mp) c[u.t.grp] += u.w || 1; for (let k = 0; k < 3; k++) c[k] = Math.round(c[k]); for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
   for (const g of document.querySelectorAll('#bgroups .grp')) g.classList.toggle('on', +g.dataset.g === B.sel);
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed;
@@ -151,7 +154,7 @@ function worldTip(sx, sy) {
   const tip = el('tip'); if (MODE !== 'world' || UI.open) { tip.hidden = true; return; } const w = s2wW(sx, sy); let html = null;
   for (const p of G.parties) { if (p.hide || Math.hypot(p.x - w.x, p.y - w.y) > 30) continue; const pw = relativePower(p), hs = isHostileToPlayer(p); html = '<b>' + (p.kind === 'bandit' ? 'Разбойники' : p.name) + '</b><br>' + FACTIONS[p.fac].name + ' · ' + troopCount(p.troops) + ' бойцов<br><span class="tag ' + pw[1] + '">' + pw[0] + '</span>' + (hs ? '<span class="tag r">враг</span>' : ''); break; }
   if (!html) for (const s of G.settles) { if (Math.hypot(s.x - w.x, s.y - w.y) > 46) continue; html = '<b>' + s.name + '</b><br>' + KIND[s.kind] + ' · ' + (s.fac === 'player' ? 'твоё владение · гарнизон ' + troopCount(garrisonOf(s)) : FACTIONS[s.fac].gen) + (settleHostile(s, G.player) ? '<br><span class="tag r">враждебен</span> ' + (s.kind === 'village' ? 'ворота закрыты' : 'клик — осада, гарнизон ' + troopCount(garrisonOf(s))) : '') + (s.kind === 'camp' ? (s.camp ? '<br>Охраняет ' + troopCount(s.camp.troops) + ' головорезов' : '<br>Опустошено') : (s.fac === 'player' ? '' : '<br>Отношение: ' + relName(G.player.rel[s.fac]))); break; }
-  if (!html) { const t = terrAt(w.x, w.y); if (t === 0 || t === 4) html = null; }
+  if (!html) { const t = terrAt(w.x, w.y); if (t === 0 || t === 4 || t === 5) html = null; }
   if (html) { tip.innerHTML = html; tip.hidden = false; tip.style.left = Math.min(sx + 18, VIEW.w - 270) + 'px'; tip.style.top = Math.min(sy + 14, VIEW.h - 100) + 'px'; } else tip.hidden = true;
 }
 
@@ -184,7 +187,7 @@ function bindInput() {
   cv.addEventListener('mouseleave', () => { el('tip').hidden = true; });
   cv.addEventListener('mousedown', e => { auInit(); IN.mx = e.clientX; IN.my = e.clientY; if (MODE === 'battle') { if (e.button === 0) IN.atk = true; else if (e.button === 2) IN.block = true; } else if (MODE === 'world' && e.button === 0) drag = { x: e.clientX, y: e.clientY, cx: WC.x, cy: WC.y, moved: false }; });
   window.addEventListener('mouseup', e => { if (MODE === 'battle') { if (e.button === 0) IN.atk = false; if (e.button === 2) IN.block = false; } else if (drag) { if (!drag.moved && e.target === cv) worldClick(e.clientX, e.clientY); drag = null; } });
-  cv.addEventListener('wheel', e => { e.preventDefault(); const f = e.deltaY < 0 ? 1.1 : .91; if (MODE === 'world') WC.z = clamp(WC.z * f, .45, 1.8); else if (B) B.cam.z = clamp(B.cam.z * f, .55, 2); }, { passive: false });
+  cv.addEventListener('wheel', e => { e.preventDefault(); const f = e.deltaY < 0 ? 1.1 : .91; if (MODE === 'world') WC.z = clamp(WC.z * f, WW > 3000 ? .25 : .45, 1.8); else if (B) B.cam.z = clamp(B.cam.z * f, .55, 2); }, { passive: false });
   // тач
   const joy = el('joy'); let jid = null; const jset = (t) => { const r = joy.getBoundingClientRect(), dx = t.clientX - (r.left + r.width / 2), dy = t.clientY - (r.top + r.height / 2), l = Math.hypot(dx, dy), m = r.width / 2; const k = l > m ? m / l : 1; IN.jx = dx * k / m; IN.jy = dy * k / m; joy.firstElementChild.style.transform = 'translate(' + dx * k + 'px,' + dy * k + 'px)'; };
   joy.addEventListener('touchstart', e => { e.preventDefault(); IN.touch = true; jid = e.changedTouches[0].identifier; jset(e.changedTouches[0]); }, { passive: false });
@@ -198,6 +201,10 @@ function bindInput() {
   // кнопки интерфейса
   el('wspeed').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; auInit(); if (NET.on) { NET.send(b.id === 'bPause' ? { t: 'prop', k: 'pause', v: !G.paused } : { t: 'prop', k: 'speed', v: +b.dataset.sp }); return; } if (b.id === 'bPause') G.paused = !G.paused; else G.speed = +b.dataset.sp; sfx('click'); updateWorldHud(); });
   el('bbtns').addEventListener('click', e => { const b = e.target.closest('[data-b]'); if (!b || !B) return; sfx('click'); const a = b.dataset.b; if (NET.on && (a === 'pause' || a === 'speed')) toast('В сетевой игре бой нельзя ставить на паузу'); else if (a === 'pause') B.paused = !B.paused; else if (a === 'speed') cycleSpeed(); else if (a === 'menu') { if (!NET.on) B.paused = true; openMenu(); } else if (a === 'retreat') { if (NET.on) NET.send({ t: 'retreat' }); else if (!B.over) { B.over = B.t; B.win = false; blog('Отряд отступает!', 1); } } });
+  el('bhero').addEventListener('click', e => { const w = e.target.closest('.wb'); if (!w || !B || !B.hero || B.cfg.demo) return; const eq = heroEq(B.cfg.hero), to = w.dataset.w;
+    if (NET.on) return toast('В сетевом бою смена оружия пока недоступна');
+    if (to === 'ranged' && !eq.ranged) return toast('Дальнего оружия нет. Лук, арбалет или метательные копья можно надеть в обозе (I).');
+    if (B.cfg.hero.sel === to || (to === 'melee' && B.cfg.hero.sel !== 'ranged')) return; IN.swTo = to; IN.swT = 90; IN.swP = false; sfx('click'); });
   el('bgroups').addEventListener('click', e => { const g = e.target.closest('.grp'); if (g && B) { B.sel = +g.dataset.g; sfx('click'); } });
   el('bords').addEventListener('click', e => { const o = e.target.closest('.ord'); if (!o || !B || !B.hero) return; const h = B.hero, foe = centroid(1), a = foe ? Math.atan2(foe.y - h.y, foe.x - h.x) : 0; giveOrder(o.dataset.o, h.x + Math.cos(a) * 60, h.y + Math.sin(a) * 60); });
   el('blog').addEventListener('click', () => el('blog').classList.toggle('open'));
