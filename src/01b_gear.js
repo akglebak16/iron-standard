@@ -61,14 +61,14 @@ PA('pike', 'Пика', 1, 600, 42, 6, { reach: 40, look: 'spear', f: ['emp', 'ki
 /* Оружие дальнего боя (боеприпасы бесконечные). cd — перезарядка, сек; range — дальность; acc — разброс; pb — доп. пробитие;
    bs — сколько урона даёт каждая единица силы */
 const ranged = (id, name, tier, price, dmg, w, o) => E(id, name, 'ranged', tier, price, w, Object.assign({ rng: 1, dt: 'pierce', dmg, hands: 2, parry: 0, bs: 1.2 }, o));
-ranged('bow_hunt', 'Охотничий лук', 0, 120, 17, 1.5, { wt: 'bow', cd: .9, range: 330, acc: .05, look: 'bow', f: ['nord'] });
-ranged('bow_long', 'Длинный лук', 1, 560, 26, 2, { wt: 'bow', cd: 1.15, range: 420, acc: .04, look: 'bow', f: ['nord', 'kin'] });
-ranged('bow_comp', 'Составной лук', 2, 1300, 33, 2, { wt: 'bow', cd: 1, range: 400, acc: .035, look: 'bow', f: ['khan', 'emi'] });
-ranged('xbow_light', 'Лёгкий арбалет', 1, 700, 30, 4, { wt: 'xbow', cd: 2, range: 360, acc: .03, pb: .12, bs: 0, look: 'xbow', f: ['emp', 'kin'] });
-ranged('xbow_heavy', 'Тяжёлый арбалет', 2, 1700, 46, 6, { wt: 'xbow', cd: 2.9, range: 380, acc: .025, pb: .22, bs: 0, look: 'xbow', f: ['emp', 'kin'] });
-ranged('jav_dart', 'Дротики', 0, 110, 26, 2.5, { wt: 'throw', hands: 1, cd: 1.2, range: 210, acc: .06, bs: 2, look: 'spear' });
-ranged('jav_spear', 'Метательные копья', 1, 420, 38, 3.5, { wt: 'throw', hands: 1, cd: 1.4, range: 230, acc: .05, bs: 2, look: 'spear', f: ['nord', 'khan', 'emi'] });
-ranged('jav_heavy', 'Тяжёлые метательные копья', 2, 980, 50, 4.5, { wt: 'throw', hands: 1, cd: 1.6, range: 240, acc: .045, pb: .1, bs: 2, look: 'spear', f: ['khan', 'emi'] });
+ranged('bow_hunt', 'Охотничий лук', 0, 120, 17, 1.5, { wt: 'bow', cd: .9, range: 660, acc: .05, look: 'bow', f: ['nord'] });
+ranged('bow_long', 'Длинный лук', 1, 560, 26, 2, { wt: 'bow', cd: 1.15, range: 840, acc: .04, look: 'bow', f: ['nord', 'kin'] });
+ranged('bow_comp', 'Составной лук', 2, 1300, 33, 2, { wt: 'bow', cd: 1, range: 800, acc: .035, look: 'bow', f: ['khan', 'emi'] });
+ranged('xbow_light', 'Лёгкий арбалет', 1, 700, 30, 4, { wt: 'xbow', cd: 2, range: 720, acc: .03, pb: .12, bs: 0, look: 'xbow', f: ['emp', 'kin'] });
+ranged('xbow_heavy', 'Тяжёлый арбалет', 2, 1700, 46, 6, { wt: 'xbow', cd: 2.9, range: 760, acc: .025, pb: .22, bs: 0, look: 'xbow', f: ['emp', 'kin'] });
+ranged('jav_dart', 'Дротики', 0, 110, 26, 2.5, { wt: 'throw', hands: 1, cd: 1.2, range: 420, acc: .06, bs: 2, look: 'spear' });
+ranged('jav_spear', 'Метательные копья', 1, 420, 38, 3.5, { wt: 'throw', hands: 1, cd: 1.4, range: 460, acc: .05, bs: 2, look: 'spear', f: ['nord', 'khan', 'emi'] });
+ranged('jav_heavy', 'Тяжёлые метательные копья', 2, 980, 50, 4.5, { wt: 'throw', hands: 1, cd: 1.6, range: 480, acc: .045, pb: .1, bs: 2, look: 'spear', f: ['khan', 'emi'] });
 }
 
 /* ---------- герой и его слоты ---------- */
