@@ -170,6 +170,9 @@ function bindInput() {
       else if (e.code >= 'Digit1' && e.code <= 'Digit3') { const sp = [1, 2, 4][+e.code.slice(5) - 1]; if (NET.on) NET.send({ t: 'prop', k: 'speed', v: sp }); else { G.speed = sp; updateWorldHud(); } }
     }
   });
+  // ушёл из окна (Alt+Tab) с зажатой клавишей или кнопкой мыши — отпускаем всё, иначе герой «залипает»
+  const releaseAll = () => { IN.keys = {}; IN.atk = IN.block = false; IN.sprint = IN.sw = false; IN.jx = IN.jy = 0; drag = null; };
+  window.addEventListener('blur', releaseAll); document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
   window.addEventListener('keyup', e => { if (e.target && e.target.id === 'chatin') return; IN.keys[e.code] = false; });
   cv.addEventListener('contextmenu', e => e.preventDefault());
   cv.addEventListener('mousemove', e => { IN.mx = e.clientX; IN.my = e.clientY; if (MODE === 'world') { if (drag) { const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 6) drag.moved = true; if (drag.moved) { WC.free = true; WC.x = drag.cx - dx / WC.z; WC.y = drag.cy - dy / WC.z; } } worldTip(e.clientX, e.clientY); } });

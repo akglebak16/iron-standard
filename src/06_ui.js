@@ -37,7 +37,7 @@ function troopRow(s, extra) { const t = TROOPS[s.type]; return '<div class="row"
 
 let UI = { open: null, town: null, enc: null, tab: 'troops' };
 function openModal(html, cls) { const m = el('modal'); m.innerHTML = '<div class="win plank ' + (cls || '') + '">' + html + '</div>'; m.hidden = false; UI.open = true; m.scrollTop = 0; }
-function closeModal() { if (NET.on && G && G.player && G.player.in) NET.send({ t: 'leave' }); el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; UI.res = null; if (G && G.player) G.player.in = null; }
+function closeModal() { if (NET.on && G && G.player && G.player.in) NET.send({ t: 'leave' }); el('modal').hidden = true; el('modal').innerHTML = ''; UI.open = false; UI.town = null; UI.enc = null; UI.panel = null; UI.res = null; UI.back = null; UI.isel = null; UI.tsel = null; if (G && G.player) G.player.in = null; }
 function mmode() { return MODE; }
 
 /* ---------- город ---------- */

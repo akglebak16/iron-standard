@@ -1,8 +1,14 @@
 {
   "name": "iron-standard",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Железный Стяг — инди-Bannerlord в браузере, одиночная игра и реалтайм-мультиплеер на двоих",
   "private": true,
-  "scripts": { "start": "node server/index.js", "build": "node build.mjs" },
-  "engines": { "node": ">=18" }
+  "scripts": {
+    "start": "node build.mjs && node server/index.js",
+    "build": "node build.mjs",
+    "test": "node tests/smoke.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }
