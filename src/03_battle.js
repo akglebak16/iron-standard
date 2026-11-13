@@ -5,7 +5,7 @@ const VIEW = { w: 800, h: 600, dpr: 1 };
 const IN = { keys: {}, mx: 0, my: 0, atk: false, block: false, jx: 0, jy: 0, touch: false, sprint: false };
 const ORD_NAME = { hold: 'Держат', follow: 'За тобой', charge: 'В атаке', back: 'Отходят' };
 
-const BATTLE_CAP = 150, JOIN_CAP = 40; // юнитов на сторону в бою; и сколько юнитов приводит второй игрок, присоединившийся к бою
+const BATTLE_CAP = 150, JOIN_CAP = 40, UNDEAD_CAP = 300; // нежити на поле больше фигур: она берёт числом // юнитов на сторону в бою; и сколько юнитов приводит второй игрок, присоединившийся к бою
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
   const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
   return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc), anticav: W.anticav ? 1 : 0,
@@ -28,9 +28,10 @@ function startBattle(cfg) {
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
   // Больше BATTLE_CAP юнитов на сторону не рисуем: лишние бойцы сливаются в более крепких. Юнит, который заменяет k бойцов, получает здоровье и урон ×k
   // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
-  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > BATTLE_CAP ? BATTLE_CAP / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
+  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const cap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP, sc = tot > cap ? cap / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.comps) for (const c of cfg.comps) spawnComp(c);
+  for (const u of B.units) if (u.t.fac === 'undead') u.mbase = u.morale = 999; // мёртвые не бегут
   if (cfg.siege) siegeSetup();
   for (const u of B.units) if (u.side === 0) u.own = cfg.heroPid;
   for (const g of B.groups[0]) g.own = cfg.heroPid;
@@ -168,10 +169,13 @@ function blocked(t, fromA, kind) {
   let ch = t.block || 0; if (t.isHero && !t.ai) ch = t.blocking ? Math.min(.97, ch + .13) : ch * .25; else if (kind === 'arrow') ch *= .85;
   if (ch <= 0 || Math.abs(angDiff(fromA, t.face)) > 1.25) return false; return Math.random() < ch;
 }
+/* нежить: скелеты плохо держат дробящий удар, а стрелы пролетают сквозь рёбра; мертвецам дробящее тоже чуть больнее */
+function undeadMul(t, dt, arrow) { const k = t.t.look && t.t.look.undead; if (!k) return 1; if (arrow) return k === 'skel' ? .6 : 1; return dt === 'blunt' ? (k === 'skel' ? 1.4 : 1.15) : 1; }
+const lookDt = t => t.wpn ? t.wpn.dt : t.look && (t.look.weapon === 'club' || t.look.weapon === 'mace') ? 'blunt' : 'cut';
 function strike(a, t) {
   let dmg = (a.t.range ? (a.t.mdmg || a.dmg * .6) : a.dmg) * rnd(.8, 1.2); const fromA = Math.atan2(a.y - t.y, a.x - t.x), rear = Math.abs(angDiff(fromA, t.face)) > 2.1;
   if (!rear && blocked(t, fromA, 'melee')) { fxSpark(t.x + Math.cos(fromA) * 10, t.y + Math.sin(fromA) * 10 - 14); sfx('clang', t); if (t === B.hero) ftext(t.x, t.y - 44, 'Блок', '#d8d2c4'); return; }
-  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; if (a.t.wpn) { dmg *= dtMul(a.t.wpn.dt, t.arm); hurt(t, dmg, a, dtPierce(a.t.wpn.dt, t.arm, a.t.wpn.pb)); } else hurt(t, dmg, a, 0); sfx('hit', t);
+  if (rear) dmg *= 1.4; if (a.t.anticav && t.t.mounted) dmg *= 1.7; dmg *= undeadMul(t, lookDt(a.t), false); if (a.t.wpn) { dmg *= dtMul(a.t.wpn.dt, t.arm); hurt(t, dmg, a, dtPierce(a.t.wpn.dt, t.arm, a.t.wpn.pb)); } else hurt(t, dmg, a, 0); sfx('hit', t);
 }
 function chargeHit(a, e, v) {
   a.ccd = 1.7; let dmg = a.dmg * (.6 + v / 150); const fromA = Math.atan2(a.y - e.y, a.x - e.x), front = Math.abs(angDiff(fromA, e.face)) < 1.1;
@@ -200,9 +204,10 @@ function kill(t, src) {
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) if (g2.own === t.pid) g2.order = 'charge'; for (const u of B.units) if (u.side === 0 && u.own === t.pid) u.morale -= 7; B.hudDirty = true; }
   else if (t.comp) { blog(t.name + ' ранен и вынесен из боя', 1); for (const u of B.units) if (u.side === 0 && Math.hypot(u.x - t.x, u.y - t.y) < 170) u.morale -= 4; B.hudDirty = true; }
+  else if (t.leader && t.t.fac === 'undead') { blog(t.name + ' пал — мертвецы рассыпаются в прах!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side && alive(u) && u.t.fac === 'undead' && Math.random() < .35) { u.leader = false; kill(u, null); } }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
-  if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1);
+  if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1) * (t.t.pw || 1);
 }
 function paintCorpse(t) {
   const g = B.gg, sp = corpseOf(t.sp), k = US * 1.0, rot = (Math.random() < .5 ? -1 : 1) * rnd(1.2, 1.9);
@@ -233,7 +238,7 @@ function heroStrike(h) {
     if (!rear && blocked(e, fromA, 'melee') && Math.random() < .75 - (W && W.brk || 0)) { fxSpark(e.x - Math.cos(a) * 8, e.y - Math.sin(a) * 8 - 14); sfx('clang', e); ftext(e.x, e.y - 44, 'Блок', '#b9b2a5'); }
     else {
       e.x += Math.cos(a) * 5 * kb; e.y += Math.sin(a) * 5 * kb; let dmg = h.dmg * rnd(.85, 1.2) * (rear ? 1.4 : 1) * (hits ? fall : 1);
-      if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); }
+      if (W) { if (W.anticav && e.t.mounted) dmg *= 1.7; dmg *= dtMul(W.dt, e.arm); } dmg *= undeadMul(e, W ? W.dt : 'blunt', false);
       hurt(e, dmg, h, W ? dtPierce(W.dt, e.arm, (W.pb || 0) + (h.fx ? h.fx.mpierce : 0)) : .1 + (h.fx ? h.fx.mpierce : 0)); sfx('hit', e);
     }
     if (++hits >= maxHits) break;
@@ -283,7 +288,7 @@ function battleUpdate(rdt) {
   for (let i = B.arrows.length - 1; i >= 0; i--) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
-    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm) * wallCover(hit, a), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
+    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm) * wallCover(hit, a) * undeadMul(hit, a.dt, true), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
     else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(a.jv ? -18 : -9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
   for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
@@ -291,7 +296,7 @@ function battleUpdate(rdt) {
   // мораль
   B.mt -= dt; if (B.mt <= 0) {
     B.mt = 1; const n = [0, 0]; for (const u of B.units) if (fit(u)) n[u.side]++; B.n = n;
-    for (const u of B.units) { if (!fit(u) || (u.isHero && !u.ai) || u.comp) continue; /* спутники, как и герой, с поля не бегут */ const my = n[u.side], th = n[1 - u.side] || .5, r = my / th; if (r < .5) u.morale -= 2.5; if (r < .3) u.morale -= 3.5; u.morale = Math.min(u.mbase, u.morale + (r > 1.5 ? 4 : r > .8 ? 2.5 : 1));
+    for (const u of B.units) { if (!fit(u) || (u.isHero && !u.ai) || u.comp || u.t.fac === 'undead') continue; /* спутники, как и герой, с поля не бегут */ const my = n[u.side], th = n[1 - u.side] || .5, r = my / th; if (r < .5) u.morale -= 2.5; if (r < .3) u.morale -= 3.5; u.morale = Math.min(u.mbase, u.morale + (r > 1.5 ? 4 : r > .8 ? 2.5 : 1));
       if (!u.wav && u.morale < 22) { u.wav = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' дрогнул', u.side ? 0 : 1); }
       if (u.morale <= 0 || (my <= B.start[u.side] * .2 && my < th * .5 && !u.leader && B.start[u.side] > 4)) { u.flee = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' бежит с поля боя', u.side ? 0 : 1); } }
     B.hudDirty = true;

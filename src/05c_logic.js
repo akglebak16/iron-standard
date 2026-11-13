@@ -32,7 +32,7 @@ function encFlee(P, p) {
 }
 function battleCfgFor(P, p) {
   return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
-    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) ? p.name : null, seed: rint(1, 1e9),
+    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) || p.kind === 'dead' ? p.name : p.kind === 'camp' && p.fac === 'undead' ? 'Некромант кургана' : null, seed: rint(1, 1e9),
     comps: compsBattle(P), csurv: compFx(P) ? compFx(P).f.surv : 0 }; // спутники и лекарь среди них: см. 05e_comps.js
 
 }
@@ -51,10 +51,11 @@ function applyBattleResult(P, res, p) {
   const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
   if (res.win) {
     let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
-    loot = Math.round((sv * rnd(.7, 1.1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
+    loot = Math.round((sv * rnd(.7, 1.1) * (p.fac === 'undead' ? .2 : 1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); // у мертвецов золота мало
+    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
     P.stats.wins++; P.stats.kills += res.enemyDead; const gx = Math.round((res.xp + 12 + res.heroKills * 4) * xpMul(H)); H.xp += gx; res.gx = gx;
     const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
-    if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
+    if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; if (c.barrow) barrowDestroyed(P, c); } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
     if (p.kind === 'bandit' || p.kind === 'camp') P.rel[P.culture] = Math.min(100, P.rel[P.culture] + 1);
     logW('Победа над отрядом «' + p.name + '». Добыча: ' + loot + ' золота.', 3, P);
   } else {
@@ -63,6 +64,7 @@ function applyBattleResult(P, res, p) {
     p.cd = 10; p.state = 'idle'; p.path = []; p.lock = null;
     if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
     logW('Ты потерпел поражение от «' + p.name + '».', 1, P);
+    const rz = undeadAfterWin(p, lost); if (rz) logW('Мертвецы подняли твоих павших: +' + rz + ' в их строю.', 1, P);
   }
   const cap = p.kind === 'siege' ? siegeAfter(P, res, p) : null, comps = compsAfter(P, res);
   relWatch(P);
@@ -78,7 +80,7 @@ function siegeParty(s) {
   for (const l of lords) for (const t of l.troops) addT(en, t.type, t.n); sortT(en);
   return { id: -s.id, kind: 'siege', fac: s.fac, name: s.name, troops: en, gold: s.kind === 'town' ? 350 : 180, sid: s.id, lord: lords[0] ? lords[0].name : null };
 }
-function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, leader: p.lord, biome: biomeName(s.x, s.y), forest: false }); }
+function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, leader: p.fac === 'undead' ? 'Некромант ' + unitName('undead') : p.lord, biome: biomeName(s.x, s.y), forest: false }); }
 function siegeAfter(P, res, p) {
   const s = settleById(p.sid); if (!s) return null;
   if (res.win) { captureSettle(P, s); return s.name; }

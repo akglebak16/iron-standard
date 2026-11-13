@@ -24,9 +24,12 @@ function torsoPath(g) { g.beginPath(); g.moveTo(15, 71); g.bezierCurveTo(11, 60,
 function drawTorso(g, L, pal, R) {
   const a = L.armor; let col = pal.c1;
   if (a === 'padded') col = '#b59c6c'; else if (a === 'mail' || a === 'mailtab' || a === 'mailfur') col = '#868b90'; else if (a === 'scale') col = '#8f8f8a';
+  else if (a === 'rags') col = '#4a4436'; else if (a === 'ribs') col = '#2a251d';
   else if (a === 'goldscale') col = '#c79d3a'; else if (a === 'lamellar') col = '#6d5639'; else if (a === 'goldlam') col = '#8a6a2c'; else if (a === 'plate') col = '#aab1b8'; else if (a === 'fur') col = '#5f4930';
   torsoPath(g); fs(g, col, 0);
   g.save(); torsoPath(g); g.clip();
+  if (a === 'rags') { g.fillStyle = '#2a251c'; for (let i = 0; i < 6; i++) { ell(g, 16 + i * 8 + (i % 2) * 3, 52 + (i * 7) % 18, 2.4, 1.8); g.fill(); } g.fillStyle = shade(col, -.3); poly(g, [10, 70, 16, 76, 22, 70, 28, 77, 34, 70, 40, 77, 46, 70, 52, 77, 58, 70, 64, 76, 64, 80, 10, 80]); g.fill(); }
+  if (a === 'ribs') { line(g, [36, 44, 36, 72], '#d8d0b8', 3); for (let y = 49; y < 70; y += 4.4) { const w = 15 - Math.abs(y - 58) * .3; line(g, [36, y, 36 - w, y + 3], '#d8d0b8', 2.2); line(g, [36, y, 36 + w, y + 3], '#cfc4a6', 2.2); } g.fillStyle = '#5a4a36'; g.fillRect(10, 70, 54, 4); }
   if (a === 'tunic') { g.fillStyle = shade(col, -.25); g.fillRect(10, 62, 52, 3); line(g, [36, 44, 36, 62], shade(col, -.3), 1); g.fillStyle = shade(col, .25); poly(g, [31, 43, 36, 50, 43, 43]); g.fill(); }
   if (a === 'padded') { for (let x = 14; x < 60; x += 4.5) line(g, [x, 44, x + (x - 36) * .12, 76], shade(col, -.28), .9); g.fillStyle = pal.c1; g.fillRect(10, 60, 52, 4); }
   if (a === 'mail' || a === 'mailtab' || a === 'mailfur') { mailTex(g, 10, 43, 54, 36, '#53575b'); mailTex(g, 11.5, 44, 54, 36, 'rgba(230,235,240,.35)'); }
@@ -42,7 +45,23 @@ function drawTorso(g, L, pal, R) {
   if (a === 'plate' || a === 'scale' || a === 'goldscale' || a === 'goldlam') { const pc = a === 'plate' ? '#b9c0c6' : a === 'scale' ? '#a9a9a2' : '#d9b248'; ell(g, 18, 50, 7, 5); fs(g, pc, 1.3); ell(g, 54, 50, 7, 5); fs(g, shade(pc.length === 7 ? pc : '#b9c0c6', -.25), 1.3); }
 }
 function facePath(g) { g.beginPath(); g.moveTo(27, 25); g.bezierCurveTo(27, 13, 47.5, 13, 47.5, 25); g.bezierCurveTo(48, 33, 45, 41, 38, 42.5); g.bezierCurveTo(31, 41, 27, 34, 27, 25); g.closePath(); }
+function drawUndeadHead(g, v) { // череп или гнилое лицо: пустые глазницы с тусклыми огоньками
+  const skin = v.skin, sk = v.undead === 'skel';
+  g.fillStyle = shade(skin, -.35); poly(g, [32.5, 36, 41.5, 36, 42.5, 46, 31.5, 46]); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+  if (sk) for (let y = 38; y < 46; y += 2.6) line(g, [33, y, 41, y], shade(skin, -.55), .8); // позвонки шеи
+  facePath(g); fs(g, skin, 0);
+  g.save(); facePath(g); g.clip();
+  const sh = g.createLinearGradient(26, 0, 49, 0); sh.addColorStop(0, 'rgba(20,25,10,.45)'); sh.addColorStop(.45, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.25)'); g.fillStyle = sh; g.fillRect(24, 10, 28, 36);
+  if (sk) { g.fillStyle = shade(skin, -.4); g.fillRect(26, 33.5, 24, 1.2); } else { g.fillStyle = 'rgba(70,30,30,.35)'; ell(g, 31, 33, 3, 2); g.fill(); ell(g, 45, 24, 2.2, 3); g.fill(); }
+  g.restore(); facePath(g); fs(g, null, 1.4);
+  g.fillStyle = '#120c08'; ell(g, 35.6, 29, sk ? 3 : 2.3, sk ? 2.8 : 1.9); g.fill(); ell(g, 43.4, 29, sk ? 2.7 : 2.1, sk ? 2.6 : 1.8); g.fill(); // глазницы
+  g.fillStyle = sk ? '#9fe3c8' : '#d8e07a'; ell(g, 35.8, 29.2, .9, .9); g.fill(); ell(g, 43.5, 29.2, .8, .8); g.fill();
+  g.fillStyle = '#120c08'; poly(g, [39.4, 31.5, 40.8, 34.2, 38.4, 34.2]); g.fill(); // нос
+  if (sk) { g.fillStyle = '#f2ecdc'; g.fillRect(35, 37, 9, 2.6); g.strokeStyle = OL; g.lineWidth = .8; g.strokeRect(35, 37, 9, 2.6); for (let x = 36.5; x < 44; x += 1.6) line(g, [x, 37, x, 39.6], OL, .6); }
+  else { line(g, [35.5, 38.4, 43.5, 37.6], '#2a1a12', 1.3); line(g, [37, 38.4, 37.5, 39.6], '#e6e0c8', .9); line(g, [41, 38, 41.4, 39.2], '#e6e0c8', .9); line(g, [44, 22, 46.5, 31], '#5a2a22', .8); }
+}
 function drawHead(g, L, v) {
+  if (v.undead) return drawUndeadHead(g, v);
   const skin = v.skin, hair = v.hair;
   g.fillStyle = shade(skin, -.3); poly(g, [31.5, 36, 42.5, 36, 44, 46, 30, 46]); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
   facePath(g); fs(g, skin, 0);
@@ -147,7 +166,7 @@ function drawWeapon(g, L, pal, v) {
   else if (w === 'xbow') { line(g, [44, 57, 68, 50], OL, 5); line(g, [44, 57, 68, 50], WOOD, 3.2); g.strokeStyle = OL; g.lineWidth = 3.4; g.beginPath(); g.moveTo(62, 38); g.quadraticCurveTo(72, 49, 67, 62); g.stroke(); g.strokeStyle = IRON; g.lineWidth = 1.9; g.stroke(); line(g, [62, 38, 52, 54.6, 67, 62], 'rgba(235,225,200,.8)', .7); fist(g, 55, 55, v); }
 }
 function quiver(g) { g.save(); g.translate(20, 40); g.rotate(-.5); g.fillStyle = LEATHER; g.fillRect(-3.5, -4, 7, 20); g.strokeStyle = OL; g.lineWidth = 1.1; g.strokeRect(-3.5, -4, 7, 20); for (let i = 0; i < 3; i++) { line(g, [-2 + i * 2, -4, -2 + i * 2, -11], '#c9b98a', .9); g.fillStyle = i % 2 ? '#b33' : '#ddd'; g.fillRect(-3 + i * 2, -13, 2, 3.4); } g.restore(); }
-const HORSES = { bay: ['#6b4226', '#22160d'], black: ['#2e2824', '#0f0c0a'], dun: ['#b3945c', '#3a2a18'], grey: ['#9c978d', '#4a463f'], chestnut: ['#8a4b22', '#4a2410'], barded: ['#6b4226', '#22160d'] };
+const HORSES = { bay: ['#6b4226', '#22160d'], black: ['#2e2824', '#0f0c0a'], dun: ['#b3945c', '#3a2a18'], grey: ['#9c978d', '#4a463f'], chestnut: ['#8a4b22', '#4a2410'], barded: ['#6b4226', '#22160d'], bone: ['#cfc6ad', '#5a5242'] };
 function drawHorse(g, kind, pal) {
   const [coat, mane] = HORSES[kind] || HORSES.bay;
   const body = () => { g.beginPath(); g.moveTo(16, 92); g.bezierCurveTo(8, 76, 16, 60, 38, 59); g.lineTo(62, 57); g.bezierCurveTo(70, 53, 76, 42, 79, 31); g.lineTo(83, 23); g.lineTo(86, 28); g.bezierCurveTo(92, 31, 100, 40, 105, 48); g.bezierCurveTo(107, 52, 103, 55, 99, 53); g.bezierCurveTo(95, 50, 91, 48, 88, 48); g.bezierCurveTo(88, 62, 88, 80, 82, 92); g.closePath(); };
@@ -175,7 +194,10 @@ function drawBust(g, L, pal, v, o) {
   if (L.horse) g.restore();
 }
 const SPR = {}; const SS = 2;
-function makeVariant(L, seed) { const R = mulberry(seed); const b = R() < (L.beard || 0) ? (R() < .45 ? 2 : 1) : 0; return { seed, skin: SKINS[Math.floor(R() * SKINS.length)], hair: HAIRS[Math.floor(R() * HAIRS.length)], beard: b, stache: L.stache && b === 0 ? 1 : 0, bald: R() < .15, scar: R() < .2 }; }
+const UNDEAD_SKIN = { zombie: ['#9aa58a', '#8c9a7e', '#a3a08a', '#7f8f78'], skel: ['#d8d0b8', '#cfc4a6', '#e0d8c2'] };
+function makeVariant(L, seed) { const R = mulberry(seed); const b = R() < (L.beard || 0) ? (R() < .45 ? 2 : 1) : 0; const us = L.undead && UNDEAD_SKIN[L.undead];
+  if (us) return { seed, undead: L.undead, skin: us[Math.floor(R() * us.length)], hair: L.undead === 'skel' ? '#3a3328' : HAIRS[Math.floor(R() * 3)], beard: L.undead === 'skel' ? 0 : b, stache: 0, bald: L.undead === 'skel' || R() < .5, scar: L.undead === 'zombie' };
+  return { seed, skin: SKINS[Math.floor(R() * SKINS.length)], hair: HAIRS[Math.floor(R() * HAIRS.length)], beard: b, stache: L.stache && b === 0 ? 1 : 0, bald: R() < .15, scar: R() < .2 }; }
 function buildSprite(L, pal, seed) {
   const m = !!L.horse, W = m ? 120 : 76, H = m ? 122 : 88, ax = m ? 54 : 36, ay = m ? 106 : 74, oy = m ? 26 : 5, ox = m ? 2 : 2;
   const v = makeVariant(L, seed);

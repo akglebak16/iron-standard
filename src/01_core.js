@@ -48,6 +48,9 @@ const FACTIONS = {
   bandit: { name: 'Разбойники', gen: 'разбойников', c1: '#3b3a36', c2: '#9a2f24', emblem: 'skull', title: 'атаман', biome: 'grass',
     names: ['Гнус', 'Рябой', 'Хорёк', 'Кабан', 'Щербатый', 'Ворон', 'Клык', 'Лис', 'Шило', 'Горбун', 'Жбан', 'Косарь', 'Мясник', 'Тихон'],
     nicks: ['', '', '', 'Живодёр', 'Висельник', 'Душегуб', 'Беглый'] },
+  undead: { name: 'Нежить', gen: 'нежити', c1: '#3f4636', c2: '#a9b98e', emblem: 'skull', title: 'некромант', biome: 'grass',
+    names: ['Мордрек', 'Ваальтор', 'Зеферин', 'Карх', 'Ильвен', 'Горр', 'Мальтус', 'Сирах', 'Ортанд', 'Велиал'],
+    nicks: ['Бледный', 'Гнилой', 'Безглазый', 'Чёрный', 'Древний', 'Шепчущий', 'Костяной'] },
   player: { name: 'Твой отряд', gen: 'твоего отряда', c1: '#c08a2e', c2: '#241a10', emblem: 'chevron', title: 'капитан', biome: 'grass' }
 };
 const BANNERS = [
@@ -121,6 +124,14 @@ T('b2', 'Разбойник', 'bandit', 2, 'inf', { helm: 'cap', armor: 'padded'
 T('b1a', 'Браконьер', 'bandit', 1, 'arc', { helm: 'hood', armor: 'tunic', weapon: 'bow', beard: .5 }, []);
 T('b3', 'Головорез', 'bandit', 3, 'inf', { helm: 'nasal', armor: 'mail', weapon: 'mace', shield: 'round', beard: .8 }, [], { arm: 34, hp: 78 });
 T('b2c', 'Конный налётчик', 'bandit', 2, 'cav', { helm: 'hood', armor: 'padded', weapon: 'sword', horse: 'bay', beard: .6 }, [], { block: .12 });
+// Нежить (кризис, 05f_undead.js): много и слабые. pw — множитель силы в расчётах (strength): мертвец считается почти вдвое слабее живого того же уровня.
+// look.undead: 'zombie' — гнилая плоть, 'skel' — скелет (рисунок в 02_art.js). В бою не бегут; скелеты держат стрелы хуже живых, но крошатся от дробящего.
+T('z1', 'Мертвец', 'undead', 1, 'inf', { helm: 'none', armor: 'rags', weapon: 'club', undead: 'zombie', beard: .3 }, [], { hp: 34, arm: 2, dmg: 7, cd: 1.7, spd: 42, block: 0, pw: .55 });
+T('s1', 'Скелет', 'undead', 1, 'inf', { helm: 'none', armor: 'ribs', weapon: 'sword', shield: 'round', undead: 'skel' }, [], { hp: 24, arm: 6, dmg: 9, cd: 1.45, spd: 54, block: .12, pw: .6 });
+T('s1a', 'Скелет-лучник', 'undead', 1, 'arc', { helm: 'hood', armor: 'ribs', weapon: 'bow', undead: 'skel' }, [], { hp: 22, arm: 3, dmg: 8, mdmg: 5, range: 290, acc: .085, pw: .6 });
+T('s2', 'Мёртвый воин', 'undead', 2, 'inf', { helm: 'nasal', armor: 'mail', weapon: 'axe', shield: 'round', undead: 'skel' }, [], { hp: 40, arm: 16, dmg: 12, pw: .65 });
+T('s2c', 'Мёртвый всадник', 'undead', 2, 'cav', { helm: 'nasal', armor: 'ribs', weapon: 'spear', horse: 'bone', undead: 'skel' }, [], { hp: 52, arm: 10, dmg: 12, spd: 118, pw: .65 });
+T('s3', 'Умертвие', 'undead', 3, 'inf', { helm: 'great', armor: 'mail', weapon: 'sword', shield: 'kite', undead: 'skel' }, [], { hp: 68, arm: 30, dmg: 16, pw: .8 });
 
 const GEAR = {
   weapon: [{ n: 'Старый меч', v: 20, p: 0 }, { n: 'Рыцарский меч', v: 28, p: 380 }, { n: 'Клинок мастера', v: 38, p: 1150 }, { n: 'Булатный клинок', v: 50, p: 2600 }],
@@ -133,7 +144,7 @@ const GEAR_UNIT = { weapon: 'урон', armor: 'броня', shield: 'блок',
 const ATTRS = { str: ['Сила', '+3 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
 function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
-function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1); } return s; }
+function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1) * (d.pw || 1); } return s; }
 function genTroops(fac, n, quality) { // quality 0..1
   const ids = Object.keys(TROOPS).filter(k => TROOPS[k].fac === fac), out = {};
   for (let i = 0; i < n; i++) {

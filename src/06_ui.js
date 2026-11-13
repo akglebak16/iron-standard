@@ -111,7 +111,7 @@ function relativePowerOld(p) { const a = strength(G.player.troops) + 8, b = part
 function openEncounter(p, forced) {
   const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp'; UI.enc = { p, forced, hostile: hostileP }; G.player.path = []; G.player.tid = null; G.wait = false;
   const pw = relativePowerOf(G.player, p), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
-  const title = p.kind === 'camp' ? 'Логово разбойников' : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? 'Разбойники' : p.name;
+  const title = p.kind === 'camp' ? (p.fac === 'undead' ? 'Чёрный курган' : 'Логово разбойников') : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? 'Разбойники' : p.name;
   let btns;
   if (hostileP) btns = '<button class="btn" data-act="flee">Бежать</button><button class="btn" data-act="auto">Рассчитать бой</button><button class="btn pri" data-act="fight">В бой!</button>';
   else btns = '<button class="btn pri" data-act="greet">Разойтись с миром</button><button class="btn danger" data-act="attack">Напасть</button>';

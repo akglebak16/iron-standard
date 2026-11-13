@@ -122,6 +122,24 @@ async function companions(pg) {
   ok('спутники и таверны сохраняются', sv === 'ingrid,halvdan|true', sv);
 }
 
+async function undead(pg) {
+  console.log('Нашествие нежити');
+  await newSinglePlayer(pg);
+  const st = await pg.evaluate(() => { crisisInit(); G.crisis.day = G.day; crisisDay(); const U = G.parties.filter(p => p.fac === 'undead'); return { on: G.crisis.on, armies: U.filter(p => p.kind === 'dead').length, raids: U.filter(p => p.kind === 'raid').length, barrows: G.settles.filter(s => s.barrow).length }; });
+  ok('кризис начался: курганы, армии и разъезды нежити на карте', st.on && st.barrows >= 1 && st.armies >= 1 && st.raids >= 1, st);
+  const fall = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'castle' && x.fac !== G.player.culture), a = mkParty('dead', 'undead', 'Некромант Тест', s.x, s.y, genUndead(900, 1)); undeadArrive(a, s); return { fac: s.fac, id: s.id }; });
+  ok('большая армия нежити берёт замок, он становится руинами', fall.fac === 'undead', fall);
+  ok('руины нежити не пускают внутрь, а предлагают осаду', await pg.evaluate(id => { openTown(settleById(id)); return !UI.town && !!document.querySelector('#modal [data-act=siegeatk]'); }, fall.id));
+  await pg.evaluate(() => { closeModal(); const P = G.player, p = mkParty('raid', 'undead', 'Мертвецы', P.x + 5, P.y, genUndead(60, 0)); P.troops = [{ type: 'n2', n: 30 }]; launchBattle(p); });
+  await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(500);
+  const b = await pg.evaluate(() => { const U = __dbg.B.units.filter(u => u.side === 1); return { n: U.length, undead: U.every(u => u.t.fac === 'undead'), brave: U.every(u => u.mbase >= 999), leader: !!U.find(u => u.leader) }; });
+  ok('в бою с мертвецами: все враги — нежить, не бегут, есть некромант', b.n > 0 && b.undead && b.brave && b.leader, b);
+  await pg.evaluate(() => { const l = __dbg.B.units.find(u => u.leader); kill(l, __dbg.B.hero); });
+  ok('гибель некроманта рассыпает часть мертвецов', await pg.evaluate(() => __dbg.B.units.filter(u => u.side === 1 && u.dead).length > 1));
+  await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=cont2]'), null, { timeout: 10000 });
+  await pg.evaluate(() => ACT.cont2());
+}
+
 async function multiPlayer(pg) {
   console.log('Игра вдвоём');
   await pg.evaluate(() => netStart({ name: 'Тест', code: '', banner: 0, culture: 'nord', replace: true }));
@@ -149,6 +167,7 @@ async function multiPlayer(pg) {
     await singlePlayer(await open());
     await sieges(await open());
     await companions(await open());
+    await undead(await open());
     await multiPlayer(await open());
   } catch (e) { console.error(e); failed++; }
   ok('нет ошибок в консоли страницы', errs.length === 0, errs.slice(0, 3));
