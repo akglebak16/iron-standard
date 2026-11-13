@@ -1,5 +1,11 @@
 /* ================= карта мира ================= */
-const WW = 2600, WH = 1700, GC = 20, GW = WW / GC, GH = Math.ceil(WH / GC);
+/* Версия карты: 1 — старая (2600×1700, три фракции), 2 — Европа (5200×3400, пять фракций). Версия лежит в G.mapv.
+   У старых сохранений и у мира сервера её нет: тогда её видно по поселениям (в старом мире все они внутри 2600×1700),
+   так старые игры продолжаются на старой карте, а новые идут на Европе. */
+const MAP_SIZE = { 1: [2600, 1700], 2: [5200, 3400] }, GC = 20, DEFAULT_MAPV = 1; // DEFAULT_MAPV — на какой карте начинаются новые игры
+let WW = MAP_SIZE[DEFAULT_MAPV][0], WH = MAP_SIZE[DEFAULT_MAPV][1], GW = WW / GC, GH = Math.ceil(WH / GC);
+function mapVer() { if (G && G.mapv) return G.mapv; if (G && G.settles && G.settles.length) return G.settles.some(s => s.x > MAP_SIZE[1][0] || s.y > MAP_SIZE[1][1]) ? 2 : 1; return DEFAULT_MAPV; }
+function setMapSize(v) { WW = MAP_SIZE[v][0]; WH = MAP_SIZE[v][1]; GW = WW / GC; GH = Math.ceil(WH / GC); PA.g = new Float32Array(GW * GH); PA.prev = new Int32Array(GW * GH); PA.closed = new Uint8Array(GW * GH); }
 let G = null, WT = null; // G — состояние игры, WT — статичный ландшафт
 const SNAMES = {
   nord: { town: ['Хольмгард', 'Скьярвик'], castle: ['Ульвхейм', 'Бьёрнборг'], village: ['Эйдфьорд', 'Ватнсдал', 'Ормслунд', 'Хавик', 'Тюрсби'] },
@@ -12,7 +18,9 @@ const atWar = (a, b) => a !== b && ((WAR[a] && WAR[a][b]) || (WAR[b] && WAR[b][a
 const TCOST = [0, 1, 1.75, 1.5, 0];
 const TNAME = ['вода', 'равнина', 'лес', 'холмы', 'горы'];
 
-function genWorld(seed) {
+function genWorld(seed) { const v = mapVer(); if (G) G.mapv = v; setMapSize(v); return v === 1 ? genWorldV1(seed) : genWorldV2(seed); }
+const genWorldV2 = seed => genWorldV1(seed); // временно: Европа появится в следующих коммитах
+function genWorldV1(seed) {
   const nE = makeNoise(seed), nM = makeNoise(seed ^ 0x9e3779b9), nF = makeNoise(seed + 77), nD = makeNoise(seed + 5);
   const info = (x, y) => {
     const dx = (x - WW / 2) / (WW / 2), dy = (y - WH / 2) / (WH / 2), f = dx * dx + dy * dy, e = nE(x / 520, y / 520) + .22 - f * .5, m = nM(x / 230, y / 230);
@@ -89,8 +97,8 @@ function sortT(list) { list.sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].
 const CULT = {
   nord: { start: [['n1', 6], ['n2a', 2], ['n2s', 2]], horse: 0 }, emp: { start: [['e1', 6], ['e2a', 3], ['e2s', 1]], horse: 0 }, khan: { start: [['k1', 5], ['k2a', 3], ['k2c', 2]], horse: 1 }
 };
-function newWorld(seed) {
-  seed = seed || rint(1, 1e9); G = { seed, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
+function newWorld(seed, mapv) {
+  seed = seed || rint(1, 1e9); G = { seed, mapv: mapv || DEFAULT_MAPV, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
   genWorld(seed); genSettlements(); genRoads(); for (const s of G.settles) { genRecruits(s); if (s.kind === 'camp') respawnCamp(s); }
   for (const f of ['nord', 'emp', 'khan']) { const hs = G.settles.filter(s => s.fac === f); for (let i = 0; i < 3; i++) { const h = hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(LORD_MIN, LORD_MAX), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
   for (let i = 0; i < 2; i++) { const t = pick(G.settles.filter(s => s.kind === 'town')); spawnCaravan(t); }
