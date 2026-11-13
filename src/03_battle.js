@@ -352,6 +352,7 @@ function swingPose(wk, bump) {
 }
 function drawUnitSprite(g, u, sp, mv) {
   const br = 1 + Math.sin(B.t * 2.1 + u.ph) * .012, lean = mv > 12 ? clamp(mv / 90, 0, 1) * .055 : 0;
+  if (sp.mnt && mv > 12) { const ph = B.t * (7 + clamp(mv / 60, 0, 3)) + u.ph; g.translate(0, -Math.abs(Math.sin(ph)) * 2.6); g.rotate(Math.sin(ph) * .018 * u.dir); }
   g.scale(u.dir * US, US * br); if (lean) g.rotate(lean);
   if (u.flash > 0 || !sp.body) { g.drawImage(u.flash > 0 ? sp.flash : sp.cv, -sp.ax, -sp.ay); return; }
   g.drawImage(sp.body, -sp.ax, -sp.ay);
