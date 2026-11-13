@@ -481,7 +481,8 @@ function autoFight(a, b) {
   const sa = partyStr(a) * rnd(.8, 1.25), sb = partyStr(b) * rnd(.8, 1.25), w = sa >= sb ? a : b, l = w === a ? b : a, r = Math.min(sa, sb) / Math.max(sa, sb), wl = Math.min(.85, r * .85);
   if (w.fac === 'undead') undeadRaise(w, troopCount(l.troops) * UNDEAD.RAISE); // мертвецы поднимают павших
   for (const s of w.troops.slice()) { let d = 0; for (let i = 0; i < s.n; i++) if (Math.random() < wl) d++; remT(w.troops, s.type, d); }
-  const li = G.parties.indexOf(l); if (li >= 0) G.parties.splice(li, 1); if (l.kind === 'camp') { /* лагеря не воюют */ }
+  if (l.ruler && Math.random() < .8 && typeof rulerHome === 'function') { for (const s of l.troops.slice()) remT(l.troops, s.type, Math.floor(s.n * .55)); rulerHome(l); } // правитель чаще уходит раненым, чем гибнет
+  else { const li = G.parties.indexOf(l); if (li >= 0) G.parties.splice(li, 1); }
   if (!w.troops.length || troopCount(w.troops) < 2) { const wi = G.parties.indexOf(w); if (wi >= 0) G.parties.splice(wi, 1); }
   w.state = 'idle'; w.path = []; w.pi = 0; w.cd = 3; w.gold += 20;
 }
