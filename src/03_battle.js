@@ -30,6 +30,7 @@ function startBattle(cfg) {
   // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
   const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const sc = tot > BATTLE_CAP ? BATTLE_CAP / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
+  if (cfg.siege) siegeSetup();
   for (const u of B.units) if (u.side === 0) u.own = cfg.heroPid;
   for (const g of B.groups[0]) g.own = cfg.heroPid;
   if (cfg.hero) {
@@ -59,7 +60,7 @@ function layout(g, init) {
   else us.forEach((u, i) => { const col = Math.floor(i / rows), row = i % rows; u.lx = (col - (nc - 1) / 2) * sp; u.ly = -row * sp * .92; });
 }
 function slotPos(u) { const g = u.grp, c = Math.cos(g.dir), s = Math.sin(g.dir); return [clamp(g.cx - s * u.lx + c * u.ly, 30, B.W - 30), clamp(g.cy + c * u.lx + s * u.ly, 30, B.H - 30)]; }
-function centroid(side) { let x = 0, y = 0, n = 0; for (const u of B.units) if (u.side === side && fit(u)) { x += u.x; y += u.y; n++; } return n ? { x: x / n, y: y / n, n } : null; }
+function centroid(side) { let x = 0, y = 0, n = 0, m = 0; for (const u of B.units) if (u.side === side && fit(u)) { x += u.x; y += u.y; n++; m += u.w || 1; } return n ? { x: x / n, y: y / n, n, m } : null; } // n — юнитов, m — людей (один юнит может быть слитым отрядом)
 function nearestFoeDist(x, y, side) { let b = 1e9; for (const u of B.units) if (u.side === side && fit(u)) { const d = Math.hypot(u.x - x, u.y - y); if (d < b) b = d; } return b; }
 function blog(txt, kind) { B.log.push({ txt, kind, t: B.t }); if (B.log.length > 30) B.log.shift(); B.logDirty = true; if (SERVER) ev(['l', txt, kind]); }
 function ev(a) { if (SERVER && B && B.ev) B.ev.push(a); }
@@ -83,7 +84,7 @@ function uname(u) { if (!u.name) u.name = unitName(u.t.fac); return u.name; }
 
 /* ---------- приказы ---------- */
 function giveOrder(ord, wx, wy, selArg, pid) {
-  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg;
+  if (!B || B.cfg.demo) return; const sl = selArg === undefined ? B.sel : selArg; if (pid === undefined) pid = myPid(); // одиночная игра: свои отряды героя
   if (!SERVER && NET.on) { NET.send({ t: 'ord', ord, wx, wy, sel: sl }); if (ord === 'hold') B.flag = { x: wx, y: wy, t: B.t }; sfx(ord === 'charge' ? 'horn' : 'order'); return; }
   const foe = centroid(1), gs = B.groups[0].filter(g => g.own === pid && (sl === 3 || g.k === sl)); let any = false;
   for (const g of gs) {
@@ -121,7 +122,7 @@ function findTarget(u) {
   for (const e of B.units) { if (e.side === u.side || e.dead || e.gone) continue; let d = Math.hypot(e.x - u.x, e.y - u.y); if (e.flee) d *= 1.7; if (cavm && e.t.range && !e.t.mounted) d *= .7; if (e === u.tgt) d *= .85; if (d < bd) { bd = d; best = e; } }
   return best;
 }
-function steer(u, tx, ty, sp, dt) { const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); let ax = 0, ay = 0; if (d > 2 && sp > 0) { const s = Math.min(sp, d * 5); ax = dx / d * s; ay = dy / d * s; } const k = Math.min(1, (u.t.mounted ? 2.4 : 10) * dt); u.vx += (ax - u.vx) * k; u.vy += (ay - u.vy) * k; }
+function steer(u, tx, ty, sp, dt) { if (B.wall) { const v = wallVia(u, tx, ty); tx = v[0]; ty = v[1]; } const dx = tx - u.x, dy = ty - u.y, d = Math.hypot(dx, dy); let ax = 0, ay = 0; if (d > 2 && sp > 0) { const s = Math.min(sp, d * 5); ax = dx / d * s; ay = dy / d * s; } const k = Math.min(1, (u.t.mounted ? 2.4 : 10) * dt); u.vx += (ax - u.vx) * k; u.vy += (ay - u.vy) * k; }
 function aiUnit(u, dt) {
   const g = u.grp, t = u.t;
   if (u.flee) { steer(u, u.side ? B.W + 90 : -90, u.y, u.spd * 1.12, dt); u.face = Math.atan2(u.vy, u.vx); if (u.x < -25 || u.x > B.W + 25) u.gone = true; return; }
@@ -254,7 +255,7 @@ function battleUpdate(rdt) {
   if (!B || B.paused || B.done) return;
   const dt = Math.min(rdt, 1 / 30) * B.speed; B.t += dt;
   const demo = B.cfg.demo;
-  sideBrain(1, dt); if (demo || (B.heroDown && false)) sideBrain(0, dt); else playerFollow();
+  if (B.wall) siegeBrain(dt); else sideBrain(1, dt); if (demo || (B.heroDown && false)) sideBrain(0, dt); else playerFollow();
   B.lt -= dt; if (B.lt <= 0) { B.lt = 2.4; for (const s of B.groups) for (const g of s) if (g.order !== 'charge') layout(g); }
   for (const u of B.units) {
     if (u.dead || u.gone) continue; u.cd -= dt; u.ccd -= dt; u.flash -= dt; if (u.bump > 0) u.bump = Math.max(0, u.bump - dt * 4.2);
@@ -266,6 +267,7 @@ function battleUpdate(rdt) {
   const us = B.units;
   for (let i = 0; i < us.length; i++) { const a = us[i]; if (a.dead || a.gone) continue;
     for (let j = i + 1; j < us.length; j++) { const b = us[j]; if (b.dead || b.gone) continue; const dx = b.x - a.x, rr = a.r + b.r; if (dx > rr || dx < -rr) continue; const dy = b.y - a.y; if (dy > rr || dy < -rr) continue; const d2 = dx * dx + dy * dy; if (d2 >= rr * rr) continue; const d = Math.sqrt(d2) || .01, ov = (rr - d) * (a.side === b.side ? .5 : .9), tm = a.mass + b.mass, nx = dx / d, ny = dy / d; a.x -= nx * ov * b.mass / tm; a.y -= ny * ov * b.mass / tm; b.x += nx * ov * a.mass / tm; b.y += ny * ov * a.mass / tm; }
+    if (B.wall) wallPush(a);
     for (const t of B.trees) { if (!t.r) continue; const dx = a.x - t.x, dy = a.y - t.y, rr = a.r + t.r, d2 = dx * dx + dy * dy; if (d2 < rr * rr) { const d = Math.sqrt(d2) || .01; a.x += dx / d * (rr - d); a.y += dy / d * (rr - d); } }
     if (!a.flee) a.x = clamp(a.x, 20, B.W - 20); a.y = clamp(a.y, 26, B.H - 16);
   }
@@ -273,7 +275,7 @@ function battleUpdate(rdt) {
   for (let i = B.arrows.length - 1; i >= 0; i--) {
     const a = B.arrows[i]; a.t += dt; if (a.t < a.dur) continue; B.arrows.splice(i, 1);
     let hit = null, bd = 1e9; for (const u of B.units) { if (u.side === a.side || u.dead || u.gone) continue; const d = Math.hypot(u.x - a.x1, u.y - 10 - a.y1); if (d < u.r + 3 && d < bd) { bd = d; hit = u; } }
-    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
+    if (hit) { const fromA = Math.atan2(a.y0 - hit.y, a.x0 - hit.x); if (blocked(hit, fromA, 'arrow')) { sfx('thunk', hit); fxSpark(hit.x + Math.cos(fromA) * 9, hit.y - 14); if (hit === B.hero) ftext(hit.x, hit.y - 44, 'Блок', '#d8d2c4'); } else { hurt(hit, a.dmg * rnd(.85, 1.15) * dtMul(a.dt, hit.arm) * wallCover(hit, a), a.src, a.dt ? dtPierce(a.dt, hit.arm, a.pierce) : a.pierce); sfx('arrowhit', hit); } }
     else if (!SERVER) { const g = B.gg, an = Math.atan2(a.y1 - a.y0, a.x1 - a.x0); g.save(); g.translate(a.x1, a.y1); g.rotate(an - .5); g.strokeStyle = '#3a2a18'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(a.jv ? -18 : -9, 0); g.lineTo(0, 0); g.stroke(); g.strokeStyle = '#e6e0cf'; g.lineWidth = 2; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-7, 0); g.stroke(); g.restore(); }
   }
   for (let i = B.fx.length - 1; i >= 0; i--) { const p = B.fx[i]; p.l -= dt; if (p.l <= 0) { B.fx.splice(i, 1); continue; } p.x += p.vx * dt; p.y += p.vy * dt; if (!p.k) p.vy += 260 * dt; }
@@ -359,9 +361,73 @@ function battleDraw(g) {
   g.font = '700 15px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center';
   for (const p of B.texts) { g.globalAlpha = Math.min(1, p.l * 2.5); g.lineWidth = 3; g.strokeStyle = 'rgba(15,10,6,.85)'; g.strokeText(p.s, p.x, p.y); g.fillStyle = p.c; g.fillText(p.s, p.x, p.y); } g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
+  if (!B.cfg.demo && !B.over) drawFoeArrow(g);
+}
+/* враг за краем экрана — стрелка у края в его сторону с числом бойцов */
+function drawFoeArrow(g) {
+  const foe = centroid(1); if (!foe) return; const cam = B.cam, z = cam.z, d = VIEW.dpr;
+  const sx = (foe.x - cam.x) * z + VIEW.w / 2, sy = (foe.y - cam.y) * z + VIEW.h / 2, m = 70;
+  if (sx > 0 && sx < VIEW.w && sy > 0 && sy < VIEW.h) return;
+  const cx = VIEW.w / 2, cy = VIEW.h / 2, a = Math.atan2(sy - cy, sx - cx), hw = cx - m, hh = cy - m - 40, k = Math.min(hw / Math.abs(Math.cos(a) || 1e-6), hh / Math.abs(Math.sin(a) || 1e-6));
+  const x = cx + Math.cos(a) * k, y = cy + Math.sin(a) * k, pulse = .75 + Math.sin(B.t * 5) * .25;
+  g.setTransform(d, 0, 0, d, d * x, d * y); g.rotate(a); g.globalAlpha = pulse;
+  g.beginPath(); g.moveTo(22, 0); g.lineTo(-10, -15); g.lineTo(-4, 0); g.lineTo(-10, 15); g.closePath(); g.fillStyle = '#e0432f'; g.fill(); g.lineWidth = 3; g.strokeStyle = 'rgba(20,10,4,.9)'; g.stroke();
+  g.setTransform(d, 0, 0, d, d * x, d * y); g.globalAlpha = 1; g.font = '700 15px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center';
+  const t = 'Враг · ' + Math.round(foe.m), ty = Math.sin(a) > .3 ? -26 : 34; g.lineWidth = 4; g.strokeStyle = 'rgba(14,9,4,.9)'; g.strokeText(t, 0, ty); g.fillStyle = '#ffb3a6'; g.fillText(t, 0, ty);
+  g.setTransform(1, 0, 0, 1, 0, 0);
 }
 function drawMinimap(c) {
   const g = c.getContext('2d'), w = c.width, h = c.height, sx = w / B.W, sy = h / B.H; g.clearRect(0, 0, w, h); g.globalAlpha = .9; g.drawImage(B.ground, 0, 0, w, h); g.globalAlpha = 1; g.fillStyle = 'rgba(10,8,4,.25)'; g.fillRect(0, 0, w, h);
   for (const u of B.units) { if (u.dead || u.gone) continue; g.fillStyle = u.side ? '#e0432f' : B.hero2 && u.own !== myPid() ? '#6fe06a' : (u.isHero ? '#fff' : '#5fa8f5'); const s = u.isHero ? 5 : u.t.mounted ? 4 : 3; g.fillRect(u.x * sx - s / 2, u.y * sy - s / 2, s, s); }
   const cam = B.cam; g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1; g.strokeRect((cam.x - VIEW.w / 2 / cam.z) * sx, (cam.y - VIEW.h / 2 / cam.z) * sy, VIEW.w / cam.z * sx, VIEW.h / cam.z * sy);
+}
+
+/* ================= осада: стена с проломами ================= */
+// стена — вертикальная полоса перед защитниками; пройти можно только через проломы (центральный — выбитые ворота)
+function siegeSetup() {
+  const W = B.W, H = B.H, x = W - 980; B.wall = { x, hw: 22, gaps: [[H / 2 - 80, H / 2 + 80], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
+  B.trees = B.trees.filter(t => t.x < x - 140); // у стены и во дворе деревьев нет
+  const [inf, arc, cav] = B.groups[1]; inf.cx = x + 80; inf.cy = H / 2; arc.cx = x + 52; arc.cy = H / 2; cav.cx = W - 380; cav.cy = H / 2; for (const g of B.groups[1]) { g.dir = Math.PI; g.order = 'hold'; g.st = 'siege'; layout(g, true); }
+  for (const u of B.units) if (u.side === 1) { u.mbase += 28; u.morale = u.mbase; if (!u.isHero) { const p = slotPos(u); u.x = p[0]; u.y = p[1]; } }
+  if (!SERVER) paintWall(B.gg);
+}
+function inGap(y, pad) { for (const g of B.wall.gaps) if (y > g[0] + pad && y < g[1] - pad) return g; return null; }
+function wallPush(a) {
+  const w = B.wall, hw = w.hw + a.r * .8, dx = a.x - w.x; if (Math.abs(dx) >= hw) return;
+  const g = inGap(a.y, 0); if (g) { a.y = clamp(a.y, g[0] + a.r * .75, g[1] - a.r * .75); return; }
+  a.x = w.x + (dx < 0 ? -hw : hw); if (a.vx && Math.sign(a.vx) !== Math.sign(dx || -1)) a.vx = 0;
+}
+// цель по ту сторону стены — сперва идём к ближайшему пролому
+function wallVia(u, tx, ty) {
+  const w = B.wall, su = u.x < w.x ? -1 : 1, st = tx < w.x ? -1 : 1; if (su === st) return [tx, ty];
+  let best = null, bd = 1e9; for (const g of w.gaps) { const c = (g[0] + g[1]) / 2, d = Math.abs(c - u.y) + Math.abs(c - ty) * .6 + ((u.id * 37) % 23); if (d < bd) { bd = d; best = g; } }
+  const c = (best[0] + best[1]) / 2, half = (best[1] - best[0]) / 2 - u.r, gy = clamp(u.y, c - half, c + half), adx = Math.abs(u.x - w.x);
+  if (adx < w.hw + 34 && Math.abs(u.y - c) < half) return [w.x - su * 70, gy];
+  return [w.x + su * (w.hw + 30), adx < 140 ? c : gy];
+}
+// стрелки за стеной получают укрытие от стрел с другой стороны
+function wallCover(hit, a) { const w = B.wall; if (!w) return 1; const behind = hit.side === 1 && hit.x > w.x && hit.x < w.x + 80 && a.x0 < w.x && !inGap(hit.y, 0); return behind ? .45 : 1; }
+// защитники: пехота держит ворота, стрелки — за стеной, конница — в резерве; выходят, когда враг прорвался внутрь
+function siegeBrain(dt) {
+  const w = B.wall, [inf, arc, cav] = B.groups[1]; let inside = 0, near = 0; for (const u of B.units) if (u.side === 0 && fit(u)) { if (u.x > w.x + w.hw) inside++; if (u.x > w.x - 160) near++; }
+  if (inf.order !== 'charge' && (inside > 2 || B.t > 150)) inf.order = 'charge';
+  if (cav.order !== 'charge' && (inside > 4 || B.t > 170)) { cav.order = 'charge'; if (!B.cfg.demo) blog('Конница гарнизона вышла в бой', 1); }
+  if (arc.order !== 'charge' && (inside > 8 || !inf.units.some(fit))) arc.order = 'charge';
+  if (near && !B.siegeHorn) { B.siegeHorn = 1; blog('Враг у стен!', 1); sfx('horn2'); }
+}
+function paintWall(g) {
+  const w = B.wall, H = B.H, x0 = w.x - w.hw, ww = w.hw * 2, segs = []; let y = 0; for (const gp of w.gaps.slice().sort((a, b) => a[0] - b[0])) { segs.push([y, gp[0]]); y = gp[1]; } segs.push([y, H]);
+  const R = mulberry(B.cfg.seed || 7);
+  g.save();
+  for (const [a, b] of segs) {
+    g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(x0 - 14, a + 10, ww + 10, b - a); // тень
+    g.fillStyle = '#857a68'; g.fillRect(x0, a, ww, b - a); g.strokeStyle = '#2a2219'; g.lineWidth = 3; g.strokeRect(x0, a, ww, b - a);
+    g.strokeStyle = 'rgba(40,32,24,.55)'; g.lineWidth = 1.2; for (let yy = a + 12; yy < b; yy += 14) { g.beginPath(); g.moveTo(x0, yy); g.lineTo(x0 + ww, yy); g.stroke(); const o = (yy / 14 | 0) % 2 ? 11 : 22; g.beginPath(); g.moveTo(x0 + o, yy - 14); g.lineTo(x0 + o, yy); g.stroke(); }
+    g.fillStyle = '#a49884'; for (let yy = a + 6; yy < b - 8; yy += 22) { g.fillRect(x0 + ww - 9, yy, 9, 12); g.strokeStyle = '#2a2219'; g.lineWidth = 1.5; g.strokeRect(x0 + ww - 9, yy, 9, 12); } // зубцы со стороны защитников
+    for (const ty of [a, b]) { if (ty <= 0 || ty >= H) continue; g.fillStyle = 'rgba(0,0,0,.3)'; ell(g, w.x - 6, ty + 10, 36, 34); g.fill(); g.fillStyle = '#93877318'; g.fillStyle = '#93876f'; ell(g, w.x, ty, 34, 34); g.fill(); g.strokeStyle = '#2a2219'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#6d6252'; ell(g, w.x, ty, 22, 22); g.fill(); }
+  }
+  for (const gp of w.gaps) { const c = (gp[0] + gp[1]) / 2, gate = gp[1] - gp[0] > 140; // обломки в проломах
+    for (let i = 0; i < 26; i++) { const yy = gp[0] + 18 + R() * (gp[1] - gp[0] - 36), xx = x0 - 6 + R() * (ww + 12), r = 3 + R() * 6; g.fillStyle = R() < .5 ? '#7a6f5e' : '#968a74'; ell(g, xx, yy, r, r * .75); g.fill(); g.strokeStyle = '#2a2219'; g.lineWidth = 1; g.stroke(); }
+    if (gate) for (const s of [-1, 1]) { g.save(); g.translate(w.x + 10, c + s * 52); g.rotate(s * .9); g.fillStyle = '#5b3d22'; g.fillRect(-26, -7, 52, 14); g.strokeStyle = '#21160b'; g.lineWidth = 2; g.strokeRect(-26, -7, 52, 14); g.restore(); } }
+  g.restore();
 }

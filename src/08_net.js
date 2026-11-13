@@ -7,7 +7,7 @@ function netProbe() {
 }
 function netStart(o) {
   MODE = 'loading'; B = null; el('title').hidden = true; showLoad(true);
-  NET.on = true; NET.q = []; NET.vote = null; NET.chat = []; NET.err = null; NET.lastLog = '';
+  NET.on = true; NET.q = []; NET.vote = null; NET.chat = []; NET.err = null; NET.lastLog = ''; NET.bt = 0; NET.bid = 0;
   const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host); NET.ws = ws;
   ws.onopen = () => NET.send(Object.assign({ t: 'join' }, o));
   ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } try { netMsg(m); } catch (x) { console.error(x); } };

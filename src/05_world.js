@@ -69,7 +69,7 @@ function genRoads() {
   for (const c of G.settles.filter(s => s.kind === 'camp')) { const b = towns.sort((p, q) => Math.hypot(p.x - c.x, p.y - c.y) - Math.hypot(q.x - c.x, q.y - c.y))[0]; if (Math.hypot(b.x - c.x, b.y - c.y) < 380) link(c, b); }
 }
 function genRecruits(s) {
-  const f = s.fac; if (f === 'bandit') return; const out = {}, n = s.kind === 'town' ? rint(5, 9) : s.kind === 'castle' ? rint(3, 6) : rint(3, 7);
+  if (s.fac === 'bandit') return; const f = sCult(s), out = {}, n = s.kind === 'town' ? rint(5, 9) : s.kind === 'castle' ? rint(3, 6) : rint(3, 7);
   for (let i = 0; i < n; i++) { const ids = Object.keys(TROOPS).filter(k => TROOPS[k].fac === f && TROOPS[k].tier <= (s.kind === 'village' ? 1 : s.kind === 'town' ? 2 : 3) && (s.kind !== 'castle' || TROOPS[k].tier >= 2) && (s.kind === 'village' || TROOPS[k].tier >= 1)); let id = pick(ids.length ? ids : Object.keys(TROOPS).filter(k => TROOPS[k].fac === f)); if (s.kind === 'village' && TROOPS[id].tier > 1) id = Object.keys(TROOPS).find(k => TROOPS[k].fac === f && TROOPS[k].tier === 1); out[id] = (out[id] || 0) + 1; }
   s.recruits = Object.keys(out).map(k => ({ type: k, n: out[k] }));
 }
@@ -101,16 +101,16 @@ function mkPlayer(o) {
   return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
     hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
-function addPlayer(o) { const P = mkPlayer(o); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
+function addPlayer(o) { const P = mkPlayer(o); relWatch(P); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
 function newGame(o) { newWorld(o.seed); const P = addPlayer(o); G.player = P; FACTIONS.player.c1 = BANNERS[P.banner].c1; FACTIONS.player.c2 = BANNERS[P.banner].c2; return G; }
 function respawnCamp(c) { c.camp = mkParty('camp', 'bandit', 'Лагерь: ' + c.name, c.x, c.y, genTroops('bandit', rint(12, 20), .4), { home: c.id, hide: false }); c.cleared = false; c.camp.camp = c.id; }
-function spawnCaravan(t) { const dst = pick(G.settles.filter(s => s.kind === 'town' && s !== t)); const p = mkParty('caravan', t.fac, 'Караван', t.x + 10, t.y + 20, genTroops(t.fac, rint(3, 5), .3), { home: t.id, sid: dst.id, state: 'travel' }); p.path = findPath(p.x, p.y, dst.x, dst.y) || []; p.pi = 0; return p; }
+function spawnCaravan(t) { if (!t || !REAL_F.includes(t.fac)) return null; const dsts = G.settles.filter(s => s.kind === 'town' && s !== t && REAL_F.includes(s.fac)); if (!dsts.length) return null; const dst = pick(dsts); const p = mkParty('caravan', t.fac, 'Караван', t.x + 10, t.y + 20, genTroops(t.fac, rint(3, 5), .3), { home: t.id, sid: dst.id, state: 'travel' }); p.path = findPath(p.x, p.y, dst.x, dst.y) || []; p.pi = 0; return p; }
 function logW(txt, kind, P) { const L = P ? P.log : G.log; L.push({ txt, kind: kind || 0, d: G.day }); if (L.length > 40) L.shift(); if (P) { P.logDirty = true; P.logN = (P.logN || 0) + 1; } else G.logDirty = true; }
-function relName(v) { return v <= -60 ? 'Враждебные' : v <= -20 ? 'Недружелюбные' : v < 20 ? 'Нейтральные' : v < 50 ? 'Дружелюбные' : 'Союзные'; }
+function relName(v) { return v < -20 ? 'Враждебные' : v < -5 ? 'Недружелюбные' : v < 20 ? 'Нейтральные' : v < 50 ? 'Дружелюбные' : 'Союзные'; }
 
 /* ---------- задания ---------- */
 function genQuests() {
-  for (const s of G.settles) { if (s.kind !== 'town') continue; s.board = s.board || []; s.board = s.board.filter(q => G.day - q.day < 12); while (s.board.length < 2) {
+  for (const s of G.settles) { if (s.kind !== 'town') continue; s.board = s.board || []; if (!REAL_F.includes(s.fac)) { s.board = []; continue; } s.board = s.board.filter(q => G.day - q.day < 12); while (s.board.length < 2) {
     const camps = G.settles.filter(c => c.kind === 'camp'); const r = Math.random();
     if (r < .5 && camps.length) { const c = pick(camps); s.board.push({ id: G.nid++, type: 'camp', sid: c.id, from: s.id, fac: s.fac, reward: rint(300, 520), day: G.day, dl: G.day + 20 }); }
     else { const d = pick(G.settles.filter(x => x.kind !== 'camp' && x !== s)); const dist = Math.hypot(d.x - s.x, d.y - s.y); s.board.push({ id: G.nid++, type: 'deliver', sid: d.id, from: s.id, fac: s.fac, reward: Math.round(90 + dist * .22), day: G.day, dl: G.day + Math.ceil(dist / 150) + 4 }); } } }
@@ -162,13 +162,13 @@ function aiParty(p, dh) {
     if (tgt) { p.tid = tgt.pl ? null : tgt.id; p.tpl = tgt.pl || null; p.state = 'hunt'; pathTo(p, tgt.x, tgt.y); return; }
     if (p.state === 'hunt' || p.state === 'flee') { p.state = 'idle'; p.tid = null; p.tpl = null; p.path = []; }
     if (p.state === 'idle' && p.pi >= p.path.length) {
-      if (p.kind === 'lord') { p.wait -= 1.2; if (p.wait <= 0) { const home = settleById(p.home), targets = G.settles.filter(s => s.fac === p.fac && s.kind !== 'camp'); const d = pick(targets); p.sid = d.id; p.state = 'travel'; pathTo(p, d.x, d.y); } }
+      if (p.kind === 'lord') { p.wait -= 1.2; if (p.wait <= 0) { const home = settleById(p.home), targets = G.settles.filter(s => s.fac === p.fac && s.kind !== 'camp'), prey = G.settles.filter(s => s.fac === 'player' && ownerHostile(s, p.fac)); const d = prey.length && Math.random() < .3 ? pick(prey) : pick(targets); if (d) { p.sid = d.id; p.state = 'travel'; pathTo(p, d.x, d.y); } else p.wait = 5; } }
       else if (p.kind === 'bandit') { const c = settleById(p.home); const a = rnd(0, TAU), r = rnd(80, 340), tx = clamp((c ? c.x : p.x) + Math.cos(a) * r, 60, WW - 60), ty = clamp((c ? c.y : p.y) + Math.sin(a) * r, 60, WH - 60); if (!pathTo(p, tx, ty)) p.path = []; p.state = 'roam'; }
       else if (p.kind === 'caravan') { p.state = 'travel'; }
     }
   }
   if (p.state === 'hunt') { if (p.tpl) { const Q = G.players.find(q => q.id === p.tpl); if (!Q || Q.in || Q.away || Q.busy || Math.hypot(Q.x - p.x, Q.y - p.y) > 300) { p.state = 'idle'; p.path = []; p.tpl = null; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, Q.x, Q.y); } } else { const t = partyById(p.tid); if (!t || t.hide) { p.state = 'idle'; p.path = []; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, t.x, t.y); } } }
-  if (p.pi < p.path.length) { const done = moveAlong(p, dh); if (done) { if (p.state === 'travel') { const s = settleById(p.sid); if (s && Math.hypot(s.x - p.x, s.y - p.y) < 40) { if (p.kind === 'caravan') { if (s.fac !== 'bandit') { G.parties.splice(G.parties.indexOf(p), 1); return; } } p.hide = true; p.wait = rint(5, 20); p.home = s.id; p.x = s.x; p.y = s.y; p.state = 'idle'; p.path = []; } } else if (p.state === 'roam') { p.state = 'idle'; p.wait = 0; } } }
+  if (p.pi < p.path.length) { const done = moveAlong(p, dh); if (done) { if (p.state === 'travel') { const s = settleById(p.sid); if (s && Math.hypot(s.x - p.x, s.y - p.y) < 40) { if (p.kind === 'caravan') { if (s.fac !== 'bandit') { G.parties.splice(G.parties.indexOf(p), 1); return; } } if (s.fac === 'player') { p.state = 'idle'; p.path = []; p.wait = rint(4, 10); return; } p.hide = true; p.wait = rint(5, 20); p.home = s.id; p.x = s.x; p.y = s.y; p.state = 'idle'; p.path = []; } } else if (p.state === 'roam') { p.state = 'idle'; p.wait = 0; } } }
   else if (p.state === 'travel' && p.kind === 'caravan') { const s = settleById(p.sid); if (s) pathTo(p, s.x, s.y); else G.parties.splice(G.parties.indexOf(p), 1); }
 }
 function autoFight(a, b) {
@@ -182,13 +182,15 @@ function hourTick() {
   G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
   for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = (P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014) * (1 + ((P.hero.int || 1) - 1) * .04 + perkFx(P.hero).heal); P.hero.hp = Math.min(1, P.hero.hp + heal); }
   for (const s of G.settles) { if (s.kind === 'camp') { if (s.cleared) { s.respawn -= 1; if (s.respawn <= 0) respawnCamp(s); } continue; } s.rt += 1; if (s.rt >= 72) { s.rt = 0; genRecruits(s); } }
+  for (const P of G.players) relWatch(P);
+  if (G.hour % 3 === 0) assaultsTick();
   // спавны
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
   if (G.hour % 6 === 0) { if (bands < 5) { const cs = G.settles.filter(s => s.kind === 'camp' && s.camp); if (cs.length && Math.random() < .5) { const c = pick(cs); mkParty('bandit', 'bandit', unitName('bandit') + ' и шайка', c.x + rnd(-30, 30), c.y + rnd(20, 40), genTroops('bandit', rint(9, 18), .4), { home: c.id }); } }
-    if (cars < 4 && Math.random() < .5) spawnCaravan(pick(G.settles.filter(s => s.kind === 'town'))); }
-  for (const f of ['nord', 'emp', 'khan']) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; if (n < 3 && G.hour === 12) { const h = pick(G.settles.filter(s => s.fac === f && s.kind !== 'village')); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id }); } }
+    if (cars < 4 && Math.random() < .5) spawnCaravan(pick(G.settles.filter(s => s.kind === 'town' && REAL_F.includes(s.fac)))); }
+  for (const f of ['nord', 'emp', 'khan']) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; const hs = G.settles.filter(s => s.fac === f && s.kind !== 'village'); if (n < 3 && G.hour === 12 && hs.length) { const h = pick(hs); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id }); } }
 }
-function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); }
+function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); garrisonDay(); }
 function playerDay(P) {
   const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = wageDay(P);
   if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
@@ -197,3 +199,62 @@ function playerDay(P) {
   for (const f of ['nord', 'emp', 'khan']) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }
 function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3 * (1 - perkFx(P.hero).wage)); }
+
+/* ================= враждебность, гарнизоны и владения ================= */
+const REAL_F = ['nord', 'emp', 'khan'];
+const sCult = s => s.cult || s.fac; // культура поселения: облик, рекруты, рынок. При захвате не меняется
+function relHostile(P, f) { return REAL_F.includes(f) && P.rel[f] < -20; }
+function settleHostile(s, P) { return !!s && s.kind !== 'camp' && relHostile(P, s.fac); }
+function ownerOf(s) { return s && s.fac === 'player' ? G.players.find(q => q.id === s.owner) || null : null; }
+function ownerHostile(s, f) { const O = ownerOf(s); return !!O && relHostile(O, f); }
+// следим, когда фракция становится враждебной или мирится: сообщение в журнал и всплывашка
+function relWatch(P) {
+  if (!P.hostF) { P.hostF = {}; for (const f of REAL_F) P.hostF[f] = relHostile(P, f); return; }
+  for (const f of REAL_F) { const h = relHostile(P, f); if (!!P.hostF[f] === h) continue; P.hostF[f] = h;
+    const msg = h ? 'Ты теперь враг ' + FACTIONS[f].gen + ': их лорды нападут, ворота их городов закрыты.' : 'Ты больше не враг ' + FACTIONS[f].gen + '.';
+    logW(msg, h ? 1 : 3, P); if (!SERVER && typeof toast === 'function' && G.player === P) toast(msg); }
+}
+// война: отношения сразу падают до враждебных
+function declareWar(P, f) { if (!REAL_F.includes(f)) return; P.rel[f] = Math.min(P.rel[f], -45); relWatch(P); }
+function garCap(s) { return s.kind === 'town' ? 50 : s.kind === 'castle' ? 40 : 0; }
+function garrisonOf(s) {
+  if (!s.gar) { const n = s.kind === 'town' ? rint(32, 46) : s.kind === 'castle' ? rint(24, 36) : 0; s.gar = n ? genTroops(sCult(s), n, s.kind === 'castle' ? .75 : .62) : []; sortT(s.gar); }
+  return s.gar;
+}
+function settleIncome(s) { return s.kind === 'town' ? 70 : s.kind === 'castle' ? 35 : 0; }
+// раз в сутки: гарнизоны фракций пополняются, свои владения приносят доход
+function garrisonDay() {
+  for (const s of G.settles) { if (s.kind !== 'town' && s.kind !== 'castle') continue; const g = garrisonOf(s), n = troopCount(g);
+    if (REAL_F.includes(s.fac) && n < garCap(s) * .8) { for (const a of genTroops(s.fac, Math.min(4, Math.round(garCap(s) * .8) - n), .6)) addT(g, a.type, a.n); sortT(g); }
+    if (s.fac === 'player' && n < 6) { for (const a of genTroops(sCult(s), 1, .3)) addT(g, a.type, a.n); } }
+  for (const P of G.players) { const own = G.settles.filter(s => s.fac === 'player' && s.owner === P.id); if (!own.length || P.away) continue; const inc = own.reduce((a, s) => a + settleIncome(s), 0); P.gold += inc; logW('Доход с владений: +' + inc + ' золота.', 3, P); }
+}
+// захват поселения игроком
+function captureSettle(P, s) {
+  s.cult = sCult(s); const was = s.fac; s.fac = 'player'; s.owner = P.id; s.board = []; s.gar = genTroops(s.cult, 4, .3); genRecruits(s);
+  for (const p of G.parties.slice()) if (p.kind === 'lord' && p.hide && p.home === s.id) { G.parties.splice(G.parties.indexOf(p), 1); } // лорды, сидевшие внутри, бегут
+  if (REAL_F.includes(was)) { P.rel[was] = Math.max(-100, P.rel[was] - 15); relWatch(P); }
+  logW((s.kind === 'town' ? 'Город ' : 'Замок ') + s.name + ' теперь твой! Доход ' + settleIncome(s) + ' золота в день. Оставь там гарнизон, иначе его отобьют.', 3, P);
+}
+// лорды враждебных фракций штурмуют владения игрока (расчётом, без боя на поле)
+function assaultsTick() {
+  for (const s of G.settles) { if (s.fac !== 'player') continue; const O = ownerOf(s); if (!O) continue;
+    const p = G.parties.find(q => q.kind === 'lord' && !q.hide && !q.lock && relHostile(O, q.fac) && Math.hypot(q.x - s.x, q.y - s.y) < 70); if (!p) continue;
+    const g = garrisonOf(s), att = partyStr(p) * rnd(.8, 1.2), def = (strength(g) + 4) * 1.6 * rnd(.8, 1.2), r = Math.min(att, def) / Math.max(att, def);
+    if (att > def) {
+      for (const t of p.troops.slice()) remT(p.troops, t.type, Math.round(t.n * r * .5));
+      s.fac = p.fac; s.owner = null; s.gar = genTroops(p.fac, 10, .5); p.hide = true; p.home = s.id; p.wait = rint(10, 30); genRecruits(s);
+      logW(p.name + ' взял штурмом ' + s.name + '. Владение потеряно.', 1, O); if (!SERVER && typeof toast === 'function' && G.player === O) toast(p.name + ' захватил ' + s.name + '!');
+    } else {
+      for (const t of g.slice()) remT(g, t.type, Math.round(t.n * r * .45));
+      const i = G.parties.indexOf(p); if (i >= 0) G.parties.splice(i, 1);
+      logW('Гарнизон ' + s.name + ' отбил штурм: ' + p.name + ' разбит.', 3, O);
+    }
+  }
+}
+// гарнизон своего поселения: оставить или забрать бойцов
+function garMove(P, s, type, n, toGar) {
+  if (!s || s.fac !== 'player' || s.owner !== P.id) return 0; const from = toGar ? P.troops : garrisonOf(s), to = toGar ? garrisonOf(s) : P.troops, have = from.find(x => x.type === type); if (!have) return 0;
+  n = Math.min(n, have.n); if (!toGar) n = Math.min(n, sizeCap(P.hero) - troopCount(P.troops)); if (toGar && from === P.troops) n = Math.min(n, troopCount(P.troops) - 1); if (n < 1) return 0;
+  remT(from, type, n); addT(to, type, n); sortT(to); return n;
+}
