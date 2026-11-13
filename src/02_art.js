@@ -201,6 +201,7 @@ function emblem(g, kind, x, y, s, col) {
   else if (kind === 'lily') { g.beginPath(); g.moveTo(0, -s); g.bezierCurveTo(s * .5, -s * .45, s * .34, s * .1, 0, s * .18); g.bezierCurveTo(-s * .34, s * .1, -s * .5, -s * .45, 0, -s); g.fill();
     for (const d of [-1, 1]) { g.beginPath(); g.moveTo(d * s * .12, s * .1); g.bezierCurveTo(d * s * .9, -s * .35, d * s * 1.05, s * .35, d * s * .5, s * .5); g.bezierCurveTo(d * s * .6, s * .2, d * s * .3, s * .12, d * s * .12, s * .1); g.fill(); }
     g.fillRect(-s * .55, s * .3, s * 1.1, s * .16); g.fillRect(-s * .14, s * .3, s * .28, s * .55); }
+  else if (kind === 'oak') { g.fillRect(-s * .14, s * .1, s * .28, s * .8); for (const q of [[-.42, -.1, .5], [.42, -.1, .5], [0, -.5, .58], [0, .08, .52]]) { ell(g, q[0] * s, q[1] * s, q[2] * s, q[2] * s); g.fill(); } }
   else if (kind === 'octa') { for (let r = 0; r < 2; r++) { g.save(); g.rotate(r * Math.PI / 4); g.fillRect(-s * .66, -s * .66, s * 1.32, s * 1.32); g.restore(); } }
   else { g.lineWidth = s * .3; g.lineJoin = 'miter'; g.beginPath(); g.moveTo(-s * .8, s * .1); g.lineTo(0, -s * .6); g.lineTo(s * .8, s * .1); g.stroke(); g.beginPath(); g.moveTo(-s * .8, s * .75); g.lineTo(0, s * .05); g.lineTo(s * .8, s * .75); g.stroke(); }
   g.restore();

@@ -48,26 +48,26 @@ const MC = melee({}, { wt: 'mace', dt: 'blunt', spd: 1.1, kb: 2.2, parry: .12, l
 const SP = melee({}, { wt: 'spear', dt: 'pierce', spd: 1.1, reach: 20, arc: .7, cleave: 2, anticav: 1, parry: .2, look: 'spear' });
 const TH = melee({}, { wt: 'twohand', hands: 2, spd: 1.4, reach: 8, arc: 1.25, cleave: 4, fall: .8, parry: .32 });
 const PA = melee({}, { wt: 'polearm', dt: 'pierce', hands: 2, spd: 1.5, reach: 36, arc: .5, cleave: 2, anticav: 1, parry: .3 });
-SW('sword_old', 'Старый меч', 0, 40, 20, 3); SW('sword_knight', 'Рыцарский меч', 1, 380, 28, 3.5, { f: ['emp', 'kin'] });
+SW('sword_old', 'Старый меч', 0, 40, 20, 3); SW('sword_knight', 'Рыцарский меч', 1, 380, 28, 3.5, { f: ['emp', 'kin', 'dom'] });
 SW('sword_master', 'Клинок мастера', 2, 1150, 38, 3.5); SW('sword_damask', 'Булатный клинок', 3, 2600, 50, 3.5, { f: ['khan', 'emi'] });
 SW('sabre', 'Сабля', 1, 330, 27, 3, { spd: .92, look: 'sabre', f: ['khan', 'emi'] });
-AX('axe_work', 'Рабочий топор', 0, 90, 24, 3.5, { f: ['nord'] }); AX('axe_battle', 'Боевой топор', 1, 420, 34, 4, { f: ['nord'] }); AX('axe_bearded', 'Бородатая секира', 2, 1250, 44, 4.5, { f: ['nord'] });
+AX('axe_work', 'Рабочий топор', 0, 90, 24, 3.5, { f: ['nord', 'dom'] }); AX('axe_battle', 'Боевой топор', 1, 420, 34, 4, { f: ['nord', 'dom'] }); AX('axe_bearded', 'Бородатая секира', 2, 1250, 44, 4.5, { f: ['nord'] });
 MC('club', 'Дубина', 0, 60, 22, 4, { look: 'club' }); MC('mace', 'Булава', 1, 400, 31, 4); MC('mace_flanged', 'Шестопёр', 2, 1100, 41, 4.5);
-SP('spear_hunt', 'Охотничье копьё', 0, 80, 24, 3.5); SP('spear_war', 'Боевое копьё', 1, 340, 33, 4, { f: ['emp', 'nord', 'kin'] });
+SP('spear_hunt', 'Охотничье копьё', 0, 80, 24, 3.5); SP('spear_war', 'Боевое копьё', 1, 340, 33, 4, { f: ['emp', 'nord', 'kin', 'dom'] });
 TH('tw_sword', 'Двуручный меч', 2, 1300, 56, 7, { dt: 'cut', look: 'sword' }); TH('tw_claymore', 'Клеймор', 3, 2800, 68, 8, { dt: 'cut', spd: 1.45, reach: 10, look: 'sword' });
 TH('tw_axe', 'Двуручная секира', 2, 1500, 62, 8, { dt: 'cut', spd: 1.5, brk: .5, look: 'axe', f: ['nord'] }); TH('tw_hammer', 'Боевой молот', 2, 1400, 60, 9, { dt: 'blunt', spd: 1.5, kb: 2.8, look: 'mace' });
-PA('pike', 'Пика', 1, 600, 42, 6, { reach: 40, look: 'spear', f: ['emp', 'kin'] }); PA('halberd', 'Алебарда', 2, 950, 48, 7, { dt: 'cut', spd: 1.35, reach: 28, arc: .7, cleave: 3, look: 'halberd', f: ['emp', 'kin'] });
+PA('pike', 'Пика', 1, 600, 42, 6, { reach: 40, look: 'spear', f: ['emp', 'kin', 'dom'] }); PA('halberd', 'Алебарда', 2, 950, 48, 7, { dt: 'cut', spd: 1.35, reach: 28, arc: .7, cleave: 3, look: 'halberd', f: ['emp', 'kin', 'dom'] });
 
 /* Оружие дальнего боя (боеприпасы бесконечные). cd — перезарядка, сек; range — дальность; acc — разброс; pb — доп. пробитие;
    bs — сколько урона даёт каждая единица силы */
 const ranged = (id, name, tier, price, dmg, w, o) => E(id, name, 'ranged', tier, price, w, Object.assign({ rng: 1, dt: 'pierce', dmg, hands: 2, parry: 0, bs: 1.2 }, o));
-ranged('bow_hunt', 'Охотничий лук', 0, 120, 17, 1.5, { wt: 'bow', cd: .9, range: 330, acc: .05, look: 'bow', f: ['nord'] });
+ranged('bow_hunt', 'Охотничий лук', 0, 120, 17, 1.5, { wt: 'bow', cd: .9, range: 330, acc: .05, look: 'bow', f: ['nord', 'dom'] });
 ranged('bow_long', 'Длинный лук', 1, 560, 26, 2, { wt: 'bow', cd: 1.15, range: 420, acc: .04, look: 'bow', f: ['nord', 'kin'] });
 ranged('bow_comp', 'Составной лук', 2, 1300, 33, 2, { wt: 'bow', cd: 1, range: 400, acc: .035, look: 'bow', f: ['khan', 'emi'] });
-ranged('xbow_light', 'Лёгкий арбалет', 1, 700, 30, 4, { wt: 'xbow', cd: 2, range: 360, acc: .03, pb: .12, bs: 0, look: 'xbow', f: ['emp', 'kin'] });
-ranged('xbow_heavy', 'Тяжёлый арбалет', 2, 1700, 46, 6, { wt: 'xbow', cd: 2.9, range: 380, acc: .025, pb: .22, bs: 0, look: 'xbow', f: ['emp', 'kin'] });
+ranged('xbow_light', 'Лёгкий арбалет', 1, 700, 30, 4, { wt: 'xbow', cd: 2, range: 360, acc: .03, pb: .12, bs: 0, look: 'xbow', f: ['emp', 'kin', 'dom'] });
+ranged('xbow_heavy', 'Тяжёлый арбалет', 2, 1700, 46, 6, { wt: 'xbow', cd: 2.9, range: 380, acc: .025, pb: .22, bs: 0, look: 'xbow', f: ['emp', 'kin', 'dom'] });
 ranged('jav_dart', 'Дротики', 0, 110, 26, 2.5, { wt: 'throw', hands: 1, cd: 1.2, range: 210, acc: .06, bs: 2, look: 'spear' });
-ranged('jav_spear', 'Метательные копья', 1, 420, 38, 3.5, { wt: 'throw', hands: 1, cd: 1.4, range: 230, acc: .05, bs: 2, look: 'spear', f: ['nord', 'khan', 'emi'] });
+ranged('jav_spear', 'Метательные копья', 1, 420, 38, 3.5, { wt: 'throw', hands: 1, cd: 1.4, range: 230, acc: .05, bs: 2, look: 'spear', f: ['nord', 'khan', 'emi', 'dom'] });
 ranged('jav_heavy', 'Тяжёлые метательные копья', 2, 980, 50, 4.5, { wt: 'throw', hands: 1, cd: 1.6, range: 240, acc: .045, pb: .1, bs: 2, look: 'spear', f: ['khan', 'emi'] });
 }
 
