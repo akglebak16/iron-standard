@@ -32,7 +32,7 @@ function encFlee(P, p) {
 }
 function battleCfgFor(P, p) {
   return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
-    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9),
+    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) ? p.name : null, seed: rint(1, 1e9),
     comps: compsBattle(P), csurv: compFx(P) ? compFx(P).f.surv : 0 }; // спутники и лекарь среди них: см. 05e_comps.js
 
 }

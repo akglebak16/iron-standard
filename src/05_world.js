@@ -329,6 +329,14 @@ function partyStr(p) { return strength(p.troops); }
 /* Армии лордов: большие, как в Mount & Blade. Начальный размер, размер нового лорда (после гибели прежнего) и до скольких лорд пополняется в своих землях */
 const lordsPerF = () => mapVer() === 2 ? 5 : 3; // лордов на фракцию: на большой карте больше
 const LORD_MIN = 130, LORD_MAX = 190, LORD_NEW_MIN = 95, LORD_NEW_MAX = 145, LORD_FULL = 165;
+/* Вассалы: средние отряды фракций между шайками (10–20) и лордами (130–190). Служат лорду своей фракции: то идут за ним, то объезжают свои земли.
+   В поселениях не прячутся (стоят у стен), в осадах не участвуют. На старых сохранениях появляются постепенно, как новые лорды. */
+const vassalsPerF = () => mapVer() === 2 ? 4 : 2;
+const VAS_MIN = 50, VAS_MAX = 80, VAS_NEW_MIN = 35, VAS_NEW_MAX = 55, VAS_FULL = 70;
+const VAS_TITLE = { nord: 'Хёвдинг', emp: 'Трибун', khan: 'Багатур', kin: 'Шевалье', emi: 'Сипахи' };
+function vassalName(fac) { return (VAS_TITLE[fac] || 'Вассал') + ' ' + unitName(fac); }
+const isNoble = p => p.kind === 'lord' || p.kind === 'vassal';
+function spawnVassal(f, h, n) { const lords = G.parties.filter(q => q.kind === 'lord' && q.fac === f), p = mkParty('vassal', f, vassalName(f), h.x + rnd(-20, 20), h.y + 24, genTroops(f, n, .55), { home: h.id, lid: lords.length ? pick(lords).id : null }); p.state = 'idle'; p.wait = rint(1, 12); return p; }
 function mkParty(kind, fac, name, x, y, troops, extra) { const p = Object.assign({ id: G.nid++, kind, fac, name, x, y, troops, path: [], pi: 0, tid: null, sid: null, home: null, state: 'idle', wait: 0, hide: false, gold: 0, hold: 0, cd: 0 }, extra || {}); G.parties.push(p); return p; }
 function partyById(id) { return G.parties.find(p => p.id === id); }
 function settleById(id) { return G.settles.find(s => s.id === id); }
@@ -346,6 +354,7 @@ function newWorld(seed, mapv) {
   seed = seed || rint(1, 1e9); G = { seed, mapv: mapv || DEFAULT_MAPV, rv: (mapv || DEFAULT_MAPV) === 2 ? 1 : 0, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
   genWorld(seed); genSettlements(); genRoads(); for (const s of G.settles) { genRecruits(s); if (s.kind === 'camp') respawnCamp(s); }
   for (const f of worldF()) { const hs = G.settles.filter(s => s.fac === f); const nl = lordsPerF(); for (let i = 0; i < nl; i++) { const h = mapVer() === 2 ? (i === 0 ? hs[0] : pick(hs.filter(s => s.kind !== 'village'))) : hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(LORD_MIN, LORD_MAX), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
+  for (const f of worldF()) { const hs = G.settles.filter(s => s.fac === f && s.kind !== 'camp'); for (let i = 0; i < vassalsPerF() && hs.length; i++) spawnVassal(f, pick(hs), rint(VAS_MIN, VAS_MAX)); }
   for (let i = 0; i < (mapVer() === 2 ? 8 : 2); i++) { const t = pick(G.settles.filter(s => s.kind === 'town')); spawnCaravan(t); }
   genQuests(); return G;
 }
@@ -417,13 +426,25 @@ function aiParty(p, dh) {
     if (p.state === 'hunt' || p.state === 'flee') { p.state = 'idle'; p.tid = null; p.tpl = null; p.path = []; }
     if (p.state === 'idle' && p.pi >= p.path.length) {
       if (p.kind === 'lord') { p.wait -= 1.2; if (p.wait <= 0) { const home = settleById(p.home), targets = G.settles.filter(s => s.fac === p.fac && s.kind !== 'camp'), prey = G.settles.filter(s => s.fac === 'player' && ownerHostile(s, p.fac)); const d = prey.length && Math.random() < .3 ? pick(prey) : pick(targets); if (d) { p.sid = d.id; p.state = 'travel'; pathTo(p, d.x, d.y); } else p.wait = 5; } }
+      else if (p.kind === 'vassal') { p.wait -= 1.2; if (p.wait <= 0) vassalIdle(p); }
       else if (p.kind === 'bandit') { const c = settleById(p.home); const a = rnd(0, TAU), r = rnd(80, 340), tx = clamp((c ? c.x : p.x) + Math.cos(a) * r, 60, WW - 60), ty = clamp((c ? c.y : p.y) + Math.sin(a) * r, 60, WH - 60); if (!pathTo(p, tx, ty)) p.path = []; p.state = 'roam'; }
       else if (p.kind === 'caravan') { p.state = 'travel'; }
     }
   }
   if (p.state === 'hunt') { if (p.tpl) { const Q = G.players.find(q => q.id === p.tpl); if (!Q || Q.in || Q.away || Q.busy || Math.hypot(Q.x - p.x, Q.y - p.y) > 300) { p.state = 'idle'; p.path = []; p.tpl = null; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, Q.x, Q.y); } } else { const t = partyById(p.tid); if (!t || t.hide) { p.state = 'idle'; p.path = []; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, t.x, t.y); } } }
-  if (p.pi < p.path.length) { const done = moveAlong(p, dh); if (done) { if (p.state === 'travel') { const s = settleById(p.sid); if (s && Math.hypot(s.x - p.x, s.y - p.y) < 40) { if (p.kind === 'caravan') { if (s.fac !== 'bandit') { G.parties.splice(G.parties.indexOf(p), 1); return; } } if (s.fac === 'player') { p.state = 'idle'; p.path = []; p.wait = rint(4, 10); return; } p.hide = true; p.wait = rint(5, 20); p.home = s.id; p.x = s.x; p.y = s.y; p.state = 'idle'; p.path = []; } } else if (p.state === 'roam') { p.state = 'idle'; p.wait = 0; } } }
+  if (p.pi < p.path.length) { const done = moveAlong(p, dh); if (done) { if (p.state === 'travel') { const s = settleById(p.sid); if (s && Math.hypot(s.x - p.x, s.y - p.y) < 40) { if (p.kind === 'caravan') { if (s.fac !== 'bandit') { G.parties.splice(G.parties.indexOf(p), 1); return; } } if (s.fac === 'player') { p.state = 'idle'; p.path = []; p.wait = rint(4, 10); return; } if (p.kind === 'vassal') { vassalRest(p, s); return; } p.hide = true; p.wait = rint(5, 20); p.home = s.id; p.x = s.x; p.y = s.y; p.state = 'idle'; p.path = []; } } else if (p.state === 'roam') { p.state = 'idle'; p.wait = p.kind === 'vassal' ? rint(2, 6) : 0; } } }
   else if (p.state === 'travel' && p.kind === 'caravan') { const s = settleById(p.sid); if (s) pathTo(p, s.x, s.y); else G.parties.splice(G.parties.indexOf(p), 1); }
+}
+/* вассал без дела: половину времени идёт к своему лорду, иначе объезжает земли фракции (деревни и замки) */
+function vassalIdle(p) {
+  let L = p.lid != null ? partyById(p.lid) : null; if (!L || L.fac !== p.fac) { const ls = G.parties.filter(q => q.kind === 'lord' && q.fac === p.fac); L = ls.length ? pick(ls) : null; p.lid = L ? L.id : null; }
+  if (L && Math.random() < .5) { const a = rnd(0, TAU), tx = clamp(L.x + Math.cos(a) * 45, 60, WW - 60), ty = clamp(L.y + Math.sin(a) * 45 + 20, 60, WH - 60); if (Math.hypot(L.x - p.x, L.y - p.y) > 80 && pathTo(p, tx, ty)) { p.state = 'roam'; return; } }
+  const own = G.settles.filter(s => s.fac === p.fac && s.kind !== 'camp' && s.kind !== 'town'), near = own.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y)).slice(0, 6), d = near.length ? pick(near) : null;
+  if (d) { p.sid = d.id; p.state = 'travel'; pathTo(p, d.x + rnd(-15, 15), d.y + 24); } else p.wait = 5;
+}
+function vassalRest(p, s) { // у своего поселения: стоит у стен несколько часов и добирает людей
+  p.state = 'idle'; p.path = []; p.pi = 0; p.wait = rint(3, 8); p.home = s.id;
+  const need = VAS_FULL - troopCount(p.troops); if (need > 0 && s.fac === p.fac) for (const a of genTroops(p.fac, Math.min(need, rint(4, 10)), .55)) addT(p.troops, a.type, a.n);
 }
 function autoFight(a, b) {
   const sa = partyStr(a) * rnd(.8, 1.25), sb = partyStr(b) * rnd(.8, 1.25), w = sa >= sb ? a : b, l = w === a ? b : a, r = Math.min(sa, sb) / Math.max(sa, sb), wl = Math.min(.85, r * .85);
@@ -442,6 +463,7 @@ function hourTick() {
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
   if (G.hour % 6 === 0) { if (bands < (mapVer() === 2 ? 10 : 5)) { const cs = G.settles.filter(s => s.kind === 'camp' && s.camp); if (cs.length && Math.random() < .5) { const c = pick(cs); mkParty('bandit', 'bandit', unitName('bandit') + ' и шайка', c.x + rnd(-30, 30), c.y + rnd(20, 40), genTroops('bandit', rint(9, 18), .4), { home: c.id }); } }
     if (cars < (mapVer() === 2 ? 9 : 4) && Math.random() < .5) spawnCaravan(pick(G.settles.filter(s => s.kind === 'town' && REAL_F.includes(s.fac)))); }
+  for (const f of worldF()) { const n = G.parties.filter(p => p.kind === 'vassal' && p.fac === f).length, hs = G.settles.filter(s => s.fac === f && s.kind !== 'camp'); if (n < vassalsPerF() && G.hour === 6 && hs.length) spawnVassal(f, pick(hs), rint(VAS_NEW_MIN, VAS_NEW_MAX)); }
   for (const f of worldF()) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; const hs = G.settles.filter(s => s.fac === f && s.kind !== 'village'); if (n < lordsPerF() && G.hour === 12 && hs.length) { const h = pick(hs); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id }); } }
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); garrisonDay(); if (!SERVER) compsDay(); } // спутники бродят по тавернам только в одиночной игре
@@ -471,25 +493,34 @@ function relWatch(P) {
 }
 // война: отношения сразу падают до враждебных
 function declareWar(P, f) { if (!REAL_F.includes(f)) return; P.rel[f] = Math.min(P.rel[f], -45); relWatch(P); }
-function garCap(s) { return s.kind === 'town' ? 50 : s.kind === 'castle' ? 40 : 0; }
+function garCap(s) { return s.kind === 'town' ? 100 : s.kind === 'castle' ? 80 : 0; } // гарнизоны фракций пополняются до 80% этого
 function garrisonOf(s) {
-  if (!s.gar) { const n = s.kind === 'town' ? rint(32, 46) : s.kind === 'castle' ? rint(24, 36) : 0; s.gar = n ? genTroops(sCult(s), n, s.kind === 'castle' ? .75 : .62) : []; sortT(s.gar); }
+  if (!s.gar) { const n = s.kind === 'town' ? rint(64, 92) : s.kind === 'castle' ? rint(48, 72) : 0; s.gar = n ? genTroops(sCult(s), n, s.kind === 'castle' ? .75 : .62) : []; sortT(s.gar); }
   return s.gar;
 }
-function settleIncome(s) { return s.kind === 'town' ? 70 : s.kind === 'castle' ? 35 : 0; }
+/* Доход владения и содержание гарнизона. Доход: город 200, замок 100 в день, плюс по 15 за каждую деревню той же культуры в округе (до 450),
+   с которой владение собирает подати. Гарнизон получает половину полевого жалованья (~0,8 золота за бойца). Город (~240) держит гарнизон в 110 бойцов
+   (~90 в день; столько нужно, чтобы отбить лорда в 165 примерно в 2 случаях из 3) и даёт ~150 прибыли; замок (~140) с гарнизоном 80 — около 75. */
+const GAR_WAGE = .5, INC_TOWN = 200, INC_CASTLE = 100, INC_VILLAGE = 15, INC_VR = 450;
+function settleVillages(s) { return G.settles.filter(v => v.kind === 'village' && sCult(v) === sCult(s) && Math.hypot(v.x - s.x, v.y - s.y) < INC_VR).length; }
+function settleIncome(s) { return s.kind === 'town' || s.kind === 'castle' ? (s.kind === 'town' ? INC_TOWN : INC_CASTLE) + settleVillages(s) * INC_VILLAGE : 0; }
+function garUpkeep(s) { let w = 0; for (const t of garrisonOf(s)) w += TROOPS[t.type].wage * t.n; return Math.round(w / 3 * GAR_WAGE); }
 // раз в сутки: гарнизоны фракций пополняются, свои владения приносят доход
 function garrisonDay() {
   for (const s of G.settles) { if (s.kind !== 'town' && s.kind !== 'castle') continue; const g = garrisonOf(s), n = troopCount(g);
     if (REAL_F.includes(s.fac) && n < garCap(s) * .8) { for (const a of genTroops(s.fac, Math.min(4, Math.round(garCap(s) * .8) - n), .6)) addT(g, a.type, a.n); sortT(g); }
     if (s.fac === 'player' && n < 6) { for (const a of genTroops(sCult(s), 1, .3)) addT(g, a.type, a.n); } }
-  for (const P of G.players) { const own = G.settles.filter(s => s.fac === 'player' && s.owner === P.id); if (!own.length || P.away) continue; const inc = own.reduce((a, s) => a + settleIncome(s), 0); P.gold += inc; logW('Доход с владений: +' + inc + ' золота.', 3, P); }
+  for (const P of G.players) { const own = G.settles.filter(s => s.fac === 'player' && s.owner === P.id); if (!own.length || P.away) continue;
+    const inc = own.reduce((a, s) => a + settleIncome(s), 0), up = Math.round(own.reduce((a, s) => a + garUpkeep(s), 0) * (1 - perkFx(P.hero).wage)); P.gold += inc - up;
+    if (P.gold < 0) { P.gold = 0; for (const s of own) { const g = garrisonOf(s); if (troopCount(g) > 6) { const t = pick(g); remT(g, t.type, Math.max(1, Math.round(t.n * .1))); } } logW('Казна пуста: гарнизоны без жалованья, часть бойцов разбежалась.', 1, P); }
+    logW('Владения: доход +' + inc + ', гарнизоны −' + up + ' золота.', 3, P); }
 }
 // захват поселения игроком
 function captureSettle(P, s) {
   s.cult = sCult(s); const was = s.fac; s.fac = 'player'; s.owner = P.id; s.board = []; s.gar = genTroops(s.cult, 4, .3); genRecruits(s);
   for (const p of G.parties.slice()) if (p.kind === 'lord' && p.hide && p.home === s.id) { G.parties.splice(G.parties.indexOf(p), 1); } // лорды, сидевшие внутри, бегут
   if (REAL_F.includes(was)) { P.rel[was] = Math.max(-100, P.rel[was] - 15); relWatch(P); }
-  logW((s.kind === 'town' ? 'Город ' : 'Замок ') + s.name + ' теперь твой! Доход ' + settleIncome(s) + ' золота в день. Оставь там гарнизон, иначе его отобьют.', 3, P);
+  logW((s.kind === 'town' ? 'Город ' : 'Замок ') + s.name + ' теперь твой! Доход ' + settleIncome(s) + ' золота в день, гарнизон получает половину жалованья. Оставь там гарнизон (против лорда нужно около 110 бойцов), иначе его отобьют.', 3, P);
 }
 // лорды враждебных фракций штурмуют владения игрока (расчётом, без боя на поле)
 function assaultsTick() {
@@ -498,7 +529,7 @@ function assaultsTick() {
     const g = garrisonOf(s), att = partyStr(p) * rnd(.8, 1.2), def = (strength(g) + 4) * 1.6 * rnd(.8, 1.2), r = Math.min(att, def) / Math.max(att, def);
     if (att > def) {
       for (const t of p.troops.slice()) remT(p.troops, t.type, Math.round(t.n * r * .5));
-      s.fac = p.fac; s.owner = null; s.gar = genTroops(p.fac, 10, .5); p.hide = true; p.home = s.id; p.wait = rint(10, 30); genRecruits(s);
+      s.fac = p.fac; s.owner = null; s.gar = genTroops(p.fac, 20, .5); p.hide = true; p.home = s.id; p.wait = rint(10, 30); genRecruits(s);
       logW(p.name + ' взял штурмом ' + s.name + '. Владение потеряно.', 1, O); if (!SERVER && typeof toast === 'function' && G.player === O) toast(p.name + ' захватил ' + s.name + '!');
     } else {
       for (const t of g.slice()) remT(g, t.type, Math.round(t.n * r * .45));
