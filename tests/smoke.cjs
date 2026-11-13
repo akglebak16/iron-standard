@@ -107,7 +107,7 @@ async function companions(pg) {
   const t = await pg.evaluate(() => { const P = G.player; P.gold = 5000; compsInit(); const s = G.settles.find(x => x.kind === 'town' && x.fac === P.culture); G.cpos.ingrid = s.id; G.cpos.halvdan = s.id; openTown(s); ACT.ttab({ t: 'tavern' }); return s.id; });
   ok('в городе есть таверна со спутниками', await pg.evaluate(() => document.querySelectorAll('#modal [data-act=chire]').length >= 2));
   await pg.click('#modal [data-act=chire][data-id=ingrid]'); await pg.click('#modal [data-act=chire][data-id=halvdan]'); await sleep(150);
-  const h = await pg.evaluate(() => ({ n: G.player.comps.length, gold: G.player.gold, left: document.querySelectorAll('#modal [data-act=chire]').length }));
+  const h = await pg.evaluate(() => ({ n: G.player.comps.length, gold: G.player.gold, left: document.querySelectorAll('#modal [data-act=chire][data-id=ingrid], #modal [data-act=chire][data-id=halvdan]').length }));
   ok('спутника можно нанять: он в отряде, золото списано, в таверне его больше нет', h.n === 2 && h.gold === 5000 - 350 - 800 && h.left === 0, h);
   ok('пан Глебио сидит в Мяделе и идёт в отряд бесплатно', await pg.evaluate(() => { const m = G.settles.find(s => s.name === 'Мядель'), g0 = G.player.gold; if (!m || G.cpos.glebio !== m.id) return false; const r = doCompHire(G.player, m, 'glebio'); const ok = !r && G.player.gold === g0 && !!compById(G.player, 'glebio'); doCompFire(G.player, 'glebio'); return ok; }));
   ok('вкладка «Спутники» в окне отряда', await pg.evaluate(() => { closeModal(); openPanel('comps'); return document.querySelectorAll('#modal .row.comp').length === 2; }));

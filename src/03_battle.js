@@ -31,7 +31,6 @@ function startBattle(cfg) {
   const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const cap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP, sc = tot > cap ? cap / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.comps) for (const c of cfg.comps) spawnComp(c);
-  for (const u of B.units) if (u.t.fac === 'undead') u.mbase = u.morale = 999; // мёртвые не бегут
   if (cfg.siege) siegeSetup();
   for (const u of B.units) if (u.side === 0) u.own = cfg.heroPid;
   for (const g of B.groups[0]) g.own = cfg.heroPid;
@@ -42,6 +41,7 @@ function startBattle(cfg) {
     for (const u of B.units) if (u.side === 0 && !u.isHero) { u.mbase += mb; u.morale = u.mbase; if (F.ally) u.dmg *= 1 + F.ally; }
   }
   if (cfg.leader) { const cands = B.units.filter(u => u.side === 1).sort((a, b) => b.t.tier - a.t.tier); const l = cands[0]; if (l) { l.leader = true; l.name = cfg.leader; l.maxHp = l.hp = l.hp * 1.9; l.dmg *= 1.3; l.mbase = l.morale = 200; } }
+  for (const u of B.units) if (u.t.fac === 'undead') u.mbase = u.morale = 999; // мёртвые не бегут (и некромант тоже)
   for (const s of B.groups) for (const g of s) layout(g, true);
   for (const u of B.units) { if (u.isHero) continue; const p = slotPos(u); u.x = p[0]; u.y = p[1]; }
   B.count0 = B.men.slice();
