@@ -87,6 +87,14 @@ function drawHelm(g, L, v, pal, R) {
     line(g, [37.5, 3, 34, -3, 30, 1], pal.c2 === '#e6c868' ? '#a02c22' : pal.c1, 2);
     g.beginPath(); g.moveTo(23.4, 27); g.bezierCurveTo(25, 20, 50, 20, 51.6, 27); g.bezierCurveTo(46, 24.5, 30, 24.5, 23.4, 27); fs(g, '#5f4930', 1.2); furTex(g, 24, 21, 27, 6, R, '#2c2014', '#9a7f58');
     g.beginPath(); g.moveTo(25.6, 26); g.lineTo(24.6, 42); g.lineTo(30, 44); g.lineTo(29, 31); g.closePath(); fs(g, '#6d5639', 1); g.beginPath(); g.moveTo(49.2, 26); g.lineTo(50.6, 42); g.lineTo(45.6, 44); g.lineTo(47, 31); g.closePath(); fs(g, '#523f28', 1);
+  } else if (h === 'turban' || h === 'turbanm') {
+    if (h === 'turbanm') { aventail(); dome(STEEL, 12); }
+    const cl = '#e6dcc0', wrap = () => { g.beginPath(); g.moveTo(24.2, 27); g.bezierCurveTo(21.5, 14, 29, 5.5, 37.5, 5.5); g.bezierCurveTo(46, 5.5, 53.5, 14, 50.8, 27); g.bezierCurveTo(44, 24, 31, 24, 24.2, 27); g.closePath(); };
+    wrap(); fs(g, cl, 1.5); g.save(); wrap(); g.clip();
+    for (let i = 0; i < 4; i++) line(g, [22, 25 - i * 5.5, 38, 20 - i * 5.5, 54, 25 - i * 5.5], shade(cl, -.24), 1.2);
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(44, 4, 12, 26); g.fillStyle = 'rgba(255,255,255,.3)'; ell(g, 31, 14, 3.4, 5); g.fill(); g.restore();
+    line(g, [24.6, 25, 37.5, 23, 50.4, 25], pal.c1, 2.8); ell(g, 41, 22.6, 1.9, 1.9); fs(g, GOLD, .9);
+    if (h === 'turbanm') { g.beginPath(); g.moveTo(35.6, 7); g.lineTo(37.5, -1.5); g.lineTo(39.4, 7); g.closePath(); fs(g, STEEL, 1.1); }
   } else if (h === 'crest') {
     plume(g, 46, 9.5, '#a3271f', true); dome('#b8a26a', 10); band(GOLD);
     g.beginPath(); g.moveTo(25.6, 25); g.lineTo(26.4, 36); g.lineTo(31.5, 40.5); g.lineTo(31, 30); g.closePath(); fs(g, '#b8a26a', 1.1); g.beginPath(); g.moveTo(49.2, 25); g.lineTo(48.6, 36); g.lineTo(45, 40); g.lineTo(46.4, 30); g.closePath(); fs(g, '#8f7c4c', 1.1);
@@ -190,6 +198,10 @@ function emblem(g, kind, x, y, s, col) {
   else if (kind === 'sun') { ell(g, 0, 0, s * .5, s * .5); g.fill(); g.lineWidth = s * .16; for (let i = 0; i < 8; i++) { const a = i * TAU / 8; g.beginPath(); g.moveTo(Math.cos(a) * s * .68, Math.sin(a) * s * .68); g.lineTo(Math.cos(a) * s, Math.sin(a) * s); g.stroke(); } }
   else if (kind === 'moon') { g.beginPath(); g.arc(0, 0, s * .85, .5, TAU - .5); g.arc(s * .34, 0, s * .62, TAU - .85, .85, true); g.closePath(); g.fill(); ell(g, s * .5, 0, s * .2, s * .2); g.fill(); }
   else if (kind === 'skull') { ell(g, 0, -s * .15, s * .72, s * .68); g.fill(); g.fillRect(-s * .4, s * .25, s * .8, s * .55); g.fillStyle = '#17110c'; ell(g, -s * .28, -s * .12, s * .2, s * .22); g.fill(); ell(g, s * .28, -s * .12, s * .2, s * .22); g.fill(); poly(g, [0, s * .12, -s * .1, s * .34, s * .1, s * .34]); g.fill(); for (let i = -1; i <= 1; i++) g.fillRect(i * s * .22 - s * .03, s * .5, s * .06, s * .3); }
+  else if (kind === 'lily') { g.beginPath(); g.moveTo(0, -s); g.bezierCurveTo(s * .5, -s * .45, s * .34, s * .1, 0, s * .18); g.bezierCurveTo(-s * .34, s * .1, -s * .5, -s * .45, 0, -s); g.fill();
+    for (const d of [-1, 1]) { g.beginPath(); g.moveTo(d * s * .12, s * .1); g.bezierCurveTo(d * s * .9, -s * .35, d * s * 1.05, s * .35, d * s * .5, s * .5); g.bezierCurveTo(d * s * .6, s * .2, d * s * .3, s * .12, d * s * .12, s * .1); g.fill(); }
+    g.fillRect(-s * .55, s * .3, s * 1.1, s * .16); g.fillRect(-s * .14, s * .3, s * .28, s * .55); }
+  else if (kind === 'octa') { for (let r = 0; r < 2; r++) { g.save(); g.rotate(r * Math.PI / 4); g.fillRect(-s * .66, -s * .66, s * 1.32, s * 1.32); g.restore(); } }
   else { g.lineWidth = s * .3; g.lineJoin = 'miter'; g.beginPath(); g.moveTo(-s * .8, s * .1); g.lineTo(0, -s * .6); g.lineTo(s * .8, s * .1); g.stroke(); g.beginPath(); g.moveTo(-s * .8, s * .75); g.lineTo(0, s * .05); g.lineTo(s * .8, s * .75); g.stroke(); }
   g.restore();
 }
@@ -204,7 +216,8 @@ function crestCanvas(fac, px) { const c = mkCanvas(px, px), g = c.getContext('2d
 const BIOMES = {
   grass: { base: '#5f6d2c', a: '#6e7d34', b: '#4d5a25', dirt: '#6f6238', tuft: ['#3f4c1c', '#84903f', '#4b5a22'], stone: '#8f8873', flower: '#e9e6d6' },
   snow: { base: '#c3ccce', a: '#dfe6e7', b: '#a7b4b5', dirt: '#8c8f80', tuft: ['#7c8660', '#eef2f2', '#9aa59a'], stone: '#8a8d90', flower: '#f6f8f8' },
-  steppe: { base: '#978a48', a: '#ab9d56', b: '#82773f', dirt: '#8a7446', tuft: ['#6c6230', '#c4b46a', '#7a6e38'], stone: '#9a8f72', flower: '#e8d37a' }
+  steppe: { base: '#978a48', a: '#ab9d56', b: '#82773f', dirt: '#8a7446', tuft: ['#6c6230', '#c4b46a', '#7a6e38'], stone: '#9a8f72', flower: '#e8d37a' },
+  arid: { base: '#bfa56a', a: '#cfb97c', b: '#aa9156', dirt: '#a68a54', tuft: ['#8a7a3c', '#dac98c', '#9a8a48'], stone: '#a99c80', flower: '#e9dba8' }
 };
 function treeSprite(biome, seed) {
   const R = mulberry(seed), c = mkCanvas(200, 250), g = c.getContext('2d'); g.lineJoin = 'round';
@@ -212,6 +225,13 @@ function treeSprite(biome, seed) {
   if (biome === 'snow') {
     g.fillStyle = '#4a3320'; g.fillRect(93, 180, 14, 52); g.strokeStyle = OL; g.lineWidth = 2.5; g.strokeRect(93, 180, 14, 52);
     for (let i = 0; i < 4; i++) { const y = 196 - i * 44, w = 74 - i * 14; g.beginPath(); g.moveTo(100 - w, y); g.lineTo(100, y - 70); g.lineTo(100 + w, y); g.quadraticCurveTo(100, y + 12, 100 - w, y); g.closePath(); g.fillStyle = i % 2 ? '#2f4a3a' : '#28402f'; g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke(); g.beginPath(); g.moveTo(100 - w * .7, y - 12); g.lineTo(100, y - 68); g.lineTo(100 + w * .25, y - 30); g.quadraticCurveTo(100 - w * .2, y - 20, 100 - w * .7, y - 12); g.fillStyle = 'rgba(240,246,248,.85)'; g.fill(); }
+  } else if (biome === 'arid') { // акация: кривой ствол и плоская зонтичная крона
+    g.fillStyle = '#5a4126'; g.beginPath(); g.moveTo(94, 232); g.quadraticCurveTo(92, 190, 100, 150); g.quadraticCurveTo(104, 126, 98, 108); g.lineTo(108, 108); g.quadraticCurveTo(116, 130, 108, 156); g.quadraticCurveTo(104, 196, 108, 232); g.closePath(); g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke();
+    const cols = ['#5f6a2c', '#7c8838', '#98a24a'], blobs = []; for (let i = 0; i < 7; i++) blobs.push([100 + (R() - .5) * 120, 100 + (R() - .5) * 26, 28 + R() * 16]);
+    g.fillStyle = OL; for (const b of blobs) { ell(g, b[0], b[1], b[2] + 2.5, b[2] * .5 + 2.5); g.fill(); }
+    g.fillStyle = cols[0]; for (const b of blobs) { ell(g, b[0], b[1], b[2], b[2] * .5); g.fill(); }
+    g.fillStyle = cols[1]; for (const b of blobs) { ell(g, b[0] - 4, b[1] - 5, b[2] * .72, b[2] * .3); g.fill(); }
+    for (let i = 0; i < 60; i++) { const b = blobs[i % 7], a = R() * TAU, d = R() * b[2] * .8, x = b[0] + Math.cos(a) * d - 4, y = b[1] + Math.sin(a) * d * .4 - 3; g.fillStyle = R() < .5 ? cols[2] : cols[0]; ell(g, x, y, 3, 1.8); g.fill(); }
   } else {
     const steppe = biome === 'steppe'; g.fillStyle = '#4a3320'; g.beginPath(); g.moveTo(90, 232); g.quadraticCurveTo(96, 190, 92, 150); g.lineTo(110, 150); g.quadraticCurveTo(106, 190, 114, 232); g.closePath(); g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke();
     const cols = steppe ? ['#5a5e22', '#6f7230', '#878a3c'] : ['#2f4a1c', '#3f6124', '#58802e'];
@@ -223,7 +243,7 @@ function treeSprite(biome, seed) {
   }
   return c;
 }
-function bushSprite(biome, seed) { const R = mulberry(seed), c = mkCanvas(90, 70), g = c.getContext('2d'); const cols = biome === 'snow' ? ['#6f7b62', '#dfe7e8', '#93a08a'] : biome === 'steppe' ? ['#6a6428', '#8c8438', '#a59c48'] : ['#34521e', '#4b6e26', '#66883a']; g.fillStyle = 'rgba(0,0,0,.2)'; ell(g, 46, 58, 34, 8); g.fill(); const bl = []; for (let i = 0; i < 6; i++) bl.push([45 + (R() - .5) * 46, 38 + (R() - .5) * 20, 12 + R() * 8]); g.fillStyle = OL; for (const b of bl) { ell(g, b[0], b[1], b[2] + 2, b[2] + 2); g.fill(); } g.fillStyle = cols[0]; for (const b of bl) { ell(g, b[0], b[1], b[2], b[2]); g.fill(); } g.fillStyle = cols[1]; for (const b of bl) { ell(g, b[0] - 3, b[1] - 3, b[2] * .65, b[2] * .6); g.fill(); } for (let i = 0; i < 40; i++) { const b = bl[i % 6]; g.fillStyle = cols[2]; ell(g, b[0] + (R() - .5) * b[2] * 1.4 - 2, b[1] + (R() - .5) * b[2] * 1.2 - 3, 2.4, 1.5); g.fill(); } return c; }
+function bushSprite(biome, seed) { const R = mulberry(seed), c = mkCanvas(90, 70), g = c.getContext('2d'); const cols = biome === 'snow' ? ['#6f7b62', '#dfe7e8', '#93a08a'] : biome === 'steppe' ? ['#6a6428', '#8c8438', '#a59c48'] : biome === 'arid' ? ['#7a7436', '#9d9648', '#b7ae5a'] : ['#34521e', '#4b6e26', '#66883a']; g.fillStyle = 'rgba(0,0,0,.2)'; ell(g, 46, 58, 34, 8); g.fill(); const bl = []; for (let i = 0; i < 6; i++) bl.push([45 + (R() - .5) * 46, 38 + (R() - .5) * 20, 12 + R() * 8]); g.fillStyle = OL; for (const b of bl) { ell(g, b[0], b[1], b[2] + 2, b[2] + 2); g.fill(); } g.fillStyle = cols[0]; for (const b of bl) { ell(g, b[0], b[1], b[2], b[2]); g.fill(); } g.fillStyle = cols[1]; for (const b of bl) { ell(g, b[0] - 3, b[1] - 3, b[2] * .65, b[2] * .6); g.fill(); } for (let i = 0; i < 40; i++) { const b = bl[i % 6]; g.fillStyle = cols[2]; ell(g, b[0] + (R() - .5) * b[2] * 1.4 - 2, b[1] + (R() - .5) * b[2] * 1.2 - 3, 2.4, 1.5); g.fill(); } return c; }
 function paintGround(W, H, biome, seed) {
   const P = BIOMES[biome], R = mulberry(seed), c = mkCanvas(W, H), g = c.getContext('2d');
   g.fillStyle = P.base; g.fillRect(0, 0, W, H);

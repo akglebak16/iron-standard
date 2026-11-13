@@ -13,7 +13,9 @@ const SNAMES = {
   khan: { town: ['Кешир', 'Алтын-Тобе'], castle: ['Булан-Орда', 'Тенгри-Кала'], village: ['Ак-Булак', 'Сары-Агач', 'Темир-Тау', 'Ордабаш', 'Кара-Су'] }
 };
 const CAMPN = ['Волчья яма', 'Разбитая башня', 'Чёрный брод', 'Пещера висельников', 'Гнилой овраг', 'Старая застава'];
-const WAR = { nord: { emp: 1 }, emp: { nord: 1, khan: 1 }, khan: { emp: 1 }, bandit: { nord: 1, emp: 1, khan: 1 } };
+const WAR = { nord: { emp: 1, kin: 1 }, emp: { nord: 1, khan: 1, emi: 1 }, khan: { emp: 1 }, kin: { emi: 1, nord: 1 }, emi: { kin: 1, emp: 1 }, bandit: { nord: 1, emp: 1, khan: 1, kin: 1, emi: 1 } };
+const FAC_V = { 1: ['nord', 'emp', 'khan'], 2: ['nord', 'emp', 'khan', 'kin', 'emi'] }; // какие фракции есть на карте версии 1 и 2
+const worldF = () => FAC_V[G ? mapVer() : DEFAULT_MAPV];
 const atWar = (a, b) => a !== b && ((WAR[a] && WAR[a][b]) || (WAR[b] && WAR[b][a]));
 const TCOST = [0, 1, 1.75, 1.5, 0];
 const TNAME = ['вода', 'равнина', 'лес', 'холмы', 'горы'];
@@ -95,18 +97,19 @@ function remT(list, type, n) { const f = list.find(s => s.type === type); if (!f
 function sortT(list) { list.sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier || (a.type < b.type ? -1 : 1)); }
 
 const CULT = {
-  nord: { start: [['n1', 6], ['n2a', 2], ['n2s', 2]], horse: 0 }, emp: { start: [['e1', 6], ['e2a', 3], ['e2s', 1]], horse: 0 }, khan: { start: [['k1', 5], ['k2a', 3], ['k2c', 2]], horse: 1 }
+  nord: { start: [['n1', 6], ['n2a', 2], ['n2s', 2]], horse: 0 }, emp: { start: [['e1', 6], ['e2a', 3], ['e2s', 1]], horse: 0 }, khan: { start: [['k1', 5], ['k2a', 3], ['k2c', 2]], horse: 1 },
+  kin: { start: [['f1', 6], ['f2a', 3], ['f2s', 1]], horse: 0 }, emi: { start: [['m1', 5], ['m2a', 3], ['m2c', 2]], horse: 1 }
 };
 function newWorld(seed, mapv) {
   seed = seed || rint(1, 1e9); G = { seed, mapv: mapv || DEFAULT_MAPV, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
   genWorld(seed); genSettlements(); genRoads(); for (const s of G.settles) { genRecruits(s); if (s.kind === 'camp') respawnCamp(s); }
-  for (const f of ['nord', 'emp', 'khan']) { const hs = G.settles.filter(s => s.fac === f); for (let i = 0; i < 3; i++) { const h = hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(LORD_MIN, LORD_MAX), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
+  for (const f of worldF()) { const hs = G.settles.filter(s => s.fac === f); for (let i = 0; i < 3; i++) { const h = hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(LORD_MIN, LORD_MAX), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
   for (let i = 0; i < 2; i++) { const t = pick(G.settles.filter(s => s.kind === 'town')); spawnCaravan(t); }
   genQuests(); return G;
 }
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
-  return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
+  return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
     hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
 function addPlayer(o) { const P = mkPlayer(o); relWatch(P); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
@@ -196,7 +199,7 @@ function hourTick() {
   const bands = G.parties.filter(p => p.kind === 'bandit').length, cars = G.parties.filter(p => p.kind === 'caravan').length;
   if (G.hour % 6 === 0) { if (bands < 5) { const cs = G.settles.filter(s => s.kind === 'camp' && s.camp); if (cs.length && Math.random() < .5) { const c = pick(cs); mkParty('bandit', 'bandit', unitName('bandit') + ' и шайка', c.x + rnd(-30, 30), c.y + rnd(20, 40), genTroops('bandit', rint(9, 18), .4), { home: c.id }); } }
     if (cars < 4 && Math.random() < .5) spawnCaravan(pick(G.settles.filter(s => s.kind === 'town' && REAL_F.includes(s.fac)))); }
-  for (const f of ['nord', 'emp', 'khan']) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; const hs = G.settles.filter(s => s.fac === f && s.kind !== 'village'); if (n < 3 && G.hour === 12 && hs.length) { const h = pick(hs); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id }); } }
+  for (const f of worldF()) { const n = G.parties.filter(p => p.kind === 'lord' && p.fac === f).length; const hs = G.settles.filter(s => s.fac === f && s.kind !== 'village'); if (n < 3 && G.hour === 12 && hs.length) { const h = pick(hs); mkParty('lord', f, lordName(f), h.x + 10, h.y + 20, genTroops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), .6), { home: h.id }); } }
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); garrisonDay(); }
 function playerDay(P) {
@@ -204,12 +207,12 @@ function playerDay(P) {
   if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
   if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
   for (const q of P.quests.slice()) if (G.day > q.dl) { P.quests.splice(P.quests.indexOf(q), 1); P.rel[q.fac] = Math.max(-100, P.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1, P); }
-  for (const f of ['nord', 'emp', 'khan']) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
+  for (const f of REAL_F) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }
 function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3 * (1 - perkFx(P.hero).wage)); }
 
 /* ================= враждебность, гарнизоны и владения ================= */
-const REAL_F = ['nord', 'emp', 'khan'];
+const REAL_F = FAC_V[2]; // все фракции (на старой карте нужных нет, и их отряды и поселения просто не появляются)
 const sCult = s => s.cult || s.fac; // культура поселения: облик, рекруты, рынок. При захвате не меняется
 function relHostile(P, f) { return REAL_F.includes(f) && P.rel[f] < -20; }
 function settleHostile(s, P) { return !!s && s.kind !== 'camp' && relHostile(P, s.fac); }
@@ -217,6 +220,7 @@ function ownerOf(s) { return s && s.fac === 'player' ? G.players.find(q => q.id 
 function ownerHostile(s, f) { const O = ownerOf(s); return !!O && relHostile(O, f); }
 // следим, когда фракция становится враждебной или мирится: сообщение в журнал и всплывашка
 function relWatch(P) {
+  for (const f of REAL_F) if (P.rel[f] === undefined) P.rel[f] = 0; // старые сохранения: новых фракций в них не было
   if (!P.hostF) { P.hostF = {}; for (const f of REAL_F) P.hostF[f] = relHostile(P, f); return; }
   for (const f of REAL_F) { const h = relHostile(P, f); if (!!P.hostF[f] === h) continue; P.hostF[f] = h;
     const msg = h ? 'Ты теперь враг ' + FACTIONS[f].gen + ': их лорды нападут, ворота их городов закрыты.' : 'Ты больше не враг ' + FACTIONS[f].gen + '.';

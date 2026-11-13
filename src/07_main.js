@@ -26,8 +26,8 @@ function gotoTitle() { MODE = 'title'; el('whud').hidden = true; el('bhud').hidd
 function buildTitleMenu() { el('tmenu').innerHTML = '<button class="btn pri" data-act="newgame">Новая игра</button>' + (NET.avail ? '<button class="btn pri" data-act="mp">Играть вдвоём</button>' : '') + (hasSave() ? '<button class="btn" data-act="cont">Продолжить</button>' : '') + '<button class="btn" data-act="quick">Быстрый бой</button><button class="btn" data-act="help">Как играть</button><button class="btn" data-act="snd">Звук: ' + (AU.on ? 'вкл' : 'выкл') + '</button>'; }
 ACT.snd = function () { auSetOn(!AU.on); if (MODE === 'title') buildTitleMenu(); else openMenu(); };
 function startDemo() {
-  const fs = ['nord', 'emp', 'khan'], a = pick(fs), b = pick(fs.filter(x => x !== a)); FACTIONS.player.c1 = FACTIONS.player.c1 || '#c08a2e';
-  startBattle({ demo: true, pl: genTroops(a, 38, .6), en: genTroops(b, 38, .6), pfac: a, efac: b, biome: pick(['grass', 'grass', 'snow', 'steppe']), seed: rint(1, 1e9) });
+  const fs = REAL_F, a = pick(fs), b = pick(fs.filter(x => x !== a)); FACTIONS.player.c1 = FACTIONS.player.c1 || '#c08a2e';
+  startBattle({ demo: true, pl: genTroops(a, 38, .6), en: genTroops(b, 38, .6), pfac: a, efac: b, biome: pick(['grass', 'grass', 'snow', 'steppe', 'arid']), seed: rint(1, 1e9) });
   B.cam.z = clamp(VIEW.h / 760, .7, 1.2); B.speed = 1.4;
 }
 

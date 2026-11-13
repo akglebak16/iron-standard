@@ -43,7 +43,7 @@ const SS_CACHE = {};
 function settleSprite(s) {
   const key = s.id + FACTIONS[s.fac].c1; if (SS_CACHE[key]) return SS_CACHE[key]; const c = mkCanvas(170, 150), g = c.getContext('2d'), f = FACTIONS[s.fac], R = mulberry(s.id * 31); g.lineJoin = 'round'; const cx = 85, cy = 120;
   g.fillStyle = 'rgba(0,0,0,.28)'; ell(g, cx + 4, cy + 4, 70, 18); g.fill();
-  const cu = sCult(s), wall = cu === 'nord' ? '#9b8d78' : cu === 'emp' ? '#cfc2a2' : '#c9b48a', roof = cu === 'nord' ? '#5a3a24' : cu === 'emp' ? '#a8462f' : '#2b7568';
+  const cu = sCult(s), CA = { nord: ['#9b8d78', '#5a3a24'], emp: ['#cfc2a2', '#a8462f'], khan: ['#c9b48a', '#2b7568'], kin: ['#d3c7ac', '#3f5f9f'], emi: ['#e3d2a6', '#b5512a'] }[cu] || ['#c9b48a', '#2b7568'], wall = CA[0], roof = CA[1];
   if (s.kind === 'town') {
     g.beginPath(); g.ellipse(cx, cy - 8, 66, 22, 0, 0, TAU); g.fillStyle = '#8f8878'; g.fill(); g.strokeStyle = OL; g.lineWidth = 2; g.stroke(); g.beginPath(); g.ellipse(cx, cy - 18, 66, 22, 0, 0, TAU); g.fillStyle = '#b3ab99'; g.fill(); g.stroke();
     house(g, cx - 36, cy - 14, 26, 18, wall, roof); house(g, cx + 34, cy - 12, 28, 20, wall, roof); house(g, cx - 8, cy - 6, 30, 22, wall, roof); house(g, cx + 6, cy - 30, 26, 22, wall, roof); house(g, cx - 28, cy - 34, 22, 16, wall, roof);
