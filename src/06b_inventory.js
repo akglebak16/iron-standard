@@ -145,7 +145,7 @@ function tradeLists(s) {
 function tradeBody(s) {
   const P = G.player; if (!hasMarket(s)) return '<div class="note">Здесь не торгуют.</div>';
   const m = marketOf(s), L = tradeLists(s);
-  return '<div class="tbar"><div class="note" style="margin:0">Золото: <b>' + fmt(P.gold) + '</b> · у торговца: <b>' + fmt(m.gold) + '</b>. Цены зависят от края и от запаса на складе, крупная партия сдвигает цену. Надетое не продаётся: сними его в окне «Обоз».</div><div>' + cargoBar(P) + '</div></div>' +
+  return '<div class="tbar"><div class="note" style="margin:0"><span class="tgold" title="Твоё золото">' + ic('coin') + ' Твоё: <b>' + fmt(P.gold) + '</b></span> <span class="tgold" title="Золото города: столько торговец может заплатить за твои товары">' + ic('coin') + ' У города: <b>' + fmt(m.gold) + '</b></span><br>Цены зависят от края и от запаса на складе, крупная партия сдвигает цену. Надетое не продаётся: сними его в окне «Обоз».</div><div>' + cargoBar(P) + '</div></div>' +
     '<div class="trade"><div><h3>Торговец</h3><div class="igrid">' + L.theirs.map(id => tradeTile(s, P, id, 'buy')).join('') + voidTiles(12 - L.theirs.length) + '</div></div>' +
     '<div><h3>Твой обоз</h3><div class="igrid">' + L.mine.map(id => tradeTile(s, P, id, 'sell')).join('') + voidTiles(12 - L.mine.length) + '</div>' + (L.mine.length ? '' : '<div class="note">Обоз пуст. Купи товар или добудь трофеи в бою.</div>') + '</div></div>';
 }
@@ -157,7 +157,7 @@ function tradeDock(s) {
   const pr = buy ? buyPrice(P, s, sel.id) : sellPrice(P, s, sel.id), lv = priceLevel(s, sel.id), ok = buy ? P.gold >= pr : m.gold >= pr, tone = !lv ? '' : (buy ? lv === 'low' : lv === 'high') ? 'cheap' : 'dear';
   const nn = it.kind === 'gear' ? [1] : [1, 5, 99], lab = n => n === 99 ? (buy ? 'Макс.' : 'Все') : (buy ? 'Купить' : 'Продать') + (n > 1 ? ' ×' + n : it.kind === 'gear' ? '' : ' ×1');
   const acts = '<div class="dprice ' + tone + '" title="' + (buy ? 'Цена покупки' : 'Цена продажи') + '">' + ic('coin') + '<b>' + fmt(pr) + '</b><small>' + (buy ? 'за штуку' : 'за штуку') + (lv ? ' · здесь ' + (lv === 'low' ? 'дёшево' : 'дорого') : '') + '</small></div>' +
-    nn.map(n => '<button class="btn sm' + (n === 1 ? ' pri' : '') + '" data-act="' + (buy ? 'tbuy' : 'tsell') + '" data-id="' + sel.id + '" data-n="' + n + '" ' + (ok ? '' : 'disabled') + '>' + (n === 1 && it.kind === 'gear' ? (buy ? 'Купить' : 'Продать') : lab(n)) + '</button>').join('');
+    '<div class="dprice" title="Золото города: столько торговец может заплатить">' + ic('coin') + '<b>' + fmt(m.gold) + '</b><small>у города</small></div>' + nn.map(n => '<button class="btn sm' + (n === 1 ? ' pri' : '') + '" data-act="' + (buy ? 'tbuy' : 'tsell') + '" data-id="' + sel.id + '" data-n="' + n + '" ' + (ok ? '' : 'disabled') + '>' + (n === 1 && it.kind === 'gear' ? (buy ? 'Купить' : 'Продать') : lab(n)) + '</button>').join('');
   return itemDock(it, { cmp: it.kind === 'gear', acts, sub: buy ? 'на прилавке: ' + have + ' · у тебя: ' + invN(P, sel.id) : 'у тебя: ' + have });
 }
 ACT.tsel = function (d) { const dbl = dblTap(d, 't|' + d.side + '|' + d.id); if (dbl) return dbl(d); UI.tsel = { side: d.side, id: d.id }; keepScroll(renderTown); };

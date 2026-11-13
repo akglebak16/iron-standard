@@ -14,7 +14,7 @@ const COMP_EQ = (head, body, hands, legs, melee, ranged, shield, horse) => ({ he
 /* sk — умение: ключи как у перков (см. FX_ZERO), значения для рангов I/II/III. grow — по какому атрибуту растёт на уровнях (по кругу). */
 const COMPS = [
   { id: 'ingrid', name: 'Ингрид Ворона', fac: 'nord', beard: 0, role: 'Лучница', skn: 'Следопыт', price: 350, wage: 6,
-    a: [2, 2, 4, 2, 1], perks: ['eagle'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'axe_work', 'bow_hunt'), sel: 'ranged', sk: { map: [.05, .08, .12] }, grow: ['agi', 'str', 'vit'],
+    a: [3, 3, 5, 2, 1], perks: ['eagle', 'tough'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'axe_work', 'bow_hunt'), sel: 'ranged', sk: { map: [.05, .08, .12] }, grow: ['agi', 'str', 'vit'],
     story: 'Охотница с северных фьордов. Ярл сжёг её деревню, и с тех пор она ищет отряд, который не боится крови.' },
   { id: 'halvdan', name: 'Хальвдан Секира', fac: 'nord', role: 'Тяжёлый пехотинец', skn: 'Носильщик', price: 800, wage: 9,
     a: [4, 4, 1, 1, 1], perks: ['grip'], eq: COMP_EQ('head_nasal', 'body_mail', 'hands_reinf', 'legs_boots', 'tw_axe'), sel: 'melee', sk: { cargo: [.12, .22, .35] }, grow: ['str', 'vit', 'str'],
@@ -23,7 +23,7 @@ const COMPS = [
     a: [2, 3, 1, 4, 2], perks: [], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'mace', null, 'shield_plank'), sel: 'melee', sk: { surv: [.08, .15, .22], heal: [.25, .5, .8] }, grow: ['int', 'vit', 'str'],
     story: 'Монах, сбежавший из обители с сумкой трав и пилой для костей. Неплохо машет булавой — говорит, что так написано в Писании.' },
   { id: 'cassia', name: 'Кассия Вента', fac: 'emp', beard: 0, role: 'Арбалетчица', skn: 'Казначей', price: 500, wage: 7,
-    a: [1, 2, 3, 4, 2], perks: [], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sword_old', 'xbow_light'), sel: 'ranged', sk: { wage: [.06, .1, .15], buy: [.03, .05, .08] }, grow: ['int', 'agi', 'vit'],
+    a: [2, 3, 4, 4, 2], perks: ['eagle'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sword_old', 'xbow_light'), sel: 'ranged', sk: { wage: [.06, .1, .15], buy: [.03, .05, .08] }, grow: ['int', 'agi', 'vit'],
     story: 'Дочь разорившегося купца из Вентума. Считает быстрее любого казначея и не прощает ни одной недостачи.' },
   { id: 'marcell', name: 'Марцелл Хромой', fac: 'emp', role: 'Ветеран-копейщик', skn: 'Наставник', price: 750, wage: 10,
     a: [3, 4, 1, 2, 3], perks: ['hide'], eq: COMP_EQ('head_kettle', 'body_mail', 'hands_mail', 'legs_greaves', 'spear_war', null, 'shield_banded'), sel: 'melee', sk: { hire: [.06, .1, .15] }, grow: ['vit', 'str', 'cha'],
@@ -32,16 +32,16 @@ const COMPS = [
     a: [2, 2, 5, 1, 1], perks: ['eagle'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', 'bow_comp', null, 'horse_steppe'), sel: 'ranged', sk: { flee: [.06, .1, .15], map: [.03, .05, .08] }, grow: ['agi', 'str', 'vit'],
     story: 'Младший сын нойона. Наследства не дождался, зато лук натягивает на полном скаку с десяти лет.' },
   { id: 'aigerim', name: 'Айгерим', fac: 'khan', beard: 0, role: 'Лёгкая всадница', skn: 'Добытчица', price: 650, wage: 10,
-    a: [3, 2, 4, 2, 2], perks: [], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', null, 'shield_buckler', 'horse_steppe'), sel: 'melee', sk: { loot: [.08, .15, .22] }, grow: ['agi', 'str', 'vit'],
+    a: [5, 4, 5, 2, 2], perks: ['tough'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', null, 'shield_buckler', 'horse_steppe'), sel: 'melee', sk: { loot: [.08, .15, .22] }, grow: ['agi', 'str', 'vit'],
     story: 'Ушла из становища с отцовской саблей. Торгуется за трофеи так же лихо, как рубит.' },
   { id: 'geoffroi', name: 'Жоффруа де Бо', fac: 'kin', role: 'Рыцарь', skn: 'Знаменосец', price: 1400, wage: 16,
-    a: [4, 4, 2, 1, 3], perks: ['tough'], eq: COMP_EQ('head_great', 'body_mail', 'hands_mail', 'legs_mail', 'sword_knight', null, 'shield_heraldic', 'horse_riding'), sel: 'melee', sk: { size: [4, 8, 12] }, grow: ['str', 'vit', 'cha'],
+    a: [6, 6, 3, 1, 3], perks: ['tough'], eq: COMP_EQ('head_great', 'body_mail', 'hands_mail', 'legs_mail', 'sword_knight', null, 'shield_heraldic', 'horse_riding'), sel: 'melee', sk: { size: [4, 8, 12] }, grow: ['str', 'vit', 'cha'],
     story: 'Рыцарь без земли: замок отца проигран в кости. Мечтает его вернуть — желательно на твои деньги.' },
   { id: 'zeynab', name: 'Зейнаб', fac: 'emi', beard: 0, role: 'Метательница дротиков', skn: 'Торговка', price: 500, wage: 8,
-    a: [2, 2, 3, 3, 3], perks: [], eq: COMP_EQ('head_turban', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', 'jav_dart', 'shield_buckler'), sel: 'ranged', sk: { sell: [.04, .07, .1], quest: [.08, .15, .22] }, grow: ['agi', 'int', 'cha'],
+    a: [3, 3, 4, 3, 3], perks: ['eagle'], eq: COMP_EQ('head_turban', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', 'jav_dart', 'shield_buckler'), sel: 'ranged', sk: { sell: [.04, .07, .1], quest: [.08, .15, .22] }, grow: ['agi', 'int', 'cha'],
     story: 'Водила караваны через пустыню, пока не лишилась последнего верблюда. Знает цену каждой вещи и каждому человеку.' },
   { id: 'vikenty', name: 'Викентий Де Будетон', fac: 'kin', role: 'Монах-арбалетчик', skn: 'Осадный лекарь', price: 650, wage: 9,
-    a: [1, 3, 3, 5, 1], perks: ['surgery', 'eagle'], eq: COMP_EQ('head_hood', 'body_habit', 'hands_leather', 'legs_boots', 'club', 'xbow_light'), sel: 'ranged', sk: { heal: [.15, .3, .5], surv: [.05, .1, .15], siege: [.25, .45, .7] }, grow: ['int', 'agi', 'vit'],
+    a: [2, 4, 4, 5, 1], perks: ['surgery', 'eagle'], eq: COMP_EQ('head_hood', 'body_habit', 'hands_leather', 'legs_boots', 'club', 'xbow_light'), sel: 'ranged', sk: { heal: [.15, .3, .5], surv: [.05, .1, .15], siege: [.25, .45, .7] }, grow: ['int', 'agi', 'vit'],
     story: 'Сэр Викентий Де Будетон: монах, знаток осадных машин и лекарь. Лучше всех знает, где у стены слабое место, а у человека — больное. Ищет таблетки, которые дадут ему счастье. Пока не нашёл, поэтому грустит.',
     voice: {
       start: ['Опять драться. А таблеток всё нет…', 'Господи, пошли мне хоть одну таблетку счастья.', 'Ну, пойдём. Всё равно ничего не радует.', 'Сэр Викентий к бою готов. К радости — нет.'],
@@ -70,7 +70,7 @@ COMPS.push({ id: 'glebio', name: 'Глебио Кемейшалес', fac: 'kin'
     down: ['Курва… я ещё вернусь…', 'Пиздец… несите к лекарю…']
   } });
 /* Захарий Коричневая Лужа: деревенский здоровяк без мозгов, сидит в Полоцке (там его знают как «мистера Лужу»). Бьётся одноручной дубиной «Головка» со щитом из досок и сыплет тупыми шутками. */
-COMPS.push({ id: 'zahariy', name: 'Захарий Коричневая Лужа', fac: 'dom', role: 'Деревенский здоровяк с дубиной', skn: 'Деревенская сила', price: 228, wage: 4, fixed: 'Полоцк',
+COMPS.push({ id: 'zahariy', name: 'Захарий Коричневая Лужа', fac: 'dom', role: 'Деревенский здоровяк с дубиной', skn: 'Деревенская сила', price: 228, wage: 4, fixed: 'Полоцк', hair: '#dcb860',
   a: [9, 9, 2, 1, 1], perks: ['tough'], eq: COMP_EQ(null, 'body_padded', null, null, 'club_head', null, 'shield_plank'), sel: 'melee', sk: { cargo: [.1, .18, .28] }, grow: ['str', 'vit', 'str'],
   story: 'Тридцатилетний грязный оборванный крестьянин из-под Полоцка: мозгов нет, зато силы на троих. В Полоцке его зовут мистер Лужа. Ходит с дубиной по имени Головка и страшно не любит выходить из дома, но за 228 монет согласился.',
   voice: {
@@ -90,7 +90,7 @@ function compRank(c) { return Math.min(3, 1 + Math.floor(((c.lvl || 1) - 1) / 3)
 function compSkillText(c, rank) { const d = COMP[c.id], r = rank || compRank(c); return Object.keys(d.sk).map(k => SK_TXT[k] + ' ' + (k === 'size' ? '+' + d.sk[k][r - 1] : '+' + Math.round(d.sk[k][r - 1] * 100) + '%')).join(', '); }
 function compNew(id) {
   const d = COMP[id], a = d.a;
-  return { id, name: d.name, lvl: 1, xp: 0, str: a[0], vit: a[1], agi: a[2], int: a[3], cha: a[4], pts: 0, pp: 0, perks: d.perks.slice(), eq: Object.assign({}, d.eq), sel: d.sel, hp: 1, seed: hashStr(id) % 99999 + 1, beard: d.beard === undefined ? 1 : d.beard };
+  return { id, name: d.name, lvl: 1, xp: 0, str: a[0], vit: a[1], agi: a[2], int: a[3], cha: a[4], pts: 0, pp: 0, perks: d.perks.slice(), eq: Object.assign({}, d.eq), sel: d.sel, hp: 1, seed: hashStr(id) % 99999 + 1, beard: d.beard === undefined ? 1 : d.beard, hair: d.hair };
 }
 const compsOf = P => P.comps || (P.comps = []);
 const compFit = c => c.hp >= COMP_FIT;
@@ -145,7 +145,7 @@ function doCompFire(P, id, why) {
 }
 
 /* ---------- бой и рост ---------- */
-function compsBattle(P) { return (P.comps || []).filter(compFit).map(c => Object.assign(heroBattle(c), { id: c.id, beard: c.beard })); } // кого взять в бой (копии, как heroBattle)
+function compsBattle(P) { return (P.comps || []).filter(compFit).map(c => Object.assign(heroBattle(c), { id: c.id, beard: c.beard, hair: c.hair })); } // кого взять в бой (копии, как heroBattle)
 function compsAuto(P, res) { // расчётный бой: спутники теряют здоровье как герой
   res.comps = {}; for (const c of P.comps || []) if (compFit(c)) res.comps[c.id] = { hp: clamp(c.hp - (res.win ? rnd(.05, .35) : rnd(.35, .6)), 0, 1), down: false, kills: 0 };
 }

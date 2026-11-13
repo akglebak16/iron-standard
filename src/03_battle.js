@@ -53,7 +53,7 @@ function spawnComp(c) {
   const hd = heroDef(c); hd.id = 'comp:' + c.id; hd.grp = hd.mounted ? 2 : hd.range ? 1 : 0; const g = B.groups[0][hd.grp];
   const u = mkUnit(0, hd, 'player', g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getHeroSprite(c, hd.mounted));
   u.comp = c.id; u.name = c.name; u.hp = Math.max(hd.hp * .3, hd.hp * (c.hp === undefined ? 1 : c.hp)); u.spd = hd.spd; u.mbase = u.morale = 160; u.fx = perkFx(c);
-  const d = typeof COMP !== 'undefined' && COMP[c.id]; if (d && d.voice) { u.voice = d.voice; u.sayCd = 0; u.sayStart = rnd(1, 2.2); u.tauntT = rnd(12, 18); } // реплики в бою (03b_gore.js)
+  const d = typeof COMP !== 'undefined' && COMP[c.id]; if (d && d.voice) { u.voice = d.voice; u.sayCd = 0; u.sayStart = rnd(1, 2.2); u.tauntT = rnd(24, 36); } // реплики в бою (03b_gore.js)
   return u;
 }
 function myPid() { return B.hero ? B.hero.pid : undefined; }
@@ -202,7 +202,7 @@ function hurt(t, dmg, src, pierce) {
 }
 function kill(t, src) {
   t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
-  if (!SERVER) { if (src && src.voice && !src.dead) voiceSay(src, t.t.fac === 'undead' && Math.random() < .5 ? 'killUndead' : 'kill'); if (t.voice) voiceSay(t, 'down', true); }
+  if (!SERVER) { if (src && src.voice && !src.dead) voiceSay(src, t.t.fac === 'undead' && Math.random() < .5 ? 'killUndead' : 'kill'); if (t.voice) { voiceSay(t, 'down', true); banterDown(t); } }
   if (!SERVER && !goreKill(t, src)) paintCorpse(t); ev(['k', t.id]);
   if (!SERVER && goreCol(t)) fxBlood(t.x, t.y - 14, 12, goreCol(t)); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }

@@ -248,7 +248,7 @@ const SPR = {}; const SS = 2;
 const UNDEAD_SKIN = { zombie: ['#9aa58a', '#8c9a7e', '#a3a08a', '#7f8f78'], skel: ['#d8d0b8', '#cfc4a6', '#e0d8c2'] };
 function makeVariant(L, seed) { const R = mulberry(seed); const b = R() < (L.beard || 0) ? (R() < .45 ? 2 : 1) : 0; const us = L.undead && UNDEAD_SKIN[L.undead];
   if (us) return { seed, undead: L.undead, skin: us[Math.floor(R() * us.length)], hair: L.undead === 'skel' ? '#3a3328' : HAIRS[Math.floor(R() * 3)], beard: L.undead === 'skel' ? 0 : b, stache: 0, bald: L.undead === 'skel' || R() < .5, scar: L.undead === 'zombie' };
-  return { seed, skin: SKINS[Math.floor(R() * SKINS.length)], hair: HAIRS[Math.floor(R() * HAIRS.length)], beard: b, stache: L.stache && b === 0 ? 1 : 0, bald: R() < .15, scar: R() < .2 }; }
+  const sk = SKINS[Math.floor(R() * SKINS.length)], hr = HAIRS[Math.floor(R() * HAIRS.length)]; return { seed, skin: sk, hair: L.hair || hr, beard: b, stache: L.stache && b === 0 ? 1 : 0, bald: R() < .15, scar: R() < .2 }; }
 function buildSprite(L, pal, seed) {
   const m = !!L.horse, W = m ? 120 : 76, H = m ? 122 : 88, ax = m ? 54 : 36, ay = m ? 106 : 74, oy = m ? 26 : 5, ox = m ? 2 : 2;
   const v = makeVariant(L, seed);
@@ -258,8 +258,8 @@ function buildSprite(L, pal, seed) {
 }
 function palOf(fac) { const f = FACTIONS[fac]; return { c1: f.c1, c2: f.c2 }; }
 function getSprite(type, variant, fac) { const k = type + '|' + variant + '|' + fac + '|' + FACTIONS[fac].c1; if (!SPR[k]) SPR[k] = buildSprite(TROOPS[type].look, palOf(fac), hashStr(type) + variant * 977); return SPR[k]; }
-function heroLook(h) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), hd = EQ[eq.head], bd = EQ[eq.body], hs = EQ[eq.horse]; return { helm: hd ? hd.look : 'none', armor: bd ? bd.look : 'tunic', weapon: W.look || null, shield: S ? S.look : 'none', horse: hs ? hs.look : null, beard: h.beard === undefined ? 1 : h.beard }; }
-function getHeroSprite(h, mounted) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), k = 'hero|' + [eq.head, eq.body, W.id, S && S.id, mounted ? eq.horse : ''].join(',') + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
+function heroLook(h) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), hd = EQ[eq.head], bd = EQ[eq.body], hs = EQ[eq.horse]; return { helm: hd ? hd.look : 'none', armor: bd ? bd.look : 'tunic', weapon: W.look || null, shield: S ? S.look : 'none', horse: hs ? hs.look : null, beard: h.beard === undefined ? 1 : h.beard, hair: h.hair }; }
+function getHeroSprite(h, mounted) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), k = 'hero|' + [eq.head, eq.body, W.id, S && S.id, mounted ? eq.horse : ''].join(',') + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7) + '|' + (h.hair || ''); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
 function corpseOf(sp, nohead) { if (nohead) return sp.corpseNH || (sp.corpseNH = sp.mk(false, { nohead: true })); if (!sp.corpse) sp.corpse = sp.mk(false); return sp.corpse; }
 function headOf(sp) { return sp.head || (sp.head = sp.mk(false, { only: 'head' })); }
 const PORT = {};

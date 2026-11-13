@@ -91,16 +91,41 @@ function drawGibAt(g, b, flat) {
 function voiceSay(u, kind, force) {
   const V = u.voice, L = V && (V[kind] || (kind === 'killUndead' ? V.kill : null)); if (!L || !L.length) return;
   if (!force && u.sayCd > 0 && !(kind === 'kill' || kind === 'killUndead') && Math.random() > .3) return;
-  if (!force && (kind === 'kill' || kind === 'killUndead') && u.sayCd > .6) return;
+  if (!force && (kind === 'kill' || kind === 'killUndead') && (u.sayCd > .6 || Math.random() > .5)) return; // реплик вдвое меньше: дольше пауза и не на каждое убийство
   let txt = pick(L); if (L.length > 1 && txt === u.sayLast) txt = pick(L); u.sayLast = txt;
-  u.say = { txt, t: kind === 'start' || kind === 'siege' ? 3 : 2.4 }; u.sayCd = kind === 'kill' || kind === 'killUndead' ? 1.1 : 3;
+  u.say = { txt, t: kind === 'start' || kind === 'siege' ? 3 : 2.4 }; u.sayCd = kind === 'kill' || kind === 'killUndead' ? 3.2 : 6;
   if (kind === 'start' || kind === 'siege' || kind === 'down') blog(u.name + ': «' + txt + '»', kind === 'down' ? 1 : 2);
 }
+/* Глебио и Захарий влюблены и флиртуют, пока оба на поле: реплика одного и через пару секунд ответ второго. Где-то раз в 20–30 секунд боя. */
+const BANTER = [
+  ['g', 'Захарка, ты сегодня красивый… для идиота!', 'Хы хы, а ты красный, Глебушка! Ты чего, влюбился?!'],
+  ['z', 'Глебушка, давай после боя в Полоцк? Там лужа есть. Романтика!', 'Курва, Захарка… ну давай. Только никому, бля!'],
+  ['g', 'Держись рядом, красавчик, я тебя прикрою!', 'Я пукнул! Это тебе от всего сердца!'],
+  ['z', 'Глебушка, ты как Головка: такой же твёрдый!', 'Ёб твою мать, Захарка, да ты поэт… я таю.'],
+  ['g', 'Твоя дубина шляхетнее всего, что я видел, пупсик!', 'Глебушка назвал меня пупсиком! Хочу домой, жениться!'],
+  ['z', 'Глебушка, я тебе цветочек принёс. Это, ну, репейник.', 'Лучший букет в моей жизни, сука, я щас заплачу!'],
+  ['g', 'Захарка, смотри на меня, а не на врагов!', 'А я и смотрю! Ой, меня бьют!'],
+  ['z', 'Мамка сказала: найди шляхтича. Я нашёл!', 'Передай мамке: я согласен, курва!']
+];
+const BANTER_DOWN = { glebio: ['Глебушка! Ты чего лёг?! Я тебе пирог принесу!', 'Глебушка, вставай, я не умею без тебя!'], zahariy: ['Захарка, не смей помирать, я тебе ещё не сказал, курва!', 'Захарка, ёб твою мать, держись!'] };
+function banterUnit(id) { return B.units.find(x => x.comp === id && x.side === 0 && !x.dead && !x.gone && x.voice); }
+function banterSay(u, txt) { u.say = { txt, t: 3 }; u.sayCd = 4; blog(u.name + ': «' + txt + '»', 2); }
+function banterDown(t) { // один упал: второй переживает
+  if (!B || !t.comp || !BANTER_DOWN[t.comp]) return; const o = banterUnit(t.comp === 'glebio' ? 'zahariy' : 'glebio'); if (!o) return;
+  B.banR = { t: 1.3, u: o, txt: pick(BANTER_DOWN[t.comp]) };
+}
+function banterUpdate(dt) {
+  if (B.banR && (B.banR.t -= dt) <= 0) { const r = B.banR; B.banR = null; if (!r.u.dead && !r.u.gone) banterSay(r.u, r.txt); }
+  if (B.banT === undefined) B.banT = rnd(9, 14); if ((B.banT -= dt) > 0 || B.banR) return;
+  const g = banterUnit('glebio'), z = banterUnit('zahariy'); if (!g || !z || g.say || z.say) { B.banT = 3; return; }
+  B.banT = rnd(20, 32); let b; do b = pick(BANTER); while (b === B.banLast); B.banLast = b; const a = b[0] === 'g' ? g : z, o = a === g ? z : g; banterSay(a, b[1]); B.banR = { t: 3.2, u: o, txt: b[2] };
+}
 function voiceUpdate(dt) {
+  banterUpdate(dt);
   for (const u of B.units) {
     if (!u.voice) continue; if (u.say && (u.say.t -= dt) <= 0) u.say = null; if (u.dead || u.gone) continue; u.sayCd -= dt;
     if (u.sayStart > 0 && (u.sayStart -= dt) <= 0) voiceSay(u, B.wall && u.voice.siege ? 'siege' : 'start', true);
-    if ((u.tauntT -= dt) <= 0) { u.tauntT = rnd(12, 20); if (nearestFoeDist(u.x, u.y, 1 - u.side) < 260) voiceSay(u, 'taunt'); }
+    if ((u.tauntT -= dt) <= 0) { u.tauntT = rnd(24, 40); if (nearestFoeDist(u.x, u.y, 1 - u.side) < 260) voiceSay(u, 'taunt'); }
   }
 }
 function voiceDraw(g) {
