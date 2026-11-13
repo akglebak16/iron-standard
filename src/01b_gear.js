@@ -27,6 +27,7 @@ armorPiece('head', 0, [['head_cap', 'Кожаный подшлемник', 30, 1
 armorPiece('body', 0, [['body_padded', 'Стёганка', 35, 6, 12, 'padded'], ['body_mail', 'Кольчуга', 340, 14, 30, 'mail'], ['body_scale', 'Чешуйчатый доспех', 900, 18, 46, 'scale'], ['body_plate', 'Латы', 2100, 26, 64, 'plate']]);
 armorPiece('hands', 0, [['hands_leather', 'Кожаные перчатки', 25, .5, 2], ['hands_reinf', 'Усиленные рукавицы', 110, 1, 3], ['hands_mail', 'Кольчужные перчатки', 300, 1.5, 5], ['hands_plate', 'Латные перчатки', 720, 2, 7]]);
 armorPiece('legs', 0, [['legs_boots', 'Кожаные сапоги', 35, 1.5, 3], ['legs_greaves', 'Сапоги с наколенниками', 150, 2.5, 5], ['legs_mail', 'Кольчужные чулки', 400, 4, 7], ['legs_plate', 'Латные поножи', 900, 6, 10]]);
+E('head_hood', 'Монашеский капюшон', 'head', 0, 25, .5, { v: 3, look: 'hood', f: ['kin', 'emp', 'dom', 'pact'] }); E('body_habit', 'Ряса', 'body', 0, 30, 4, { v: 9, look: 'habit', f: ['kin', 'emp', 'dom', 'pact'] });
 E('head_turban', 'Тюрбан', 'head', 1, 130, 1, { v: 5, look: 'turban', f: ['emi'] }); E('head_turbanm', 'Шлем-тюрбан с бармицей', 'head', 2, 420, 3, { v: 10, look: 'turbanm', f: ['emi'] });
 // щиты: v — шанс блока
 E('shield_buckler', 'Баклер', 'shield', 0, 60, 2, { v: .42, look: 'small' });

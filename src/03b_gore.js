@@ -93,13 +93,13 @@ function voiceSay(u, kind, force) {
   if (!force && u.sayCd > 0 && !(kind === 'kill' || kind === 'killUndead') && Math.random() > .3) return;
   if (!force && (kind === 'kill' || kind === 'killUndead') && u.sayCd > .6) return;
   let txt = pick(L); if (L.length > 1 && txt === u.sayLast) txt = pick(L); u.sayLast = txt;
-  u.say = { txt, t: kind === 'start' ? 3 : 2.4 }; u.sayCd = kind === 'kill' || kind === 'killUndead' ? 1.1 : 3;
-  if (kind === 'start' || kind === 'down') blog(u.name + ': «' + txt + '»', kind === 'down' ? 1 : 2);
+  u.say = { txt, t: kind === 'start' || kind === 'siege' ? 3 : 2.4 }; u.sayCd = kind === 'kill' || kind === 'killUndead' ? 1.1 : 3;
+  if (kind === 'start' || kind === 'siege' || kind === 'down') blog(u.name + ': «' + txt + '»', kind === 'down' ? 1 : 2);
 }
 function voiceUpdate(dt) {
   for (const u of B.units) {
     if (!u.voice) continue; if (u.say && (u.say.t -= dt) <= 0) u.say = null; if (u.dead || u.gone) continue; u.sayCd -= dt;
-    if (u.sayStart > 0 && (u.sayStart -= dt) <= 0) voiceSay(u, 'start', true);
+    if (u.sayStart > 0 && (u.sayStart -= dt) <= 0) voiceSay(u, B.wall && u.voice.siege ? 'siege' : 'start', true);
     if ((u.tauntT -= dt) <= 0) { u.tauntT = rnd(12, 20); if (nearestFoeDist(u.x, u.y, 1 - u.side) < 260) voiceSay(u, 'taunt'); }
   }
 }

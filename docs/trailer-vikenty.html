@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Сэр Викентий Де Будетон</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Кинозал: тёмный зал одного вида, экран 16:9 по центру, под ним панель с кнопкой и полосой хода */
+:root { --bg: #0b0806; --screen: #000; --ink: #eadfc2; --muted: #b3a483; --gold: #d1a84c; --blood: #b3301f; --wood: #3a2a1a;
+  --disp: "Alegreya SC", Georgia, serif; --body: "Alegreya Sans", "Segoe UI", Arial, sans-serif; color-scheme: dark; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font: 500 16px/1.4 var(--body); padding-block: 24px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+h1 { font: 700 clamp(22px, 4vw, 34px)/1.1 var(--disp); color: var(--gold); margin: 0; letter-spacing: .03em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; }
+.screen { position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; background: var(--screen); border: 3px solid var(--wood); box-shadow: 0 10px 40px #000c; }
+canvas { display: block; width: 100%; height: 100%; }
+.bar { position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: var(--blood); }
+.ctl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button { font: 700 18px/1 var(--disp); letter-spacing: .04em; color: var(--ink); background: linear-gradient(180deg, #5b4128, #2a1d12); border: 2px solid #000; border-radius: 3px; padding: 12px 18px; cursor: pointer; box-shadow: inset 0 0 0 1px #7c5c38; }
+button:hover { filter: brightness(1.15); } button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+#play { background: linear-gradient(180deg, #8a2a1c, #4a120c); }
+body.on #play { opacity: .5; pointer-events: none; }
+.note { color: var(--muted); font-size: 14px; margin: 0; flex: 1 1 260px; min-width: 0; }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+</style>
+</head><body>
+<div class="wrap">
+  <header><h1>Сэр Викентий Де Будетон</h1><p class="sub">Трейлер нового спутника «Железного Стяга» · 50 секунд · 16+, грусть и осадные машины</p></header>
+  <div class="screen"><canvas id="scr" width="1280" height="720" aria-label="Трейлер: сэр Викентий Де Будетон"></canvas><div class="bar" id="bar"></div></div>
+  <div class="ctl"><button id="play">▶ Смотреть со звуком</button><button id="rec" hidden>● Записать видео (.webm)</button>
+  <p class="note">Открой этот файл в Chrome со своего компьютера — появится кнопка «Записать видео»: трейлер проиграется и сохранится файлом .webm. Всё нарисовано кодом самой игры: тот же Глебио, те же солдаты Империи и скелеты, тот же звук.</p></div>
+</div>
+<script>
+let B = null;
+'use strict';
+/* ================= утилиты ================= */
+const SERVER = typeof __SRV !== 'undefined';
+const NET = { on: false, ws: null, avail: false, q: [] };
+const TAU = Math.PI * 2;
+const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
+const rint = (a, b) => Math.floor(rnd(a, b + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+function mulberry(seed) { let a = seed >>> 0; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function angDiff(a, b) { let d = (a - b) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; }
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = n >> 8 & 255, b = n & 255;
+  if (amt < 0) { r *= 1 + amt; g *= 1 + amt; b *= 1 + amt; } else { r += (255 - r) * amt; g += (255 - g) * amt; b += (255 - b) * amt; }
+  return 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')';
+}
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h); return c; }
+function makeNoise(seed) {
+  const r = mulberry(seed), p = new Float32Array(4096);
+  for (let i = 0; i < 4096; i++) p[i] = r();
+  const at = (x, y) => p[((x & 63) + (y & 63) * 64)];
+  const n1 = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y); let fx = x - xi, fy = y - yi; fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy); return lerp(lerp(at(xi, yi), at(xi + 1, yi), fx), lerp(at(xi, yi + 1), at(xi + 1, yi + 1), fx), fy); };
+  return (x, y) => (n1(x, y) * 0.55 + n1(x * 2.1 + 7, y * 2.1 + 3) * 0.3 + n1(x * 4.3 + 13, y * 4.3 + 9) * 0.15);
+}
+const $ = s => document.querySelector(s);
+const fmt = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+function plural(n, a, b, c) { const m = n % 100, k = n % 10; if (m > 10 && m < 20) return c; if (k === 1) return a; if (k > 1 && k < 5) return b; return c; }
+
+/* ================= данные ================= */
+const FACTIONS = {
+  nord: { name: 'Нордмарк', gen: 'Нордмарка', c1: '#2f5a85', c2: '#dfe6ea', emblem: 'star', title: 'ярл', biome: 'snow',
+    names: ['Эйнар', 'Бьорн', 'Ульф', 'Харальд', 'Сигурд', 'Торвальд', 'Гуннар', 'Хальфдан', 'Ивар', 'Олаф', 'Стейн', 'Кнуд', 'Асгейр', 'Фроди'],
+    nicks: ['Бык', 'Седой', 'Кривой', 'Рыжий', 'Молчун', 'Долгий', 'Чёрный', 'Беззубый', 'Волчья Пасть', 'Каменный'] },
+  emp: { name: 'Аурелийская империя', gen: 'Империи', c1: '#7d1f28', c2: '#d8a838', emblem: 'sun', title: 'легат', biome: 'grass',
+    names: ['Луций', 'Марк', 'Кассий', 'Деций', 'Авл', 'Север', 'Валерий', 'Квинт', 'Флавий', 'Октав', 'Руф', 'Гордиан', 'Юст', 'Максим'],
+    nicks: ['Старший', 'Меченый', 'Хромой', 'из Вентума', 'Железный', 'Счастливчик', 'Суровый', 'Младший'] },
+  khan: { name: 'Кеширское ханство', gen: 'Ханства', c1: '#1e6a5e', c2: '#e6c868', emblem: 'moon', title: 'нойон', biome: 'steppe',
+    names: ['Темир', 'Батур', 'Арслан', 'Тогрул', 'Алтан', 'Есен', 'Кайрат', 'Бори', 'Даян', 'Сартак', 'Очир', 'Мерген', 'Тархан', 'Булат'],
+    nicks: ['Сокол', 'Быстрый', 'Косой', 'Степной Волк', 'Меткий', 'Молодой', 'Одноглазый', 'Буран'] },
+  kin: { name: 'Королевство Галлия', gen: 'Королевства', c1: '#5a3a92', c2: '#f0e2a6', emblem: 'lily', title: 'граф', biome: 'grass',
+    names: ['Гийом', 'Анри', 'Рено', 'Тибо', 'Ожье', 'Бертран', 'Гуго', 'Роже', 'Ги', 'Жеффруа', 'Ансельм', 'Эд', 'Рауль', 'Фульк'],
+    nicks: ['Храбрый', 'Рыжий', 'Толстый', 'Благочестивый', 'Лысый', 'Добрый', 'Строитель', 'Сильный'] },
+  emi: { name: 'Эмират Хайрат', gen: 'Эмирата', c1: '#c4571f', c2: '#f4e8c4', emblem: 'octa', title: 'эмир', biome: 'arid',
+    names: ['Рашид', 'Хасан', 'Идрис', 'Тарик', 'Мусса', 'Юсуф', 'Ибрагим', 'Омар', 'Салим', 'Фарид', 'Захир', 'Малик', 'Джафар', 'Камиль'],
+    nicks: ['Лев', 'Мудрый', 'Одноглазый', 'Золотой', 'Быстрый', 'Меченый', 'Щедрый', 'Пустынный'] },
+  dom: { name: 'Мядельский доминион', gen: 'Доминиона', c1: '#b58a28', c2: '#2d2a22', emblem: 'oak', title: 'князь', biome: 'grass',
+    names: ['Витовт', 'Гедымин', 'Миндовг', 'Ольгерд', 'Кейстут', 'Довмонт', 'Скирмунт', 'Радзивил', 'Збигнев', 'Ян', 'Юрий', 'Лев', 'Збышек', 'Казимир'],
+    nicks: ['Лесной', 'Седой', 'Угрюмый', 'Строгий', 'Меткий', 'Рогатый', 'Крепкий', 'Болотный'] },
+  pact: { name: 'Варшавско-Познаньский пакт', gen: 'Пакта', c1: '#dcd5c2', c2: '#b3262e', emblem: 'crown', title: 'воевода', biome: 'grass',
+    names: ['Болеслав', 'Казимир', 'Мешко', 'Владислав', 'Зигмунт', 'Ежи', 'Стефан', 'Хенрик', 'Конрад', 'Лешек', 'Фридрих', 'Отто', 'Бернхард', 'Вацлав'],
+    nicks: ['Храбрый', 'Кривоустый', 'Щедрый', 'Мудрый', 'Суровый', 'Белый', 'Старый', 'Рыжий'] },
+  bandit: { name: 'Разбойники', gen: 'разбойников', c1: '#3b3a36', c2: '#9a2f24', emblem: 'skull', title: 'атаман', biome: 'grass',
+    names: ['Гнус', 'Рябой', 'Хорёк', 'Кабан', 'Щербатый', 'Ворон', 'Клык', 'Лис', 'Шило', 'Горбун', 'Жбан', 'Косарь', 'Мясник', 'Тихон'],
+    nicks: ['', '', '', 'Живодёр', 'Висельник', 'Душегуб', 'Беглый'] },
+  undead: { name: 'Нежить', gen: 'нежити', c1: '#3f4636', c2: '#a9b98e', emblem: 'skull', title: 'некромант', biome: 'grass',
+    names: ['Мордрек', 'Ваальтор', 'Зеферин', 'Карх', 'Ильвен', 'Горр', 'Мальтус', 'Сирах', 'Ортанд', 'Велиал'],
+    nicks: ['Бледный', 'Гнилой', 'Безглазый', 'Чёрный', 'Древний', 'Шепчущий', 'Костяной'] },
+  player: { name: 'Твой отряд', gen: 'твоего отряда', c1: '#c08a2e', c2: '#241a10', emblem: 'chevron', title: 'капитан', biome: 'grass' }
+};
+const BANNERS = [
+  { n: 'Янтарь', c1: '#c08a2e', c2: '#241a10' }, { n: 'Изумруд', c1: '#3e7a3a', c2: '#ece6d2' },
+  { n: 'Индиго', c1: '#3b3f94', c2: '#e3c15a' }, { n: 'Уголь', c1: '#2b2b31', c2: '#d8d2c4' },
+  { n: 'Кость', c1: '#d6cfbc', c2: '#6a1f1f' }, { n: 'Пурпур', c1: '#6d2c74', c2: '#e6d08a' }
+];
+const BASE = {
+  inf: [0, { hp: 46, arm: 8, dmg: 11, cd: 1.35, spd: 60, block: .22 }, { hp: 62, arm: 24, dmg: 15, cd: 1.2, spd: 58, block: .4 }, { hp: 84, arm: 42, dmg: 20, cd: 1.1, spd: 56, block: .5 }],
+  spr: [0, 0, { hp: 56, arm: 18, dmg: 14, cd: 1.3, spd: 58, block: .32, reach: 14, anticav: 1 }, { hp: 74, arm: 34, dmg: 19, cd: 1.2, spd: 57, block: .3, reach: 16, anticav: 1 }],
+  arc: [0, { hp: 36, arm: 4, dmg: 10, mdmg: 7, cd: 2.6, spd: 62, range: 660, acc: .065 }, { hp: 42, arm: 8, dmg: 13, mdmg: 8, cd: 2.4, spd: 62, range: 720, acc: .05 }, { hp: 52, arm: 18, dmg: 18, mdmg: 11, cd: 2.1, spd: 62, range: 800, acc: .036 }],
+  cav: [0, 0, { hp: 74, arm: 20, dmg: 16, cd: 1.3, spd: 150, block: .3 }, { hp: 100, arm: 44, dmg: 22, cd: 1.2, spd: 142, block: .42 }],
+  har: [0, 0, { hp: 58, arm: 10, dmg: 22, mdmg: 9, cd: 2.2, spd: 152, range: 580, acc: .08 }, { hp: 66, arm: 14, dmg: 28, mdmg: 11, cd: 1.95, spd: 156, range: 620, acc: .065 }]
+};
+const TROOPS = {};
+/* Бой: дальность стрелков ×2 от прежней, разброс ×ACC_K, щит прибавляет шанс заблокировать снаряд (см. blocked в 03_battle.js) */
+const ACC_K = 1.8, SHOT_V = 620, THROW_V = 460;
+/* Подстройка живучести фракций после патча дальнобоя: множитель здоровья всех бойцов фракции (по боям 30/50/80 человек; пакт — самый слабый в среднем) */
+const FAC_HP = { pact: 1.05 };
+function shieldArrow(l) { return l === 'kite' ? .18 : l === 'round' ? .12 : l === 'small' ? .07 : 0; }
+function T(id, name, fac, tier, cls, look, up, mod) {
+  const t = Object.assign({ id, name, fac, tier, cls, look, up: up || [], reach: 0, block: 0, range: 0 }, BASE[cls][tier], mod || {});
+  t.mounted = cls === 'cav' || cls === 'har'; if (FAC_HP[fac]) t.hp = Math.round(t.hp * FAC_HP[fac]); t.shb = shieldArrow(look.shield); t.acc = t.acc ? t.acc * (cls === 'har' ? 1.3 : ACC_K) : t.acc;
+  t.grp = (cls === 'inf' || cls === 'spr') ? 0 : cls === 'arc' ? 1 : 2;
+  t.cost = [0, 25, 60, 130][tier] + (t.mounted ? 50 : 0);
+  t.upCost = [0, 35, 85, 0][tier];
+  t.wage = [0, 2, 4, 7][tier] + (t.mounted ? 3 : 0);
+  TROOPS[id] = t;
+}
+// Нордмарк — тяжёлая пехота
+T('n1', 'Бонд', 'nord', 1, 'inf', { helm: 'none', armor: 'tunic', weapon: 'axe', shield: 'round', beard: .8 }, ['n2', 'n2s', 'n2a'], { hp: 50 });
+T('n2', 'Секироносец', 'nord', 2, 'inf', { helm: 'nasal', armor: 'fur', weapon: 'axe', shield: 'round', beard: .9 }, ['n3'], { hp: 68, dmg: 17 });
+T('n3', 'Хускарл', 'nord', 3, 'inf', { helm: 'spectacle', armor: 'mailfur', weapon: 'sword', shield: 'round', beard: 1 }, [], { hp: 94, dmg: 23 });
+T('n2s', 'Копьеносец', 'nord', 2, 'spr', { helm: 'cap', armor: 'padded', weapon: 'spear', shield: 'round', beard: .8 }, ['n3c']);
+T('n2a', 'Охотник', 'nord', 2, 'arc', { helm: 'hood', armor: 'fur', weapon: 'bow', beard: .7 }, ['n3a']);
+T('n3a', 'Следопыт', 'nord', 3, 'arc', { helm: 'nasal', armor: 'fur', weapon: 'bow', beard: .9 }, []);
+T('n3c', 'Дружинник', 'nord', 3, 'cav', { helm: 'spectacle', armor: 'mail', weapon: 'spear', shield: 'round', horse: 'bay', beard: .9 }, [], { spd: 132, hp: 104 });
+// Империя — броня, арбалеты, катафракты
+T('e1', 'Рекрут', 'emp', 1, 'inf', { helm: 'cap', armor: 'tunic', weapon: 'sword', shield: 'kite', beard: .2 }, ['e2', 'e2s', 'e2a']);
+T('e2', 'Легионер', 'emp', 2, 'inf', { helm: 'flat', armor: 'mailtab', weapon: 'sword', shield: 'kite', beard: .3 }, ['e3', 'e3c'], { arm: 30 });
+T('e3', 'Триарий', 'emp', 3, 'inf', { helm: 'crest', armor: 'scale', weapon: 'sword', shield: 'kite', beard: .3 }, [], { arm: 50 });
+T('e2s', 'Пикинёр', 'emp', 2, 'spr', { helm: 'kettle', armor: 'padded', weapon: 'spear', shield: 'kite', beard: .3 }, ['e3s']);
+T('e3s', 'Алебардист', 'emp', 3, 'spr', { helm: 'kettle', armor: 'mailtab', weapon: 'halberd', beard: .4 }, [], { dmg: 24, block: .12 });
+T('e2a', 'Арбалетчик', 'emp', 2, 'arc', { helm: 'kettle', armor: 'padded', weapon: 'xbow', beard: .3 }, ['e3a'], { dmg: 19, cd: 3.4, pierce: .4 });
+T('e3a', 'Стрелок-ветеран', 'emp', 3, 'arc', { helm: 'flat', armor: 'mailtab', weapon: 'xbow', beard: .4 }, [], { dmg: 25, cd: 3.1, pierce: .4, arm: 26 });
+T('e3c', 'Катафракт', 'emp', 3, 'cav', { helm: 'mask', armor: 'goldscale', weapon: 'lance', shield: 'kite', horse: 'barded' }, [], { arm: 56, spd: 128, hp: 106 });
+// Ханство — конница и конные лучники
+T('k1', 'Кочевник', 'khan', 1, 'inf', { helm: 'furcap', armor: 'tunic', weapon: 'sabre', shield: 'small', beard: .5, stache: 1 }, ['k2', 'k2a', 'k2c'], { spd: 64 });
+T('k2', 'Степной копейщик', 'khan', 2, 'spr', { helm: 'pointed', armor: 'lamellar', weapon: 'spear', shield: 'small', beard: .4, stache: 1 }, ['k3c']);
+T('k2a', 'Степной стрелок', 'khan', 2, 'arc', { helm: 'furcap', armor: 'tunic', weapon: 'bow', beard: .4, stache: 1 }, ['k3h'], { acc: .042 });
+T('k2c', 'Всадник', 'khan', 2, 'cav', { helm: 'furcap', armor: 'lamellar', weapon: 'sabre', shield: 'small', horse: 'dun', stache: 1 }, ['k3c'], { spd: 158 });
+T('k3h', 'Конный лучник', 'khan', 3, 'har', { helm: 'pointed', armor: 'lamellar', weapon: 'bow', horse: 'dun', stache: 1 }, []);
+T('k3c', 'Нукер', 'khan', 3, 'cav', { helm: 'pointed', armor: 'goldlam', weapon: 'lance', shield: 'small', horse: 'black', stache: 1 }, [], { spd: 154 });
+// Королевство Галлия — рыцарская конница, сержанты и длинные луки
+T('f1', 'Ополченец', 'kin', 1, 'inf', { helm: 'cap', armor: 'padded', weapon: 'sword', shield: 'round', beard: .3 }, ['f2', 'f2s', 'f2a', 'f2c']);
+T('f2', 'Сержант', 'kin', 2, 'inf', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', beard: .3 }, ['f3'], { arm: 30, hp: 66 });
+T('f3', 'Латник', 'kin', 3, 'inf', { helm: 'great', armor: 'plate', weapon: 'sword', shield: 'kite', beard: .2 }, [], { arm: 55, hp: 92, dmg: 23 });
+T('f2s', 'Копейщик', 'kin', 2, 'spr', { helm: 'kettle', armor: 'padded', weapon: 'spear', shield: 'round', beard: .4 }, ['f3s']);
+T('f3s', 'Протазанщик', 'kin', 3, 'spr', { helm: 'coif', armor: 'mailtab', weapon: 'halberd', beard: .4 }, [], { dmg: 24, block: .12 });
+T('f2a', 'Лучник', 'kin', 2, 'arc', { helm: 'cap', armor: 'padded', weapon: 'bow', beard: .5 }, ['f3a'], { range: 760 });
+T('f3a', 'Йомен', 'kin', 3, 'arc', { helm: 'coif', armor: 'mail', weapon: 'bow', beard: .5 }, [], { dmg: 20, range: 840, arm: 22 });
+T('f2c', 'Конный сержант', 'kin', 2, 'cav', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', horse: 'chestnut', beard: .3 }, ['f3c'], { arm: 29, spd: 140, hp: 76 });
+T('f3c', 'Рыцарь', 'kin', 3, 'cav', { helm: 'great', armor: 'plate', weapon: 'lance', shield: 'kite', horse: 'grey' }, [], { arm: 58, spd: 128, hp: 114, dmg: 25 });
+// Эмират Хайрат — лёгкая конница, лучники и мамлюки
+T('m1', 'Воин пустыни', 'emi', 1, 'inf', { helm: 'turban', armor: 'tunic', weapon: 'sabre', shield: 'small', beard: .8 }, ['m2', 'm2a', 'm2c'], { spd: 63 });
+T('m2', 'Гулям', 'emi', 2, 'inf', { helm: 'turban', armor: 'padded', weapon: 'sabre', shield: 'round', beard: .8 }, ['m3'], { arm: 20 });
+T('m3', 'Страж эмира', 'emi', 3, 'inf', { helm: 'turbanm', armor: 'mail', weapon: 'sabre', shield: 'round', beard: .9 }, [], { arm: 40, dmg: 22 });
+T('m2s', 'Копейщик-бербер', 'emi', 2, 'spr', { helm: 'turban', armor: 'padded', weapon: 'spear', shield: 'small', beard: .8 }, ['m3c']);
+T('m2a', 'Лучник пустыни', 'emi', 2, 'arc', { helm: 'turban', armor: 'tunic', weapon: 'bow', beard: .7 }, ['m3h'], { acc: .04 });
+T('m2c', 'Лёгкий всадник', 'emi', 2, 'cav', { helm: 'turban', armor: 'padded', weapon: 'sabre', shield: 'small', horse: 'dun', beard: .7 }, ['m3c', 'm3h'], { spd: 158, arm: 16 });
+T('m3h', 'Конный лучник', 'emi', 3, 'har', { helm: 'turbanm', armor: 'lamellar', weapon: 'bow', horse: 'dun', beard: .7 }, []);
+T('m3c', 'Мамлюк', 'emi', 3, 'cav', { helm: 'turbanm', armor: 'goldlam', weapon: 'lance', shield: 'small', horse: 'black', beard: .6 }, [], { spd: 150, arm: 40, hp: 96 });
+// Мядельский доминион — лесной оплот: стойкая пехота, арбалеты и лёгкая дружинная конница
+T('d1', 'Ополченец', 'dom', 1, 'inf', { helm: 'cap', armor: 'padded', weapon: 'axe', shield: 'round', beard: .7 }, ['d2', 'd2s', 'd2x', 'd2c']);
+T('d2', 'Щитник', 'dom', 2, 'inf', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', beard: .6 }, ['d3'], { arm: 28, hp: 68 });
+T('d3', 'Страж доминиона', 'dom', 3, 'inf', { helm: 'great', armor: 'mailtab', weapon: 'sword', shield: 'kite', beard: .5 }, [], { arm: 48, hp: 96, dmg: 22 });
+T('d2s', 'Рогатинник', 'dom', 2, 'spr', { helm: 'nasal', armor: 'padded', weapon: 'spear', shield: 'round', beard: .7 }, ['d3s']);
+T('d3s', 'Алебардист', 'dom', 3, 'spr', { helm: 'kettle', armor: 'mail', weapon: 'halberd', beard: .6 }, [], { dmg: 24, block: .12 });
+T('d2x', 'Арбалетчик', 'dom', 2, 'arc', { helm: 'nasal', armor: 'padded', weapon: 'xbow', beard: .6 }, ['d3x'], { dmg: 19, cd: 3.4, pierce: .4 });
+T('d3x', 'Лесной стрелок', 'dom', 3, 'arc', { helm: 'kettle', armor: 'mail', weapon: 'xbow', beard: .6 }, [], { dmg: 25, cd: 3.1, pierce: .4, arm: 24 });
+T('d2c', 'Дружинник', 'dom', 2, 'cav', { helm: 'nasal', armor: 'mail', weapon: 'spear', shield: 'round', horse: 'bay', beard: .6 }, ['d3c'], { arm: 26, spd: 140, hp: 76 });
+T('d3c', 'Боярин', 'dom', 3, 'cav', { helm: 'great', armor: 'mailtab', weapon: 'lance', shield: 'kite', horse: 'chestnut', beard: .5 }, [], { arm: 50, spd: 130, hp: 104, dmg: 24 });
+// Варшавско-Познаньский пакт — тяжёлая конница, ландскнехты и лучники
+T('p1', 'Ополченец', 'pact', 1, 'inf', { helm: 'cap', armor: 'padded', weapon: 'sword', shield: 'round', beard: .5 }, ['p2', 'p2s', 'p2a', 'p2c']);
+T('p2', 'Пехотинец', 'pact', 2, 'inf', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', beard: .4 }, ['p3'], { arm: 29, hp: 67 });
+T('p3', 'Кнехт', 'pact', 3, 'inf', { helm: 'flat', armor: 'mailtab', weapon: 'sword', shield: 'kite', beard: .4 }, [], { arm: 50, hp: 94, dmg: 22 });
+T('p2s', 'Пикинёр', 'pact', 2, 'spr', { helm: 'kettle', armor: 'padded', weapon: 'spear', shield: 'kite', beard: .5 }, ['p3s']);
+T('p3s', 'Ландскнехт', 'pact', 3, 'spr', { helm: 'flat', armor: 'mailtab', weapon: 'halberd', beard: .5 }, [], { dmg: 24, block: .12 });
+T('p2a', 'Лучник', 'pact', 2, 'arc', { helm: 'cap', armor: 'padded', weapon: 'bow', beard: .5 }, ['p3a'], { range: 760 });
+T('p3a', 'Стрелок', 'pact', 3, 'arc', { helm: 'coif', armor: 'mail', weapon: 'bow', beard: .5 }, [], { dmg: 20, range: 840, arm: 22 });
+T('p2c', 'Панцирный всадник', 'pact', 2, 'cav', { helm: 'kettle', armor: 'mail', weapon: 'lance', shield: 'kite', horse: 'bay', beard: .4 }, ['p3c'], { arm: 30, spd: 138, hp: 78 });
+T('p3c', 'Гусар', 'pact', 3, 'cav', { helm: 'great', armor: 'plate', weapon: 'lance', shield: 'kite', horse: 'grey' }, [], { arm: 52, spd: 132, hp: 100, dmg: 25 });
+// Разбойники
+T('b1', 'Грабитель', 'bandit', 1, 'inf', { helm: 'hood', armor: 'tunic', weapon: 'club', beard: .6 }, [], { block: .08, hp: 40 });
+T('b2', 'Разбойник', 'bandit', 2, 'inf', { helm: 'cap', armor: 'padded', weapon: 'axe', shield: 'round', beard: .7 }, [], { arm: 16 });
+T('b1a', 'Браконьер', 'bandit', 1, 'arc', { helm: 'hood', armor: 'tunic', weapon: 'bow', beard: .5 }, []);
+T('b3', 'Головорез', 'bandit', 3, 'inf', { helm: 'nasal', armor: 'mail', weapon: 'mace', shield: 'round', beard: .8 }, [], { arm: 34, hp: 78 });
+T('b2c', 'Конный налётчик', 'bandit', 2, 'cav', { helm: 'hood', armor: 'padded', weapon: 'sword', horse: 'bay', beard: .6 }, [], { block: .12 });
+// Нежить (кризис, 05f_undead.js): много и слабые. pw — множитель силы в расчётах (strength): мертвец считается почти вдвое слабее живого того же уровня.
+// look.undead: 'zombie' — гнилая плоть, 'skel' — скелет (рисунок в 02_art.js). В бою не бегут; скелеты держат стрелы хуже живых, но крошатся от дробящего.
+T('z1', 'Мертвец', 'undead', 1, 'inf', { helm: 'none', armor: 'rags', weapon: 'club', undead: 'zombie', beard: .3 }, [], { hp: 34, arm: 2, dmg: 7, cd: 1.7, spd: 42, block: 0, pw: .55 });
+T('s1', 'Скелет', 'undead', 1, 'inf', { helm: 'none', armor: 'ribs', weapon: 'sword', shield: 'round', undead: 'skel' }, [], { hp: 24, arm: 6, dmg: 9, cd: 1.45, spd: 54, block: .12, pw: .6 });
+T('s1a', 'Скелет-лучник', 'undead', 1, 'arc', { helm: 'hood', armor: 'ribs', weapon: 'bow', undead: 'skel' }, [], { hp: 22, arm: 3, dmg: 8, mdmg: 5, range: 580, acc: .085, pw: .6 });
+T('s2', 'Мёртвый воин', 'undead', 2, 'inf', { helm: 'nasal', armor: 'mail', weapon: 'axe', shield: 'round', undead: 'skel' }, [], { hp: 40, arm: 16, dmg: 12, pw: .65 });
+T('s2c', 'Мёртвый всадник', 'undead', 2, 'cav', { helm: 'nasal', armor: 'ribs', weapon: 'spear', horse: 'bone', undead: 'skel' }, [], { hp: 52, arm: 10, dmg: 12, spd: 118, pw: .65 });
+T('s3', 'Умертвие', 'undead', 3, 'inf', { helm: 'great', armor: 'mail', weapon: 'sword', shield: 'kite', undead: 'skel' }, [], { hp: 68, arm: 30, dmg: 16, pw: .8 });
+
+const GEAR = {
+  weapon: [{ n: 'Старый меч', v: 20, p: 0 }, { n: 'Рыцарский меч', v: 28, p: 380 }, { n: 'Клинок мастера', v: 38, p: 1150 }, { n: 'Булатный клинок', v: 50, p: 2600 }],
+  armor: [{ n: 'Стёганка', v: 12, p: 0 }, { n: 'Кольчуга', v: 30, p: 340 }, { n: 'Чешуйчатый доспех', v: 46, p: 900 }, { n: 'Латы', v: 64, p: 2100 }],
+  shield: [{ n: 'Дощатый щит', v: .5, p: 0 }, { n: 'Окованный щит', v: .68, p: 240 }, { n: 'Гербовый щит', v: .84, p: 700 }],
+  horse: [{ n: 'Пеший', v: 0, p: 0 }, { n: 'Походный конь', v: 150, p: 520 }, { n: 'Боевой скакун', v: 172, p: 1500 }]
+};
+const GEAR_LABEL = { weapon: 'Оружие', armor: 'Доспех', shield: 'Щит', horse: 'Конь' };
+const GEAR_UNIT = { weapon: 'урон', armor: 'броня', shield: 'блок', horse: 'скорость' };
+const ATTRS = { str: ['Сила', '+3 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
+function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
+function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
+function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1) * (d.pw || 1); } return s; }
+function genTroops(fac, n, quality) { // quality 0..1
+  const ids = Object.keys(TROOPS).filter(k => TROOPS[k].fac === fac), out = {};
+  for (let i = 0; i < n; i++) {
+    const r = Math.random() + (quality - .5) * .7; const tier = r < .38 ? 1 : r < .78 ? 2 : 3;
+    let c = ids.filter(k => TROOPS[k].tier === tier); if (!c.length) c = ids;
+    let id = pick(c); if (TROOPS[id].mounted && fac !== 'khan' && Math.random() < .55) id = pick(c);
+    out[id] = (out[id] || 0) + 1;
+  }
+  return Object.keys(out).map(k => ({ type: k, n: out[k] }));
+}
+
+/* ================= снаряжение героя: слоты, оружие, типы урона =================
+   Общий для клиента и сервера: без DOM. Герой носит предметы в слотах H.eq = { slot: id|null },
+   какое оружие в руках — H.sel ('melee' | 'ranged'). Старые герои (индексы armor/weapon/shield/horse)
+   переезжают в слоты лениво при первом обращении к heroEq(H), поэтому старые сохранения грузятся без миграции. */
+
+const SLOTS = ['head', 'body', 'hands', 'legs', 'melee', 'ranged', 'shield', 'horse'];
+const SLOT_NAME = { head: 'Голова', body: 'Тело', hands: 'Руки', legs: 'Ноги', melee: 'Ближний бой', ranged: 'Дальний бой', shield: 'Щит', horse: 'Конь' };
+const WTYPE = { sword: 'Меч', axe: 'Топор', mace: 'Булава', spear: 'Копьё', twohand: 'Двуручное', polearm: 'Древковое', bow: 'Лук', xbow: 'Арбалет', throw: 'Метательное', fist: 'Кулаки' };
+
+/* Тип урона → доля брони, которую удар игнорирует, по классу брони цели: лёгкая (<18), средняя (18–37), тяжёлая (38+) */
+const DTYPE = {
+  cut:    { n: 'Рубящий', p: [0, .06, 0],     note: '+15% урона по лёгкой броне, тяжёлую почти не берёт' },
+  pierce: { n: 'Колющий', p: [.18, .38, .22], note: 'лучше всех пробивает среднюю броню (кольчуги)' },
+  blunt:  { n: 'Дробящий', p: [.10, .26, .42], note: 'лучше всех пробивает латы, сильнее отбрасывает' }
+};
+function armClass(a) { return a < 18 ? 0 : a < 38 ? 1 : 2; }
+function dtPierce(dt, arm, extra) { const d = DTYPE[dt]; return clamp((d ? d.p[armClass(arm)] : 0) + (extra || 0), 0, .8); }
+function dtMul(dt, arm) { return dt === 'cut' && armClass(arm) === 0 ? 1.15 : 1; }
+
+/* ---------- каталог ---------- */
+const EQ = {};
+{ // помощники каталога живут в блоке, чтобы не занимать глобальные имена (PA, SP и т. п. уже есть в других файлах)
+function E(id, name, slot, tier, price, w, o) { return (EQ[id] = Object.assign({ id, name, slot, tier, price, w }, o || {})); }
+const armorPiece = (slot, tier, list) => list.forEach((a, i) => E(a[0], a[1], slot, i, a[2], a[3], { v: a[4], look: a[5], f: a[6] }));
+// голова: v — броня, look — рисунок шлема
+armorPiece('head', 0, [['head_cap', 'Кожаный подшлемник', 30, 1, 3, 'cap'], ['head_nasal', 'Шлем с наносником', 140, 2.5, 6, 'nasal'], ['head_kettle', 'Шлем-котелок', 380, 3.5, 9, 'kettle'], ['head_great', 'Закрытый шлем', 950, 5, 13, 'great']]);
+armorPiece('body', 0, [['body_padded', 'Стёганка', 35, 6, 12, 'padded'], ['body_mail', 'Кольчуга', 340, 14, 30, 'mail'], ['body_scale', 'Чешуйчатый доспех', 900, 18, 46, 'scale'], ['body_plate', 'Латы', 2100, 26, 64, 'plate']]);
+armorPiece('hands', 0, [['hands_leather', 'Кожаные перчатки', 25, .5, 2], ['hands_reinf', 'Усиленные рукавицы', 110, 1, 3], ['hands_mail', 'Кольчужные перчатки', 300, 1.5, 5], ['hands_plate', 'Латные перчатки', 720, 2, 7]]);
+armorPiece('legs', 0, [['legs_boots', 'Кожаные сапоги', 35, 1.5, 3], ['legs_greaves', 'Сапоги с наколенниками', 150, 2.5, 5], ['legs_mail', 'Кольчужные чулки', 400, 4, 7], ['legs_plate', 'Латные поножи', 900, 6, 10]]);
+E('head_hood', 'Монашеский капюшон', 'head', 0, 25, .5, { v: 3, look: 'hood', f: ['kin', 'emp', 'dom', 'pact'] }); E('body_habit', 'Ряса', 'body', 0, 30, 4, { v: 9, look: 'habit', f: ['kin', 'emp', 'dom', 'pact'] });
+E('head_turban', 'Тюрбан', 'head', 1, 130, 1, { v: 5, look: 'turban', f: ['emi'] }); E('head_turbanm', 'Шлем-тюрбан с бармицей', 'head', 2, 420, 3, { v: 10, look: 'turbanm', f: ['emi'] });
+// щиты: v — шанс блока
+E('shield_buckler', 'Баклер', 'shield', 0, 60, 2, { v: .42, look: 'small' });
+E('shield_plank', 'Дощатый щит', 'shield', 0, 25, 3, { v: .5, look: 'round' });
+E('shield_banded', 'Окованный щит', 'shield', 1, 240, 4, { v: .68, look: 'round' });
+E('shield_heraldic', 'Гербовый щит', 'shield', 2, 700, 5.5, { v: .84, look: 'kite' });
+// кони: v — скорость
+E('horse_riding', 'Походный конь', 'horse', 1, 520, 0, { v: 150, look: 'chestnut' });
+E('horse_steppe', 'Степной конь', 'horse', 2, 800, 0, { v: 160, look: 'dun', f: ['khan', 'emi'] });
+E('horse_war', 'Боевой скакун', 'horse', 2, 1500, 0, { v: 172, look: 'barded' });
+
+/* Оружие ближнего боя. dmg — урон; spd — множитель времени замаха (больше = медленнее); reach — прибавка к дальности;
+   hands — 1 или 2 (с двуручным нельзя щит); arc — ширина удара; cleave — сколько целей заденет; brk — пробивает блок щитом;
+   kb — отбрасывание; anticav — бонус против конницы; parry — шанс блока оружием без щита */
+const melee = (o, base) => (id, name, tier, price, dmg, w, x) => E(id, name, 'melee', tier, price, w, Object.assign({ dmg, spd: 1, reach: 0, hands: 1, arc: 1, cleave: 3, fall: .7 }, base, o, x));
+const SW = melee({}, { wt: 'sword', dt: 'cut', parry: .22, look: 'sword' });
+const AX = melee({}, { wt: 'axe', dt: 'cut', spd: 1.1, brk: .4, parry: .12, look: 'axe' });
+const MC = melee({}, { wt: 'mace', dt: 'blunt', spd: 1.1, kb: 2.2, parry: .12, look: 'mace' });
+const SP = melee({}, { wt: 'spear', dt: 'pierce', spd: 1.1, reach: 20, arc: .7, cleave: 2, anticav: 1, parry: .2, look: 'spear' });
+const TH = melee({}, { wt: 'twohand', hands: 2, spd: 1.4, reach: 8, arc: 1.25, cleave: 4, fall: .8, parry: .32 });
+const PA = melee({}, { wt: 'polearm', dt: 'pierce', hands: 2, spd: 1.5, reach: 36, arc: .5, cleave: 2, anticav: 1, parry: .3 });
+SW('sword_old', 'Старый меч', 0, 40, 20, 3); SW('sword_knight', 'Рыцарский меч', 1, 380, 28, 3.5, { f: ['emp', 'kin', 'dom', 'pact'] });
+SW('sword_master', 'Клинок мастера', 2, 1150, 38, 3.5); SW('sword_damask', 'Булатный клинок', 3, 2600, 50, 3.5, { f: ['khan', 'emi'] });
+SW('sabre', 'Сабля', 1, 330, 27, 3, { spd: .92, look: 'sabre', f: ['khan', 'emi'] });
+AX('axe_work', 'Рабочий топор', 0, 90, 24, 3.5, { f: ['nord', 'dom'] }); AX('axe_battle', 'Боевой топор', 1, 420, 34, 4, { f: ['nord', 'dom'] }); AX('axe_bearded', 'Бородатая секира', 2, 1250, 44, 4.5, { f: ['nord'] });
+MC('club', 'Дубина', 0, 60, 22, 4, { look: 'club' }); MC('mace', 'Булава', 1, 400, 31, 4); MC('mace_flanged', 'Шестопёр', 2, 1100, 41, 4.5);
+SP('spear_hunt', 'Охотничье копьё', 0, 80, 24, 3.5); SP('spear_war', 'Боевое копьё', 1, 340, 33, 4, { f: ['emp', 'nord', 'kin', 'dom', 'pact'] });
+TH('tw_sword', 'Двуручный меч', 2, 1300, 56, 7, { dt: 'cut', look: 'sword' }); TH('tw_claymore', 'Клеймор', 3, 2800, 68, 8, { dt: 'cut', spd: 1.45, reach: 10, look: 'sword' });
+TH('tw_axe', 'Двуручная секира', 2, 1500, 62, 8, { dt: 'cut', spd: 1.5, brk: .5, look: 'axe', f: ['nord'] }); TH('tw_hammer', 'Боевой молот', 2, 1400, 60, 9, { dt: 'blunt', spd: 1.5, kb: 2.8, look: 'mace' });
+PA('pike', 'Пика', 1, 600, 42, 6, { reach: 40, look: 'spear', f: ['emp', 'kin', 'dom', 'pact'] }); PA('halberd', 'Алебарда', 2, 950, 48, 7, { dt: 'cut', spd: 1.35, reach: 28, arc: .7, cleave: 3, look: 'halberd', f: ['emp', 'kin', 'dom', 'pact'] });
+
+/* Оружие дальнего боя (боеприпасы бесконечные). cd — перезарядка, сек; range — дальность; acc — разброс; pb — доп. пробитие;
+   bs — сколько урона даёт каждая единица силы */
+const ranged = (id, name, tier, price, dmg, w, o) => E(id, name, 'ranged', tier, price, w, Object.assign({ rng: 1, dt: 'pierce', dmg, hands: 2, parry: 0, bs: 1.2 }, o));
+ranged('bow_hunt', 'Охотничий лук', 0, 120, 17, 1.5, { wt: 'bow', cd: .9, range: 660, acc: .05, look: 'bow', f: ['nord', 'dom', 'pact'] });
+ranged('bow_long', 'Длинный лук', 1, 560, 26, 2, { wt: 'bow', cd: 1.15, range: 840, acc: .04, look: 'bow', f: ['nord', 'kin', 'pact'] });
+ranged('bow_comp', 'Составной лук', 2, 1300, 33, 2, { wt: 'bow', cd: 1, range: 800, acc: .035, look: 'bow', f: ['khan', 'emi'] });
+ranged('xbow_light', 'Лёгкий арбалет', 1, 700, 30, 4, { wt: 'xbow', cd: 2, range: 720, acc: .03, pb: .12, bs: 0, look: 'xbow', f: ['emp', 'kin', 'dom'] });
+ranged('xbow_heavy', 'Тяжёлый арбалет', 2, 1700, 46, 6, { wt: 'xbow', cd: 2.9, range: 760, acc: .025, pb: .22, bs: 0, look: 'xbow', f: ['emp', 'kin', 'dom'] });
+ranged('jav_dart', 'Дротики', 0, 110, 26, 2.5, { wt: 'throw', hands: 1, cd: 1.2, range: 420, acc: .06, bs: 2, look: 'spear' });
+ranged('jav_spear', 'Метательные копья', 1, 420, 38, 3.5, { wt: 'throw', hands: 1, cd: 1.4, range: 460, acc: .05, bs: 2, look: 'spear', f: ['nord', 'khan', 'emi', 'dom'] });
+ranged('jav_heavy', 'Тяжёлые метательные копья', 2, 980, 50, 4.5, { wt: 'throw', hands: 1, cd: 1.6, range: 480, acc: .045, pb: .1, bs: 2, look: 'spear', f: ['khan', 'emi'] });
+}
+
+/* ---------- герой и его слоты ---------- */
+const LEGACY_EQ = { weapon: ['sword_old', 'sword_knight', 'sword_master', 'sword_damask'], armor: ['body_padded', 'body_mail', 'body_scale', 'body_plate'], shield: ['shield_plank', 'shield_banded', 'shield_heraldic'], horse: [null, 'horse_riding', 'horse_war'] };
+function syncLegacy(H) { H.horse = H.eq.horse ? (H.eq.horse === 'horse_war' ? 2 : 1) : 0; } // индекс коня нужен карте мира (скорость отряда) и старому коду
+function heroEq(H) {
+  if (H.eq) return H.eq;
+  H.eq = { head: 'head_cap', body: LEGACY_EQ.armor[H.armor] || null, hands: null, legs: null, melee: LEGACY_EQ.weapon[H.weapon] || 'sword_old', ranged: null, shield: LEGACY_EQ.shield[H.shield] || null, horse: LEGACY_EQ.horse[H.horse] || null };
+  H.sel = 'melee'; syncLegacy(H); return H.eq;
+}
+function eqItem(H, slot) { const id = heroEq(H)[slot]; return id && EQ[id] ? EQ[id] : null; }
+const FIST = { id: 'fist', name: 'Кулаки', slot: 'melee', wt: 'fist', dt: 'blunt', dmg: 8, spd: .9, reach: -3, hands: 1, arc: 1, cleave: 3, fall: .7, parry: .1, look: null };
+function heroWield(H) { const eq = heroEq(H); if (H.sel === 'ranged' && eq.ranged && EQ[eq.ranged]) return EQ[eq.ranged]; return (eq.melee && EQ[eq.melee]) || FIST; }
+function heroShield(H) { const s = eqItem(H, 'shield'); return s && heroWield(H).hands < 2 ? s : null; } // двуручное оружие и щит несовместимы
+function heroArmor(H) { let a = 0; for (const k of ['head', 'body', 'hands', 'legs']) { const it = eqItem(H, k); if (it) a += it.v; } return a; }
+function heroGear(H) { const W = heroWield(H), S = heroShield(H), horse = eqItem(H, 'horse'); return { W, S, horse, mounted: !!horse, arm: heroArmor(H), block: S ? S.v : (W.parry || 0) }; }
+
+/* ================= герой: атрибуты, перки, очки =================
+   Общий для клиента и сервера: без DOM. Пять атрибутов (ATTRS в 01_core.js), у каждого четыре перка.
+   Все перки доступны с самого начала, у каждого три ранга (уровня). Каждый следующий ранг требует своего уровня атрибута
+   и стоит одно очко перков. Очки: за уровень +2 очка атрибутов и +1 очко перков.
+   Герой хранит: H.str/vit/agi/int/cha, H.pts (очки атрибутов), H.pp (очки перков), H.perks (список id изученных).
+   Ранг перка = сколько раз его id встречается в H.perks: ['grip', 'grip', 'tough'] это «Крепкая хватка» II и «Закалка» I.
+   Так формат совместим с первой версией перков (там каждый id был один раз = ранг I) и с сохранениями и сетью.
+   Старые герои (Лидерство, без Интеллекта и перков) чинятся лениво через heroFix(H), поэтому старые сохранения грузятся без миграции. */
+
+const PTS_LEVEL = 2, PP_LEVEL = 1, PTS_START = 2, PP_START = 1; // очки за уровень и на старте
+const PERK_MAX = 3;                                              // рангов у каждого перка
+
+/* req: уровень атрибута для рангов I, II, III. «Обычные» перки 3/6/9, самые сильные 4/7/10.
+   fx: что перк даёт на каждом ранге (итоговое значение на этом ранге, не прибавка). Доли: 0.12 = +12%; arm, size, morale в единицах. */
+const REQ_A = [3, 6, 9], REQ_B = [4, 7, 10];
+const PERKS = [
+  // Сила
+  { id: 'grip',      a: 'str', n: 'Крепкая хватка',     req: REQ_A, fx: { heavy: [.06, .12, .18] } },
+  { id: 'packhorse', a: 'str', n: 'Тяжеловоз',          req: REQ_A, fx: { cargo: [.12, .25, .4] } },
+  { id: 'breaker',   a: 'str', n: 'Сокрушитель',        req: REQ_A, fx: { mpierce: [.04, .08, .12] } },
+  { id: 'butcher',   a: 'str', n: 'Мясник',             req: REQ_B, fx: { killHeal: [.02, .04, .06] } },
+  // Стойкость
+  { id: 'tough',     a: 'vit', n: 'Закалка',            req: REQ_A, fx: { hp: [.06, .12, .18] } },
+  { id: 'hide',      a: 'vit', n: 'Толстая кожа',       req: REQ_A, fx: { arm: [3, 6, 9] } },
+  { id: 'recover',   a: 'vit', n: 'Живучий',            req: REQ_A, fx: { heal: [.3, .6, 1] } },
+  { id: 'lastStand', a: 'vit', n: 'Последний рубеж',    req: REQ_B, fx: { lastStand: [.2, .3, .45] } },
+  // Ловкость
+  { id: 'quick',     a: 'agi', n: 'Быстрые руки',       req: REQ_A, fx: { cd: [.04, .08, .12] } },
+  { id: 'eagle',     a: 'agi', n: 'Меткий глаз',        req: REQ_A, fx: { acc: [.2, .35, .5], range: [.05, .1, .15] } },
+  { id: 'light',     a: 'agi', n: 'Лёгкая поступь',     req: REQ_A, fx: { map: [.04, .08, .12], flee: [.05, .1, .15], run: [.03, .05, .08] } },
+  { id: 'master',    a: 'agi', n: 'Мастер оружия',      req: REQ_B, fx: { dmg: [.06, .12, .18] } },
+  // Интеллект
+  { id: 'surgery',   a: 'int', n: 'Хирургия',           req: REQ_A, fx: { surv: [.1, .2, .3] } },
+  { id: 'learner',   a: 'int', n: 'Сообразительный',    req: REQ_A, fx: { xp: [.08, .15, .25] } },
+  { id: 'merchant',  a: 'int', n: 'Торговец',           req: REQ_A, fx: { buy: [.03, .05, .08], sell: [.03, .05, .08] } },
+  { id: 'tactician', a: 'int', n: 'Тактик',             req: REQ_B, fx: { ally: [.04, .08, .12], morale: [3, 6, 9] } },
+  // Харизма
+  { id: 'inspire',   a: 'cha', n: 'Вдохновляющий',      req: REQ_A, fx: { morale: [6, 12, 18] } },
+  { id: 'recruiter', a: 'cha', n: 'Вербовщик',          req: REQ_A, fx: { hire: [.08, .15, .25] } },
+  { id: 'commander', a: 'cha', n: 'Командир',           req: REQ_A, fx: { size: [5, 10, 15], wage: [.05, .1, .15] } },
+  { id: 'famous',    a: 'cha', n: 'Знаменитый наёмник', req: REQ_B, fx: { quest: [.1, .2, .3], loot: [.1, .2, .3] } }
+];
+const PERK = {}; for (const p of PERKS) PERK[p.id] = p;
+const FX_ZERO = Object.freeze({ heavy: 0, cargo: 0, mpierce: 0, killHeal: 0, hp: 0, arm: 0, heal: 0, lastStand: 0, cd: 0, acc: 0, range: 0, map: 0, flee: 0, run: 0, dmg: 0, surv: 0, xp: 0, buy: 0, sell: 0, ally: 0, morale: 0, hire: 0, size: 0, wage: 0, quest: 0, loot: 0, siege: 0 });
+
+/* Как эффект выглядит в тексте: t — фраза, u — единица, m — множитель (доли показываем в процентах).
+   Из этого собирается описание перка сразу для всех трёх рангов: «бьёт сильнее на 6 / 12 / 18%». */
+const FX_TXT = {
+  heavy: { t: 'Двуручное и древковое оружие бьёт сильнее на', u: '%', m: 100 },
+  cargo: { t: 'Обоз вмещает больше груза на', u: '%', m: 100 },
+  mpierce: { t: 'Удары ближнего боя игнорируют ещё', u: '% брони', m: 100 },
+  killHeal: { t: 'За каждого сражённого врага здоровье растёт на', u: '%', m: 100 },
+  hp: { t: 'Здоровье героя выше на', u: '%', m: 100 },
+  arm: { t: 'Броня героя выше на', u: '', m: 1 },
+  heal: { t: 'Герой лечится на карте быстрее на', u: '%', m: 100 },
+  lastStand: { t: 'Раз за бой при смертельном ударе герой встаёт со здоровьем', u: '%', m: 100 },
+  cd: { t: 'Удары и выстрелы быстрее на', u: '%', m: 100 },
+  acc: { t: 'Разброс стрел и болтов меньше на', u: '%', m: 100 },
+  range: { t: 'дальность стрельбы больше на', u: '%', m: 100 },
+  map: { t: 'Отряд идёт по карте быстрее на', u: '%', m: 100 },
+  flee: { t: 'шанс уйти от погони выше на', u: '%', m: 100 },
+  run: { t: 'бег в бою быстрее на', u: '%', m: 100 },
+  dmg: { t: 'Любое оружие бьёт сильнее на', u: '%', m: 100 },
+  surv: { t: 'Среди павших бойцов больше раненых, которые вернутся в строй:', u: '%', m: 100 },
+  xp: { t: 'Опыта за бои больше на', u: '%', m: 100 },
+  buy: { t: 'Покупка дешевле на', u: '%', m: 100 },
+  sell: { t: 'продажа дороже на', u: '%', m: 100 },
+  ally: { t: 'Бойцы отряда бьют сильнее на', u: '%', m: 100 },
+  morale: { t: 'мораль бойцов выше на', u: '', m: 1 },
+  hire: { t: 'Найм и улучшение войск дешевле на', u: '%', m: 100 },
+  size: { t: 'Отряд больше на', u: '', m: 1 },
+  wage: { t: 'жалованье ниже на', u: '%', m: 100 },
+  quest: { t: 'Награды за задания больше на', u: '%', m: 100 },
+  loot: { t: 'добыча после боя больше на', u: '%', m: 100 }
+};
+/* Описание перка кусками: [{ t, v: [значение I, II, III], u }]. Интерфейс сам подсвечивает значение текущего ранга. */
+function perkParts(p) { return Object.keys(p.fx).map((k, i) => { const f = FX_TXT[k]; return { t: i ? f.t : f.t[0].toUpperCase() + f.t.slice(1), v: p.fx[k].map(x => Math.round(x * f.m)), u: f.u }; }); }
+/* Описание одним текстом для выбранного ранга (1..3): удобно для подсказок и проверок */
+function perkText(p, rank) { return perkParts(p).map(x => x.t + ' ' + x.v[rank - 1] + x.u).join(', ') + '.'; }
+
+/* Старые герои: Лидерство стало Харизмой, Интеллекта не было, перков не было.
+   Очки перков за уже набранные уровни выдаются задним числом (по одному за уровень). */
+function heroFix(H) {
+  if (!H) return H;
+  if (H.cha === undefined) H.cha = H.lead || 1;
+  if (H.int === undefined) H.int = 1;
+  if (!H.perks) H.perks = [];
+  if (H.pp === undefined) H.pp = Math.max(0, (H.lvl || 1) - H.perks.length);
+  return H;
+}
+
+/* Ранг перка у героя: 0 (не изучен) .. PERK_MAX */
+function perkRank(H, id) { let n = 0; const a = H && H.perks; if (a) for (let i = 0; i < a.length; i++) if (a[i] === id) n++; return Math.min(n, PERK_MAX); }
+const hasPerk = (H, id) => perkRank(H, id) > 0;
+
+/* Сумма эффектов изученных перков. Кэш в WeakMap, а не в самом герое, чтобы в сохранение и в сеть не попадало лишнего. */
+const FXC = new WeakMap();
+const FXP = new WeakMap();
+function perkFx(H) { // перки героя плюс умения его спутников (05e_comps.js): спутники есть только у героя игрока в одиночной игре
+  const own = ownPerkFx(H), cf = H ? compFxForHero(H) : null; if (!cf) return own;
+  const c = FXP.get(H); if (c && c.own === own && c.k === cf.k) return c.f;
+  const f = Object.assign({}, own); for (const k in cf.f) f[k] += cf.f[k]; FXP.set(H, { own, k: cf.k, f }); return f;
+}
+function ownPerkFx(H) {
+  const ids = H && H.perks; if (!ids || !ids.length) return FX_ZERO;
+  const key = ids.join(','), c = FXC.get(H); if (c && c.k === key) return c.f;
+  const f = Object.assign({}, FX_ZERO), seen = {};
+  for (const id of ids) { const p = PERK[id]; if (!p || seen[id]) continue; seen[id] = 1; const r = perkRank(H, id); if (r > 0) for (const k in p.fx) f[k] += p.fx[k][r - 1]; }
+  FXC.set(H, { k: key, f }); return f;
+}
+
+/* Можно ли поднять перк на следующий ранг: '' если да, иначе причина (для кнопок и подсказок) */
+function perkWhy(H, id) {
+  heroFix(H); const p = PERK[id]; if (!p) return 'Нет такого перка.';
+  const r = perkRank(H, id); if (r >= PERK_MAX) return 'Максимальный уровень.';
+  if (H[p.a] < p.req[r]) return 'Нужно: ' + ATTRS[p.a][0] + ' ' + p.req[r] + '.';
+  if (H.pp < 1) return 'Нет очков перков.';
+  return '';
+}
+
+/* Цены найма и улучшения с учётом перка «Вербовщик» */
+const hireCost = (P, type) => Math.max(1, Math.round(TROOPS[type].cost * (1 - perkFx(P.hero).hire)));
+const upgCost = (P, type) => Math.max(1, Math.round(TROOPS[type].upCost * (1 - perkFx(P.hero).hire)));
+
+/* ================= рисованная графика: бюсты на подставках ================= */
+const OL = '#1b130c';
+const SKINS = ['#e2b48c', '#d6a179', '#c98f66', '#b97d58', '#e8c3a0'];
+const HAIRS = ['#2a1d14', '#4a3020', '#6b4423', '#8c5a2b', '#a8672e', '#b9b2a5', '#1a1a1a', '#7a2e16'];
+const STEEL = '#9aa1a8', IRON = '#6f757b', LEATHER = '#6a4a2c', WOOD = '#7a5a36', GOLD = '#d2a63c';
+function ell(g, x, y, rx, ry) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, TAU); }
+function fs(g, fill, lw) { if (fill) { g.fillStyle = fill; g.fill(); } if (lw !== 0) { g.strokeStyle = OL; g.lineWidth = lw || 1.5; g.stroke(); } }
+function line(g, pts, col, lw) { g.beginPath(); g.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]); g.strokeStyle = col; g.lineWidth = lw; g.stroke(); }
+function poly(g, pts) { g.beginPath(); g.moveTo(pts[0], pts[1]); for (let i = 2; i < pts.length; i += 2) g.lineTo(pts[i], pts[i + 1]); g.closePath(); }
+function mailTex(g, x, y, w, h, c) { g.strokeStyle = c; g.lineWidth = .6; let r = 0; for (let yy = y; yy < y + h; yy += 2.5, r++) for (let xx = x + (r % 2) * 1.5; xx < x + w; xx += 3) { g.beginPath(); g.arc(xx, yy, 1.3, 0, Math.PI); g.stroke(); } }
+function scaleTex(g, x, y, w, h, c1, c2) { let r = 0; for (let yy = y; yy < y + h; yy += 4, r++) for (let xx = x + (r % 2) * 2.5; xx < x + w; xx += 5) { g.beginPath(); g.arc(xx, yy, 2.7, 0, Math.PI); g.fillStyle = c1; g.fill(); g.strokeStyle = c2; g.lineWidth = .6; g.stroke(); } }
+function furTex(g, x, y, w, h, R, dark, light) { for (let i = 0; i < w * h / 5; i++) { const xx = x + R() * w, yy = y + R() * h; g.strokeStyle = R() < .5 ? dark : light; g.lineWidth = 1; g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx + (R() - .5) * 3, yy + 2.5 + R() * 3); g.stroke(); } }
+
+function drawBase(g, cx, cy, rx, ry, pal) {
+  g.fillStyle = '#14110d'; ell(g, cx, cy + 5, rx, ry); g.fill(); g.fillRect(cx - rx, cy, rx * 2, 5);
+  g.strokeStyle = OL; g.lineWidth = 1.4; ell(g, cx, cy + 5, rx, ry); g.stroke();
+  const gr = g.createLinearGradient(cx - rx, 0, cx + rx, 0); gr.addColorStop(0, '#7b756b'); gr.addColorStop(.5, '#4a453d'); gr.addColorStop(1, '#26221d');
+  ell(g, cx, cy, rx, ry); fs(g, gr, 1.4);
+  g.strokeStyle = pal.c1; g.lineWidth = 2.2; ell(g, cx, cy, rx - 2.6, ry - 1.6); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = .8; g.beginPath(); g.ellipse(cx, cy, rx - 1, ry - .6, 0, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
+}
+function torsoPath(g) { g.beginPath(); g.moveTo(15, 71); g.bezierCurveTo(11, 60, 13, 50, 24, 46); g.lineTo(31, 43); g.lineTo(43, 43); g.lineTo(50, 46); g.bezierCurveTo(61, 50, 61, 60, 57, 71); g.quadraticCurveTo(36, 78, 15, 71); g.closePath(); }
+
+function drawTorso(g, L, pal, R) {
+  const a = L.armor; let col = pal.c1;
+  if (a === 'padded') col = '#b59c6c'; else if (a === 'mail' || a === 'mailtab' || a === 'mailfur') col = '#868b90'; else if (a === 'scale') col = '#8f8f8a';
+  else if (a === 'habit') col = '#5a4630'; else if (a === 'rags') col = '#4a4436'; else if (a === 'ribs') col = '#2a251d';
+  else if (a === 'goldscale') col = '#c79d3a'; else if (a === 'lamellar') col = '#6d5639'; else if (a === 'goldlam') col = '#8a6a2c'; else if (a === 'plate') col = '#aab1b8'; else if (a === 'fur') col = '#5f4930';
+  torsoPath(g); fs(g, col, 0);
+  g.save(); torsoPath(g); g.clip();
+  if (a === 'rags') { g.fillStyle = '#2a251c'; for (let i = 0; i < 6; i++) { ell(g, 16 + i * 8 + (i % 2) * 3, 52 + (i * 7) % 18, 2.4, 1.8); g.fill(); } g.fillStyle = shade(col, -.3); poly(g, [10, 70, 16, 76, 22, 70, 28, 77, 34, 70, 40, 77, 46, 70, 52, 77, 58, 70, 64, 76, 64, 80, 10, 80]); g.fill(); }
+  if (a === 'ribs') { line(g, [36, 44, 36, 72], '#d8d0b8', 3); for (let y = 49; y < 70; y += 4.4) { const w = 15 - Math.abs(y - 58) * .3; line(g, [36, y, 36 - w, y + 3], '#d8d0b8', 2.2); line(g, [36, y, 36 + w, y + 3], '#cfc4a6', 2.2); } g.fillStyle = '#5a4a36'; g.fillRect(10, 70, 54, 4); }
+  if (a === 'habit') { line(g, [36, 44, 36, 78], shade(col, -.35), 1.2); line(g, [20, 46, 14, 78], shade(col, -.25), .9); line(g, [52, 46, 58, 78], shade(col, -.25), .9); g.fillStyle = '#d8c9a0'; g.fillRect(10, 61, 52, 3.4); line(g, [47, 63, 49, 76], '#d8c9a0', 1.6); g.fillStyle = '#d8c9a0'; ell(g, 49, 77, 1.6, 1.6); g.fill(); line(g, [36, 49, 36, 56], '#c9a24a', 1.6); line(g, [33, 52, 39, 52], '#c9a24a', 1.6); }
+  if (a === 'tunic') { g.fillStyle = shade(col, -.25); g.fillRect(10, 62, 52, 3); line(g, [36, 44, 36, 62], shade(col, -.3), 1); g.fillStyle = shade(col, .25); poly(g, [31, 43, 36, 50, 43, 43]); g.fill(); }
+  if (a === 'padded') { for (let x = 14; x < 60; x += 4.5) line(g, [x, 44, x + (x - 36) * .12, 76], shade(col, -.28), .9); g.fillStyle = pal.c1; g.fillRect(10, 60, 52, 4); }
+  if (a === 'mail' || a === 'mailtab' || a === 'mailfur') { mailTex(g, 10, 43, 54, 36, '#53575b'); mailTex(g, 11.5, 44, 54, 36, 'rgba(230,235,240,.35)'); }
+  if (a === 'mailtab') { g.fillStyle = pal.c1; poly(g, [27, 43, 47, 43, 50, 78, 24, 78]); g.fill(); g.fillStyle = pal.c2; poly(g, [36, 43, 47, 43, 50, 78, 37, 78]); g.fill(); line(g, [27, 43, 24, 78], OL, .8); line(g, [47, 43, 50, 78], OL, .8); g.fillStyle = '#3a2a1a'; g.fillRect(22, 62, 30, 3); }
+  if (a === 'scale' || a === 'goldscale') scaleTex(g, 10, 44, 54, 36, a === 'scale' ? '#a3a39c' : '#dcb44a', a === 'scale' ? '#4c4c48' : '#6e5216');
+  if (a === 'lamellar' || a === 'goldlam') { const c = a === 'lamellar' ? '#8a7048' : '#d0a53e'; for (let y = 46; y < 78; y += 5) { g.fillStyle = c; g.fillRect(10, y, 54, 3.6); for (let x = 11; x < 64; x += 3.4) line(g, [x, y, x, y + 3.6], 'rgba(20,12,4,.55)', .6); } g.fillStyle = pal.c1; g.fillRect(10, 61, 54, 3.5); }
+  if (a === 'plate') { g.fillStyle = 'rgba(255,255,255,.3)'; ell(g, 28, 54, 9, 6); g.fill(); line(g, [36, 44, 36, 76], '#5c6268', 1); line(g, [16, 62, 56, 62], '#5c6268', 1); g.fillStyle = pal.c1; poly(g, [30, 43, 36, 52, 43, 43]); g.fill(); }
+  if (a === 'fur') { g.fillStyle = '#7a6040'; g.fillRect(28, 43, 16, 36); line(g, [28, 43, 28, 78], OL, .7); line(g, [44, 43, 44, 78], OL, .7); g.fillStyle = '#3a2a1a'; g.fillRect(10, 62, 54, 3.4); }
+  if (a === 'fur' || a === 'mailfur') { g.fillStyle = '#4a3826'; g.beginPath(); g.moveTo(10, 60); g.bezierCurveTo(10, 46, 22, 42, 31, 42); g.lineTo(31, 50); g.bezierCurveTo(24, 52, 20, 58, 19, 66); g.closePath(); g.fill(); g.beginPath(); g.moveTo(62, 60); g.bezierCurveTo(62, 46, 52, 42, 43, 42); g.lineTo(43, 50); g.bezierCurveTo(50, 52, 54, 58, 55, 66); g.closePath(); g.fill(); furTex(g, 10, 42, 22, 24, R, '#2c2014', '#8a7150'); furTex(g, 42, 42, 22, 24, R, '#2c2014', '#8a7150'); }
+  const sh = g.createLinearGradient(12, 0, 60, 0); sh.addColorStop(0, 'rgba(255,240,200,.16)'); sh.addColorStop(.45, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.42)'); g.fillStyle = sh; g.fillRect(8, 40, 60, 40);
+  const sv = g.createLinearGradient(0, 60, 0, 78); sv.addColorStop(0, 'rgba(0,0,0,0)'); sv.addColorStop(1, 'rgba(0,0,0,.4)'); g.fillStyle = sv; g.fillRect(8, 60, 60, 20);
+  g.restore(); torsoPath(g); fs(g, null, 1.6);
+  if (a === 'plate' || a === 'scale' || a === 'goldscale' || a === 'goldlam') { const pc = a === 'plate' ? '#b9c0c6' : a === 'scale' ? '#a9a9a2' : '#d9b248'; ell(g, 18, 50, 7, 5); fs(g, pc, 1.3); ell(g, 54, 50, 7, 5); fs(g, shade(pc.length === 7 ? pc : '#b9c0c6', -.25), 1.3); }
+}
+function facePath(g) { g.beginPath(); g.moveTo(27, 25); g.bezierCurveTo(27, 13, 47.5, 13, 47.5, 25); g.bezierCurveTo(48, 33, 45, 41, 38, 42.5); g.bezierCurveTo(31, 41, 27, 34, 27, 25); g.closePath(); }
+function drawUndeadHead(g, v) { // череп или гнилое лицо: пустые глазницы с тусклыми огоньками
+  const skin = v.skin, sk = v.undead === 'skel';
+  g.fillStyle = shade(skin, -.35); poly(g, [32.5, 36, 41.5, 36, 42.5, 46, 31.5, 46]); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+  if (sk) for (let y = 38; y < 46; y += 2.6) line(g, [33, y, 41, y], shade(skin, -.55), .8); // позвонки шеи
+  facePath(g); fs(g, skin, 0);
+  g.save(); facePath(g); g.clip();
+  const sh = g.createLinearGradient(26, 0, 49, 0); sh.addColorStop(0, 'rgba(20,25,10,.45)'); sh.addColorStop(.45, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.25)'); g.fillStyle = sh; g.fillRect(24, 10, 28, 36);
+  if (sk) { g.fillStyle = shade(skin, -.4); g.fillRect(26, 33.5, 24, 1.2); } else { g.fillStyle = 'rgba(70,30,30,.35)'; ell(g, 31, 33, 3, 2); g.fill(); ell(g, 45, 24, 2.2, 3); g.fill(); }
+  g.restore(); facePath(g); fs(g, null, 1.4);
+  g.fillStyle = '#120c08'; ell(g, 35.6, 29, sk ? 3 : 2.3, sk ? 2.8 : 1.9); g.fill(); ell(g, 43.4, 29, sk ? 2.7 : 2.1, sk ? 2.6 : 1.8); g.fill(); // глазницы
+  g.fillStyle = sk ? '#9fe3c8' : '#d8e07a'; ell(g, 35.8, 29.2, .9, .9); g.fill(); ell(g, 43.5, 29.2, .8, .8); g.fill();
+  g.fillStyle = '#120c08'; poly(g, [39.4, 31.5, 40.8, 34.2, 38.4, 34.2]); g.fill(); // нос
+  if (sk) { g.fillStyle = '#f2ecdc'; g.fillRect(35, 37, 9, 2.6); g.strokeStyle = OL; g.lineWidth = .8; g.strokeRect(35, 37, 9, 2.6); for (let x = 36.5; x < 44; x += 1.6) line(g, [x, 37, x, 39.6], OL, .6); }
+  else { line(g, [35.5, 38.4, 43.5, 37.6], '#2a1a12', 1.3); line(g, [37, 38.4, 37.5, 39.6], '#e6e0c8', .9); line(g, [41, 38, 41.4, 39.2], '#e6e0c8', .9); line(g, [44, 22, 46.5, 31], '#5a2a22', .8); }
+}
+function drawHead(g, L, v) {
+  if (v.undead) return drawUndeadHead(g, v);
+  const skin = v.skin, hair = v.hair;
+  g.fillStyle = shade(skin, -.3); poly(g, [31.5, 36, 42.5, 36, 44, 46, 30, 46]); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+  facePath(g); fs(g, skin, 0);
+  g.save(); facePath(g); g.clip();
+  const sh = g.createLinearGradient(26, 0, 49, 0); sh.addColorStop(0, 'rgba(60,25,10,.42)'); sh.addColorStop(.4, 'rgba(60,25,10,0)'); sh.addColorStop(1, 'rgba(255,230,200,.12)'); g.fillStyle = sh; g.fillRect(24, 10, 28, 36);
+  g.fillStyle = 'rgba(40,15,5,.3)'; ell(g, 36, 29.4, 2.6, 1.7); g.fill(); ell(g, 43.4, 29.4, 2.4, 1.7); g.fill();
+  if (v.beard === 0) { g.fillStyle = 'rgba(40,25,15,.22)'; g.fillRect(26, 34, 24, 10); }
+  if (v.beard >= 1) { g.fillStyle = hair; g.beginPath(); g.moveTo(26, 30); g.lineTo(31, 34); g.lineTo(35, 35.5); g.lineTo(43, 35.5); g.lineTo(46, 33.5); g.lineTo(49, 30); g.lineTo(49, 46); g.lineTo(26, 46); g.closePath(); g.fill(); for (let i = 0; i < 14; i++) line(g, [28 + i * 1.5, 36 + (i % 3), 28.5 + i * 1.5, 43], shade(hair, i % 2 ? -.3 : .2), .6); }
+  g.restore();
+  facePath(g); fs(g, null, 1.4);
+  if (v.beard >= 2) { g.beginPath(); g.moveTo(29.5, 38); g.bezierCurveTo(29, 46, 33, 53, 38, 54); g.bezierCurveTo(43, 52, 46, 46, 46, 38); g.bezierCurveTo(42, 43, 34, 43, 29.5, 38); fs(g, hair, 1.2); for (let i = 0; i < 7; i++) line(g, [32.5 + i * 1.8, 43.5, 33.5 + i * 1.3, 50.5 - Math.abs(i - 3)], shade(hair, i % 2 ? -.3 : .22), .7); }
+  if (v.stache) { g.strokeStyle = hair; g.lineWidth = 1.7; g.beginPath(); g.moveTo(39.4, 36.4); g.quadraticCurveTo(35, 36, 33.4, 41.5); g.stroke(); g.beginPath(); g.moveTo(40.4, 36.4); g.quadraticCurveTo(44.4, 36, 45.6, 41.5); g.stroke(); }
+  line(g, [32.8, 26.6, 37.8, 27.8], shade(hair, -.35), 1.7); line(g, [41, 27.8, 46, 26.4], shade(hair, -.35), 1.7);
+  g.fillStyle = '#120a06'; ell(g, 36, 29.5, 1.05, .95); g.fill(); ell(g, 43.5, 29.5, 1, .95); g.fill();
+  g.strokeStyle = shade(skin, -.42); g.lineWidth = 1.1; g.beginPath(); g.moveTo(40.4, 29.5); g.lineTo(42, 34); g.lineTo(39.6, 34.6); g.stroke();
+  if (v.beard < 1) line(g, [36.6, 38.2, 42.6, 38], shade(skin, -.5), 1.1); else line(g, [37, 38.3, 42.2, 38.2], shade(hair, -.55), 1);
+  if (v.scar) line(g, [44.5, 23, 46, 34], '#8a3a30', .9);
+}
+/* обрубок шеи: у живых — кровь и позвонок, у скелета — сломанный позвонок, у мертвеца — тёмная жижа */
+function drawStump(g, v) {
+  const sk = v.undead === 'skel', zb = v.undead === 'zombie', meat = sk ? '#cfc4a6' : zb ? '#3b4a24' : '#8f1a12';
+  g.fillStyle = sk ? '#2a251d' : shade(v.skin, -.3); poly(g, [31.5, 38, 42.5, 38, 44, 46, 30, 46]); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+  ell(g, 37, 38.5, 6, 2.6); fs(g, meat, 1.2); if (!sk) { ell(g, 37, 38.4, 4, 1.5); g.fillStyle = zb ? '#1e2612' : '#5a0c08'; g.fill(); }
+  ell(g, 37, 38.2, 1.6, 1.1); g.fillStyle = '#efe8d6'; g.fill();
+  if (!sk) { g.fillStyle = meat; for (let i = 0; i < 4; i++) { const x = 31 + i * 3.2; g.beginPath(); g.moveTo(x, 40); g.quadraticCurveTo(x + .8, 44 + i % 2 * 3, x + 1.6, 40); g.fill(); } }
+}
+function plume(g, x, y, col, big) { g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x - 4, y - (big ? 16 : 10), x - 18, y - (big ? 14 : 9), x - (big ? 22 : 15), y - 1); g.bezierCurveTo(x - 14, y - 5, x - 7, y - 4, x, y); fs(g, col, 1.2); for (let i = 0; i < 5; i++) line(g, [x - 3 - i * 3, y - 2, x - 5 - i * 3.4, y - (big ? 10 : 6)], 'rgba(0,0,0,.28)', .7); }
+function drawHelm(g, L, v, pal, R) {
+  const h = L.helm, hair = v.hair;
+  const dome = (c, top) => { g.beginPath(); g.moveTo(25.6, 26); g.bezierCurveTo(25, 16, 30, top, 37.5, top); g.bezierCurveTo(45, top, 49.6, 16, 49.2, 26); g.closePath(); fs(g, c, 1.5); g.fillStyle = 'rgba(255,255,255,.28)'; ell(g, 33, top + 6, 3.5, 4.5); g.fill(); g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.moveTo(42, top + 1); g.bezierCurveTo(47, top + 4, 49.4, 18, 49.2, 26); g.lineTo(43, 26); g.closePath(); g.fill(); };
+  const band = c => { g.fillStyle = c; g.fillRect(25.2, 23.4, 24.4, 3.2); g.strokeStyle = OL; g.lineWidth = 1.1; g.strokeRect(25.2, 23.4, 24.4, 3.2); };
+  const aventail = () => { g.beginPath(); g.moveTo(25.6, 25); g.lineTo(23.5, 44); g.lineTo(31, 47); g.lineTo(29.6, 33); g.closePath(); fs(g, '#7e8388', 1.1); g.beginPath(); g.moveTo(49.2, 25); g.lineTo(51.5, 44); g.lineTo(44.5, 47); g.lineTo(47, 33); g.closePath(); fs(g, '#63686d', 1.1); g.save(); g.beginPath(); g.rect(23, 25, 9, 22); g.rect(44, 25, 8, 22); g.clip(); mailTex(g, 22, 26, 32, 22, '#3f4347'); g.restore(); };
+  if (h === 'none') {
+    if (v.bald) return; g.beginPath(); g.moveTo(25.8, 27); g.bezierCurveTo(24, 14, 31, 10.5, 37.5, 10.5); g.bezierCurveTo(45, 10.5, 51, 15, 48.6, 27); g.bezierCurveTo(47, 21, 44, 18.5, 40, 19.5); g.bezierCurveTo(35, 17, 29, 19, 27.6, 24); g.closePath(); fs(g, hair, 1.3);
+    for (let i = 0; i < 6; i++) line(g, [29 + i * 3.2, 13.5 + (i % 2), 30 + i * 3, 18], shade(hair, i % 2 ? .25 : -.3), .7);
+  } else if (h === 'hood') {
+    const c = pal.c1 === '#3b3a36' ? '#4a4034' : shade(pal.c1, -.35) ; g.beginPath(); g.moveTo(23, 44); g.bezierCurveTo(21, 20, 28, 8.5, 38, 8.5); g.bezierCurveTo(48, 8.5, 53.5, 20, 51.5, 44); g.lineTo(47, 44); g.bezierCurveTo(49.5, 30, 46, 19.5, 38, 19.5); g.bezierCurveTo(30, 19.5, 26.5, 30, 28, 44); g.closePath(); g.fillStyle = typeof c === 'string' ? c : '#4a4034'; g.fill(); g.strokeStyle = OL; g.lineWidth = 1.4; g.stroke();
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.moveTo(28, 26); g.bezierCurveTo(30, 19.5, 46, 19.5, 47.6, 26); g.bezierCurveTo(44, 23.5, 32, 23.5, 28, 26); g.fill();
+  } else if (h === 'cap') { dome('#7a5633', 11.5); line(g, [37.5, 11.5, 37.5, 25], 'rgba(0,0,0,.4)', .9); band('#5a3d22'); }
+  else if (h === 'furcap') { g.beginPath(); g.moveTo(24, 26); g.bezierCurveTo(22, 12, 31, 8, 37.5, 8); g.bezierCurveTo(45, 8, 53, 12, 51, 26); g.bezierCurveTo(44, 22.5, 31, 22.5, 24, 26); fs(g, '#6a4f33', 1.4); furTex(g, 24, 9, 27, 15, R, '#33241a', '#a08260'); g.beginPath(); g.moveTo(31, 11); g.bezierCurveTo(34, 5, 41, 5, 44, 11); fs(g, pal.c1, 1.1); }
+  else if (h === 'nasal') { dome(STEEL, 9); band(IRON); g.fillStyle = IRON; g.fillRect(39, 25, 2.8, 9.5); g.strokeStyle = OL; g.lineWidth = 1; g.strokeRect(39, 25, 2.8, 9.5); line(g, [37.5, 9.5, 37.5, 23], 'rgba(0,0,0,.35)', .9); }
+  else if (h === 'kettle') { dome(STEEL, 11); ell(g, 37.5, 24.2, 16.5, 3.8); fs(g, IRON, 1.3); g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = .8; g.beginPath(); g.ellipse(37.5, 23.6, 15, 2.8, 0, Math.PI, Math.PI * 1.6); g.stroke(); }
+  else if (h === 'flat') {
+    aventail(); g.beginPath(); g.moveTo(25.4, 26.5); g.lineTo(25.8, 13); g.quadraticCurveTo(26, 10, 29, 10); g.lineTo(46, 10); g.quadraticCurveTo(49, 10, 49.2, 13); g.lineTo(49.6, 26.5); g.closePath(); fs(g, STEEL, 1.5);
+    g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(42.5, 10.5, 6.8, 15.5); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(28, 11.5, 4, 13);
+    g.fillStyle = IRON; g.fillRect(25.2, 23, 24.6, 3.5); g.fillRect(36, 10, 3, 16); g.strokeStyle = OL; g.lineWidth = 1; g.strokeRect(25.2, 23, 24.6, 3.5); g.strokeRect(36, 10, 3, 13);
+  } else if (h === 'spectacle') { aventail(); dome(STEEL, 9.5); band(GOLD); g.strokeStyle = IRON; g.lineWidth = 2; g.beginPath(); g.arc(35.6, 29.2, 3.6, Math.PI * 1.05, Math.PI * 2.05); g.stroke(); g.beginPath(); g.arc(43.6, 29.2, 3.4, Math.PI * .95, Math.PI * 1.95); g.stroke(); g.fillStyle = IRON; g.fillRect(38.8, 25, 2.6, 8); line(g, [37.5, 10, 37.5, 23], GOLD, 1.3); }
+  else if (h === 'pointed') {
+    g.beginPath(); g.moveTo(25.6, 25); g.bezierCurveTo(27, 15, 33, 11, 37.5, 2.5); g.bezierCurveTo(42, 11, 48, 15, 49.2, 25); g.closePath(); fs(g, L.armor === 'goldlam' ? GOLD : STEEL, 1.5); g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.moveTo(37.5, 2.5); g.bezierCurveTo(42, 11, 48, 15, 49.2, 25); g.lineTo(42, 25); g.closePath(); g.fill();
+    line(g, [37.5, 3, 34, -3, 30, 1], pal.c2 === '#e6c868' ? '#a02c22' : pal.c1, 2);
+    g.beginPath(); g.moveTo(23.4, 27); g.bezierCurveTo(25, 20, 50, 20, 51.6, 27); g.bezierCurveTo(46, 24.5, 30, 24.5, 23.4, 27); fs(g, '#5f4930', 1.2); furTex(g, 24, 21, 27, 6, R, '#2c2014', '#9a7f58');
+    g.beginPath(); g.moveTo(25.6, 26); g.lineTo(24.6, 42); g.lineTo(30, 44); g.lineTo(29, 31); g.closePath(); fs(g, '#6d5639', 1); g.beginPath(); g.moveTo(49.2, 26); g.lineTo(50.6, 42); g.lineTo(45.6, 44); g.lineTo(47, 31); g.closePath(); fs(g, '#523f28', 1);
+  } else if (h === 'turban' || h === 'turbanm') {
+    if (h === 'turbanm') { aventail(); dome(STEEL, 12); }
+    const cl = '#e6dcc0', wrap = () => { g.beginPath(); g.moveTo(24.2, 27); g.bezierCurveTo(21.5, 14, 29, 5.5, 37.5, 5.5); g.bezierCurveTo(46, 5.5, 53.5, 14, 50.8, 27); g.bezierCurveTo(44, 24, 31, 24, 24.2, 27); g.closePath(); };
+    wrap(); fs(g, cl, 1.5); g.save(); wrap(); g.clip();
+    for (let i = 0; i < 4; i++) line(g, [22, 25 - i * 5.5, 38, 20 - i * 5.5, 54, 25 - i * 5.5], shade(cl, -.24), 1.2);
+    g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(44, 4, 12, 26); g.fillStyle = 'rgba(255,255,255,.3)'; ell(g, 31, 14, 3.4, 5); g.fill(); g.restore();
+    line(g, [24.6, 25, 37.5, 23, 50.4, 25], pal.c1, 2.8); ell(g, 41, 22.6, 1.9, 1.9); fs(g, GOLD, .9);
+    if (h === 'turbanm') { g.beginPath(); g.moveTo(35.6, 7); g.lineTo(37.5, -1.5); g.lineTo(39.4, 7); g.closePath(); fs(g, STEEL, 1.1); }
+  } else if (h === 'crest') {
+    plume(g, 46, 9.5, '#a3271f', true); dome('#b8a26a', 10); band(GOLD);
+    g.beginPath(); g.moveTo(25.6, 25); g.lineTo(26.4, 36); g.lineTo(31.5, 40.5); g.lineTo(31, 30); g.closePath(); fs(g, '#b8a26a', 1.1); g.beginPath(); g.moveTo(49.2, 25); g.lineTo(48.6, 36); g.lineTo(45, 40); g.lineTo(46.4, 30); g.closePath(); fs(g, '#8f7c4c', 1.1);
+  } else if (h === 'great') {
+    plume(g, 44, 9.5, pal.c1, true);
+    g.beginPath(); g.moveTo(25, 14); g.quadraticCurveTo(25, 9.5, 29.5, 9.5); g.lineTo(45.5, 9.5); g.quadraticCurveTo(50, 9.5, 50, 14); g.lineTo(49.4, 38); g.quadraticCurveTo(44, 44.5, 38, 44.5); g.quadraticCurveTo(31, 44.5, 25.6, 38); g.closePath(); fs(g, '#aeb5bc', 1.6);
+    g.fillStyle = 'rgba(0,0,0,.24)'; g.fillRect(43, 10, 7, 30); g.fillStyle = 'rgba(255,255,255,.26)'; g.fillRect(27.5, 11, 3.6, 24);
+    g.fillStyle = GOLD; g.fillRect(38.4, 9.5, 2.6, 34); g.fillRect(25.4, 26.4, 24.4, 2.4); g.fillStyle = '#0b0705'; g.fillRect(30, 26.8, 7.4, 1.7); g.fillRect(42, 26.8, 6, 1.7);
+    for (let i = 0; i < 3; i++) { g.fillRect(43 + i * 2, 33, 1, 1); g.fillRect(43 + i * 2, 36, 1, 1); }
+  } else if (h === 'mask') {
+    g.save(); g.translate(46, 10); for (let i = 0; i < 6; i++) { g.beginPath(); g.moveTo(-2, 2); g.quadraticCurveTo(-8 - i * 2.6, -14 + i * 1.5, -16 - i * 1.6, -5 + i * 2.6); g.strokeStyle = i % 2 ? '#e8e2d0' : '#a3271f'; g.lineWidth = 3.4; g.stroke(); } g.restore();
+    facePath(g); fs(g, '#d9b043', 1.4); g.save(); facePath(g); g.clip(); const sh = g.createLinearGradient(26, 0, 49, 0); sh.addColorStop(0, 'rgba(90,50,0,.45)'); sh.addColorStop(.5, 'rgba(255,240,170,.3)'); sh.addColorStop(1, 'rgba(90,50,0,.2)'); g.fillStyle = sh; g.fillRect(24, 10, 28, 36); g.restore();
+    g.fillStyle = '#1a0f05'; ell(g, 35.8, 29.4, 2, 1.2); g.fill(); ell(g, 43.4, 29.4, 1.9, 1.2); g.fill(); line(g, [40.3, 29, 41.8, 34.4, 39.4, 35], '#7a5a16', 1.1); line(g, [36.6, 38.4, 42.6, 38.2], '#7a5a16', 1.1); line(g, [32.6, 26.6, 37.8, 27.6], '#7a5a16', 1.2); line(g, [41, 27.6, 46, 26.4], '#7a5a16', 1.2);
+    dome('#d9b043', 9.5); band('#a3271f');
+  } else if (h === 'coif') { aventail(); dome('#7e8388', 11); g.save(); g.beginPath(); g.rect(25, 11, 25, 15); g.clip(); mailTex(g, 25, 12, 26, 14, '#3f4347'); g.restore(); }
+}
+function drawShield(g, L, pal, R) {
+  const s = L.shield; if (!s || s === 'none') return;
+  if (s === 'round') {
+    const cx = 23, cy = 58, r = 14.5; ell(g, cx, cy, r, r); fs(g, pal.c1, 0); g.save(); ell(g, cx, cy, r, r); g.clip();
+    g.fillStyle = pal.c2; g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r, -Math.PI / 2, 0); g.closePath(); g.fill(); g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r, Math.PI / 2, Math.PI); g.closePath(); g.fill();
+    for (let x = cx - r; x < cx + r; x += 5) line(g, [x, cy - r, x, cy + r], 'rgba(0,0,0,.2)', .7);
+    const sh = g.createRadialGradient(cx - 5, cy - 6, 2, cx, cy, r); sh.addColorStop(0, 'rgba(255,255,255,.18)'); sh.addColorStop(1, 'rgba(0,0,0,.38)'); g.fillStyle = sh; g.fillRect(cx - r, cy - r, r * 2, r * 2); g.restore();
+    ell(g, cx, cy, r, r); g.strokeStyle = '#4a4034'; g.lineWidth = 2.6; g.stroke(); ell(g, cx, cy, r + 1, r + 1); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+    ell(g, cx, cy, 4, 4); fs(g, STEEL, 1.2); g.fillStyle = 'rgba(255,255,255,.5)'; ell(g, cx - 1.2, cy - 1.2, 1.3, 1.3); g.fill();
+  } else if (s === 'kite') {
+    const p = () => { g.beginPath(); g.moveTo(11, 46); g.quadraticCurveTo(23, 41, 36, 46); g.bezierCurveTo(37, 60, 31, 72, 23.5, 79); g.bezierCurveTo(16, 72, 10, 60, 11, 46); g.closePath(); };
+    p(); fs(g, pal.c1, 0); g.save(); p(); g.clip(); g.strokeStyle = pal.c2; g.lineWidth = 4.4; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(8, 60 + i * 9 - 8); g.lineTo(23.5, 49 + i * 9 - 8); g.lineTo(40, 60 + i * 9 - 8); g.stroke(); }
+    const sh = g.createLinearGradient(10, 0, 37, 0); sh.addColorStop(0, 'rgba(255,255,255,.2)'); sh.addColorStop(1, 'rgba(0,0,0,.4)'); g.fillStyle = sh; g.fillRect(8, 40, 32, 42); g.restore(); p(); g.strokeStyle = OL; g.lineWidth = 1.7; g.stroke();
+    ell(g, 23.5, 52, 2.4, 2.4); fs(g, STEEL, 1);
+  } else if (s === 'small') {
+    const cx = 24, cy = 59, r = 11.5; ell(g, cx, cy, r, r); fs(g, '#a8823c', 0); g.strokeStyle = '#5c4218'; g.lineWidth = .8; for (let rr = 3; rr < r; rr += 2.4) { ell(g, cx, cy, rr, rr); g.stroke(); }
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .4; line(g, [cx + Math.cos(a) * 3, cy + Math.sin(a) * 3, cx + Math.cos(a) * r, cy + Math.sin(a) * r], pal.c1, 2.2); }
+    ell(g, cx, cy, r, r); g.strokeStyle = OL; g.lineWidth = 1.5; g.stroke(); ell(g, cx, cy, 3.4, 3.4); fs(g, GOLD, 1.1);
+  }
+}
+function fist(g, x, y, v) { ell(g, x, y, 3.2, 3.2); fs(g, shade(v.skin, -.12), 1.2); }
+function blade(g, x1, y1, x2, y2, w, col) { const a = Math.atan2(y2 - y1, x2 - x1), nx = -Math.sin(a) * w, ny = Math.cos(a) * w; g.beginPath(); g.moveTo(x1 + nx, y1 + ny); g.lineTo(x2 + nx * .5, y2 + ny * .5); g.lineTo(x2 + Math.cos(a) * 4, y2 + Math.sin(a) * 4); g.lineTo(x2 - nx * .5, y2 - ny * .5); g.lineTo(x1 - nx, y1 - ny); g.closePath(); fs(g, col || '#c9cfd4', 1.1); line(g, [x1, y1, x2, y2], 'rgba(255,255,255,.55)', .7); }
+function drawWeapon(g, L, pal, v) {
+  const w = L.weapon;
+  if (w === 'sword') { line(g, [57.5, 62, 59, 54], '#3a2a1a', 3); blade(g, 59.5, 52, 65.5, 20, 2.1); line(g, [55, 52.6, 64.4, 54.4], GOLD, 2.4); fist(g, 58.4, 57.5, v); }
+  else if (w === 'sabre') { line(g, [57.5, 62, 59, 54], '#3a2a1a', 3); g.beginPath(); g.moveTo(57.6, 52.5); g.quadraticCurveTo(58, 34, 67, 20); g.quadraticCurveTo(64, 36, 61.6, 53); g.closePath(); fs(g, '#c9cfd4', 1.1); line(g, [55.4, 52.6, 64, 54], GOLD, 2.2); fist(g, 58.4, 57.5, v); }
+  else if (w === 'axe') { line(g, [56.5, 68, 63, 22], OL, 4); line(g, [56.5, 68, 63, 22], WOOD, 2.4); g.beginPath(); g.moveTo(62, 24); g.quadraticCurveTo(70, 20, 70.5, 30); g.quadraticCurveTo(70.5, 38, 60.5, 35.5); g.closePath(); fs(g, STEEL, 1.2); line(g, [69.6, 23, 70, 36], 'rgba(255,255,255,.6)', .9); fist(g, 58.3, 56, v); }
+  else if (w === 'mace') { line(g, [56.5, 68, 62.5, 28], OL, 4); line(g, [56.5, 68, 62.5, 28], WOOD, 2.4); ell(g, 63.2, 24.5, 5, 5); fs(g, IRON, 1.2); for (let i = 0; i < 6; i++) { const a = i * TAU / 6; line(g, [63.2 + Math.cos(a) * 4.5, 24.5 + Math.sin(a) * 4.5, 63.2 + Math.cos(a) * 7.2, 24.5 + Math.sin(a) * 7.2], OL, 2.2); } fist(g, 58.3, 56, v); }
+  else if (w === 'club') { g.beginPath(); g.moveTo(55.6, 67); g.lineTo(60, 22); g.quadraticCurveTo(64.5, 18, 67, 23); g.lineTo(58.6, 67.4); g.closePath(); fs(g, WOOD, 1.3); line(g, [61.6, 25, 60, 44], 'rgba(0,0,0,.3)', .8); fist(g, 58, 56, v); }
+  else if (w === 'spear') { line(g, [58.5, 76, 60, 9], OL, 3.6); line(g, [58.5, 76, 60, 9], WOOD, 2); poly(g, [60, -2, 63.2, 9.5, 60, 13, 56.8, 9.5]); fs(g, '#c9cfd4', 1.1); fist(g, 59, 56, v); }
+  else if (w === 'halberd') { line(g, [58.5, 76, 60, 9], OL, 3.6); line(g, [58.5, 76, 60, 9], WOOD, 2); poly(g, [60, -3, 62, 8, 60, 11, 58, 8]); fs(g, '#c9cfd4', 1); g.beginPath(); g.moveTo(60.4, 9); g.quadraticCurveTo(70, 7, 69, 20); g.quadraticCurveTo(64, 17, 60.4, 20); g.closePath(); fs(g, STEEL, 1.2); poly(g, [59.4, 12, 53.5, 14.5, 59.4, 17]); fs(g, IRON, 1); fist(g, 59, 52, v); fist(g, 58.6, 64, v); }
+  else if (w === 'lance') { line(g, [56, 80, 66, -14], OL, 3.8); line(g, [56, 80, 66, -14], '#8a6a40', 2.2); poly(g, [66.6, -22, 69, -12, 66, -9, 63.4, -12.6]); fs(g, '#c9cfd4', 1); g.beginPath(); g.moveTo(65.2, -8); g.lineTo(52, -6); g.lineTo(56, -2); g.lineTo(51.6, 2); g.lineTo(64.4, 1); g.closePath(); fs(g, pal.c1, 1); line(g, [64.6, -3.4, 54.6, -2.4], pal.c2, 1.6); fist(g, 59.4, 54, v); }
+  else if (w === 'bow') { g.strokeStyle = OL; g.lineWidth = 3.6; g.beginPath(); g.moveTo(58, 16); g.quadraticCurveTo(72, 42, 58, 68); g.stroke(); g.strokeStyle = '#8a6234'; g.lineWidth = 2.1; g.stroke(); line(g, [58, 16, 58, 68], 'rgba(235,225,200,.85)', .7); fist(g, 64.6, 42, v); }
+  else if (w === 'xbow') { line(g, [44, 57, 68, 50], OL, 5); line(g, [44, 57, 68, 50], WOOD, 3.2); g.strokeStyle = OL; g.lineWidth = 3.4; g.beginPath(); g.moveTo(62, 38); g.quadraticCurveTo(72, 49, 67, 62); g.stroke(); g.strokeStyle = IRON; g.lineWidth = 1.9; g.stroke(); line(g, [62, 38, 52, 54.6, 67, 62], 'rgba(235,225,200,.8)', .7); fist(g, 55, 55, v); }
+}
+function quiver(g) { g.save(); g.translate(20, 40); g.rotate(-.5); g.fillStyle = LEATHER; g.fillRect(-3.5, -4, 7, 20); g.strokeStyle = OL; g.lineWidth = 1.1; g.strokeRect(-3.5, -4, 7, 20); for (let i = 0; i < 3; i++) { line(g, [-2 + i * 2, -4, -2 + i * 2, -11], '#c9b98a', .9); g.fillStyle = i % 2 ? '#b33' : '#ddd'; g.fillRect(-3 + i * 2, -13, 2, 3.4); } g.restore(); }
+const HORSES = { bay: ['#6b4226', '#22160d'], black: ['#2e2824', '#0f0c0a'], dun: ['#b3945c', '#3a2a18'], grey: ['#9c978d', '#4a463f'], chestnut: ['#8a4b22', '#4a2410'], barded: ['#6b4226', '#22160d'], bone: ['#cfc6ad', '#5a5242'] };
+function drawHorse(g, kind, pal) {
+  const [coat, mane] = HORSES[kind] || HORSES.bay;
+  const body = () => { g.beginPath(); g.moveTo(16, 92); g.bezierCurveTo(8, 76, 16, 60, 38, 59); g.lineTo(62, 57); g.bezierCurveTo(70, 53, 76, 42, 79, 31); g.lineTo(83, 23); g.lineTo(86, 28); g.bezierCurveTo(92, 31, 100, 40, 105, 48); g.bezierCurveTo(107, 52, 103, 55, 99, 53); g.bezierCurveTo(95, 50, 91, 48, 88, 48); g.bezierCurveTo(88, 62, 88, 80, 82, 92); g.closePath(); };
+  body(); fs(g, coat, 0); g.save(); body(); g.clip();
+  if (kind === 'barded') { g.fillStyle = pal.c1; g.beginPath(); g.moveTo(6, 96); g.lineTo(10, 62); g.lineTo(60, 58); g.lineTo(72, 50); g.lineTo(90, 50); g.lineTo(90, 96); g.closePath(); g.fill(); g.strokeStyle = pal.c2; g.lineWidth = 2.4; g.beginPath(); g.moveTo(12, 64); g.lineTo(60, 60); g.lineTo(73, 52); g.lineTo(89, 51); g.stroke(); for (let x = 20; x < 86; x += 12) { g.fillStyle = pal.c2; poly(g, [x, 74, x + 3.4, 78, x, 82, x - 3.4, 78]); g.fill(); } g.fillStyle = '#c9a23c'; g.beginPath(); g.moveTo(84, 26); g.lineTo(101, 43); g.lineTo(96, 47); g.lineTo(82, 35); g.closePath(); g.fill(); }
+  const sh = g.createLinearGradient(0, 50, 0, 96); sh.addColorStop(0, 'rgba(255,235,200,.14)'); sh.addColorStop(1, 'rgba(0,0,0,.42)'); g.fillStyle = sh; g.fillRect(0, 20, 112, 80); g.restore();
+  body(); fs(g, null, 1.7);
+  g.beginPath(); g.moveTo(62, 57); g.bezierCurveTo(66, 48, 72, 36, 80, 25); g.lineTo(83, 23); g.bezierCurveTo(76, 28, 68, 40, 58, 56); g.closePath(); fs(g, mane, 1.1);
+  poly(g, [80, 26, 81.4, 16.5, 85.4, 24]); fs(g, coat, 1.2);
+  g.fillStyle = '#0d0806'; ell(g, 89.4, 34.6, 1.5, 1.3); g.fill(); ell(g, 102.4, 49.4, 1, .8); g.fill();
+  line(g, [86, 29, 96, 50], kind === 'barded' ? pal.c2 : '#2a1a10', 1.3); line(g, [96, 50, 70, 60], '#2a1a10', 1); line(g, [84, 40, 93, 36], '#2a1a10', 1);
+}
+/* look + palette + seed → рисунок бюста. o.base=false — без подставки (для павших) */
+function drawBust(g, L, pal, v, o) {
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const R = mulberry(v.seed || 1);
+  if (L.horse) {
+    if (o.base !== false) drawBase(g, 54, 104, 40, 10.5, pal);
+    g.save(); g.translate(2, 14); drawHorse(g, L.horse, pal); g.restore();
+    g.save(); g.translate(4, 2);
+    g.fillStyle = L.horse === 'barded' ? pal.c2 : '#3a2a1a'; g.beginPath(); g.moveTo(14, 70); g.quadraticCurveTo(36, 62, 58, 70); g.lineTo(55, 80); g.quadraticCurveTo(36, 85, 17, 80); g.closePath(); g.fill(); g.strokeStyle = OL; g.lineWidth = 1.2; g.stroke();
+  } else if (o.base !== false) drawBase(g, 36, 72, 24, 8.5, pal);
+  if (o.only === 'head') { drawHead(g, L, v); drawHelm(g, L, v, pal, R); if (L.horse) g.restore(); return; } // голова отдельно (летит при обезглавливании)
+  if (L.weapon === 'bow' || L.weapon === 'xbow') quiver(g);
+  drawTorso(g, L, pal, R);
+  if (o.nohead) drawStump(g, v); else { drawHead(g, L, v); drawHelm(g, L, v, pal, R); }
+  drawShield(g, L, pal, R); drawWeapon(g, L, pal, v);
+  if (L.horse) g.restore();
+}
+const SPR = {}; const SS = 2;
+const UNDEAD_SKIN = { zombie: ['#9aa58a', '#8c9a7e', '#a3a08a', '#7f8f78'], skel: ['#d8d0b8', '#cfc4a6', '#e0d8c2'] };
+function makeVariant(L, seed) { const R = mulberry(seed); const b = R() < (L.beard || 0) ? (R() < .45 ? 2 : 1) : 0; const us = L.undead && UNDEAD_SKIN[L.undead];
+  if (us) return { seed, undead: L.undead, skin: us[Math.floor(R() * us.length)], hair: L.undead === 'skel' ? '#3a3328' : HAIRS[Math.floor(R() * 3)], beard: L.undead === 'skel' ? 0 : b, stache: 0, bald: L.undead === 'skel' || R() < .5, scar: L.undead === 'zombie' };
+  return { seed, skin: SKINS[Math.floor(R() * SKINS.length)], hair: HAIRS[Math.floor(R() * HAIRS.length)], beard: b, stache: L.stache && b === 0 ? 1 : 0, bald: R() < .15, scar: R() < .2 }; }
+function buildSprite(L, pal, seed) {
+  const m = !!L.horse, W = m ? 120 : 76, H = m ? 122 : 88, ax = m ? 54 : 36, ay = m ? 106 : 74, oy = m ? 26 : 5, ox = m ? 2 : 2;
+  const v = makeVariant(L, seed);
+  const mk = (base, o2) => { const c = mkCanvas(W * SS, H * SS), g = c.getContext('2d'); g.scale(SS, SS); g.translate(ox, oy); drawBust(g, L, pal, v, Object.assign({ base }, o2)); return c; };
+  const cv = mk(true), fl = mkCanvas(W * SS, H * SS), fg = fl.getContext('2d'); fg.drawImage(cv, 0, 0); fg.globalCompositeOperation = 'source-in'; fg.fillStyle = '#fff'; fg.fillRect(0, 0, fl.width, fl.height);
+  return { cv, flash: fl, ax: (ax + ox) * SS, ay: (ay + oy) * SS, w: W * SS, h: H * SS, m, corpse: null, mk, v, hc: [(37.5 + ox + (m ? 4 : 0)) * SS, (29 + oy + (m ? 2 : 0)) * SS] }; // hc — центр головы на холсте
+}
+function palOf(fac) { const f = FACTIONS[fac]; return { c1: f.c1, c2: f.c2 }; }
+function getSprite(type, variant, fac) { const k = type + '|' + variant + '|' + fac + '|' + FACTIONS[fac].c1; if (!SPR[k]) SPR[k] = buildSprite(TROOPS[type].look, palOf(fac), hashStr(type) + variant * 977); return SPR[k]; }
+function heroLook(h) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), hd = EQ[eq.head], bd = EQ[eq.body], hs = EQ[eq.horse]; return { helm: hd ? hd.look : 'none', armor: bd ? bd.look : 'tunic', weapon: W.look || null, shield: S ? S.look : 'none', horse: hs ? hs.look : null, beard: h.beard === undefined ? 1 : h.beard }; }
+function getHeroSprite(h, mounted) { const eq = heroEq(h), W = heroWield(h), S = heroShield(h), k = 'hero|' + [eq.head, eq.body, W.id, S && S.id, mounted ? eq.horse : ''].join(',') + '|' + FACTIONS.player.c1 + '|' + (h.seed || 7); if (!SPR[k]) { const L = heroLook(h); if (!mounted) L.horse = null; SPR[k] = buildSprite(L, palOf('player'), h.seed || 7); } return SPR[k]; }
+function corpseOf(sp, nohead) { if (nohead) return sp.corpseNH || (sp.corpseNH = sp.mk(false, { nohead: true })); if (!sp.corpse) sp.corpse = sp.mk(false); return sp.corpse; }
+function headOf(sp) { return sp.head || (sp.head = sp.mk(false, { only: 'head' })); }
+const PORT = {};
+function portrait(type, fac) { const k = type + fac + FACTIONS[fac].c1; if (!PORT[k]) PORT[k] = getSprite(type, 0, fac).cv.toDataURL(); return PORT[k]; }
+
+/* ---------- гербы и знамёна ---------- */
+function emblem(g, kind, x, y, s, col) {
+  g.save(); g.translate(x, y); g.fillStyle = col; g.strokeStyle = col; g.lineCap = 'round';
+  if (kind === 'star') { g.lineWidth = s * .16; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 4; g.beginPath(); g.moveTo(Math.cos(a) * s, Math.sin(a) * s); g.lineTo(-Math.cos(a) * s, -Math.sin(a) * s); g.stroke(); } ell(g, 0, 0, s * .28, s * .28); g.fill(); }
+  else if (kind === 'sun') { ell(g, 0, 0, s * .5, s * .5); g.fill(); g.lineWidth = s * .16; for (let i = 0; i < 8; i++) { const a = i * TAU / 8; g.beginPath(); g.moveTo(Math.cos(a) * s * .68, Math.sin(a) * s * .68); g.lineTo(Math.cos(a) * s, Math.sin(a) * s); g.stroke(); } }
+  else if (kind === 'moon') { g.beginPath(); g.arc(0, 0, s * .85, .5, TAU - .5); g.arc(s * .34, 0, s * .62, TAU - .85, .85, true); g.closePath(); g.fill(); ell(g, s * .5, 0, s * .2, s * .2); g.fill(); }
+  else if (kind === 'skull') { ell(g, 0, -s * .15, s * .72, s * .68); g.fill(); g.fillRect(-s * .4, s * .25, s * .8, s * .55); g.fillStyle = '#17110c'; ell(g, -s * .28, -s * .12, s * .2, s * .22); g.fill(); ell(g, s * .28, -s * .12, s * .2, s * .22); g.fill(); poly(g, [0, s * .12, -s * .1, s * .34, s * .1, s * .34]); g.fill(); for (let i = -1; i <= 1; i++) g.fillRect(i * s * .22 - s * .03, s * .5, s * .06, s * .3); }
+  else if (kind === 'lily') { g.beginPath(); g.moveTo(0, -s); g.bezierCurveTo(s * .5, -s * .45, s * .34, s * .1, 0, s * .18); g.bezierCurveTo(-s * .34, s * .1, -s * .5, -s * .45, 0, -s); g.fill();
+    for (const d of [-1, 1]) { g.beginPath(); g.moveTo(d * s * .12, s * .1); g.bezierCurveTo(d * s * .9, -s * .35, d * s * 1.05, s * .35, d * s * .5, s * .5); g.bezierCurveTo(d * s * .6, s * .2, d * s * .3, s * .12, d * s * .12, s * .1); g.fill(); }
+    g.fillRect(-s * .55, s * .3, s * 1.1, s * .16); g.fillRect(-s * .14, s * .3, s * .28, s * .55); }
+  else if (kind === 'crown') { g.fillRect(-s * .8, s * .35, s * 1.6, s * .3); g.beginPath(); g.moveTo(-s * .8, s * .35); g.lineTo(-s * .8, -s * .45); g.lineTo(-s * .4, 0); g.lineTo(0, -s * .7); g.lineTo(s * .4, 0); g.lineTo(s * .8, -s * .45); g.lineTo(s * .8, s * .35); g.closePath(); g.fill(); }
+  else if (kind === 'oak') { g.fillRect(-s * .14, s * .1, s * .28, s * .8); for (const q of [[-.42, -.1, .5], [.42, -.1, .5], [0, -.5, .58], [0, .08, .52]]) { ell(g, q[0] * s, q[1] * s, q[2] * s, q[2] * s); g.fill(); } }
+  else if (kind === 'octa') { for (let r = 0; r < 2; r++) { g.save(); g.rotate(r * Math.PI / 4); g.fillRect(-s * .66, -s * .66, s * 1.32, s * 1.32); g.restore(); } }
+  else { g.lineWidth = s * .3; g.lineJoin = 'miter'; g.beginPath(); g.moveTo(-s * .8, s * .1); g.lineTo(0, -s * .6); g.lineTo(s * .8, s * .1); g.stroke(); g.beginPath(); g.moveTo(-s * .8, s * .75); g.lineTo(0, s * .05); g.lineTo(s * .8, s * .75); g.stroke(); }
+  g.restore();
+}
+function drawBanner(g, x, y, fac, s) { // древко от (x,y) вверх
+  const f = FACTIONS[fac]; g.lineCap = 'round'; line(g, [x, y, x, y - s * 2.3], OL, s * .2); line(g, [x, y, x, y - s * 2.3], '#8a6a40', s * .1);
+  g.beginPath(); g.moveTo(x, y - s * 2.25); g.lineTo(x + s * 1.3, y - s * 2.15); g.lineTo(x + s * 1.05, y - s * 1.65); g.lineTo(x + s * 1.3, y - s * 1.15); g.lineTo(x, y - s * 1.05); g.closePath(); g.fillStyle = f.c1; g.fill(); g.strokeStyle = OL; g.lineWidth = Math.max(1, s * .08); g.stroke();
+  emblem(g, f.emblem, x + s * .52, y - s * 1.65, s * .3, f.c2);
+}
+function crestCanvas(fac, px) { const c = mkCanvas(px, px), g = c.getContext('2d'), f = FACTIONS[fac]; ell(g, px / 2, px / 2, px / 2 - 2, px / 2 - 2); g.fillStyle = f.c1; g.fill(); g.strokeStyle = '#0d0906'; g.lineWidth = 3; g.stroke(); ell(g, px / 2, px / 2, px / 2 - 5, px / 2 - 5); g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 1.2; g.stroke(); emblem(g, f.emblem, px / 2, px / 2, px * .27, f.c2); return c; }
+
+/* ---------- поле боя ---------- */
+const BIOMES = {
+  grass: { base: '#5f6d2c', a: '#6e7d34', b: '#4d5a25', dirt: '#6f6238', tuft: ['#3f4c1c', '#84903f', '#4b5a22'], stone: '#8f8873', flower: '#e9e6d6' },
+  snow: { base: '#c3ccce', a: '#dfe6e7', b: '#a7b4b5', dirt: '#8c8f80', tuft: ['#7c8660', '#eef2f2', '#9aa59a'], stone: '#8a8d90', flower: '#f6f8f8' },
+  steppe: { base: '#978a48', a: '#ab9d56', b: '#82773f', dirt: '#8a7446', tuft: ['#6c6230', '#c4b46a', '#7a6e38'], stone: '#9a8f72', flower: '#e8d37a' },
+  arid: { base: '#bfa56a', a: '#cfb97c', b: '#aa9156', dirt: '#a68a54', tuft: ['#8a7a3c', '#dac98c', '#9a8a48'], stone: '#a99c80', flower: '#e9dba8' }
+};
+function treeSprite(biome, seed) {
+  const R = mulberry(seed), c = mkCanvas(200, 250), g = c.getContext('2d'); g.lineJoin = 'round';
+  g.fillStyle = 'rgba(0,0,0,.25)'; ell(g, 104, 232, 46, 12); g.fill();
+  if (biome === 'snow') {
+    g.fillStyle = '#4a3320'; g.fillRect(93, 180, 14, 52); g.strokeStyle = OL; g.lineWidth = 2.5; g.strokeRect(93, 180, 14, 52);
+    for (let i = 0; i < 4; i++) { const y = 196 - i * 44, w = 74 - i * 14; g.beginPath(); g.moveTo(100 - w, y); g.lineTo(100, y - 70); g.lineTo(100 + w, y); g.quadraticCurveTo(100, y + 12, 100 - w, y); g.closePath(); g.fillStyle = i % 2 ? '#2f4a3a' : '#28402f'; g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke(); g.beginPath(); g.moveTo(100 - w * .7, y - 12); g.lineTo(100, y - 68); g.lineTo(100 + w * .25, y - 30); g.quadraticCurveTo(100 - w * .2, y - 20, 100 - w * .7, y - 12); g.fillStyle = 'rgba(240,246,248,.85)'; g.fill(); }
+  } else if (biome === 'arid') { // акация: кривой ствол и плоская зонтичная крона
+    g.fillStyle = '#5a4126'; g.beginPath(); g.moveTo(94, 232); g.quadraticCurveTo(92, 190, 100, 150); g.quadraticCurveTo(104, 126, 98, 108); g.lineTo(108, 108); g.quadraticCurveTo(116, 130, 108, 156); g.quadraticCurveTo(104, 196, 108, 232); g.closePath(); g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke();
+    const cols = ['#5f6a2c', '#7c8838', '#98a24a'], blobs = []; for (let i = 0; i < 7; i++) blobs.push([100 + (R() - .5) * 120, 100 + (R() - .5) * 26, 28 + R() * 16]);
+    g.fillStyle = OL; for (const b of blobs) { ell(g, b[0], b[1], b[2] + 2.5, b[2] * .5 + 2.5); g.fill(); }
+    g.fillStyle = cols[0]; for (const b of blobs) { ell(g, b[0], b[1], b[2], b[2] * .5); g.fill(); }
+    g.fillStyle = cols[1]; for (const b of blobs) { ell(g, b[0] - 4, b[1] - 5, b[2] * .72, b[2] * .3); g.fill(); }
+    for (let i = 0; i < 60; i++) { const b = blobs[i % 7], a = R() * TAU, d = R() * b[2] * .8, x = b[0] + Math.cos(a) * d - 4, y = b[1] + Math.sin(a) * d * .4 - 3; g.fillStyle = R() < .5 ? cols[2] : cols[0]; ell(g, x, y, 3, 1.8); g.fill(); }
+  } else {
+    const steppe = biome === 'steppe'; g.fillStyle = '#4a3320'; g.beginPath(); g.moveTo(90, 232); g.quadraticCurveTo(96, 190, 92, 150); g.lineTo(110, 150); g.quadraticCurveTo(106, 190, 114, 232); g.closePath(); g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke();
+    const cols = steppe ? ['#5a5e22', '#6f7230', '#878a3c'] : ['#2f4a1c', '#3f6124', '#58802e'];
+    const blobs = []; for (let i = 0; i < 9; i++) blobs.push([100 + (R() - .5) * 96, 96 + (R() - .5) * 96, 34 + R() * 20]);
+    g.fillStyle = OL; for (const b of blobs) { ell(g, b[0], b[1], b[2] + 2.5, b[2] * .92 + 2.5); g.fill(); }
+    g.fillStyle = cols[0]; for (const b of blobs) { ell(g, b[0], b[1], b[2], b[2] * .92); g.fill(); }
+    g.fillStyle = cols[1]; for (const b of blobs) { ell(g, b[0] - 6, b[1] - 8, b[2] * .72, b[2] * .64); g.fill(); }
+    for (let i = 0; i < 150; i++) { const b = blobs[i % 9], a = R() * TAU, d = R() * b[2] * .8, x = b[0] + Math.cos(a) * d - 5, y = b[1] + Math.sin(a) * d * .9 - 6; g.fillStyle = R() < .5 ? cols[2] : cols[0]; ell(g, x, y, 3.4, 2.2); g.fill(); }
+  }
+  return c;
+}
+function bushSprite(biome, seed) { const R = mulberry(seed), c = mkCanvas(90, 70), g = c.getContext('2d'); const cols = biome === 'snow' ? ['#6f7b62', '#dfe7e8', '#93a08a'] : biome === 'steppe' ? ['#6a6428', '#8c8438', '#a59c48'] : biome === 'arid' ? ['#7a7436', '#9d9648', '#b7ae5a'] : ['#34521e', '#4b6e26', '#66883a']; g.fillStyle = 'rgba(0,0,0,.2)'; ell(g, 46, 58, 34, 8); g.fill(); const bl = []; for (let i = 0; i < 6; i++) bl.push([45 + (R() - .5) * 46, 38 + (R() - .5) * 20, 12 + R() * 8]); g.fillStyle = OL; for (const b of bl) { ell(g, b[0], b[1], b[2] + 2, b[2] + 2); g.fill(); } g.fillStyle = cols[0]; for (const b of bl) { ell(g, b[0], b[1], b[2], b[2]); g.fill(); } g.fillStyle = cols[1]; for (const b of bl) { ell(g, b[0] - 3, b[1] - 3, b[2] * .65, b[2] * .6); g.fill(); } for (let i = 0; i < 40; i++) { const b = bl[i % 6]; g.fillStyle = cols[2]; ell(g, b[0] + (R() - .5) * b[2] * 1.4 - 2, b[1] + (R() - .5) * b[2] * 1.2 - 3, 2.4, 1.5); g.fill(); } return c; }
+function paintGround(W, H, biome, seed) {
+  const P = BIOMES[biome], R = mulberry(seed), c = mkCanvas(W, H), g = c.getContext('2d');
+  g.fillStyle = P.base; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 520; i++) { const x = R() * W, y = R() * H, r = 50 + R() * 190, col = R() < .45 ? P.a : R() < .8 ? P.b : P.dirt; const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = .16 + R() * .2; g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, r, r * (.5 + R() * .4), R() * 3, 0, TAU); g.fill(); }
+  g.globalAlpha = 1;
+  // мощёная дорога
+  const ph = R() * 6, amp = 160 + R() * 180, y0 = H * (.3 + R() * .4), slope = (R() - .5) * .35;
+  const ry = x => y0 + Math.sin(x / 330 + ph) * amp + Math.sin(x / 120 + ph * 2) * 34 + (x - W / 2) * slope;
+  for (let x = -40; x < W + 40; x += 16) { const y = ry(x); g.fillStyle = P.dirt; g.globalAlpha = .34; g.beginPath(); g.ellipse(x, y, 60, 46, 0, 0, TAU); g.fill(); } g.globalAlpha = 1;
+  for (let i = 0; i < 4200; i++) { const x = R() * W, t = (R() + R() + R() - 1.5) * 62, y = ry(x) + t; if (R() < Math.abs(t) / 110) continue; const rx = 4 + R() * 7, ry2 = 3 + R() * 4.6; g.beginPath(); g.ellipse(x, y, rx, ry2, R() * 3, 0, TAU); g.fillStyle = shade(P.stone, (R() - .5) * .34); g.fill(); g.strokeStyle = 'rgba(40,36,26,.7)'; g.lineWidth = 1.1; g.stroke(); g.fillStyle = 'rgba(255,255,255,.14)'; g.beginPath(); g.ellipse(x - rx * .25, y - ry2 * .3, rx * .45, ry2 * .35, 0, 0, TAU); g.fill(); }
+  // трава, цветы, камни
+  g.lineCap = 'round';
+  for (let i = 0; i < 5200; i++) { const x = R() * W, y = R() * H; g.strokeStyle = P.tuft[Math.floor(R() * 3)]; g.lineWidth = 1.3; g.globalAlpha = .75; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(x + k * 2.4, y); g.lineTo(x + k * 4.2 + (R() - .5) * 2, y - 6 - R() * 6); g.stroke(); } }
+  g.globalAlpha = 1;
+  for (let i = 0; i < 70; i++) { const x = R() * W, y = R() * H; for (let k = 0; k < 7; k++) { g.fillStyle = P.flower; ell(g, x + (R() - .5) * 30, y + (R() - .5) * 22, 1.6, 1.6); g.fill(); } }
+  for (let i = 0; i < 90; i++) { const x = R() * W, y = R() * H, r = 3 + R() * 6; g.fillStyle = 'rgba(0,0,0,.25)'; ell(g, x + 2, y + 2, r, r * .6); g.fill(); ell(g, x, y, r, r * .65); g.fillStyle = shade('#85806f', (R() - .5) * .3); g.fill(); g.strokeStyle = 'rgba(30,26,18,.8)'; g.lineWidth = 1; g.stroke(); }
+  const vg = g.createRadialGradient(W / 2, H / 2, H * .45, W / 2, H / 2, W * .62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,8,4,.45)'); g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  return c;
+}
+
+/* ================= звук (процедурный) ================= */
+const AU = { ctx: null, master: null, on: true, last: {}, noiseBuf: null, music: true, mg: null, mt: 0 };
+function auInit() {
+  if (AU.ctx) { if (AU.ctx.state === 'suspended') AU.ctx.resume(); return; }
+  try {
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return; AU.ctx = new C();
+    AU.master = AU.ctx.createGain(); AU.master.gain.value = .55; AU.master.connect(AU.ctx.destination);
+    const n = AU.ctx.sampleRate, b = AU.ctx.createBuffer(1, n, n), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; AU.noiseBuf = b;
+    AU.mg = AU.ctx.createGain(); AU.mg.gain.value = AU.music ? .5 : 0; AU.mg.connect(AU.master);
+    const dl = AU.ctx.createDelay(1); dl.delayTime.value = .38; const fb = AU.ctx.createGain(); fb.gain.value = .45; dl.connect(fb); fb.connect(dl); AU.mg.connect(dl); dl.connect(AU.master);
+  } catch (e) { AU.ctx = null; }
+}
+function auSetOn(v) { AU.on = v; if (AU.master) AU.master.gain.value = v ? .55 : 0; }
+function auSetMusic(v) { AU.music = v; if (AU.mg) AU.mg.gain.value = v ? .5 : 0; }
+function tone(f0, f1, dur, type, vol, delay) {
+  const c = AU.ctx, t = c.currentTime + (delay || 0), o = c.createOscillator(), g = c.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(g); g.connect(AU.master); o.start(t); o.stop(t + dur + .02);
+}
+function noise(dur, ft, f0, f1, vol, q) {
+  const c = AU.ctx, t = c.currentTime, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = AU.noiseBuf; s.loop = true; f.type = ft; f.frequency.setValueAtTime(f0, t); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t + dur); f.Q.value = q || 1;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); s.connect(f); f.connect(g); g.connect(AU.master); s.start(t, Math.random()); s.stop(t + dur + .02);
+}
+const SFX_MIN = { hit: .05, clang: .06, bow: .05, arrowhit: .05, death: .08, thud: .1, swing: .08, thunk: .06 };
+function sfx(name, u) {
+  if (!AU.ctx || !AU.on) return; const now = AU.ctx.currentTime, mn = SFX_MIN[name] || 0; if (AU.last[name] && now - AU.last[name] < mn) return;
+  let v = 1; if (u && B) { const d = Math.hypot(u.x - B.cam.x, u.y - B.cam.y); v = clamp(1.15 - d / 900, .06, 1); if (u === B.hero) v = 1; } AU.last[name] = now;
+  switch (name) {
+    case 'hit': noise(.09, 'lowpass', 1400, 300, .55 * v); tone(130, 60, .12, 'sine', .5 * v); break;
+    case 'clang': tone(1900 + Math.random() * 400, 0, .2, 'triangle', .22 * v); tone(2900, 0, .12, 'square', .05 * v); noise(.05, 'highpass', 3000, 0, .25 * v); break;
+    case 'swing': noise(.14, 'bandpass', 500, 1800, .25, 2); break;
+    case 'bow': noise(.07, 'highpass', 2500, 900, .22 * v); tone(240, 120, .07, 'triangle', .1 * v); break;
+    case 'arrowhit': noise(.05, 'lowpass', 1800, 400, .4 * v); tone(220, 110, .08, 'sine', .3 * v); break;
+    case 'thunk': tone(160, 90, .07, 'square', .12 * v); break;
+    case 'death': tone(170, 55, .3, 'sawtooth', .13 * v); noise(.18, 'lowpass', 700, 150, .25 * v); break;
+    case 'thud': tone(80, 40, .2, 'sine', .7 * v); noise(.14, 'lowpass', 500, 120, .5 * v); break;
+    case 'order': tone(392, 0, .09, 'triangle', .18); tone(523, 0, .12, 'triangle', .18, .08); break;
+    case 'click': tone(660, 440, .05, 'square', .06); break;
+    case 'coin': tone(1320, 0, .08, 'triangle', .14); tone(1760, 0, .18, 'triangle', .14, .07); break;
+    case 'horn': case 'horn2': { const f = name === 'horn' ? 146 : 110, c = AU.ctx, t = c.currentTime; for (const k of [1, 1.005, 2.01]) { const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f * k * .96, t); o.frequency.linearRampToValueAtTime(f * k, t + .35); fl.type = 'lowpass'; fl.frequency.value = 900; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.11 / k, t + .18); g.gain.setValueAtTime(.11 / k, t + 1); g.gain.exponentialRampToValueAtTime(.0001, t + 1.7); o.connect(fl); fl.connect(g); g.connect(AU.master); o.start(t); o.stop(t + 1.8); } break; }
+    case 'level': tone(392, 0, .2, 'triangle', .2); tone(523, 0, .2, 'triangle', .2, .15); tone(659, 0, .4, 'triangle', .2, .3); break;
+  }
+}
+const SCALE = [146.83, 164.81, 174.61, 196, 220, 246.94, 261.63, 293.66, 349.23]; // D дорийский
+function musicTick(dt, mode) {
+  if (!AU.ctx || !AU.music || !AU.on) return; AU.mt -= dt; if (AU.mt > 0) return;
+  const bt = mode === 'battle' ? .5 : 1.6; AU.mt = bt * (.8 + Math.random() * .7); const c = AU.ctx, t = c.currentTime;
+  const f = SCALE[Math.floor(Math.random() * (mode === 'battle' ? 6 : SCALE.length))] * (Math.random() < .25 ? .5 : 1);
+  const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = mode === 'battle' ? 'sawtooth' : 'triangle'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = mode === 'battle' ? 500 : 900;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(mode === 'battle' ? .06 : .09, t + .04); g.gain.exponentialRampToValueAtTime(.0001, t + (mode === 'battle' ? .9 : 2.6)); o.connect(fl); fl.connect(g); g.connect(AU.mg); o.start(t); o.stop(t + 3);
+  if (mode !== 'battle' && Math.random() < .4) { const d = c.createOscillator(), dg = c.createGain(); d.type = 'sine'; d.frequency.value = 73.4; dg.gain.setValueAtTime(0, t); dg.gain.linearRampToValueAtTime(.1, t + .8); dg.gain.exponentialRampToValueAtTime(.0001, t + 4); d.connect(dg); dg.connect(AU.mg); d.start(t); d.stop(t + 4.2); }
+  if (mode === 'battle' && Math.random() < .5) { const t2 = c.currentTime; const o2 = c.createOscillator(), g2 = c.createGain(); o2.type = 'sine'; o2.frequency.setValueAtTime(90, t2); o2.frequency.exponentialRampToValueAtTime(40, t2 + .25); g2.gain.setValueAtTime(.35, t2); g2.gain.exponentialRampToValueAtTime(.0001, t2 + .3); o2.connect(g2); g2.connect(AU.mg); o2.start(t2); o2.stop(t2 + .35); }
+}
+
+/* ================= спутники (компаньоны) =================
+   Общий для клиента и сервера: без DOM. Одиннадцать уникальных героев сидят по тавернам городов и переходят из города в город.
+   Нанятый спутник идёт в отряде: в бою сражается сам (ИИ) в своей группе (пехота, стрелки или конница) и слушается приказов,
+   на карте даёт отряду своё умение. Спутники не погибают: в бою их только ранят и выносят с поля, раненый (< 25% здоровья)
+   пропускает бои, пока не подлечится. Спутник растёт в уровнях от боёв, на каждом уровне +1 к атрибуту по своему пути,
+   а умение крепнет на 4-м и 7-м уровне (ранги I, II, III, как у перков).
+   Хранение: P.comps = [спутник] — объект героя (атрибуты, eq, sel, hp, lvl, xp), к нему подходят heroDef/heroEq/getHeroSprite.
+   G.cpos = { id: id города } — где сидят ненанятые; G.cstate = { id: спутник } — те, кого отпустили (уровень и вещи сохраняются).
+   Старые сохранения: полей нет — всё заводится лениво. Сервер для игры вдвоём спутников не раздаёт (у игроков нет P.comps). */
+
+const COMP_MAX = 5;            // больше спутников в отряде не берут
+const COMP_FIT = .25;          // ниже этой доли здоровья спутник в бой не идёт
+const COMP_EQ = (head, body, hands, legs, melee, ranged, shield, horse) => ({ head, body, hands, legs, melee, ranged: ranged || null, shield: shield || null, horse: horse || null });
+/* sk — умение: ключи как у перков (см. FX_ZERO), значения для рангов I/II/III. grow — по какому атрибуту растёт на уровнях (по кругу). */
+const COMPS = [
+  { id: 'ingrid', name: 'Ингрид Ворона', fac: 'nord', beard: 0, role: 'Лучница', skn: 'Следопыт', price: 350, wage: 6,
+    a: [2, 2, 4, 2, 1], perks: ['eagle'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'axe_work', 'bow_hunt'), sel: 'ranged', sk: { map: [.05, .08, .12] }, grow: ['agi', 'str', 'vit'],
+    story: 'Охотница с северных фьордов. Ярл сжёг её деревню, и с тех пор она ищет отряд, который не боится крови.' },
+  { id: 'halvdan', name: 'Хальвдан Секира', fac: 'nord', role: 'Тяжёлый пехотинец', skn: 'Носильщик', price: 800, wage: 9,
+    a: [4, 4, 1, 1, 1], perks: ['grip'], eq: COMP_EQ('head_nasal', 'body_mail', 'hands_reinf', 'legs_boots', 'tw_axe'), sel: 'melee', sk: { cargo: [.12, .22, .35] }, grow: ['str', 'vit', 'str'],
+    story: 'Бывший хускарл. Говорит, что ярл выгнал его за пьянство. Ярл говорит — за то, что Хальвдан выпил его мёд вместе с бочкой.' },
+  { id: 'anselm', name: 'Брат Ансельм', fac: 'kin', role: 'Лекарь', skn: 'Лекарь', price: 450, wage: 7,
+    a: [2, 3, 1, 4, 2], perks: [], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'mace', null, 'shield_plank'), sel: 'melee', sk: { surv: [.08, .15, .22], heal: [.25, .5, .8] }, grow: ['int', 'vit', 'str'],
+    story: 'Монах, сбежавший из обители с сумкой трав и пилой для костей. Неплохо машет булавой — говорит, что так написано в Писании.' },
+  { id: 'cassia', name: 'Кассия Вента', fac: 'emp', beard: 0, role: 'Арбалетчица', skn: 'Казначей', price: 500, wage: 7,
+    a: [1, 2, 3, 4, 2], perks: [], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sword_old', 'xbow_light'), sel: 'ranged', sk: { wage: [.06, .1, .15], buy: [.03, .05, .08] }, grow: ['int', 'agi', 'vit'],
+    story: 'Дочь разорившегося купца из Вентума. Считает быстрее любого казначея и не прощает ни одной недостачи.' },
+  { id: 'marcell', name: 'Марцелл Хромой', fac: 'emp', role: 'Ветеран-копейщик', skn: 'Наставник', price: 750, wage: 10,
+    a: [3, 4, 1, 2, 3], perks: ['hide'], eq: COMP_EQ('head_kettle', 'body_mail', 'hands_mail', 'legs_greaves', 'spear_war', null, 'shield_banded'), sel: 'melee', sk: { hire: [.06, .1, .15] }, grow: ['vit', 'str', 'cha'],
+    story: 'Двадцать лет в легионе, из них три — в плену у кочевников. Хромает, но учит новобранцев держать строй лучше любого центуриона.' },
+  { id: 'tului', name: 'Тулуй', fac: 'khan', role: 'Конный лучник', skn: 'Степной разведчик', price: 800, wage: 11,
+    a: [2, 2, 5, 1, 1], perks: ['eagle'], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', 'bow_comp', null, 'horse_steppe'), sel: 'ranged', sk: { flee: [.06, .1, .15], map: [.03, .05, .08] }, grow: ['agi', 'str', 'vit'],
+    story: 'Младший сын нойона. Наследства не дождался, зато лук натягивает на полном скаку с десяти лет.' },
+  { id: 'aigerim', name: 'Айгерим', fac: 'khan', beard: 0, role: 'Лёгкая всадница', skn: 'Добытчица', price: 650, wage: 10,
+    a: [3, 2, 4, 2, 2], perks: [], eq: COMP_EQ('head_cap', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', null, 'shield_buckler', 'horse_steppe'), sel: 'melee', sk: { loot: [.08, .15, .22] }, grow: ['agi', 'str', 'vit'],
+    story: 'Ушла из становища с отцовской саблей. Торгуется за трофеи так же лихо, как рубит.' },
+  { id: 'geoffroi', name: 'Жоффруа де Бо', fac: 'kin', role: 'Рыцарь', skn: 'Знаменосец', price: 1400, wage: 16,
+    a: [4, 4, 2, 1, 3], perks: ['tough'], eq: COMP_EQ('head_great', 'body_mail', 'hands_mail', 'legs_mail', 'sword_knight', null, 'shield_heraldic', 'horse_riding'), sel: 'melee', sk: { size: [4, 8, 12] }, grow: ['str', 'vit', 'cha'],
+    story: 'Рыцарь без земли: замок отца проигран в кости. Мечтает его вернуть — желательно на твои деньги.' },
+  { id: 'zeynab', name: 'Зейнаб', fac: 'emi', beard: 0, role: 'Метательница дротиков', skn: 'Торговка', price: 500, wage: 8,
+    a: [2, 2, 3, 3, 3], perks: [], eq: COMP_EQ('head_turban', 'body_padded', 'hands_leather', 'legs_boots', 'sabre', 'jav_dart', 'shield_buckler'), sel: 'ranged', sk: { sell: [.04, .07, .1], quest: [.08, .15, .22] }, grow: ['agi', 'int', 'cha'],
+    story: 'Водила караваны через пустыню, пока не лишилась последнего верблюда. Знает цену каждой вещи и каждому человеку.' },
+  { id: 'vikenty', name: 'Викентий Де Будетон', fac: 'kin', role: 'Монах-арбалетчик', skn: 'Осадный лекарь', price: 650, wage: 9,
+    a: [1, 3, 3, 5, 1], perks: ['surgery', 'eagle'], eq: COMP_EQ('head_hood', 'body_habit', 'hands_leather', 'legs_boots', 'club', 'xbow_light'), sel: 'ranged', sk: { heal: [.15, .3, .5], surv: [.05, .1, .15], siege: [.25, .45, .7] }, grow: ['int', 'agi', 'vit'],
+    story: 'Сэр Викентий Де Будетон: монах, знаток осадных машин и лекарь. Лучше всех знает, где у стены слабое место, а у человека — больное. Ищет таблетки, которые дадут ему счастье. Пока не нашёл, поэтому грустит.',
+    voice: {
+      start: ['Опять драться. А таблеток всё нет…', 'Господи, пошли мне хоть одну таблетку счастья.', 'Ну, пойдём. Всё равно ничего не радует.', 'Сэр Викентий к бою готов. К радости — нет.'],
+      siege: ['Стена. Хоть что-то в этом мире держится.', 'Каждая стена слаба там, где слаба душа. У меня — везде.', 'Осада: можно долго ждать и грустить. Мой жанр.'],
+      kill: ['Прости, брат. Мне и самому невесело.', 'Минус один. Грусть на месте.', 'Это не та таблетка…', 'Болт нашёл цель. Хоть кто-то нашёл.', 'Тебе уже не больно. Мне — всё ещё.', 'Аминь. Вздох.'],
+      killUndead: ['Вам хорошо: вы ничего не чувствуете.', 'Лежи спокойно. Завидую.', 'Вернись в могилу. Там тихо и не грустно.'],
+      taunt: ['У кого есть таблетки? Не для боя. Для счастья.', 'Вы не видели аптекаря? Мне очень нужен аптекарь…', 'Может, вы что-то принимаете? Поделитесь.', 'Сдавайтесь. Мне и так тоскливо.'],
+      hurt: ['Ай. Ну вот, и тут не повезло.', 'Больно. Как всегда.', 'Благословен будь… ох.'],
+      down: ['Лекарство… найдите мне лекарство…', 'Всё как всегда. Несите к лекарю. То есть ко мне.']
+    } },
+  { id: 'idris', name: 'Идрис Песчаный', fac: 'emi', role: 'Мечник', skn: 'Учитель фехтования', price: 1000, wage: 13,
+    a: [4, 3, 3, 1, 1], perks: ['master'], eq: COMP_EQ('head_turbanm', 'body_mail', 'hands_reinf', 'legs_greaves', 'sword_master', null, 'shield_banded'), sel: 'melee', sk: { xp: [.05, .1, .15] }, grow: ['str', 'agi', 'vit'],
+    story: 'Бывший страж эмира. Молчит неделями, но враги его отряда почему-то не доживают до разговора.' }
+];
+/* Пасхалка: пан Глебио Кемейшалес. Всегда сидит в таверне Мяделя (на старой карте и в старых сохранениях Европы — в ближайшем к Нарочи городе),
+   идёт в отряд бесплатно и без жалованья. Бьётся двуручником и в бою орёт (реплики над головой, см. 03b_gore.js). */
+COMPS.push({ id: 'glebio', name: 'Глебио Кемейшалес', fac: 'kin', role: 'Шляхтич с двуручником', skn: 'Шляхетский размах', price: 0, wage: 0, fixed: 'Мядель',
+  a: [6, 5, 3, 1, 2], perks: ['grip', 'grip', 'tough'], eq: COMP_EQ('head_kettle', 'body_scale', 'hands_mail', 'legs_mail', 'tw_claymore'), sel: 'melee', sk: { loot: [.1, .18, .25] }, grow: ['str', 'vit', 'str'],
+  story: 'Польский шляхтич из-под Мяделя. Родовой герб, фамильный клеймор и ни гроша за душой. Служить готов даром — лишь бы рубить. Говорит, что за честь. Врёт: за веселье.',
+  voice: {
+    start: ['Ну пизда вам, сучары!', 'Пан Глебио пришёл — всем лечь!', 'Курва, ну и рожи… Поехали!', 'Сейчас будет шляхетский мордобой!', 'Кто не спрятался — я не виноват, бля!'],
+    kill: ['Сюда, бля, малышок, епта — минус один!', 'Резать! Резать! Резать!', 'СВИННОЕ ПЕКЛО!', 'Курва мать, ещё один!', 'Лежать, холоп!', 'Это тебе за Мядель, сука!', 'Ещё! Дайте ещё!', 'Пиздец тебе, родной.', 'Кто следующий, ёб твою мать?!', 'Мой клеймор голоден!', 'Готов, голубчик!', 'Ох, хорошо пошло!'],
+    killUndead: ['Лежи и не вставай, жмурик!', 'Обратно в могилу, сука!', 'Кости в кучу, курва!'],
+    taunt: ['Вы чё, ссыте?!', 'Иди сюда, иди сюда, сучара!', 'Я ж вас всех на шашлык порежу!', 'Шляхта не отступает, бля!', 'Ну давай, давай, родной!'],
+    hurt: ['Ай, сука!', 'Царапина, бля!', 'Ах ты ж падла!'],
+    down: ['Курва… я ещё вернусь…', 'Пиздец… несите к лекарю…']
+  } });
+const COMP = {}; for (const c of COMPS) COMP[c.id] = c;
+const SK_TXT = { map: 'отряд идёт по карте быстрее', cargo: 'обоз вмещает больше', surv: 'из павших бойцов больше раненых', heal: 'герой лечится быстрее', wage: 'жалованье ниже', buy: 'покупка дешевле',
+  hire: 'найм и улучшение войск дешевле', flee: 'шанс уйти от погони выше', loot: 'добыча после боя больше', size: 'отряд больше на', sell: 'продажа дороже', quest: 'награды за задания больше', xp: 'герой получает больше опыта', siege: 'штурм легче: защита стен слабее на' };
+
+function compRank(c) { return Math.min(3, 1 + Math.floor(((c.lvl || 1) - 1) / 3)); } // ранг умения: 1–3 уровни I, 4–6 II, 7+ III
+function compSkillText(c, rank) { const d = COMP[c.id], r = rank || compRank(c); return Object.keys(d.sk).map(k => SK_TXT[k] + ' ' + (k === 'size' ? '+' + d.sk[k][r - 1] : '+' + Math.round(d.sk[k][r - 1] * 100) + '%')).join(', '); }
+function compNew(id) {
+  const d = COMP[id], a = d.a;
+  return { id, name: d.name, lvl: 1, xp: 0, str: a[0], vit: a[1], agi: a[2], int: a[3], cha: a[4], pts: 0, pp: 0, perks: d.perks.slice(), eq: Object.assign({}, d.eq), sel: d.sel, hp: 1, seed: hashStr(id) % 99999 + 1, beard: d.beard === undefined ? 1 : d.beard };
+}
+const compsOf = P => P.comps || (P.comps = []);
+const compFit = c => c.hp >= COMP_FIT;
+function compWage(P) { let w = 0; for (const c of P.comps || []) w += COMP[c.id].wage; return w; }
+function compById(P, id) { return (P.comps || []).find(c => c.id === id) || null; }
+
+/* Сумма умений спутников игрока; кэш по составу и уровням. Подмешивается в perkFx(герой игрока), поэтому действует везде,
+   где уже работают перки (скорость на карте, жалованье, торговля, найм, добыча, размер отряда, опыт героя). */
+const CFX = new WeakMap();
+function compFx(P) {
+  const L = P && P.comps; if (!L || !L.length) return null;
+  const key = L.map(c => c.id + compRank(c)).join(','), c0 = CFX.get(P); if (c0 && c0.k === key) return c0;
+  const f = Object.assign({}, FX_ZERO); for (const c of L) { const d = COMP[c.id], r = compRank(c); if (d) for (const k in d.sk) f[k] += d.sk[k][r - 1]; }
+  const o = { k: key, f }; CFX.set(P, o); return o;
+}
+function compFxForHero(H) { if (typeof G === 'undefined' || !G || !G.players) return null; for (const P of G.players) if (P.hero === H) return compFx(P); return null; }
+/* Сила спутников для расчётного боя и оценки сил: крепче бойца 3-го уровня и растёт с уровнем */
+function compStr(P) { let s = 0; for (const c of P.comps || []) if (compFit(c)) s += (8 + c.lvl * .8) * (heroEq(c).horse ? 1.35 : 1); return s; }
+
+/* ---------- таверны ---------- */
+function compTowns() { return G.settles.filter(s => s.kind === 'town' && s.fac !== 'bandit'); }
+function compHired(id) { for (const P of G.players) if (compById(P, id)) return true; return false; }
+function compFixedTown(d) { // город пасхального спутника: по имени, иначе ближайший к его родным местам (Нарочь), на старой карте — первый город
+  const all = compTowns(), byName = all.find(s => s.name === d.fixed); if (byName) return byName;
+  if (isEU()) { const x = euX(26.85), y = euY(54.88); return all.slice().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0]; }
+  return all[0];
+}
+function compPlace(id, avoid) {
+  const all = compTowns(), d = COMP[id]; if (!all.length) return;
+  if (d.fixed) { const t = compFixedTown(d); if (t) { G.cpos[id] = t.id; return; } }
+  const busy = new Set(Object.values(G.cpos)), home = all.filter(s => sCult(s) === d.fac && s.id !== avoid && !busy.has(s.id)), free = all.filter(s => s.id !== avoid && !busy.has(s.id));
+  const s = pick(home.length && Math.random() < .6 ? home : free.length ? free : all); G.cpos[id] = s.id;
+}
+function compsInit() { if (!G.cpos) G.cpos = {}; if (!G.cstate) G.cstate = {}; for (const c of COMPS) if (!compHired(c.id) && (G.cpos[c.id] === undefined || !settleById(G.cpos[c.id]))) compPlace(c.id); }
+function compsAt(s) { compsInit(); return COMPS.filter(c => G.cpos[c.id] === s.id && !compHired(c.id)).map(c => G.cstate[c.id] || compNew(c.id)); }
+function compsDay() { compsInit(); if (G.day % 4) return; for (const c of COMPS) if (!c.fixed && !compHired(c.id) && Math.random() < .5) { const was = G.cpos[c.id]; delete G.cpos[c.id]; compPlace(c.id, was); } } // раз в 4 дня половина бродяг меняет город
+function compRumor(s) { // слух в таверне: где сейчас ближайший свободный спутник из другого города
+  compsInit(); let best = null, bd = 1e9; for (const c of COMPS) { const sid = G.cpos[c.id]; if (sid === undefined || sid === s.id || compHired(c.id)) continue; const t = settleById(sid); if (!t) continue; const d = Math.hypot(t.x - s.x, t.y - s.y); if (d < bd) { bd = d; best = { c: COMP[c.id], t }; } }
+  return best;
+}
+function doCompHire(P, s, id) {
+  compsInit(); const d = COMP[id]; if (!d || G.cpos[id] !== s.id || compHired(id)) return 'Этого человека здесь уже нет.';
+  if (compsOf(P).length >= COMP_MAX) return 'Больше ' + COMP_MAX + ' спутников в отряде не уживутся.';
+  if (P.gold < d.price) return 'Не хватает золота.';
+  P.gold -= d.price; const c = G.cstate[id] || compNew(id); delete G.cstate[id]; delete G.cpos[id]; compsOf(P).push(c);
+  logW(c.name + ' присоединяется к отряду.', 3, P); return '';
+}
+function doCompFire(P, id, why) {
+  const c = compById(P, id); if (!c) return false; compsInit(); P.comps.splice(P.comps.indexOf(c), 1); G.cstate[id] = c;
+  const near = COMP[id].fixed ? compFixedTown(COMP[id]) : compTowns().sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; // пасхальный спутник возвращается домой if (near) G.cpos[id] = near.id;
+  logW(c.name + (why || ' уходит из отряда') + (near ? ' и будет ждать в таверне ' + near.name : '') + '.', 1, P); return true;
+}
+
+/* ---------- бой и рост ---------- */
+function compsBattle(P) { return (P.comps || []).filter(compFit).map(c => Object.assign(heroBattle(c), { id: c.id, beard: c.beard })); } // кого взять в бой (копии, как heroBattle)
+function compsAuto(P, res) { // расчётный бой: спутники теряют здоровье как герой
+  res.comps = {}; for (const c of P.comps || []) if (compFit(c)) res.comps[c.id] = { hp: clamp(c.hp - (res.win ? rnd(.05, .35) : rnd(.35, .6)), 0, 1), down: false, kills: 0 };
+}
+function compsAfter(P, res) { // → список строк для итогов боя
+  const out = [], R = res.comps; if (!R) return out;
+  for (const id in R) {
+    const c = compById(P, id), r = R[id]; if (!c) continue;
+    c.hp = r.down ? .1 : clamp(r.hp, .1, 1);
+    const gx = Math.round(((res.win ? 1 : .5) * (res.xp || 0) * .3 + r.kills * 12 + 8) * xpMul(c)); c.xp += gx; let up = 0;
+    while (c.xp >= xpNeed(c.lvl)) { c.xp -= xpNeed(c.lvl); c.lvl++; const d = COMP[id]; c[d.grow[(c.lvl - 2) % d.grow.length]]++; up++; if (c.lvl === 4 || c.lvl === 7) logW(c.name + ': умение «' + d.skn + '» окрепло (ранг ' + ['I', 'II', 'III'][compRank(c) - 1] + ').', 3, P); }
+    if (up) logW(c.name + ' достигает уровня ' + c.lvl + '.', 3, P);
+    out.push({ c, down: r.down, kills: r.kills, gx, up });
+  }
+  return out;
+}
+function compsHeal(P, heal) { for (const c of P.comps || []) c.hp = Math.min(1, c.hp + heal); }
+function compsUnpaid(P) { // не хватило на жалованье: спутник может уйти
+  const L = P.comps || []; if (!L.length || Math.random() > .25) return; doCompFire(P, pick(L).id, ' ушёл: жалованье не плачено,');
+}
+
+
+/* ===== Трейлер: сэр Викентий Де Будетон. Рисунки — настоящий код игры (02_art.js), звук — 04_audio.js ===== */
+FACTIONS.player.c1 = '#6b5236'; FACTIONS.player.c2 = '#d8c9a0'; // коричневая ряса и пояс-верёвка
+const TW = 1280, TH = 720, DUR = 50;
+const cvs = document.getElementById('scr'), g = cvs.getContext('2d');
+const FD = '"Alegreya SC", Georgia, serif', FB = '"Alegreya Sans", "Segoe UI", Arial, sans-serif';
+const VK = compNew('vikenty'), V = COMP.vikenty.voice, VSP = getHeroSprite(VK, false);
+const R = mulberry(91), rr = (a, b) => a + R() * (b - a);
+const ease = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+const fadeIO = (t, a, b, f) => Math.min(ease((t - a) / f), ease((b - t) / f));
+const SC = .72;
+
+/* ---------- поле боя: земля из игры, крепостная стена, на землю впечатываются трупы и кровь ---------- */
+const FW = 2400, WALLX = 1420, ground = paintGround(FW, TH, 'grass', 4), gg = ground.getContext('2d');
+const DEF = [['n1', 0, 250], ['n2', 1, 330], ['n2s', 2, 410], ['n1', 3, 490], ['n2', 0, 570], ['n2s', 1, 300], ['n1', 2, 450], ['n2', 3, 530]]
+  .map((d, i) => ({ id: d[0], sp: getSprite(d[0], d[1], 'nord'), x: WALLX + 55 + (i % 3) * 48 + (i > 4 ? 34 : 0), y: d[2], dead: false, dir: -1 }));
+const ALLY = [['f2', 0, 330], ['f2s', 1, 400], ['f1', 2, 470], ['f2a', 3, 540], ['f2s', 0, 610]]
+  .map((d, i) => ({ id: d[0], sp: getSprite(d[0], d[1], 'kin'), x: 90 + (i % 2) * 70, y: d[2], dead: false, dir: 1, tx: 0 }));
+const WND = { sp: getSprite('f1', 1, 'kin'), x: 760, y: 470, down: false, up: false, hp: .12 }; // раненый союзник, которого он вылечит
+const VKP = { x: 240, y: 440, shoot: -1 };
+const gib = [], drops = [], bolts = [], dust = [], heals = [];
+function splat(x, y, n, ang, sp, col) { for (let i = 0; i < n; i++) { const a = ang + rr(-.7, .7), v = rr(.3, 1) * sp; drops.push({ x, y, z: rr(30, 60), vx: Math.cos(a) * v, vy: Math.sin(a) * v * .4, vz: rr(40, 220), c: col, s: rr(2, 4.5) }); } }
+function killUnit(u, kind) {
+  u.dead = true; const col = '#8f1a12', ang = Math.atan2(u.y - VKP.y, u.x - VKP.x), S = SC;
+  const hx = u.x + (u.sp.hc[0] - u.sp.ax) * S * u.dir, hy = u.y + (u.sp.hc[1] - u.sp.ay) * S;
+  if (kind !== 'arm') gib.push({ cv: headOf(u.sp), hc: u.sp.hc, dir: u.dir, x: hx, y: u.y, z: u.y - hy, vx: Math.cos(ang) * rr(120, 220), vy: Math.sin(ang) * rr(20, 80), vz: rr(240, 340), rot: 0, vr: rr(-12, 12) * u.dir, col });
+  else gib.push({ arm: true, x: u.x, y: u.y, z: 60, vx: Math.cos(ang) * 180, vy: 30, vz: 280, rot: 0, vr: 14, col, skin: u.sp.v.skin, sleeve: '#3a4a66' });
+  splat(hx, u.y, 30, ang, 320, col); gg.globalAlpha = .5; gg.fillStyle = col; ell(gg, u.x, u.y + 4, 42, 18); gg.fill(); gg.globalAlpha = 1;
+  const c = corpseOf(u.sp, kind !== 'arm'); gg.save(); gg.translate(u.x, u.y); gg.rotate(rr(1.2, 1.8) * (R() < .5 ? -1 : 1)); gg.globalAlpha = .92; gg.scale(S, S); gg.drawImage(c, -u.sp.ax, -u.sp.ay + 60); gg.restore();
+  sfx('arrowhit'); sfx('death'); setTimeout(() => sfx('thud'), 90);
+}
+function physics(dt) {
+  for (let i = gib.length - 1; i >= 0; i--) { const b = gib[i]; b.vz -= 900 * dt; b.z += b.vz * dt; b.x += b.vx * dt; b.y += b.vy * dt; b.rot += b.vr * dt;
+    if (b.z <= 0) { b.z = 0; b.vz *= -.35; b.vx *= .5; b.vy *= .5; b.vr *= .5; if (b.col) splat(b.x, b.y, 3, 0, 50, b.col); if (Math.abs(b.vz) < 40) { gg.save(); drawGib(gg, b, true); gg.restore(); gib.splice(i, 1); } } }
+  for (let i = drops.length - 1; i >= 0; i--) { const d = drops[i]; d.vz -= 900 * dt; d.z += d.vz * dt; d.x += d.vx * dt; d.y += d.vy * dt; if (d.z <= 0) { gg.globalAlpha = .7; gg.fillStyle = d.c; ell(gg, d.x, d.y, d.s, d.s * .5); gg.fill(); gg.globalAlpha = 1; drops.splice(i, 1); } }
+  for (let i = dust.length - 1; i >= 0; i--) { const d = dust[i]; d.t += dt; d.x += d.vx * dt; d.y += d.vy * dt; d.vy -= 12 * dt; if (d.t > d.life) dust.splice(i, 1); }
+  for (let i = heals.length - 1; i >= 0; i--) { const h = heals[i]; h.t += dt; if (h.t > h.life) heals.splice(i, 1); }
+}
+function drawGib(G2, b, flat) {
+  G2.translate(b.x, b.y - (flat ? 0 : b.z)); G2.rotate(b.rot);
+  if (b.cv) { G2.scale(b.dir * SC, SC); G2.drawImage(b.cv, -b.hc[0], -b.hc[1]); if (b.col) { G2.fillStyle = b.col; ell(G2, 0, 26, 12, 6); G2.fill(); } return; }
+  G2.fillStyle = b.sleeve; G2.fillRect(-18, -5, 20, 10); G2.fillStyle = b.skin; G2.fillRect(2, -4, 13, 8); ell(G2, 17, 0, 6, 6); G2.fill(); G2.fillStyle = b.col; ell(G2, -18, 0, 4, 6); G2.fill();
+}
+
+/* ---------- стена замка: рисуется один раз, целая и с проломом ---------- */
+function makeWall(broken) {
+  const c = mkCanvas(220, TH), x = c.getContext('2d'), W0 = 110, w = 46, R3 = mulberry(12), segs = broken ? [[110, 330], [440, 650]] : [[110, 650]];
+  for (const [a, b] of segs) {
+    x.fillStyle = 'rgba(0,0,0,.3)'; x.fillRect(W0 - w / 2 - 12, a + 12, w + 14, b - a); x.fillStyle = '#857a68'; x.fillRect(W0 - w / 2, a, w, b - a); x.strokeStyle = '#2a2219'; x.lineWidth = 3; x.strokeRect(W0 - w / 2, a, w, b - a);
+    for (let y = a + 14; y < b; y += 17) { x.strokeStyle = 'rgba(40,32,24,.5)'; x.lineWidth = 1.2; x.beginPath(); x.moveTo(W0 - w / 2, y); x.lineTo(W0 + w / 2, y); x.stroke(); for (let k = 0; k < 2; k++) { const px = W0 - w / 2 + 6 + R3() * 32; x.beginPath(); x.moveTo(px, y); x.lineTo(px, y + 17); x.stroke(); } }
+    for (let y = a; y < b - 10; y += 26) { x.fillStyle = '#9a8f7a'; x.fillRect(W0 - w / 2 - 4, y, w + 8, 14); x.strokeRect(W0 - w / 2 - 4, y, w + 8, 14); } // зубцы
+  }
+  if (broken) for (let i = 0; i < 26; i++) { const px = W0 + rr(-60, 60), py = 332 + rr(0, 106); x.fillStyle = i % 3 ? '#7a705f' : '#5f5648'; x.beginPath(); x.ellipse(px, py, rr(6, 15), rr(5, 11), rr(0, 3), 0, TAU); x.fill(); x.strokeStyle = '#2a2219'; x.lineWidth = 1.2; x.stroke(); }
+  return c;
+}
+const WALL0 = makeWall(false), WALL1 = makeWall(true); let wallBroken = false;
+
+/* ---------- общие рисовалки ---------- */
+function drawSprite(sp, x, y, dir, s, flash, bob) { g.save(); g.translate(x, y + (bob || 0)); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(0, 4, 30 * s / SC, 10 * s / SC, 0, 0, TAU); g.fill(); g.scale(dir * s, s); g.drawImage(flash ? sp.flash : sp.cv, -sp.ax, -sp.ay); g.restore(); }
+function bubble(txt, x, y, a, big) {
+  if (a <= 0) return; g.save(); g.globalAlpha = a; g.font = (big ? '700 30px ' : '700 22px ') + FB; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const w = g.measureText(txt).width + 30, h = big ? 50 : 40; x = clamp(x, w / 2 + 10, TW - w / 2 - 10); g.fillStyle = '#f3e8c9'; g.strokeStyle = '#1b130c'; g.lineWidth = 3;
+  g.beginPath(); if (g.roundRect) g.roundRect(x - w / 2, y - h / 2, w, h, 9); else g.rect(x - w / 2, y - h / 2, w, h); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(x - 10, y + h / 2 - 1.5); g.lineTo(x - 22, y + h / 2 + 18); g.lineTo(x + 8, y + h / 2 - 1.5); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#2a1a0e'; g.fillText(txt, x, y + 1); g.restore();
+}
+function caption(txt, y, a, size, col, font, cx) { if (a <= 0) return; g.save(); g.globalAlpha = a; g.font = (size || 34) + 'px ' + (font || FD); g.textAlign = 'center'; g.fillStyle = col || '#eadfc2'; g.shadowColor = 'rgba(0,0,0,.8)'; g.shadowBlur = 12; g.fillText(txt, cx || TW / 2, y); g.restore(); }
+const grain = (() => { const c = mkCanvas(256, 256), x = c.getContext('2d'), d = x.createImageData(256, 256); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 18; } x.putImageData(d, 0, 0); return c; })();
+function vignette(k) { const v = g.createRadialGradient(TW / 2, TH / 2, TH * .3, TW / 2, TH / 2, TH * .95); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,' + (k || .75) + ')'); g.fillStyle = v; g.fillRect(0, 0, TW, TH); g.save(); g.globalAlpha = .5; g.fillStyle = g.createPattern(grain, 'repeat'); g.translate(-R() * 256, -R() * 256); g.fillRect(0, 0, TW + 512, TH + 512); g.restore(); }
+function pill(x, y, rot, c1, c2, s) { g.save(); g.translate(x, y); g.rotate(rot); g.scale(s || 1, s || 1); g.fillStyle = c1; g.beginPath(); g.arc(-7, 0, 6, Math.PI / 2, Math.PI * 1.5); g.lineTo(0, -6); g.lineTo(0, 6); g.closePath(); g.fill(); g.fillStyle = c2; g.beginPath(); g.arc(7, 0, 6, -Math.PI / 2, Math.PI / 2); g.lineTo(0, 6); g.lineTo(0, -6); g.closePath(); g.fill(); g.strokeStyle = '#1b130c'; g.lineWidth = 1.4; g.beginPath(); g.arc(-7, 0, 6, Math.PI / 2, Math.PI * 1.5); g.arc(7, 0, 6, -Math.PI / 2, Math.PI / 2); g.closePath(); g.stroke(); g.restore(); }
+
+/* ---------- сцены ---------- */
+const embers = Array.from({ length: 60 }, () => ({ x: rr(0, TW), y: rr(0, TH), v: rr(15, 50), s: rr(1, 3) }));
+const rain = Array.from({ length: 90 }, () => ({ x: rr(0, TW), y: rr(0, TH), v: rr(500, 800), l: rr(14, 30) }));
+function sIntro(t) { g.fillStyle = '#0b0806'; g.fillRect(0, 0, TW, TH); for (const e of embers) { const y = ((e.y - t * e.v) % TH + TH) % TH; g.fillStyle = 'rgba(160,190,230,' + (.2 + .2 * Math.sin(t * 3 + e.x)) + ')'; g.fillRect(e.x, y, e.s, e.s); }
+  caption('ЖЕЛЕЗНЫЙ СТЯГ', TH / 2 - 10, fadeIO(t, .8, 5, .8), 64, '#d1a84c'); caption('представляет', TH / 2 + 44, fadeIO(t, 2, 5, .8), 26, '#b3a483', FB); }
+const PHARM = [[330, 440, 'Аптека. Закрыта.', 6.3], [640, 260, 'Аптека. Закрыта.', 7.6], [980, 400, 'Аптека. Сгорела.', 8.9]];
+function sMap(t) { // карта Галлии: дорога по аптекам
+  const k = 1 + (t - 5) * .04; g.save(); g.translate(TW / 2, TH / 2); g.scale(k, k); g.translate(-TW / 2, -TH / 2);
+  g.fillStyle = '#cdb98e'; g.fillRect(-100, -100, TW + 200, TH + 200); const R2 = mulberry(8); for (let i = 0; i < 280; i++) { g.fillStyle = 'rgba(70,90,40,' + (.2 + R2() * .3) + ')'; const x = R2() * TW, y = R2() * TH; ell(g, x, y, 6 + R2() * 8, 4 + R2() * 5); g.fill(); }
+  g.strokeStyle = '#7a5a36'; g.lineWidth = 6; g.setLineDash([16, 12]); g.beginPath(); g.moveTo(120, 600); g.bezierCurveTo(250, 420, 400, 660, 560, 470); g.bezierCurveTo(700, 300, 820, 400, 900, 520); g.bezierCurveTo(960, 600, 1100, 520, 1180, 330); g.stroke(); g.setLineDash([]);
+  for (const p of PHARM) { const a = ease((t - p[3]) / .4); if (a <= 0) continue; g.save(); g.translate(p[0], p[1]); g.globalAlpha = a; g.scale(.8 + a * .2, .8 + a * .2);
+    g.fillStyle = '#e9e1c8'; g.fillRect(-26, -22, 52, 40); g.strokeStyle = '#2a1a0e'; g.lineWidth = 3; g.strokeRect(-26, -22, 52, 40); g.fillStyle = '#9a2f24'; g.beginPath(); g.moveTo(-30, -22); g.lineTo(0, -48); g.lineTo(30, -22); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#2f7a46'; g.fillRect(-4, -14, 8, 22); g.fillRect(-11, -7, 22, 8); g.strokeStyle = '#a3150c'; g.lineWidth = 6; g.beginPath(); g.moveTo(-34, -52); g.lineTo(34, 24); g.moveTo(34, -52); g.lineTo(-34, 24); g.stroke();
+    g.font = '700 26px ' + FD; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = 'rgba(20,12,4,.9)'; g.strokeText(p[2], 0, 62); g.fillStyle = '#f0e6c8'; g.fillText(p[2], 0, 62); g.restore(); }
+  g.restore(); vignette(.8); caption('Где-то в Королевстве Галлия…', TH - 80, fadeIO(t, 5.6, 11, .7), 40);
+  caption('в поисках счастья', TH - 36, fadeIO(t, 9.6, 11, .5), 26, '#b3a483', FB);
+}
+function sTavern(t) {
+  g.fillStyle = '#1c120a'; g.fillRect(0, 0, TW, TH); for (let i = 0; i < 9; i++) { g.fillStyle = i % 2 ? '#2a1a0e' : '#24170c'; g.fillRect(i * 150, 0, 150, TH); }
+  const fl = .75 + Math.sin(t * 17) * .04 + Math.sin(t * 7.3) * .04, lg = g.createRadialGradient(560, 420, 10, 560, 420, 520 * fl); lg.addColorStop(0, 'rgba(255,190,90,.4)'); lg.addColorStop(1, 'rgba(255,150,40,0)'); g.fillStyle = lg; g.fillRect(0, 0, TW, TH);
+  g.fillStyle = '#5a3a1e'; g.fillRect(150, 520, 760, 40); g.fillStyle = '#3a2412'; g.fillRect(180, 560, 30, 160); g.fillRect(850, 560, 30, 160);
+  g.fillStyle = '#e8dcc0'; g.fillRect(552, 470, 16, 50); g.fillStyle = '#ffcf6a'; ell(g, 560, 462 - fl * 4, 6, 12 * fl); g.fill();
+  g.fillStyle = '#8a6a3a'; g.fillRect(700, 488, 34, 32); g.fillStyle = '#e9d9a8'; g.fillRect(700, 484, 34, 8); // пустая кружка
+  const jars = [['#3d7a52', 'от кашля', 620], ['#a3562a', 'от жадности', 770], ['#4a5a9a', 'от жизни', 830]];
+  jars.forEach((j, i) => { const jx = j[2] + (i === 0 ? 0 : 0), jy = 520, a = ease((t - 12.2 - i * .5) / .3); if (a <= 0) return; g.globalAlpha = a; g.fillStyle = j[0]; g.fillRect(jx - 14, jy - 38, 28, 38); g.strokeStyle = '#1b130c'; g.lineWidth = 2.4; g.strokeRect(jx - 14, jy - 38, 28, 38); g.fillStyle = '#d8c9a0'; g.fillRect(jx - 16, jy - 46, 32, 9); g.strokeRect(jx - 16, jy - 46, 32, 9); g.fillStyle = '#efe6cc'; g.fillRect(jx - 11, jy - 28, 22, 14); g.font = '700 9px ' + FB; g.textAlign = 'center'; g.fillStyle = '#2a1a0e'; g.fillText(j[1], jx, jy - 18); g.globalAlpha = 1; });
+  pill(470, 516, .4, '#e8e4d2', '#c0392b', 1); pill(500, 520, -.5, '#e8e4d2', '#3d7a52', 1); pill(520, 514, 1.2, '#e8e4d2', '#d1a84c', 1);
+  drawSprite(VSP, 400, 540, 1, 2.3, false, Math.sin(t * 1.4) * 1.5 + 2);
+  const lines = ['Монах.', 'Лекарь.', 'Знаток осадных машин.', 'Арбалет всегда при нём.', 'И очень грустный.'], at = [11.6, 12.8, 14, 15.4, 17];
+  g.save(); g.textAlign = 'left'; lines.forEach((s, i) => { const a = ease((t - at[i]) / .5); if (a <= 0) return; g.globalAlpha = a * fadeIO(t, 11, 20, .6); g.font = '36px ' + FD; g.fillStyle = i === 4 ? '#9ab4de' : '#eadfc2'; g.fillText(s, 800 + (1 - a) * 30, 190 + i * 58); }); g.restore();
+  if (t > 12.4) bubble('Где же эти таблетки счастья…', 450, 175, fadeIO(t, 12.4, 14.6, .25));
+  const no = [[15.2, 'Не то.'], [16.3, 'И это не то.'], [17.6, 'Тоже не то.']]; no.forEach(n => { if (t > n[0]) bubble(n[1], 470, 175, fadeIO(t, n[0], n[0] + 1, .2)); });
+  if (t > 18.6) bubble('Ну и ладно. Пойдём ломать стены.', 470, 175, fadeIO(t, 18.6, 20, .25));
+  vignette(.85);
+}
+let shake = 0;
+function sTitle(t) {
+  const lt = t - 20; g.fillStyle = '#0a0c12'; g.fillRect(0, 0, TW, TH); const sx = shake > 0 ? rr(-8, 8) * shake : 0, sy = shake > 0 ? rr(-8, 8) * shake : 0; g.save(); g.translate(sx, sy);
+  g.strokeStyle = 'rgba(160,185,225,.25)'; g.lineWidth = 1.4; for (const d of rain) { const y = ((d.y + t * d.v) % (TH + 40)) - 20; g.beginPath(); g.moveTo(d.x, y); g.lineTo(d.x - d.l * .25, y + d.l); g.stroke(); }
+  drawSprite(VSP, TW / 2 - 420, 560, 1, 2.1, lt < .08, Math.sin(t * 1.4) * 1.5);
+  const s = 1 + Math.max(0, .5 - lt) * 1.6; g.save(); g.translate(TW / 2 + 120, 300); g.scale(s, s); g.textAlign = 'center'; g.font = '700 92px ' + FD; g.lineWidth = 10; g.strokeStyle = '#000'; g.strokeText('СЭР ВИКЕНТИЙ', 0, 0); g.fillStyle = '#e9d18a'; g.fillText('СЭР ВИКЕНТИЙ', 0, 0);
+  g.font = '700 70px ' + FD; g.strokeText('ДЕ БУДЕТОН', 0, 84); g.fillStyle = '#9ab4de'; g.fillText('ДЕ БУДЕТОН', 0, 84); g.restore();
+  caption('монах · лекарь · осадник · арбалетчик · грустный', 470, ease((lt - .8) / .5), 30, '#b3a483', FB, TW / 2 + 120); g.restore(); vignette(.7);
+}
+
+/* ---------- осада ---------- */
+let BT;
+const SHOTS = [[26.3, 0, 'hit'], [27.5, 0, 'miss'], [28.3, 1, 'hit'], [29.3, 2, 'hit'], [38.9, 5, 'hit'], [40, 6, 'hit'], [41.1, 7, 'hit']];
+const MELEE = [[32.7, 3, 'head'], [33.5, 4, 'arm']];
+function sayAt(t, txt, dur) { BT.said = txt; BT.sayT = t; BT.sayD = dur || 2; }
+function fireBolt(t, target, miss) {
+  const x0 = VKP.x + 34, y0 = VKP.y - 56, e = target, dur = .62, tx = e.x + (miss ? -rr(120, 170) : 0), ty = e.y - 46 + (miss ? rr(40, 70) : 0);
+  bolts.push({ x0, y0, x1: tx, y1: ty, t0: t, dur, e, miss, done: false }); VKP.shoot = .3; sfx('bow');
+}
+function sBattle(t, dt) {
+  const walk = ease((t - 23.4) / 2.2); VKP.x = 240 + walk * 400;
+  ALLY.forEach((a, i) => { a.x = (t < 31.6 ? 120 + (i % 2) * 70 + walk * 330 : lerp(a.x, WALLX - 70 - (i % 3) * 36, Math.min(1, dt * .9))); });
+  if (VKP.shoot > 0) VKP.shoot -= dt;
+  if (t > 23.4 && !BT.s0) { BT.s0 = 1; sayAt(t, V.siege[0], 2.6); sfx('horn'); }
+  SHOTS.forEach((k, i) => { if (t >= k[0] && BT.lastShot < i) { BT.lastShot = i; fireBolt(t, DEF[k[1]], k[2] === 'miss'); if (k[2] === 'miss') sayAt(t + .6, 'Мимо. Как и всё остальное.', 1.9); else if (i === 0) sayAt(t + .6, V.kill[1], 1.8); else if (i === 2) sayAt(t + .6, V.kill[0], 1.8); else if (i === 3) sayAt(t + .6, V.kill[3], 1.8); else if (i === 5) sayAt(t + .6, V.kill[4], 1.7); else if (i === 6) sayAt(t + .6, V.kill[2], 1.7); } });
+  for (const b of bolts) if (!b.done && t >= b.t0 + b.dur) { b.done = true; if (b.miss) { sfx('thunk'); for (let i = 0; i < 6; i++) dust.push({ x: b.x1, y: b.y1 + 40, vx: rr(-30, 30), vy: rr(-40, -10), t: 0, life: .7, s: rr(4, 10) }); } else { BT.cnt++; killUnit(b.e, BT.cnt % 2 ? 'head' : 'head'); shake = .35; } }
+  MELEE.forEach((k, i) => { if (t >= k[0] && BT.lastM < i) { BT.lastM = i; killUnit(DEF[k[1]], k[2]); BT.cnt++; shake = .4; sfx('clang'); } });
+  // катапульта: выстрел, камень летит и ломает стену
+  if (t > 30 && !BT.cat) { BT.cat = t; sfx('thud'); noise(.4, 'bandpass', 300, 900, .3, 2); sayAt(t + .1, V.siege[1], 2.6); }
+  if (BT.cat && !BT.hit && t > BT.cat + 1.3) { BT.hit = 1; wallBroken = true; shake = 1; sfx('thud'); setTimeout(() => sfx('thud'), 120); noise(.7, 'lowpass', 900, 150, .7); for (let i = 0; i < 60; i++) dust.push({ x: WALLX + rr(-40, 40), y: rr(320, 440), vx: rr(-120, 120), vy: rr(-90, 20), t: 0, life: rr(.9, 2), s: rr(8, 26) }); }
+  // раненый союзник: падает от вражеского болта, Викентий его лечит
+  if (t > 34 && !WND.down) { WND.down = true; sfx('arrowhit'); shake = .3; }
+  if (t > 36 && !BT.heal) { BT.heal = t; sayAt(t, 'Лечу. Хоть кому-то стало лучше.', 2.4); sfx('level'); }
+  if (BT.heal) { WND.hp = clamp(.12 + (t - BT.heal) / 1.6 * .88, 0, 1); if (Math.random() < dt * 22 && t < BT.heal + 1.8) heals.push({ x: WND.x + rr(-24, 24), y: WND.y - 20, t: 0, life: 1.1 }); if (t > BT.heal + 2 && !WND.up) { WND.up = true; } }
+  if (t > 37.6 && !BT.s1) { BT.s1 = 1; sayAt(t, V.taunt[0], 2.2); }
+  if (WND.up) WND.x = lerp(WND.x, WALLX - 120, Math.min(1, dt * .9));
+  const cx = clamp(VKP.x - TW * .2, 0, FW - TW); BT.cam += (cx - BT.cam) * Math.min(1, dt * 4);
+  g.save(); const shx = shake > 0 ? rr(-8, 8) * shake : 0; g.translate(shx, 0); g.translate(-BT.cam, 0);
+  g.drawImage(ground, 0, 0); g.drawImage(wallBroken ? WALL1 : WALL0, WALLX - 110, 0);
+  // катапульта (стоит перед Викентием)
+  { const cxp = 960, cyp = 560, k = BT.cat ? clamp((t - BT.cat) / .35, 0, 1) : 0, rec = BT.cat ? clamp(1 - (t - BT.cat - .35) / 1.8, 0, 1) : 1, ang = -.9 + (k < 1 ? k : 1) * 1.7 - (1 - rec) * 0 + (k >= 1 ? -(1 - rec) * .0 : 0);
+    g.save(); g.translate(cxp, cyp); g.fillStyle = 'rgba(0,0,0,.3)'; ell(g, 0, 18, 70, 16); g.fill(); g.fillStyle = '#6b4a26'; g.strokeStyle = '#1b130c'; g.lineWidth = 3; g.fillRect(-60, -6, 120, 16); g.strokeRect(-60, -6, 120, 16); g.fillRect(-4, -48, 10, 44); g.strokeRect(-4, -48, 10, 44);
+    for (const wx of [-44, 44]) { g.fillStyle = '#4a3218'; g.beginPath(); g.arc(wx, 14, 15, 0, TAU); g.fill(); g.stroke(); g.strokeStyle = '#2a1a0e'; g.lineWidth = 2; g.beginPath(); g.moveTo(wx - 15, 14); g.lineTo(wx + 15, 14); g.moveTo(wx, -1); g.lineTo(wx, 29); g.stroke(); g.strokeStyle = '#1b130c'; g.lineWidth = 3; }
+    g.save(); g.translate(0, -44); g.rotate(BT.cat ? (k < 1 ? -1.1 + k * 1.9 : .8 - (1 - rec) * 1.9) : -1.1); g.fillStyle = '#7a5630'; g.fillRect(-60, -4, 74, 8); g.strokeRect(-60, -4, 74, 8); g.fillStyle = '#3a2412'; g.beginPath(); g.arc(-60, 0, 11, 0, TAU); g.fill(); g.stroke();
+    if (!BT.cat) { g.fillStyle = '#8a8a82'; g.beginPath(); g.arc(-60, -12, 9, 0, TAU); g.fill(); g.stroke(); } g.restore(); g.restore(); }
+  // камень
+  if (BT.cat && t > BT.cat + .3 && t < BT.cat + 1.3) { const p = (t - BT.cat - .3) / 1, x = lerp(940, WALLX, p), y = lerp(500, 380, p) - Math.sin(p * Math.PI) * 220; g.fillStyle = '#8a8a82'; g.strokeStyle = '#1b130c'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 14, 0, TAU); g.fill(); g.stroke(); g.fillStyle = 'rgba(0,0,0,.3)'; ell(g, x, lerp(520, 395, p), 12, 4); g.fill(); }
+  const L = []; for (const e of DEF) if (!e.dead) L.push(e); for (const a of ALLY) L.push(a); L.push({ me: 1, y: VKP.y }); L.push({ wnd: 1, y: WND.y }); L.sort((a, b) => a.y - b.y);
+  for (const u of L) {
+    if (u.me) { const kick = VKP.shoot > 0 ? Math.sin((1 - VKP.shoot / .3) * Math.PI) * -6 : 0; drawSprite(VSP, VKP.x + kick, VKP.y, 1, SC * 1.08, false, Math.sin(t * 2) * 1.5); continue; }
+    if (u.wnd) { if (t < 34 || !WND.down) { if (!WND.up || true) drawSprite(WND.sp, t < 34 ? 700 : WND.x, WND.y, 1, SC, false, 0); } else if (!WND.up) { g.save(); g.translate(WND.x, WND.y); g.rotate(1.45); g.globalAlpha = .95; g.scale(SC, SC); g.drawImage(corpseOf(WND.sp, false), -WND.sp.ax, -WND.sp.ay + 60); g.restore(); } else drawSprite(WND.sp, WND.x, WND.y, 1, SC, false, Math.sin(t * 12) * 2); continue; }
+    drawSprite(u.sp, u.x, u.y, u.dir, SC, false, Math.sin(t * 3 + u.y) * 1.2 + (u.dir > 0 && t < 31.6 ? Math.sin(t * 12 + u.y) * 2 : 0));
+  }
+  for (const b of bolts) { const p = clamp((t - b.t0) / b.dur, 0, 1); if (p >= 1) continue; const x = lerp(b.x0, b.x1, p), y = lerp(b.y0, b.y1, p) - Math.sin(p * Math.PI) * 34, a = Math.atan2(b.y1 - b.y0 - Math.cos(p * Math.PI) * 34 * Math.PI / 1, b.x1 - b.x0); g.save(); g.translate(x, y); g.rotate(a); g.strokeStyle = '#d8d2c0'; g.lineWidth = 4.5; g.beginPath(); g.moveTo(-26, 0); g.lineTo(10, 0); g.stroke(); g.fillStyle = '#9aa2aa'; g.beginPath(); g.moveTo(10, -5); g.lineTo(20, 0); g.lineTo(10, 5); g.fill(); g.restore(); }
+  for (const b of gib) { g.fillStyle = 'rgba(0,0,0,.3)'; ell(g, b.x, b.y, 12, 4); g.fill(); g.save(); drawGib(g, b, false); g.restore(); }
+  for (const d of drops) { g.fillStyle = d.c; g.fillRect(d.x, d.y - d.z, d.s, d.s); }
+  for (const d of dust) { g.globalAlpha = (1 - d.t / d.life) * .55; g.fillStyle = '#9a8f7a'; ell(g, d.x, d.y, d.s * (1 + d.t), d.s * (1 + d.t) * .8); g.fill(); } g.globalAlpha = 1;
+  for (const h of heals) { const a = 1 - h.t / h.life; g.globalAlpha = a; g.fillStyle = '#5bd47a'; g.fillRect(h.x - 2, h.y - h.t * 60 - 7, 4, 14); g.fillRect(h.x - 7, h.y - h.t * 60 - 2, 14, 4); } g.globalAlpha = 1;
+  if (BT.heal && t < BT.heal + 2.6) { g.globalAlpha = fadeIO(t, BT.heal, BT.heal + 2.6, .3); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillRect(WND.x - 30, WND.y - 128, 60, 8); g.fillStyle = '#d23b2a'; g.fillRect(WND.x - 29, WND.y - 127, 58 * WND.hp, 6); g.globalAlpha = 1; }
+  g.restore();
+  if (BT.said && t - BT.sayT < BT.sayD) { const sx = VKP.x - BT.cam + 40, sy = VKP.y - 170; bubble(BT.said, sx, sy, fadeIO(t, BT.sayT, BT.sayT + BT.sayD, .15)); }
+  if (BT.cnt) { g.save(); g.textAlign = 'right'; g.font = '700 54px ' + FD; g.fillStyle = '#d23b2a'; g.strokeStyle = '#000'; g.lineWidth = 6; const s = '−' + BT.cnt; g.strokeText(s, TW - 40, 80); g.fillText(s, TW - 40, 80); g.font = '22px ' + FB; g.fillStyle = '#eadfc2'; g.fillText('защитников', TW - 40, 112); g.restore(); }
+  caption('Штурм удался. Радости нет.', 120, fadeIO(t, 41.4, 43, .3), 38, '#9ab4de');
+  vignette(.6);
+}
+function sEnd(t) {
+  const lt = t - 43; g.fillStyle = '#0a0c12'; g.fillRect(0, 0, TW, TH); g.strokeStyle = 'rgba(160,185,225,.2)'; g.lineWidth = 1.2; for (const d of rain) { const y = ((d.y + t * d.v) % (TH + 40)) - 20; g.beginPath(); g.moveTo(d.x, y); g.lineTo(d.x - d.l * .25, y + d.l); g.stroke(); }
+  drawSprite(VSP, 300, 600, 1, 2.2, false, Math.sin(t * 1.4) * 1.5);
+  g.save(); g.textAlign = 'left'; const L = [['СЭР ВИКЕНТИЙ ДЕ БУДЕТОН', '700 44px ' + FD, '#e9d18a', 0], ['Монах-арбалетчик. Умение «Осадный лекарь».', '30px ' + FB, '#eadfc2', .6], ['Ищи его в тавернах Королевства Галлия.', '30px ' + FB, '#eadfc2', 1.1], ['Железный Стяг · версия 0.17', '26px ' + FD, '#b3a483', 1.8]];
+  L.forEach((l, i) => { g.globalAlpha = Math.max(0, ease((lt - l[3]) / .5) * Math.min(1, (DUR - t) / .8)); g.font = l[1]; g.fillStyle = l[2]; g.fillText(l[0], 470, 250 + i * 70 + (i === 3 ? 40 : 0)); }); g.restore();
+  bubble('А таблетки так и не нашлись…', 300, 330, fadeIO(t, 45.6, DUR - .2, .3)); vignette(.7);
+}
+/* ---------- музыка: тоскливый орган и редкие барабаны ---------- */
+const timers = [];
+function later(s, f) { timers.push(setTimeout(f, s * 1000)); }
+function drone(at, f, d) { later(at, () => { tone(f, 0, d, 'sine', .35); tone(f * 2.005, 0, d, 'triangle', .1); }); }
+function note(at, f, d, v) { later(at, () => { tone(f, 0, d || 1.8, 'triangle', v || .22); tone(f * 2, 0, (d || 1.8) * .6, 'sine', .06); }); }
+function score() {
+  for (let s = .4; s < 50; s += 6) drone(s, s > 22 ? 73.4 : 55, 6.5);
+  const mel = [[1, 293.7], [3.5, 349.2], [6, 329.6], [8.5, 293.7], [11, 261.6], [13.5, 293.7], [16, 220], [18.5, 246.9], [21, 293.7], [22, 349.2]]; for (const m of mel) note(m[0], m[1], 2.4, .24);
+  for (let s = 23.4; s < 43; s += 1.1) later(s, () => { tone(70, 40, .4, 'sine', .55); noise(.1, 'lowpass', 400, 100, .3); });
+  later(23.2, () => { shake = 1; sfx('thud'); sfx('horn'); });
+  for (const m of [[43.5, 293.7], [45.5, 349.2], [47.5, 329.6], [49, 293.7]]) note(m[0], m[1], 2.6, .22);
+  later(43.2, () => sfx('horn2'));
+}
+
+/* ---------- проигрывание ---------- */
+let T0 = 0, playing = false, tPrev = 0;
+function frame(t, dt) {
+  if (shake > 0) shake = Math.max(0, shake - dt * 2.5);
+  if (t < 5) sIntro(t); else if (t < 11) sMap(t); else if (t < 20) sTavern(t); else if (t < 23.2) { if (!BT.ti) { BT.ti = 1; shake = 1; sfx('thud'); sfx('horn'); } sTitle(t); } else if (t < 43) { physics(dt); sBattle(t, dt); } else sEnd(t);
+  const fb = Math.min(fadeIO(t, 0, DUR, .5), t > 22.95 && t < 23.35 ? .15 : 1); if (fb < 1) { g.fillStyle = 'rgba(0,0,0,' + (1 - fb) + ')'; g.fillRect(0, 0, TW, TH); }
+}
+function loop(now) {
+  if (!playing) return; const t = (now - T0) / 1000, dt = Math.min(.05, Math.max(0, t - tPrev)); tPrev = t;
+  if (t >= DUR) { playing = false; document.body.classList.remove('on'); document.getElementById('play').textContent = '↻ Смотреть ещё раз'; onEnd(); poster(); return; }
+  frame(t, dt); document.getElementById('bar').style.width = (t / DUR * 100) + '%'; requestAnimationFrame(loop);
+}
+function reset() {
+  for (const id of timers.splice(0)) clearTimeout(id);
+  gg.clearRect(0, 0, FW, TH); gg.drawImage(paintGround(FW, TH, 'grass', 4), 0, 0); gib.length = 0; drops.length = 0; bolts.length = 0; dust.length = 0; heals.length = 0;
+  for (const e of DEF) e.dead = false; wallBroken = false; WND.down = false; WND.up = false; WND.hp = .12; WND.x = 760;
+  BT = { lastShot: -1, lastM: -1, cnt: 0, said: null, sayT: 0, cam: 0 }; VKP.x = 240; VKP.shoot = -1; shake = 0;
+}
+function play() { auInit(); reset(); playing = true; T0 = performance.now(); tPrev = 0; document.body.classList.add('on'); score(); requestAnimationFrame(loop); }
+let onEnd = () => {};
+function poster() { BT = BT || {}; BT.ti = 1; shake = 0; sTitle(21.6); }
+document.getElementById('play').addEventListener('click', () => { if (!playing) play(); });
+reset(); poster();
+if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('700 40px "Alegreya SC"'), document.fonts.load('700 20px "Alegreya Sans"')]).then(() => { if (!playing) poster(); }).catch(() => {});
+/* запись видео — только если файл открыт со своего компьютера (в просмотрщике claude.ai сохранение файлов запрещено) */
+const rec = document.getElementById('rec');
+if (location.protocol === 'file:' && window.MediaRecorder && cvs.captureStream) { rec.hidden = false; rec.addEventListener('click', () => {
+  if (playing) return; auInit(); const vs = cvs.captureStream(60), dst = AU.ctx.createMediaStreamDestination(); AU.master.connect(dst); const st = new MediaStream([...vs.getVideoTracks(), ...dst.stream.getAudioTracks()]);
+  const mt = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)), mr = new MediaRecorder(st, { mimeType: mt, videoBitsPerSecond: 8e6 }), ch = [];
+  mr.ondataavailable = e => { if (e.data.size) ch.push(e.data); }; mr.onstop = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(ch, { type: 'video/webm' })); a.download = 'vikenty-trailer.webm'; document.body.appendChild(a); a.click(); a.remove(); rec.textContent = '● Записать видео (.webm)'; };
+  onEnd = () => { setTimeout(() => mr.stop(), 300); onEnd = () => {}; }; rec.textContent = '● Идёт запись…'; mr.start(); play(); }); }
+
+
+</script>
+</body></html>

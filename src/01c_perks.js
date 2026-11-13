@@ -41,7 +41,7 @@ const PERKS = [
   { id: 'famous',    a: 'cha', n: 'Знаменитый наёмник', req: REQ_B, fx: { quest: [.1, .2, .3], loot: [.1, .2, .3] } }
 ];
 const PERK = {}; for (const p of PERKS) PERK[p.id] = p;
-const FX_ZERO = Object.freeze({ heavy: 0, cargo: 0, mpierce: 0, killHeal: 0, hp: 0, arm: 0, heal: 0, lastStand: 0, cd: 0, acc: 0, range: 0, map: 0, flee: 0, run: 0, dmg: 0, surv: 0, xp: 0, buy: 0, sell: 0, ally: 0, morale: 0, hire: 0, size: 0, wage: 0, quest: 0, loot: 0 });
+const FX_ZERO = Object.freeze({ heavy: 0, cargo: 0, mpierce: 0, killHeal: 0, hp: 0, arm: 0, heal: 0, lastStand: 0, cd: 0, acc: 0, range: 0, map: 0, flee: 0, run: 0, dmg: 0, surv: 0, xp: 0, buy: 0, sell: 0, ally: 0, morale: 0, hire: 0, size: 0, wage: 0, quest: 0, loot: 0, siege: 0 });
 
 /* Как эффект выглядит в тексте: t — фраза, u — единица, m — множитель (доли показываем в процентах).
    Из этого собирается описание перка сразу для всех трёх рангов: «бьёт сильнее на 6 / 12 / 18%». */

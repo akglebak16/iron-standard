@@ -406,10 +406,11 @@ function drawMinimap(c) {
 /* ================= осада: стена с проломами ================= */
 // стена — вертикальная полоса перед защитниками; пройти можно только через проломы (центральный — выбитые ворота)
 function siegeSetup() {
+  const sf = B.siegeF = clamp(B.cfg.csiege || 0, 0, .9); // осадное дело спутника: у защитников слабее дух, стена хуже укрывает
   const W = B.W, H = B.H, x = W - 980; B.wall = { x, hw: 22, gaps: [[H / 2 - 80, H / 2 + 80], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
   B.trees = B.trees.filter(t => t.x < x - 140); // у стены и во дворе деревьев нет
   const [inf, arc, cav] = B.groups[1]; inf.cx = x + 80; inf.cy = H / 2; arc.cx = x + 52; arc.cy = H / 2; cav.cx = W - 380; cav.cy = H / 2; for (const g of B.groups[1]) { g.dir = Math.PI; g.order = 'hold'; g.st = 'siege'; layout(g, true); }
-  for (const u of B.units) if (u.side === 1) { u.mbase += 28; u.morale = u.mbase; if (!u.isHero) { const p = slotPos(u); u.x = p[0]; u.y = p[1]; } }
+  for (const u of B.units) if (u.side === 1) { u.mbase += Math.round(28 * (1 - sf)); u.morale = u.mbase; if (!u.isHero) { const p = slotPos(u); u.x = p[0]; u.y = p[1]; } }
   if (!SERVER) paintWall(B.gg);
 }
 function inGap(y, pad) { for (const g of B.wall.gaps) if (y > g[0] + pad && y < g[1] - pad) return g; return null; }
@@ -427,7 +428,7 @@ function wallVia(u, tx, ty) {
   return [w.x + su * (w.hw + 30), adx < 140 ? c : gy];
 }
 // стрелки за стеной получают укрытие от стрел с другой стороны
-function wallCover(hit, a) { const w = B.wall; if (!w) return 1; const behind = hit.side === 1 && hit.x > w.x && hit.x < w.x + 80 && a.x0 < w.x && !inGap(hit.y, 0); return behind ? .45 : 1; }
+function wallCover(hit, a) { const w = B.wall; if (!w) return 1; const behind = hit.side === 1 && hit.x > w.x && hit.x < w.x + 80 && a.x0 < w.x && !inGap(hit.y, 0); return behind ? .45 + .5 * (B.siegeF || 0) : 1; }
 // защитники: пехота держит ворота, стрелки — за стеной, конница — в резерве; выходят, когда враг прорвался внутрь
 function siegeBrain(dt) {
   const w = B.wall, [inf, arc, cav] = B.groups[1]; let inside = 0, near = 0; for (const u of B.units) if (u.side === 0 && fit(u)) { if (u.x > w.x + w.hw) inside++; if (u.x > w.x - 160) near++; }
