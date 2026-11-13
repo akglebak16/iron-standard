@@ -271,3 +271,5 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 .btn:active{box-shadow:inset 0 2px 5px rgba(0,0,0,.55),inset 0 0 0 1px #7c5c38}
 .card{background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.3));box-shadow:inset 0 1px 0 rgba(255,235,190,.06)}
 h1,h2,h3,.disp{text-shadow:0 2px 0 #000,0 0 10px rgba(209,168,76,.18)}
+/* низкие окна (ноутбуки, 720p и ниже): компактный нижний блок, больше места под содержимое */
+@media (max-height:700px){.dock{min-height:60px;max-height:26vh;padding:6px 14px;gap:10px}.dock .dnote{display:none}#modal .win:not(.narrow){margin-top:0;max-height:100%}}
