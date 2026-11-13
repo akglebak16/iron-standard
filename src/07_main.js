@@ -187,7 +187,7 @@ function bindInput() {
   cv.addEventListener('mouseleave', () => { el('tip').hidden = true; });
   cv.addEventListener('mousedown', e => { auInit(); IN.mx = e.clientX; IN.my = e.clientY; if (MODE === 'battle') { if (e.button === 0) IN.atk = true; else if (e.button === 2) IN.block = true; } else if (MODE === 'world' && e.button === 0) drag = { x: e.clientX, y: e.clientY, cx: WC.x, cy: WC.y, moved: false }; });
   window.addEventListener('mouseup', e => { if (MODE === 'battle') { if (e.button === 0) IN.atk = false; if (e.button === 2) IN.block = false; } else if (drag) { if (!drag.moved && e.target === cv) worldClick(e.clientX, e.clientY); drag = null; } });
-  cv.addEventListener('wheel', e => { e.preventDefault(); const f = e.deltaY < 0 ? 1.1 : .91; if (MODE === 'world') WC.z = clamp(WC.z * f, .45, 1.8); else if (B) B.cam.z = clamp(B.cam.z * f, .55, 2); }, { passive: false });
+  cv.addEventListener('wheel', e => { e.preventDefault(); const f = e.deltaY < 0 ? 1.1 : .91; if (MODE === 'world') WC.z = clamp(WC.z * f, WW > 3000 ? .25 : .45, 1.8); else if (B) B.cam.z = clamp(B.cam.z * f, .55, 2); }, { passive: false });
   // тач
   const joy = el('joy'); let jid = null; const jset = (t) => { const r = joy.getBoundingClientRect(), dx = t.clientX - (r.left + r.width / 2), dy = t.clientY - (r.top + r.height / 2), l = Math.hypot(dx, dy), m = r.width / 2; const k = l > m ? m / l : 1; IN.jx = dx * k / m; IN.jy = dy * k / m; joy.firstElementChild.style.transform = 'translate(' + dx * k + 'px,' + dy * k + 'px)'; };
   joy.addEventListener('touchstart', e => { e.preventDefault(); IN.touch = true; jid = e.changedTouches[0].identifier; jset(e.changedTouches[0]); }, { passive: false });
