@@ -74,10 +74,12 @@ const BASE = {
 const TROOPS = {};
 /* Бой: дальность стрелков ×2 от прежней, разброс ×ACC_K, щит прибавляет шанс заблокировать снаряд (см. blocked в 03_battle.js) */
 const ACC_K = 1.8, SHOT_V = 620, THROW_V = 460;
+/* Подстройка живучести фракций после патча дальнобоя: множитель здоровья всех бойцов фракции (по боям 30/50/80 человек) */
+const FAC_HP = { khan: 1.05, emi: .96 };
 function shieldArrow(l) { return l === 'kite' ? .18 : l === 'round' ? .12 : l === 'small' ? .07 : 0; }
 function T(id, name, fac, tier, cls, look, up, mod) {
   const t = Object.assign({ id, name, fac, tier, cls, look, up: up || [], reach: 0, block: 0, range: 0 }, BASE[cls][tier], mod || {});
-  t.mounted = cls === 'cav' || cls === 'har'; t.shb = shieldArrow(look.shield); t.acc = t.acc ? t.acc * (cls === 'har' ? 1.3 : ACC_K) : t.acc;
+  t.mounted = cls === 'cav' || cls === 'har'; if (FAC_HP[fac]) t.hp = Math.round(t.hp * FAC_HP[fac]); t.shb = shieldArrow(look.shield); t.acc = t.acc ? t.acc * (cls === 'har' ? 1.3 : ACC_K) : t.acc;
   t.grp = (cls === 'inf' || cls === 'spr') ? 0 : cls === 'arc' ? 1 : 2;
   t.cost = [0, 25, 60, 130][tier] + (t.mounted ? 50 : 0);
   t.upCost = [0, 35, 85, 0][tier];
