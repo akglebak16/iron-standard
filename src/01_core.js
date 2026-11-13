@@ -74,8 +74,8 @@ const BASE = {
 const TROOPS = {};
 /* Бой: дальность стрелков ×2 от прежней, разброс ×ACC_K, щит прибавляет шанс заблокировать снаряд (см. blocked в 03_battle.js) */
 const ACC_K = 1.8, SHOT_V = 620, THROW_V = 460;
-/* Подстройка живучести фракций после патча дальнобоя: множитель здоровья всех бойцов фракции (по боям 30/50/80 человек) */
-const FAC_HP = { khan: 1.05, emi: .96 };
+/* Подстройка живучести фракций после патча дальнобоя: множитель здоровья всех бойцов фракции (по боям 30/50/80 человек; пакт — самый слабый в среднем) */
+const FAC_HP = { pact: 1.05 };
 function shieldArrow(l) { return l === 'kite' ? .18 : l === 'round' ? .12 : l === 'small' ? .07 : 0; }
 function T(id, name, fac, tier, cls, look, up, mod) {
   const t = Object.assign({ id, name, fac, tier, cls, look, up: up || [], reach: 0, block: 0, range: 0 }, BASE[cls][tier], mod || {});
