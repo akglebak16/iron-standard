@@ -108,13 +108,23 @@ function boxBlur(src, W, H, r, passes) {
   return a;
 }
 function distSeg(px, py, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy, t = l ? clamp(((px - ax) * dx + (py - ay) * dy) / l, 0, 1) : 0; return Math.hypot(px - ax - dx * t, py - ay - dy * t); }
-// поле гор: 1 на гребне, спадает к краям; границу слегка рвёт шум, чтобы хребты не были ровными линиями
-function ridgeGrid(W, H, res, n1, n2) {
-  const R = new Float32Array(W * H);
+// поле гор: 1 на гребне, спадает к краям; границу слегка рвёт шум, чтобы хребты не были ровными линиями.
+// Вдоль каждого длинного хребта через равные промежутки прорезаны перевалы (место чуть сдвигается от зерна к зерну):
+// без них Альпы, Карпаты и прочие хребты были бы сплошной стеной с одной-двумя дырками на краях
+function ridgeGrid(W, H, res, n1, n2, rng) {
+  const R = new Float32Array(W * H), P = new Float32Array(W * H), T = new Float32Array(W * H), X = new Float32Array(W * H), Y = new Float32Array(W * H);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const x = (i + .5) * res, y = (j + .5) * res; X[j * W + i] = x + (n1(x / 260, y / 260) - .5) * 110; Y[j * W + i] = y + (n2(x / 260 + 5, y / 260) - .5) * 110; }
   for (const rd of EU_RIDGES) { const w = rd[0], pts = []; for (let i = 1; i < rd.length; i += 2) pts.push([euX(rd[i]), euY(rd[i + 1])]);
+    T.fill(0); let L = 0; const lens = []; for (let s = 0; s < pts.length - 1; s++) { lens.push(Math.hypot(pts[s + 1][0] - pts[s][0], pts[s + 1][1] - pts[s][1])); L += lens[s]; }
     for (let s = 0; s < pts.length - 1; s++) { const [ax, ay] = pts[s], [bx, by] = pts[s + 1], pad = w * 2.6 + 60;
       const i0 = Math.max(0, Math.floor((Math.min(ax, bx) - pad) / res)), i1 = Math.min(W - 1, Math.ceil((Math.max(ax, bx) + pad) / res)), j0 = Math.max(0, Math.floor((Math.min(ay, by) - pad) / res)), j1 = Math.min(H - 1, Math.ceil((Math.max(ay, by) + pad) / res));
-      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const x = (i + .5) * res, y = (j + .5) * res, d = distSeg(x + (n1(x / 260, y / 260) - .5) * 110, y + (n2(x / 260 + 5, y / 260) - .5) * 110, ax, ay, bx, by), v = Math.exp(-(d / w) * (d / w)); if (v > R[j * W + i]) R[j * W + i] = v; } } }
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const k = j * W + i, d = distSeg(X[k], Y[k], ax, ay, bx, by), v = Math.exp(-(d / w) * (d / w)); if (v > T[k]) T[k] = v; } }
+    if (L >= 200) { const n = Math.ceil(L / (200 + w * 1.2)), ph = 22 + w * .1; // n перевалов; ph — половина полностью открытого прохода
+      for (let q = 0; q < n; q++) { let at = L * (q + .5 + (rng() - .5) * .5) / n, s = 0; while (s < lens.length - 1 && at > lens[s]) { at -= lens[s]; s++; } const t = lens[s] ? at / lens[s] : 0, px = pts[s][0] + (pts[s + 1][0] - pts[s][0]) * t, py = pts[s][1] + (pts[s + 1][1] - pts[s][1]) * t;
+        const i0 = Math.max(0, Math.floor((px - ph * 2) / res)), i1 = Math.min(W - 1, Math.ceil((px + ph * 2) / res)), j0 = Math.max(0, Math.floor((py - ph * 2) / res)), j1 = Math.min(H - 1, Math.ceil((py + ph * 2) / res));
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const k = j * W + i, d = Math.hypot(X[k] - px, Y[k] - py); if (d < ph * 1.4) { const f = clamp((d - ph) / (ph * .4), 0, 1); T[k] *= f; if (1 - f > P[k]) P[k] = 1 - f; } } } }
+    for (let k = 0; k < R.length; k++) if (T[k] > R[k]) R[k] = T[k]; }
+  R.pass = P; // где прорезаны перевалы: там нет и случайных скал
   return R;
 }
 function bilin(F, W, H, res, x, y) { const u = x / res - .5, v = y / res - .5, i = Math.floor(u), j = Math.floor(v), fx = u - i, fy = v - j, i0 = clamp(i, 0, W - 1), i1 = clamp(i + 1, 0, W - 1), j0 = clamp(j, 0, H - 1), j1 = clamp(j + 1, 0, H - 1); return (F[j0 * W + i0] * (1 - fx) + F[j0 * W + i1] * fx) * (1 - fy) + (F[j1 * W + i0] * (1 - fx) + F[j1 * W + i1] * fx) * fy; }
@@ -128,7 +138,7 @@ function genWorldV2(seed) {
   const nE = makeNoise(seed), nM = makeNoise(seed ^ 0x9e3779b9), nF = makeNoise(seed + 77), nD = makeNoise(seed + 5), nC = makeNoise(seed + 31);
   const RES = 10, LW = WW / RES, LH = WH / RES, mask = new Uint8Array(LW * LH);
   for (const sh of EU_SHAPES) { const pts = []; for (let i = 1; i < sh.length; i += 2) pts.push(euX(sh[i]), euY(sh[i + 1])); polyFill(mask, LW, LH, RES, pts, sh[0]); }
-  const Lsh = boxBlur(mask, LW, LH, 2, 2), Lwd = boxBlur(mask, LW, LH, 8, 2), Rid = ridgeGrid(LW, LH, RES, nF, nD);
+  const Lsh = boxBlur(mask, LW, LH, 2, 2), Lwd = boxBlur(mask, LW, LH, 8, 2), Rid = ridgeGrid(LW, LH, RES, nF, nD, mulberry(seed + 101));
   const carve = new Uint8Array(GW * GH), kOf = (x, y) => clamp(Math.floor(y / GC), 0, GH - 1) * GW + clamp(Math.floor(x / GC), 0, GW - 1);
   // тип местности: 0 море, 1 равнина, 2 лес, 3 холмы, 4 горы
   const bz = (x, y) => { // биом: 0 трава, 1 снег, 2 степь, 3 пустыня
@@ -145,7 +155,7 @@ function genWorldV2(seed) {
     const Ls = bilin(Lsh, LW, LH, RES, x, y), Lw = bilin(Lwd, LW, LH, RES, x, y), e = .33 + (Ls - .5) * .8 + (Lw - .5) * .3 + (nE(x / 240, y / 240) - .5) * .2 + (nC(x / 60, y / 60) - .5) * .16;
     if (e < .33) return { e, t: 0 };
     const m = nM(x / 230, y / 230), r = bilin(Rid, LW, LH, RES, x, y), mt = r * (.55 + .9 * m); let t = 1;
-    if (mt > .66 || m > .78) t = carve[kOf(x, y)] ? 3 : 4;
+    if (mt > .66 || (m > .78 && bilin(Rid.pass, LW, LH, RES, x, y) < .2)) t = carve[kOf(x, y)] ? 3 : 4;
     else if (mt > .34 || m > .64) t = 3;
     else { const b = bz(x, y); if (b !== 3) { const lat = euLat(y), thr = .62 - .09 * clamp((lat - 47) / 10, -1.2, 1.4) + (b === 2 ? .14 : 0); if (nF(x / 130, y / 130) > thr) t = 2; } }
     return { e, t };
