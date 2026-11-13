@@ -12,7 +12,7 @@ function saveGame(silent) { if (!G || MODE !== 'world' || NET.on) return; try { 
 function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
 function loadGame() {
   let raw; try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { } if (!raw) return toast('Сохранения нет');
-  try { const d = JSON.parse(raw); G = d; genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); G.player = G.players[0]; const b = BANNERS[G.player.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2; closeModal(); enterWorld(); } catch (e) { console.error(e); toast('Сохранение повреждено'); }
+  try { const d = JSON.parse(raw); G = d; if (d.rv === undefined) d.rv = 0; genWorld(d.seed); for (const s of G.settles) s.camp = s.camp ? G.parties.find(p => p.id === s.camp) || null : null; markRoads(); G.player = G.players[0]; const b = BANNERS[G.player.banner]; FACTIONS.player.c1 = b.c1; FACTIONS.player.c2 = b.c2; closeModal(); enterWorld(); } catch (e) { console.error(e); toast('Сохранение повреждено'); }
 }
 function showLoad(on) { el('load').hidden = !on; }
 function startNew(o) { MODE = 'loading'; B = null; el('title').hidden = true; showLoad(true); setTimeout(() => { newGame(o); enterWorld(); }, 30); }
@@ -154,7 +154,7 @@ function worldTip(sx, sy) {
   const tip = el('tip'); if (MODE !== 'world' || UI.open) { tip.hidden = true; return; } const w = s2wW(sx, sy); let html = null;
   for (const p of G.parties) { if (p.hide || Math.hypot(p.x - w.x, p.y - w.y) > 30) continue; const pw = relativePower(p), hs = isHostileToPlayer(p); html = '<b>' + (p.kind === 'bandit' ? 'Разбойники' : p.name) + '</b><br>' + FACTIONS[p.fac].name + ' · ' + troopCount(p.troops) + ' бойцов<br><span class="tag ' + pw[1] + '">' + pw[0] + '</span>' + (hs ? '<span class="tag r">враг</span>' : ''); break; }
   if (!html) for (const s of G.settles) { if (Math.hypot(s.x - w.x, s.y - w.y) > 46) continue; html = '<b>' + s.name + '</b><br>' + KIND[s.kind] + ' · ' + (s.fac === 'player' ? 'твоё владение · гарнизон ' + troopCount(garrisonOf(s)) : FACTIONS[s.fac].gen) + (settleHostile(s, G.player) ? '<br><span class="tag r">враждебен</span> ' + (s.kind === 'village' ? 'ворота закрыты' : 'клик — осада, гарнизон ' + troopCount(garrisonOf(s))) : '') + (s.kind === 'camp' ? (s.camp ? '<br>Охраняет ' + troopCount(s.camp.troops) + ' головорезов' : '<br>Опустошено') : (s.fac === 'player' ? '' : '<br>Отношение: ' + relName(G.player.rel[s.fac]))); break; }
-  if (!html) { const t = terrAt(w.x, w.y); if (t === 0 || t === 4) html = null; }
+  if (!html) { const t = terrAt(w.x, w.y); if (t === 0 || t === 4 || t === 5) html = null; }
   if (html) { tip.innerHTML = html; tip.hidden = false; tip.style.left = Math.min(sx + 18, VIEW.w - 270) + 'px'; tip.style.top = Math.min(sy + 14, VIEW.h - 100) + 'px'; } else tip.hidden = true;
 }
 

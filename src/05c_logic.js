@@ -27,7 +27,7 @@ function relativePowerOf(P, p) { const a = strength(P.troops) + 8, b = p.str !==
 function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); relWatch(P); }
 function encFlee(P, p) {
   const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0) + perkFx(P.hero).flee, .12, .9);
-  if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; p.lock = null; const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); return true; }
+  if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; p.lock = null; const a = Math.atan2(P.y - p.y, P.x - p.x); const nx = clamp(P.x + Math.cos(a) * 40, 20, WW - 20), ny = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); if (!WT.rv || (TCOST[terrAt(nx, ny)] && losClear(P.x, P.y, nx, ny))) { P.x = nx; P.y = ny; } return true; }
   return false;
 }
 function battleCfgFor(P, p) {

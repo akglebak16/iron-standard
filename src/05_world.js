@@ -18,7 +18,7 @@ const FAC_V = { 1: ['nord', 'emp', 'khan'], 2: ['nord', 'emp', 'khan', 'kin', 'e
 const worldF = () => FAC_V[G ? mapVer() : DEFAULT_MAPV];
 const atWar = (a, b) => a !== b && ((WAR[a] && WAR[a][b]) || (WAR[b] && WAR[b][a]));
 const TCOST = [0, 1, 1.75, 1.5, 0];
-const TNAME = ['вода', 'равнина', 'лес', 'холмы', 'горы'];
+const TNAME = ['вода', 'равнина', 'лес', 'холмы', 'горы', 'река'];
 
 function genWorld(seed) { const v = mapVer(); if (G) G.mapv = v; setMapSize(v); return v === 1 ? genWorldV1(seed) : genWorldV2(seed); }
 /* ---------- Европа: карта версии 2 ----------
@@ -134,6 +134,69 @@ function labelComps(cells) {
   for (let s = 0; s < cells.length; s++) { if (comp[s] >= 0 || !TCOST[cells[s]]) continue; let n = 0; const st = [s]; comp[s] = cid; while (st.length) { const c = st.pop(); n++; const ci = c % GW, cj = (c / GW) | 0; for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = ci + a, y = cj + b; if (x < 0 || y < 0 || x >= GW || y >= GH) continue; const k = y * GW + x; if (comp[k] < 0 && TCOST[cells[k]]) { comp[k] = cid; st.push(k); } } } if (n > bestN) { bestN = n; best = cid; } cid++; }
   return { comp, main: best };
 }
+// Реки Европы: [ширина у устья, долгота, широта, ...] от истока к устью. Река обрывается у моря или впадает в другую реку.
+const EU_RIVERS = [
+  [17, 8.5, 48.0, 10, 48.4, 12, 48.8, 14, 48.3, 16.5, 48.2, 19, 47.5, 19.1, 46, 20.5, 45.2, 22.5, 44.5, 25, 43.8, 27.5, 44.2, 28.5, 45.3, 29.8, 45.2, 31, 45.2], // Дунай
+  [11, 24, 48, 21.5, 48.3, 20.2, 47, 20.1, 46, 20.4, 45.2], // Тиса
+  [10, 14.5, 46.1, 16, 45.8, 18, 45.1, 20.1, 44.8, 20.6, 44.8], // Сава
+  [14, 8.6, 46.6, 8.2, 47.6, 7.6, 48.5, 8.4, 49.5, 7.6, 50.3, 6.9, 51, 6, 51.8, 4.5, 51.9, 3.5, 52.4], // Рейн
+  [8, 11.5, 50.2, 9.5, 50, 8.3, 50, 8.1, 50], // Майн
+  [12, 4.8, 47.6, 3.5, 48.1, 2.5, 48.5, 1.5, 49, .3, 49.4, -.5, 49.9], // Сена
+  [14, 4, 45, 3.5, 46.5, 2.5, 47.4, .5, 47.3, -1.5, 47.3, -2.3, 47.3, -3.2, 47.1], // Луара
+  [12, 7, 46.2, 5.9, 45.9, 4.8, 45.3, 4.8, 44, 4.7, 43.5, 4.6, 43.2, 4.5, 42.6], // Рона
+  [11, .7, 42.8, .8, 43.6, 1.4, 43.6, .5, 44.3, -.5, 44.9, -1.2, 45.5, -2, 45.9], // Гаронна
+  [11, -4, 43, -2.5, 42.4, -.8, 41.7, .5, 41.2, .9, 40.7, 1.6, 40.3], // Эбро
+  [13, -2, 40.4, -4, 40, -6.5, 39.6, -8.2, 39.5, -9, 38.8, -10.2, 38.5], // Тахо
+  [12, -3, 41.9, -5, 41.5, -7, 41.2, -8.5, 41.1, -10, 41.1], // Дуэро
+  [10, -2.8, 38, -4.5, 37.9, -6, 37.3, -6.4, 36.8, -6.6, 36], // Гвадалквивир
+  [13, 7.1, 44.7, 8.5, 45, 10.5, 45, 12, 44.9, 12.8, 44.9, 13.6, 44.9], // По
+  [15, 15.5, 50.6, 14.2, 50.5, 13.5, 51, 12.5, 51.8, 11.5, 52.5, 10.5, 53.3, 9.5, 53.7, 8.5, 54, 8, 54.4], // Эльба
+  [13, 17.5, 49.8, 16.8, 50.8, 15.5, 51.8, 14.5, 52.6, 14.3, 53.4, 14.3, 54, 14.2, 54.8], // Одер
+  [14, 19, 49.6, 20.3, 50.1, 21.5, 50.6, 21.5, 51.8, 20.6, 52.5, 19.5, 53, 18.8, 53.8, 18.8, 54.8], // Висла
+  [14, 24, 49.2, 25, 48.8, 27, 48.4, 28.8, 47.3, 29.9, 46.4, 30.2, 45.9], // Днестр
+  [17, 32, 56, 31, 55, 30.5, 53.5, 30.8, 52, 31.5, 50.5, 33, 49.5, 34.7, 48.5, 33.5, 47.5, 32.5, 46.7, 31.5, 45.8], // Днепр
+  [14, 39, 53.5, 39.5, 51.5, 40.5, 49.8, 42.5, 49, 41.5, 48, 40, 47.3, 38.8, 46.8], // Дон
+  [19, 35, 57.5, 38, 57.2, 41, 57, 44, 56.2, 46, 55.8, 49, 55.5, 49.5, 54, 47.5, 52.5, 46, 51, 45.5, 49, 44.5, 47.5, 47.5, 46.5, 49.5, 46.3], // Волга
+  [11, 36, 53.2, 39, 54.4, 41.5, 55.3, 44, 56.2], // Ока
+  [9, -2, 51.7, -.8, 51.5, .4, 51.5, 1.4, 51.6], // Темза
+];
+// Реки: клетки местности 5 непроходимы (TCOST[5] не задан). Мосты — открытые клетки в реке; недостающие мосты добавляются там, где река отрезала земли от главной суши
+function genRivers(cells, seed) {
+  const R = mulberry(seed + 211), nR = makeNoise(seed + 313), rk = new Uint8Array(GW * GH), bridge = new Uint8Array(GW * GH), rivers = [], bridges = [];
+  const kOf = (x, y) => clamp(Math.floor(y / GC), 0, GH - 1) * GW + clamp(Math.floor(x / GC), 0, GW - 1), cx = k => (k % GW) * GC + GC / 2, cy = k => ((k / GW) | 0) * GC + GC / 2;
+  EU_RIVERS.forEach((rd, ri) => {
+    const w = rd[0], P = []; for (let i = 1; i < rd.length; i += 2) P.push([euX(rd[i]), euY(rd[i + 1])]);
+    const D = []; for (let i = 0; i < P.length - 1; i++) { const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)], n = Math.max(2, Math.ceil(Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) / 6));
+      for (let j = 0; j < n; j++) { const t = j / n, t2 = t * t, t3 = t2 * t; D.push([0, 1].map(a => .5 * (2 * p1[a] + (-p0[a] + p2[a]) * t + (2 * p0[a] - 5 * p1[a] + 4 * p2[a] - p3[a]) * t2 + (-p0[a] + 3 * p1[a] - 3 * p2[a] + p3[a]) * t3))); } }
+    D.push(P[P.length - 1]);
+    let s = 0; const M = D.map((p, i) => { if (i) s += Math.hypot(p[0] - D[i - 1][0], p[1] - D[i - 1][1]); const a = D[Math.max(0, i - 2)], b = D[Math.min(D.length - 1, i + 2)], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, o = (nR(s / 150, ri * 9.7) - .5) * 48 * Math.min(1, s / 200); return [p[0] - (b[1] - a[1]) / L * o, p[1] + (b[0] - a[0]) / L * o]; });
+    const cs = [], curve = [], own = new Set(); let last = -1, started = false, stop = false, join = false;
+    const add = k => { if (!cells[k] && !rk[k]) { stop = true; return; } if (rk[k] && !own.has(k)) { if (cs.length > 5) { stop = true; join = true; } return; } if (own.has(k)) return; if (cells[k] === 4) return; cells[k] = 5; rk[k] = ri + 1; own.add(k); cs.push(k); };
+    let end = M.length;
+    for (let i = 0; i < M.length && !stop; i++) {
+      const [x, y] = M[i]; if (x < 0 || y < 0 || x >= WW || y >= WH) continue; const k = kOf(x, y);
+      if (!started) { if (!cells[k]) continue; started = true; }
+      if (k !== last) { const ci = k % GW, cj = (k / GW) | 0;
+        if (last >= 0) { const li = last % GW, lj = (last / GW) | 0; if (ci !== li && cj !== lj) { const ka = lj * GW + ci, kb = cj * GW + li, da = Math.hypot(cx(ka) - x, cy(ka) - y), db = Math.hypot(cx(kb) - x, cy(kb) - y); add(da <= db ? ka : kb); } }
+        if (!stop) add(k); last = k; }
+      curve.push([Math.round(x * 10) / 10, Math.round(y * 10) / 10]); if (stop) end = i;
+    }
+    if (stop && !join) for (let i = end + 1; i < Math.min(M.length, end + 5); i++) curve.push([Math.round(M[i][0] * 10) / 10, Math.round(M[i][1] * 10) / 10]); // чуть дальше в море, чтобы устье не обрывалось у берега
+    if (join && curve.length) { let bd = 1e9, bp = null; for (const r of rivers) for (const q of r.p) { const d = Math.hypot(q[0] - curve[curve.length - 1][0], q[1] - curve[curve.length - 1][1]); if (d < bd) { bd = d; bp = q; } } if (bp && bd < 60) curve.push(bp); }
+    if (cs.length >= 4) rivers.push({ w, p: curve, c: cs });
+  });
+  const land = k => k >= 0 && k < cells.length && (cells[k] === 1 || cells[k] === 2 || cells[k] === 3);
+  const axisOf = k => { const ci = k % GW, W = ci > 0 && land(k - 1), E = ci < GW - 1 && land(k + 1), N = land(k - GW), S = land(k + GW); if (W && E && !N && !S) return 0; if (N && S && !W && !E) return 1; return -1; };
+  const open = (k, ax, w) => { cells[k] = 1; rk[k] = 0; bridge[k] = 1; bridges.push({ k, x: cx(k), y: cy(k), ax: ax < 0 ? 0 : ax, w }); };
+  for (const r of rivers) { let next = 100 + R() * 120; for (let i = 0; i < r.c.length; i++) { if (i * GC < next) continue; let done = false; for (let j = i; j < Math.min(r.c.length, i + 8) && !done; j++) { const k = r.c[j], ax = axisOf(k); if (ax >= 0) { open(k, ax, r.w * (.55 + .45 * j / r.c.length)); done = true; i = j; } } if (done) next = i * GC + 260 + R() * 200; } }
+  // реки не должны отрезать земли: если область отделена только рекой, открываем мост
+  for (let pass = 0; pass < 12; pass++) {
+    const lab = labelComps(cells), sizes = new Map(); for (let k = 0; k < cells.length; k++) if (lab.comp[k] >= 0) sizes.set(lab.comp[k], (sizes.get(lab.comp[k]) || 0) + 1);
+    const best = new Map(); for (let k = 0; k < cells.length; k++) { if (cells[k] !== 5) continue; const ci = k % GW, ns = [ci > 0 ? k - 1 : -1, ci < GW - 1 ? k + 1 : -1, k - GW, k + GW].map(q => q >= 0 && q < cells.length && lab.comp[q] >= 0 ? lab.comp[q] : -1), ids = [...new Set(ns.filter(q => q >= 0))]; if (ids.length < 2) continue; const sc = (axisOf(k) >= 0 ? 2 : 0) + (ids.includes(lab.main) ? 1 : 0); for (const c of ids) { if (c === lab.main || (sizes.get(c) || 0) < 8) continue; const o = best.get(c); if (!o || sc > o.sc) best.set(c, { k, sc }); } }
+    if (!best.size) break; for (const { k } of best.values()) if (cells[k] === 5) open(k, axisOf(k), (rivers[rk[k] - 1] || { w: 10 }).w * .8);
+  }
+  return { rivers, bridges, bridge };
+}
 function genWorldV2(seed) {
   const nE = makeNoise(seed), nM = makeNoise(seed ^ 0x9e3779b9), nF = makeNoise(seed + 77), nD = makeNoise(seed + 5), nC = makeNoise(seed + 31);
   const RES = 10, LW = WW / RES, LH = WH / RES, mask = new Uint8Array(LW * LH);
@@ -176,7 +239,9 @@ function genWorldV2(seed) {
     for (const k0 of bestOf.values()) for (let k = k0; k >= 0 && dist[k] > 0; k = prev[k]) if (cells[k] === 4) { cells[k] = 3; carve[k] = 1; }
     lab = labelComps(cells);
   }
-  WT = { seed, cells, bio, comp: lab.comp, main: lab.main, info, biomeAt, road: new Uint8Array(GW * GH), nF, nD };
+  const rv = !(G && G.rv === 0), RV = rv ? genRivers(cells, seed) : { rivers: [], bridges: [], bridge: new Uint8Array(GW * GH) };
+  if (rv) lab = labelComps(cells);
+  WT = { seed, cells, bio, comp: lab.comp, main: lab.main, info, biomeAt, road: new Uint8Array(GW * GH), nF, nD, rv, rivers: RV.rivers, bridges: RV.bridges, bridge: RV.bridge };
   return WT;
 }
 function genWorldV1(seed) {
@@ -205,8 +270,8 @@ const PA = { g: new Float32Array(GW * GH), prev: new Int32Array(GW * GH), closed
 function nearestPass(x, y) { const ci = clamp(Math.floor(x / GC), 0, GW - 1), cj = clamp(Math.floor(y / GC), 0, GH - 1); if (TCOST[WT.cells[cj * GW + ci]]) return [ci, cj]; for (let r = 1; r < 40; r++) for (let j = cj - r; j <= cj + r; j++) for (let i = ci - r; i <= ci + r; i++) { if (i < 0 || j < 0 || i >= GW || j >= GH) continue; if (Math.max(Math.abs(i - ci), Math.abs(j - cj)) !== r) continue; if (TCOST[WT.cells[j * GW + i]] && WT.comp[j * GW + i] === WT.main) return [i, j]; } return [ci, cj]; }
 function hpush(h, f, v) { h.push([f, v]); let i = h.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (h[p][0] <= h[i][0]) break; [h[p], h[i]] = [h[i], h[p]]; i = p; } }
 function hpop(h) { const top = h[0], last = h.pop(); if (h.length) { h[0] = last; let i = 0; for (; ;) { let l = i * 2 + 1, r = l + 1, m = i; if (l < h.length && h[l][0] < h[m][0]) m = l; if (r < h.length && h[r][0] < h[m][0]) m = r; if (m === i) break; [h[m], h[i]] = [h[i], h[m]]; i = m; } } return top; }
-function losClear(x0, y0, x1, y1) { const d = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(d / (GC * .5)); for (let i = 1; i < n; i++) { const t = i / n; if (!TCOST[terrAt(lerp(x0, x1, t), lerp(y0, y1, t))]) return false; } return true; }
-function findPath(sx, sy, tx, ty) {
+function losClear(x0, y0, x1, y1) { const d = Math.hypot(x1 - x0, y1 - y0), n = Math.ceil(d / (GC * (WT.rv ? .25 : .5))); for (let i = 1; i < n; i++) { const t = i / n; if (!TCOST[terrAt(lerp(x0, x1, t), lerp(y0, y1, t))]) return false; } return true; }
+function findPath(sx, sy, tx, ty, raw) { // raw: путь по центрам клеток без упрощения (для дорог)
   const [a, b] = nearestPass(sx, sy), [c, d] = nearestPass(tx, ty), s = b * GW + a, e = d * GW + c; if (s === e) return [{ x: tx, y: ty }];
   PA.g.fill(1e9); PA.closed.fill(0); const h = []; PA.g[s] = 0; PA.prev[s] = -1; hpush(h, 0, s); let found = false;
   while (h.length) { const [, cur] = hpop(h); if (PA.closed[cur]) continue; PA.closed[cur] = 1; if (cur === e) { found = true; break; } const ci = cur % GW, cj = (cur / GW) | 0;
@@ -214,6 +279,7 @@ function findPath(sx, sy, tx, ty) {
   if (!found) return null;
   const pts = []; for (let k = e; k >= 0; k = PA.prev[k]) pts.push({ x: (k % GW) * GC + GC / 2, y: ((k / GW) | 0) * GC + GC / 2 }); pts.reverse(); pts[0] = { x: sx, y: sy }; pts[pts.length - 1] = { x: tx, y: ty };
   if (!TCOST[terrAt(tx, ty)]) pts[pts.length - 1] = pts[pts.length - 2] || pts[0];
+  if (raw) return pts.filter((q, i) => i && (q.x !== pts[i - 1].x || q.y !== pts[i - 1].y));
   const out = [pts[0]]; let i = 0; while (i < pts.length - 1) { let j = pts.length - 1; while (j > i + 1 && !losClear(pts[i].x, pts[i].y, pts[j].x, pts[j].y)) j--; out.push(pts[j]); i = j; } out.shift(); return out;
 }
 
@@ -231,7 +297,7 @@ const rnd2 = (R, a, b) => a + R() * (b - a);
 // Европа: фракции живут каждая в своих землях (эллипсы в EU_REG). Столицы ставятся первыми, остальное — вразброс: из нескольких подходящих мест берётся самое далёкое от соседей
 function genSettlementsV2() {
   const R = mulberry(G.seed + 11), W = WT;
-  const ok = (x, y, md) => { if (x < 90 || y < 90 || x > WW - 90 || y > WH - 90) return false; const k = cellOf(x, y); if (W.comp[k] !== W.main || W.cells[k] !== 1) return false; for (const s of G.settles) if (Math.hypot(s.x - x, s.y - y) < md) return false; return true; };
+  const ok = (x, y, md) => { if (x < 90 || y < 90 || x > WW - 90 || y > WH - 90) return false; const k = cellOf(x, y); if (W.comp[k] !== W.main || W.cells[k] !== 1) return false; if (W.rv) { const ci = k % GW, cj = (k / GW) | 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = ci + di, b = cj + dj; if (a >= 0 && b >= 0 && a < GW && b < GH && W.cells[b * GW + a] === 5) return false; } } for (const s of G.settles) if (Math.hypot(s.x - x, s.y - y) < md) return false; return true; };
   const spot = (discs, sc) => { let tot = 0; for (const d of discs) tot += d[2] * d[3]; let q = R() * tot, d = discs[discs.length - 1]; for (const c of discs) { if (q < c[2] * c[3]) { d = c; break; } q -= c[2] * c[3]; } const a = R() * TAU, r = Math.sqrt(R()); return [euX(d[0] + Math.cos(a) * r * d[2] * sc), euY(d[1] + Math.sin(a) * r * d[3] * sc)]; };
   const place = (fac, kind, name, md, discs, k) => { let best = null, bd = -1, tries = 0, found = 0, sc = 1;
     while (found < k && tries < 1500) { tries++; if (tries % 250 === 0) sc *= 1.2; const [x, y] = spot(discs, sc); if (!ok(x, y, md)) continue; found++; let d = 1e9; for (const s of G.settles) d = Math.min(d, Math.hypot(s.x - x, s.y - y)); if (d > bd) { bd = d; best = [x, y]; } }
@@ -244,9 +310,14 @@ function genSettlementsV2() {
   // разбойничьи лагеря: у каждой фракции и в диких краях
   for (let i = 0; i < CAMPN2.length; i++) { const f = i < 10 ? REAL_F[i % 5] : 'wild'; place('bandit', 'camp', CAMPN2[i], 200, EU_REG[f].discs, 4); }
 }
+// Путь по клеткам идёт отрезками в 8 направлениях: точки на прямых участках лишние (кроме мостов — они нужны для рисования)
+function thinPath(seg) {
+  const out = [seg[0]]; for (let i = 1; i < seg.length - 1; i++) { const ax = seg[i].x - seg[i - 1].x, ay = seg[i].y - seg[i - 1].y, bx = seg[i + 1].x - seg[i].x, by = seg[i + 1].y - seg[i].y; if (Math.abs(ax * by - ay * bx) < 1e-6 && ax * bx + ay * by > 0 && !WT.bridge[cellOf(seg[i].x, seg[i].y)]) continue; out.push(seg[i]); } out.push(seg[seg.length - 1]); return out;
+}
 function genRoads() {
   const towns = G.settles.filter(s => s.kind !== 'camp'); WT.road.fill(0);
-  const link = (a, b) => { const p = findPath(a.x, a.y, b.x, b.y); if (!p) return false; let px = a.x, py = a.y; const seg = []; for (const q of [{ x: a.x, y: a.y }, ...p]) seg.push(q); for (let i = 0; i < seg.length - 1; i++) { const n = Math.ceil(Math.hypot(seg[i + 1].x - seg[i].x, seg[i + 1].y - seg[i].y) / 8); for (let k = 0; k <= n; k++) WT.road[cellOf(lerp(seg[i].x, seg[i + 1].x, k / n), lerp(seg[i].y, seg[i + 1].y, k / n))] = 1; } G.roads.push(seg); return true; };
+  const addRoad = seg => { for (let i = 0; i < seg.length - 1; i++) { const n = Math.ceil(Math.hypot(seg[i + 1].x - seg[i].x, seg[i + 1].y - seg[i].y) / 8); for (let k = 0; k <= n; k++) WT.road[cellOf(lerp(seg[i].x, seg[i + 1].x, k / n), lerp(seg[i].y, seg[i + 1].y, k / n))] = 1; } G.roads.push(seg); };
+  const link = (a, b) => { const raw = !!WT.rv, p = findPath(a.x, a.y, b.x, b.y, raw); if (!p) return false; let seg = [{ x: a.x, y: a.y }, ...p]; if (raw) seg = thinPath(seg); addRoad(seg); return true; };
   G.roads = []; const done = new Set();
   if (mapVer() === 2) { // каркас дорог: все поселения связаны в одну сеть (минимальное остовное дерево), а не только с двумя ближайшими соседями
     const ed = []; for (let i = 0; i < towns.length; i++) for (let j = i + 1; j < towns.length; j++) ed.push([Math.hypot(towns[i].x - towns[j].x, towns[i].y - towns[j].y), i, j]); ed.sort((p, q) => p[0] - q[0]);
@@ -254,6 +325,12 @@ function genRoads() {
     for (const [d, i, j] of ed) { if (d > 1500) break; if (fd(i) === fd(j)) continue; if (link(towns[i], towns[j])) { up[fd(i)] = fd(j); done.add(Math.min(towns[i].id, towns[j].id) + '-' + Math.max(towns[i].id, towns[j].id)); } } }
   for (const a of towns) { const ds = towns.filter(b => b !== a).sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y)); let n = 0; for (const b of ds) { const key = Math.min(a.id, b.id) + '-' + Math.max(a.id, b.id); if (done.has(key)) { n++; if (n >= 2) break; continue; } done.add(key); link(a, b); if (++n >= 2) break; } }
   for (const c of G.settles.filter(s => s.kind === 'camp')) { const b = towns.sort((p, q) => Math.hypot(p.x - c.x, p.y - c.y) - Math.hypot(q.x - c.x, q.y - c.y))[0]; if (Math.hypot(b.x - c.x, b.y - c.y) < 380) link(c, b); }
+  // у каждого моста должна быть дорога: недостающие тянем от моста к ближайшему поселению на каждом берегу
+  if (WT.rv) for (const b of WT.bridges) { if (WT.road[b.k]) continue;
+    for (const sg of [-1, 1]) { const at = n => b.ax === 0 ? { x: b.x + sg * GC * n, y: b.y } : { x: b.x, y: b.y + sg * GC * n }, sp = at(1); if (!TCOST[terrAt(sp.x, sp.y)]) continue;
+      let t = null, bd = 900; for (const q of towns) { const d = Math.hypot(q.x - sp.x, q.y - sp.y); if (d < bd) { bd = d; t = q; } }
+      let tail = t ? findPath(sp.x, sp.y, t.x, t.y, true) : null; if (!tail) { tail = []; for (let n = 2; n < 5; n++) { const q = at(n); if (TCOST[terrAt(q.x, q.y)]) tail.push(q); else break; } }
+      addRoad(thinPath([{ x: b.x, y: b.y }, sp, ...tail])); } }
 }
 function genRecruits(s) {
   if (s.fac === 'bandit') return; const f = sCult(s), out = {}, n = s.kind === 'town' ? rint(5, 9) : s.kind === 'castle' ? rint(3, 6) : rint(3, 7);
@@ -279,7 +356,7 @@ const CULT = {
   kin: { start: [['f1', 6], ['f2a', 3], ['f2s', 1]], horse: 0 }, emi: { start: [['m1', 5], ['m2a', 3], ['m2c', 2]], horse: 1 }
 };
 function newWorld(seed, mapv) {
-  seed = seed || rint(1, 1e9); G = { seed, mapv: mapv || DEFAULT_MAPV, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
+  seed = seed || rint(1, 1e9); G = { seed, mapv: mapv || DEFAULT_MAPV, rv: (mapv || DEFAULT_MAPV) === 2 ? 1 : 0, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
   genWorld(seed); genSettlements(); genRoads(); for (const s of G.settles) { genRecruits(s); if (s.kind === 'camp') respawnCamp(s); }
   for (const f of worldF()) { const hs = G.settles.filter(s => s.fac === f); const nl = lordsPerF(); for (let i = 0; i < nl; i++) { const h = mapVer() === 2 ? (i === 0 ? hs[0] : pick(hs.filter(s => s.kind !== 'village'))) : hs[i % 2 === 0 ? 0 : rint(0, hs.length - 1)]; const p = mkParty('lord', f, lordName(f), h.x + 12, h.y + 20, genTroops(f, rint(LORD_MIN, LORD_MAX), .6), { home: h.id }); p.state = 'idle'; p.wait = rint(1, 20); } }
   for (let i = 0; i < (mapVer() === 2 ? 8 : 2); i++) { const t = pick(G.settles.filter(s => s.kind === 'town')); spawnCaravan(t); }
@@ -287,7 +364,8 @@ function newWorld(seed, mapv) {
 }
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
-  return { id: G.nid++, x: home.x + 10 + rnd(-24, 24), y: home.y + 34, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
+  let px = home.x + 10 + rnd(-24, 24), py = home.y + 34; if (!TCOST[terrAt(px, py)]) { px = home.x; py = home.y; }
+  return { id: G.nid++, x: px, y: py, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
     hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
 function addPlayer(o) { const P = mkPlayer(o); relWatch(P); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
