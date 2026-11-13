@@ -33,6 +33,15 @@ function invN(P, id) { return invOf(P)[id] || 0; }
 function invAdd(P, id, n) { const I = invOf(P), v = (I[id] || 0) + n; if (v > 0) I[id] = v; else delete I[id]; }
 function invWeight(P) { const I = invOf(P); let w = 0; for (const id in I) if (ITEM[id]) w += ITEM[id].w * I[id]; return Math.round(w * 10) / 10; }
 function cargoCap(P) { const H = P.hero; return Math.round((60 + troopCount(P.troops) * 3 + H.str * 6 + (eqItem(H, 'horse') ? 30 : 0)) * (1 + perkFx(H).cargo)); }
+/* провизия — это съедобные товары в обозе (а не отдельная единица); P.food остался только как «остаток» после еды и для сетевой игры */
+const FOODV = { potato: 6, grain: 6, zurek: 12, ale: 4 }; // сколько порций даёт одна штука товара; съедается в этом порядке (дешёвое — первым)
+function provOf(P) { let n = Math.max(0, P.food || 0); const I = invOf(P); for (const id in FOODV) n += (I[id] || 0) * FOODV[id]; return n; }
+function eatProv(P, need) { // съесть need порций; остаток от целой штуки уходит в P.food, чтобы ничего не пропадало
+  const f = Math.min(Math.max(0, P.food || 0), need); P.food = (P.food || 0) - f; need -= f;
+  for (const id in FOODV) while (need > 0 && invN(P, id) > 0) { invAdd(P, id, -1); need -= FOODV[id]; }
+  if (need < 0) { P.food = (P.food || 0) - need; need = 0; } return need;
+}
+function addProv(P, n) { if (n > 0) invAdd(P, 'grain', Math.ceil(n / FOODV.grain)); }
 function invIds(P, kind) { return Object.keys(invOf(P)).filter(id => ITEM[id] && ITEM[id].kind === kind).sort((a, b) => ITEM[a].price - ITEM[b].price); }
 function equippedId(P, slot) { const id = heroEq(P.hero)[slot]; return id && ITEM[id] ? id : null; }
 

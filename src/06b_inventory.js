@@ -113,7 +113,7 @@ function cmpDelta(it, cur, key) { // насколько вещь лучше на
 }
 function itemDock(it, o) {
   o = o || {}; const t = tierOf(it), cur = o.cmp ? eqItem(G.player.hero, it.slot) : null, st = [], tr = []; let sub;
-  if (it.kind === 'goods') { sub = 'Товар'; st.push(stat('Вес', it.w), stat('Обычная цена', it.price)); }
+  if (it.kind === 'goods') { sub = FOODV[it.id] ? 'Товар · провизия' : 'Товар'; st.push(stat('Вес', it.w), stat('Обычная цена', it.price)); if (FOODV[it.id]) st.push(stat('Провизия', '+' + FOODV[it.id] + ' порц.')); }
   else {
     sub = SLOT_NAME[it.slot] + (it.dt ? ' · ' + WTYPE[it.wt] + ' · ' + DTYPE[it.dt].n.toLowerCase() + ' урон' : '') + ' · ' + t.n;
     if (it.dmg !== undefined) {
@@ -205,7 +205,7 @@ function invBody() {
     '<div class="stt">' + stt.map(x => '<div><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('') + '</div></div>' +
     '<div><h3>Рюкзак<span class="fl">' + BAG_FILTERS.map(x => '<button class="fbtn' + (x[0] === f ? ' on' : '') + '" data-act="bagf" data-f="' + x[0] + '">' + x[1] + '</button>').join('') + '</span></h3>' + cargoBar(P) +
     '<div class="igrid">' + ids.map(id => bagTile(P, id)).join('') + voidTiles(Math.max(24, Math.ceil(ids.length / 6) * 6) - ids.length) + '</div>' +
-    (ids.length ? '' : '<div class="note">' + (f === 'all' ? 'Обоз пуст.' : 'В этой вкладке пусто.') + '</div>') + '<div class="note">Провизия: ' + P.food + ' (вес не занимает). Двойной щелчок по вещи: надеть, по слоту: снять. В бою X меняет оружие.</div></div></div>';
+    (ids.length ? '' : '<div class="note">' + (f === 'all' ? 'Обоз пуст.' : 'В этой вкладке пусто.') + '</div>') + '<div class="note">Провизия: ' + provOf(P) + ' порций — это зерно, картошка, журек и эль из обоза, отряд съедает их по дороге. Двойной щелчок по вещи: надеть, по слоту: снять. В бою X меняет оружие.</div></div></div>';
 }
 function invDock() {
   const P = G.player, H = invWho(P), s = UI.isel, hint = dockHint('Выбери слот куклы или вещь в рюкзаке. Подходящие вещи подсветятся зелёной рамкой.', 'bag');

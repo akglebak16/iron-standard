@@ -9,7 +9,7 @@ const BATTLE_CAP = 150, JOIN_CAP = 40, UNDEAD_CAP = 300; // нежити на п
 function heroDef(h) { // параметры героя считаются из надетого (слоты и оружие в руках — см. 01b_gear.js)
   const Gr = heroGear(h), W = Gr.W, m = Gr.mounted, F = perkFx(h), heavy = W.hands === 2 && !W.rng ? F.heavy : 0; // перки: см. 01c_perks.js
   return { id: 'hero', name: h.name, tier: 3, cls: m ? 'cav' : 'inf', grp: 0, mounted: m, range: W.rng ? Math.round(W.range * (1 + F.range)) : 0, reach: 9 + (W.reach || 0), fac: 'player', up: [], wpn: W, acc: (W.acc || .05) * (1 - F.acc) * ACC_K, shb: heroShield(h) ? shieldArrow(heroShield(h).look) : 0, anticav: W.anticav ? 1 : 0,
-    cd: (W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1)) * (1 - F.cd), hp: Math.round((100 + h.vit * 14) * (1 + F.hp)), arm: Gr.arm + F.arm, dmg: (W.dmg + h.str * (W.rng ? W.bs : 3)) * (1 + F.dmg + heavy),
+    cd: (W.rng ? Math.max(.35, W.cd * (1 - h.agi * .025)) : Math.max(.3, .56 - h.agi * .03) * (W.spd || 1)) * (1 - F.cd), hp: Math.round((100 + h.vit * 14) * (1 + F.hp)), arm: Gr.arm + F.arm, dmg: (W.dmg + h.str * (W.rng ? W.bs : 2.5)) * (1 + F.dmg + heavy),
     spd: (m ? Gr.horse.v : 86 + h.agi * 3) * (1 + F.run), block: Gr.block };
 }
 function mkUnit(side, t, fac, x, y, sp) {

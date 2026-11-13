@@ -301,7 +301,6 @@ function genSettlementsV2() {
   for (let i = 0; i < 8; i++) for (const f of F) place(f, 'village', SNAMES2[f].village[i], 150, EU_REG[f].discs, 6);
   // разбойничьи лагеря: у каждой фракции и в диких краях
   for (let i = 0; i < CAMPN2.length; i++) { const f = i < 10 ? F[i % F.length] : 'wild'; place('bandit', 'camp', CAMPN2[i], 200, EU_REG[f].discs, 4); }
-  place('khan', 'town', 'Мядель', 200, [[26.85, 54.88, .5, .3]], 3); // городок у озера Нарочь: там сидит пан Глебио (05e_comps.js)
 }
 // Путь по клеткам идёт отрезками в 8 направлениях: точки на прямых участках лишние (кроме мостов — они нужны для рисования)
 function thinPath(seg) {
@@ -367,7 +366,7 @@ function newWorld(seed, mapv) {
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
   let px = home.x + 10 + rnd(-24, 24), py = home.y + 34; if (!TCOST[terrAt(px, py)]) { px = home.x; py = home.y; }
-  return { id: G.nid++, x: px, y: py, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, dom: 0, pact: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
+  return { id: G.nid++, x: px, y: py, troops, gold: 650, food: SERVER ? 60 : 0, inv: SERVER ? {} : { grain: 10 }, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, dom: 0, pact: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
     hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
 function addPlayer(o) { const P = mkPlayer(o); relWatch(P); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name.replace(/а$/, 'у').replace(/я$/, 'ю') + '. Собери отряд и заработай имя.', 0, P); return P; }
@@ -379,19 +378,43 @@ function relName(v) { return v < -20 ? 'Враждебные' : v < -5 ? 'Нед
 
 /* ---------- задания ---------- */
 function genQuests() {
-  for (const s of G.settles) { if (s.kind !== 'town') continue; s.board = s.board || []; if (!REAL_F.includes(s.fac)) { s.board = []; continue; } s.board = s.board.filter(q => G.day - q.day < 12); while (s.board.length < 2) {
-    let camps = G.settles.filter(c => c.kind === 'camp'); const r = Math.random(); if (isEU()) camps = camps.sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y)).slice(0, 3);
-    if (r < .5 && camps.length) { const c = pick(camps); s.board.push({ id: G.nid++, type: 'camp', sid: c.id, from: s.id, fac: s.fac, reward: rint(300, 520), day: G.day, dl: G.day + 20 }); }
-    else { let ds = G.settles.filter(x => x.kind !== 'camp' && x !== s); if (isEU()) ds = ds.sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y)).slice(0, 8); const d = pick(ds); const dist = Math.hypot(d.x - s.x, d.y - s.y); s.board.push({ id: G.nid++, type: 'deliver', sid: d.id, from: s.id, fac: s.fac, reward: Math.round(90 + dist * .22), day: G.day, dl: G.day + Math.ceil(dist / 150) + 4 }); } } }
+  for (const s of G.settles) { if (s.kind !== 'town') continue; s.board = s.board || []; if (!REAL_F.includes(s.fac)) { s.board = []; continue; } s.board = s.board.filter(q => G.day - q.day < 12); while (s.board.length < 3) {
+    let camps = G.settles.filter(c => c.kind === 'camp'); if (isEU()) camps = camps.sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y)).slice(0, 3);
+    const near = (list, k) => { list = list.filter(x => x !== s); if (isEU()) list = list.sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y)).slice(0, k); return list; };
+    const base = { id: G.nid++, from: s.id, fac: s.fac, day: G.day }, kinds = ['deliver', 'deliver', 'supply', 'supply', 'purge', 'muster'].concat(camps.length ? ['camp', 'camp', 'scout'] : []), kind = pick(kinds);
+    if (kind === 'camp') { const c = pick(camps); s.board.push(Object.assign(base, { type: 'camp', sid: c.id, reward: rint(300, 520), dl: G.day + 20 })); }
+    else if (kind === 'scout') { const c = pick(camps); s.board.push(Object.assign(base, { type: 'scout', sid: c.id, seen: false, reward: rint(160, 260), dl: G.day + 14 })); }
+    else if (kind === 'purge') { const n = rint(2, 3); s.board.push(Object.assign(base, { type: 'purge', sid: s.id, n, got: 0, reward: 150 + n * 90, dl: G.day + 16 })); }
+    else if (kind === 'supply') { const ds = near(G.settles.filter(x => x.kind === 'town' || x.kind === 'castle'), 6), d = ds.length ? pick(ds) : null; if (!d) continue; const ids = Object.keys(GOODS).filter(k => !GOODS[k].lux), item = pick(ids), n = rint(6, 14), dist = Math.hypot(d.x - s.x, d.y - s.y); s.board.push(Object.assign(base, { type: 'supply', sid: d.id, item, n, reward: Math.round(n * GOODS[item].p * 1.3 + dist * .15 + 40), dl: G.day + Math.ceil(dist / 150) + 8 })); }
+    else if (kind === 'muster') { const ds = near(G.settles.filter(x => (x.kind === 'town' || x.kind === 'castle') && x.fac === s.fac), 4), d = ds.length ? pick(ds) : null; if (!d) continue; const n = rint(6, 12), dist = Math.hypot(d.x - s.x, d.y - s.y); s.board.push(Object.assign(base, { type: 'muster', sid: d.id, n, reward: Math.round(n * 48 + dist * .1), dl: G.day + Math.ceil(dist / 150) + 8 })); }
+    else { const ds = near(G.settles.filter(x => x.kind !== 'camp'), 8), d = pick(ds), dist = Math.hypot(d.x - s.x, d.y - s.y); s.board.push(Object.assign(base, { type: 'deliver', sid: d.id, reward: Math.round(90 + dist * .22), dl: G.day + Math.ceil(dist / 150) + 4 })); } } }
 }
-function questText(q) { const s = settleById(q.sid), f = settleById(q.from); return q.type === 'camp' ? 'Разгромить разбойников: «' + s.name + '»' : 'Доставить груз в ' + s.name; }
+function questText(q) { const s = settleById(q.sid), f = settleById(q.from); switch (q.type) {
+  case 'camp': return 'Разгромить разбойников: «' + s.name + '»';
+  case 'scout': return 'Разведать лагерь «' + s.name + '» и вернуться в ' + f.name;
+  case 'purge': return 'Разбить разбойничьи отряды в пути: ' + q.n + ' (' + (q.got || 0) + '/' + q.n + ')';
+  case 'supply': return 'Привезти в ' + s.name + ': ' + GOODS[q.item].n.toLowerCase() + ' ×' + q.n;
+  case 'muster': return 'Прислать в гарнизон ' + s.name + ' бойцов 2 уровня и выше: ' + q.n;
+  default: return 'Доставить груз в ' + s.name; } }
+function questDetail(q, from) { const s = settleById(q.sid), lg = x => Math.round(Math.hypot(x.x - from.x, x.y - from.y) / 10) / 10 + ' лиг';
+  switch (q.type) { case 'camp': case 'scout': return 'Расстояние: ' + lg(s); case 'purge': return 'Любые разбойничьи отряды на дорогах'; case 'supply': return 'Товар покупаешь сам, расстояние: ' + lg(s); case 'muster': return 'Бойцы переходят в гарнизон, расстояние: ' + lg(s); default: return 'Груз уже погружен'; } }
+/* прогресс заданий: вход в поселение, победа над отрядом, ход часов (разведка) */
+function questsOnEnter(P, s) {
+  for (const q of P.quests.slice()) {
+    if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);
+    else if (q.type === 'scout' && q.seen && q.from === s.id) questDone(P, q, true);
+    else if (q.type === 'supply' && q.sid === s.id) { if (invN(P, q.item) >= q.n) { invAdd(P, q.item, -q.n); questDone(P, q, true); } else logW('Для задания нужно ещё: ' + GOODS[q.item].n.toLowerCase() + ' ×' + (q.n - invN(P, q.item)), 0, P); }
+    else if (q.type === 'muster' && q.sid === s.id) { const pool = P.troops.filter(t => TROOPS[t.type].tier >= 2).sort((a, b) => TROOPS[a.type].tier - TROOPS[b.type].tier); let have = 0; for (const t of pool) have += t.n; if (have >= q.n && troopCount(P.troops) - q.n >= 1) { let need = q.n; for (const t of pool) { const k = Math.min(t.n, need); if (k > 0) { remT(P.troops, t.type, k); addT(garrisonOf(s), t.type, k); need -= k; } } sortT(garrisonOf(s)); questDone(P, q, true); } else logW('Для задания нужно бойцов 2 уровня и выше: ' + q.n + ' (у тебя ' + have + ')', 0, P); }
+  }
+}
+function questsScoutTick() { for (const P of G.players) { if (P.away || P.busy === 'battle') continue; for (const q of P.quests) if (q.type === 'scout' && !q.seen) { const c = settleById(q.sid); if (c && Math.hypot(c.x - P.x, c.y - P.y) < 120) { q.seen = true; logW('Лагерь «' + c.name + '» разведан. Возвращайся в ' + settleById(q.from).name + '.', 1, P); } } } }
 function acceptQuest(P, q) { const t = settleById(q.from); if (P.quests.length >= 4) return 'Не больше четырёх заданий одновременно.'; if (t.board.indexOf(q) < 0) return 'Задание уже взято.'; t.board.splice(t.board.indexOf(q), 1); P.quests.push(q); return null; }
 function questDone(P, q, why) { P.quests.splice(P.quests.indexOf(q), 1); if (why) { const rw = Math.round(q.reward * (1 + perkFx(P.hero).quest)); P.gold += rw; P.rel[q.fac] = Math.min(100, P.rel[q.fac] + 6); sfx('coin'); logW('Задание выполнено: ' + questText(q) + '. Награда: ' + rw + ' золота.', 3, P); } }
 
 /* ---------- ход времени ---------- */
 function speedOf(p) {
   let m = 1, base = 17, any = false, mo = true; for (const s of p.troops) { any = true; if (!TROOPS[s.type].mounted) mo = false; } if (any && mo) base = 22;
-  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (p.food <= 0) base *= .85; if (p.troops.length > 14) base *= .96; base *= 1 + perkFx(p.hero).map; }
+  if (p.hero) { base = (p.hero.horse && mo ? 22 : base) + 1; if (provOf(p) <= 0) base *= .85; if (p.troops.length > 14) base *= .96; base *= 1 + perkFx(p.hero).map; }
   const k = cellOf(p.x, p.y), t = WT.cells[k]; m = t === 2 ? .72 : t === 3 ? .78 : 1; if (WT.bio[k] === 1) m *= .85; if (WT.road[k]) m *= 1.3; if (p.kind === 'bandit') m *= 1.04; return base * m;
 }
 function moveAlong(p, dh) { let rem = speedOf(p) * dh; while (rem > 0 && p.pi < p.path.length) { const t = p.path[p.pi], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy); if (d <= rem) { p.x = t.x; p.y = t.y; p.pi++; rem -= d; } else { p.x += dx / d * rem; p.y += dy / d * rem; p.fx = dx / d; rem = 0; } } return p.pi >= p.path.length; }
@@ -464,7 +487,7 @@ function autoFight(a, b) {
 function hourTick() {
   G.hour++; if (G.hour >= 24) { G.hour = 0; G.day++; dayTick(); }
   for (const P of G.players) { if (P.away || P.busy === 'battle') continue; const heal = (P.in ? .035 : P.path.length && P.pi < P.path.length ? .006 : .014) * (1 + ((P.hero.int || 1) - 1) * .04 + perkFx(P.hero).heal); P.hero.hp = Math.min(1, P.hero.hp + heal); compsHeal(P, heal); }
-  undeadHour();
+  questsScoutTick(); undeadHour();
   for (const s of G.settles) { if (s.kind === 'camp') { if (s.cleared) { s.respawn -= 1; if (s.respawn <= 0) respawnCamp(s); } continue; } s.rt += 1; if (s.rt >= 72) { s.rt = 0; genRecruits(s); } }
   for (const P of G.players) relWatch(P);
   if (G.hour % 3 === 0) assaultsTick();
@@ -477,9 +500,9 @@ function hourTick() {
 }
 function dayTick() { for (const P of G.players) if (!P.away && P.busy !== 'battle') playerDay(P); genQuests(); garrisonDay(); if (!SERVER) { compsDay(); crisisDay(); } } // спутники бродят по тавернам только в одиночной игре
 function playerDay(P) {
-  const cnt = troopCount(P.troops); P.food -= Math.max(0, Math.ceil(cnt / 6)) * 1; let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = wageDay(P);
+  const cnt = troopCount(P.troops); eatProv(P, Math.max(0, Math.ceil(cnt / 6))); let wage = 0; for (const s of P.troops) wage += TROOPS[s.type].wage * s.n; wage = wageDay(P);
   if (P.gold >= wage) P.gold -= wage; else { P.gold = 0; compsUnpaid(P); if (cnt > 3 && Math.random() < .6) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Не хватило денег на жалованье: ' + TROOPS[s.type].name.toLowerCase() + ' дезертировал.', 1, P); } }
-  if (P.food <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
+  if (provOf(P) <= 0) { P.food = 0; if (cnt > 2 && Math.random() < .5) { const s = pick(P.troops); remT(P.troops, s.type, 1); logW('Отряд голодает: боец ушёл.', 1, P); } else logW('Закончилась провизия!', 1, P); }
   for (const q of P.quests.slice()) if (G.day > q.dl) { P.quests.splice(P.quests.indexOf(q), 1); P.rel[q.fac] = Math.max(-100, P.rel[q.fac] - 4); logW('Срок задания истёк: ' + questText(q), 1, P); }
   for (const f of REAL_F) P.rel[f] = P.rel[f] > 0 ? P.rel[f] - .1 : P.rel[f] < 0 ? Math.min(0, P.rel[f] + .25) : 0;
 }

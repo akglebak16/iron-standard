@@ -15,25 +15,25 @@ const PERK_MAX = 3;                                              // рангов
 const REQ_A = [3, 6, 9], REQ_B = [4, 7, 10];
 const PERKS = [
   // Сила
-  { id: 'grip',      a: 'str', n: 'Крепкая хватка',     req: REQ_A, fx: { heavy: [.06, .12, .18] } },
+  { id: 'grip',      a: 'str', n: 'Крепкая хватка',     req: REQ_A, fx: { heavy: [.04, .08, .12] } },
   { id: 'packhorse', a: 'str', n: 'Тяжеловоз',          req: REQ_A, fx: { cargo: [.12, .25, .4] } },
-  { id: 'breaker',   a: 'str', n: 'Сокрушитель',        req: REQ_A, fx: { mpierce: [.04, .08, .12] } },
-  { id: 'butcher',   a: 'str', n: 'Мясник',             req: REQ_B, fx: { killHeal: [.02, .04, .06] } },
+  { id: 'breaker',   a: 'str', n: 'Сокрушитель',        req: REQ_A, fx: { mpierce: [.03, .06, .09] } },
+  { id: 'butcher',   a: 'str', n: 'Мясник',             req: REQ_B, fx: { killHeal: [.01, .02, .03] } },
   // Стойкость
-  { id: 'tough',     a: 'vit', n: 'Закалка',            req: REQ_A, fx: { hp: [.06, .12, .18] } },
+  { id: 'tough',     a: 'vit', n: 'Закалка',            req: REQ_A, fx: { hp: [.05, .10, .15] } },
   { id: 'hide',      a: 'vit', n: 'Толстая кожа',       req: REQ_A, fx: { arm: [3, 6, 9] } },
   { id: 'recover',   a: 'vit', n: 'Живучий',            req: REQ_A, fx: { heal: [.3, .6, 1] } },
-  { id: 'lastStand', a: 'vit', n: 'Последний рубеж',    req: REQ_B, fx: { lastStand: [.2, .3, .45] } },
+  { id: 'lastStand', a: 'vit', n: 'Последний рубеж',    req: REQ_B, fx: { lastStand: [.15, .25, .35] } },
   // Ловкость
-  { id: 'quick',     a: 'agi', n: 'Быстрые руки',       req: REQ_A, fx: { cd: [.04, .08, .12] } },
+  { id: 'quick',     a: 'agi', n: 'Быстрые руки',       req: REQ_A, fx: { cd: [.03, .06, .09] } },
   { id: 'eagle',     a: 'agi', n: 'Меткий глаз',        req: REQ_A, fx: { acc: [.2, .35, .5], range: [.05, .1, .15] } },
   { id: 'light',     a: 'agi', n: 'Лёгкая поступь',     req: REQ_A, fx: { map: [.04, .08, .12], flee: [.05, .1, .15], run: [.03, .05, .08] } },
-  { id: 'master',    a: 'agi', n: 'Мастер оружия',      req: REQ_B, fx: { dmg: [.06, .12, .18] } },
+  { id: 'master',    a: 'agi', n: 'Мастер оружия',      req: REQ_B, fx: { dmg: [.04, .08, .12] } },
   // Интеллект
   { id: 'surgery',   a: 'int', n: 'Хирургия',           req: REQ_A, fx: { surv: [.1, .2, .3] } },
   { id: 'learner',   a: 'int', n: 'Сообразительный',    req: REQ_A, fx: { xp: [.08, .15, .25] } },
   { id: 'merchant',  a: 'int', n: 'Торговец',           req: REQ_A, fx: { buy: [.03, .05, .08], sell: [.03, .05, .08] } },
-  { id: 'tactician', a: 'int', n: 'Тактик',             req: REQ_B, fx: { ally: [.04, .08, .12], morale: [3, 6, 9] } },
+  { id: 'tactician', a: 'int', n: 'Тактик',             req: REQ_B, fx: { ally: [.03, .06, .09], morale: [3, 6, 9] } },
   // Харизма
   { id: 'inspire',   a: 'cha', n: 'Вдохновляющий',      req: REQ_A, fx: { morale: [6, 12, 18] } },
   { id: 'recruiter', a: 'cha', n: 'Вербовщик',          req: REQ_A, fx: { hire: [.08, .15, .25] } },

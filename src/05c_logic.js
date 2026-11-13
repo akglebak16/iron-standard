@@ -4,7 +4,7 @@ const xpMul = H => 1 + ((H.int || 1) - 1) * .03 + perkFx(H).xp; // опыт: +3%
 function heroBattle(H) { heroFix(H); return { name: H.name, str: H.str, vit: H.vit, agi: H.agi, int: H.int, cha: H.cha, perks: H.perks.slice(), eq: Object.assign({}, heroEq(H)), sel: H.sel || 'melee', hp: H.hp, seed: H.seed }; } // снаряжение — слотами (см. 01b_gear.js)
 function townEnter(P, s) {
   P.in = s.id; P.path = []; P.pi = 0; P.tid = null; P.sid = null;
-  for (const q of P.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);
+  questsOnEnter(P, s);
   if (P.rel[s.fac] !== undefined) P.rel[s.fac] = Math.min(100, P.rel[s.fac] + .5);
 }
 function doHire(P, s, type, n) {
@@ -52,10 +52,11 @@ function applyBattleResult(P, res, p) {
   if (res.win) {
     let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
     loot = Math.round((sv * rnd(.7, 1.1) * (p.fac === 'undead' ? .2 : 1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); // у мертвецов золота мало
-    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; P.food += p.kind === 'caravan' ? rint(10, 30) : rint(0, 8);
+    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; addProv(P, p.kind === 'caravan' ? rint(10, 30) : rint(0, 8));
     P.stats.wins++; P.stats.kills += res.enemyDead; const gx = Math.round((res.xp + 12 + res.heroKills * 4) * xpMul(H)); H.xp += gx; res.gx = gx;
     const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
     if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; if (c.barrow) barrowDestroyed(P, c); } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
+    if (p.kind === 'bandit') for (const q of P.quests.slice()) if (q.type === 'purge' && ++q.got >= q.n) questDone(P, q, true);
     if (p.kind === 'bandit' || p.kind === 'camp') P.rel[P.culture] = Math.min(100, P.rel[P.culture] + 1);
     logW('Победа над отрядом «' + p.name + '». Добыча: ' + loot + ' золота.', 3, P);
   } else {

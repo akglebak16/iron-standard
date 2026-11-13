@@ -3,7 +3,7 @@
    значения атрибута и стоит очко перков. Логика и каталог перков: 01c_perks.js. */
 const ATTR_ICON = { str: 'hands', vit: 'heart', agi: 'charge', int: 'book', cha: 'flag' };
 const ATTR_NOW = {
-  str: H => '+' + H.str * 3 + ' к урону',
+  str: H => '+' + Math.round(H.str * 2.5) + ' к урону',
   vit: H => '+' + H.vit * 14 + ' к здоровью',
   agi: H => '+' + H.agi * 3 + ' к скорости бега',
   int: H => '+' + (H.int - 1) * 3 + '% к опыту',

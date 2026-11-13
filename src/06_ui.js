@@ -53,12 +53,9 @@ function renderTown() {
     body += '<div class="note">В отряде ' + cnt + ' из ' + cap + ' бойцов. Свободных рекрутов: ' + troopCount(s.recruits) + '. Новые люди приходят каждые три дня.</div>';
     if (!s.recruits.length) body += '<div class="note">Сегодня здесь никто не хочет воевать.</div>';
     for (const r of s.recruits) { const t = TROOPS[r.type], hc = hireCost(P, r.type), ok = P.gold >= hc && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < hc ? 'no' : '') + '">' + ic('coin') + hc + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
+    body += '<div class="card" style="margin-top:10px"><h3>Отдых</h3><p class="note">Восемь часов в таверне: герой залечивает раны. Отряд за это время ест.</p><button class="btn sm" data-act="rest">Отдохнуть</button></div>';
   } else if (tab === 'trade') {
     body += tradeBody(s);
-  } else if (tab === 'market') {
-    body += '<div class="note">Золото: ' + fmt(P.gold) + '. Провизии: ' + P.food + ', отряду нужно около ' + Math.ceil(cnt / 6) + ' в день.</div><div class="cols">' +
-      [[10, 22], [30, 60], [80, 150]].map(a => '<div class="card"><h3>' + a[0] + ' провизии</h3><div style="display:flex;justify-content:space-between;align-items:center"><span class="price ' + (P.gold < a[1] ? 'no' : '') + '">' + ic('coin') + a[1] + '</span><button class="btn sm" data-act="food" data-n="' + a[0] + '" data-p="' + a[1] + '" ' + (P.gold >= a[1] ? '' : 'disabled') + '>Купить</button></div></div>').join('') +
-      '<div class="card"><h3>Отдых</h3><p class="note">Восемь часов в таверне: герой залечивает раны.</p><button class="btn sm" data-act="rest">Отдохнуть</button></div></div>';
   } else if (tab === 'garrison') {
     const g = garrisonOf(s); body += '<div class="note">Гарнизон защищает владение, пока тебя нет: враждебные лорды могут прийти и взять его штурмом. Против лорда в 160–190 бойцов нужно около 110 человек. В гарнизоне ' + troopCount(g) + ' бойцов, в отряде ' + cnt + ' из ' + cap + '.</div>' + garMoney(s, P) + '<h3 style="margin:10px 0 6px">В гарнизоне</h3>';
     if (!g.length) body += '<div class="note">Пусто. Оставь здесь бойцов из отряда.</div>';
@@ -70,10 +67,10 @@ function renderTown() {
   } else if (tab === 'quests') {
     const bd = s.board || []; body += '<div class="note">Заказы города. Награду выплачивают сразу, как дело сделано.</div>';
     if (!bd.length) body += '<div class="note">Доска пуста.</div>';
-    for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + (q.type === 'camp' ? 'Расстояние: ' + Math.round(Math.hypot(settleById(q.sid).x - s.x, settleById(q.sid).y - s.y) / 10) / 10 + ' лиг' : 'Груз уже погружен') + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
+    for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + questDetail(q, s) + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
     if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
-  const mine = s.fac === 'player', tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок']].concat(s.kind === 'town' && !NET.on ? [['tavern', 'Таверна']] : [], mine ? [['garrison', 'Гарнизон']] : [['quests', 'Задания']]), canSiege = !mine && !NET.on && REAL_F.includes(s.fac) && (s.kind === 'town' || s.kind === 'castle');
+  const mine = s.fac === 'player', tabs = [['recruit', 'Рекруты'], ['trade', 'Рынок']].concat(s.kind === 'town' && !NET.on ? [['tavern', 'Таверна']] : [], mine ? [['garrison', 'Гарнизон']] : [['quests', 'Задания']]), canSiege = !mine && !NET.on && REAL_F.includes(s.fac) && (s.kind === 'town' || s.kind === 'castle');
   openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + (mine ? 'твоё владение · доход ' + settleIncome(s) + ', гарнизон ' + troopCount(garrisonOf(s)) + ' (−' + garUp(s, P) + ')/день' : f.gen + ' · отношение: ' + relName(G.player.rel[s.fac])) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'trade' ? tradeDock(s) : '') + '<div class="wfoot">' + (canSiege ? '<button class="btn danger" data-act="siegeask" style="margin-right:auto">Осадить</button>' : '') + '<button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
@@ -103,7 +100,7 @@ function renderPanel() {
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
   const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (!NET.on && (P.comps || []).length) tabs.splice(1, 0, ['comps', 'Спутники']); if (NET.on) tabs.push(['ally', 'Союз']);
-  openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + P.food + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
+  openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + provOf(P) + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
 }
 
 /* ---------- встреча ---------- */

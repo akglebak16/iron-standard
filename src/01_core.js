@@ -75,7 +75,7 @@ const TROOPS = {};
 /* Бой: дальность стрелков ×2 от прежней, разброс ×ACC_K, щит прибавляет шанс заблокировать снаряд (см. blocked в 03_battle.js) */
 const ACC_K = 1.8, SHOT_V = 620, THROW_V = 460;
 /* Подстройка живучести фракций после патча дальнобоя: множитель здоровья всех бойцов фракции (по боям 30/50/80 человек; пакт — самый слабый в среднем) */
-const FAC_HP = { pact: 1.05 };
+const FAC_HP = { nord: 1.2, khan: .86 };
 function shieldArrow(l) { return l === 'kite' ? .18 : l === 'round' ? .12 : l === 'small' ? .07 : 0; }
 function T(id, name, fac, tier, cls, look, up, mod) {
   const t = Object.assign({ id, name, fac, tier, cls, look, up: up || [], reach: 0, block: 0, range: 0 }, BASE[cls][tier], mod || {});
@@ -88,12 +88,12 @@ function T(id, name, fac, tier, cls, look, up, mod) {
 }
 // Нордмарк — тяжёлая пехота
 T('n1', 'Бонд', 'nord', 1, 'inf', { helm: 'none', armor: 'tunic', weapon: 'axe', shield: 'round', beard: .8 }, ['n2', 'n2s', 'n2a'], { hp: 50 });
-T('n2', 'Секироносец', 'nord', 2, 'inf', { helm: 'nasal', armor: 'fur', weapon: 'axe', shield: 'round', beard: .9 }, ['n3'], { hp: 68, dmg: 17 });
-T('n3', 'Хускарл', 'nord', 3, 'inf', { helm: 'spectacle', armor: 'mailfur', weapon: 'sword', shield: 'round', beard: 1 }, [], { hp: 94, dmg: 23 });
-T('n2s', 'Копьеносец', 'nord', 2, 'spr', { helm: 'cap', armor: 'padded', weapon: 'spear', shield: 'round', beard: .8 }, ['n3c']);
+T('n2', 'Секироносец', 'nord', 2, 'inf', { helm: 'nasal', armor: 'fur', weapon: 'axe', shield: 'round', beard: .9 }, ['n3'], { hp: 68, dmg: 17, arm: 18 });
+T('n3', 'Хускарл', 'nord', 3, 'inf', { helm: 'spectacle', armor: 'mailfur', weapon: 'sword', shield: 'round', beard: 1 }, [], { hp: 94, dmg: 23, arm: 36 });
+T('n2s', 'Копьеносец', 'nord', 2, 'spr', { helm: 'cap', armor: 'padded', weapon: 'spear', shield: 'round', beard: .8 }, ['n3c'], { arm: 12 });
 T('n2a', 'Охотник', 'nord', 2, 'arc', { helm: 'hood', armor: 'fur', weapon: 'bow', beard: .7 }, ['n3a']);
-T('n3a', 'Следопыт', 'nord', 3, 'arc', { helm: 'nasal', armor: 'fur', weapon: 'bow', beard: .9 }, []);
-T('n3c', 'Дружинник', 'nord', 3, 'cav', { helm: 'spectacle', armor: 'mail', weapon: 'spear', shield: 'round', horse: 'bay', beard: .9 }, [], { spd: 132, hp: 104 });
+T('n3a', 'Следопыт', 'nord', 3, 'arc', { helm: 'nasal', armor: 'fur', weapon: 'bow', beard: .9 }, [], { arm: 14 });
+T('n3c', 'Дружинник', 'nord', 3, 'cav', { helm: 'spectacle', armor: 'mail', weapon: 'spear', shield: 'round', horse: 'bay', beard: .9 }, [], { spd: 132, hp: 104, arm: 32 });
 // Империя — броня, арбалеты, катафракты
 T('e1', 'Рекрут', 'emp', 1, 'inf', { helm: 'cap', armor: 'tunic', weapon: 'sword', shield: 'kite', beard: .2 }, ['e2', 'e2s', 'e2a']);
 T('e2', 'Легионер', 'emp', 2, 'inf', { helm: 'flat', armor: 'mailtab', weapon: 'sword', shield: 'kite', beard: .3 }, ['e3', 'e3c'], { arm: 30 });
@@ -172,7 +172,7 @@ const GEAR = {
 };
 const GEAR_LABEL = { weapon: 'Оружие', armor: 'Доспех', shield: 'Щит', horse: 'Конь' };
 const GEAR_UNIT = { weapon: 'урон', armor: 'броня', shield: 'блок', horse: 'скорость' };
-const ATTRS = { str: ['Сила', '+3 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
+const ATTRS = { str: ['Сила', '+2,5 к урону за очко'], vit: ['Стойкость', '+14 к здоровью за очко'], agi: ['Ловкость', 'Быстрее удар и шаг'], int: ['Интеллект', '+3% к опыту, быстрее лечение'], cha: ['Харизма', '+5 к размеру отряда и +4 к морали за очко'] };
 function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pick(f.names || FACTIONS.nord.names); const k = Math.random() < .45 ? pick(f.nicks || ['']) : ''; return k ? n + ' ' + k : n; }
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
 function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1) * (d.pw || 1); } return s; }
