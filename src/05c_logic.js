@@ -44,15 +44,17 @@ function autoResult(P, p) {
   compsAuto(P, res);
   return res;
 }
+/* Опыт считается по числу убитых: при масштабе ×2 отряды лордов вдвое больше, и уровни шли бы вдвое быстрее. Делим на тот же множитель, на какой выросли враги (разбойники и нежить растут слабее) */
+const xpScale = p => MK() > 1 ? (p.fac === 'bandit' || p.fac === 'undead' ? 1 + (MK() - 1) * .25 : MK()) : 1;
 function applyBattleResult(P, res, p) {
-  const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0;
+  const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0; res.xp = Math.round(res.xp / xpScale(p));
   for (const k in res.dead) remT(P.troops, k, res.dead[k]);
   H.hp = clamp(res.heroHp, .22, 1);
   const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
   if (res.win) {
     let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
     loot = Math.round((sv * rnd(.7, 1.1) * (p.fac === 'undead' ? .2 : 1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); // у мертвецов золота мало
-    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; addProv(P, p.kind === 'caravan' ? rint(10, 30) : rint(0, 8));
+    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; addProv(P, (p.kind === 'caravan' ? rint(10, 30) : rint(0, 8)) * MK());
     P.stats.wins++; P.stats.kills += res.enemyDead; const gx = Math.round((res.xp + 12 + res.heroKills * 4) * xpMul(H)); H.xp += gx; res.gx = gx;
     const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
     if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; if (c.barrow) barrowDestroyed(P, c); } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }

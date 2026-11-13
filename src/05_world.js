@@ -537,7 +537,8 @@ function garrisonOf(s) {
    (~90 в день; столько нужно, чтобы отбить лорда в 165 примерно в 2 случаях из 3) и даёт ~150 прибыли; замок (~140) с гарнизоном 80 — около 75. */
 const GAR_WAGE = .5, INC_TOWN = 200, INC_CASTLE = 100, INC_VILLAGE = 15, INC_VR = 450;
 function settleVillages(s) { return G.settles.filter(v => v.kind === 'village' && sCult(v) === sCult(s) && Math.hypot(v.x - s.x, v.y - s.y) < INC_VR).length; }
-function settleIncome(s) { return s.kind === 'town' || s.kind === 'castle' ? Math.round(((s.kind === 'town' ? INC_TOWN : INC_CASTLE) + settleVillages(s) * INC_VILLAGE) * (s.ruin > 0 ? .4 : 1)) : 0; } // руины после нежити: 40%, пока восстанавливаются
+const INC_K = () => 1 + (MK() - 1) * .5; // при ×2 гарнизоны вдвое дороже, а подати прежние: растим их в полтора раза
+function settleIncome(s) { return s.kind === 'town' || s.kind === 'castle' ? Math.round(((s.kind === 'town' ? INC_TOWN : INC_CASTLE) + settleVillages(s) * INC_VILLAGE) * INC_K() * (s.ruin > 0 ? .4 : 1)) : 0; } // руины после нежити: 40%, пока восстанавливаются
 function garUpkeep(s) { let w = 0; for (const t of garrisonOf(s)) w += TROOPS[t.type].wage * t.n; return Math.round(w / 3 * GAR_WAGE); }
 // раз в сутки: гарнизоны фракций пополняются, свои владения приносят доход
 function garrisonDay() {
