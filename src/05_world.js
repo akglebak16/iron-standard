@@ -2,9 +2,9 @@
 /* Версия карты: 1 — старая (2600×1700, три фракции), 2 — Европа (5200×3400, пять фракций). Версия лежит в G.mapv.
    У старых сохранений и у мира сервера её нет: тогда её видно по поселениям (в старом мире все они внутри 2600×1700),
    так старые игры продолжаются на старой карте, а новые идут на Европе. */
-const MAP_SIZE = { 1: [2600, 1700], 2: [5200, 3400], 3: [5200, 3400] }, GC = 20, DEFAULT_MAPV = 3; // DEFAULT_MAPV — на какой карте начинаются новые игры
+const MAP_SIZE = { 1: [2600, 1700], 2: [5200, 3400], 3: [5200, 3400], 4: [5200, 3400] }, GC = 20, DEFAULT_MAPV = 4; // DEFAULT_MAPV — на какой карте начинаются новые игры
 let WW = MAP_SIZE[DEFAULT_MAPV][0], WH = MAP_SIZE[DEFAULT_MAPV][1], GW = WW / GC, GH = Math.ceil(WH / GC);
-function mapVer() { if (G && G.mapv) return G.mapv; if (G && G.settles && G.settles.length) return G.settles.some(s => s.fac === 'dom') ? 3 : G.settles.some(s => s.x > MAP_SIZE[1][0] || s.y > MAP_SIZE[1][1]) ? 2 : 1; return DEFAULT_MAPV; }
+function mapVer() { if (G && G.mapv) return G.mapv; if (G && G.settles && G.settles.length) return G.settles.some(s => s.fac === 'pact') ? 4 : G.settles.some(s => s.fac === 'dom') ? 3 : G.settles.some(s => s.x > MAP_SIZE[1][0] || s.y > MAP_SIZE[1][1]) ? 2 : 1; return DEFAULT_MAPV; }
 const isEU = () => mapVer() >= 2; // карта Европы (версии 2 и 3)
 function setMapSize(v) { WW = MAP_SIZE[v][0]; WH = MAP_SIZE[v][1]; GW = WW / GC; GH = Math.ceil(WH / GC); PA.g = new Float32Array(GW * GH); PA.prev = new Int32Array(GW * GH); PA.closed = new Uint8Array(GW * GH); }
 let G = null, WT = null; // G — состояние игры, WT — статичный ландшафт
@@ -14,8 +14,8 @@ const SNAMES = {
   khan: { town: ['Кешир', 'Алтын-Тобе'], castle: ['Булан-Орда', 'Тенгри-Кала'], village: ['Ак-Булак', 'Сары-Агач', 'Темир-Тау', 'Ордабаш', 'Кара-Су'] }
 };
 const CAMPN = ['Волчья яма', 'Разбитая башня', 'Чёрный брод', 'Пещера висельников', 'Гнилой овраг', 'Старая застава'];
-const WAR = { nord: { emp: 1, kin: 1, dom: 1 }, emp: { nord: 1, khan: 1, emi: 1 }, khan: { emp: 1, dom: 1 }, kin: { emi: 1, nord: 1 }, emi: { kin: 1, emp: 1 }, dom: { khan: 1, nord: 1 }, bandit: { nord: 1, emp: 1, khan: 1, kin: 1, emi: 1, dom: 1 } };
-const FAC_V = { 1: ['nord', 'emp', 'khan'], 2: ['nord', 'emp', 'khan', 'kin', 'emi'], 3: ['nord', 'emp', 'khan', 'kin', 'emi', 'dom'] }; // какие фракции есть на карте версий 1, 2 и 3
+const WAR = { nord: { emp: 1, kin: 1, dom: 1 }, emp: { nord: 1, khan: 1, emi: 1, pact: 1 }, khan: { emp: 1, dom: 1 }, kin: { emi: 1, nord: 1, pact: 1 }, emi: { kin: 1, emp: 1 }, dom: { khan: 1, nord: 1, pact: 1 }, pact: { kin: 1, dom: 1, emp: 1 }, bandit: { nord: 1, emp: 1, khan: 1, kin: 1, emi: 1, dom: 1, pact: 1 } };
+const FAC_V = { 1: ['nord', 'emp', 'khan'], 2: ['nord', 'emp', 'khan', 'kin', 'emi'], 3: ['nord', 'emp', 'khan', 'kin', 'emi', 'dom'], 4: ['nord', 'emp', 'khan', 'kin', 'emi', 'dom', 'pact'] }; // какие фракции есть на карте версий 1–4
 const worldF = () => FAC_V[G ? mapVer() : DEFAULT_MAPV];
 const atWar = (a, b) => a !== b && ((WAR[a] && WAR[a][b]) || (WAR[b] && WAR[b][a]));
 const TCOST = [0, 1, 1.75, 1.5, 0];
@@ -77,10 +77,11 @@ const EU_RIDGES = [
 // Где живёт каждая фракция: столица [долгота, широта, rx, ry] и эллипсы, в которых лежат её земли
 const EU_REG = {
   nord: { cap: [10.7, 59.7, .6, .5], discs: [[10.2, 60.2, 2.6, 1.7], [15.6, 59.4, 3, 1.6], [13.2, 57, 2, 1.3], [9.8, 56.3, 1.2, .9], [16.6, 62, 2.4, 1.2], [10.4, 63.3, 1.4, .7], [24.5, 61.5, 2.6, 1.3]] },
-  kin: { cap: [2.4, 48.8, .7, .5], discs: [[2.4, 47.5, 4.2, 2.6], [-1.3, 52.6, 1.8, 2], [-3.5, 54.6, 1.3, 1.1], [6.5, 50.8, 2.3, 1.4], [10.3, 50, 3.2, 1.6], [-3.5, 42.9, 3.5, .7], [.8, 41.8, 1.5, .8]] },
+  kin: { cap: [2.4, 48.8, .7, .5], discs: [[2.4, 47.5, 4.2, 2.6], [-1.3, 52.6, 1.8, 2], [-3.5, 54.6, 1.3, 1.1], [5.2, 50.8, 1.6, 1.1], [-3.5, 42.9, 3.5, .7], [.8, 41.8, 1.5, .8]] },
   emp: { cap: [12.5, 42, .6, .5], discs: [[12.2, 42.8, 2.3, 2], [15.8, 40.6, 1.3, 1], [14, 37.6, .9, .45], [14.5, 47.4, 3, 1.1], [19.5, 47.2, 2.7, 1.1], [19.5, 43.8, 3.2, 2], [25, 42.7, 3, 1], [22.2, 39.2, 1.5, 1.6], [31.5, 39.2, 5, 1.5], [29, 41.1, 1.5, .5]] },
   khan: { cap: [32, 50, .9, .7], discs: [[36, 49.5, 4.5, 3.2], [47, 52, 6, 3.5], [27, 50.2, 2.4, 1.1], [41, 45.5, 3, 1.2], [52, 47.5, 3, 3]] },
-  dom: { cap: [26.9, 54.9, .6, .5], discs: [[26.5, 54, 2.4, 1.3], [23.4, 54.4, 2.4, 1.4], [24.8, 57, 1.8, 1.2], [29.8, 53.4, 2.2, 1.4], [20.6, 52, 1.8, 1.3], [30.5, 56, 1.4, 1]] },
+  dom: { cap: [26.9, 54.9, .6, .5], discs: [[26.5, 54, 2.4, 1.3], [23.4, 54.4, 2.4, 1.4], [24.8, 57, 1.8, 1.2], [29.8, 53.4, 2.2, 1.4], [30.5, 56, 1.4, 1], [33.2, 54.8, 2.2, 1.4], [27.5, 51.6, 2, 1.1]] },
+  pact: { cap: [21, 52.2, .6, .5], discs: [[21, 52, 2.2, 1.3], [17, 52.3, 2, 1.2], [19.8, 50.2, 1.8, .9], [13.4, 52.5, 2.4, 1.2], [10.5, 51.4, 2.6, 1.3], [11, 48.8, 2, 1], [9.5, 53.6, 1.6, .7], [18.6, 54.1, 1.4, .6], [8.8, 48.5, 1.6, .9], [14.4, 49.4, 1.7, .9]] },
   emi: { cap: [-5.6, 37.8, 1, .6], discs: [[-5.2, 37.6, 2.8, 1.1], [-6.5, 39.5, 1.5, .9], [-2.5, 39.2, 2.5, 1], [-5.5, 34.4, 2, 1.3], [-1.5, 35.4, 3.5, 1.2], [4.2, 36, 3.4, 1.3], [8.8, 35.8, 2.4, 1.3]] },
   wild: { discs: [[45, 58, 6, 3], [48, 34.5, 5, 1.5], [10, 33.2, 6, .8], [38, 55.5, 3, 1.3]] }
 };
@@ -90,6 +91,7 @@ const SNAMES2 = {
   khan: { town: ['Кешир', 'Алтын-Тобе', 'Сарай-Кала', 'Орда-Балык'], castle: ['Булан-Орда', 'Тенгри-Кала', 'Кызыл-Кала'], village: ['Ак-Булак', 'Сары-Агач', 'Темир-Тау', 'Ордабаш', 'Кара-Су', 'Жайлау', 'Узун-Кюль', 'Бай-Тал'] },
   kin: { town: ['Аржанкур', 'Сен-Люс', 'Бельмон', 'Вильнёв'], castle: ['Монфокон', 'Шато-Руж', 'Рокбрюн'], village: ['Лаж-Дюбуа', 'Бовуар', 'Сен-Реми', 'Ла-Форж', 'Пре-Верт', 'Мон-Клер', 'Фонтене', 'Круа-Бланш'] },
   dom: { town: ['Мядель', 'Новогрудок', 'Ковенск', 'Полоцк'], castle: ['Крево', 'Гольшаны', 'Мир'], village: ['Нарочь', 'Свирь', 'Кобыльник', 'Вишнев', 'Мстижь', 'Ляды', 'Богушевка', 'Дольск'] },
+  pact: { town: ['Варшава', 'Познань', 'Краков', 'Берлин'], castle: ['Мальборк', 'Вавель', 'Вартбург'], village: ['Гнезно', 'Лович', 'Кутно', 'Плоцк', 'Радом', 'Калиш', 'Бранденбург', 'Любек'] },
   emi: { town: ['Аль-Захра', 'Мадинат-Нур', 'Баб-эш-Шамс', 'Рабат-Султан'], castle: ['Каср-эль-Хаджар', 'Калъат-Сакр', 'Хисн-аль-Асад'], village: ['Айн-Сафра', 'Вади-Рамль', 'Дар-эль-Хаджар', 'Сук-Тамар', 'Бир-Нахль', 'Тель-Асвад', 'Ксар-Ильм', 'Аль-Манара'] }
 };
 const CAMPN2 = ['Волчья яма', 'Разбитая башня', 'Чёрный брод', 'Пещера висельников', 'Гнилой овраг', 'Старая застава', 'Ущелье воронов', 'Заброшенная шахта', 'Костяной холм', 'Разорённый монастырь', 'Тёмная роща', 'Дозорная башня', 'Лисья нора', 'Каменная пасть'];
@@ -298,7 +300,7 @@ function genSettlementsV2() {
   for (let i = 0; i < 3; i++) for (const f of F) place(f, 'castle', SNAMES2[f].castle[i], 240, EU_REG[f].discs, 8);
   for (let i = 0; i < 8; i++) for (const f of F) place(f, 'village', SNAMES2[f].village[i], 150, EU_REG[f].discs, 6);
   // разбойничьи лагеря: у каждой фракции и в диких краях
-  for (let i = 0; i < CAMPN2.length; i++) { const f = i < 2 * F.length ? F[i % F.length] : 'wild'; place('bandit', 'camp', CAMPN2[i], 200, EU_REG[f].discs, 4); }
+  for (let i = 0; i < CAMPN2.length; i++) { const f = i < 10 ? F[i % F.length] : 'wild'; place('bandit', 'camp', CAMPN2[i], 200, EU_REG[f].discs, 4); }
 }
 // Путь по клеткам идёт отрезками в 8 направлениях: точки на прямых участках лишние (кроме мостов — они нужны для рисования)
 function thinPath(seg) {
@@ -343,7 +345,7 @@ function sortT(list) { list.sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].
 
 const CULT = {
   nord: { start: [['n1', 6], ['n2a', 2], ['n2s', 2]], horse: 0 }, emp: { start: [['e1', 6], ['e2a', 3], ['e2s', 1]], horse: 0 }, khan: { start: [['k1', 5], ['k2a', 3], ['k2c', 2]], horse: 1 },
-  kin: { start: [['f1', 6], ['f2a', 3], ['f2s', 1]], horse: 0 }, dom: { start: [['d1', 6], ['d2x', 3], ['d2s', 1]], horse: 0 }, emi: { start: [['m1', 5], ['m2a', 3], ['m2c', 2]], horse: 1 }
+  kin: { start: [['f1', 6], ['f2a', 3], ['f2s', 1]], horse: 0 }, dom: { start: [['d1', 6], ['d2x', 3], ['d2s', 1]], horse: 0 }, pact: { start: [['p1', 6], ['p2a', 3], ['p2s', 1]], horse: 0 }, emi: { start: [['m1', 5], ['m2a', 3], ['m2c', 2]], horse: 1 }
 };
 function newWorld(seed, mapv) {
   seed = seed || rint(1, 1e9); G = { seed, mapv: mapv || DEFAULT_MAPV, rv: (mapv || DEFAULT_MAPV) >= 2 ? 1 : 0, nid: 1, day: 1, hour: 8, acc: 0, speed: 1, paused: false, parties: [], settles: [], roads: [], players: [], player: null, log: [], stats: { wins: 0, kills: 0 }, ver: 2 };
@@ -355,10 +357,10 @@ function newWorld(seed, mapv) {
 function mkPlayer(o) {
   const home = G.settles.filter(s => s.fac === o.culture && s.kind === 'town')[0], troops = CULT[o.culture].start.map(a => ({ type: a[0], n: a[1] })), nm = (o.name || 'Безымянный').slice(0, 18);
   let px = home.x + 10 + rnd(-24, 24), py = home.y + 34; if (!TCOST[terrAt(px, py)]) { px = home.x; py = home.y; }
-  return { id: G.nid++, x: px, y: py, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, dom: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
+  return { id: G.nid++, x: px, y: py, troops, gold: 650, food: 60, path: [], pi: 0, tid: null, sid: null, in: null, name: nm, culture: o.culture, banner: o.banner || 0, fx: 1, busy: null, away: false, log: [], logDirty: true, quests: [], rel: { nord: 0, emp: 0, khan: 0, kin: 0, emi: 0, dom: 0, pact: 0, bandit: -100 }, stats: { wins: 0, kills: 0 },
     hero: { name: nm, lvl: 1, xp: 0, pts: PTS_START, pp: PP_START, perks: [], str: 1, vit: 1, agi: 1, int: 1, cha: 1, armor: 0, weapon: 0, shield: 0, horse: CULT[o.culture].horse, hp: 1, seed: rint(1, 99999) } };
 }
-function addPlayer(o) { const P = mkPlayer(o); relWatch(P); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name + '. Собери отряд и заработай имя.', 0, P); return P; }
+function addPlayer(o) { const P = mkPlayer(o); relWatch(P); G.players.push(P); const h = G.settles.find(s => s.fac === o.culture && s.kind === 'town'); logW('Ты прибыл в ' + h.name.replace(/а$/, 'у').replace(/я$/, 'ю') + '. Собери отряд и заработай имя.', 0, P); return P; }
 function newGame(o) { newWorld(o.seed); const P = addPlayer(o); G.player = P; FACTIONS.player.c1 = BANNERS[P.banner].c1; FACTIONS.player.c2 = BANNERS[P.banner].c2; return G; }
 function respawnCamp(c) { c.camp = mkParty('camp', 'bandit', 'Лагерь: ' + c.name, c.x, c.y, genTroops('bandit', rint(12, 20), .4), { home: c.id, hide: false }); c.cleared = false; c.camp.camp = c.id; }
 function spawnCaravan(t) { if (!t || !REAL_F.includes(t.fac)) return null; const dsts = G.settles.filter(s => s.kind === 'town' && s !== t && REAL_F.includes(s.fac)); if (!dsts.length) return null; const nr = isEU() ? dsts.filter(s => Math.hypot(s.x - t.x, s.y - t.y) < 1300) : dsts, dst = pick(nr.length ? nr : dsts); const p = mkParty('caravan', t.fac, 'Караван', t.x + 10, t.y + 20, genTroops(t.fac, rint(3, 5), .3), { home: t.id, sid: dst.id, state: 'travel' }); p.path = findPath(p.x, p.y, dst.x, dst.y) || []; p.pi = 0; return p; }
@@ -458,7 +460,7 @@ function playerDay(P) {
 function wageDay(P) { let w = 0; for (const s of P.troops) w += TROOPS[s.type].wage * s.n; return Math.round(w / 3 * (1 - perkFx(P.hero).wage)); }
 
 /* ================= враждебность, гарнизоны и владения ================= */
-const REAL_F = FAC_V[3]; // все фракции (на старой карте нужных нет, и их отряды и поселения просто не появляются)
+const REAL_F = FAC_V[4]; // все фракции (на старой карте нужных нет, и их отряды и поселения просто не появляются)
 const sCult = s => s.cult || s.fac; // культура поселения: облик, рекруты, рынок. При захвате не меняется
 function relHostile(P, f) { return REAL_F.includes(f) && P.rel[f] < -20; }
 function settleHostile(s, P) { return !!s && s.kind !== 'camp' && relHostile(P, s.fac); }
