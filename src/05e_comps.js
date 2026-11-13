@@ -90,7 +90,7 @@ function compTowns() { return G.settles.filter(s => s.kind === 'town' && s.fac !
 function compHired(id) { for (const P of G.players) if (compById(P, id)) return true; return false; }
 function compFixedTown(d) { // город пасхального спутника: по имени, иначе ближайший к его родным местам (Нарочь), на старой карте — первый город
   const all = compTowns(), byName = all.find(s => s.name === d.fixed); if (byName) return byName;
-  if (mapVer() === 2) { const x = euX(26.85), y = euY(54.88); return all.slice().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0]; }
+  if (isEU()) { const x = euX(26.85), y = euY(54.88); return all.slice().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0]; }
   return all[0];
 }
 function compPlace(id, avoid) {

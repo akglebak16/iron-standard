@@ -33,7 +33,7 @@ function crisisDay() {
   if (!alive && !any) { C.on = false; C.done = true; notifyAll('Нашествие мёртвых отбито! Курганы разрушены, армии нежити истреблены.', 3); if (!SERVER && typeof toast === 'function') toast('Нашествие мёртвых отбито!'); }
 }
 function crisisStart() {
-  const C = G.crisis, camps = G.settles.filter(s => s.kind === 'camp'), n = mapVer() === 2 ? 2 : 1, src = [];
+  const C = G.crisis, camps = G.settles.filter(s => s.kind === 'camp'), n = isEU() ? 2 : 1, src = [];
   for (let i = 0; i < n && camps.length; i++) { // курганы подальше друг от друга
     let best = null, bd = -1; for (let k = 0; k < 12; k++) { const c = pick(camps); if (src.includes(c)) continue; const d = src.length ? Math.min(...src.map(o => Math.hypot(o.x - c.x, o.y - c.y))) : rnd(); if (d > bd) { bd = d; best = c; } } if (best) src.push(best);
   }
