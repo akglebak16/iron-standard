@@ -85,3 +85,32 @@ function drawGibAt(g, b, flat) {
   if (b.type === 'bone') { g.strokeStyle = '#e2dac4'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-b.s / 2, 0); g.lineTo(b.s / 2, 0); g.stroke(); g.fillStyle = '#e2dac4'; ell(g, -b.s / 2, 0, 1.2, 1.2); g.fill(); ell(g, b.s / 2, 0, 1.2, 1.2); g.fill(); return; }
   g.fillStyle = b.col; ell(g, 0, 0, b.s, b.s * .7); g.fill(); g.fillStyle = 'rgba(255,220,200,.25)'; ell(g, -b.s * .3, -b.s * .2, b.s * .35, b.s * .25); g.fill(); // кусок
 }
+
+/* ================= реплики спутников над головой (пан Глебио и др.: COMP[id].voice в 05e_comps.js) =================
+   start — в начале боя, kill / killUndead — когда убил, taunt — время от времени рядом с врагом, hurt — получил сильный удар, down — ранен и вынесен. */
+function voiceSay(u, kind, force) {
+  const V = u.voice, L = V && (V[kind] || (kind === 'killUndead' ? V.kill : null)); if (!L || !L.length) return;
+  if (!force && u.sayCd > 0 && !(kind === 'kill' || kind === 'killUndead') && Math.random() > .3) return;
+  if (!force && (kind === 'kill' || kind === 'killUndead') && u.sayCd > .6) return;
+  let txt = pick(L); if (L.length > 1 && txt === u.sayLast) txt = pick(L); u.sayLast = txt;
+  u.say = { txt, t: kind === 'start' ? 3 : 2.4 }; u.sayCd = kind === 'kill' || kind === 'killUndead' ? 1.1 : 3;
+  if (kind === 'start' || kind === 'down') blog(u.name + ': «' + txt + '»', kind === 'down' ? 1 : 2);
+}
+function voiceUpdate(dt) {
+  for (const u of B.units) {
+    if (!u.voice) continue; if (u.say && (u.say.t -= dt) <= 0) u.say = null; if (u.dead || u.gone) continue; u.sayCd -= dt;
+    if (u.sayStart > 0 && (u.sayStart -= dt) <= 0) voiceSay(u, 'start', true);
+    if ((u.tauntT -= dt) <= 0) { u.tauntT = rnd(12, 20); if (nearestFoeDist(u.x, u.y, 1 - u.side) < 260) voiceSay(u, 'taunt'); }
+  }
+}
+function voiceDraw(g) {
+  g.font = '700 13px "Alegreya Sans","Alegreya Sans SC",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const u of B.units) {
+    if (!u.say) continue; const s = u.say, a = clamp(s.t / .3, 0, 1), w = g.measureText(s.txt).width + 14, h = 20, x = u.x, y = u.y - (u.sp && u.sp.m ? 98 : 78) - (u.dead ? -40 : 0);
+    g.globalAlpha = a; g.fillStyle = '#f3e8c9'; g.strokeStyle = '#1b130c'; g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(x - w / 2 + 4, y - h / 2); g.lineTo(x + w / 2 - 4, y - h / 2); g.quadraticCurveTo(x + w / 2, y - h / 2, x + w / 2, y - h / 2 + 4); g.lineTo(x + w / 2, y + h / 2 - 4); g.quadraticCurveTo(x + w / 2, y + h / 2, x + w / 2 - 4, y + h / 2);
+    g.lineTo(x + 6, y + h / 2); g.lineTo(x - 2, y + h / 2 + 8); g.lineTo(x - 2, y + h / 2); g.lineTo(x - w / 2 + 4, y + h / 2); g.quadraticCurveTo(x - w / 2, y + h / 2, x - w / 2, y + h / 2 - 4); g.lineTo(x - w / 2, y - h / 2 + 4); g.quadraticCurveTo(x - w / 2, y - h / 2, x - w / 2 + 4, y - h / 2); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = /[А-ЯЁ]{4,}|!$/.test(s.txt) ? '#8f1a12' : '#2a1a0e'; g.fillText(s.txt, x, y + 1);
+  }
+  g.globalAlpha = 1; g.textBaseline = 'alphabetic';
+}

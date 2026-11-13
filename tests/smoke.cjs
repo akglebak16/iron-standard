@@ -109,6 +109,7 @@ async function companions(pg) {
   await pg.click('#modal [data-act=chire][data-id=ingrid]'); await pg.click('#modal [data-act=chire][data-id=halvdan]'); await sleep(150);
   const h = await pg.evaluate(() => ({ n: G.player.comps.length, gold: G.player.gold, left: document.querySelectorAll('#modal [data-act=chire]').length }));
   ok('спутника можно нанять: он в отряде, золото списано, в таверне его больше нет', h.n === 2 && h.gold === 5000 - 350 - 800 && h.left === 0, h);
+  ok('пан Глебио сидит в Мяделе и идёт в отряд бесплатно', await pg.evaluate(() => { const m = G.settles.find(s => s.name === 'Мядель'), g0 = G.player.gold; if (!m || G.cpos.glebio !== m.id) return false; const r = doCompHire(G.player, m, 'glebio'); const ok = !r && G.player.gold === g0 && !!compById(G.player, 'glebio'); doCompFire(G.player, 'glebio'); return ok; }));
   ok('вкладка «Спутники» в окне отряда', await pg.evaluate(() => { closeModal(); openPanel('comps'); return document.querySelectorAll('#modal .row.comp').length === 2; }));
   ok('в обозе можно выбрать спутника и надеть на него вещь', await pg.evaluate(() => { invAdd(G.player, 'bow_long', 1); ACT.cgear({ id: 'halvdan' }); ACT.equip({ id: 'bow_long' }); const c = compById(G.player, 'halvdan'); return !!document.querySelector('#modal .whobar') && heroEq(c).ranged === 'bow_long' && heroEq(G.player.hero).ranged !== 'bow_long'; }));
   await pg.evaluate(() => { closeModal(); const P = G.player, p = mkParty('bandit', 'bandit', 'Тестовая шайка', P.x + 5, P.y, [{ type: 'b1', n: 8 }]); launchBattle(p); });

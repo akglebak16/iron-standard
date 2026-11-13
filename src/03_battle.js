@@ -52,7 +52,9 @@ function startBattle(cfg) {
 function spawnComp(c) {
   const hd = heroDef(c); hd.id = 'comp:' + c.id; hd.grp = hd.mounted ? 2 : hd.range ? 1 : 0; const g = B.groups[0][hd.grp];
   const u = mkUnit(0, hd, 'player', g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getHeroSprite(c, hd.mounted));
-  u.comp = c.id; u.name = c.name; u.hp = Math.max(hd.hp * .3, hd.hp * (c.hp === undefined ? 1 : c.hp)); u.spd = hd.spd; u.mbase = u.morale = 160; u.fx = perkFx(c); return u;
+  u.comp = c.id; u.name = c.name; u.hp = Math.max(hd.hp * .3, hd.hp * (c.hp === undefined ? 1 : c.hp)); u.spd = hd.spd; u.mbase = u.morale = 160; u.fx = perkFx(c);
+  const d = typeof COMP !== 'undefined' && COMP[c.id]; if (d && d.voice) { u.voice = d.voice; u.sayCd = 0; u.sayStart = rnd(1, 2.2); u.tauntT = rnd(12, 18); } // реплики в бою (03b_gore.js)
+  return u;
 }
 function myPid() { return B.hero ? B.hero.pid : undefined; }
 function alive(u) { return !u.dead && !u.gone; }
@@ -191,7 +193,7 @@ function shoot(u, e, d) {
 }
 function hurt(t, dmg, src, pierce) {
   if (t.dead) return; const arm = t.arm * (1 - (pierce || 0)), d = Math.max(1, Math.round(dmg * (1 - arm / (arm + 55))));
-  t.hp -= d; t.lh = d; t.flash = .13; t.morale -= d * .12; if (!SERVER) { const bc = goreCol(t); if (bc) fxBlood(t.x, t.y - 16, 4, bc); else fxDust(t.x, t.y - 14); if (t.hp > 0) goreHit(t, d, src); } ev(['h', t.id, d]);
+  t.hp -= d; t.lh = d; t.flash = .13; t.morale -= d * .12; if (!SERVER) { const bc = goreCol(t); if (bc) fxBlood(t.x, t.y - 16, 4, bc); else fxDust(t.x, t.y - 14); if (t.hp > 0) goreHit(t, d, src); if (t.voice && t.hp > 0 && d > t.maxHp * .1 && Math.random() < .35) voiceSay(t, 'hurt'); } ev(['h', t.id, d]);
   if (t === B.hero || (src && src === B.hero)) ftext(t.x + rnd(-6, 6), t.y - 46, String(d), t === B.hero ? '#e2503c' : '#f1e3b0');
   if (t === B.hero) B.shake = .18;
   if (t.hp <= 0 && t.isHero && t.fx && t.fx.lastStand && !t.lsUsed) { t.lsUsed = true; t.hp = Math.max(1, t.maxHp * t.fx.lastStand); if (!SERVER) ftext(t.x, t.y - 62, 'Не сдаюсь!', '#f1d27a'); blog(t.name + ' поднялся на ноги', 0); }
@@ -199,6 +201,7 @@ function hurt(t, dmg, src, pierce) {
 }
 function kill(t, src) {
   t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
+  if (!SERVER) { if (src && src.voice && !src.dead) voiceSay(src, t.t.fac === 'undead' && Math.random() < .5 ? 'killUndead' : 'kill'); if (t.voice) voiceSay(t, 'down', true); }
   if (!SERVER && !goreKill(t, src)) paintCorpse(t); ev(['k', t.id]);
   if (!SERVER && goreCol(t)) fxBlood(t.x, t.y - 14, 12, goreCol(t)); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
@@ -304,7 +307,7 @@ function battleUpdate(rdt) {
     if ((!f0 || !f1) && !B.over) { B.over = B.t; B.win = f0 && !f1; if (!demo) { blog(B.win ? 'Победа! Враг разбит.' : 'Отряд разбит…', B.win ? 0 : 1); sfx(B.win ? 'horn' : 'horn2'); } }
   }
   if (B.over && B.t - B.over > 2.2 && !B.done) { B.done = true; finishBattle(); }
-  if (!SERVER) { goreUpdate(dt); battleCamera(rdt); }
+  if (!SERVER) { goreUpdate(dt); voiceUpdate(dt); battleCamera(rdt); }
 }
 function battleCamera(rdt) {
   const demo = B.cfg.demo;
@@ -366,7 +369,7 @@ function battleDraw(g) {
     if (u.comp && !demo) { g.font = '700 12px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center'; const ny = u.y - (sp.m ? 76 : 58); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(u.name, u.x + 1, ny + 1); g.fillStyle = '#9fe3d6'; g.fillText(u.name, u.x, ny); }
     if (u.flee && !demo) { g.fillStyle = '#f4f0e0'; g.fillRect(u.x - 1, u.y - 66, 9, 6); g.fillStyle = '#3a2a18'; g.fillRect(u.x - 2, u.y - 67, 1.5, 14); }
   }
-  goreDrawOver(g);
+  goreDrawOver(g); voiceDraw(g);
   const h = B.hero;
   if (h && !h.dead && h.swing > 0) { const p = 1 - h.swing / .26, R = 34 + h.t.reach + (h.t.mounted ? 8 : 0), a0 = h.swingA - 1 + p * 2; g.strokeStyle = 'rgba(255,250,230,' + (.85 - p * .7) + ')'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.arc(h.x, h.y - 14, R, a0 - .7, a0); g.stroke(); }
   // стрелы

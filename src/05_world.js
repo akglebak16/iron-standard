@@ -296,6 +296,7 @@ function genSettlementsV2() {
   for (let i = 0; i < 8; i++) for (const f of REAL_F) place(f, 'village', SNAMES2[f].village[i], 150, EU_REG[f].discs, 6);
   // разбойничьи лагеря: у каждой фракции и в диких краях
   for (let i = 0; i < CAMPN2.length; i++) { const f = i < 10 ? REAL_F[i % 5] : 'wild'; place('bandit', 'camp', CAMPN2[i], 200, EU_REG[f].discs, 4); }
+  place('khan', 'town', 'Мядель', 200, [[26.85, 54.88, .5, .3]], 3); // городок у озера Нарочь: там сидит пан Глебио (05e_comps.js)
 }
 // Путь по клеткам идёт отрезками в 8 направлениях: точки на прямых участках лишние (кроме мостов — они нужны для рисования)
 function thinPath(seg) {

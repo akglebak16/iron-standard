@@ -44,6 +44,19 @@ const COMPS = [
     a: [4, 3, 3, 1, 1], perks: ['master'], eq: COMP_EQ('head_turbanm', 'body_mail', 'hands_reinf', 'legs_greaves', 'sword_master', null, 'shield_banded'), sel: 'melee', sk: { xp: [.05, .1, .15] }, grow: ['str', 'agi', 'vit'],
     story: 'Бывший страж эмира. Молчит неделями, но враги его отряда почему-то не доживают до разговора.' }
 ];
+/* Пасхалка: пан Глебио Кемейшалес. Всегда сидит в таверне Мяделя (на старой карте и в старых сохранениях Европы — в ближайшем к Нарочи городе),
+   идёт в отряд бесплатно и без жалованья. Бьётся двуручником и в бою орёт (реплики над головой, см. 03b_gore.js). */
+COMPS.push({ id: 'glebio', name: 'Глебио Кемейшалес', fac: 'kin', role: 'Шляхтич с двуручником', skn: 'Шляхетский размах', price: 0, wage: 0, fixed: 'Мядель',
+  a: [6, 5, 3, 1, 2], perks: ['grip', 'grip', 'tough'], eq: COMP_EQ('head_kettle', 'body_scale', 'hands_mail', 'legs_mail', 'tw_claymore'), sel: 'melee', sk: { loot: [.1, .18, .25] }, grow: ['str', 'vit', 'str'],
+  story: 'Польский шляхтич из-под Мяделя. Родовой герб, фамильный клеймор и ни гроша за душой. Служить готов даром — лишь бы рубить. Говорит, что за честь. Врёт: за веселье.',
+  voice: {
+    start: ['Ну пизда вам, сучары!', 'Пан Глебио пришёл — всем лечь!', 'Курва, ну и рожи… Поехали!', 'Сейчас будет шляхетский мордобой!', 'Кто не спрятался — я не виноват, бля!'],
+    kill: ['Сюда, бля, малышок, епта — минус один!', 'Резать! Резать! Резать!', 'СВИННОЕ ПЕКЛО!', 'Курва мать, ещё один!', 'Лежать, холоп!', 'Это тебе за Мядель, сука!', 'Ещё! Дайте ещё!', 'Пиздец тебе, родной.', 'Кто следующий, ёб твою мать?!', 'Мой клеймор голоден!', 'Готов, голубчик!', 'Ох, хорошо пошло!'],
+    killUndead: ['Лежи и не вставай, жмурик!', 'Обратно в могилу, сука!', 'Кости в кучу, курва!'],
+    taunt: ['Вы чё, ссыте?!', 'Иди сюда, иди сюда, сучара!', 'Я ж вас всех на шашлык порежу!', 'Шляхта не отступает, бля!', 'Ну давай, давай, родной!'],
+    hurt: ['Ай, сука!', 'Царапина, бля!', 'Ах ты ж падла!'],
+    down: ['Курва… я ещё вернусь…', 'Пиздец… несите к лекарю…']
+  } });
 const COMP = {}; for (const c of COMPS) COMP[c.id] = c;
 const SK_TXT = { map: 'отряд идёт по карте быстрее', cargo: 'обоз вмещает больше', surv: 'из павших бойцов больше раненых', heal: 'герой лечится быстрее', wage: 'жалованье ниже', buy: 'покупка дешевле',
   hire: 'найм и улучшение войск дешевле', flee: 'шанс уйти от погони выше', loot: 'добыча после боя больше', size: 'отряд больше на', sell: 'продажа дороже', quest: 'награды за задания больше', xp: 'герой получает больше опыта' };
@@ -75,14 +88,20 @@ function compStr(P) { let s = 0; for (const c of P.comps || []) if (compFit(c)) 
 /* ---------- таверны ---------- */
 function compTowns() { return G.settles.filter(s => s.kind === 'town' && s.fac !== 'bandit'); }
 function compHired(id) { for (const P of G.players) if (compById(P, id)) return true; return false; }
+function compFixedTown(d) { // город пасхального спутника: по имени, иначе ближайший к его родным местам (Нарочь), на старой карте — первый город
+  const all = compTowns(), byName = all.find(s => s.name === d.fixed); if (byName) return byName;
+  if (mapVer() === 2) { const x = euX(26.85), y = euY(54.88); return all.slice().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0]; }
+  return all[0];
+}
 function compPlace(id, avoid) {
   const all = compTowns(), d = COMP[id]; if (!all.length) return;
+  if (d.fixed) { const t = compFixedTown(d); if (t) { G.cpos[id] = t.id; return; } }
   const busy = new Set(Object.values(G.cpos)), home = all.filter(s => sCult(s) === d.fac && s.id !== avoid && !busy.has(s.id)), free = all.filter(s => s.id !== avoid && !busy.has(s.id));
   const s = pick(home.length && Math.random() < .6 ? home : free.length ? free : all); G.cpos[id] = s.id;
 }
 function compsInit() { if (!G.cpos) G.cpos = {}; if (!G.cstate) G.cstate = {}; for (const c of COMPS) if (!compHired(c.id) && (G.cpos[c.id] === undefined || !settleById(G.cpos[c.id]))) compPlace(c.id); }
 function compsAt(s) { compsInit(); return COMPS.filter(c => G.cpos[c.id] === s.id && !compHired(c.id)).map(c => G.cstate[c.id] || compNew(c.id)); }
-function compsDay() { compsInit(); if (G.day % 4) return; for (const c of COMPS) if (!compHired(c.id) && Math.random() < .5) { const was = G.cpos[c.id]; delete G.cpos[c.id]; compPlace(c.id, was); } } // раз в 4 дня половина бродяг меняет город
+function compsDay() { compsInit(); if (G.day % 4) return; for (const c of COMPS) if (!c.fixed && !compHired(c.id) && Math.random() < .5) { const was = G.cpos[c.id]; delete G.cpos[c.id]; compPlace(c.id, was); } } // раз в 4 дня половина бродяг меняет город
 function compRumor(s) { // слух в таверне: где сейчас ближайший свободный спутник из другого города
   compsInit(); let best = null, bd = 1e9; for (const c of COMPS) { const sid = G.cpos[c.id]; if (sid === undefined || sid === s.id || compHired(c.id)) continue; const t = settleById(sid); if (!t) continue; const d = Math.hypot(t.x - s.x, t.y - s.y); if (d < bd) { bd = d; best = { c: COMP[c.id], t }; } }
   return best;
@@ -96,7 +115,7 @@ function doCompHire(P, s, id) {
 }
 function doCompFire(P, id, why) {
   const c = compById(P, id); if (!c) return false; compsInit(); P.comps.splice(P.comps.indexOf(c), 1); G.cstate[id] = c;
-  const near = compTowns().sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; if (near) G.cpos[id] = near.id;
+  const near = COMP[id].fixed ? compFixedTown(COMP[id]) : compTowns().sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; // пасхальный спутник возвращается домой if (near) G.cpos[id] = near.id;
   logW(c.name + (why || ' уходит из отряда') + (near ? ' и будет ждать в таверне ' + near.name : '') + '.', 1, P); return true;
 }
 
