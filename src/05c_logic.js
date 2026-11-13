@@ -5,7 +5,7 @@ function heroBattle(H) { heroFix(H); return { name: H.name, str: H.str, vit: H.v
 function townEnter(P, s) {
   P.in = s.id; P.path = []; P.pi = 0; P.tid = null; P.sid = null;
   for (const q of P.quests.slice()) if (q.type === 'deliver' && q.sid === s.id) questDone(P, q, true);
-  P.rel[s.fac] = Math.min(100, P.rel[s.fac] + .5);
+  if (P.rel[s.fac] !== undefined) P.rel[s.fac] = Math.min(100, P.rel[s.fac] + .5);
 }
 function doHire(P, s, type, n) {
   const r = s.recruits.find(x => x.type === type), t = TROOPS[type]; if (!r) return false;
@@ -24,7 +24,7 @@ function doAccept(P, s, qid) { const q = (s.board || []).find(x => x.id === qid)
 
 /* ---------- встреча и бой ---------- */
 function relativePowerOf(P, p) { const a = strength(P.troops) + 8, b = p.str !== undefined && !p.troops ? p.str : partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
-function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); }
+function encAttack(P, p) { P.rel[p.fac] = Math.max(-100, P.rel[p.fac] - (p.kind === 'caravan' ? 12 : 30)); logW('Ты напал на ' + FACTIONS[p.fac].gen + '. Отношения испорчены.', 1, P); relWatch(P); }
 function encFlee(P, p) {
   const ch = clamp(.45 + (speedOf(P) - speedOf(p)) * .06 - (p.kind === 'camp' ? .3 : 0) + perkFx(P.hero).flee, .12, .9);
   if (Math.random() < ch) { p.cd = 6; p.state = 'idle'; p.path = []; p.lock = null; const a = Math.atan2(P.y - p.y, P.x - p.x); P.x = clamp(P.x + Math.cos(a) * 40, 20, WW - 20); P.y = clamp(P.y + Math.sin(a) * 40, 20, WH - 20); return true; }
@@ -35,7 +35,7 @@ function battleCfgFor(P, p) {
     title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: p.kind === 'lord' ? p.name : null, seed: rint(1, 1e9) };
 }
 function autoResult(P, p) {
-  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + 10, sb = partyStr(p), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + 10, sb = partyStr(p) * (p.kind === 'siege' ? 1.35 : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
   const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
   for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
   if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
@@ -61,7 +61,23 @@ function applyBattleResult(P, res, p) {
     if (!troopCount(P.troops)) { const t = G.settles.filter(s => s.kind === 'town').sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))[0]; P.x = t.x + 10; P.y = t.y + 34; res.woke = t.name; if (P.gold < 60) P.gold += 80; }
     logW('Ты потерпел поражение от «' + p.name + '».', 1, P);
   }
+  const cap = p.kind === 'siege' ? siegeAfter(P, res, p) : null;
+  relWatch(P);
   while (H.xp >= xpNeed(H.lvl)) { H.xp -= xpNeed(H.lvl); H.lvl++; H.pts += PTS_LEVEL; H.pp += PP_LEVEL; lvl++; }
   if (lvl) { sfx('level'); logW('Новый уровень: ' + H.lvl + '. Очки: атрибуты +' + PTS_LEVEL * lvl + ', перки +' + PP_LEVEL * lvl + '.', 3, P); }
-  return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl };
+  return { res, loot, lvl, lost, wounded, win: res.win, lvlNow: H.lvl, captured: cap };
+}
+
+/* ---------- осада ---------- */
+// враг при осаде: гарнизон плюс лорды той же фракции, что сидят в стенах
+function siegeParty(s) {
+  const en = garrisonOf(s).map(t => ({ type: t.type, n: t.n })), lords = G.parties.filter(p => p.kind === 'lord' && p.hide && p.home === s.id && p.fac === s.fac);
+  for (const l of lords) for (const t of l.troops) addT(en, t.type, t.n); sortT(en);
+  return { id: -s.id, kind: 'siege', fac: s.fac, name: s.name, troops: en, gold: s.kind === 'town' ? 350 : 180, sid: s.id, lord: lords[0] ? lords[0].name : null };
+}
+function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, leader: p.lord, biome: biomeName(s.x, s.y), forest: false }); }
+function siegeAfter(P, res, p) {
+  const s = settleById(p.sid); if (!s) return null;
+  if (res.win) { captureSettle(P, s); return s.name; }
+  const g = garrisonOf(s), k = res.enemyTotal ? 1 - res.enemyDead / res.enemyTotal : 1; for (const t of g.slice()) remT(g, t.type, Math.round(t.n * (1 - k))); return null;
 }

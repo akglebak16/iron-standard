@@ -43,6 +43,7 @@ function mmode() { return MODE; }
 /* ---------- город ---------- */
 function openTown(s) {
   if (NET.on) { NET.send({ t: 'enter', id: s.id }); return; }
+  if (settleHostile(s, G.player)) { G.player.path = []; if (s.kind === 'village') toast(s.name + ': жители заперлись — ' + FACTIONS[s.fac].name + ' враждебен тебе.'); else openSiege(s); return; }
   const P = G.player; townEnter(P, s); G.wait = false; UI.town = { s, tab: 'recruit' }; sfx('click'); renderTown(); saveGame(true);
 }
 function renderTown() {
@@ -58,14 +59,20 @@ function renderTown() {
     body += '<div class="note">Золото: ' + fmt(P.gold) + '. Провизии: ' + P.food + ', отряду нужно около ' + Math.ceil(cnt / 6) + ' в день.</div><div class="cols">' +
       [[10, 22], [30, 60], [80, 150]].map(a => '<div class="card"><h3>' + a[0] + ' провизии</h3><div style="display:flex;justify-content:space-between;align-items:center"><span class="price ' + (P.gold < a[1] ? 'no' : '') + '">' + ic('coin') + a[1] + '</span><button class="btn sm" data-act="food" data-n="' + a[0] + '" data-p="' + a[1] + '" ' + (P.gold >= a[1] ? '' : 'disabled') + '>Купить</button></div></div>').join('') +
       '<div class="card"><h3>Отдых</h3><p class="note">Восемь часов в таверне: герой залечивает раны.</p><button class="btn sm" data-act="rest">Отдохнуть</button></div></div>';
+  } else if (tab === 'garrison') {
+    const g = garrisonOf(s); body += '<div class="note">Гарнизон защищает владение, пока тебя нет: враждебные лорды могут прийти и взять его штурмом. Доход: ' + settleIncome(s) + ' золота в день. В гарнизоне ' + troopCount(g) + ' бойцов, в отряде ' + cnt + ' из ' + cap + '.</div><h3 style="margin:10px 0 6px">В гарнизоне</h3>';
+    if (!g.length) body += '<div class="note">Пусто. Оставь здесь бойцов из отряда.</div>';
+    for (const t of g) body += troopRow(t, '<div class="cnt">' + t.n + '</div><div class="acts"><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="1" ' + (cnt < cap ? '' : 'disabled') + '>Забрать</button><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="99" ' + (cnt < cap ? '' : 'disabled') + '>Всех</button></div>');
+    body += '<h3 style="margin:14px 0 6px">Твой отряд</h3>';
+    for (const t of P.troops) body += troopRow(t, '<div class="cnt">' + t.n + '</div><div class="acts"><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="1" data-to="1" ' + (cnt > 1 ? '' : 'disabled') + '>Оставить</button><button class="btn sm" data-act="gar" data-t="' + t.type + '" data-n="99" data-to="1" ' + (cnt > 1 ? '' : 'disabled') + '>Всех</button></div>');
   } else if (tab === 'quests') {
     const bd = s.board || []; body += '<div class="note">Заказы города. Награду выплачивают сразу, как дело сделано.</div>';
     if (!bd.length) body += '<div class="note">Доска пуста.</div>';
     for (const q of bd) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Срок: до дня ' + q.dl + ' · ' + (q.type === 'camp' ? 'Расстояние: ' + Math.round(Math.hypot(settleById(q.sid).x - s.x, settleById(q.sid).y - s.y) / 10) / 10 + ' лиг' : 'Груз уже погружен') + '</div></div><span class="price">' + ic('coin') + q.reward + '</span><button class="btn sm" data-act="accept" data-q="' + q.id + '">Взять</button></div>';
     if (G.player.quests.length) { body += '<h3 style="margin:14px 0 6px">Твои задания</h3>'; for (const q of G.player.quests) body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">До дня ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
   }
-  const tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок'], ['quests', 'Задания']];
-  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + f.gen + ' · отношение: ' + relName(G.player.rel[s.fac]) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'trade' ? tradeDock(s) : '') + '<div class="wfoot"><button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
+  const mine = s.fac === 'player', tabs = [['recruit', 'Рекруты'], ['trade', 'Торговля'], ['market', 'Рынок']].concat(mine ? [['garrison', 'Гарнизон']] : [['quests', 'Задания']]), canSiege = !mine && !NET.on && REAL_F.includes(s.fac) && (s.kind === 'town' || s.kind === 'castle');
+  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + (mine ? 'твоё владение · доход ' + settleIncome(s) + '/день · гарнизон ' + troopCount(garrisonOf(s)) : f.gen + ' · отношение: ' + relName(G.player.rel[s.fac])) + '</span></h2><span class="stat">' + ic('coin') + fmt(P.gold) + '</span></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ttab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'trade' ? tradeDock(s) : '') + '<div class="wfoot">' + (canSiege ? '<button class="btn danger" data-act="siegeask" style="margin-right:auto">Осадить</button>' : '') + '<button class="btn" data-act="party">Отряд</button><button class="btn pri" data-act="leave">Покинуть ' + (s.kind === 'town' ? 'город' : s.kind === 'castle' ? 'замок' : 'деревню') + '</button></div>');
 }
 
 /* ---------- отряд и герой ---------- */
@@ -85,7 +92,7 @@ function renderPanel() {
     body += invBody();
   } else if (tab === 'journal') {
     body += '<h3>Задания</h3>'; if (!G.player.quests.length) body += '<div class="note">Нет активных заданий. Загляни на доску в городе.</div>'; for (const q of G.player.quests) { const s = settleById(q.sid); body += '<div class="row"><div class="grow"><div class="nm">' + questText(q) + '</div><div class="ds">Заказчик: ' + FACTIONS[q.fac].name + ' · срок: день ' + q.dl + '</div></div><span class="price">' + ic('coin') + q.reward + '</span></div>'; }
-    body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card"><h3>' + FACTIONS[f].name + '</h3><div class="kv"><span>Отношение</span><b>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
+    body += '<h3 style="margin-top:14px">Отношения</h3><div class="cols">' + ['nord', 'emp', 'khan'].map(f => '<div class="card' + (relHostile(G.player, f) ? ' hostile' : '') + '"><h3>' + FACTIONS[f].name + (relHostile(G.player, f) ? ' <span class="tag r">враг</span>' : '') + '</h3><div class="kv"><span>Отношение</span><b' + (relHostile(G.player, f) ? ' class="dn"' : '') + '>' + relName(G.player.rel[f]) + ' (' + Math.round(G.player.rel[f]) + ')</b></div><div class="kv"><span>Воюет с</span><b>' + (['nord', 'emp', 'khan'].filter(o => atWar(f, o)).map(o => FACTIONS[o].name.split(' ')[0]).join(', ') || 'ни с кем') + '</b></div></div>').join('') + '</div>' +
       '<h3 style="margin-top:14px">Хроника</h3>' + G.player.log.slice(-12).reverse().map(l => '<div class="kv"><span>День ' + l.d + '</span><b style="font-weight:500;text-align:right">' + l.txt + '</b></div>').join('');
   }
   const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Журнал']]; if (NET.on) tabs.push(['ally', 'Союз']);
@@ -107,6 +114,13 @@ function openEncounter(p, forced) {
 
 /* ---------- действия по клику ---------- */
 const ACT = {
+  gar(d) { const s = UI.town && UI.town.s, n = garMove(G.player, s, d.t, +d.n, d.to === '1'); if (n) { sfx('click'); renderTown(); } },
+  siegeask() { const s = UI.town.s; openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>Осадить ' + s.name + '?<span class="sub">Это объявление войны</span></h2></div><div class="wbody"><div class="note">Отношения с ' + FACTIONS[s.fac].gen + ' станут враждебными: их лорды начнут охотиться за тобой, ворота их городов закроются.</div></div><div class="wfoot"><button class="btn" data-act="siegeno" data-s="' + s.id + '">Передумал</button><button class="btn danger" data-act="siegeyes" data-s="' + s.id + '">Объявить войну</button></div>', 'narrow'); },
+  siegeno(d) { openTown(settleById(+d.s)); },
+  siegeyes(d) { const s = settleById(+d.s); declareWar(G.player, s.fac); openSiege(s); },
+  siegeatk() { const p = UI.siege.p; closeModal(); launchSiege(p); },
+  siegeauto() { const p = UI.siege.p; closeModal(); battleEnded(autoResult(G.player, p), p); },
+  siegeoff() { closeModal(); },
   ttab(d) { UI.town.tab = d.t; renderTown(); },
   leave() { closeModal(); },
   hire(d) { if (NET.on) { NET.send({ t: 'hire', type: d.t, n: +d.n }); sfx('coin'); return; } if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
@@ -163,3 +177,12 @@ function renderQuick() {
   openModal('<div class="whead"><h2>Быстрый бой<span class="sub">Сразу на поле: ты ведёшь своего героя, остальные слушаются приказов</span></h2></div><div class="wbody"><div class="note">Твоя армия</div>' + pick('me', [['nord', 'Нордмарк'], ['emp', 'Империя'], ['khan', 'Ханство']]) + '<div class="note">Противник</div>' + pick('foe', [['nord', 'Нордмарк'], ['emp', 'Империя'], ['khan', 'Ханство'], ['bandit', 'Разбойники']]) + '<div class="note">Размер армий</div>' + pick('size', [[20, 'Отряд (20)'], [40, 'Войско (40)'], [70, 'Великая битва (70)']]) + '</div><div class="wfoot"><button class="btn" data-act="tomenu">Назад</button><button class="btn pri" data-act="qgo">В бой</button></div>', 'narrow');
 }
 function openQuick() { renderQuick(); }
+
+/* ---------- осада ---------- */
+function openSiege(s) {
+  const P = G.player, p = siegeParty(s), pw = relativePowerOf(P, Object.assign({}, p, { troops: p.troops.map(t => ({ type: t.type, n: Math.round(t.n * 1.35) })) })); P.path = []; P.tid = null; G.wait = false;
+  UI.siege = { s, p }; const n = troopCount(p.troops), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
+  openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>Осада: ' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + FACTIONS[s.fac].name + ' · ' + n + ' защитников' + (p.lord ? ' · в стенах ' + p.lord : '') + '</span></h2><span class="tag ' + pw[1] + '">' + pw[0] + '</span></div>' +
+    '<div class="wbody"><div class="note">Ворота закрыты. Защитники держат проломы в стене, их стрелки бьют из-за зубцов. Если возьмёшь ' + (s.kind === 'town' ? 'город' : 'замок') + ', он станет твоим и будет приносить ' + settleIncome(s) + ' золота в день.</div>' +
+    list.map(t => troopRow(t, '<div class="cnt">' + t.n + '</div>')).join('') + '</div><div class="wfoot"><button class="btn" data-act="siegeoff">Отойти</button><button class="btn" data-act="siegeauto">Рассчитать штурм</button><button class="btn danger" data-act="siegeatk">На штурм!</button></div>', 'narrow');
+}

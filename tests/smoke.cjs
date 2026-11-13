@@ -75,6 +75,32 @@ async function singlePlayer(pg) {
   ok('выход из боя в меню просит подтверждение', conf); await pg.evaluate(() => closeModal());
 }
 
+async function sieges(pg) {
+  console.log('Осады и враждебность');
+  await newSinglePlayer(pg);
+  const c = await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.fac === 'emp' && x.kind === 'castle'); P.x = s.x - 60; P.y = s.y + 20; P.troops = [{ type: 'n2a', n: 20 }, { type: 'n2s', n: 20 }]; openTown(s); return s.id; });
+  ok('в чужом замке есть кнопка «Осадить»', !!(await pg.$('#modal [data-act=siegeask]')));
+  await pg.click('#modal [data-act=siegeask]'); await pg.click('#modal [data-act=siegeyes]'); await sleep(200);
+  const war = await pg.evaluate(() => ({ hostile: relHostile(G.player, 'emp'), log: G.player.log.slice(-1)[0].txt, siege: !!document.querySelector('#modal [data-act=siegeatk]') }));
+  ok('объявление войны: фракция враждебна, в журнале сообщение, открыто окно осады', war.hostile && /враг/.test(war.log) && war.siege, war);
+  ok('враждебный замок не пускает в город, а предлагает осаду', await pg.evaluate(id => { closeModal(); openTown(settleById(id)); return !UI.town && !!document.querySelector('#modal [data-act=siegeatk]'); }, c));
+  await pg.click('#modal [data-act=siegeatk]'); await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(300);
+  await pg.evaluate(() => { giveOrder('charge', 0, 0, 3); __dbg.B.speed = 2; });
+  await pg.waitForFunction(() => { const B = __dbg.B, w = B.wall; return B.units.some(u => u.side === 0 && fit(u) && u.x > w.x + w.hw) || B.over; }, null, { timeout: 45000 }).catch(() => {});
+  const fight = await pg.evaluate(() => { const B = __dbg.B, w = B.wall; let inWall = 0, inside = 0; for (const u of B.units) if (fit(u)) { if (Math.abs(u.x - w.x) < w.hw && !inGap(u.y, 0)) inWall++; if (u.side === 0 && u.x > w.x + w.hw) inside++; } return { wall: !!w, inWall, inside }; });
+  ok('бой-осада: есть стена, бойцы не стоят внутри стены, атакующие проходят через проломы', fight.wall && fight.inWall === 0 && fight.inside > 0, fight);
+  await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=cont2]'), null, { timeout: 10000 });
+  await pg.evaluate(() => ACT.cont2()); await sleep(300);
+  const own = await pg.evaluate(id => { const s = settleById(id); return { fac: s.fac, mine: s.owner === G.player.id, recruits: s.recruits.length > 0 }; }, c);
+  ok('после победы замок наш, в нём можно нанимать', own.fac === 'player' && own.mine && own.recruits, own);
+  const gar = await pg.evaluate(id => { const s = settleById(id); const before = troopCount(s.gar); garMove(G.player, s, 'n2a', 5, true); return troopCount(s.gar) - before; }, c);
+  ok('можно оставить бойцов в гарнизоне', gar === 5, gar);
+  const day = await pg.evaluate(() => { const g0 = G.player.gold; garrisonDay(); return G.player.gold - g0; });
+  ok('владение приносит доход', day > 0, day);
+  const lost = await pg.evaluate(id => { const s = settleById(id); s.gar = [{ type: 'n1', n: 1 }]; mkParty('lord', 'emp', 'Легат Тест', s.x + 20, s.y + 10, genTroops('emp', 40, .7)); assaultsTick(); return s.fac; }, c);
+  ok('враждебный лорд отбивает владение со слабым гарнизоном', lost === 'emp', lost);
+}
+
 async function multiPlayer(pg) {
   console.log('Игра вдвоём');
   await pg.evaluate(() => netStart({ name: 'Тест', code: '', banner: 0, culture: 'nord', replace: true }));
@@ -100,6 +126,7 @@ async function multiPlayer(pg) {
     for (let i = 0; i < 50; i++) { try { const r = await fetch('http://localhost:' + port + '/health'); if (r.ok) break; } catch (e) { } await sleep(100); }
     const open = async () => { const pg = await browser.newPage({ viewport: { width: 1600, height: 900 } }); pg.on('pageerror', e => errs.push(e.message)); await pg.goto('http://localhost:' + port + '/'); await pg.waitForFunction(() => window.__dbg && __dbg.MODE === 'title', null, { timeout: 15000 }); await sleep(300); return pg; };
     await singlePlayer(await open());
+    await sieges(await open());
     await multiPlayer(await open());
   } catch (e) { console.error(e); failed++; }
   ok('нет ошибок в консоли страницы', errs.length === 0, errs.slice(0, 3));

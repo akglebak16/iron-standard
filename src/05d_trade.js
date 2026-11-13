@@ -38,7 +38,7 @@ function equippedId(P, slot) { const id = heroEq(P.hero)[slot]; return id && ITE
 function hasMarket(s) { return s && s.kind !== 'camp' && s.fac !== 'bandit'; }
 function goodTarget(s, id) {
   const g = GOODS[id]; let t = MK_GOODS[s.kind] || 8;
-  if (g.make.includes(s.fac)) t *= 1.7; else if (g.need.includes(s.fac)) t *= .45;
+  if (g.make.includes(sCult(s))) t *= 1.7; else if (g.need.includes(sCult(s))) t *= .45;
   if (s.kind === 'village' && !g.raw) t *= .5;
   if (s.kind === 'castle' && !['grain', 'ale', 'salt', 'iron'].includes(id)) t *= .4;
   return Math.max(1, Math.round(t));
@@ -48,7 +48,7 @@ function gearPool(s) { // что вообще может продаваться 
   for (const id in ITEM) { const it = ITEM[id]; if (it.kind === 'gear' && it.tier <= max) out.push(id); }
   return out;
 }
-function gearOdds(s, id, table) { const it = ITEM[id]; return table[it.tier] * (it.f ? (it.f.includes(s.fac) ? 1.5 : .45) : 1); } // местные товары попадаются чаще
+function gearOdds(s, id, table) { const it = ITEM[id]; return table[it.tier] * (it.f ? (it.f.includes(sCult(s)) ? 1.5 : .45) : 1); } // местные товары попадаются чаще
 function mkMarket(s) {
   const m = { day: G.day, gold: Math.round((MK_GOLD[s.kind] || 800) * rnd(.7, 1.1)), stock: {} };
   for (const id in GOODS) m.stock[id] = Math.round(goodTarget(s, id) * rnd(.6, 1.4));
@@ -71,7 +71,7 @@ function marketOf(s) { // ленивое создание и догон по д�
 /* ---------- цены ---------- */
 function regionMod(s, id) {
   const g = GOODS[id]; if (!g) return 1;
-  let m = g.make.includes(s.fac) ? .78 : g.need.includes(s.fac) ? 1.22 : 1;
+  let m = g.make.includes(sCult(s)) ? .78 : g.need.includes(sCult(s)) ? 1.22 : 1;
   if (s.kind === 'village' && g.raw) m *= .9; if (s.kind === 'town' && g.lux) m *= 1.08;
   return m;
 }

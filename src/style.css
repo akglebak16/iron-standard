@@ -240,3 +240,7 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 #sFood small.warn{color:#ff8a6a}
 /* группы в бою: число бойцов не налезает на портрет */
 .grp{height:72px}.grp img{top:-14px}
+
+/* --- осады и враждебность --- */
+.card.hostile{box-shadow:inset 0 0 0 2px #b8352a99}
+.note.good{color:#9fe08a;font-weight:700}
