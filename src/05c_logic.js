@@ -32,7 +32,7 @@ function encFlee(P, p) {
 }
 function battleCfgFor(P, p) {
   return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
-    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) || p.kind === 'dead' ? p.name : p.kind === 'camp' && p.fac === 'undead' ? 'Некромант кургана' : null, seed: rint(1, 1e9),
+    title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) || p.kind === 'dead' ? p.name : p.kind === 'camp' && p.fac === 'undead' ? 'Некромант кургана' : p.kind === 'raid' ? 'Некромант ' + unitName('undead') : null, // у нежити всегда есть некромант seed: rint(1, 1e9),
     comps: compsBattle(P), csurv: compFx(P) ? compFx(P).f.surv : 0 }; // спутники и лекарь среди них: см. 05e_comps.js
 
 }
