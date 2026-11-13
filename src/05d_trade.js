@@ -56,7 +56,7 @@ function goodTarget(s, id) {
 }
 function gearPool(s) { // что вообще может продаваться в поселении: деревня до 1 уровня, город до 2, замок до 3
   const max = s.kind === 'village' ? 1 : s.kind === 'town' ? 2 : 3, out = [];
-  for (const id in ITEM) { const it = ITEM[id]; if (it.kind === 'gear' && it.tier <= max) out.push(id); }
+  for (const id in ITEM) { const it = ITEM[id]; if (it.kind === 'gear' && !it.unique && it.tier <= max) out.push(id); }
   return out;
 }
 function gearOdds(s, id, table) { const it = ITEM[id]; return table[it.tier] * (it.f ? (it.f.includes(sCult(s)) ? 1.5 : .45) : 1); } // местные товары попадаются чаще
@@ -145,7 +145,7 @@ function rollLoot(P, p) {
     if (p.kind === 'caravan' || Math.random() < .3) {
       const own = ids.filter(g => GOODS[g].make.includes(p.fac)); id = pick(p.kind === 'caravan' && own.length ? own : ids); n = clamp(Math.round(rint(120, 300) / GOODS[id].p), 1, 14);
     } else {
-      const top = clamp(Math.round(avg), 0, 3), pool = Object.keys(ITEM).filter(k => ITEM[k].kind === 'gear' && ITEM[k].tier <= top && (ITEM[k].slot !== 'horse' || mounted)), ws = pool.map(k => (ITEM[k].f && ITEM[k].f.includes(p.fac) ? 2.2 : 1) / (1 + ITEM[k].tier));
+      const top = clamp(Math.round(avg), 0, 3), pool = Object.keys(ITEM).filter(k => ITEM[k].kind === 'gear' && !ITEM[k].unique && ITEM[k].tier <= top && (ITEM[k].slot !== 'horse' || mounted)), ws = pool.map(k => (ITEM[k].f && ITEM[k].f.includes(p.fac) ? 2.2 : 1) / (1 + ITEM[k].tier));
       let r = Math.random() * ws.reduce((a, b) => a + b, 0), j = 0; while (j < pool.length - 1 && (r -= ws[j]) > 0) j++; id = pool[j];
     }
     if (!ITEM[id]) continue;

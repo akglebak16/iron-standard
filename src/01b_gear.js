@@ -56,6 +56,7 @@ AX('axe_work', 'Рабочий топор', 0, 90, 24, 3.5, { f: ['nord', 'dom']
 MC('club', 'Дубина', 0, 60, 22, 4, { look: 'club' }); MC('mace', 'Булава', 1, 400, 31, 4); MC('mace_flanged', 'Шестопёр', 2, 1100, 41, 4.5);
 SP('spear_hunt', 'Охотничье копьё', 0, 80, 24, 3.5); SP('spear_war', 'Боевое копьё', 1, 340, 33, 4, { f: ['emp', 'nord', 'kin', 'dom', 'pact'] });
 TH('tw_sword', 'Двуручный меч', 2, 1300, 56, 7, { dt: 'cut', look: 'sword' }); TH('tw_claymore', 'Клеймор', 3, 2800, 68, 8, { dt: 'cut', spd: 1.45, reach: 10, look: 'sword' });
+MC('club_head', 'Головка', 3, 900, 46, 6, { spd: 1.15, kb: 3, parry: .16, look: 'club', unique: 1 }); // одноручная дубина Захария: личное оружие, в лавки и добычу не попадает
 TH('tw_axe', 'Двуручная секира', 2, 1500, 62, 8, { dt: 'cut', spd: 1.5, brk: .5, look: 'axe', f: ['nord'] }); TH('tw_hammer', 'Боевой молот', 2, 1400, 60, 9, { dt: 'blunt', spd: 1.5, kb: 2.8, look: 'mace' });
 PA('pike', 'Пика', 1, 600, 42, 6, { reach: 40, look: 'spear', f: ['emp', 'kin', 'dom', 'pact'] }); PA('halberd', 'Алебарда', 2, 950, 48, 7, { dt: 'cut', spd: 1.35, reach: 28, arc: .7, cleave: 3, look: 'halberd', f: ['emp', 'kin', 'dom', 'pact'] });
 
