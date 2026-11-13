@@ -45,6 +45,12 @@ const FACTIONS = {
   emi: { name: 'Эмират Хайрат', gen: 'Эмирата', c1: '#c4571f', c2: '#f4e8c4', emblem: 'octa', title: 'эмир', biome: 'arid',
     names: ['Рашид', 'Хасан', 'Идрис', 'Тарик', 'Мусса', 'Юсуф', 'Ибрагим', 'Омар', 'Салим', 'Фарид', 'Захир', 'Малик', 'Джафар', 'Камиль'],
     nicks: ['Лев', 'Мудрый', 'Одноглазый', 'Золотой', 'Быстрый', 'Меченый', 'Щедрый', 'Пустынный'] },
+  dom: { name: 'Мядельский доминион', gen: 'Доминиона', c1: '#b58a28', c2: '#2d2a22', emblem: 'oak', title: 'князь', biome: 'grass',
+    names: ['Витовт', 'Гедымин', 'Миндовг', 'Ольгерд', 'Кейстут', 'Довмонт', 'Скирмунт', 'Радзивил', 'Збигнев', 'Ян', 'Юрий', 'Лев', 'Збышек', 'Казимир'],
+    nicks: ['Лесной', 'Седой', 'Угрюмый', 'Строгий', 'Меткий', 'Рогатый', 'Крепкий', 'Болотный'] },
+  pact: { name: 'Варшавско-Познаньский пакт', gen: 'Пакта', c1: '#dcd5c2', c2: '#b3262e', emblem: 'crown', title: 'воевода', biome: 'grass',
+    names: ['Болеслав', 'Казимир', 'Мешко', 'Владислав', 'Зигмунт', 'Ежи', 'Стефан', 'Хенрик', 'Конрад', 'Лешек', 'Фридрих', 'Отто', 'Бернхард', 'Вацлав'],
+    nicks: ['Храбрый', 'Кривоустый', 'Щедрый', 'Мудрый', 'Суровый', 'Белый', 'Старый', 'Рыжий'] },
   bandit: { name: 'Разбойники', gen: 'разбойников', c1: '#3b3a36', c2: '#9a2f24', emblem: 'skull', title: 'атаман', biome: 'grass',
     names: ['Гнус', 'Рябой', 'Хорёк', 'Кабан', 'Щербатый', 'Ворон', 'Клык', 'Лис', 'Шило', 'Горбун', 'Жбан', 'Косарь', 'Мясник', 'Тихон'],
     nicks: ['', '', '', 'Живодёр', 'Висельник', 'Душегуб', 'Беглый'] },
@@ -115,6 +121,26 @@ T('m2a', 'Лучник пустыни', 'emi', 2, 'arc', { helm: 'turban', armor
 T('m2c', 'Лёгкий всадник', 'emi', 2, 'cav', { helm: 'turban', armor: 'padded', weapon: 'sabre', shield: 'small', horse: 'dun', beard: .7 }, ['m3c', 'm3h'], { spd: 158, arm: 16 });
 T('m3h', 'Конный лучник', 'emi', 3, 'har', { helm: 'turbanm', armor: 'lamellar', weapon: 'bow', horse: 'dun', beard: .7 }, []);
 T('m3c', 'Мамлюк', 'emi', 3, 'cav', { helm: 'turbanm', armor: 'goldlam', weapon: 'lance', shield: 'small', horse: 'black', beard: .6 }, [], { spd: 150, arm: 40, hp: 96 });
+// Мядельский доминион — лесной оплот: стойкая пехота, арбалеты и лёгкая дружинная конница
+T('d1', 'Ополченец', 'dom', 1, 'inf', { helm: 'cap', armor: 'padded', weapon: 'axe', shield: 'round', beard: .7 }, ['d2', 'd2s', 'd2x', 'd2c']);
+T('d2', 'Щитник', 'dom', 2, 'inf', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', beard: .6 }, ['d3'], { arm: 28, hp: 68 });
+T('d3', 'Страж доминиона', 'dom', 3, 'inf', { helm: 'great', armor: 'mailtab', weapon: 'sword', shield: 'kite', beard: .5 }, [], { arm: 48, hp: 96, dmg: 22 });
+T('d2s', 'Рогатинник', 'dom', 2, 'spr', { helm: 'nasal', armor: 'padded', weapon: 'spear', shield: 'round', beard: .7 }, ['d3s']);
+T('d3s', 'Алебардист', 'dom', 3, 'spr', { helm: 'kettle', armor: 'mail', weapon: 'halberd', beard: .6 }, [], { dmg: 24, block: .12 });
+T('d2x', 'Арбалетчик', 'dom', 2, 'arc', { helm: 'nasal', armor: 'padded', weapon: 'xbow', beard: .6 }, ['d3x'], { dmg: 19, cd: 3.4, pierce: .4 });
+T('d3x', 'Лесной стрелок', 'dom', 3, 'arc', { helm: 'kettle', armor: 'mail', weapon: 'xbow', beard: .6 }, [], { dmg: 25, cd: 3.1, pierce: .4, arm: 24 });
+T('d2c', 'Дружинник', 'dom', 2, 'cav', { helm: 'nasal', armor: 'mail', weapon: 'spear', shield: 'round', horse: 'bay', beard: .6 }, ['d3c'], { arm: 26, spd: 140, hp: 76 });
+T('d3c', 'Боярин', 'dom', 3, 'cav', { helm: 'great', armor: 'mailtab', weapon: 'lance', shield: 'kite', horse: 'chestnut', beard: .5 }, [], { arm: 50, spd: 130, hp: 104, dmg: 24 });
+// Варшавско-Познаньский пакт — тяжёлая конница, ландскнехты и лучники
+T('p1', 'Ополченец', 'pact', 1, 'inf', { helm: 'cap', armor: 'padded', weapon: 'sword', shield: 'round', beard: .5 }, ['p2', 'p2s', 'p2a', 'p2c']);
+T('p2', 'Пехотинец', 'pact', 2, 'inf', { helm: 'kettle', armor: 'mail', weapon: 'sword', shield: 'kite', beard: .4 }, ['p3'], { arm: 29, hp: 67 });
+T('p3', 'Кнехт', 'pact', 3, 'inf', { helm: 'flat', armor: 'mailtab', weapon: 'sword', shield: 'kite', beard: .4 }, [], { arm: 50, hp: 94, dmg: 22 });
+T('p2s', 'Пикинёр', 'pact', 2, 'spr', { helm: 'kettle', armor: 'padded', weapon: 'spear', shield: 'kite', beard: .5 }, ['p3s']);
+T('p3s', 'Ландскнехт', 'pact', 3, 'spr', { helm: 'flat', armor: 'mailtab', weapon: 'halberd', beard: .5 }, [], { dmg: 24, block: .12 });
+T('p2a', 'Лучник', 'pact', 2, 'arc', { helm: 'cap', armor: 'padded', weapon: 'bow', beard: .5 }, ['p3a'], { range: 380 });
+T('p3a', 'Стрелок', 'pact', 3, 'arc', { helm: 'coif', armor: 'mail', weapon: 'bow', beard: .5 }, [], { dmg: 20, range: 420, arm: 22 });
+T('p2c', 'Панцирный всадник', 'pact', 2, 'cav', { helm: 'kettle', armor: 'mail', weapon: 'lance', shield: 'kite', horse: 'bay', beard: .4 }, ['p3c'], { arm: 30, spd: 138, hp: 78 });
+T('p3c', 'Гусар', 'pact', 3, 'cav', { helm: 'great', armor: 'plate', weapon: 'lance', shield: 'kite', horse: 'grey' }, [], { arm: 52, spd: 132, hp: 100, dmg: 25 });
 // Разбойники
 T('b1', 'Грабитель', 'bandit', 1, 'inf', { helm: 'hood', armor: 'tunic', weapon: 'club', beard: .6 }, [], { block: .08, hp: 40 });
 T('b2', 'Разбойник', 'bandit', 2, 'inf', { helm: 'cap', armor: 'padded', weapon: 'axe', shield: 'round', beard: .7 }, [], { arm: 16 });
