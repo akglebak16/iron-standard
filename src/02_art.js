@@ -24,12 +24,13 @@ function torsoPath(g) { g.beginPath(); g.moveTo(15, 71); g.bezierCurveTo(11, 60,
 function drawTorso(g, L, pal, R) {
   const a = L.armor; let col = pal.c1;
   if (a === 'padded') col = '#b59c6c'; else if (a === 'mail' || a === 'mailtab' || a === 'mailfur') col = '#868b90'; else if (a === 'scale') col = '#8f8f8a';
-  else if (a === 'rags') col = '#4a4436'; else if (a === 'ribs') col = '#2a251d';
+  else if (a === 'habit') col = '#5a4630'; else if (a === 'rags') col = '#4a4436'; else if (a === 'ribs') col = '#2a251d';
   else if (a === 'goldscale') col = '#c79d3a'; else if (a === 'lamellar') col = '#6d5639'; else if (a === 'goldlam') col = '#8a6a2c'; else if (a === 'plate') col = '#aab1b8'; else if (a === 'fur') col = '#5f4930';
   torsoPath(g); fs(g, col, 0);
   g.save(); torsoPath(g); g.clip();
   if (a === 'rags') { g.fillStyle = '#2a251c'; for (let i = 0; i < 6; i++) { ell(g, 16 + i * 8 + (i % 2) * 3, 52 + (i * 7) % 18, 2.4, 1.8); g.fill(); } g.fillStyle = shade(col, -.3); poly(g, [10, 70, 16, 76, 22, 70, 28, 77, 34, 70, 40, 77, 46, 70, 52, 77, 58, 70, 64, 76, 64, 80, 10, 80]); g.fill(); }
   if (a === 'ribs') { line(g, [36, 44, 36, 72], '#d8d0b8', 3); for (let y = 49; y < 70; y += 4.4) { const w = 15 - Math.abs(y - 58) * .3; line(g, [36, y, 36 - w, y + 3], '#d8d0b8', 2.2); line(g, [36, y, 36 + w, y + 3], '#cfc4a6', 2.2); } g.fillStyle = '#5a4a36'; g.fillRect(10, 70, 54, 4); }
+  if (a === 'habit') { line(g, [36, 44, 36, 78], shade(col, -.35), 1.2); line(g, [20, 46, 14, 78], shade(col, -.25), .9); line(g, [52, 46, 58, 78], shade(col, -.25), .9); g.fillStyle = '#d8c9a0'; g.fillRect(10, 61, 52, 3.4); line(g, [47, 63, 49, 76], '#d8c9a0', 1.6); g.fillStyle = '#d8c9a0'; ell(g, 49, 77, 1.6, 1.6); g.fill(); line(g, [36, 49, 36, 56], '#c9a24a', 1.6); line(g, [33, 52, 39, 52], '#c9a24a', 1.6); }
   if (a === 'tunic') { g.fillStyle = shade(col, -.25); g.fillRect(10, 62, 52, 3); line(g, [36, 44, 36, 62], shade(col, -.3), 1); g.fillStyle = shade(col, .25); poly(g, [31, 43, 36, 50, 43, 43]); g.fill(); }
   if (a === 'padded') { for (let x = 14; x < 60; x += 4.5) line(g, [x, 44, x + (x - 36) * .12, 76], shade(col, -.28), .9); g.fillStyle = pal.c1; g.fillRect(10, 60, 52, 4); }
   if (a === 'mail' || a === 'mailtab' || a === 'mailfur') { mailTex(g, 10, 43, 54, 36, '#53575b'); mailTex(g, 11.5, 44, 54, 36, 'rgba(230,235,240,.35)'); }
