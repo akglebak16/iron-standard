@@ -52,6 +52,15 @@ async function singlePlayer(pg) {
   // 4. закрытие окна сбрасывает «откуда открыта панель» и выделения
   ok('закрытие окна сбрасывает UI.back / выделения', await pg.evaluate(() => { UI.back = { s: G.settles[0] }; UI.isel = { from: 'bag' }; UI.tsel = {}; closeModal(); return !UI.back && !UI.isel && !UI.tsel; }));
 
+  // 4б. окна с вкладками не прыгают при смене вкладки
+  const tops = await pg.evaluate(async () => { const r = []; for (const t of ['troops', 'hero', 'inv', 'journal']) { openPanel(t); await new Promise(z => setTimeout(z, 60)); r.push(Math.round(document.querySelector('#modal .win').getBoundingClientRect().top)); } closeModal(); return r; });
+  ok('вкладки окна героя не сдвигают окно', new Set(tops).size === 1, tops);
+
+  // 4в. «В главное меню» с карты сохраняет игру
+  const saved = await pg.evaluate(() => { localStorage.removeItem(SAVE_KEY); const day = G.day; ACT.tomenu(); const sv = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return !!sv && sv.day === day && MODE === 'title'; });
+  ok('выход в главное меню с карты сохраняет игру', saved);
+  await pg.evaluate(() => loadGame()); await pg.waitForFunction(() => __dbg.MODE === 'world', null, { timeout: 10000 }); await sleep(300);
+
   // 5. приказы армии в бою с карты мира (кнопки и клавиши)
   await pg.evaluate(() => { const G = __dbg.G; const p = G.parties.find(p => p.kind === 'bandit' && !p.hide) || G.parties.find(p => !p.hide); launchBattle(p); });
   await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(800);
@@ -61,6 +70,9 @@ async function singlePlayer(pg) {
   await pg.mouse.move(800, 450); await pg.keyboard.press('KeyQ'); await sleep(150);
   const hold = await pg.evaluate(() => __dbg.B.groups[0].filter(g => g.units.some(fit)).map(g => g.order));
   ok('клавиша Q — «держать позицию»', hold.every(o => o === 'hold'), hold);
+  // 6. выход из идущего боя просит подтверждение
+  const conf = await pg.evaluate(() => { ACT.tomenu({}); return __dbg.MODE === 'battle' && !!document.querySelector('#modal [data-act=tomenu][data-ok]'); });
+  ok('выход из боя в меню просит подтверждение', conf); await pg.evaluate(() => closeModal());
 }
 
 async function multiPlayer(pg) {

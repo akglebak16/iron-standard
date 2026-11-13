@@ -353,6 +353,20 @@ function battleDraw(g) {
   g.font = '700 15px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center';
   for (const p of B.texts) { g.globalAlpha = Math.min(1, p.l * 2.5); g.lineWidth = 3; g.strokeStyle = 'rgba(15,10,6,.85)'; g.strokeText(p.s, p.x, p.y); g.fillStyle = p.c; g.fillText(p.s, p.x, p.y); } g.globalAlpha = 1;
   g.setTransform(1, 0, 0, 1, 0, 0);
+  if (!B.cfg.demo && !B.over) drawFoeArrow(g);
+}
+/* враг за краем экрана — стрелка у края в его сторону с числом бойцов */
+function drawFoeArrow(g) {
+  const foe = centroid(1); if (!foe) return; const cam = B.cam, z = cam.z, d = VIEW.dpr;
+  const sx = (foe.x - cam.x) * z + VIEW.w / 2, sy = (foe.y - cam.y) * z + VIEW.h / 2, m = 70;
+  if (sx > 0 && sx < VIEW.w && sy > 0 && sy < VIEW.h) return;
+  const cx = VIEW.w / 2, cy = VIEW.h / 2, a = Math.atan2(sy - cy, sx - cx), hw = cx - m, hh = cy - m - 40, k = Math.min(hw / Math.abs(Math.cos(a) || 1e-6), hh / Math.abs(Math.sin(a) || 1e-6));
+  const x = cx + Math.cos(a) * k, y = cy + Math.sin(a) * k, pulse = .75 + Math.sin(B.t * 5) * .25;
+  g.setTransform(d, 0, 0, d, d * x, d * y); g.rotate(a); g.globalAlpha = pulse;
+  g.beginPath(); g.moveTo(22, 0); g.lineTo(-10, -15); g.lineTo(-4, 0); g.lineTo(-10, 15); g.closePath(); g.fillStyle = '#e0432f'; g.fill(); g.lineWidth = 3; g.strokeStyle = 'rgba(20,10,4,.9)'; g.stroke();
+  g.setTransform(d, 0, 0, d, d * x, d * y); g.globalAlpha = 1; g.font = '700 15px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center';
+  const t = 'Враг · ' + foe.n, ty = Math.sin(a) > .3 ? -26 : 34; g.lineWidth = 4; g.strokeStyle = 'rgba(14,9,4,.9)'; g.strokeText(t, 0, ty); g.fillStyle = '#ffb3a6'; g.fillText(t, 0, ty);
+  g.setTransform(1, 0, 0, 1, 0, 0);
 }
 function drawMinimap(c) {
   const g = c.getContext('2d'), w = c.width, h = c.height, sx = w / B.W, sy = h / B.H; g.clearRect(0, 0, w, h); g.globalAlpha = .9; g.drawImage(B.ground, 0, 0, w, h); g.globalAlpha = 1; g.fillStyle = 'rgba(10,8,4,.25)'; g.fillRect(0, 0, w, h);

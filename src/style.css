@@ -228,3 +228,15 @@ div.tile{cursor:default}div.tile:hover{filter:none}
 .perk:disabled{color:var(--parch)}
 #wjoin{position:absolute;left:50%;bottom:max(86px,calc(env(safe-area-inset-bottom,0px) + 86px));transform:translateX(-50%);z-index:30;padding:8px 14px;display:flex;gap:10px;align-items:center;font-size:17px}
 #wjoin[hidden]{display:none}
+
+/* --- UI/UX 0.4 --- */
+/* окна с вкладками прижаты к верху: при смене вкладки заголовок и вкладки не прыгают */
+#modal .win:not(.narrow){align-self:start;margin-top:clamp(0px,5vh,60px);max-height:calc(100% - clamp(0px,5vh,60px))}
+/* верхняя панель карты не переносится на 2 строки и не наезжает на журнал */
+#wtop{width:max-content}
+#wlog{width:clamp(200px,calc(50vw - 345px),340px)}
+/* подсказки клавиш на кнопках меню карты */
+#wmenu .btn{display:flex;align-items:center;gap:6px}#wmenu .kb{margin-left:auto;padding-left:8px;font:700 11px var(--body);color:var(--brass);opacity:.8}
+#sFood small.warn{color:#ff8a6a}
+/* группы в бою: число бойцов не налезает на портрет */
+.grp{height:72px}.grp img{top:-14px}

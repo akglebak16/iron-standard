@@ -129,7 +129,13 @@ const ACT = {
   flee() { if (NET.on) { NET.send({ t: 'enc', a: 'flee' }); closeModal(); return; } const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
   resume() { closeModal(); }, save() { saveGame(); toast('Игра сохранена'); },
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
-  tomenu() { if (NET.on) netLeave(); closeModal(); gotoTitle(); },
+  tomenu(d) {
+    if (NET.on) { netLeave(); closeModal(); gotoTitle(); return; }
+    // из идущего боя — только после подтверждения: бой не сохраняется
+    if (MODE === 'battle' && B && !B.cfg.demo && !B.cfg.quick && !B.over && !(d && d.ok)) { openModal('<div class="whead"><h2>Выйти из боя?<span class="sub">Бой не сохраняется. При «Продолжить» ты вернёшься к моменту перед этим боем.</span></h2></div><div class="wfoot"><button class="btn" data-act="resume">Остаться</button><button class="btn danger" data-act="tomenu" data-ok="1">Выйти в меню</button></div>', 'narrow'); return; }
+    if (MODE === 'world' && G) { saveGame(true); toast('Игра сохранена'); } // карта: сохраняем перед выходом, чтобы не терять прогресс
+    closeModal(); gotoTitle();
+  },
   newgame() { CR.mp = false; openCreate(); }, mp() { CR.mp = true; openCreate(); },
   mpgo() { const rep = el('crrep') ? el('crrep').checked : false, nm = (el('crname') ? el('crname').value : CR.name).trim() || 'Безымянный', code = el('crcode') ? el('crcode').value.trim() : ''; try { localStorage.setItem('zs-mp', JSON.stringify({ name: nm, code })); } catch (e) { } closeModal(); netStart({ name: nm, code, banner: CR.banner, culture: CR.culture, replace: rep }); },
   vyes() { NET.send({ t: 'vote', yes: 1 }); }, vno() { NET.send({ t: 'vote', yes: 0 }); }, cont() { loadGame(); }, quick() { openQuick(); },
