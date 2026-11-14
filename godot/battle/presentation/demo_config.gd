@@ -1,7 +1,6 @@
 extends RefCounted
 ## Placeholder drawing and text used only by the current playable preview.
 
-const CAMERA_ZOOM := 0.75
 const HERO_DOWN := "Герой ранен — бой продолжается"
 const VICTORY := "Победа"
 const DEFEAT := "Поражение"
@@ -12,7 +11,7 @@ const SOUND_ON := "вкл."
 const SOUND_OFF := "выкл."
 const HUD_TEXT := "%s  |  Свои: %d  Враги: %d  Силы: %d · Выбрано: %s"
 const WEAPON_HUD_TEXT := "\nОружие [X]: %s"
-const CONTROL_HINT := "\nWASD ходить · Shift бег · ЛКМ удар · ПКМ блок\n1–4 группа · Q держать · E за мной · R атаковать · F отход"
+const CONTROL_HINT := "\nWASD ходить · Shift бег · ЛКМ удар · ПКМ блок · Колесо масштаб\n1–4 группа · Q держать · E за мной · R атаковать · F отход"
 
 const GROUP_NAMES := ["Пехота", "Стрелки", "Конница", "Весь отряд"]
 const ARROW_ARC_SCALE := 0.17

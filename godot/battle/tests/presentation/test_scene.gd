@@ -7,6 +7,7 @@ const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const PresentationPreferences = preload("res://app/presentation_preferences.gd")
 const UnitMarkers = preload("res://battle/presentation/unit_markers.gd")
 const SoundBank = preload("res://battle/presentation/audio/sound_bank.gd")
+const BattleCamera = preload("res://battle/presentation/battle_camera.gd")
 const TICK := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -30,8 +31,7 @@ func _check() -> void:
 	assert(view._navigation._ground.material != ground)
 	assert(view._navigation._ground.material.get_shader_parameter("road") == ground.get_shader_parameter("road"))
 	assert(view._navigation._frame.enemy_strength == frame.counts[1])
-	var camera_probe := root.get_canvas_transform() * Vector2(frame.camera_target)
-	assert(camera_probe.is_equal_approx(root.get_visible_rect().size * 0.5))
+	_check_camera(view)
 	assert(view._terrain.get_child_count() == 0)
 	assert(view._vegetation.entries.size() == view._session.vegetation_layout().size())
 	assert(not view._vegetation.entries.is_empty())
@@ -52,7 +52,7 @@ func _check() -> void:
 	await process_frame
 	assert(view.get_battle_snapshot().tick > 0)
 	assert(view._music._note_players.any(func(player): return player.playing))
-	assert(view.get_node("Camera").position == view.get_battle_snapshot().hero_position)
+	assert(view.camera.position.distance_to(view.get_battle_snapshot().hero_position) <= BattleCamera.INITIAL_LEAD.length())
 	var session: Session = view._session
 	var target = session._state.units.filter(func(unit): return unit.side == 1)[0]
 	session._state.hurt(target, 1, session._hero)
@@ -105,6 +105,18 @@ func _check() -> void:
 	assert(DirAccess.remove_absolute(path) == OK)
 	print("Scene tests passed")
 	quit(0)
+
+func _check_camera(view) -> void:
+	var camera: BattleCamera = view.camera
+	var center := root.get_visible_rect().size * 0.5
+	assert((root.get_canvas_transform() * camera.position).is_equal_approx(center))
+	var initial_zoom := camera.zoom.x
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+	wheel.pressed = true
+	view._unhandled_input(wheel)
+	assert(is_equal_approx(camera.zoom.x, initial_zoom * BattleCamera.ZOOM_IN_FACTOR))
+	assert((root.get_canvas_transform() * camera.position).is_equal_approx(center))
 
 func _check_unit_markers(view, frame: Dictionary) -> void:
 	var foot: Dictionary = frame.units.filter(func(unit): return unit.side == 0 and unit.group_kind == Config.GROUP_INFANTRY and not unit.hero and not unit.companion)[0]

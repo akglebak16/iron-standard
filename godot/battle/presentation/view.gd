@@ -15,12 +15,13 @@ const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
 const VegetationView = preload("res://battle/presentation/terrain/vegetation_view.gd")
 const OrderMarker = preload("res://battle/presentation/hud/order_marker.gd")
 const NavigationHud = preload("res://battle/presentation/hud/navigation_hud.gd")
+const BattleCamera = preload("res://battle/presentation/battle_camera.gd")
 
 signal battle_finished
 signal audio_preferences_changed(effects: bool, music: bool)
 signal blood_preference_changed(enabled: bool)
 
-@onready var camera: Camera2D = $Camera
+@onready var camera: BattleCamera = $Camera
 @onready var status: Label = $Hud/Status
 @onready var _navigation: NavigationHud = $Hud/Navigation
 var _session: Session
@@ -65,7 +66,9 @@ func _ready() -> void:
 		set_physics_process(false)
 		set_process_unhandled_input(false)
 		return
-	camera.zoom = Vector2.ONE * Demo.CAMERA_ZOOM
+	var initial := _session.snapshot()
+	camera.configure(initial.arena_size, initial.hero_position)
+	get_viewport().size_changed.connect(_on_viewport_resized)
 	_navigation.configure(_terrain.material)
 	_audio = CombatAudio.new()
 	_audio.enabled = _effects_enabled
@@ -77,19 +80,22 @@ func _ready() -> void:
 
 func _physics_process(dt: float) -> void:
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
-		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles() or _order_marker.is_visible():
+		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles() or _order_marker.is_visible() or camera.is_shaking():
 			_feedback.advance(dt, [])
 			_impacts.advance(dt, [])
 			_figures.advance(dt, [])
 			_dialogue.age(dt)
 			_order_marker.advance(dt, [])
+			if camera.is_shaking():
+				camera.advance_shake(dt, [])
+				_navigation.queue_redraw()
 			queue_redraw()
 		return
 	_music.advance(dt)
 	if _frame.outcome == Session.Outcome.RUNNING:
 		var input := HeroInput.new()
 		input.move = Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
-		input.face = (get_global_mouse_position() - Vector2(_frame.hero_position)).angle()
+		input.face = (_pointer_world_position() - Vector2(_frame.hero_position)).angle()
 		input.sprint = Input.is_key_pressed(KEY_SHIFT)
 		input.block = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 		input.attack = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
@@ -107,7 +113,14 @@ func _physics_process(dt: float) -> void:
 		battle_finished.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _session == null or not event is InputEventKey or not event.pressed or event.echo:
+	if _session == null:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		camera.change_zoom(event.button_index == MOUSE_BUTTON_WHEEL_UP)
+		_navigation.queue_redraw()
+		queue_redraw()
+		return
+	if not event is InputEventKey or not event.pressed or event.echo:
 		return
 	match event.keycode:
 		KEY_M:
@@ -123,10 +136,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_2: _select_group(Config.GROUP_ARCHERS)
 		KEY_3: _select_group(Config.GROUP_CAVALRY)
 		KEY_4: _select_group(Config.ALL_GROUPS)
-		KEY_Q: _session.issue_order(Config.ORDER_HOLD, get_global_mouse_position(), _selection)
+		KEY_Q: _session.issue_order(Config.ORDER_HOLD, _pointer_world_position(), _selection)
 		KEY_E: _session.issue_order(Config.ORDER_FOLLOW, _frame.hero_position, _selection)
 		KEY_R: _session.issue_order(Config.ORDER_CHARGE, _frame.hero_position, _selection)
 		KEY_F: _session.issue_order(Config.ORDER_RETREAT, _frame.hero_position, _selection)
+
+func _pointer_world_position() -> Vector2:
+	return camera.screen_to_world(get_viewport().get_mouse_position())
+
+func _on_viewport_resized() -> void:
+	camera.fit_viewport()
+	_navigation.queue_redraw()
+	queue_redraw()
 
 func _select_group(group: int) -> void:
 	_selection = group
@@ -144,8 +165,7 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 func _refresh(dt: float, events: Array[Dictionary]) -> void:
 	# One detached read per physics tick, reused by HUD and drawing.
 	_frame = _session.snapshot()
-	camera.position = _frame.camera_target
-	camera.force_update_scroll()
+	camera.advance(dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
 	_navigation.update_frame(_frame, dt)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished))
@@ -172,8 +192,7 @@ func _update_status() -> void:
 func _draw() -> void:
 	if _frame.is_empty():
 		return
-	var size := get_viewport_rect().size / camera.zoom
-	var visible := Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN)
+	var visible := (get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
 	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)

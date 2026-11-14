@@ -88,6 +88,7 @@ func _check_commands_and_lifetime() -> void:
 	fallen_session.advance(Config.BATTLE_END_DELAY_SECONDS + TICK_SECONDS)
 	assert(fallen_session.snapshot().outcome == Session.Outcome.DEFEAT)
 	assert(fallen_session.snapshot().hero_down)
+	assert(fallen_session.snapshot().camera_target == Vector2.INF)
 
 func _check_hero_down_continues_battle() -> void:
 	var state := State.new()
@@ -108,10 +109,11 @@ func _check_hero_down_continues_battle() -> void:
 	session.advance(TICK_SECONDS)
 	assert(session.snapshot().outcome == Session.Outcome.HERO_DOWN)
 	assert(session.snapshot().tick == 1)
-	assert(session.snapshot().camera_target != hero.position)
+	assert(session.snapshot().camera_target == (ally.position + enemy.position) * 0.5)
 	state.kill(enemy, ally)
 	session.advance(Config.MORALE_TICK_SECONDS)
 	assert(session.snapshot().outcome == Session.Outcome.HERO_DOWN)
+	assert(session.snapshot().camera_target == ally.position)
 	session.advance(Config.BATTLE_END_DELAY_SECONDS + TICK_SECONDS)
 	assert(session.snapshot().outcome == Session.Outcome.VICTORY)
 	assert(session.snapshot().hero_down)
