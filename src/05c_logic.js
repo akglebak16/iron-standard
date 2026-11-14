@@ -45,7 +45,7 @@ function autoResult(P, p) {
   return res;
 }
 /* Опыт считается по числу убитых: при масштабе ×2 отряды лордов вдвое больше, и уровни шли бы вдвое быстрее. Делим на тот же множитель, на какой выросли враги (разбойники и нежить растут слабее) */
-const xpScale = p => MK() > 1 ? (p.fac === 'bandit' || (p.fac === 'undead' && p.kind === 'raid') ? 1 + (MK() - 1) * .25 : MK()) : 1; // армии и курганы нежити ×2, разъезды ×1.25 (05f_undead.js)
+const xpScale = p => MK() > 1 ? (p.fac === 'bandit' ? 1 : p.fac === 'undead' && p.kind === 'raid' ? 1 + (MK() - 1) * .25 : MK()) : 1; // армии и курганы нежити ×2, разъезды ×1.25 (05f_undead.js)
 function applyBattleResult(P, res, p) {
   const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0; res.xp = Math.round(res.xp / xpScale(p));
   for (const k in res.dead) remT(P.troops, k, res.dead[k]);

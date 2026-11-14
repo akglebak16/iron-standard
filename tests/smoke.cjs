@@ -129,7 +129,7 @@ async function undead(pg) {
   await newSinglePlayer(pg);
   const st = await pg.evaluate(() => { crisisInit(); G.crisis.day = G.day; crisisDay(); const U = G.parties.filter(p => p.fac === 'undead'); return { on: G.crisis.on, armies: U.filter(p => p.kind === 'dead').length, raids: U.filter(p => p.kind === 'raid').length, barrows: G.settles.filter(s => s.barrow).length }; });
   ok('кризис начался: курганы, армии и разъезды нежити на карте', st.on && st.barrows >= 1 && st.armies >= 1 && st.raids >= 1, st);
-  const fall = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'castle' && x.fac !== G.player.culture); for (const q of G.parties.slice()) if (q.hide && q.home === s.id) G.parties.splice(G.parties.indexOf(q), 1); const a = mkParty('dead', 'undead', 'Некромант Тест', s.x, s.y, genUndead(1500, 1)); undeadArrive(a, s); return { fac: s.fac, id: s.id }; });
+  const fall = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'castle' && x.fac !== G.player.culture); for (const q of G.parties.slice()) if (q.hide && q.home === s.id) G.parties.splice(G.parties.indexOf(q), 1); const a = mkParty('dead', 'undead', 'Некромант Тест', s.x, s.y, genUndead(4000, 1)); undeadArrive(a, s); return { fac: s.fac, id: s.id }; });
   ok('большая армия нежити берёт замок, он становится руинами', fall.fac === 'undead', fall);
   ok('руины нежити не пускают внутрь, а предлагают осаду', await pg.evaluate(id => { openTown(settleById(id)); return !UI.town && !!document.querySelector('#modal [data-act=siegeatk]'); }, fall.id));
   await pg.evaluate(() => { closeModal(); const P = G.player, p = mkParty('raid', 'undead', 'Мертвецы', P.x + 5, P.y, genUndead(60, 0)); P.troops = [{ type: 'n2', n: 30 }]; launchBattle(p); });
