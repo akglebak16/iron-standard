@@ -12,6 +12,7 @@ const TASKS = path.join(ROOT, 'tasks');
 const REPO = 'akglebak16/iron-standard';
 export const STATUSES = ['идея', 'можно брать', 'в работе', 'на проверке', 'готово'];
 const PRIOR = ['высокий', 'обычный', 'низкий'];
+const PEOPLE = JSON.parse(fs.readFileSync(path.join(ROOT, 'people.json'), 'utf8'));
 const KEYS = ['title', 'status', 'owner', 'area', 'priority', 'created', 'done', 'pr', 'outside'];
 
 const args = process.argv.slice(2);
@@ -34,6 +35,7 @@ function parse(text, id, where) {
   if (!t.title) errs.push(`${where}: нет title`);
   if (!STATUSES.includes(t.status)) errs.push(`${where}: status «${t.status || ''}», а можно: ${STATUSES.join(' / ')}`);
   if (t.priority && !PRIOR.includes(t.priority)) errs.push(`${where}: priority «${t.priority}», а можно: ${PRIOR.join(' / ')}`);
+  if (t.owner && !PEOPLE.some(p => p.name === t.owner)) errs.push(`${where}: owner «${t.owner}» нет в roadmap/people.json (${PEOPLE.map(p => p.name).join(', ')}); нового человека добавь туда`);
   if (t.status === 'в работе' && !t.owner) errs.push(`${where}: в работе, но не указан owner`);
   for (const k of ['created', 'done']) if (t[k] && !/^\d{4}-\d\d-\d\d$/.test(t[k])) errs.push(`${where}: ${k} должен быть ГГГГ-ММ-ДД`);
   if (t.pr && !/^\d+$/.test(t.pr.replace('#', ''))) errs.push(`${where}: pr — номер Pull Request, например 15`);
@@ -85,7 +87,7 @@ if (BRANCHES) {
   for (const [id, v] of best) tasks.set(id, v.t);
 }
 
-const data = { repo: REPO, built: new Date().toISOString(), statuses: STATUSES, tasks: [...tasks.values()] };
+const data = { repo: REPO, built: new Date().toISOString(), statuses: STATUSES, people: PEOPLE, board: 'roadmap-board', tasks: [...tasks.values()] };
 const page = fs.readFileSync(path.join(ROOT, 'page.html'), 'utf8')
   .replace('/*DATA*/null', () => JSON.stringify(data).replace(/</g, '\\u003c'));
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
