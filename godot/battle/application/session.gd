@@ -13,6 +13,7 @@ const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
 const BattleResult = preload("res://battle/rules/result.gd")
+const Event = preload("res://battle/combat_event.gd")
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
 
 var _state: State
@@ -41,6 +42,7 @@ func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: G
 	_gear_catalog = gear_catalog
 	_hero_profile = hero_profile.duplicate(true)
 	_companion_survival = companion_survival
+	_state.record_notice(Event.Kind.BATTLE_STARTED)
 
 func set_hero_input(input: HeroInput) -> bool:
 	if _outcome != Outcome.RUNNING or _hero.dead or input == null or not input.move.is_finite() or not is_finite(input.face):
@@ -60,7 +62,8 @@ func advance(dt: float) -> void:
 	if _outcome in [Outcome.VICTORY, Outcome.DEFEAT] or not is_finite(dt) or dt <= 0.0:
 		return
 	for command in _orders:
-		_state.give_order(command.order, command.point, command.selection)
+		if _state.give_order(command.order, command.point, command.selection):
+			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection})
 	_orders.clear()
 	_elapsed_seconds += dt
 	if _state.wall == null:
@@ -74,16 +77,17 @@ func advance(dt: float) -> void:
 	Movement.step(_state, dt, _rng)
 	CombatStep.resolve_projectiles(_state, dt, _rng)
 	var morale_checked: bool = Morale.advance(_state, dt)
-	_events = _state.take_events()
 	_tick += 1
 	if _hero.dead:
 		_outcome = Outcome.HERO_DOWN
 	if morale_checked and _battle_over_at < 0.0 and (not _side_alive(0) or not _side_alive(1)):
 		_battle_over_at = _elapsed_seconds
 		_battle_won = _side_alive(0) and not _side_alive(1)
+		_state.record_notice(Event.Kind.BATTLE_DECIDED, {"won": _battle_won})
 	if _battle_over_at >= 0.0 and _elapsed_seconds - _battle_over_at > Config.BATTLE_END_DELAY_SECONDS:
 		_outcome = Outcome.VICTORY if _battle_won else Outcome.DEFEAT
 		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won, _companion_survival)
+	_events = _state.take_events()
 
 func result() -> Dictionary:
 	return _result.duplicate(true)

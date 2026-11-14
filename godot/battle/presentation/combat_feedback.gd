@@ -1,6 +1,7 @@
 extends RefCounted
 const Demo = preload("res://battle/presentation/demo_config.gd")
 const Event = preload("res://battle/combat_event.gd")
+const Config = preload("res://battle/config.gd")
 
 const BLOCK_TEXT := "Блок"
 const LAST_STAND_TEXT := "Не сдаюсь!"
@@ -9,6 +10,19 @@ const HERO_DOWN := "Герой ранен и вынесен из боя."
 const COMPANION_DOWN := "%s ранен и вынесен из боя."
 const LEADER_DOWN := "%s пал!"
 const HERO_KILL := "Герой сразил: %s."
+const BATTLE_STARTED := "Битва началась."
+const ENEMY_CHARGE := "Враг идёт в атаку!"
+const WALL_ALERT := "Враг у стен!"
+const GARRISON_CAVALRY := "Конница гарнизона вышла в бой."
+const VICTORY := "Победа! Враг разбит."
+const DEFEAT := "Отряд разбит."
+const GROUP_NAMES := ["Пехота", "Стрелки", "Конница", "Весь отряд"]
+const ORDER_NAMES := {
+	Config.ORDER_HOLD: "держать позицию",
+	Config.ORDER_FOLLOW: "за мной",
+	Config.ORDER_CHARGE: "в атаку!",
+	Config.ORDER_RETREAT: "отойти назад",
+}
 
 var _labels: Array[Dictionary] = []
 var _impacts: Array[Dictionary] = []
@@ -19,6 +33,18 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 	_age(_impacts, dt)
 	for event in events:
 		match event.kind:
+			Event.Kind.BATTLE_STARTED:
+				_log(BATTLE_STARTED)
+			Event.Kind.ORDER_APPLIED:
+				_log("%s: %s" % [GROUP_NAMES[event.selection], ORDER_NAMES[event.order]])
+			Event.Kind.ENEMY_CHARGE:
+				_log(ENEMY_CHARGE)
+			Event.Kind.WALL_ALERT:
+				_log(WALL_ALERT)
+			Event.Kind.GARRISON_CAVALRY:
+				_log(GARRISON_CAVALRY)
+			Event.Kind.BATTLE_DECIDED:
+				_log(VICTORY if event.won else DEFEAT)
 			Event.Kind.HIT:
 				if event.target_hero or event.source_hero:
 					_label(event.position, str(event.amount), Demo.DAMAGE_RECEIVED_COLOR if event.target_hero else Demo.DAMAGE_DEALT_COLOR)

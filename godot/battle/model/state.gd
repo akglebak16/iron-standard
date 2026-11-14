@@ -17,7 +17,13 @@ var projectiles: Array = []
 var starting_units := [0, 0]
 var morale_timer := 0.0
 var formation_timer := 0.0
+var siege_alerted := false
 var _events: Array[Dictionary] = []
+
+func record_notice(kind: Event.Kind, details: Dictionary = {}) -> void:
+	var notice := {"kind": kind}
+	notice.merge(details)
+	_events.append(notice)
 
 func launch_projectile(shot: Dictionary) -> void:
 	projectiles.append(shot)

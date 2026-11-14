@@ -1,6 +1,7 @@
 extends Node
 const Event = preload("res://battle/combat_event.gd")
 const Bank = preload("res://battle/presentation/audio/sound_bank.gd")
+const Config = preload("res://battle/config.gd")
 
 const MASTER_GAIN := 0.55
 const NEAR_GAIN := 1.15
@@ -48,6 +49,10 @@ func advance(dt: float, events: Array[Dictionary], listener: Vector2) -> void:
 
 static func sound_for(event: Dictionary) -> int:
 	match event.kind:
+		Event.Kind.BATTLE_STARTED: return Bank.Sound.HORN
+		Event.Kind.ORDER_APPLIED: return Bank.Sound.HORN if event.order == Config.ORDER_CHARGE else Bank.Sound.ORDER
+		Event.Kind.ENEMY_CHARGE, Event.Kind.WALL_ALERT: return Bank.Sound.ENEMY_HORN
+		Event.Kind.BATTLE_DECIDED: return Bank.Sound.HORN if event.won else Bank.Sound.ENEMY_HORN
 		Event.Kind.SHOT: return Bank.Sound.BOW
 		Event.Kind.SWING: return Bank.Sound.SWING
 		Event.Kind.CHARGE: return Bank.Sound.CHARGE
@@ -61,7 +66,7 @@ static func sound_for(event: Dictionary) -> int:
 	return -1
 
 static func distance_gain(event: Dictionary, listener: Vector2) -> float:
-	if event.target_hero or event.kind == Event.Kind.SWING:
+	if not event.has("position") or event.target_hero or event.kind == Event.Kind.SWING:
 		return 1.0
 	var position: Vector2 = event.position
 	return clampf(NEAR_GAIN - listener.distance_to(position) / ATTENUATION_DISTANCE, MIN_DISTANCE_GAIN, 1.0)

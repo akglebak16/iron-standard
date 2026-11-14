@@ -4,6 +4,7 @@ const Config = preload("res://battle/config.gd")
 const State = preload("res://battle/model/state.gd")
 const Group = preload("res://battle/model/group.gd")
 const Unit = preload("res://battle/model/unit.gd")
+const Event = preload("res://battle/combat_event.gd")
 
 static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> void:
 	var foe := battle.centroid(1 - side)
@@ -19,6 +20,8 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 		var nearest := _nearest_foe_distance(battle, infantry.center, 1 - side)
 		if nearest < Config.AI_INFANTRY_CHARGE_DISTANCE or elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS:
 			infantry.order = Config.ORDER_CHARGE
+			if has_infantry and side == 1:
+				battle.record_notice(Event.Kind.ENEMY_CHARGE)
 		elif elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
 			_advance(infantry, foe, Config.AI_INFANTRY_ADVANCE_SPEED, dt)
 	if archers.order != Config.ORDER_CHARGE:
@@ -46,18 +49,27 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 
 static func siege_step(battle: State, elapsed: float) -> void:
 	var inside := 0
+	var near_wall := false
 	for unit: Unit in battle.units:
-		if unit.side == 0 and not unit.dead and not unit.gone and not unit.fleeing and unit.position.x > battle.wall.x + battle.wall.half_width:
+		if unit.side != 0 or unit.dead or unit.gone or unit.fleeing:
+			continue
+		if unit.position.x > battle.wall.x + battle.wall.half_width:
 			inside += 1
+		if unit.position.x > battle.wall.x - Config.SIEGE_ALERT_DISTANCE:
+			near_wall = true
 	var infantry: Group = battle.groups[1][Config.GROUP_INFANTRY]
 	var cavalry: Group = battle.groups[1][Config.GROUP_CAVALRY]
 	var archers: Group = battle.groups[1][Config.GROUP_ARCHERS]
 	if inside > Config.SIEGE_INFANTRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_INFANTRY_FORCE_CHARGE_SECONDS:
 		infantry.order = Config.ORDER_CHARGE
-	if inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS:
+	if cavalry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS):
 		cavalry.order = Config.ORDER_CHARGE
+		battle.record_notice(Event.Kind.GARRISON_CAVALRY)
 	if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE or infantry.active_units().is_empty():
 		archers.order = Config.ORDER_CHARGE
+	if near_wall and not battle.siege_alerted:
+		battle.siege_alerted = true
+		battle.record_notice(Event.Kind.WALL_ALERT)
 
 static func follow_hero(battle: State, hero: Unit) -> void:
 	if hero.dead:

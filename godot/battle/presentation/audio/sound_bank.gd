@@ -1,6 +1,6 @@
 extends RefCounted
 ## Short PCM effects synthesized from the tone and noise layers in src/04_audio.js.
-enum Sound { HIT, CLANG, SWING, BOW, ARROW_HIT, THUNK, DOWN, CHARGE }
+enum Sound { HIT, CLANG, SWING, BOW, ARROW_HIT, THUNK, DOWN, CHARGE, ORDER, HORN, ENEMY_HORN }
 enum Wave { SINE, TRIANGLE, SQUARE, SAW }
 enum Filter { LOW, HIGH, BAND }
 
@@ -9,7 +9,16 @@ const ATTACK_SECONDS := 0.006
 const ENVELOPE_FLOOR := 0.0001
 const PCM_MAX := 32767.0
 const NOISE_SEED := 4171
-const MIN_INTERVALS := [0.05, 0.06, 0.08, 0.05, 0.05, 0.06, 0.08, 0.1]
+const MIN_INTERVALS := [0.05, 0.06, 0.08, 0.05, 0.05, 0.06, 0.08, 0.1, 0.0, 0.0, 0.0]
+const HORN_PARTIALS := [1.0, 1.005, 2.01]
+const HORN_START_RATIO := 0.96
+const HORN_RAMP_SECONDS := 0.35
+const HORN_ATTACK_SECONDS := 0.18
+const HORN_SUSTAIN_SECONDS := 1.0
+const HORN_DECAY_END_SECONDS := 1.7
+const HORN_LENGTH := 1.8
+const HORN_CUTOFF := 900.0
+const HORN_GAIN := 0.11
 
 static func build() -> Dictionary:
 	var rng := RandomNumberGenerator.new()
@@ -23,10 +32,13 @@ static func build() -> Dictionary:
 		Sound.THUNK: _render([_tone(160, 90, 0.07, Wave.SQUARE, 0.12)], [], rng),
 		Sound.DOWN: _render([_tone(170, 55, 0.3, Wave.SAW, 0.13)], [_noise(700, 150, 0.18, Filter.LOW, 0.25)], rng),
 		Sound.CHARGE: _render([_tone(80, 40, 0.2, Wave.SINE, 0.7)], [_noise(500, 120, 0.14, Filter.LOW, 0.5)], rng),
+		Sound.ORDER: _render([_tone(392, 392, 0.09, Wave.TRIANGLE, 0.18), _tone(523, 523, 0.12, Wave.TRIANGLE, 0.18, 0.08)], [], rng),
+		Sound.HORN: _horn(146.0),
+		Sound.ENEMY_HORN: _horn(110.0),
 	}
 
-static func _tone(start: float, finish: float, length: float, wave: Wave, volume: float) -> Dictionary:
-	return {"start": start, "finish": finish, "length": length, "wave": wave, "volume": volume}
+static func _tone(start: float, finish: float, length: float, wave: Wave, volume: float, delay: float = 0.0) -> Dictionary:
+	return {"start": start, "finish": finish, "length": length, "wave": wave, "volume": volume, "delay": delay}
 
 static func _noise(start: float, finish: float, length: float, filter: Filter, volume: float, resonance: float = 1.0) -> Dictionary:
 	return {"start": start, "finish": finish, "length": length, "filter": filter, "volume": volume, "resonance": resonance}
@@ -35,12 +47,16 @@ static func _render(tones: Array, noises: Array, rng: RandomNumberGenerator) -> 
 	var samples := PackedFloat32Array()
 	for layer in tones + noises:
 		var frames := ceili(float(layer.length) * MIX_RATE)
-		if frames > samples.size():
-			samples.resize(frames)
+		var offset := roundi(float(layer.get("delay", 0.0)) * MIX_RATE)
+		if frames + offset > samples.size():
+			samples.resize(frames + offset)
 		if layer.has("wave"):
-			_mix_tone(samples, layer, frames)
+			_mix_tone(samples, layer, frames, offset)
 		else:
 			_mix_noise(samples, layer, frames, rng)
+	return _stream(samples)
+
+static func _stream(samples: PackedFloat32Array) -> AudioStreamWAV:
 	var pcm := PackedByteArray()
 	pcm.resize(samples.size() * 2)
 	for i in samples.size():
@@ -51,7 +67,7 @@ static func _render(tones: Array, noises: Array, rng: RandomNumberGenerator) -> 
 	stream.data = pcm
 	return stream
 
-static func _mix_tone(samples: PackedFloat32Array, layer: Dictionary, frames: int) -> void:
+static func _mix_tone(samples: PackedFloat32Array, layer: Dictionary, frames: int, offset: int) -> void:
 	var phase := 0.0
 	var attack := roundi(ATTACK_SECONDS * MIX_RATE)
 	for i in frames:
@@ -63,7 +79,7 @@ static func _mix_tone(samples: PackedFloat32Array, layer: Dictionary, frames: in
 			Wave.TRIANGLE: value = 1.0 - 4.0 * absf(phase - 0.5)
 			Wave.SQUARE: value = 1.0 if phase < 0.5 else -1.0
 			Wave.SAW: value = phase * 2.0 - 1.0
-		samples[i] += value * envelope
+		samples[i + offset] += value * envelope
 		phase = fposmod(phase + frequency / MIX_RATE, 1.0)
 
 static func _mix_noise(samples: PackedFloat32Array, layer: Dictionary, frames: int, rng: RandomNumberGenerator) -> void:
@@ -100,3 +116,24 @@ static func _mix_noise(samples: PackedFloat32Array, layer: Dictionary, frames: i
 
 static func _decay(volume: float, progress: float) -> float:
 	return volume * pow(ENVELOPE_FLOOR / volume, progress)
+
+static func _horn(pitch: float) -> AudioStreamWAV:
+	var samples := PackedFloat32Array()
+	samples.resize(ceili(HORN_LENGTH * MIX_RATE))
+	var filter_rate := 1.0 - exp(-TAU * HORN_CUTOFF / MIX_RATE)
+	for partial in HORN_PARTIALS:
+		var phase := 0.0
+		var filtered := 0.0
+		var gain: float = HORN_GAIN / partial
+		for i in samples.size():
+			var time := float(i) / MIX_RATE
+			var ramp := minf(time / HORN_RAMP_SECONDS, 1.0)
+			var frequency: float = pitch * partial * lerpf(HORN_START_RATIO, 1.0, ramp)
+			filtered += (phase * 2.0 - 1.0 - filtered) * filter_rate
+			var envelope := gain * minf(time / HORN_ATTACK_SECONDS, 1.0)
+			if time > HORN_SUSTAIN_SECONDS:
+				var release := minf((time - HORN_SUSTAIN_SECONDS) / (HORN_DECAY_END_SECONDS - HORN_SUSTAIN_SECONDS), 1.0)
+				envelope = _decay(gain, release)
+			samples[i] += filtered * envelope
+			phase = fposmod(phase + frequency / MIX_RATE, 1.0)
+	return _stream(samples)

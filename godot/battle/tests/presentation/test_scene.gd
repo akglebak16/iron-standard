@@ -35,7 +35,7 @@ func _check() -> void:
 	launch.origin = Vector2.INF
 	view._physics_process(TICK)
 	assert(view._feedback._labels.size() == 1)
-	assert(view._audio._last_played.size() == 1)
+	assert(view._audio._last_played.has(preload("res://battle/presentation/audio/sound_bank.gd").Sound.BOW))
 	var mute := InputEventKey.new()
 	mute.keycode = KEY_M
 	mute.pressed = true
