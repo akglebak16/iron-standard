@@ -4,6 +4,7 @@ const Config = preload("res://battle/config.gd")
 const Demo = preload("res://battle/presentation/demo_config.gd")
 const Session = preload("res://battle/application/session.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
+const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
 
 signal battle_finished
 
@@ -89,5 +90,5 @@ func _draw() -> void:
 			draw_arc(unit.position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, Color.WHITE, Demo.HERO_RING_WIDTH)
 		elif unit.companion and not unit.dead:
 			draw_arc(unit.position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, Demo.COMPANION_RING_COLOR, Demo.HERO_RING_WIDTH)
-	for impact in _frame.shots:
-		draw_circle(impact, Demo.PROJECTILE_RADIUS, Color.YELLOW)
+	for shot in _frame.shots:
+		ProjectileView.draw(self, shot)

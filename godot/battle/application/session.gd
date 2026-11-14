@@ -125,9 +125,9 @@ func snapshot() -> Dictionary:
 			camera_target = focus_sum[0] / focus_count[0]
 		elif focus_count[1] > 0:
 			camera_target = focus_sum[1] / focus_count[1]
-	var shots: Array[Vector2] = []
+	var shots: Array[Dictionary] = []
 	for shot in _state.projectiles:
-		shots.append(shot.impact)
+		shots.append({"origin": shot.origin, "impact": shot.impact, "progress": clampf(shot.time / shot.duration, 0.0, 1.0), "throwing": shot.throwing, "crossbow": shot.crossbow})
 	var walls: Array[Rect2] = []
 	if _state.wall != null:
 		walls = _state.wall.segments()
