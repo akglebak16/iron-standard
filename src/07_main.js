@@ -113,6 +113,14 @@ function worldClick(sx, sy) {
   if (ts) { if (Math.hypot(ts.x - P.x, ts.y - P.y) < 46) { openTown(ts); return; } P.sid = ts.id; P.path = findPath(P.x, P.y, ts.x, ts.y) || []; P.pi = 0; if (!P.path.length) P.sid = null; return; }
   const tx = clamp(w.x, 10, WW - 10), ty = clamp(w.y, 10, WH - 10); const path = findPath(P.x, P.y, tx, ty); if (!path) return toast('Туда не пройти'); P.path = path; P.pi = 0;
 }
+/* WASD двигают камеру по карте мира (в сети тоже: камера только клиентская). Скорость в экранных пикселях, поэтому не зависит от масштаба.
+   Камера становится «свободной»; C возвращает её к отряду, как после перетаскивания мышью. Окно открыто или курсор в поле ввода — не двигаем. */
+function worldKeyPan(dt) {
+  if (UI.open || (document.activeElement && document.activeElement.tagName === 'INPUT')) return;
+  const k = IN.keys, dx = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0), dy = (k.KeyS ? 1 : 0) - (k.KeyW ? 1 : 0); if (!dx && !dy) return;
+  const n = Math.hypot(dx, dy), v = 620 * (k.ShiftLeft || k.ShiftRight ? 2 : 1) * Math.min(dt, .05) / WC.z;
+  WC.free = true; WC.x += dx / n * v; WC.y += dy / n * v;
+}
 function worldUpdate(dt) {
   if (NET.on) return netWorldUpdate(dt);
   if (!G || UI.open) return; const P = G.player; if (P.in && !G.wait) { P.in = null; G.waitIn = null; } /* ожидание в городе кончилось (Z или клик): снова на карте */ const moving = (P.path.length && P.pi < P.path.length) || P.tid != null;
@@ -227,7 +235,7 @@ function frame(ts) {
   try {
     if (MODE === 'title') { if (B) { battleUpdate(dt); battleDraw(g); if (B.over && B.t - B.over > 3) startDemo(); } musicTick(dt, 'world'); }
     else if (MODE === 'battle' && B) { if (NET.on) netBattleUpdate(dt); else if (!UI.open || B.over) { readHeroInput(); battleUpdate(dt); } battleDraw(g); drawMinimap(el('bmini').firstElementChild); hudT -= dt; if (hudT <= 0) { hudT = .12; updateBattleHud(); } musicTick(dt, 'battle'); }
-    else if (MODE === 'world' && G) { worldUpdate(dt); drawWorld(g); hudT -= dt; if (hudT <= 0) { hudT = .15; updateWorldHud(); } musicTick(dt, 'world'); }
+    else if (MODE === 'world' && G) { worldKeyPan(dt); worldUpdate(dt); drawWorld(g); hudT -= dt; if (hudT <= 0) { hudT = .15; updateWorldHud(); } musicTick(dt, 'world'); }
   } catch (e) { console.error(e); if (!window.__err) { window.__err = 1; } }
   requestAnimationFrame(frame);
 }
