@@ -46,7 +46,7 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: Sp
 		for unit: Unit in battle.units:
 			if unit.side == shot.side or unit.dead or unit.gone:
 				continue
-			var distance: float = unit.position.distance_to(shot.impact)
+			var distance: float = (unit.position - Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT)).distance_to(shot.impact)
 			if distance < unit.collision_radius + Config.PROJECTILE_HIT_PADDING and distance < closest:
 				victim = unit
 				closest = distance

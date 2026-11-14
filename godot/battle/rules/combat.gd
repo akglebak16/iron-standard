@@ -26,15 +26,16 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)
-	var speed: float = Config.THROW_SPEED if attacker.weapon_kind == "javelin" else Config.SHOT_SPEED
+	var is_throw := attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON
+	var speed: float = Config.THROW_SPEED if is_throw else Config.SHOT_SPEED
 	var duration: float = distance / speed + Config.PROJECTILE_START_DELAY
 	var spread: float = Config.SHOT_BASE_SCATTER + distance * attacker.accuracy
 	var impact: Vector2 = target.position + target.velocity * duration * Config.AIM_VELOCITY_LEAD
-	impact += Vector2(rng.randf_range(-spread, spread), rng.randf_range(-spread, spread))
-	return {"side": attacker.side, "source": attacker, "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "time": 0.0, "duration": duration}
+	impact += Vector2((rng.randf() + rng.randf() - 1.0) * spread, (rng.randf() + rng.randf() - 1.0) * spread)
+	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "throwing": is_throw, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
 
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
-	var incoming: float = (shot.source.position - target.position).angle()
+	var incoming: float = (shot.origin - target.position).angle()
 	if Block.check(target, incoming, true, rng):
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)

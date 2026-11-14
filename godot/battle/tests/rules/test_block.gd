@@ -38,7 +38,7 @@ func _initialize() -> void:
 	target.block_chance = 0.0
 	var attacker := Unit.new(1, 0, Vector2(50, 0), 100, 0, 1)
 	attacker.damage = 30
-	var shot := {"source": attacker, "damage": attacker.damage, "pierce": 0.0}
+	var shot := {"source": attacker, "origin": attacker.position - Vector2(0, Config.PROJECTILE_START_HEIGHT), "damage": attacker.damage, "pierce": 0.0}
 	var battle := State.new()
 	assert(Combat.arrow_hit(battle, shot, target, rng) == 0)
 	assert(target.hp == 500)
