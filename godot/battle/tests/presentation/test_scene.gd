@@ -33,6 +33,7 @@ func _check() -> void:
 	view._physics_process(Config.BATTLE_END_DELAY_SECONDS + TICK)
 	var text: String = view.get_node("Hud/Status").text
 	assert(text.contains("Победа") and text.contains("Трофеи:"))
+	assert(text.contains("Ансельм +") and scene._demo_party.comps[0].xp > 0)
 	assert(scene._demo_party.gold > 0 and scene._demo_party.hero.xp > 0)
 	view._physics_process(TICK)
 	assert(view.get_node("Hud/Status").text == text)

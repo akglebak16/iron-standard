@@ -25,6 +25,11 @@ func replace_data(data: Variant) -> bool:
 		for stat in entry.a:
 			if not _valid_number(stat):
 				return false
+		if not entry.get("grow") is Array or entry.grow.is_empty():
+			return false
+		for attribute in entry.grow:
+			if attribute not in Config.ATTRIBUTES:
+				return false
 		if not entry.get("sk") is Dictionary or entry.sk.is_empty():
 			return false
 		for effect in entry.sk:

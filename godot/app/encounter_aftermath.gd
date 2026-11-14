@@ -7,22 +7,29 @@ const Goods = preload("res://campaign/data/goods_catalog.gd")
 const Rewards = preload("res://campaign/data/encounter_rewards.gd")
 const Aftermath = preload("res://campaign/rules/battle_aftermath.gd")
 const Loot = preload("res://campaign/economy/battle_loot.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
+const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 
 var _session: Session
 
 func _init(session: Session) -> void:
 	_session = session
 
-func resolve(party: Dictionary, opponent: Dictionary, effects: Dictionary, mounted_hero: bool, troops: Troops, gear: Gear, goods: Goods, rng: RandomNumberGenerator) -> Dictionary:
-	if _session == null or gear == null or goods == null:
+func resolve(party: Dictionary, opponent: Dictionary, mounted_hero: bool, troops: Troops, gear: Gear, goods: Goods, rng: RandomNumberGenerator, companions: CompanionCatalog, perks: PerkCatalog) -> Dictionary:
+	if _session == null or gear == null or goods == null or companions == null or perks == null or not party.get("hero") is Dictionary:
 		return {}
 	var result := _session.result()
 	if result.is_empty():
 		return {}
 	var encounter := Rewards.from_opponent(opponent)
-	var aftermath := Aftermath.resolve(party, result, encounter, effects, troops, rng)
+	var effects := CompanionProfile.party_effects(party.hero, party.get("comps", []), companions, perks)
+	var aftermath := Aftermath.resolve(party, result, encounter, effects, troops, rng, companions, perks)
 	if aftermath.is_empty():
 		return {}
-	aftermath.summary.drops = Loot.collect(aftermath.party, encounter, effects, mounted_hero, troops, gear, goods, rng) if result.win else []
+	aftermath.summary.drops = []
+	if result.win:
+		var reward_effects := CompanionProfile.party_effects(aftermath.party.hero, aftermath.party.get("comps", []), companions, perks)
+		aftermath.summary.drops = Loot.collect(aftermath.party, encounter, reward_effects, mounted_hero, troops, gear, goods, rng)
 	_session = null
 	return aftermath

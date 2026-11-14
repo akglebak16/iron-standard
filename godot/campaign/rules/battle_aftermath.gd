@@ -3,11 +3,15 @@ extends RefCounted
 const Config = preload("res://campaign/config.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const Progression = preload("res://characters/rules/progression.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
+const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const PerkEffects = preload("res://characters/rules/perk_effects.gd")
+const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 
 ## Returns a detached party and a summary. Effects already combine hero perks and companion skills.
 ## The encounter supplies the original enemy army and a loot policy selected by the caller.
-static func resolve(party: Dictionary, result: Dictionary, encounter: Dictionary, effects: Dictionary, troops: Catalog, rng: RandomNumberGenerator) -> Dictionary:
-	if troops == null or rng == null or not result.get("win") is bool or not result.get("dead") is Dictionary or not result.get("wounded") is Dictionary:
+static func resolve(party: Dictionary, result: Dictionary, encounter: Dictionary, effects: Dictionary, troops: Catalog, rng: RandomNumberGenerator, companions: CompanionCatalog, perks: PerkCatalog) -> Dictionary:
+	if troops == null or rng == null or companions == null or perks == null or not result.get("win") is bool or not result.get("dead") is Dictionary or not result.get("wounded") is Dictionary:
 		return {}
 	if not party.get("hero") is Dictionary or not party.get("troops") is Array or not encounter.get("troops") is Array:
 		return {}
@@ -27,11 +31,6 @@ static func resolve(party: Dictionary, result: Dictionary, encounter: Dictionary
 	updated.troops = remaining
 	var hero: Dictionary = updated.hero
 	hero.hp = clampf(float(result.heroHp), Config.HERO_MIN_RECOVERY_HEALTH, 1.0)
-	var companion_results: Dictionary = result.get("comps", {})
-	for companion in updated.get("comps", []):
-		if companion_results.has(companion.id):
-			var outcome: Dictionary = companion_results[companion.id]
-			companion.hp = Config.COMPANION_MIN_RECOVERY_HEALTH if outcome.down else clampf(float(outcome.hp), Config.COMPANION_MIN_RECOVERY_HEALTH, 1.0)
 	var stats: Dictionary = updated.get("stats", {})
 	var inventory: Dictionary = updated.get("inv", {})
 	var summary := {"win": result.win, "lost": _total(result.dead), "wounded": _total(result.wounded), "loot": 0, "lost_gold": 0, "xp": 0}
@@ -55,7 +54,29 @@ static func resolve(party: Dictionary, result: Dictionary, encounter: Dictionary
 	updated.stats = stats
 	updated.inv = inventory
 	summary.levels_gained = Progression.gain_hero_xp(hero, summary.xp)
+	summary.comps = _apply_companions(updated.get("comps", []), result, companions, perks)
 	return {"party": updated, "summary": summary}
+
+static func _apply_companions(roster: Array, result: Dictionary, catalog: CompanionCatalog, perks: PerkCatalog) -> Dictionary:
+	var outcomes: Dictionary = result.get("comps", {})
+	var updates := {}
+	for companion in roster:
+		if not outcomes.has(companion.id):
+			continue
+		var definition := catalog.get_companion(companion.id)
+		var resolved := CompanionProfile.resolve(companion, catalog)
+		if resolved.is_empty():
+			continue
+		companion.merge(resolved.profile)
+		var outcome: Dictionary = outcomes[companion.id]
+		companion.hp = Config.COMPANION_MIN_RECOVERY_HEALTH if outcome.down else clampf(float(outcome.hp), Config.COMPANION_MIN_RECOVERY_HEALTH, 1.0)
+		var own := PerkEffects.own(companion, perks)
+		var share := 1.0 if result.win else Config.DEFEAT_XP_SHARE
+		var base_xp := share * float(result.xp) * Config.COMPANION_BATTLE_XP_SHARE + int(outcome.kills) * Config.COMPANION_KILL_XP + Config.COMPANION_BASE_XP
+		var xp := roundi(base_xp * Progression.xp_multiplier(companion, float(own.get("xp", 0))))
+		var levels := Progression.gain_companion_xp(companion, xp, definition.grow)
+		updates[companion.id] = {"down": outcome.down, "kills": outcome.kills, "xp": xp, "levels_gained": levels}
+	return updates
 
 static func _total(counts: Dictionary) -> int:
 	var total := 0

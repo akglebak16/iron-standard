@@ -1,6 +1,18 @@
 extends RefCounted
 const Config = preload("res://characters/config.gd")
 const Catalog = preload("res://characters/data/companion_catalog.gd")
+const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const PerkEffects = preload("res://characters/rules/perk_effects.gd")
+
+static func party_effects(hero: Dictionary, roster: Array, catalog: Catalog, perks: PerkCatalog) -> Dictionary:
+	var effects := PerkEffects.own(hero, perks)
+	for saved in roster:
+		var resolved := resolve(saved, catalog)
+		if resolved.is_empty():
+			continue
+		for effect in resolved.party_effects:
+			effects[effect] = float(effects.get(effect, 0)) + resolved.party_effects[effect]
+	return effects
 
 ## Saved profile fields override the starting definition, including empty equipment slots.
 static func resolve(saved: Dictionary, catalog: Catalog) -> Dictionary:

@@ -8,7 +8,13 @@ const Gear = preload("res://equipment/data/gear_catalog.gd")
 const Goods = preload("res://campaign/data/goods_catalog.gd")
 const TICK := 1.0 / 60.0
 
+const Companions = preload("res://characters/data/companion_catalog.gd")
+const Perks = preload("res://characters/data/perk_catalog.gd")
+
 func _initialize() -> void:
+	var companions := Companions.new()
+	var perks := Perks.new()
+	assert(companions.load_data() and perks.load_data())
 	var troops := Troops.new()
 	var gear := Gear.new()
 	var goods := Goods.new()
@@ -23,17 +29,17 @@ func _initialize() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 25
 	var initial_rng := rng.state
-	assert(bridge.resolve(party, opponent, {}, false, troops, gear, goods, rng).is_empty())
+	assert(bridge.resolve(party, opponent, false, troops, gear, goods, rng, companions, perks).is_empty())
 	assert(rng.state == initial_rng)
 	session._state.kill(session._state.units[0], session._hero)
 	session.advance(TICK)
 	session.advance(TICK + Config.BATTLE_END_DELAY_SECONDS)
-	var applied := bridge.resolve(party, opponent, {}, false, troops, gear, goods, rng)
+	var applied := bridge.resolve(party, opponent, false, troops, gear, goods, rng, companions, perks)
 	assert(applied.summary.win and applied.summary.loot > 0 and not applied.summary.drops.is_empty())
 	assert(applied.party.gold == 25 + applied.summary.loot)
 	assert(party.gold == 25 and not party.has("inv"))
 	var final_rng := rng.state
-	assert(bridge.resolve(applied.party, opponent, {}, false, troops, gear, goods, rng).is_empty())
+	assert(bridge.resolve(applied.party, opponent, false, troops, gear, goods, rng, companions, perks).is_empty())
 	assert(rng.state == final_rng)
 	print("Encounter aftermath integration tests passed")
 	quit(0)
