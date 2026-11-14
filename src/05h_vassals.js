@@ -95,3 +95,27 @@ function cvAI(p, dh) {
   if (p.state === 'hunt') { const t = partyById(p.tid); if (!t || t.hide) { p.state = 'idle'; p.path = []; p.tid = null; } else if ((p.rp = (p.rp || 0) - dh) <= 0) { p.rp = .7; pathTo(p, t.x, t.y); } }
   if (p.pi < p.path.length) { if (moveAlong(p, dh) && p.state === 'travel') { p.state = 'idle'; p.path = []; p.pi = 0; } }
 }
+
+/* ---------- дружины вассалов вступают в бой игрока ----------
+   Как у врагов (encHelpers/encMerge): дружины вассалов рядом (ENC_HELP_R) идут в бой вместе с игроком. В cfg.pl их бойцы добавляются к отряду игрока,
+   после боя потери каждого типа делятся между стеками по числу бойцов. Игрок теряет только свою долю, дружины — свою. На карте они остаются. */
+let CVB = null; // { p: враг, al: [{ h: отряд вассала, tr: [{type,n}] }] }
+function cvHelpers(P, p) {
+  if (NET.on || ['camp', 'siege', 'caravan'].includes(p.kind)) return [];
+  return G.parties.filter(o => o.kind === 'cvass' && o.owner === P.id && o !== p && !o.hide && !o.fight && !o.lock && troopCount(o.troops) > 0 && hostile(o, p) && Math.min(Math.hypot(o.x - p.x, o.y - p.y), Math.hypot(o.x - P.x, o.y - P.y)) < ENC_HELP_R);
+}
+function cvBattleStart(P, p, al) { CVB = al && al.length ? { p, al: al.filter(h => G.parties.includes(h)).map(h => ({ h, tr: h.troops.map(s => ({ type: s.type, n: s.n })) })) } : null; if (CVB && !CVB.al.length) CVB = null; }
+function cvAllyTroops(p) { const out = []; if (CVB && CVB.p === p) for (const a of CVB.al) for (const s of a.tr) addT(out, s.type, s.n); return out; }
+function cvBattleEnd(P, res, p) {
+  const C = CVB; CVB = null; if (!C || C.p !== p) return;
+  const lostBy = C.al.map(() => 0); let total = 0;
+  for (const kind of ['dead', 'wounded']) for (const k of Object.keys(res[kind] || {})) {
+    const D = res[kind][k], mine = (P.troops.find(s => s.type === k) || { n: 0 }).n, stacks = [mine].concat(C.al.map(a => (a.tr.find(s => s.type === k) || { n: 0 }).n)), tot = stacks.reduce((a, b) => a + b, 0);
+    if (!tot) continue; const sh = stacks.map(n => Math.floor(D * n / tot)); let rest = D - sh.reduce((a, b) => a + b, 0); for (let i = 0; rest > 0; i = (i + 1) % sh.length) if (stacks[i] > 0) { sh[i]++; rest--; }
+    res[kind][k] = sh[0]; if (!sh[0]) delete res[kind][k];
+    if (kind === 'dead') C.al.forEach((a, i) => { if (sh[i + 1] > 0 && G.parties.includes(a.h)) { remT(a.h.troops, k, sh[i + 1]); lostBy[i] += sh[i + 1]; total += sh[i + 1]; } });
+  }
+  C.al.forEach((a, i) => { const h = a.h; if (!G.parties.includes(h)) return; if (troopCount(h.troops) < 1) G.parties.splice(G.parties.indexOf(h), 1); else { h.cd = Math.max(h.cd, 2); h.state = 'idle'; h.path = []; h.pi = 0; }
+    logW('Дружина «' + h.name + '» билась рядом с тобой' + (lostBy[i] ? ', павших: ' + lostBy[i] : '') + '.', 3, P); });
+  res.allyDead = total;
+}
