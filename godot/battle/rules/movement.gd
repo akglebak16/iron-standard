@@ -6,6 +6,7 @@ const Group = preload("res://battle/model/group.gd")
 const Targeting = preload("res://battle/rules/targeting.gd")
 const SpatialIndex = preload("res://battle/rules/spatial_index.gd")
 const Charge = preload("res://battle/rules/charge.gd")
+const AiDecision = preload("res://battle/rules/ai_decision.gd")
 
 static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0, rng: RandomNumberGenerator = null) -> SpatialIndex:
 	if dt <= 0.0:
@@ -28,9 +29,23 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 		var group: Group = battle.groups[unit.side][unit.group_kind]
 		var destination: Vector2 = group.slot_position(unit, battle.arena_size)
 		var velocity_scale := 1.0
+		var ai_face := unit.facing
 		if unit.fleeing:
 			destination = Vector2(battle.arena_size.x + Config.FLEE_DESTINATION_PADDING if unit.side == 1 else -Config.FLEE_DESTINATION_PADDING, unit.position.y)
 			velocity_scale = Config.FLEE_SPEED_MULTIPLIER
+		elif rng != null:
+			var enemy := Targeting.refresh(battle, unit, dt, rng)
+			var plan := AiDecision.plan(unit, group, enemy, battle.arena_size)
+			unit.ai_mode = plan.mode
+			destination = plan.destination
+			velocity_scale = plan.speed_scale
+			ai_face = plan.face
+			if unit.ai_mode == Config.AI_MODE_MELEE and enemy != null and Charge.can_hit(unit, enemy):
+				Charge.hit(battle, unit, enemy, rng)
+				if destination != unit.position:
+					destination = enemy.position
+				if index != null:
+					index.update(battle.units.find(enemy))
 		elif group.order == Config.ORDER_CHARGE:
 			var enemy: Unit = Targeting.nearest_enemy(battle, unit, index)
 			if enemy != null:
@@ -41,6 +56,8 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 					if index != null:
 						index.update(battle.units.find(enemy))
 		_steer(unit, destination, unit.speed * velocity_scale, dt)
+		if rng != null and not unit.fleeing:
+			unit.facing = ai_face
 		unit.position += unit.velocity * dt
 		if unit.fleeing and (unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING):
 			unit.gone = true

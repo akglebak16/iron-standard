@@ -28,6 +28,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.weight = weight
 			unit.damage = float(troop.dmg) * weight
 			unit.speed = float(troop.spd) * rng.randf_range(Config.SPEED_RANDOM_MIN, Config.SPEED_RANDOM_MAX)
+			unit.target_timer = rng.randf_range(0.0, Config.RETARGET_INITIAL_MAX_SECONDS)
 			unit.attack_range = float(troop.get("range", 0))
 			unit.mounted = bool(troop.mounted)
 			unit.attack_interval = float(troop.cd)
