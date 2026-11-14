@@ -44,6 +44,25 @@ async function singlePlayer(pg) {
   }
   ok('кнопки верхнего меню нажимаются с первого раза', opened === tries, opened + '/' + tries);
 
+  // камера карты мира двигается клавишами WASD, C возвращает её к отряду, при открытом окне не двигается
+  await pg.evaluate(() => { closeModal(); G.paused = true; G.player.path = []; WC.free = false; WC.x = WW / 2; WC.y = WH / 2; WC.z = .9; });
+  const cam0 = await pg.evaluate(() => ({ x: WC.x, y: WC.y }));
+  await pg.keyboard.down('d'); await pg.waitForTimeout(350); await pg.keyboard.up('d');
+  const camD = await pg.evaluate(() => ({ x: WC.x, y: WC.y, free: WC.free }));
+  await pg.keyboard.down('a'); await pg.waitForTimeout(350); await pg.keyboard.up('a');
+  const camA = await pg.evaluate(() => ({ x: WC.x }));
+  await pg.keyboard.down('s'); await pg.waitForTimeout(350); await pg.keyboard.up('s');
+  const camS = await pg.evaluate(() => ({ y: WC.y }));
+  await pg.keyboard.down('w'); await pg.waitForTimeout(350); await pg.keyboard.up('w');
+  const camW = await pg.evaluate(() => ({ y: WC.y }));
+  await pg.evaluate(() => openMenu()); const frozen0 = await pg.evaluate(() => WC.x);
+  await pg.keyboard.down('d'); await pg.waitForTimeout(250); await pg.keyboard.up('d');
+  const frozen1 = await pg.evaluate(() => WC.x); await pg.evaluate(() => closeModal());
+  await pg.keyboard.press('c'); const back = await pg.evaluate(() => WC.free);
+  ok('WASD двигают камеру по карте мира, C возвращает её к отряду, при открытом окне камера стоит',
+    camD.x > cam0.x + 30 && camD.free && camA.x < camD.x - 30 && camS.y > camD.y + 30 && camW.y < camS.y - 30 && Math.abs(frozen1 - frozen0) < 1 && back === false, { cam0, camD, camA, camS, camW, frozen0, frozen1, back });
+  await pg.evaluate(() => { G.paused = false; });
+
   // 3. клавиши не залипают после Alt+Tab
   await pg.keyboard.down('KeyW'); const held = await pg.evaluate(() => !!IN.keys.KeyW);
   const freed = await pg.evaluate(() => { IN.atk = true; window.dispatchEvent(new Event('blur')); return !IN.keys.KeyW && !IN.atk; }); await pg.keyboard.up('KeyW');
