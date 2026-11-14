@@ -40,6 +40,7 @@ func _initialize() -> void:
 	assert(events[0].kind == Event.Kind.CHARGE and events[0].source_hero)
 	assert(events[1].kind == Event.Kind.HIT and events[1].amount == impact)
 	assert(events[2].kind == Event.Kind.DOWN and events[2].target_id == enemy.id)
+	assert(events[2].attack == Event.Attack.CHARGE)
 	var old_position: Vector2 = enemy.position
 	events[2].position = Vector2.INF
 	assert(enemy.position == old_position)

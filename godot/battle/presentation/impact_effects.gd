@@ -40,6 +40,24 @@ const SPRAY_LIFT := Vector2(40, 80)
 const SPRAY_VERTICAL_SCALE := 0.5
 const SPRAY_LIFE := Vector2(0.3, 0.65)
 const SPRAY_RADIUS := Vector2(1.5, 3.4)
+const DEATH_SPRAY_OFFSET := Vector2(0, -18)
+const DEATH_SPRAY_COUNT := 12
+const ARROW_DEATH_SPRAY_COUNT := 6
+const DEATH_SPRAY_SPEED := 140.0
+const CHARGE_SPRAY_SPEED := 220.0
+const DEATH_SPRAY_LIFT := Vector2(45, 90)
+const SPRAY_MIN_SPEED_SHARE := 0.3
+const BONE_DUST_COLOR := Color("#cfc6ad")
+const BONE_DUST_OFFSET := Vector2(0, -10)
+const POOL_LIMIT := 90
+const POOL_INITIAL_RADIUS := 3.0
+const POOL_MAX_RADIUS := Vector2(16, 26)
+const POOL_X_JITTER := Vector2(-6, 6)
+const POOL_Y_JITTER := Vector2(-2, 5)
+const POOL_LIFETIME := 2.6
+const POOL_GROWTH_RATE := 0.5
+const POOL_ALPHA := 0.55
+const POOL_SCALE := Vector2(1.0, 0.5)
 const PROFILES := {
 	Particle.BLOOD: {"count": BLOOD_HIT_COUNT, "vx": Vector2(-60, 60), "vy": Vector2(-90, 20), "life": Vector2(0.25, 0.55), "radius": Vector2(1.4, 2.8), "jitter_x": Vector2.ZERO, "jitter_y": Vector2.ZERO},
 	Particle.SPARK: {"count": 6, "vx": Vector2(-90, 90), "vy": Vector2(-90, 60), "life": Vector2(0.12, 0.28), "radius": Vector2(1.5, 1.5), "jitter_x": Vector2.ZERO, "jitter_y": Vector2.ZERO},
@@ -49,18 +67,21 @@ const PROFILES := {
 var _rng := RandomNumberGenerator.new()
 var _particles: Array[Dictionary] = []
 var _ground_marks: Array[Dictionary] = []
+var _pools: Array[Dictionary] = []
 var _next_mark := 0
 var blood_enabled := true:
 	set(value):
 		blood_enabled = value
 		if not value:
 			_particles = _particles.filter(func(particle): return particle.kind != Particle.BLOOD)
+			_pools.clear()
 			_remove_blood_marks()
 
 func _init() -> void:
 	_rng.randomize()
 
 func advance(dt: float, events: Array[Dictionary]) -> void:
+	_advance_pools(dt)
 	for i in range(_particles.size() - 1, -1, -1):
 		var particle := _particles[i]
 		particle.remaining -= dt
@@ -80,10 +101,10 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				else:
 					_emit(Particle.BLOOD, event.position + BLOOD_OFFSET, BLOOD_COLORS[event.impact_style])
 					if event.get("damage_fraction", 0.0) >= HEAVY_HIT_THRESHOLD and not event.get("lethal", false):
-						_spray(event, BLOOD_COLORS[event.impact_style])
+						var count := SPRAY_BASE_COUNT + mini(SPRAY_MAX_EXTRA, floori(event.amount / SPRAY_DAMAGE_PER_EXTRA))
+						_spray(event, BLOOD_COLORS[event.impact_style], count, SPRAY_OFFSET, SPRAY_SPEED, SPRAY_LIFT)
 			Event.Kind.DOWN:
-				if blood_enabled and BLOOD_COLORS.has(event.impact_style):
-					_emit(Particle.BLOOD, event.position + DEATH_OFFSET, BLOOD_COLORS[event.impact_style], BLOOD_DOWN_COUNT)
+				_on_down(event)
 			Event.Kind.BLOCK:
 				_emit(Particle.SPARK, event.position + event.contact_offset + DEATH_OFFSET, SPARK_COLOR)
 			Event.Kind.CHARGE:
@@ -92,7 +113,7 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				_remember({"position": event.position, "trajectory": event.trajectory, "throwing": event.throwing})
 
 func has_particles() -> bool:
-	return not _particles.is_empty()
+	return not _particles.is_empty() or not _pools.is_empty()
 
 func draw_ground(canvas: CanvasItem) -> void:
 	# The ring's oldest element is the next slot to overwrite.
@@ -106,8 +127,13 @@ func draw_ground(canvas: CanvasItem) -> void:
 			canvas.draw_line(point - direction * FLETCHING_FAR, point - direction * FLETCHING_NEAR, FLETCHING_COLOR, FLETCHING_WIDTH, true)
 		else:
 			var color: Color = mark.color
-			color.a = SPLAT_ALPHA
-			_draw_splat(canvas, point + SPLAT_OFFSET, mark.radius, color)
+			var pool: bool = mark.get("pool", false)
+			color.a = POOL_ALPHA if pool else SPLAT_ALPHA
+			_draw_ellipse(canvas, point if pool else point + SPLAT_OFFSET, mark.radius, POOL_SCALE if pool else SPLAT_SCALE, color)
+	for pool in _pools:
+		var color: Color = pool.color
+		color.a = POOL_ALPHA
+		_draw_ellipse(canvas, pool.position, pool.radius, POOL_SCALE, color)
 
 func draw_particles(canvas: CanvasItem) -> void:
 	for particle in _particles:
@@ -115,21 +141,54 @@ func draw_particles(canvas: CanvasItem) -> void:
 		color.a = clampf(particle.remaining / particle.lifetime, 0.0, 1.0)
 		canvas.draw_circle(particle.position, particle.radius, color)
 
-static func _draw_splat(canvas: CanvasItem, center: Vector2, radius: float, color: Color) -> void:
+static func _draw_ellipse(canvas: CanvasItem, center: Vector2, radius: float, scale: Vector2, color: Color) -> void:
 	var points := PackedVector2Array()
 	for i in SPLAT_SEGMENTS:
-		points.append(center + Vector2.from_angle(TAU * i / SPLAT_SEGMENTS) * SPLAT_SCALE * radius)
+		points.append(center + Vector2.from_angle(TAU * i / SPLAT_SEGMENTS) * scale * radius)
 	canvas.draw_colored_polygon(points, color)
 
-func _spray(event: Dictionary, color: Color) -> void:
-	var direction: Vector2 = event.impact_direction
+func _on_down(event: Dictionary) -> void:
+	if not blood_enabled:
+		return
+	var ordinary: bool = not event.get("target_hero", false) and not event.get("target_companion", false)
+	if not BLOOD_COLORS.has(event.impact_style):
+		if ordinary:
+			_emit(Particle.DUST, event.position + BONE_DUST_OFFSET, BONE_DUST_COLOR)
+		return
+	var color: Color = BLOOD_COLORS[event.impact_style]
+	_emit(Particle.BLOOD, event.position + DEATH_OFFSET, color, BLOOD_DOWN_COUNT)
+	if not ordinary:
+		return
+	var attack: int = event.get("attack", Event.Attack.NONE)
+	var speed := CHARGE_SPRAY_SPEED if attack == Event.Attack.CHARGE else DEATH_SPRAY_SPEED
+	var count := ARROW_DEATH_SPRAY_COUNT if attack == Event.Attack.PROJECTILE else DEATH_SPRAY_COUNT
+	_spray(event, color, count, DEATH_SPRAY_OFFSET, Vector2(speed * SPRAY_MIN_SPEED_SHARE, speed), DEATH_SPRAY_LIFT)
+	var position: Vector2 = event.position + Vector2(_sample(POOL_X_JITTER), _sample(POOL_Y_JITTER))
+	var limit := _sample(POOL_MAX_RADIUS)
+	if _pools.size() == POOL_LIMIT:
+		_bake_pool(_pools.pop_front())
+	_pools.append({"position": position, "radius": POOL_INITIAL_RADIUS, "limit": limit, "age": 0.0, "color": color})
+
+func _advance_pools(dt: float) -> void:
+	for i in range(_pools.size() - 1, -1, -1):
+		var pool := _pools[i]
+		pool.age += dt
+		pool.radius = minf(pool.limit, POOL_INITIAL_RADIUS + pool.age * pool.limit * POOL_GROWTH_RATE)
+		if pool.age >= POOL_LIFETIME:
+			_bake_pool(pool)
+			_pools.remove_at(i)
+
+func _bake_pool(pool: Dictionary) -> void:
+	_remember({"position": pool.position, "radius": pool.radius, "color": pool.color, "pool": true})
+
+func _spray(event: Dictionary, color: Color, count: int, offset: Vector2, speed: Vector2, lift: Vector2) -> void:
+	var direction: Vector2 = event.get("impact_direction", Vector2.ZERO)
 	var angle := direction.angle() if direction != Vector2.ZERO else _rng.randf_range(0.0, TAU)
-	var count := SPRAY_BASE_COUNT + mini(SPRAY_MAX_EXTRA, floori(event.amount / SPRAY_DAMAGE_PER_EXTRA))
 	for i in mini(count, MAX_PARTICLES - _particles.size()):
-		var velocity := Vector2.from_angle(angle + _rng.randf_range(-SPRAY_SPREAD, SPRAY_SPREAD)) * _sample(SPRAY_SPEED)
-		velocity.y = velocity.y * SPRAY_VERTICAL_SCALE - _sample(SPRAY_LIFT)
+		var velocity := Vector2.from_angle(angle + _rng.randf_range(-SPRAY_SPREAD, SPRAY_SPREAD)) * _sample(speed)
+		velocity.y = velocity.y * SPRAY_VERTICAL_SCALE - _sample(lift)
 		var lifetime := _sample(SPRAY_LIFE)
-		_particles.append({"kind": Particle.BLOOD, "position": event.position + SPRAY_OFFSET,
+		_particles.append({"kind": Particle.BLOOD, "position": event.position + offset,
 			"velocity": velocity, "color": color, "remaining": lifetime, "lifetime": lifetime, "radius": _sample(SPRAY_RADIUS)})
 
 func _remove_blood_marks() -> void:

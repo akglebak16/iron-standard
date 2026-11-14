@@ -21,12 +21,15 @@ func _initialize() -> void:
 	assert(events == [{"kind": Event.Kind.PROJECTILE_MISSED, "position": Vector2(100, 100), "trajectory": Vector2(100, 90), "throwing": true}])
 	events.append_array([hit, dust, dark, block, charge])
 	effects.advance(0.0, events)
-	assert(effects._particles.size() == 34 and effects._ground_marks.size() == 1)
+	assert(effects._particles.size() == 46 and effects._ground_marks.size() == 1)
 	assert(effects._particles[4].kind == Effects.Particle.DUST)
 	assert(effects._particles[10].color == Color("#3b4a22"))
-	assert(effects._particles[22].position == Vector2(49, 16))
+	assert(effects._particles[34].position == Vector2(49, 16))
 	effects.advance(1.0, [])
-	assert(not effects.has_particles() and effects._ground_marks.size() == 17)
+	assert(effects._particles.is_empty() and effects._ground_marks.size() == 29)
+	assert(effects.has_particles() and effects._pools[0].radius > Effects.POOL_INITIAL_RADIUS)
+	effects.advance(Effects.POOL_LIFETIME, [])
+	assert(not effects.has_particles() and effects._ground_marks[-1].pool)
 	var burst: Array[Dictionary] = []
 	for i in 1000:
 		burst.append(hit)
@@ -37,6 +40,7 @@ func _initialize() -> void:
 		effects.advance(0.0, burst)
 	assert(effects._ground_marks.size() == Effects.MAX_GROUND_MARKS)
 	_check_blood_setting()
+	_check_death_effects()
 	print("Impact effects tests passed")
 	quit(0)
 
@@ -54,3 +58,21 @@ func _check_blood_setting() -> void:
 	assert(effects._ground_marks.size() == 1 and effects._ground_marks[0].has("trajectory"))
 	effects.advance(0.0, [heavy])
 	assert(effects._particles.size() == 6 and effects._particles[0].kind == Effects.Particle.DUST)
+
+func _check_death_effects() -> void:
+	var effects := Effects.new()
+	var down := {"kind": Event.Kind.DOWN, "position": Vector2.ZERO, "impact_style": Event.ImpactStyle.BLOOD,
+		"attack": Event.Attack.PROJECTILE, "impact_direction": Vector2.RIGHT, "target_hero": false, "target_companion": false}
+	effects.advance(0.0, [down])
+	assert(effects._particles.size() == 18 and effects._pools.size() == 1)
+	down.target_companion = true
+	effects.advance(0.0, [down])
+	assert(effects._particles.size() == 30 and effects._pools.size() == 1)
+	down.target_companion = false
+	down.impact_style = Event.ImpactStyle.DUST
+	effects.advance(0.0, [down])
+	assert(effects._particles.size() == 36 and effects._particles[-1].kind == Effects.Particle.DUST)
+	effects.blood_enabled = false
+	assert(effects._pools.is_empty() and effects._particles.size() == 6)
+	effects.advance(0.0, [down])
+	assert(effects._particles.size() == 6)

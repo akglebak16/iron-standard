@@ -134,15 +134,15 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 			target.hp = maxf(1.0, target.max_hp * recovery)
 			record_event(Event.Kind.LAST_STAND, target, source, attack)
 	if target.hp <= 0.0:
-		kill(target, source, rng)
+		kill(target, source, rng, attack)
 	return amount
 
-func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null) -> void:
+func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE) -> void:
 	if target.dead:
 		return
 	target.dead = true
 	target.hp = 0.0
-	record_event(Event.Kind.DOWN, target, source)
+	record_event(Event.Kind.DOWN, target, source, attack)
 	if source != null:
 		source.kills += 1
 		source.morale = minf(source.base_morale, source.morale + Config.KILL_MORALE_BONUS)
