@@ -5,6 +5,7 @@ const HeroInput = preload("res://battle/application/hero_input.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Catalog = preload("res://battle/data/catalog.gd")
+const GearCatalog = preload("res://battle/data/gear_catalog.gd")
 const Config = preload("res://battle/config.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
 const TICK_SECONDS := 1.0 / 60.0
@@ -13,6 +14,7 @@ const REPLAY_TICKS := 120
 func _initialize() -> void:
 	_check_commands_and_lifetime()
 	_check_factory_and_repeatability()
+	_check_weapon_swap()
 	print("Session tests passed")
 	quit(0)
 
@@ -107,3 +109,42 @@ func _check_factory_and_repeatability() -> void:
 	invalid.enemy_army = [{"type": "missing", "n": 1}]
 	assert(Factory.create(invalid, catalog) == null)
 	assert(Factory.create(null, catalog) == null)
+
+func _check_weapon_swap() -> void:
+	var troops := Catalog.new()
+	var gear_catalog := GearCatalog.new()
+	assert(troops.load_data() and gear_catalog.load_data())
+	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.hero_profile = {"str": 3, "vit": 3, "hp": 0.5, "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank"}, "sel": "melee"}
+	var session := Factory.create(setup, troops, gear_catalog)
+	assert(session != null)
+	var hero: Unit = session._hero
+	var health: float = hero.hp
+	var maximum: float = hero.max_hp
+	assert(hero.weapon_kind == "sword" and hero.attack_range == 0.0)
+	var input := HeroInput.new()
+	input.swap = true
+	assert(session.set_hero_input(input))
+	setup.hero_profile.eq.ranged = "missing" # Running session owns a detached profile.
+	session.advance(TICK_SECONDS)
+	assert(hero.weapon_kind == "throw" and hero.attack_range == 480.0)
+	assert(hero.hp == health and hero.max_hp == maximum)
+	assert(hero.attack_cooldown > 0.0)
+	session.advance(TICK_SECONDS)
+	assert(hero.weapon_kind == "throw") # Holding X does not switch again.
+	input.swap = false
+	session.set_hero_input(input)
+	session.advance(TICK_SECONDS)
+	input.swap = true
+	session.set_hero_input(input)
+	session.advance(TICK_SECONDS)
+	assert(hero.weapon_kind == "sword" and hero.attack_range == 0.0)
+	assert(hero.hp == health)
+	var melee_only: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	melee_only.hero_profile = {"eq": {"melee": "sword_old"}}
+	var no_ranged := Factory.create(melee_only, troops, gear_catalog)
+	var no_ranged_input := HeroInput.new()
+	no_ranged_input.swap = true
+	no_ranged.set_hero_input(no_ranged_input)
+	no_ranged.advance(TICK_SECONDS)
+	assert(no_ranged._hero.weapon_kind == "sword")

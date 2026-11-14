@@ -9,6 +9,9 @@ const Unit = preload("res://battle/model/unit.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 const HeroControl = preload("res://battle/rules/hero_control.gd")
 const Config = preload("res://battle/config.gd")
+const GearCatalog = preload("res://battle/data/gear_catalog.gd")
+const HeroGear = preload("res://battle/data/hero_gear.gd")
+const HeroStats = preload("res://battle/data/hero_stats.gd")
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
 
 var _state: State
@@ -19,13 +22,18 @@ var _orders: Array[Dictionary] = []
 var _outcome: Outcome = Outcome.RUNNING
 var _tick: int = 0
 var _elapsed_seconds: float = 0.0
+var _gear_catalog: GearCatalog
+var _hero_profile: Dictionary = {}
+var _swap_held: bool = false
 
-func _init(state: State, hero: Unit, rng: RandomNumberGenerator) -> void:
+func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}) -> void:
 	assert(state != null and hero != null and rng != null)
 	assert(hero.hero and hero in state.units)
 	_state = state
 	_hero = hero
 	_rng = rng
+	_gear_catalog = gear_catalog
+	_hero_profile = hero_profile.duplicate(true)
 
 func set_hero_input(input: HeroInput) -> bool:
 	if _outcome != Outcome.RUNNING or input == null or not input.move.is_finite() or not is_finite(input.face):
@@ -51,6 +59,7 @@ func advance(dt: float) -> void:
 	Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
+	_handle_swap()
 	HeroControl.step(_state, _hero, _input, dt, _rng)
 	var spatial_index = Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
 	CombatStep.step(_state, dt, _rng, spatial_index)
@@ -63,6 +72,18 @@ func advance(dt: float) -> void:
 		_outcome = Outcome.VICTORY
 	elif not _side_alive(0):
 		_outcome = Outcome.DEFEAT
+
+func _handle_swap() -> void:
+	var pressed: bool = bool(_input.get("swap", false))
+	if pressed and not _swap_held and _gear_catalog != null and not _hero_profile.is_empty() and _hero.attack_windup <= 0.0:
+		var selection := "melee" if _hero_profile.get("sel", "melee") == "ranged" else "ranged"
+		var candidate: Dictionary = _hero_profile.duplicate(true)
+		candidate.sel = selection
+		var gear: Dictionary = HeroGear.resolve(candidate, _gear_catalog)
+		if not gear.is_empty() and (selection == "melee" or gear.weapon.get("slot") == "ranged") and HeroStats.apply(_hero, candidate, gear, false):
+			_hero_profile = candidate
+			_hero.attack_cooldown = maxf(_hero.attack_cooldown, Config.HERO_SWAP_COOLDOWN_FLOOR)
+	_swap_held = pressed
 
 func _side_alive(side: int) -> bool:
 	for unit: Unit in _state.units:

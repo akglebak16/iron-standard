@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | `src/01_core.js` — записи `TROOPS` и 67 типов войск | Готово | `battle/data/troops.json`, `battle/tools/export_troops.cjs --check`, `battle/tests/data/test_catalog_spawn.gd` | Сохранять автоматическую сверку при правке данных |
 | `src/01_core.js` — фракции, мир, игрок, стартовые данные и остальные каталоги | Не начато | — | Перенести определения и связи с кампанией без изменения ID |
-| `src/01b_gear.js` — `EQ`, слоты, оружие, броня, щиты и типы урона | Частично | `battle/data/items.json`, `battle/data/gear_catalog.gd`, `hero_gear.gd`, `battle/tools/export_gear.cjs --check`, `battle/tests/data/test_gear_catalog.gd`, `test_hero_gear.gd`, `battle/rules/damage_type.gd`, `battle/tests/rules/test_damage_type.gd` | Все 55 предметов, типы урона, слоты, старые индексы, выбор оружия, броня и щит героя перенесены; нужны перки, смена оружия в ходе боя, спутники и сохранения; дальняя атака экипированного героя ещё не подключена |
+| `src/01b_gear.js` — `EQ`, слоты, оружие, броня, щиты и типы урона | Частично | `battle/data/items.json`, `battle/data/gear_catalog.gd`, `hero_gear.gd`, `hero_stats.gd`, `battle/tools/export_gear.cjs --check`, `battle/tests/data/test_gear_catalog.gd`, `test_hero_gear.gd`, `battle/rules/damage_type.gd`, `battle/tests/rules/test_damage_type.gd` | Все 55 предметов, типы урона, слоты, старые индексы, выбор оружия, броня и щит героя перенесены; смена оружия в бою работает для профиля, но нужны перки, спутники, сохранения и обратная связь UI/звука |
 | `src/01c_perks.js` — атрибуты, уровни, перки и эффекты | Не начато | — | Данные, расчёт рангов/эффектов, применение в бою и кампании, миграция старого героя |
 
 ## Бой — `src/03_battle.js`
@@ -28,7 +28,7 @@
 | `shoot` и обработка `B.arrows` в `battleUpdate` | Частично | `battle/rules/combat.gd`, `combat_step.gd`, `damage_type.gd`, `battle/tests/rules/test_combat.gd`, `test_projectile.gd`, `test_damage_type.gd` | Треугольный разброс, упреждение, высота пуска, попадание и формула типов урона перенесены; нужны данные экипировки, укрытие, рисование полёта и полный стрелковый ИИ |
 | `hurt`, `kill` — ранения, смерть, мораль | Частично | `battle/model/state.gd`, `battle/rules/morale.gd`, `test_battle_state.gd`, `test_morale.gd` | «Последний рубеж», лечение за убийство, смерть лидера нежити, потери людей, награды, события/звук |
 | `heroControl`, `heroStrike` — управление героем | Частично | `battle/rules/hero_control.gd`, `battle/application/factory.gd`, `battle/tests/rules/test_hero_control.gd`, `battle/tests/data/test_hero_gear.gd` | Базовые атрибуты и экипировка рассчитываются, но герой текущего превью всё ещё использует `hero_troop`; нужны перки, точный тайминг/направление атаки, верховая езда и ранение |
-| `heroShoot`, `swapWield` — стрельба и смена оружия героя | Частично | `battle/rules/hero_control.gd`, `combat.gd`, `battle/tests/rules/test_hero_control.gd` | Выбор цели в конусе и выстрел без цели перенесены для героя с экипированным дальним оружием; нужны переключение оружия во время боя, ввод и точное совпадение таймера замаха |
+| `heroShoot`, `swapWield` — стрельба и смена оружия героя | Частично | `battle/rules/hero_control.gd`, `combat.gd`, `battle/application/session.gd`, `battle/presentation/view.gd`, `battle/tests/rules/test_hero_control.gd`, `battle/tests/application/test_session.gd` | Выстрел и смена оружия по X перенесены; нужны точный таймер замаха, текст/звук смены, HUD оружия и запуск демонстрационной встречи с профилем героя |
 | `battleUpdate`, `finishBattle` — цикл, результат | Частично | `battle/application/session.gd`, `test_session.gd` | Ожидание после разгрома, полноценные итоги, опыт, трофеи, возврат в кампанию |
 | `siegeSetup`, `wallVia`, `siegeBrain`, `wallCover` | Не начато | — | Стены, проломы, путь, укрытие, ИИ защитников и штурм |
 | `battleCamera`, `drawUnitSprite`, `battleDraw`, `drawFoeArrow`, `drawMinimap` | Частично | `battle/presentation/view.gd`, `test_scene.gd` | Исходные спрайты, слои, камера, миникарта, стрелки вне экрана, HUD |
@@ -61,7 +61,7 @@
 | `src/07_main.js` — главный цикл, режимы, ввод, сохранение/загрузка | Не начато | — | Godot-сцены режимов, версионированные сохранения и миграция старых данных |
 | `src/shell.html`, `src/style.css` — оболочка и оформление | Не начато | — | Воспроизвести функции и внешний вид нативными сценами/темой; HTML/CSS буквально не переносим |
 
-Следующий боевой срез — `swapWield`: смена экипированного оружия во время боя. Перед выпуском первой ограниченной Godot-версии должны работать хотя бы сценарий боя, базовые итоги и управление уже перенесёнными механиками; неперенесённые части явно помечаем в меню и документации. Полная версия требует закрыть все строки, включая кампанию, графику, звук, UI и сохранения.
+Следующий боевой срез — точный порядок `heroControl`/`heroStrike`, включая замах, дугу удара и несколько целей. Перед выпуском первой ограниченной Godot-версии должны работать хотя бы сценарий боя, базовые итоги и управление уже перенесёнными механиками; неперенесённые части явно помечаем в меню и документации. Полная версия требует закрыть все строки, включая кампанию, графику, звук, UI и сохранения.
 
 
 ## Оценка оставшихся итераций одиночного боя

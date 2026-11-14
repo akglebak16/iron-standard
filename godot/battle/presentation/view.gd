@@ -36,6 +36,7 @@ func _physics_process(dt: float) -> void:
 	input.sprint = Input.is_key_pressed(KEY_SHIFT)
 	input.block = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 	input.attack = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	input.swap = Input.is_key_pressed(KEY_X)
 	_session.set_hero_input(input)
 	_session.advance(dt)
 	_refresh()
