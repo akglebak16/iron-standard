@@ -107,6 +107,8 @@ static func _resolve_unit_collisions(battle: State, index: SpatialIndex) -> void
 		if not a.fleeing:
 			a.position.x = clampf(a.position.x, Config.FIELD_LEFT_RIGHT_MARGIN, battle.arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
 		a.position.y = clampf(a.position.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
+		if battle.wall != null:
+			battle.wall.constrain(a)
 		if index != null:
 			index.update(i)
 

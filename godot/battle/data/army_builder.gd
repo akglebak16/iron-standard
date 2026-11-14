@@ -4,7 +4,7 @@ const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 
-static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator, cap: int = Config.SOLO_UNIT_CAP, leader_name: String = "") -> bool:
+static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator, cap: int = Config.SOLO_UNIT_CAP, leader_name: String = "", starting_morale_bonus: float = 0.0) -> bool:
 	if side < 0 or side > 1 or battle.groups.size() != 2 or cap <= 0:
 		return false
 	var total := 0
@@ -52,6 +52,9 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.weapon_kind = str(look.get("weapon", ""))
 			unit.collision_radius = Config.HORSE_COLLISION_RADIUS if unit.mounted else Config.FOOT_COLLISION_RADIUS
 			unit.mass = Config.HORSE_MASS if unit.mounted else Config.FOOT_MASS
+			unit.base_morale += starting_morale_bonus
+			if battle.wall != null and side == 1:
+				unit.facing = battle.groups[side][kind].direction
 			_apply_traits(unit, traits)
 			battle.add_grouped_unit(unit, kind)
 			if not leader_name.is_empty() and (leader == null or unit.tier > leader.tier):

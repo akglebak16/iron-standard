@@ -62,7 +62,8 @@ func advance(dt: float) -> void:
 		_state.give_order(command.order, command.point, command.selection)
 	_orders.clear()
 	_elapsed_seconds += dt
-	Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
+	if _state.wall == null:
+		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
 	_handle_swap()
@@ -125,4 +126,7 @@ func snapshot() -> Dictionary:
 	var shots: Array[Vector2] = []
 	for shot in _state.projectiles:
 		shots.append(shot.impact)
-	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots}
+	var walls: Array[Rect2] = []
+	if _state.wall != null:
+		walls = _state.wall.segments()
+	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls}

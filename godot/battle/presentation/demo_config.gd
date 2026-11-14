@@ -3,6 +3,7 @@ extends RefCounted
 
 const CAMERA_ZOOM := 0.75
 const GROUND_COLOR := Color("#78845d")
+const WALL_COLOR := Color("#77736a")
 const PLAYER_COLOR := Color("#285a83")
 const ENEMY_COLOR := Color("#9b3f38")
 const DEAD_COLOR := Color("#42362d")

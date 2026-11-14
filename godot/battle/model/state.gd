@@ -4,6 +4,10 @@ const Damage = preload("res://battle/rules/damage.gd")
 const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
+const SiegeWall = preload("res://battle/model/siege_wall.gd")
+
+var wall: SiegeWall
+var siege_skill := 0.0
 
 var units: Array[Unit] = []
 var arena_size := Config.ARENA_SIZE

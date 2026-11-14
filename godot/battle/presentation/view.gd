@@ -78,6 +78,8 @@ func _draw() -> void:
 	if _frame.is_empty():
 		return
 	draw_rect(Rect2(Vector2.ZERO, _frame.arena_size), Demo.GROUND_COLOR)
+	for segment: Rect2 in _frame.walls:
+		draw_rect(segment, Demo.WALL_COLOR)
 	for unit in _frame.units:
 		if unit.gone:
 			continue

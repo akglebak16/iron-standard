@@ -5,6 +5,7 @@ const Config = preload("res://battle/config.gd")
 const FACTION_UNIT_CAPS := {"undead": 600}
 const DEFAULT_UNIT_CAP_OVERRIDE := 0
 @export var seed: int = 0
+@export var siege: bool = false
 @export var player_faction: String = ""
 @export var enemy_faction: String = ""
 @export var player_unit_cap: int = DEFAULT_UNIT_CAP_OVERRIDE

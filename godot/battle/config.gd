@@ -3,6 +3,17 @@ extends RefCounted
 ## Balance values copied from the browser battle. Change them here, then run Godot tests.
 const TroopConfig = preload("res://troops/config.gd")
 const ARENA_SIZE := Vector2(2600, 1700)
+const SIEGE_WALL_RIGHT_OFFSET := 980.0
+const SIEGE_WALL_HALF_WIDTH := 22.0
+const SIEGE_GAP_OFFSETS := [Vector2(-80, 80), Vector2(-520, -425), Vector2(425, 520)] # Order breaks equal-distance ties.
+const SIEGE_WALL_RADIUS_PADDING := 0.8
+const SIEGE_GAP_RADIUS_PADDING := 0.75
+const SIEGE_INFANTRY_OFFSET := 80.0
+const SIEGE_ARCHER_OFFSET := 52.0
+const SIEGE_CAVALRY_RIGHT_OFFSET := 380.0
+const SIEGE_DEFENDER_MORALE := 28.0
+const SIEGE_SKILL_MAX := 0.9
+const AI_TACTIC_SIEGE := "siege"
 const SPATIAL_CELL_SIZE := 128.0 # Broad-phase cell; changing it must not change battle results.
 const SPATIAL_MIN_UNITS := 64 # Small battles avoid index construction overhead.
 const FRONT_X := 640.0

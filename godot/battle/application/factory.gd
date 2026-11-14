@@ -15,6 +15,7 @@ const CharacterConfig = preload("res://characters/config.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 const CompanionBuilder = preload("res://battle/data/companion_builder.gd")
+const SiegeSetup = preload("res://battle/data/siege_setup.gd")
 
 static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite():
@@ -30,23 +31,31 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	var enemy_cap := setup.unit_cap(setup.enemy_faction, setup.enemy_unit_cap)
 	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, player_cap):
 		return null
-	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name):
-		return null
 	var companion_survival := 0.0
+	var siege_skill := 0.0
 	var companion_ids := {}
+	var fit_companions: Array[Dictionary] = []
 	for saved in setup.companion_profiles:
 		var resolved := CompanionProfile.resolve(saved, companion_catalog)
 		if resolved.is_empty() or companion_ids.has(resolved.profile.id):
 			return null
 		companion_ids[resolved.profile.id] = true
 		companion_survival += float(resolved.party_effects.get(CharacterConfig.SURVIVAL_EFFECT, 0.0))
+		siege_skill += float(resolved.party_effects.get(CharacterConfig.SIEGE_EFFECT, 0.0))
 		if not resolved.fit:
 			continue
-		var gear := HeroGear.resolve(resolved.profile, gear_catalog)
+		fit_companions.append(resolved.profile)
+	if setup.siege:
+		SiegeSetup.apply(state, siege_skill)
+	var defender_morale := roundf(Config.SIEGE_DEFENDER_MORALE * (1.0 - state.siege_skill)) if setup.siege else 0.0
+	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale):
+		return null
+	for profile in fit_companions:
+		var gear := HeroGear.resolve(profile, gear_catalog)
 		if gear.is_empty() or perk_catalog == null:
 			return null
-		var effects := PerkEffects.own(resolved.profile, perk_catalog)
-		if effects.is_empty() or not CompanionBuilder.spawn(state, resolved.profile, gear, effects, rng):
+		var effects := PerkEffects.own(profile, perk_catalog)
+		if effects.is_empty() or not CompanionBuilder.spawn(state, profile, gear, effects, rng):
 			return null
 	state.place_units()
 	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
