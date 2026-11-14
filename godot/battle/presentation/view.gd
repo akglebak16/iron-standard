@@ -28,16 +28,17 @@ func _ready() -> void:
 	_refresh()
 
 func _physics_process(dt: float) -> void:
-	if _frame.outcome != Session.Outcome.RUNNING:
+	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		return
-	var input := HeroInput.new()
-	input.move = Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
-	input.face = (get_global_mouse_position() - Vector2(_frame.hero_position)).angle()
-	input.sprint = Input.is_key_pressed(KEY_SHIFT)
-	input.block = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
-	input.attack = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-	input.swap = Input.is_key_pressed(KEY_X)
-	_session.set_hero_input(input)
+	if _frame.outcome == Session.Outcome.RUNNING:
+		var input := HeroInput.new()
+		input.move = Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
+		input.face = (get_global_mouse_position() - Vector2(_frame.hero_position)).angle()
+		input.sprint = Input.is_key_pressed(KEY_SHIFT)
+		input.block = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+		input.attack = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		input.swap = Input.is_key_pressed(KEY_X)
+		_session.set_hero_input(input)
 	_session.advance(dt)
 	_refresh()
 
@@ -57,7 +58,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _refresh() -> void:
 	# One detached read per physics tick, reused by HUD and drawing.
 	_frame = _session.snapshot()
-	camera.position = _frame.hero_position
+	camera.position = _frame.camera_target
 	var label: String = Demo.IN_PROGRESS
 	match _frame.outcome:
 		Session.Outcome.HERO_DOWN: label = Demo.HERO_DOWN

@@ -117,6 +117,14 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null) 
 			unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
 		else:
 			unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
+	if target.hero and target.side == 0 and not target.companion:
+		if not groups.is_empty():
+			for group: Group in groups[0]:
+				group.order = Config.ORDER_CHARGE
+		for unit: Unit in units:
+			if unit.side == target.side:
+				unit.morale -= Config.HERO_DOWN_MORALE_LOSS
+		return
 	if target.hero or target.companion or not target.leader:
 		return
 	if target.faction == Config.UNDEAD_FACTION:

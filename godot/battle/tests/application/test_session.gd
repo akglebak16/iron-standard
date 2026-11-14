@@ -13,6 +13,7 @@ const REPLAY_TICKS := 120
 
 func _initialize() -> void:
 	_check_commands_and_lifetime()
+	_check_hero_down_continues_battle()
 	_check_factory_and_repeatability()
 	_check_weapon_swap()
 	print("Session tests passed")
@@ -56,13 +57,19 @@ func _check_commands_and_lifetime() -> void:
 	assert(not session.set_hero_input(null))
 	state.kill(enemy)
 	session.advance(TICK_SECONDS)
+	assert(session.snapshot().outcome == Session.Outcome.RUNNING)
+	session.advance(Config.MORALE_TICK_SECONDS)
+	assert(session.snapshot().outcome == Session.Outcome.RUNNING)
+	session.advance(Config.BATTLE_END_DELAY_SECONDS - TICK_SECONDS)
+	assert(session.snapshot().outcome == Session.Outcome.RUNNING)
+	session.advance(TICK_SECONDS * 2.0)
 	assert(session.snapshot().outcome == Session.Outcome.VICTORY)
 	var finished := session.snapshot()
 	session.advance(TICK_SECONDS)
 	assert(session.snapshot() == finished)
 	assert(not session.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS))
 	assert(not session.set_hero_input(HeroInput.new()))
-	# Hero death takes precedence over simultaneous enemy defeat, as in the preview.
+	# Without any surviving side, the browser resolves a defeat after the battle-end delay.
 	var fallen_state := State.new()
 	fallen_state.setup_groups()
 	var fallen_hero := Unit.new(0, 0, Vector2(100, 100), 100, 0, 1)
@@ -72,6 +79,36 @@ func _check_commands_and_lifetime() -> void:
 	var fallen_session := Session.new(fallen_state, fallen_hero, RandomNumberGenerator.new())
 	fallen_session.advance(TICK_SECONDS)
 	assert(fallen_session.snapshot().outcome == Session.Outcome.HERO_DOWN)
+	fallen_session.advance(Config.BATTLE_END_DELAY_SECONDS + TICK_SECONDS)
+	assert(fallen_session.snapshot().outcome == Session.Outcome.DEFEAT)
+	assert(fallen_session.snapshot().hero_down)
+
+func _check_hero_down_continues_battle() -> void:
+	var state := State.new()
+	state.setup_groups()
+	var hero := Unit.new(0, 0, Vector2(100, 100), 100, 0, 1)
+	hero.hero = true
+	var ally := Unit.new(1, 0, Vector2(400, 100), 100, 0, 1)
+	var enemy := Unit.new(2, 1, Vector2(2000, 100), 100, 0, 1)
+	state.add_unit(hero)
+	state.add_grouped_unit(ally, Config.GROUP_INFANTRY)
+	state.add_grouped_unit(enemy, Config.GROUP_INFANTRY)
+	state.groups[0][Config.GROUP_INFANTRY].order = Config.ORDER_FOLLOW
+	state.kill(hero, enemy)
+	assert(state.groups[0][Config.GROUP_INFANTRY].order == Config.ORDER_CHARGE)
+	assert(ally.morale == ally.base_morale - Config.HERO_DOWN_MORALE_LOSS)
+	var session := Session.new(state, hero, RandomNumberGenerator.new())
+	assert(not session.set_hero_input(HeroInput.new()))
+	session.advance(TICK_SECONDS)
+	assert(session.snapshot().outcome == Session.Outcome.HERO_DOWN)
+	assert(session.snapshot().tick == 1)
+	assert(session.snapshot().camera_target != hero.position)
+	state.kill(enemy, ally)
+	session.advance(Config.MORALE_TICK_SECONDS)
+	assert(session.snapshot().outcome == Session.Outcome.HERO_DOWN)
+	session.advance(Config.BATTLE_END_DELAY_SECONDS + TICK_SECONDS)
+	assert(session.snapshot().outcome == Session.Outcome.VICTORY)
+	assert(session.snapshot().hero_down)
 
 func _check_factory_and_repeatability() -> void:
 	var catalog := Catalog.new()

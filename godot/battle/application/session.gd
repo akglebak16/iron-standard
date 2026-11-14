@@ -20,6 +20,8 @@ var _rng: RandomNumberGenerator
 var _input: Dictionary = {}
 var _orders: Array[Dictionary] = []
 var _outcome: Outcome = Outcome.RUNNING
+var _battle_over_at: float = -1.0
+var _battle_won: bool = false
 var _tick: int = 0
 var _elapsed_seconds: float = 0.0
 var _gear_catalog: GearCatalog
@@ -36,13 +38,13 @@ func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: G
 	_hero_profile = hero_profile.duplicate(true)
 
 func set_hero_input(input: HeroInput) -> bool:
-	if _outcome != Outcome.RUNNING or input == null or not input.move.is_finite() or not is_finite(input.face):
+	if _outcome != Outcome.RUNNING or _hero.dead or input == null or not input.move.is_finite() or not is_finite(input.face):
 		return false
 	_input = input.to_dictionary()
 	return true
 
 func issue_order(order: String, point: Vector2, selection: int) -> bool:
-	if _outcome != Outcome.RUNNING or not point.is_finite() or selection < 0 or selection > Config.ALL_GROUPS:
+	if _outcome in [Outcome.VICTORY, Outcome.DEFEAT] or not point.is_finite() or selection < 0 or selection > Config.ALL_GROUPS:
 		return false
 	if order not in [Config.ORDER_HOLD, Config.ORDER_FOLLOW, Config.ORDER_CHARGE, Config.ORDER_RETREAT]:
 		return false
@@ -50,7 +52,7 @@ func issue_order(order: String, point: Vector2, selection: int) -> bool:
 	return true
 
 func advance(dt: float) -> void:
-	if _outcome != Outcome.RUNNING or not is_finite(dt) or dt <= 0.0:
+	if _outcome in [Outcome.VICTORY, Outcome.DEFEAT] or not is_finite(dt) or dt <= 0.0:
 		return
 	for command in _orders:
 		_state.give_order(command.order, command.point, command.selection)
@@ -63,15 +65,15 @@ func advance(dt: float) -> void:
 	HeroControl.step(_state, _hero, _input, dt, _rng)
 	Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
 	CombatStep.resolve_projectiles(_state, dt, _rng)
-	Morale.advance(_state, dt)
+	var morale_checked: bool = Morale.advance(_state, dt)
 	_tick += 1
-	# Preserve preview behavior; full original post-battle rules are tracked in PARITY.md.
 	if _hero.dead:
 		_outcome = Outcome.HERO_DOWN
-	elif not _side_alive(1):
-		_outcome = Outcome.VICTORY
-	elif not _side_alive(0):
-		_outcome = Outcome.DEFEAT
+	if morale_checked and _battle_over_at < 0.0 and (not _side_alive(0) or not _side_alive(1)):
+		_battle_over_at = _elapsed_seconds
+		_battle_won = _side_alive(0) and not _side_alive(1)
+	if _battle_over_at >= 0.0 and _elapsed_seconds - _battle_over_at > Config.BATTLE_END_DELAY_SECONDS:
+		_outcome = Outcome.VICTORY if _battle_won else Outcome.DEFEAT
 
 func _handle_swap() -> void:
 	var pressed: bool = bool(_input.get("swap", false))
@@ -95,11 +97,24 @@ func snapshot() -> Dictionary:
 	# Detached values: presentation cannot mutate simulation through this query.
 	var units: Array[Dictionary] = []
 	var counts := [0, 0]
+	var focus_sum := [Vector2.ZERO, Vector2.ZERO]
+	var focus_count := [0, 0]
 	for unit: Unit in _state.units:
 		if not unit.dead and not unit.gone:
 			counts[unit.side] += 1
+			if not unit.fleeing:
+				focus_sum[unit.side] += unit.position
+				focus_count[unit.side] += 1
 		units.append({"position": unit.position, "radius": unit.collision_radius, "side": unit.side, "hero": unit.hero, "dead": unit.dead, "gone": unit.gone})
+	var camera_target: Vector2 = _hero.position
+	if _hero.dead:
+		if focus_count[0] > 0 and focus_count[1] > 0:
+			camera_target = (focus_sum[0] / focus_count[0] + focus_sum[1] / focus_count[1]) / 2.0
+		elif focus_count[0] > 0:
+			camera_target = focus_sum[0] / focus_count[0]
+		elif focus_count[1] > 0:
+			camera_target = focus_sum[1] / focus_count[1]
 	var shots: Array[Vector2] = []
 	for shot in _state.projectiles:
 		shots.append(shot.impact)
-	return {"tick": _tick, "outcome": _outcome, "arena_size": _state.arena_size, "hero_position": _hero.position, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots}
+	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots}

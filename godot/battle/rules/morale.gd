@@ -27,10 +27,13 @@ static func tick(battle: State) -> void:
 		if unit.morale <= 0.0 or collapse:
 			unit.fleeing = true
 
-static func advance(battle: State, dt: float) -> void:
+static func advance(battle: State, dt: float) -> bool:
 	if dt <= 0.0:
-		return
+		return false
 	battle.morale_timer -= dt
+	var checked := false
 	while battle.morale_timer <= 0.0:
 		tick(battle)
+		checked = true
 		battle.morale_timer += Config.MORALE_TICK_SECONDS
+	return checked
