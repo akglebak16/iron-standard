@@ -1,8 +1,9 @@
-﻿[gd_scene load_steps=4 format=3]
+﻿[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://battle/presentation/view.gd" id="1_view"]
 [ext_resource type="Script" path="res://battle/presentation/hud/navigation_hud.gd" id="2_navigation"]
 [ext_resource type="Script" path="res://battle/presentation/battle_camera.gd" id="3_camera"]
+[ext_resource type="Script" path="res://battle/presentation/hud/battle_controls.gd" id="4_controls"]
 
 [node name="Battle" type="Node2D"]
 script = ExtResource("1_view")
@@ -33,3 +34,14 @@ offset_top = 16.0
 offset_right = 980.0
 offset_bottom = 86.0
 theme_override_font_sizes/font_size = 18
+
+[node name="Controls" type="PanelContainer" parent="Hud"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -12.0
+offset_right = 12.0
+offset_bottom = -12.0
+grow_vertical = 0
+script = ExtResource("4_controls")

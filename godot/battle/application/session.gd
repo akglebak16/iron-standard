@@ -14,6 +14,8 @@ const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
 const BattleResult = preload("res://battle/rules/result.gd")
 const Event = preload("res://battle/combat_event.gd")
+const WEAPON_SLOT_MELEE := HeroGear.MELEE
+const WEAPON_SLOT_RANGED := HeroGear.RANGED
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
 
 var _state: State
@@ -30,6 +32,11 @@ var _elapsed_seconds: float = 0.0
 var _gear_catalog: GearCatalog
 var _hero_profile: Dictionary = {}
 var _swap_held: bool = false
+var _requested_slot := ""
+var _slot_request_ticks := 0
+var _weapon_names: Dictionary = {}
+var _retreat_requested := false
+var _starting_ally_strength := 0.0
 var _companion_survival: float
 var _events: Array[Dictionary] = []
 var _companion_dialogue: Dictionary
@@ -42,6 +49,12 @@ func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: G
 	_rng = rng
 	_gear_catalog = gear_catalog
 	_hero_profile = hero_profile.duplicate(true)
+	if not hero_profile.is_empty() and gear_catalog != null:
+		var gear := HeroGear.resolve(_hero_profile, _gear_catalog)
+		_weapon_names = gear.get("weapon_names", {})
+	for unit in _state.units:
+		if unit.side == 0:
+			_starting_ally_strength += unit.weight
 	_companion_survival = companion_survival
 	_companion_dialogue = companion_dialogue.duplicate(true)
 	_state.record_notice(Event.Kind.BATTLE_STARTED)
@@ -67,6 +80,11 @@ func advance(dt: float) -> void:
 		if _state.give_order(command.order, command.point, command.selection):
 			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection, "point": command.point})
 	_orders.clear()
+	if _retreat_requested:
+		_retreat_requested = false
+		_battle_over_at = _elapsed_seconds
+		_battle_won = false
+		_state.record_notice(Event.Kind.BATTLE_RETREATED)
 	_elapsed_seconds += dt
 	if _state.wall == null:
 		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
@@ -94,6 +112,21 @@ func advance(dt: float) -> void:
 func result() -> Dictionary:
 	return _result.duplicate(true)
 
+func request_weapon_slot(slot: String) -> bool:
+	if _outcome != Outcome.RUNNING or _hero.dead or _hero.gone or _weapon_names.get(slot, "").is_empty():
+		return false
+	if _hero.hero_weapon.get("slot") == slot:
+		return false
+	_requested_slot = slot
+	_slot_request_ticks = Config.HERO_SLOT_REQUEST_TICKS
+	return true
+
+func request_retreat() -> bool:
+	if _battle_over_at >= 0.0 or _retreat_requested:
+		return false
+	_retreat_requested = true
+	return true
+
 func companion_dialogue() -> Dictionary:
 	return _companion_dialogue.duplicate(true)
 
@@ -113,15 +146,27 @@ func _handle_swap() -> void:
 	var pressed: bool = bool(_input.get("swap", false))
 	var requested := pressed and not _swap_held
 	_swap_held = pressed
-	if not requested or _gear_catalog == null or _hero_profile.is_empty() or _hero.dead or _hero.gone or _hero.attack_windup >= 0.0:
+	if _gear_catalog == null or _hero_profile.is_empty() or _hero.dead or _hero.gone:
 		return
-	var selection := "melee" if _hero.hero_weapon.get("slot") == "ranged" else "ranged"
+	if _slot_request_ticks > 0:
+		_slot_request_ticks -= 1
+		if _hero.attack_windup < 0.0:
+			_slot_request_ticks = 0
+			if _hero.hero_weapon.get("slot") != _requested_slot:
+				_equip_weapon(_requested_slot)
+			return
+	if not requested or _hero.attack_windup >= 0.0:
+		return
+	var selection := WEAPON_SLOT_MELEE if _hero.hero_weapon.get("slot") == WEAPON_SLOT_RANGED else WEAPON_SLOT_RANGED
+	_equip_weapon(selection)
+
+func _equip_weapon(selection: String) -> void:
 	var candidate := _hero_profile.duplicate(true)
 	candidate.sel = selection
 	var gear := HeroGear.resolve(candidate, _gear_catalog)
 	if gear.is_empty():
 		return
-	if selection == "ranged" and gear.weapon.get("slot") != "ranged":
+	if selection == WEAPON_SLOT_RANGED and gear.weapon.get("slot") != WEAPON_SLOT_RANGED:
 		_state.record_notice(Event.Kind.RANGED_WEAPON_UNAVAILABLE, {"position": _hero.position})
 		return
 	if HeroStats.apply(_hero, candidate, gear, false):
@@ -142,6 +187,9 @@ func snapshot() -> Dictionary:
 	var focus_sum := [Vector2.ZERO, Vector2.ZERO]
 	var focus_count := [0, 0]
 	var enemy_strength := 0.0
+	var ally_strength := 0.0
+	var group_strength := PackedFloat64Array()
+	group_strength.resize(Config.GROUP_KINDS)
 	for unit: Unit in _state.units:
 		if not unit.dead and not unit.gone:
 			counts[unit.side] += 1
@@ -150,6 +198,10 @@ func snapshot() -> Dictionary:
 				focus_count[unit.side] += 1
 				if unit.side == 1:
 					enemy_strength += unit.weight
+				else:
+					ally_strength += unit.weight
+					if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
+						group_strength[unit.group_kind] += unit.weight
 		units.append({
 			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
 			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
@@ -178,6 +230,14 @@ func snapshot() -> Dictionary:
 	if _state.wall != null:
 		walls = _state.wall.segments()
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
+	var ready_groups: Array[int] = []
+	for weight in group_strength:
+		ready_groups.append(roundi(weight))
 	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls,
 		"enemy_center": enemy_center, "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
-		"hero_weapon_name": _hero.hero_weapon.get("name", "")}
+		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
+		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,
+		"army_share": ally_strength / maxf(1.0, _starting_ally_strength),
+		"hero_status": {"name": str(_hero_profile.get("name", "")), "hp": _hero.hp, "max_hp": _hero.max_hp,
+			"armor": _hero.armor, "block": _hero.block_chance, "slot": _hero.hero_weapon.get("slot", ""),
+			"weapon_names": _weapon_names.duplicate()}}

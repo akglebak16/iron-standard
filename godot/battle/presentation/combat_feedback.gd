@@ -21,6 +21,7 @@ const WALL_ALERT := "Враг у стен!"
 const GARRISON_CAVALRY := "Конница гарнизона вышла в бой."
 const VICTORY := "Победа! Враг разбит."
 const DEFEAT := "Отряд разбит."
+const RETREATED := "Отряд отступает!"
 const ORDER_NAMES := {
 	Config.ORDER_HOLD: "держать позицию",
 	Config.ORDER_FOLLOW: "за мной",
@@ -47,6 +48,8 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				_log(GARRISON_CAVALRY)
 			Event.Kind.BATTLE_DECIDED:
 				_log(VICTORY if event.won else DEFEAT)
+			Event.Kind.BATTLE_RETREATED:
+				_log(RETREATED)
 			Event.Kind.HIT:
 				if event.target_hero or event.source_hero:
 					_label(event.position, str(event.amount), Demo.DAMAGE_RECEIVED_COLOR if event.target_hero else Demo.DAMAGE_DEALT_COLOR)
