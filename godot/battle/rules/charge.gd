@@ -4,6 +4,7 @@ const Config = preload("res://battle/config.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Block = preload("res://battle/rules/block.gd")
+const Event = preload("res://battle/combat_event.gd")
 
 static func can_hit(attacker: Unit, target: Unit) -> bool:
 	if not attacker.mounted or attacker.attack_range > 0.0 or attacker.charge_cooldown > 0.0 or attacker.velocity.length() <= Config.CHARGE_MIN_SPEED:
@@ -20,10 +21,11 @@ static func hit(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGe
 	var front := absf(wrapf(incoming - target.facing, -PI, PI)) < Config.CHARGE_FRONT_ARC
 	if target.anti_cavalry and front and not target.fleeing:
 		damage *= Config.CHARGE_ANTI_DAMAGE_MULTIPLIER
-		battle.hurt(attacker, Config.CHARGE_COUNTER_DAMAGE * rng.randf_range(Config.CHARGE_COUNTER_RANDOM_MIN, Config.CHARGE_COUNTER_RANDOM_MAX), target, 0.0, rng)
+		battle.hurt(attacker, Config.CHARGE_COUNTER_DAMAGE * rng.randf_range(Config.CHARGE_COUNTER_RANDOM_MIN, Config.CHARGE_COUNTER_RANDOM_MAX), target, 0.0, rng, Event.Attack.COUNTER)
 	elif front and Block.check(target, incoming, false, rng):
 		damage *= Config.CHARGE_BLOCK_DAMAGE_MULTIPLIER
 	target.position -= Vector2(cos(incoming), sin(incoming)) * (Config.CHARGE_KNOCKBACK / target.mass)
 	attacker.velocity *= Config.CHARGE_ATTACKER_VELOCITY_MULTIPLIER
 	attacker.attack_cooldown = maxf(attacker.attack_cooldown, Config.CHARGE_ATTACK_COOLDOWN)
-	return battle.hurt(target, damage, attacker, 0.0, rng) if not target.dead and not target.gone else 0
+	battle.record_event(Event.Kind.CHARGE, target, attacker, Event.Attack.CHARGE)
+	return battle.hurt(target, damage, attacker, 0.0, rng, Event.Attack.CHARGE) if not target.dead and not target.gone else 0

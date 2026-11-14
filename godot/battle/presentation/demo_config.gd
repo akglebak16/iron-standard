@@ -33,3 +33,17 @@ const JAVELIN_WIDTH := 2.6
 const FLETCHING_START := 10.0
 const FLETCHING_END := 13.0
 const FLETCHING_WIDTH := 2.2
+
+const FEEDBACK_LIFETIME := 0.9
+const FEEDBACK_RISE_SPEED := 26.0
+const FEEDBACK_OFFSET := Vector2(0, -44)
+const FEEDBACK_FONT_SIZE := 18
+const FEEDBACK_MAX_LABELS := 40
+const BATTLE_LOG_MAX_ENTRIES := 3
+const DAMAGE_RECEIVED_COLOR := Color("#e2503c")
+const DAMAGE_DEALT_COLOR := Color("#f1e3b0")
+const BLOCK_COLOR := Color("#d8d2c4")
+const LAST_STAND_COLOR := Color("#f1d27a")
+const IMPACT_RADIUS := 14.0
+const IMPACT_DURATION := 0.2
+const IMPACT_MAX_MARKS := 40

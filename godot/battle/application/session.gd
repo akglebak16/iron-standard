@@ -30,6 +30,7 @@ var _gear_catalog: GearCatalog
 var _hero_profile: Dictionary = {}
 var _swap_held: bool = false
 var _companion_survival: float
+var _events: Array[Dictionary] = []
 
 func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0) -> void:
 	assert(state != null and hero != null and rng != null)
@@ -73,6 +74,7 @@ func advance(dt: float) -> void:
 	Movement.step(_state, dt, _rng)
 	CombatStep.resolve_projectiles(_state, dt, _rng)
 	var morale_checked: bool = Morale.advance(_state, dt)
+	_events = _state.take_events()
 	_tick += 1
 	if _hero.dead:
 		_outcome = Outcome.HERO_DOWN
@@ -85,6 +87,12 @@ func advance(dt: float) -> void:
 
 func result() -> Dictionary:
 	return _result.duplicate(true)
+
+## Transfers the most recent tick's events once. Advance replaces unread events.
+func take_events() -> Array[Dictionary]:
+	var batch := _events
+	_events = []
+	return batch
 
 func _handle_swap() -> void:
 	var pressed: bool = bool(_input.get("swap", false))

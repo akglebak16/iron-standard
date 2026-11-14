@@ -5,6 +5,7 @@ const Demo = preload("res://battle/presentation/demo_config.gd")
 const Session = preload("res://battle/application/session.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
+const CombatFeedback = preload("res://battle/presentation/combat_feedback.gd")
 
 signal battle_finished
 
@@ -13,6 +14,7 @@ signal battle_finished
 var _session: Session
 var _frame: Dictionary = {}
 var _selection := Config.ALL_GROUPS
+var _feedback := CombatFeedback.new()
 
 func configure(session: Session) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
@@ -35,6 +37,9 @@ func _ready() -> void:
 
 func _physics_process(dt: float) -> void:
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
+		if _feedback.has_effects():
+			_feedback.advance(dt, [])
+			queue_redraw()
 		return
 	if _frame.outcome == Session.Outcome.RUNNING:
 		var input := HeroInput.new()
@@ -46,6 +51,7 @@ func _physics_process(dt: float) -> void:
 		input.swap = Input.is_key_pressed(KEY_X)
 		_session.set_hero_input(input)
 	_session.advance(dt)
+	_feedback.advance(dt, _session.take_events())
 	_refresh()
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		battle_finished.emit()
@@ -73,6 +79,9 @@ func _refresh() -> void:
 		Session.Outcome.VICTORY: label = Demo.VICTORY
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina)]
+	var journal := _feedback.journal()
+	if not journal.is_empty():
+		status.text += "\n" + journal
 	queue_redraw()
 
 func _draw() -> void:
@@ -92,3 +101,4 @@ func _draw() -> void:
 			draw_arc(unit.position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, Demo.COMPANION_RING_COLOR, Demo.HERO_RING_WIDTH)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
+	_feedback.draw(self)

@@ -32,6 +32,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			var jitter := Vector2(rng.randf_range(-Config.SPAWN_JITTER, Config.SPAWN_JITTER), rng.randf_range(-Config.SPAWN_JITTER, Config.SPAWN_JITTER))
 			var unit := Unit.new(battle.units.size(), side, center + jitter, float(troop.hp) * weight, float(troop.arm), int(troop.tier))
 			unit.troop_id = str(stack.type)
+			unit.name = troop.name
 			unit.faction = faction
 			unit.weight = weight
 			unit.xp_multiplier = float(troop.get("pw", 1.0))

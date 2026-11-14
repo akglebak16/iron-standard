@@ -5,6 +5,7 @@ const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
+const Event = preload("res://battle/combat_event.gd")
 
 var wall: SiegeWall
 var siege_skill := 0.0
@@ -16,6 +17,21 @@ var projectiles: Array = []
 var starting_units := [0, 0]
 var morale_timer := 0.0
 var formation_timer := 0.0
+var _events: Array[Dictionary] = []
+
+func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0) -> void:
+	_events.append({
+		"kind": kind, "attack": attack, "amount": amount,
+		"position": target.position, "target_id": target.id,
+		"target_hero": target.hero, "target_companion": target.companion,
+		"target_leader": target.leader, "target_name": target.name,
+		"source_hero": source != null and source.hero,
+	})
+
+func take_events() -> Array[Dictionary]:
+	var batch := _events
+	_events = []
+	return batch
 
 func setup_groups(cavalry_flank: int = 1) -> void:
 	groups.clear()
@@ -89,17 +105,19 @@ func add_unit(unit: Unit) -> void:
 	units.append(unit)
 	starting_units[unit.side] += 1
 
-func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 0.0, rng: RandomNumberGenerator = null) -> int:
+func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 0.0, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE) -> int:
 	if target.dead:
 		return 0
 	var amount: int = Damage.after_armor(raw_damage, target.armor, pierce)
 	target.hp -= amount
 	target.morale -= amount * Config.HIT_MORALE_PER_DAMAGE
+	record_event(Event.Kind.HIT, target, source, attack, amount)
 	if target.hp <= 0.0 and target.hero and not target.last_stand_used:
 		var recovery: float = float(target.perk_effects.get("lastStand", 0.0))
 		if recovery > 0.0:
 			target.last_stand_used = true
 			target.hp = maxf(1.0, target.max_hp * recovery)
+			record_event(Event.Kind.LAST_STAND, target, source, attack)
 	if target.hp <= 0.0:
 		kill(target, source, rng)
 	return amount
@@ -109,6 +127,7 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null) 
 		return
 	target.dead = true
 	target.hp = 0.0
+	record_event(Event.Kind.DOWN, target, source)
 	if source != null:
 		source.kills += 1
 		source.morale = minf(source.base_morale, source.morale + Config.KILL_MORALE_BONUS)

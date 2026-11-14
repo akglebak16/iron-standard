@@ -6,6 +6,7 @@ const Config = preload("res://battle/config.gd")
 const EquipmentConfig = preload("res://equipment/config.gd")
 const Block = preload("res://battle/rules/block.gd")
 const DamageType = preload("res://equipment/rules/damage_type.gd")
+const Event = preload("res://battle/combat_event.gd")
 
 static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGenerator, damage_scale: float = 1.0) -> int:
 	var incoming: float = (attacker.position - target.position).angle()
@@ -15,6 +16,7 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		base = attacker.ranged_melee_damage if attacker.ranged_melee_damage > 0.0 else base * Config.RANGED_MELEE_DAMAGE_MULTIPLIER
 	var raw: float = base * damage_scale * rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
 	if not rear and Block.check(target, incoming, false, rng):
+		battle.record_event(Event.Kind.BLOCK, target, attacker, Event.Attack.MELEE)
 		return 0
 	if rear:
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
@@ -23,8 +25,8 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.blunt_melee):
 		raw *= target.blunt_melee_damage_multiplier
 	if attacker.damage_type.is_empty():
-		return battle.hurt(target, raw, attacker, 0.0, rng)
-	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce), rng)
+		return battle.hurt(target, raw, attacker, 0.0, rng, Event.Attack.MELEE)
+	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce), rng, Event.Attack.MELEE)
 
 static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: int, rng: RandomNumberGenerator) -> int:
 	var weapon: Dictionary = hero.hero_weapon
@@ -33,6 +35,7 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 	var incoming: float = (hero.position - target.position).angle()
 	var rear := absf(wrapf(incoming - target.facing, -PI, PI)) > Config.REAR_ANGLE
 	if not rear and Block.check(target, incoming, false, rng) and rng.randf() < Config.HERO_BLOCK_HOLD_CHANCE - float(weapon.get("brk", 0.0)):
+		battle.record_event(Event.Kind.BLOCK, target, hero, Event.Attack.MELEE)
 		return 0
 	var knockback: float = float(weapon.get("kb", Config.HERO_DEFAULT_KNOCKBACK))
 	target.position += Vector2(cos(direction), sin(direction)) * Config.HERO_KNOCKBACK_DISTANCE * knockback
@@ -46,8 +49,8 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 	if hero.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT:
 		raw *= target.blunt_melee_damage_multiplier
 	if hero.damage_type.is_empty():
-		return battle.hurt(target, raw, hero, Config.HERO_UNARMED_PIERCE + bonus_pierce, rng)
-	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce + bonus_pierce), rng)
+		return battle.hurt(target, raw, hero, Config.HERO_UNARMED_PIERCE + bonus_pierce, rng, Event.Attack.MELEE)
+	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce + bonus_pierce), rng, Event.Attack.MELEE)
 
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)
@@ -72,6 +75,7 @@ static func _make_projectile(attacker: Unit, aim: Vector2, distance: float, dura
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
 	var incoming: float = (shot.origin - target.position).angle()
 	if Block.check(target, incoming, true, rng):
+		battle.record_event(Event.Kind.BLOCK, target, shot.source, Event.Attack.PROJECTILE)
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)
 	if battle.wall != null:
@@ -79,5 +83,5 @@ static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: Random
 	raw *= target.projectile_damage_multiplier
 	var kind: String = shot.get("damage_type", "")
 	if kind.is_empty():
-		return battle.hurt(target, raw, shot.source, shot.pierce, rng)
-	return battle.hurt(target, raw * DamageType.multiplier(kind, target.armor), shot.source, DamageType.pierce(kind, target.armor, shot.pierce), rng)
+		return battle.hurt(target, raw, shot.source, shot.pierce, rng, Event.Attack.PROJECTILE)
+	return battle.hurt(target, raw * DamageType.multiplier(kind, target.armor), shot.source, DamageType.pierce(kind, target.armor, shot.pierce), rng, Event.Attack.PROJECTILE)
