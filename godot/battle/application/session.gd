@@ -2,6 +2,7 @@ extends RefCounted
 const Morale = preload("res://battle/rules/morale.gd")
 const CombatStep = preload("res://battle/rules/combat_step.gd")
 const Movement = preload("res://battle/rules/movement.gd")
+const Tactics = preload("res://battle/rules/tactics.gd")
 ## Single writer for a running battle. No SceneTree, Input, files or translated text.
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
@@ -17,6 +18,7 @@ var _input: Dictionary = {}
 var _orders: Array[Dictionary] = []
 var _outcome: Outcome = Outcome.RUNNING
 var _tick: int = 0
+var _elapsed_seconds: float = 0.0
 
 func _init(state: State, hero: Unit, rng: RandomNumberGenerator) -> void:
 	assert(state != null and hero != null and rng != null)
@@ -45,6 +47,9 @@ func advance(dt: float) -> void:
 	for command in _orders:
 		_state.give_order(command.order, command.point, command.selection)
 	_orders.clear()
+	_elapsed_seconds += dt
+	Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
+	Tactics.follow_hero(_state, _hero)
 	HeroControl.step(_state, _hero, _input, dt, _rng)
 	var spatial_index = Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
 	CombatStep.step(_state, dt, _rng, spatial_index)

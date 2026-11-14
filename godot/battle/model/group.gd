@@ -8,6 +8,8 @@ var center: Vector2
 var direction: float
 var order: String = Config.ORDER_HOLD
 var backing: bool = false
+var tactic_state: String = Config.AI_TACTIC_WAIT
+var waypoint: Vector2 = Vector2.ZERO
 var units: Array[Unit] = []
 
 func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void:

@@ -5,7 +5,6 @@ const Catalog = preload("res://battle/data/catalog.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Session = preload("res://battle/application/session.gd")
-const Config = preload("res://battle/config.gd")
 
 static func create(setup: Setup, catalog: Catalog) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite():
@@ -29,6 +28,4 @@ static func create(setup: Setup, catalog: Catalog) -> Session:
 	hero.block_chance = float(troop.block)
 	hero.shield_block = float(troop.get("shb", 0))
 	state.add_unit(hero)
-	for group in state.groups[1]:
-		group.order = Config.ORDER_CHARGE
 	return Session.new(state, hero, rng)

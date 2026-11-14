@@ -11,16 +11,7 @@ const AiDecision = preload("res://battle/rules/ai_decision.gd")
 static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0, rng: RandomNumberGenerator = null) -> SpatialIndex:
 	if dt <= 0.0:
 		return null
-	var foe := battle.centroid(1)
 	var index: SpatialIndex = SpatialIndex.new(battle.units) if battle.units.size() >= Config.SPATIAL_MIN_UNITS else null
-	for group: Group in battle.groups[0]:
-		if group.order != Config.ORDER_FOLLOW:
-			continue
-		var facing := (foe - hero_position).angle() if foe != Vector2.INF else hero_facing
-		group.direction = facing
-		var rear: float = Config.FOLLOW_REAR_OFFSET[group.kind]
-		var lateral := Config.FOLLOW_CAVALRY_SIDE_OFFSET if group.kind == Config.GROUP_CAVALRY else 0.0
-		group.center = hero_position - Vector2(cos(facing), sin(facing)) * rear + Vector2(-sin(facing), cos(facing)) * lateral
 	for unit_index in battle.units.size():
 		var unit: Unit = battle.units[unit_index]
 		if unit.dead or unit.gone or unit.hero:

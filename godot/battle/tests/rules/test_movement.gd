@@ -30,7 +30,6 @@ func _initialize() -> void:
 	assert(foot.facing == 0.0)
 	assert(battle.give_order(Config.ORDER_FOLLOW, Vector2.ZERO, Config.GROUP_CAVALRY))
 	Movement.step(battle, 0.1, Vector2(900, 850))
-	assert(battle.groups[0][Config.GROUP_CAVALRY].center == Vector2(840, 1020))
 	assert(battle.give_order(Config.ORDER_RETREAT, Vector2.ZERO, Config.GROUP_INFANTRY))
 	assert(battle.groups[0][Config.GROUP_INFANTRY].center.x < foot.position.x)
 	foot.fleeing = true

@@ -1,0 +1,70 @@
+extends RefCounted
+## Single-player sideBrain() and playerFollow() from src/03_battle.js.
+const Config = preload("res://battle/config.gd")
+const State = preload("res://battle/model/state.gd")
+const Group = preload("res://battle/model/group.gd")
+const Unit = preload("res://battle/model/unit.gd")
+
+static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> void:
+	var foe := battle.centroid(1 - side)
+	var own := battle.centroid(side)
+	if foe == Vector2.INF or own == Vector2.INF:
+		return
+	var groups: Array = battle.groups[side]
+	var infantry: Group = groups[Config.GROUP_INFANTRY]
+	var archers: Group = groups[Config.GROUP_ARCHERS]
+	var cavalry: Group = groups[Config.GROUP_CAVALRY]
+	var has_infantry := not infantry.active_units().is_empty()
+	if infantry.order != Config.ORDER_CHARGE:
+		var nearest := _nearest_foe_distance(battle, infantry.center, 1 - side)
+		if nearest < Config.AI_INFANTRY_CHARGE_DISTANCE or elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS:
+			infantry.order = Config.ORDER_CHARGE
+		elif elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
+			_advance(infantry, foe, Config.AI_INFANTRY_ADVANCE_SPEED, dt)
+	if archers.order != Config.ORDER_CHARGE:
+		var nearest := _nearest_foe_distance(battle, archers.center, 1 - side)
+		if nearest < Config.AI_ARCHER_CHARGE_DISTANCE or (not has_infantry and nearest < Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE):
+			archers.order = Config.ORDER_CHARGE
+		elif nearest > Config.AI_ARCHER_ADVANCE_DISTANCE and elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
+			_advance(archers, foe, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED, dt)
+		else:
+			archers.direction = (foe - archers.center).angle()
+	if cavalry.active_units().is_empty() or cavalry.order == Config.ORDER_CHARGE:
+		return
+	if cavalry.tactic_state == Config.AI_TACTIC_WAIT:
+		if elapsed > Config.AI_CAVALRY_FLANK_DELAY_SECONDS:
+			cavalry.tactic_state = Config.AI_TACTIC_FLANK
+			var flank_side := 1.0 if cavalry.center.y >= battle.arena_size.y * 0.5 else -1.0
+			cavalry.waypoint = Vector2(lerpf(own.x, foe.x, Config.AI_CAVALRY_FLANK_PROGRESS), clampf(foe.y + flank_side * Config.AI_CAVALRY_FLANK_OFFSET, Config.AI_CAVALRY_FLANK_EDGE, battle.arena_size.y - Config.AI_CAVALRY_FLANK_EDGE))
+	else:
+		var offset := cavalry.waypoint - cavalry.center
+		var remaining := offset.length()
+		cavalry.direction = offset.angle()
+		cavalry.center += offset.normalized() * Config.AI_CAVALRY_FLANK_SPEED * dt
+		if remaining < Config.AI_CAVALRY_WAYPOINT_ARRIVAL or _nearest_foe_distance(battle, cavalry.center, 1 - side) < Config.AI_CAVALRY_CHARGE_DISTANCE:
+			cavalry.order = Config.ORDER_CHARGE
+
+static func follow_hero(battle: State, hero: Unit) -> void:
+	if hero.dead:
+		return
+	var foe := battle.centroid(1)
+	var facing: float = (foe - hero.position).angle() if foe != Vector2.INF else hero.facing
+	for group: Group in battle.groups[0]:
+		if group.order != Config.ORDER_FOLLOW:
+			continue
+		var rear: float = Config.FOLLOW_REAR_OFFSET[group.kind]
+		var side: float = Config.FOLLOW_CAVALRY_SIDE_OFFSET if group.kind == Config.GROUP_CAVALRY else 0.0
+		group.direction = facing
+		group.center = hero.position - Vector2(cos(facing), sin(facing)) * rear + Vector2(-sin(facing), cos(facing)) * side
+
+static func _nearest_foe_distance(battle: State, point: Vector2, side: int) -> float:
+	var closest := INF
+	for unit: Unit in battle.units:
+		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
+			closest = minf(closest, point.distance_to(unit.position))
+	return closest
+
+static func _advance(group: Group, foe: Vector2, speed: float, dt: float) -> void:
+	var angle := (foe - group.center).angle()
+	group.direction = angle
+	group.center += Vector2(cos(angle), sin(angle)) * speed * dt
