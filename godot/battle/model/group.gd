@@ -34,7 +34,12 @@ func layout(initial: bool = false) -> void:
 	var spacing: float = Config.FORMATION_SPACING[kind]
 	var perpendicular := Vector2(-sin(direction), cos(direction))
 	if initial:
-		active.sort_custom(func(a: Unit, b: Unit): return a.tier > b.tier if a.tier != b.tier else a.id < b.id)
+		active.sort_custom(func(a: Unit, b: Unit):
+			if a.tier != b.tier:
+				return a.tier > b.tier
+			if a.troop_id != b.troop_id:
+				return a.troop_id < b.troop_id
+			return a.id < b.id)
 	else:
 		active.sort_custom(func(a: Unit, b: Unit): return a.position.dot(perpendicular) < b.position.dot(perpendicular))
 	for i in count:
