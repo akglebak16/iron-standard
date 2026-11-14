@@ -52,6 +52,7 @@ func _test_hit_height_and_origin() -> void:
 	battle.projectiles.append(shot)
 	attacker.position = Vector2(300, 100)
 	var rng := RandomNumberGenerator.new()
+	rng.seed = 42
 	CombatStep.step(battle, 0.1, rng)
 	assert(target.hp == 100.0) # Blocking uses the launch point, not the current shooter position.
 	assert(battle.projectiles.is_empty())
