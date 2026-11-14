@@ -10,6 +10,9 @@ const HERO_DOWN := "Герой ранен и вынесен из боя."
 const COMPANION_DOWN := "%s ранен и вынесен из боя."
 const LEADER_DOWN := "%s пал!"
 const HERO_KILL := "Герой сразил: %s."
+const RANGED_UNAVAILABLE_TEXT := "Нет дальнего оружия"
+const WEAPON_TEXT_COLOR := Color("#f1e3b0")
+const WEAPON_TEXT_OFFSET := Vector2(0, -8)
 const FATAL_IMPACT_COLOR := Color("#ff8d79")
 const FATAL_IMPACT_OFFSET := Vector2(0, -26)
 const BATTLE_STARTED := "Битва началась."
@@ -53,6 +56,10 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 			Event.Kind.LAST_STAND:
 				_label(event.position, LAST_STAND_TEXT, Demo.LAST_STAND_COLOR)
 				_log(HERO_RECOVERED)
+			Event.Kind.WEAPON_SWAPPED:
+				_label(event.position + WEAPON_TEXT_OFFSET, event.weapon_name, WEAPON_TEXT_COLOR)
+			Event.Kind.RANGED_WEAPON_UNAVAILABLE:
+				_label(event.position + WEAPON_TEXT_OFFSET, RANGED_UNAVAILABLE_TEXT, Demo.BLOCK_COLOR)
 			Event.Kind.DOWN:
 				if event.target_hero:
 					_log(HERO_DOWN)

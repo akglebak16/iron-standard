@@ -111,15 +111,23 @@ func take_events() -> Array[Dictionary]:
 
 func _handle_swap() -> void:
 	var pressed: bool = bool(_input.get("swap", false))
-	if pressed and not _swap_held and _gear_catalog != null and not _hero_profile.is_empty() and _hero.attack_windup < 0.0:
-		var selection := "melee" if _hero_profile.get("sel", "melee") == "ranged" else "ranged"
-		var candidate: Dictionary = _hero_profile.duplicate(true)
-		candidate.sel = selection
-		var gear: Dictionary = HeroGear.resolve(candidate, _gear_catalog)
-		if not gear.is_empty() and (selection == "melee" or gear.weapon.get("slot") == "ranged") and HeroStats.apply(_hero, candidate, gear, false):
-			_hero_profile = candidate
-			_hero.attack_cooldown = maxf(_hero.attack_cooldown, Config.HERO_SWAP_COOLDOWN_FLOOR)
+	var requested := pressed and not _swap_held
 	_swap_held = pressed
+	if not requested or _gear_catalog == null or _hero_profile.is_empty() or _hero.dead or _hero.gone or _hero.attack_windup >= 0.0:
+		return
+	var selection := "melee" if _hero.hero_weapon.get("slot") == "ranged" else "ranged"
+	var candidate := _hero_profile.duplicate(true)
+	candidate.sel = selection
+	var gear := HeroGear.resolve(candidate, _gear_catalog)
+	if gear.is_empty():
+		return
+	if selection == "ranged" and gear.weapon.get("slot") != "ranged":
+		_state.record_notice(Event.Kind.RANGED_WEAPON_UNAVAILABLE, {"position": _hero.position})
+		return
+	if HeroStats.apply(_hero, candidate, gear, false):
+		_hero_profile = candidate
+		_hero.attack_cooldown = maxf(_hero.attack_cooldown, Config.HERO_SWAP_COOLDOWN_FLOOR)
+		_state.record_notice(Event.Kind.WEAPON_SWAPPED, {"position": _hero.position, "weapon_name": gear.weapon.name, "target_id": _hero.id})
 
 func _side_alive(side: int) -> bool:
 	for unit: Unit in _state.units:
@@ -169,4 +177,5 @@ func snapshot() -> Dictionary:
 		walls = _state.wall.segments()
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
 	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls,
-		"enemy_center": enemy_center, "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0}
+		"enemy_center": enemy_center, "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
+		"hero_weapon_name": _hero.hero_weapon.get("name", "")}

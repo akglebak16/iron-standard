@@ -50,6 +50,7 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				if event.attack == Event.Attack.MELEE and event.source_id >= 0 and not event.source_hero:
 					_attacks[event.source_id] = _time + ATTACK_SPRING_SECONDS
 			Event.Kind.SHOT, Event.Kind.SWING: _attacks[event.target_id] = _time + ATTACK_SPRING_SECONDS
+			Event.Kind.WEAPON_SWAPPED: _attacks.erase(event.target_id)
 			Event.Kind.DOWN:
 				if not event.target_hero and not event.target_companion:
 					_falls[event.target_id] = _time

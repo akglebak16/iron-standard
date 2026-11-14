@@ -11,7 +11,8 @@ func _initialize() -> void:
 	for sound in bank:
 		var stream: AudioStreamWAV = bank[sound]
 		var expected_long: bool = sound == Bank.Sound.HORN or sound == Bank.Sound.ENEMY_HORN
-		assert(stream.get_length() >= 0.07 and stream.get_length() <= (1.81 if expected_long else 0.31))
+		var minimum := Bank.WEAPON_CLICK_SECONDS if sound == Bank.Sound.WEAPON_CLICK else 0.07
+		assert(stream.get_length() >= minimum - 1.0 / Bank.MIX_RATE and stream.get_length() <= (1.81 if expected_long else 0.31))
 		assert(not expected_long or stream.get_length() >= 1.8)
 		var audible := false
 		for i in range(0, stream.data.size(), 2):
@@ -30,6 +31,10 @@ func _initialize() -> void:
 	assert(Audio.sound_for({"kind": Event.Kind.ORDER_APPLIED, "order": "hold"}) == Bank.Sound.ORDER)
 	assert(Audio.sound_for({"kind": Event.Kind.ORDER_APPLIED, "order": "charge"}) == Bank.Sound.HORN)
 	assert(Audio.sound_for({"kind": Event.Kind.WALL_ALERT}) == Bank.Sound.ENEMY_HORN)
+	var swapped := {"kind": Event.Kind.WEAPON_SWAPPED, "position": Vector2(1000, 0)}
+	assert(Audio.sound_for(swapped) == Bank.Sound.WEAPON_CLICK)
+	assert(Audio.distance_gain(swapped, Vector2.ZERO) == 1.0)
+	assert(Audio.sound_for({"kind": Event.Kind.RANGED_WEAPON_UNAVAILABLE}) == -1)
 	assert(Audio.distance_gain({"kind": Event.Kind.BATTLE_STARTED}, Vector2(3000, 1000)) == 1.0)
 	var note := Music._note(146.83)
 	var offset := roundi(0.38 * Bank.MIX_RATE) * 2

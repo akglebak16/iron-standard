@@ -6,6 +6,7 @@ const Dialogue = preload("res://battle/presentation/companion_dialogue.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const PresentationPreferences = preload("res://app/presentation_preferences.gd")
 const UnitMarkers = preload("res://battle/presentation/unit_markers.gd")
+const SoundBank = preload("res://battle/presentation/audio/sound_bank.gd")
 const TICK := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -64,7 +65,8 @@ func _check() -> void:
 	launch.origin = Vector2.INF
 	view._physics_process(TICK)
 	assert(view._feedback._labels.size() == 1)
-	assert(view._audio._last_played.has(preload("res://battle/presentation/audio/sound_bank.gd").Sound.BOW))
+	assert(view._audio._last_played.has(SoundBank.Sound.BOW))
+	_check_weapon_hud(view)
 	var mute := InputEventKey.new()
 	mute.keycode = KEY_M
 	mute.pressed = true
@@ -124,6 +126,24 @@ func _check_unit_markers(view, frame: Dictionary) -> void:
 	key.keycode = KEY_4
 	view._unhandled_input(key)
 	assert(view.status.text.contains("Выбрано: Весь отряд"))
+
+func _check_weapon_hud(view) -> void:
+	assert(view.status.text.contains("Оружие [X]: Рыцарский меч"))
+	var key := InputEventKey.new()
+	key.keycode = KEY_X
+	key.pressed = true
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
+	view._physics_process(TICK)
+	assert(view.status.text.contains("Оружие [X]: Длинный лук"))
+	assert(view._feedback._labels.any(func(label): return label.text == "Длинный лук"))
+	assert(view._audio._last_played.has(SoundBank.Sound.WEAPON_CLICK))
+	assert(view.get_battle_snapshot().units.back().look.weapon == "bow")
+	key = InputEventKey.new()
+	key.keycode = KEY_X
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
+	view._physics_process(TICK)
 
 func _check_figure_cache(art) -> void:
 	var unit := {"side": 0, "faction": "nord", "hero": false, "companion": false, "mounted": false, "look": {"weapon": "sword"}}

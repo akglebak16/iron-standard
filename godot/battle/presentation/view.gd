@@ -159,6 +159,8 @@ func _update_status() -> void:
 		Session.Outcome.VICTORY: label = Demo.VICTORY
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina), Demo.GROUP_NAMES[_selection]]
+	if not _frame.hero_down and not _frame.hero_weapon_name.is_empty():
+		status.text += Demo.WEAPON_HUD_TEXT % _frame.hero_weapon_name
 	status.text += Demo.CONTROL_HINT
 	status.text += Demo.SOUND_HINT % [Demo.SOUND_ON if _effects_enabled else Demo.SOUND_OFF, Demo.SOUND_ON if _music_enabled else Demo.SOUND_OFF]
 	status.text += Demo.BLOOD_HINT % (Demo.SOUND_ON if _impacts.blood_enabled else Demo.SOUND_OFF)

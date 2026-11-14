@@ -8,6 +8,7 @@ const Catalog = preload("res://troops/data/catalog.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const Config = preload("res://battle/config.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
+const Event = preload("res://battle/combat_event.gd")
 const TICK_SECONDS := 1.0 / 60.0
 const REPLAY_TICKS := 120
 
@@ -121,6 +122,7 @@ func _check_factory_and_repeatability() -> void:
 	assert(catalog.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
+	setup.hero_profile.clear()
 	var original_army := setup.player_army.duplicate(true)
 	var first := Factory.create(setup, catalog)
 	var second := Factory.create(setup, catalog)
@@ -169,15 +171,31 @@ func _check_weapon_swap() -> void:
 	assert(hero.weapon_kind == "sword" and hero.attack_range == 0.0)
 	var input := HeroInput.new()
 	input.swap = true
+	hero.attack_windup = TICK_SECONDS * 2.0
+	assert(session.set_hero_input(input))
+	session.advance(TICK_SECONDS)
+	assert(hero.hero_weapon.id == "sword_knight")
+	assert(not session.take_events().any(func(event): return event.kind == Event.Kind.WEAPON_SWAPPED))
+	hero.attack_windup = -1.0
+	session.advance(TICK_SECONDS)
+	assert(hero.hero_weapon.id == "sword_knight")
+	input.swap = false
+	assert(session.set_hero_input(input))
+	session.advance(TICK_SECONDS)
+	input.swap = true
 	assert(session.set_hero_input(input))
 	setup.hero_profile.eq.ranged = "missing" # Running session owns a detached profile.
 	session.advance(TICK_SECONDS)
 	assert(hero.weapon_kind == "throw" and hero.attack_range == 480.0)
 	assert(hero.hero_weapon.id == "jav_heavy")
+	assert(session.snapshot().hero_weapon_name == hero.hero_weapon.name)
+	var changed := session.take_events().filter(func(event): return event.kind == Event.Kind.WEAPON_SWAPPED)
+	assert(changed.size() == 1 and changed[0].weapon_name == hero.hero_weapon.name and changed[0].target_id == hero.id)
 	assert(hero.hp == health and hero.max_hp == maximum)
 	assert(hero.attack_cooldown > 0.0)
 	session.advance(TICK_SECONDS)
 	assert(hero.weapon_kind == "throw") # Holding X does not switch again.
+	assert(not session.take_events().any(func(event): return event.kind == Event.Kind.WEAPON_SWAPPED))
 	input.swap = false
 	session.set_hero_input(input)
 	session.advance(TICK_SECONDS)
@@ -189,10 +207,13 @@ func _check_weapon_swap() -> void:
 	assert(hero.hp == health)
 	var melee_only: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	melee_only.companion_profiles.clear()
-	melee_only.hero_profile = {"eq": {"melee": "sword_old"}}
+	melee_only.hero_profile = {"eq": {"melee": "sword_old"}, "sel": "ranged"}
 	var no_ranged := Factory.create(melee_only, troops, gear_catalog)
 	var no_ranged_input := HeroInput.new()
 	no_ranged_input.swap = true
 	no_ranged.set_hero_input(no_ranged_input)
 	no_ranged.advance(TICK_SECONDS)
 	assert(no_ranged._hero.weapon_kind == "sword")
+	assert(no_ranged.take_events().any(func(event): return event.kind == Event.Kind.RANGED_WEAPON_UNAVAILABLE))
+	no_ranged.advance(TICK_SECONDS)
+	assert(not no_ranged.take_events().any(func(event): return event.kind == Event.Kind.RANGED_WEAPON_UNAVAILABLE))

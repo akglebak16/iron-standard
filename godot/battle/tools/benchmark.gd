@@ -18,6 +18,7 @@ func _initialize() -> void:
 	for army_size in [24, Config.SOLO_UNIT_CAP]:
 		var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 		setup.companion_profiles.clear()
+		setup.hero_profile.clear()
 		setup.player_army = [{"type": "n1", "n": army_size}]
 		setup.enemy_army = [{"type": "e1", "n": army_size}]
 		var session := Factory.create(setup, catalog)

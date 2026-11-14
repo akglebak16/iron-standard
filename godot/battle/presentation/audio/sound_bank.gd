@@ -1,6 +1,6 @@
 extends RefCounted
 ## Short PCM effects synthesized from the tone and noise layers in src/04_audio.js.
-enum Sound { HIT, CLANG, SWING, BOW, ARROW_HIT, THUNK, DOWN, CHARGE, ORDER, HORN, ENEMY_HORN }
+enum Sound { HIT, CLANG, SWING, BOW, ARROW_HIT, THUNK, DOWN, CHARGE, ORDER, HORN, ENEMY_HORN, WEAPON_CLICK }
 enum Wave { SINE, TRIANGLE, SQUARE, SAW }
 enum Filter { LOW, HIGH, BAND }
 
@@ -10,7 +10,10 @@ const ATTACK_SECONDS := 0.006
 const ENVELOPE_FLOOR := 0.0001
 const PCM_MAX := 32767.0
 const NOISE_SEED := 4171
-const MIN_INTERVALS := [0.05, 0.06, 0.08, 0.05, 0.05, 0.06, 0.08, 0.1, 0.0, 0.0, 0.0]
+const WEAPON_CLICK_SECONDS := 0.05
+const WEAPON_CLICK_PITCH := Vector2(660, 440)
+const WEAPON_CLICK_VOLUME := 0.06
+const MIN_INTERVALS := [0.05, 0.06, 0.08, 0.05, 0.05, 0.06, 0.08, 0.1, 0.0, 0.0, 0.0, 0.0]
 const HORN_PARTIALS := [1.0, 1.005, 2.01]
 const HORN_START_RATIO := 0.96
 const HORN_RAMP_SECONDS := 0.35
@@ -36,6 +39,7 @@ static func build() -> Dictionary:
 		Sound.ORDER: _render([_tone(392, 392, 0.09, Wave.TRIANGLE, 0.18), _tone(523, 523, 0.12, Wave.TRIANGLE, 0.18, 0.08)], [], rng),
 		Sound.HORN: _horn(146.0),
 		Sound.ENEMY_HORN: _horn(110.0),
+		Sound.WEAPON_CLICK: _render([_tone(WEAPON_CLICK_PITCH.x, WEAPON_CLICK_PITCH.y, WEAPON_CLICK_SECONDS, Wave.SQUARE, WEAPON_CLICK_VOLUME)], [], rng),
 	}
 
 static func _tone(start: float, finish: float, length: float, wave: Wave, volume: float, delay: float = 0.0) -> Dictionary:
