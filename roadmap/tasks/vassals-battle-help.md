@@ -1,11 +1,11 @@
 ---
 title: Дружины вассалов вступают в бой игрока
-status: в работе
+status: на проверке
 owner: Виталий
 area: спутники
 priority: обычный
 created: 2026-11-14
-pr:
+pr: 25
 done:
 outside: нет
 ---
