@@ -34,7 +34,14 @@ static func resolve(profile: Dictionary, catalog: GearCatalog) -> Dictionary:
 	var armor := 0.0
 	for slot in ARMOR_SLOTS:
 		armor += float(_item(catalog, slots, slot).get("v", 0.0))
-	return {"slots": slots, "selection": selection, "weapon": weapon, "shield": shield, "horse": horse, "mounted": not horse.is_empty(), "armor": armor, "block": float(shield.get("v", weapon.get("parry", 0.0)))}
+	var look := {
+		"helm": _item(catalog, slots, "head").get("look", "none"),
+		"armor": _item(catalog, slots, "body").get("look", "tunic"),
+		"weapon": weapon.get("look"),
+		"shield": shield.get("look", "none"),
+		"horse": horse.get("look"),
+	}
+	return {"slots": slots, "selection": selection, "weapon": weapon, "shield": shield, "horse": horse, "mounted": not horse.is_empty(), "armor": armor, "block": float(shield.get("v", weapon.get("parry", 0.0))), "look": look}
 
 static func _item(catalog: GearCatalog, slots: Dictionary, slot: String) -> Dictionary:
 	var item: Dictionary = catalog.get_item(str(slots.get(slot, "")))

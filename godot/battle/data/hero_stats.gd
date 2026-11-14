@@ -38,4 +38,5 @@ static func apply(hero: Unit, profile: Dictionary, gear: Dictionary, initial: bo
 	hero.accuracy = accuracy * (1.0 - float(effects.get("acc", 0.0))) * Config.HERO_GEAR_ACCURACY_MULTIPLIER
 	hero.anti_cavalry = bool(weapon.get("anticav", false))
 	hero.hero_weapon = weapon.duplicate(true)
+	hero.appearance = gear.get("look", {}).duplicate(true)
 	return true

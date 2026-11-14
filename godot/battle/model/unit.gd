@@ -41,6 +41,7 @@ var companion: bool:
 	get:
 		return not companion_id.is_empty()
 var faction: String = ""
+var appearance: Dictionary = {}
 var collision_radius: float = Config.FOOT_COLLISION_RADIUS
 var mass: float = Config.FOOT_MASS
 var attack_interval: float = 1.0

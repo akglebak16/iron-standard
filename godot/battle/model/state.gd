@@ -36,6 +36,7 @@ func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: E
 		"target_hero": target.hero, "target_companion": target.companion,
 		"target_leader": target.leader, "target_name": target.name,
 		"source_hero": source != null and source.hero,
+		"source_id": source.id if source != null else -1,
 		"impact_style": target.impact_style,
 	})
 

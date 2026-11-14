@@ -53,6 +53,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.pierce = float(troop.get("pierce", 0))
 			unit.anti_cavalry = bool(troop.get("anticav", false))
 			var look: Dictionary = troop.get("look", {})
+			unit.appearance = look.duplicate(true)
 			unit.impact_style = IMPACT_BY_APPEARANCE.get(look.get("undead", ""), Event.ImpactStyle.BLOOD)
 			unit.weapon_kind = str(look.get("weapon", ""))
 			unit.collision_radius = Config.HORSE_COLLISION_RADIUS if unit.mounted else Config.FOOT_COLLISION_RADIUS

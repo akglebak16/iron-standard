@@ -19,11 +19,17 @@ func _check() -> void:
 	root.add_child(scene)
 	await process_frame
 	var view = scene.get_node("Battle")
+	_check_figure_cache(view._figures._art)
 	var frame: Dictionary = view.get_battle_snapshot()
 	assert(frame.units.size() == 55)
 	assert(frame.counts == [29, 26])
 	assert(frame.units.filter(func(unit): return unit.companion).size() == 3)
 	assert(frame.outcome == Session.Outcome.RUNNING)
+	assert(frame.units.any(func(unit): return unit.mounted and unit.look.has("horse")))
+	assert(frame.units.any(func(unit): return unit.look.get("weapon") == "bow"))
+	var original_look: Dictionary = frame.units[0].look.duplicate(true)
+	frame.units[0].look.clear()
+	assert(view.get_battle_snapshot().units[0].look == original_look)
 	assert(view.get_node("Hud/Status").text.contains("Свои"))
 	frame.units.clear()
 	assert(view.get_battle_snapshot().units.size() == 55)
@@ -59,6 +65,7 @@ func _check() -> void:
 		if unit.side == 1:
 			session._state.kill(unit, session._hero)
 	view._physics_process(Config.MORALE_TICK_SECONDS)
+	assert(view._figures.has_falling_units())
 	view._physics_process(Config.BATTLE_END_DELAY_SECONDS + TICK)
 	var text: String = view.get_node("Hud/Status").text
 	assert(text.contains("Победа") and text.contains("Трофеи:"))
@@ -68,10 +75,23 @@ func _check() -> void:
 	assert(scene._demo_world.parties.is_empty())
 	view._physics_process(TICK)
 	assert(view.get_node("Hud/Status").text == text)
+	assert(not view._figures.has_falling_units())
 	_check_defeat(packed, path)
 	assert(DirAccess.remove_absolute(path) == OK)
 	print("Scene tests passed")
 	quit(0)
+
+func _check_figure_cache(art) -> void:
+	var unit := {"side": 0, "faction": "nord", "hero": false, "companion": false, "mounted": false, "look": {"weapon": "sword"}}
+	var foot: Dictionary = art.layers(unit)
+	assert(foot.body.get_image().get_used_rect().has_area())
+	assert(foot.weapon.get_image().get_used_rect().has_area())
+	assert(art.layers(unit).body == foot.body)
+	unit.look.weapon = "bow"
+	var archer: Dictionary = art.layers(unit)
+	assert(archer.weapon.get_image().get_data() != foot.weapon.get_image().get_data())
+	unit.mounted = true
+	assert(art.layers(unit).body.get_image().get_data() != archer.body.get_image().get_data())
 
 func _check_defeat(packed: PackedScene, path: String) -> void:
 	var scene = packed.instantiate()

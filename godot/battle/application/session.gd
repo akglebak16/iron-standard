@@ -128,7 +128,14 @@ func snapshot() -> Dictionary:
 			if not unit.fleeing:
 				focus_sum[unit.side] += unit.position
 				focus_count[unit.side] += 1
-		units.append({"position": unit.position, "radius": unit.collision_radius, "side": unit.side, "hero": unit.hero, "companion": unit.companion, "dead": unit.dead, "gone": unit.gone})
+		units.append({
+			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
+			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
+			"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted,
+			"facing": unit.facing, "speed": unit.velocity.length(), "blocking": unit.blocking,
+			"windup": unit.attack_windup if unit.hero else unit.ai_windup,
+			"look": unit.appearance.duplicate(true),
+		})
 	var camera_target: Vector2 = _hero.position
 	if _hero.dead:
 		if focus_count[0] > 0 and focus_count[1] > 0:
