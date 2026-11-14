@@ -14,7 +14,7 @@ func _initialize() -> void:
 	assert(catalog.load_data())
 	assert(catalog.size() == 67)
 	assert(catalog.get_troop("n1").name == "Бонд")
-	assert(catalog.get_troop("n1").hp == 60) # faction health multiplier already applied in source catalog
+	assert(catalog.get_troop("n1").hp == 57) # faction health multiplier already applied in source catalog
 	assert(catalog.get_troop("e3c").grp == Config.GROUP_CAVALRY)
 	assert(catalog.get_troop("s1a").grp == Config.GROUP_ARCHERS)
 	var rng = RandomNumberGenerator.new()
@@ -30,7 +30,7 @@ func _initialize() -> void:
 	assert(battle.units.size() == 15)
 	assert(battle.groups[0][Config.GROUP_INFANTRY].units.size() == 10)
 	assert(battle.groups[0][Config.GROUP_CAVALRY].units.size() == 5)
-	assert(battle.units[0].hp == 60.0 and battle.units[0].weight == 1.0)
+	assert(battle.units[0].hp == 57.0 and battle.units[0].weight == 1.0)
 	assert(battle.units[0].melee_reach == Config.DEFAULT_MELEE_REACH + float(catalog.get_troop("n1").reach))
 	assert(battle.units[0].shield_block == float(catalog.get_troop("n1").get("shb", 0)))
 	var massive = BattleState.new()

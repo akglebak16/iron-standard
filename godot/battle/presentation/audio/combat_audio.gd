@@ -52,6 +52,7 @@ static func sound_for(event: Dictionary) -> int:
 		Event.Kind.ORDER_APPLIED: return Bank.Sound.HORN if event.order == Config.ORDER_CHARGE else Bank.Sound.ORDER
 		Event.Kind.ENEMY_CHARGE, Event.Kind.WALL_ALERT: return Bank.Sound.ENEMY_HORN
 		Event.Kind.BATTLE_DECIDED: return Bank.Sound.HORN if event.won else Bank.Sound.ENEMY_HORN
+		Event.Kind.RESERVE_WAVE: return Bank.Sound.ENEMY_HORN if event.side == 1 else Bank.Sound.HORN
 		Event.Kind.WEAPON_SWAPPED: return Bank.Sound.WEAPON_CLICK
 		Event.Kind.SHOT: return Bank.Sound.BOW
 		Event.Kind.SWING: return Bank.Sound.SWING

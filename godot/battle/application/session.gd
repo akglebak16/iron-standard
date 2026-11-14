@@ -14,6 +14,7 @@ const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
 const BattleResult = preload("res://battle/rules/result.gd")
 const Event = preload("res://battle/combat_event.gd")
+const Reinforcements = preload("res://battle/data/reinforcements.gd")
 const WEAPON_SLOT_MELEE := HeroGear.MELEE
 const WEAPON_SLOT_RANGED := HeroGear.RANGED
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
@@ -97,6 +98,8 @@ func advance(dt: float) -> void:
 	Movement.step(_state, dt, _rng)
 	CombatStep.resolve_projectiles(_state, dt, _rng)
 	var morale_checked: bool = Morale.advance(_state, dt)
+	if morale_checked:
+		Reinforcements.release(_state, _state.active_counts, _rng, _state.side_factions)
 	_tick += 1
 	if _hero.dead:
 		_outcome = Outcome.HERO_DOWN
@@ -234,7 +237,7 @@ func snapshot() -> Dictionary:
 	for weight in group_strength:
 		ready_groups.append(roundi(weight))
 	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls,
-		"enemy_center": enemy_center, "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
+		"enemy_center": enemy_center, "reserve": [_state.reserve[0].size(), _state.reserve[1].size()], "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
 		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
 		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,
 		"army_share": ally_strength / maxf(1.0, _starting_ally_strength),

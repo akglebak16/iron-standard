@@ -9,6 +9,16 @@ const HERO_RECOVERED := "Герой поднялся на ноги."
 const HERO_DOWN := "Герой ранен и вынесен из боя."
 const COMPANION_DOWN := "%s ранен и вынесен из боя."
 const LEADER_DOWN := "%s пал!"
+const BONDED_LEADER_DOWN := "%s пал — мертвецы рассыпаются в прах!"
+const WAVERED := "%s дрогнул."
+const FLED := "%s бежит с поля боя."
+const RESERVE_UNDEAD := "Из-за холма выходят ещё %d мертвецов"
+const RESERVE_ENEMY := "К врагу подходит подкрепление: %d"
+const RESERVE_ALLY := "К нам подходит подкрепление: %d"
+const RESERVE_LEFT := " (в запасе %d)."
+const RESERVE_LAST := " — последняя волна."
+const UNDEAD_FACTION := "undead" # Presentation text choice only; rules read battle traits.
+const ROUT_MESSAGE_CHANCE := 0.5 # Browser logs every second waver/rout to keep the journal readable.
 const HERO_KILL := "Герой сразил: %s."
 const RANGED_UNAVAILABLE_TEXT := "Нет дальнего оружия"
 const WEAPON_TEXT_COLOR := Color("#f1e3b0")
@@ -31,6 +41,10 @@ const ORDER_NAMES := {
 
 var _labels: Array[Dictionary] = []
 var _journal: PackedStringArray = []
+var _rng := RandomNumberGenerator.new()
+
+func set_seed(value: int) -> void:
+	_rng.seed = value
 
 func advance(dt: float, events: Array[Dictionary]) -> void:
 	_age(_labels, dt)
@@ -50,6 +64,15 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				_log(VICTORY if event.won else DEFEAT)
 			Event.Kind.BATTLE_RETREATED:
 				_log(RETREATED)
+			Event.Kind.RESERVE_WAVE:
+				var text: String = RESERVE_UNDEAD % event.count if UNDEAD_FACTION in event.troop_factions else (RESERVE_ENEMY if event.side == 1 else RESERVE_ALLY) % event.count
+				_log(text + (RESERVE_LEFT % event.remaining if event.remaining > 0 else RESERVE_LAST))
+			Event.Kind.WAVERED:
+				if _rng.randf() < ROUT_MESSAGE_CHANCE:
+					_log(WAVERED % event.target_name)
+			Event.Kind.FLED:
+				if _rng.randf() < ROUT_MESSAGE_CHANCE:
+					_log(FLED % event.target_name)
 			Event.Kind.HIT:
 				if event.target_hero or event.source_hero:
 					_label(event.position, str(event.amount), Demo.DAMAGE_RECEIVED_COLOR if event.target_hero else Demo.DAMAGE_DEALT_COLOR)
@@ -69,7 +92,7 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				elif event.target_companion:
 					_log(COMPANION_DOWN % event.target_name)
 				elif event.target_leader:
-					_log(LEADER_DOWN % event.target_name)
+					_log((BONDED_LEADER_DOWN if event.target_bonded else LEADER_DOWN) % event.target_name)
 				elif event.source_hero and not event.target_name.is_empty():
 					_log(HERO_KILL % event.target_name)
 

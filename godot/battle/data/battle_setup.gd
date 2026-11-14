@@ -4,9 +4,14 @@ const Config = preload("res://battle/config.gd")
 # Browser compatibility default for armies without an explicit scenario budget.
 const FACTION_UNIT_CAPS := {"undead": 600}
 const DEFAULT_UNIT_CAP_OVERRIDE := 0
+# Browser fill(): these armies keep figures above the cap in reserve waves instead of merging them.
+const FACTION_RESERVE_WAVES := ["undead"]
 @export var seed: int = 0
 @export_enum("grass", "snow", "steppe", "arid") var biome: String = Config.DEFAULT_BIOME
 @export var siege: bool = false
+@export var quick: bool = false # Quick battle: every army above the cap fights in reserve waves.
+@export_range(0.0, 1.0) var wall_damage: float = 0.0 # Siege only: battered walls widen the gate and cut defender supplies.
+@export var wall_defense: Dictionary = {} # Siege only: {"stones": int, "oil": int}; empty uses the browser default.
 @export var player_faction: String = ""
 @export var enemy_faction: String = ""
 @export var player_unit_cap: int = DEFAULT_UNIT_CAP_OVERRIDE
@@ -21,3 +26,6 @@ const DEFAULT_UNIT_CAP_OVERRIDE := 0
 
 func unit_cap(faction: String, override: int) -> int:
 	return int(FACTION_UNIT_CAPS.get(faction, Config.SOLO_UNIT_CAP)) if override == DEFAULT_UNIT_CAP_OVERRIDE else override
+
+func uses_reserve_waves(faction: String) -> bool:
+	return quick or faction in FACTION_RESERVE_WAVES

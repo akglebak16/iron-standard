@@ -237,6 +237,9 @@ func _update_status() -> void:
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_controls.update_frame(_frame, _selection, _paused, PLAYBACK_SPEEDS[_speed_index], finished)
 	status.text = Demo.HUD_TEXT % [label, _frame.ally_strength, _frame.enemy_strength, roundi(_frame.stamina), Demo.GROUP_NAMES[_selection], BattleControls.format_time(_frame.elapsed_seconds)]
+	var reserve: Array = _frame.get("reserve", [0, 0])
+	if reserve[0] > 0 or reserve[1] > 0:
+		status.text += Demo.RESERVE_HUD_TEXT % [reserve[0], reserve[1]]
 	if not _frame.hero_down and not _frame.hero_weapon_name.is_empty():
 		status.text += Demo.WEAPON_HUD_TEXT % _frame.hero_weapon_name
 	status.text += Demo.CONTROL_HINT

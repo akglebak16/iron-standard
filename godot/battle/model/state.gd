@@ -23,6 +23,13 @@ var starting_units := [0, 0]
 var morale_timer := 0.0
 var formation_timer := 0.0
 var siege_alerted := false
+## Figures above the cap that enter later in waves (browser B.reserve / B.cap / B.resDead).
+var reserve: Array = [[], []]
+var reserve_definitions: Dictionary = {}
+var side_factions := ["", ""]
+var reserve_caps := [0, 0]
+var reserve_lost := [0, 0]
+var active_counts := [0, 0] # Combat-ready units at the latest morale check.
 var _events: Array[Dictionary] = []
 
 func set_plants(layout: Array[Plant]) -> void:
@@ -34,6 +41,9 @@ func record_notice(kind: Event.Kind, details: Dictionary = {}) -> void:
 	notice.merge(details)
 	_events.append(notice)
 
+func record_unit_notice(kind: Event.Kind, unit: Unit) -> void:
+	record_notice(kind, {"side": unit.side, "target_id": unit.id, "target_name": unit.name, "position": unit.position})
+
 func launch_projectile(shot: Dictionary) -> void:
 	projectiles.append(shot)
 	record_event(Event.Kind.SHOT, shot.source, null, Event.Attack.PROJECTILE)
@@ -44,6 +54,7 @@ func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: E
 		"position": target.position, "contact_offset": contact_offset, "target_id": target.id,
 		"target_hero": target.hero, "target_companion": target.companion,
 		"target_leader": target.leader, "target_name": target.name,
+		"target_side": target.side, "target_bonded": not target.leader_bond.is_empty(),
 		"source_hero": source != null and source.hero,
 		"source_id": source.id if source != null else -1,
 		"source_alive": source != null and not source.dead,
@@ -208,6 +219,11 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 			if unit.side == target.side and not unit.dead and not unit.gone and unit.leader_bond == target.leader_bond and unit.leader_loss_chance > 0.0 and rng.randf() < unit.leader_loss_chance:
 				unit.leader = false
 				kill(unit, null, rng)
+		var waiting: Array = reserve[target.side]
+		if not waiting.is_empty():
+			var lost := roundi(waiting.size() * Config.LEADER_BOND_RESERVE_LOSS)
+			waiting.assign(waiting.slice(lost))
+			reserve_lost[target.side] += lost
 	else:
 		for unit: Unit in units:
 			if unit.side == target.side:
