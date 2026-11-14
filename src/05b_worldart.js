@@ -151,6 +151,7 @@ function settleSprite(s) {
     for (const [x, y, sc] of [[-28, -4, 1], [24, -8, 1.1], [-2, -20, .9]]) { poly(g, [cx + x - 20 * sc, cy + y, cx + x, cy + y - 32 * sc, cx + x + 20 * sc, cy + y]); fs(g, '#3d352b', 1.5); poly(g, [cx + x, cy + y - 32 * sc, cx + x + 20 * sc, cy + y, cx + x + 4 * sc, cy + y]); fs(g, '#2a231b', 0); poly(g, [cx + x - 5 * sc, cy + y, cx + x, cy + y - 14 * sc, cx + x + 5 * sc, cy + y]); fs(g, '#120d08', 1); }
     for (let i = 0; i < 4; i++) { const x = cx - 48 + i * 30; line(g, [x, cy + 12, x, cy - 6], '#4d3a22', 2.2); ell(g, x, cy - 9, 4.4, 4.6); fs(g, '#d6cfbc', 1); } ell(g, cx + 36, cy + 10, 5, 3); fs(g, '#4a4034', 1); g.fillStyle = '#ff9a2a'; poly(g, [cx + 33, cy + 9, cx + 36, cy + 0, cx + 39, cy + 9]); g.fill();
   }
+  if (s.kind === 'castle') { g.strokeStyle = '#ece0ba'; g.lineWidth = 1; for (const x of [cx - 40, cx + 40]) { g.beginPath(); g.moveTo(x - 8, cy - 47); g.lineTo(x - 8, cy - 25); g.stroke(); } }
   if (s.kind !== 'camp') drawBanner(g, cx + (s.kind === 'castle' ? 14 : 20), cy - (s.kind === 'town' ? 62 : s.kind === 'castle' ? 66 : 28), s.fac, 13);
   return SS_CACHE[key] = { cv: c, ax: cx, ay: cy };
 }

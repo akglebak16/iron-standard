@@ -6,8 +6,9 @@
 import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
+import { fileURLToPath } from 'url';
 
-const ROOT = path.dirname(new URL(import.meta.url).pathname);
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const TASKS = path.join(ROOT, 'tasks');
 const REPO = 'akglebak16/iron-standard';
 export const STATUSES = ['идея', 'можно брать', 'в работе', 'на проверке', 'готово'];
