@@ -4,6 +4,7 @@ const Unit = preload("res://battle/model/unit.gd")
 
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
+const Charge = preload("res://battle/rules/charge.gd")
 
 ## Input keys: move (Vector2), face (float), sprint, block, attack (bool).
 static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: RandomNumberGenerator) -> void:
@@ -30,6 +31,7 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 		steering = Config.HERO_FOOT_STEERING_RATE
 	hero.velocity = hero.velocity.lerp(move * speed, minf(1.0, steering * dt))
 	hero.attack_cooldown -= dt
+	hero.charge_cooldown -= dt
 	if bool(input.get("attack", false)) and hero.attack_cooldown <= 0.0 and hero.attack_windup < 0.0 and not hero.blocking:
 		hero.attack_cooldown = hero.attack_interval
 		hero.attack_windup = Config.HERO_RANGED_WINDUP if hero.attack_range > 0.0 else Config.HERO_ATTACK_WINDUP
@@ -40,8 +42,28 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 		if hero.attack_windup < 0.0:
 			_strike(battle, hero, rng)
 	hero.swing_timer -= dt
+	_charge(battle, hero, rng)
 	hero.position += hero.velocity * dt
 	hero.position = hero.position.clamp(Vector2(Config.FIELD_LEFT_RIGHT_MARGIN, Config.FIELD_TOP_MARGIN), battle.arena_size - Vector2(Config.FIELD_LEFT_RIGHT_MARGIN, Config.FIELD_BOTTOM_MARGIN))
+
+static func _charge(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
+	if not hero.mounted or hero.charge_cooldown > 0.0:
+		return
+	var speed := hero.velocity.length()
+	if speed <= Config.HERO_CHARGE_MIN_SPEED:
+		return
+	var travel_direction := hero.velocity.angle()
+	for enemy: Unit in battle.units:
+		if enemy.side == hero.side or enemy.dead or enemy.gone:
+			continue
+		var delta := enemy.position - hero.position
+		if delta.length() >= hero.collision_radius + enemy.collision_radius + Config.HERO_CHARGE_EXTRA_REACH:
+			continue
+		if absf(wrapf(delta.angle() - travel_direction, -PI, PI)) >= Config.HERO_CHARGE_DIRECTION_ARC:
+			continue
+		Charge.hit(battle, hero, enemy, rng)
+		hero.charge_cooldown = Config.HERO_CHARGE_COOLDOWN
+		break
 
 static func _strike(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
 	if hero.attack_range > 0.0:
