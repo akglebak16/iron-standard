@@ -40,4 +40,7 @@ static func arrow_hit(battle: RefCounted, shot: Dictionary, target: RefCounted, 
 	return battle.hurt(target, raw, shot.source, shot.pierce)
 
 static func _blocked(target: RefCounted, incoming: float, rng: RandomNumberGenerator) -> bool:
-	return absf(wrapf(incoming - target.facing, -PI, PI)) <= Config.BLOCK_ARC and rng.randf() < target.block_chance
+	var chance: float = target.block_chance
+	if target.hero:
+		chance = minf(Config.HERO_MAX_BLOCK_CHANCE, chance + Config.HERO_ACTIVE_BLOCK_BONUS) if target.blocking else chance * Config.HERO_IDLE_BLOCK_MULTIPLIER
+	return absf(wrapf(incoming - target.facing, -PI, PI)) <= Config.BLOCK_ARC and rng.randf() < chance

@@ -37,6 +37,10 @@ var pierce: float = 0.0
 var anti_cavalry: bool = false
 var weapon_kind: String = ""
 var undead_kind: String = ""
+var stamina: float = Config.HERO_MAX_STAMINA
+var blocking: bool = false
+var attack_windup: float = 0.0
+var swing_facing: float = 0.0
 
 func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection: float, unit_tier: int) -> void:
 	id = unit_id
