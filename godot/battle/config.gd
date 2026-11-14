@@ -3,6 +3,7 @@ extends RefCounted
 ## Balance values copied from the browser battle. Change them here, then run Godot tests.
 const TroopConfig = preload("res://troops/config.gd")
 const ARENA_SIZE := Vector2(2600, 1700)
+const DEFAULT_BIOME := "grass"
 const SIEGE_WALL_RIGHT_OFFSET := 980.0
 const SIEGE_WALL_HALF_WIDTH := 22.0
 const SIEGE_GAP_OFFSETS := [Vector2(-80, 80), Vector2(-520, -425), Vector2(425, 520)] # Order breaks equal-distance ties.

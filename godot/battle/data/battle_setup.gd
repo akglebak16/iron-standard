@@ -5,6 +5,7 @@ const Config = preload("res://battle/config.gd")
 const FACTION_UNIT_CAPS := {"undead": 600}
 const DEFAULT_UNIT_CAP_OVERRIDE := 0
 @export var seed: int = 0
+@export_enum("grass", "snow", "steppe", "arid") var biome: String = Config.DEFAULT_BIOME
 @export var siege: bool = false
 @export var player_faction: String = ""
 @export var enemy_faction: String = ""

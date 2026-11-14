@@ -2,8 +2,6 @@ extends RefCounted
 ## Placeholder drawing and text used only by the current playable preview.
 
 const CAMERA_ZOOM := 0.75
-const GROUND_COLOR := Color("#78845d")
-const WALL_COLOR := Color("#77736a")
 const HERO_DOWN := "Герой ранен — бой продолжается"
 const VICTORY := "Победа"
 const DEFEAT := "Поражение"

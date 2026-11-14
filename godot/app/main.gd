@@ -54,7 +54,7 @@ func _ready() -> void:
 	var view = BattleView.instantiate()
 	view.name = "Battle"
 	var audio := presentation_preferences.read()
-	view.configure(session, audio.effects, audio.music, presentation_preferences.read_blood())
+	view.configure(session, audio.effects, audio.music, presentation_preferences.read_blood(), battle_setup.seed, battle_setup.biome)
 	view.audio_preferences_changed.connect(_save_audio_preferences)
 	view.blood_preference_changed.connect(_save_blood_preference)
 	var profile := battle_setup.hero_profile.duplicate(true)

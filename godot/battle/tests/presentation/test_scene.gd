@@ -23,6 +23,9 @@ func _check() -> void:
 	var view = scene.get_node("Battle")
 	_check_figure_cache(view._figures._art)
 	var frame: Dictionary = view.get_battle_snapshot()
+	var ground: ShaderMaterial = view._terrain.material
+	assert(ground.get_shader_parameter("arena_size") == frame.arena_size)
+	assert(view._terrain.get_child_count() == 0)
 	assert(frame.units.size() == 55)
 	assert(frame.counts == [29, 26])
 	assert(frame.units.filter(func(unit): return unit.companion).size() == 3)
@@ -130,6 +133,8 @@ func _check_siege_dialogue(path: String) -> void:
 	var session: Session = view._session
 	var rng_state: int = session._rng.state
 	var frame := session.snapshot()
+	assert(view._terrain.get_child_count() == 1)
+	assert(view._terrain.get_child(0)._segments == frame.walls)
 	var events: Array[Dictionary] = []
 	view._refresh(Dialogue.START_DELAY.y, events)
 	var catalog := CompanionCatalog.new()

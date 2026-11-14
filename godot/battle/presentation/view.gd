@@ -11,6 +11,7 @@ const UnitView = preload("res://battle/presentation/unit_view.gd")
 const CompanionDialogue = preload("res://battle/presentation/companion_dialogue.gd")
 const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
 const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
+const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
 
 signal battle_finished
 signal audio_preferences_changed(effects: bool, music: bool)
@@ -30,14 +31,19 @@ var _music: BattleMusic
 var _effects_enabled := true
 var _music_enabled := true
 var _result_summary := ""
+var _terrain := TerrainView.new()
 
-func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true) -> void:
+func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true,
+		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
 	_dialogue.configure(session.companion_dialogue())
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
 	_impacts.blood_enabled = blood_enabled
+	var frame := session.snapshot()
+	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
+	add_child(_terrain)
 
 func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
@@ -146,9 +152,6 @@ func _update_status() -> void:
 func _draw() -> void:
 	if _frame.is_empty():
 		return
-	draw_rect(Rect2(Vector2.ZERO, _frame.arena_size), Demo.GROUND_COLOR)
-	for segment: Rect2 in _frame.walls:
-		draw_rect(segment, Demo.WALL_COLOR)
 	var size := get_viewport_rect().size / camera.zoom
 	var visible := Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
