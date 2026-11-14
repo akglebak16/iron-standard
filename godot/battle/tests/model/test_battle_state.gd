@@ -2,6 +2,7 @@
 
 const Unit = preload("res://battle/model/unit.gd")
 const BattleState = preload("res://battle/model/state.gd")
+const Config = preload("res://battle/config.gd")
 
 func _initialize() -> void:
 	var battle = BattleState.new()
@@ -22,6 +23,8 @@ func _initialize() -> void:
 	assert(battle.hurt(victim, 60.0, attacker) == 0)
 	assert(attacker.kills == 1)
 	_check_last_stand_and_kill_heal()
+	_check_undead_leader_collapse()
+	_check_ordinary_leader_morale()
 	print("Battle state tests passed")
 	quit(0)
 
@@ -47,3 +50,47 @@ func _check_last_stand_and_kill_heal() -> void:
 	assert(hero.hp == 100.0) # Healing is capped at maximum HP.
 	battle.hurt(hero, 200, foe)
 	assert(hero.dead and hero.hp == 0.0) # Last Stand fires once per battle.
+
+func _check_undead_leader_collapse() -> void:
+	var battle := BattleState.new()
+	var leader := Unit.new(0, 1, Vector2.ZERO, 100, 0, 3)
+	leader.leader = true
+	leader.faction = Config.UNDEAD_FACTION
+	battle.add_unit(leader)
+	var undead: Array[Unit] = []
+	for i in 12:
+		var unit := Unit.new(i + 1, 1, Vector2(300 + i * 200, 0), 100, 0, 1)
+		unit.faction = Config.UNDEAD_FACTION
+		battle.add_unit(unit)
+		undead.append(unit)
+	var mortal := Unit.new(13, 1, Vector2(3000, 0), 100, 0, 1)
+	mortal.faction = "emp"
+	battle.add_unit(mortal)
+	var attacker := Unit.new(14, 0, Vector2.ZERO, 100, 0, 1)
+	battle.add_unit(attacker)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 410
+	var reference := RandomNumberGenerator.new()
+	reference.seed = rng.seed
+	var expected: Array[bool] = []
+	for unit in undead:
+		expected.append(reference.randf() < Config.UNDEAD_LEADER_COLLAPSE_CHANCE)
+	battle.kill(leader, attacker, rng)
+	assert(leader.dead and attacker.kills == 1)
+	assert(not mortal.dead)
+	for i in undead.size():
+		assert(undead[i].dead == expected[i])
+	assert(rng.state == reference.state) # One roll per eligible undead, in unit order.
+
+func _check_ordinary_leader_morale() -> void:
+	var battle := BattleState.new()
+	var leader := Unit.new(0, 1, Vector2.ZERO, 100, 0, 3)
+	leader.leader = true
+	leader.faction = "emp"
+	var nearby := Unit.new(1, 1, Vector2(10, 0), 100, 0, 1)
+	var distant := Unit.new(2, 1, Vector2(500, 0), 100, 0, 1)
+	for unit in [leader, nearby, distant]:
+		battle.add_unit(unit)
+	battle.kill(leader)
+	assert(nearby.morale == nearby.base_morale - Config.LEADER_DEATH_MORALE - Config.LEADER_GLOBAL_MORALE_LOSS)
+	assert(distant.morale == distant.base_morale - Config.LEADER_GLOBAL_MORALE_LOSS)

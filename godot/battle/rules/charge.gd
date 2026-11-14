@@ -20,10 +20,10 @@ static func hit(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGe
 	var front := absf(wrapf(incoming - target.facing, -PI, PI)) < Config.CHARGE_FRONT_ARC
 	if target.anti_cavalry and front and not target.fleeing:
 		damage *= Config.CHARGE_ANTI_DAMAGE_MULTIPLIER
-		battle.hurt(attacker, Config.CHARGE_COUNTER_DAMAGE * rng.randf_range(Config.CHARGE_COUNTER_RANDOM_MIN, Config.CHARGE_COUNTER_RANDOM_MAX), target)
+		battle.hurt(attacker, Config.CHARGE_COUNTER_DAMAGE * rng.randf_range(Config.CHARGE_COUNTER_RANDOM_MIN, Config.CHARGE_COUNTER_RANDOM_MAX), target, 0.0, rng)
 	elif front and Block.check(target, incoming, false, rng):
 		damage *= Config.CHARGE_BLOCK_DAMAGE_MULTIPLIER
 	target.position -= Vector2(cos(incoming), sin(incoming)) * (Config.CHARGE_KNOCKBACK / target.mass)
 	attacker.velocity *= Config.CHARGE_ATTACKER_VELOCITY_MULTIPLIER
 	attacker.attack_cooldown = maxf(attacker.attack_cooldown, Config.CHARGE_ATTACK_COOLDOWN)
-	return battle.hurt(target, damage, attacker) if not target.dead and not target.gone else 0
+	return battle.hurt(target, damage, attacker, 0.0, rng) if not target.dead and not target.gone else 0

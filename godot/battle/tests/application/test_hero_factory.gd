@@ -13,6 +13,7 @@ func _initialize() -> void:
 	_test_factory(catalog)
 	_test_battle_perks(catalog)
 	_test_heavy_perk_swap(catalog)
+	_test_named_undead_leader(catalog)
 	print("Hero factory tests passed")
 	quit(0)
 
@@ -87,3 +88,22 @@ func _test_heavy_perk_swap(gear_catalog: GearCatalog) -> void:
 	assert(is_equal_approx(hero.damage, (float(ranged.dmg) + 3.0 * float(ranged.bs)) * 1.04)) # Grip affects melee two-handed weapons only.
 	assert(hero.hp == health and hero.max_hp == maximum)
 	assert(hero.perk_effects.heavy == 0.04)
+
+func _test_named_undead_leader(gear_catalog: GearCatalog) -> void:
+	var troops := Catalog.new()
+	assert(troops.load_data())
+	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.enemy_faction = Config.UNDEAD_FACTION
+	setup.enemy_army = [{"type": "s1", "n": 2}, {"type": "s3", "n": 2}]
+	setup.enemy_leader_name = "Некромант"
+	var session = Factory.create(setup, troops, gear_catalog)
+	assert(session != null)
+	var leaders: Array = session._state.units.filter(func(unit): return unit.leader)
+	assert(leaders.size() == 1)
+	var leader = leaders[0]
+	assert(leader.side == 1 and leader.troop_id == "s3" and leader.name == setup.enemy_leader_name)
+	assert(leader.hp == float(troops.get_troop("s3").hp) * Config.LEADER_HEALTH_MULTIPLIER)
+	assert(leader.damage == float(troops.get_troop("s3").dmg) * Config.LEADER_DAMAGE_MULTIPLIER)
+	for unit in session._state.units:
+		if unit.faction == Config.UNDEAD_FACTION:
+			assert(unit.morale == Config.UNDEAD_BASE_MORALE and unit.base_morale == Config.UNDEAD_BASE_MORALE)

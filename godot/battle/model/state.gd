@@ -83,7 +83,7 @@ func add_unit(unit: Unit) -> void:
 	units.append(unit)
 	starting_units[unit.side] += 1
 
-func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 0.0) -> int:
+func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 0.0, rng: RandomNumberGenerator = null) -> int:
 	if target.dead:
 		return 0
 	var amount: int = Damage.after_armor(raw_damage, target.armor, pierce)
@@ -95,10 +95,10 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 			target.last_stand_used = true
 			target.hp = maxf(1.0, target.max_hp * recovery)
 	if target.hp <= 0.0:
-		kill(target, source)
+		kill(target, source, rng)
 	return amount
 
-func kill(target: Unit, source: Unit = null) -> void:
+func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null) -> void:
 	if target.dead:
 		return
 	target.dead = true
@@ -117,3 +117,17 @@ func kill(target: Unit, source: Unit = null) -> void:
 			unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
 		else:
 			unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
+	if target.hero or target.companion or not target.leader:
+		return
+	if target.faction == Config.UNDEAD_FACTION:
+		if rng == null:
+			push_error("Undead leader collapse requires the battle RNG")
+			return
+		for unit: Unit in units:
+			if unit.side == target.side and not unit.dead and not unit.gone and unit.faction == Config.UNDEAD_FACTION and rng.randf() < Config.UNDEAD_LEADER_COLLAPSE_CHANCE:
+				unit.leader = false
+				kill(unit, null, rng)
+	else:
+		for unit: Unit in units:
+			if unit.side == target.side:
+				unit.morale -= Config.LEADER_GLOBAL_MORALE_LOSS

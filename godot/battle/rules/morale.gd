@@ -10,7 +10,7 @@ static func tick(battle: State) -> void:
 		if not unit.dead and not unit.gone and not unit.fleeing:
 			active[unit.side] += 1
 	for unit: Unit in battle.units:
-		if unit.dead or unit.gone or unit.fleeing or unit.hero or unit.companion or unit.faction == "undead":
+		if unit.dead or unit.gone or unit.fleeing or unit.hero or unit.companion or unit.faction == Config.UNDEAD_FACTION:
 			continue
 		var friends: int = active[unit.side]
 		var enemies: float = maxf(Config.MORALE_OPPONENT_FLOOR, active[1 - unit.side])

@@ -25,8 +25,8 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		elif target.undead_kind == "zombie":
 			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
 	if attacker.damage_type.is_empty():
-		return battle.hurt(target, raw, attacker)
-	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce))
+		return battle.hurt(target, raw, attacker, 0.0, rng)
+	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce), rng)
 
 static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: int, rng: RandomNumberGenerator) -> int:
 	var weapon: Dictionary = hero.hero_weapon
@@ -51,8 +51,8 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 		elif target.undead_kind == "zombie":
 			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
 	if hero.damage_type.is_empty():
-		return battle.hurt(target, raw, hero, Config.HERO_UNARMED_PIERCE + bonus_pierce)
-	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce + bonus_pierce))
+		return battle.hurt(target, raw, hero, Config.HERO_UNARMED_PIERCE + bonus_pierce, rng)
+	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce + bonus_pierce), rng)
 
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)
@@ -83,5 +83,5 @@ static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: Random
 		raw *= Config.SKELETON_ARROW_MULTIPLIER
 	var kind: String = shot.get("damage_type", "")
 	if kind.is_empty():
-		return battle.hurt(target, raw, shot.source, shot.pierce)
-	return battle.hurt(target, raw * DamageType.multiplier(kind, target.armor), shot.source, DamageType.pierce(kind, target.armor, shot.pierce))
+		return battle.hurt(target, raw, shot.source, shot.pierce, rng)
+	return battle.hurt(target, raw * DamageType.multiplier(kind, target.armor), shot.source, DamageType.pierce(kind, target.armor, shot.pierce), rng)

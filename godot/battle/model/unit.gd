@@ -19,6 +19,7 @@ var hero: bool = false
 var group_kind: int = 0
 var slot_offset: Vector2 = Vector2.ZERO
 var troop_id: String = ""
+var name: String = "" # Optional named leader or companion; empty uses the troop catalog name.
 var damage: float = 0.0
 var speed: float = 0.0
 var attack_range: float = 0.0
