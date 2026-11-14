@@ -11,20 +11,15 @@ function commandHud() {
   const label = el('commandState');
   if (label) label.textContent = ['Пехота', 'Стрелки', 'Конница', 'Все отряды'][B.sel] + ' · ' + (!groups.length ? 'нет бойцов' : orders.size > 1 ? 'разные приказы' : ORD_NAME[[...orders][0]] || 'Ждут приказа');
 }
+/* Метка приказа на поле боя только для «Держать» и еле заметная: ни стрелок «В атаку», ни «канатов» «За мной», ни линий «Отойти» (они перегружали картинку; состояние приказа видно по кнопкам). */
 function commandDraw(g) {
   if (B.cfg.demo) return;
-  g.save(); const foe = centroid(1);
+  g.save(); g.globalAlpha = .3;
   for (const group of selectedGroups()) {
-    const c = centroidOf(group); let target;
-    if (group.order === 'hold') target = { x: group.cx, y: group.cy };
-    else if (group.order === 'follow') target = B.hero;
-    else if (foe) { const a = Math.atan2(foe.y - c.y, foe.x - c.x); target = { x: c.x + Math.cos(a) * 100, y: c.y + Math.sin(a) * 100 }; }
-    if (!target) continue;
-    const a = Math.atan2(target.y - c.y, target.x - c.x), col = group.back ? '#a9d1dc' : '#edcf7b';
-    g.strokeStyle = 'rgba(20,14,6,.65)'; g.lineWidth = 5; g.beginPath(); g.moveTo(c.x, c.y); g.lineTo(target.x, target.y); g.stroke();
-    g.strokeStyle = col; g.lineWidth = 2; g.setLineDash([9, 7]); g.stroke(); g.setLineDash([]);
-    line(g, [target.x - Math.cos(a - .5) * 13, target.y - Math.sin(a - .5) * 13, target.x, target.y, target.x - Math.cos(a + .5) * 13, target.y - Math.sin(a + .5) * 13], col, 2);
-    if (group.order === 'hold') { ell(g, target.x, target.y, 24, 10); g.stroke(); const d = group.dir || 0; line(g, [target.x, target.y, target.x + Math.cos(d) * 32, target.y + Math.sin(d) * 32], col, 2); }
+    if (group.order !== 'hold' || group.back) continue;
+    const c = centroidOf(group), t = { x: group.cx, y: group.cy };
+    if (Math.hypot(t.x - c.x, t.y - c.y) > 40) { g.strokeStyle = '#edcf7b'; g.lineWidth = 1.5; g.setLineDash([6, 9]); g.beginPath(); g.moveTo(c.x, c.y); g.lineTo(t.x, t.y); g.stroke(); g.setLineDash([]); }
+    g.strokeStyle = '#edcf7b'; ell(g, t.x, t.y, 22, 9); g.lineWidth = 1.5; g.stroke(); const d = group.dir || 0; line(g, [t.x, t.y, t.x + Math.cos(d) * 28, t.y + Math.sin(d) * 28], '#edcf7b', 1.5);
   }
   g.restore();
 }
