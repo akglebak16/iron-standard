@@ -2,6 +2,8 @@ shader_type canvas_item;
 render_mode unshaded;
 
 uniform vec2 arena_size;
+uniform vec2 world_scale = vec2(1.0);
+uniform float map_shade = 1.0;
 uniform vec2 seed_offset;
 uniform vec4 base_color : source_color;
 uniform vec4 light_color : source_color;
@@ -46,7 +48,7 @@ float value_noise(vec2 point) {
 }
 
 void vertex() {
-	world_point = VERTEX;
+	world_point = VERTEX * world_scale;
 }
 
 void fragment() {
@@ -105,5 +107,5 @@ void fragment() {
 		land = mix(land, tuft_color.rgb, (1.0 - smoothstep(0.018, 0.05, stalk)) * tip * clear_ground * 0.58);
 	}
 	float corner = length((UV - 0.5) * 1.4142);
-	COLOR = vec4(land * mix(1.04, 0.82, corner), 1.0);
+	COLOR = vec4(land * mix(1.04, 0.82, corner) * map_shade, 1.0);
 }

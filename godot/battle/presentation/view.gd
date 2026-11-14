@@ -13,6 +13,8 @@ const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
 const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
 const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
 const VegetationView = preload("res://battle/presentation/terrain/vegetation_view.gd")
+const OrderMarker = preload("res://battle/presentation/hud/order_marker.gd")
+const NavigationHud = preload("res://battle/presentation/hud/navigation_hud.gd")
 
 signal battle_finished
 signal audio_preferences_changed(effects: bool, music: bool)
@@ -20,6 +22,7 @@ signal blood_preference_changed(enabled: bool)
 
 @onready var camera: Camera2D = $Camera
 @onready var status: Label = $Hud/Status
+@onready var _navigation: NavigationHud = $Hud/Navigation
 var _session: Session
 var _frame: Dictionary = {}
 var _selection := Config.ALL_GROUPS
@@ -34,6 +37,7 @@ var _music_enabled := true
 var _result_summary := ""
 var _terrain := TerrainView.new()
 var _vegetation := VegetationView.new()
+var _order_marker := OrderMarker.new()
 
 func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true,
 		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME) -> void:
@@ -62,6 +66,7 @@ func _ready() -> void:
 		set_process_unhandled_input(false)
 		return
 	camera.zoom = Vector2.ONE * Demo.CAMERA_ZOOM
+	_navigation.configure(_terrain.material)
 	_audio = CombatAudio.new()
 	_audio.enabled = _effects_enabled
 	add_child(_audio)
@@ -72,11 +77,12 @@ func _ready() -> void:
 
 func _physics_process(dt: float) -> void:
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
-		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles():
+		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles() or _order_marker.is_visible():
 			_feedback.advance(dt, [])
 			_impacts.advance(dt, [])
 			_figures.advance(dt, [])
 			_dialogue.age(dt)
+			_order_marker.advance(dt, [])
 			queue_redraw()
 		return
 	_music.advance(dt)
@@ -94,6 +100,7 @@ func _physics_process(dt: float) -> void:
 	_feedback.advance(dt, events)
 	_feedback.add_fatal_impacts(_impacts.advance(dt, events))
 	_figures.advance(dt, events)
+	_order_marker.advance(dt, events)
 	_refresh(dt, events)
 	_audio.advance(dt, events, camera.position)
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
@@ -138,6 +145,8 @@ func _refresh(dt: float, events: Array[Dictionary]) -> void:
 	# One detached read per physics tick, reused by HUD and drawing.
 	_frame = _session.snapshot()
 	camera.position = _frame.camera_target
+	camera.force_update_scroll()
+	_navigation.update_frame(_frame, dt)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished))
 	_update_status()
@@ -164,6 +173,7 @@ func _draw() -> void:
 	var size := get_viewport_rect().size / camera.zoom
 	var visible := Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
+	_order_marker.draw(self)
 	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)

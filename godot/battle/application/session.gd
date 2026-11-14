@@ -65,7 +65,7 @@ func advance(dt: float) -> void:
 		return
 	for command in _orders:
 		if _state.give_order(command.order, command.point, command.selection):
-			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection})
+			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection, "point": command.point})
 	_orders.clear()
 	_elapsed_seconds += dt
 	if _state.wall == null:
@@ -133,12 +133,15 @@ func snapshot() -> Dictionary:
 	var counts := [0, 0]
 	var focus_sum := [Vector2.ZERO, Vector2.ZERO]
 	var focus_count := [0, 0]
+	var enemy_strength := 0.0
 	for unit: Unit in _state.units:
 		if not unit.dead and not unit.gone:
 			counts[unit.side] += 1
 			if not unit.fleeing:
 				focus_sum[unit.side] += unit.position
 				focus_count[unit.side] += 1
+				if unit.side == 1:
+					enemy_strength += unit.weight
 		units.append({
 			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
 			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
@@ -164,4 +167,6 @@ func snapshot() -> Dictionary:
 	var walls: Array[Rect2] = []
 	if _state.wall != null:
 		walls = _state.wall.segments()
-	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls}
+	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
+	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls,
+		"enemy_center": enemy_center, "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0}

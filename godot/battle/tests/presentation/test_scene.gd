@@ -26,6 +26,11 @@ func _check() -> void:
 	var frame: Dictionary = view.get_battle_snapshot()
 	var ground: ShaderMaterial = view._terrain.material
 	assert(ground.get_shader_parameter("arena_size") == frame.arena_size)
+	assert(view._navigation._ground.material != ground)
+	assert(view._navigation._ground.material.get_shader_parameter("road") == ground.get_shader_parameter("road"))
+	assert(view._navigation._frame.enemy_strength == frame.counts[1])
+	var camera_probe := root.get_canvas_transform() * Vector2(frame.camera_target)
+	assert(camera_probe.is_equal_approx(root.get_visible_rect().size * 0.5))
 	assert(view._terrain.get_child_count() == 0)
 	assert(view._vegetation.entries.size() == view._session.vegetation_layout().size())
 	assert(not view._vegetation.entries.is_empty())
@@ -163,6 +168,7 @@ func _check_siege_dialogue(path: String) -> void:
 	var frame := session.snapshot()
 	assert(view._terrain.get_child_count() == 1)
 	assert(view._terrain.get_child(0)._segments == frame.walls)
+	assert(view._navigation._frame.walls == frame.walls)
 	var events: Array[Dictionary] = []
 	view._refresh(Dialogue.START_DELAY.y, events)
 	var catalog := CompanionCatalog.new()

@@ -68,7 +68,7 @@ func _check_notices() -> void:
 	assert(session.issue_order("charge", Vector2.ZERO, 1)) # Empty group.
 	assert(session.issue_order("follow", Vector2.ZERO, 0))
 	session.advance(STEP)
-	assert(session.take_events() == [{"kind": Event.Kind.BATTLE_STARTED}, {"kind": Event.Kind.ORDER_APPLIED, "order": "follow", "selection": 0}, {"kind": Event.Kind.WALL_ALERT}])
+	assert(session.take_events() == [{"kind": Event.Kind.BATTLE_STARTED}, {"kind": Event.Kind.ORDER_APPLIED, "order": "follow", "selection": 0, "point": Vector2.ZERO}, {"kind": Event.Kind.WALL_ALERT}])
 	session.advance(STEP)
 	assert(session.take_events().is_empty())
 	Tactics.siege_step(battle, Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS + STEP)
