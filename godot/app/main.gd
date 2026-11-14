@@ -16,8 +16,12 @@ const DEMO_REWARD_TEXT := "\nПогибло: %d · Ранено: %d · Золо�
 const NO_DROPS := "—"
 const COMPANION_XP_TEXT := "%s +%d опыта"
 const COMPANION_LEVEL_TEXT := " (ур. %d)"
+const RECOVERY_TEXT := "\nГерой очнулся у города %s."
+@export var demo_world: Dictionary = {}
+@export var demo_party_position := Vector2.ZERO
 @export var battle_setup: Setup = preload("res://battle/data/demo_battle.tres")
 var _demo_party: Dictionary
+var _demo_world: Dictionary
 
 func _ready() -> void:
 	var catalog := Catalog.new()
@@ -51,8 +55,10 @@ func _ready() -> void:
 	for saved in battle_setup.companion_profiles:
 		var resolved := CompanionProfile.resolve(saved, companion_catalog)
 		roster.append(resolved.profile)
-	_demo_party = {"troops": battle_setup.player_army.duplicate(true), "hero": profile, "gold": 0, "comps": roster}
-	var opponent := {"troops": battle_setup.enemy_army.duplicate(true), "fac": battle_setup.enemy_faction}
+	_demo_party = {"troops": battle_setup.player_army.duplicate(true), "hero": profile, "gold": 0, "comps": roster, "position": demo_party_position}
+	var opponent := {"id": "demo_opponent", "troops": battle_setup.enemy_army.duplicate(true), "fac": battle_setup.enemy_faction}
+	_demo_world = demo_world.duplicate(true)
+	_demo_world.parties = [opponent.duplicate(true)]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = battle_setup.seed + REWARD_SEED_OFFSET
 	var mounted := bool(HeroGear.resolve(profile, gear_catalog).get("mounted", false))
@@ -61,10 +67,11 @@ func _ready() -> void:
 	add_child(view)
 
 func _show_aftermath(view: Node2D, bridge: EncounterAftermath, opponent: Dictionary, mounted: bool, troops: Catalog, gear: GearCatalog, goods: GoodsCatalog, rng: RandomNumberGenerator, companions: CompanionCatalog, perks: PerkCatalog) -> void:
-	var resolved := bridge.resolve(_demo_party, opponent, mounted, troops, gear, goods, rng, companions, perks)
+	var resolved := bridge.resolve(_demo_party, opponent, mounted, troops, gear, goods, rng, companions, perks, _demo_world)
 	if resolved.is_empty():
 		return
 	_demo_party = resolved.party
+	_demo_world = resolved.world
 	var summary: Dictionary = resolved.summary
 	var names: PackedStringArray = []
 	var trade_goods := goods.definitions()
@@ -72,7 +79,10 @@ func _show_aftermath(view: Node2D, bridge: EncounterAftermath, opponent: Diction
 		var item := gear.get_item(drop.id)
 		var display_name: String = item.name if not item.is_empty() else trade_goods[drop.id].n
 		names.append("%s ×%d" % [display_name, drop.n])
-	var text := DEMO_REWARD_TEXT % [summary.lost, summary.wounded, summary.loot - summary.lost_gold, summary.xp, NO_DROPS if names.is_empty() else ", ".join(names)]
+	var gold_change: int = summary.loot - summary.lost_gold + summary.get("recovery_gold", 0)
+	var text := DEMO_REWARD_TEXT % [summary.lost, summary.wounded, gold_change, summary.xp, NO_DROPS if names.is_empty() else ", ".join(names)]
+	if summary.has("recovery_town"):
+		text += RECOVERY_TEXT % summary.recovery_town
 	var companions_text := PackedStringArray()
 	for profile in _demo_party.comps:
 		if not summary.comps.has(profile.id):
