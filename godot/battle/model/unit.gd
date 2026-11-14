@@ -1,4 +1,6 @@
 extends RefCounted
+const Event = preload("res://battle/combat_event.gd")
+var impact_style := Event.ImpactStyle.BLOOD
 const Config = preload("res://battle/config.gd")
 
 var id: int

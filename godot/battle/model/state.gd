@@ -29,13 +29,14 @@ func launch_projectile(shot: Dictionary) -> void:
 	projectiles.append(shot)
 	record_event(Event.Kind.SHOT, shot.source, null, Event.Attack.PROJECTILE)
 
-func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0) -> void:
+func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0, contact_offset: Vector2 = Vector2.ZERO) -> void:
 	_events.append({
 		"kind": kind, "attack": attack, "amount": amount,
-		"position": target.position, "target_id": target.id,
+		"position": target.position, "contact_offset": contact_offset, "target_id": target.id,
 		"target_hero": target.hero, "target_companion": target.companion,
 		"target_leader": target.leader, "target_name": target.name,
 		"source_hero": source != null and source.hero,
+		"impact_style": target.impact_style,
 	})
 
 func take_events() -> Array[Dictionary]:

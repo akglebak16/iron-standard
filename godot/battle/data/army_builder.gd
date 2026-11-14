@@ -3,6 +3,8 @@ const Config = preload("res://battle/config.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
+const Event = preload("res://battle/combat_event.gd")
+const IMPACT_BY_APPEARANCE := {"skel": Event.ImpactStyle.DUST, "zombie": Event.ImpactStyle.DARK_BLOOD}
 
 static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator, cap: int = Config.SOLO_UNIT_CAP, leader_name: String = "", starting_morale_bonus: float = 0.0) -> bool:
 	if side < 0 or side > 1 or battle.groups.size() != 2 or cap <= 0:
@@ -51,6 +53,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.pierce = float(troop.get("pierce", 0))
 			unit.anti_cavalry = bool(troop.get("anticav", false))
 			var look: Dictionary = troop.get("look", {})
+			unit.impact_style = IMPACT_BY_APPEARANCE.get(look.get("undead", ""), Event.ImpactStyle.BLOOD)
 			unit.weapon_kind = str(look.get("weapon", ""))
 			unit.collision_radius = Config.HORSE_COLLISION_RADIUS if unit.mounted else Config.FOOT_COLLISION_RADIUS
 			unit.mass = Config.HORSE_MASS if unit.mounted else Config.FOOT_MASS

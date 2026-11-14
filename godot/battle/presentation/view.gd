@@ -6,6 +6,7 @@ const Session = preload("res://battle/application/session.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
 const CombatFeedback = preload("res://battle/presentation/combat_feedback.gd")
+const ImpactEffects = preload("res://battle/presentation/impact_effects.gd")
 const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
 const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
 
@@ -18,6 +19,7 @@ var _session: Session
 var _frame: Dictionary = {}
 var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
+var _impacts := ImpactEffects.new()
 var _audio: CombatAudio
 var _music: BattleMusic
 var _effects_enabled := true
@@ -54,8 +56,9 @@ func _ready() -> void:
 
 func _physics_process(dt: float) -> void:
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
-		if _feedback.has_effects():
+		if _feedback.has_effects() or _impacts.has_particles():
 			_feedback.advance(dt, [])
+			_impacts.advance(dt, [])
 			queue_redraw()
 		return
 	_music.advance(dt)
@@ -71,6 +74,7 @@ func _physics_process(dt: float) -> void:
 	_session.advance(dt)
 	var events := _session.take_events()
 	_feedback.advance(dt, events)
+	_impacts.advance(dt, events)
 	_refresh()
 	_audio.advance(dt, events, camera.position)
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
@@ -127,6 +131,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, _frame.arena_size), Demo.GROUND_COLOR)
 	for segment: Rect2 in _frame.walls:
 		draw_rect(segment, Demo.WALL_COLOR)
+	_impacts.draw_ground(self)
 	for unit in _frame.units:
 		if unit.gone:
 			continue
@@ -138,4 +143,5 @@ func _draw() -> void:
 			draw_arc(unit.position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, Demo.COMPANION_RING_COLOR, Demo.HERO_RING_WIDTH)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
+	_impacts.draw_particles(self)
 	_feedback.draw(self)

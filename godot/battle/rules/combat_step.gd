@@ -1,5 +1,6 @@
 extends RefCounted
 const Config = preload("res://battle/config.gd")
+const Event = preload("res://battle/combat_event.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Combat = preload("res://battle/rules/combat.gd")
@@ -64,6 +65,10 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 				closest = distance
 		if victim != null:
 			Combat.arrow_hit(battle, shot, victim, rng)
+		else:
+			battle.record_notice(Event.Kind.PROJECTILE_MISSED, {
+				"position": shot.impact, "trajectory": shot.impact - shot.origin, "throwing": shot.get("throwing", false),
+			})
 
 static func _can_shoot(unit: Unit, distance: float) -> bool:
 	if unit.attack_range <= 0.0 or distance >= unit.attack_range:

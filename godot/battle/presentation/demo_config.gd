@@ -47,6 +47,3 @@ const DAMAGE_RECEIVED_COLOR := Color("#e2503c")
 const DAMAGE_DEALT_COLOR := Color("#f1e3b0")
 const BLOCK_COLOR := Color("#d8d2c4")
 const LAST_STAND_COLOR := Color("#f1d27a")
-const IMPACT_RADIUS := 14.0
-const IMPACT_DURATION := 0.2
-const IMPACT_MAX_MARKS := 40

@@ -7,6 +7,9 @@ const EquipmentConfig = preload("res://equipment/config.gd")
 const Block = preload("res://battle/rules/block.gd")
 const DamageType = preload("res://equipment/rules/damage_type.gd")
 const Event = preload("res://battle/combat_event.gd")
+const MELEE_BLOCK_CONTACT := 10.0
+const HERO_BLOCK_CONTACT := 8.0
+const PROJECTILE_BLOCK_CONTACT_X := 9.0
 
 static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGenerator, damage_scale: float = 1.0) -> int:
 	var incoming: float = (attacker.position - target.position).angle()
@@ -16,7 +19,7 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		base = attacker.ranged_melee_damage if attacker.ranged_melee_damage > 0.0 else base * Config.RANGED_MELEE_DAMAGE_MULTIPLIER
 	var raw: float = base * damage_scale * rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
 	if not rear and Block.check(target, incoming, false, rng):
-		battle.record_event(Event.Kind.BLOCK, target, attacker, Event.Attack.MELEE)
+		battle.record_event(Event.Kind.BLOCK, target, attacker, Event.Attack.MELEE, 0, Vector2.from_angle(incoming) * MELEE_BLOCK_CONTACT)
 		return 0
 	if rear:
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
@@ -35,7 +38,7 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 	var incoming: float = (hero.position - target.position).angle()
 	var rear := absf(wrapf(incoming - target.facing, -PI, PI)) > Config.REAR_ANGLE
 	if not rear and Block.check(target, incoming, false, rng) and rng.randf() < Config.HERO_BLOCK_HOLD_CHANCE - float(weapon.get("brk", 0.0)):
-		battle.record_event(Event.Kind.BLOCK, target, hero, Event.Attack.MELEE)
+		battle.record_event(Event.Kind.BLOCK, target, hero, Event.Attack.MELEE, 0, -Vector2.from_angle(direction) * HERO_BLOCK_CONTACT)
 		return 0
 	var knockback: float = float(weapon.get("kb", Config.HERO_DEFAULT_KNOCKBACK))
 	target.position += Vector2(cos(direction), sin(direction)) * Config.HERO_KNOCKBACK_DISTANCE * knockback
@@ -75,7 +78,7 @@ static func _make_projectile(attacker: Unit, aim: Vector2, distance: float, dura
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
 	var incoming: float = (shot.origin - target.position).angle()
 	if Block.check(target, incoming, true, rng):
-		battle.record_event(Event.Kind.BLOCK, target, shot.source, Event.Attack.PROJECTILE)
+		battle.record_event(Event.Kind.BLOCK, target, shot.source, Event.Attack.PROJECTILE, 0, Vector2(cos(incoming) * PROJECTILE_BLOCK_CONTACT_X, 0))
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)
 	if battle.wall != null:
