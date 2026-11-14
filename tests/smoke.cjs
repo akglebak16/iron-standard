@@ -124,6 +124,37 @@ async function companions(pg) {
   ok('спутники и таверны сохраняются', sv === 'ingrid,halvdan|true', sv);
 }
 
+async function vassals(pg) {
+  console.log('Вассалы-спутники');
+  await newSinglePlayer(pg);
+  const set = await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); captureSettle(P, s); s.gar = genTroops(sCult(s), 20, .5); const t = G.settles.find(x => x.kind === 'town' && x.fac === 'player'); P.gold = 5000; compsInit(); G.cpos.vikenty = t.id; const r = doCompHire(P, t, 'vikenty'); return { sid: s.id, r, n: P.comps.length }; });
+  ok('есть своё владение и спутник в отряде', !set.r && set.n === 1, set);
+  await pg.evaluate(() => { closeModal(); openPanel('comps'); });
+  ok('у спутника есть кнопка «Дать надел»', await pg.evaluate(() => !!document.querySelector('#modal [data-act=cvpick][data-id=vikenty]')));
+  await pg.click('#modal [data-act=cvpick][data-id=vikenty]'); await sleep(100);
+  ok('кнопка показывает список наделов', await pg.evaluate(id => !!document.querySelector('#modal [data-act=cvgrant][data-s="' + id + '"]'), set.sid));
+  await pg.click('#modal [data-act=cvgrant][data-id=vikenty]'); await sleep(150);
+  const g = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), v = cvOfId(P, 'vikenty'), p = v && cvPartyOf(v); return { out: !compById(P, 'vikenty'), vass: P.vass.length, mark: s.vass === 'vikenty', party: !!p && p.kind === 'cvass' && p.fac === 'player', hired: compHired('vikenty'), ui: /Вассал/.test(el('modal').innerHTML) && !!document.querySelector('#modal [data-act=cvrevoke]'), tab: !!document.querySelector('#modal .tab[data-t=comps]') }; }, set.sid);
+  ok('надел отдан: спутник стал вассалом, на карте его дружина, в таверне его нет', g.out && g.vass === 1 && g.mark && g.party && g.hired && g.ui && g.tab, g);
+  const eco = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), v = cvOfId(P, 'vikenty'), g0 = P.gold, n0 = troopCount(cvPartyOf(v).troops); v.gold = 3000; for (let i = 0; i < 4; i++) { garrisonDay(); cvDay(P); } return { dg: P.gold - g0, n: troopCount(cvPartyOf(v).troops) - n0, vg: v.gold, cap: cvCap(v) }; }, set.sid);
+  ok('вассал платит подать, на казну нанимает дружину, содержание списывается', eco.dg > 0 && eco.n > 0 && eco.vg < 3000 + 4 * 400, eco);
+  const hs = await pg.evaluate(() => { const v = cvOfId(G.player, 'vikenty'), p = cvPartyOf(v), P = G.player; const bd = { kind: 'bandit', fac: 'bandit' }, lord = f => ({ kind: 'lord', fac: f }); const f1 = REAL_F[0], f2 = REAL_F[1]; P.rel[f1] = 40; P.rel[f2] = -45; return { bandit: hostile(p, bd) && hostile(bd, p), friend: !hostile(p, lord(f1)), foe: hostile(p, lord(f2)), own: !hostile(p, { kind: 'cvass', fac: 'player' }), cara: !hostile(p, { kind: 'caravan', fac: f2 }), hunted: isHostileToPlayer(p, P) === false }; });
+  ok('дружина вассала враждует с врагами игрока и не трогает друзей и караваны', hs.bandit && hs.friend && hs.foe && hs.own && hs.cara && hs.hunted, hs);
+  const wr = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), v = cvOfId(P, 'vikenty'), p = cvPartyOf(v); p.x = s.x; p.y = s.y; p.troops = genTroops('emp', 60, .8); s.gar = [{ type: 'n1', n: 1 }]; const f = REAL_F.find(x => x !== sCult(s)) || 'emp'; P.rel[f] = -60; mkParty('lord', f, 'Лорд Тест', s.x + 15, s.y + 5, genTroops(f, 40, .6)); assaultsTick(); return { fac: s.fac, party: !!cvPartyOf(v) }; }, set.sid);
+  ok('дружина вассала у надела помогает отбить штурм при слабом гарнизоне', wr.fac === 'player', wr);
+  const sim = await pg.evaluate(sid => { const P = G.player, v = cvOfId(P, 'vikenty'), p = cvPartyOf(v); for (const m of ['patrol', 'follow', 'guard']) { v.mode = m; for (let i = 0; i < 120; i++) stepWorld(.5); } const s = settleById(sid); return { ok: G.parties.includes(p) ? Math.hypot(p.x - s.x, p.y - s.y) < 400 : true }; }, set.sid);
+  ok('дружина ходит по приказам (дозор, за героем, охрана) без ошибок', sim.ok, sim);
+  const talk = await pg.evaluate(() => { closeModal(); const p = cvPartyOf(cvOfId(G.player, 'vikenty')); if (!p) return true; openEncounter(p, false); return /Твой вассал/.test(el('modal').innerHTML) && !!document.querySelector('#modal [data-act=cvmode][data-m=patrol]') && !document.querySelector('#modal [data-act=attack]'); });
+  ok('при встрече с дружиной вассала — разговор и приказы, а не нападение', talk);
+  await pg.evaluate(() => { const P = G.player, v = cvOfId(P, 'vikenty'); closeModal(); ACT.cvmode({ id: 'vikenty', m: 'patrol' }); });
+  ok('приказ вассалу меняет режим', await pg.evaluate(() => cvOfId(G.player, 'vikenty').mode === 'patrol'));
+  const rv = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), n0 = troopCount(garrisonOf(s)); cvRevoke(P, 'vikenty'); return { back: !!compById(P, 'vikenty'), no: !P.vass.length, mark: s.vass === undefined, gar: troopCount(garrisonOf(s)) >= n0, party: !G.parties.some(p => p.kind === 'cvass') }; }, set.sid);
+  ok('надел можно забрать: спутник в отряде, дружина распущена в гарнизон', rv.back && rv.no && rv.mark && rv.gar && rv.party, rv);
+  const lost = await pg.evaluate(sid => { const P = G.player, s = settleById(sid); cvGrant(P, 'vikenty', sid); s.fac = 'emp'; s.owner = null; cvDay(P); return { back: !!compById(P, 'vikenty'), no: !P.vass.length, party: !G.parties.some(p => p.kind === 'cvass') }; }, set.sid);
+  ok('потерянный надел снимает вассала автоматически', lost.back && lost.no && lost.party, lost);
+  ok('лишнее: нельзя отдать чужой город или несуществующего спутника', await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player'); return !!cvCan(G.player, 'vikenty', s.id) && !!cvCan(G.player, 'nobody', s.id); }));
+}
+
 async function undead(pg) {
   console.log('Нашествие нежити');
   await newSinglePlayer(pg);
@@ -171,6 +202,7 @@ async function multiPlayer(pg) {
     await singlePlayer(await open());
     await sieges(await open());
     await companions(await open());
+    { const vp = await open(); await vassals(vp); await vp.close(); } // страница больше не нужна: фоновые вкладки грузят процессор и тормозят игру вдвоём
     await undead(await open());
     await multiPlayer(await open());
   } catch (e) { console.error(e); failed++; }

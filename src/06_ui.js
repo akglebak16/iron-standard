@@ -102,13 +102,14 @@ function renderPanel() {
   } else if (tab === 'factions') {
     body += journalFactionsBody();
   }
-  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Задания'], ['factions', 'Фракции']]; if (!NET.on && (P.comps || []).length) tabs.splice(1, 0, ['comps', 'Спутники']); if (NET.on) tabs.push(['ally', 'Союз']);
+  const tabs = [['troops', 'Отряд'], ['hero', 'Герой'], ['inv', 'Обоз'], ['journal', 'Задания'], ['factions', 'Фракции']]; if (!NET.on && ((P.comps || []).length || (P.vass || []).length)) tabs.splice(1, 0, ['comps', 'Спутники']); if (NET.on) tabs.push(['ally', 'Союз']);
   openModal('<div class="whead"><img alt="" src="' + crestURL('player') + '"><h2>' + P.name + '<span class="sub">Уровень ' + H.lvl + ' · ' + fmt(P.gold) + ' золота · провизии ' + provOf(P) + '</span></h2></div><div class="tabs">' + tabs.map(t => '<button class="tab ' + (t[0] === tab ? 'on' : '') + '" data-act="ptab" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</div><div class="wbody">' + body + '</div>' + (tab === 'inv' ? invDock() : '') + '<div class="wfoot"><button class="btn pri" data-act="closepanel">Закрыть</button></div>', 'wide');
 }
 
 /* ---------- встреча ---------- */
 function relativePowerOld(p) { const a = strength(G.player.troops) + 8, b = partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function openEncounter(p, forced) {
+  if (p.kind === 'cvass' && typeof vassalTalk === 'function') return vassalTalk(p); // дружина своего вассала: разговор, не бой
   const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp', help = hostileP && typeof encHelpers === 'function' ? encHelpers(G.player, p) : []; UI.enc = { p, forced, hostile: hostileP, help }; G.player.path = []; G.player.tid = null; G.wait = false;
   const all = help.length ? encTroops(p, help) : p.troops, pw = relativePowerOf(G.player, Object.assign({}, p, { troops: all })), list = all.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
   const title = p.kind === 'camp' ? (p.fac === 'undead' ? 'Чёрный курган' : 'Логово разбойников') : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? (p.big ? 'Крупная банда' : 'Разбойники') : p.name;
