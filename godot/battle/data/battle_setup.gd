@@ -6,4 +6,5 @@ extends Resource
 @export var player_army: Array[Dictionary] = []
 @export var enemy_army: Array[Dictionary] = []
 @export var hero_troop: String = ""
+@export var hero_profile: Dictionary = {} # Empty keeps the existing troop-based preview hero.
 @export var hero_position : Vector2 = Vector2.ZERO
