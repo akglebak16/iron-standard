@@ -8,6 +8,7 @@ func _initialize() -> void:
 	_test_infantry_and_archers()
 	_test_cavalry_flank()
 	_test_follow()
+	_test_relayout()
 	print("Tactics tests passed")
 	quit(0)
 
@@ -86,3 +87,26 @@ func _test_follow() -> void:
 	hero.position = Vector2(1000, 800)
 	Tactics.follow_hero(battle, hero)
 	assert(battle.groups[0][0].center == Vector2(850, 800))
+
+func _test_relayout() -> void:
+	var battle := _battle()
+	var first: Unit = battle.units[0]
+	var second := Unit.new(1, 0, Vector2(600, 900), 100, 0, 1)
+	battle.add_grouped_unit(second, Config.GROUP_INFANTRY)
+	var group = battle.groups[0][Config.GROUP_INFANTRY]
+	first.position = Vector2(600, 700)
+	Tactics.relayout(battle, 0.1)
+	var first_slot: Vector2 = first.slot_offset
+	var second_slot: Vector2 = second.slot_offset
+	assert(is_equal_approx(battle.formation_timer, Config.FORMATION_RELAYOUT_SECONDS))
+	first.position.y = 950
+	second.position.y = 650
+	Tactics.relayout(battle, 1.0)
+	assert(first.slot_offset == first_slot and second.slot_offset == second_slot)
+	Tactics.relayout(battle, Config.FORMATION_RELAYOUT_SECONDS - 1.0)
+	assert(first.slot_offset == second_slot and second.slot_offset == first_slot)
+	group.order = Config.ORDER_CHARGE
+	first.position.y = 600
+	second.position.y = 950
+	Tactics.relayout(battle, Config.FORMATION_RELAYOUT_SECONDS)
+	assert(first.slot_offset == second_slot and second.slot_offset == first_slot)

@@ -11,6 +11,7 @@ var groups: Array = []
 var projectiles: Array = []
 var starting_units := [0, 0]
 var morale_timer := 0.0
+var formation_timer := 0.0
 
 func setup_groups(cavalry_flank: int = 1) -> void:
 	groups.clear()

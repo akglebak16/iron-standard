@@ -50,6 +50,7 @@ func advance(dt: float) -> void:
 	_elapsed_seconds += dt
 	Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
 	Tactics.follow_hero(_state, _hero)
+	Tactics.relayout(_state, dt)
 	HeroControl.step(_state, _hero, _input, dt, _rng)
 	var spatial_index = Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
 	CombatStep.step(_state, dt, _rng, spatial_index)

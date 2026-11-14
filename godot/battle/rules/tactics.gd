@@ -57,6 +57,16 @@ static func follow_hero(battle: State, hero: Unit) -> void:
 		group.direction = facing
 		group.center = hero.position - Vector2(cos(facing), sin(facing)) * rear + Vector2(-sin(facing), cos(facing)) * side
 
+static func relayout(battle: State, dt: float) -> void:
+	battle.formation_timer -= dt
+	if battle.formation_timer > 0.0:
+		return
+	battle.formation_timer = Config.FORMATION_RELAYOUT_SECONDS
+	for side_groups in battle.groups:
+		for group: Group in side_groups:
+			if group.order != Config.ORDER_CHARGE:
+				group.layout()
+
 static func _nearest_foe_distance(battle: State, point: Vector2, side: int) -> float:
 	var closest := INF
 	for unit: Unit in battle.units:
