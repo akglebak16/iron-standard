@@ -42,4 +42,4 @@ static func resolve(saved: Dictionary, catalog: Catalog) -> Dictionary:
 	var effects := {}
 	for effect in definition.sk:
 		effects[effect] = definition.sk[effect][rank_index]
-	return {"profile": profile, "fit": health >= Config.COMPANION_FIT_HEALTH, "party_effects": effects}
+	return {"profile": profile, "fit": health >= Config.COMPANION_FIT_HEALTH, "party_effects": effects, "voice": definition.get("voice", {})}

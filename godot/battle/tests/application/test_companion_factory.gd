@@ -22,6 +22,7 @@ func _initialize() -> void:
 	setup.companion_profiles = [{"id": "anselm", "hp": 0.25}, {"id": "ingrid"}, {"id": "tului"}, {"id": "vikenty", "hp": 0.24}]
 	var session := Factory.create(setup, troops, gear, perks, companions)
 	assert(session != null and session.snapshot().counts == [4, 1])
+	assert(session.companion_dialogue().is_empty())
 	var by_id := {}
 	for unit: Unit in session._state.units:
 		if unit.companion:
@@ -52,6 +53,7 @@ func _initialize() -> void:
 	setup.companion_profiles.append({"id": "anselm"})
 	assert(Factory.create(setup, troops, gear, perks, companions) == null)
 	_check_wounded_bonus(troops, gear, perks, companions)
+	_check_dialogue(troops, gear, perks, companions)
 	print("Companion battle integration tests passed")
 	quit(0)
 
@@ -87,3 +89,19 @@ func _check_wounded_bonus(troops: Catalog, gear: GearCatalog, perks: PerkCatalog
 	assert(plain.result().dead.n1 == 1)
 	assert(treated.result().wounded.n1 == 1 and treated.result().comps.is_empty())
 	assert(plain._rng.state == treated._rng.state)
+
+func _check_dialogue(troops: Catalog, gear: GearCatalog, perks: PerkCatalog, companions: CompanionCatalog) -> void:
+	var setup := Setup.new()
+	setup.hero_troop = "n1"
+	setup.companion_profiles = [{"id": "vikenty", "name": "Викентий в бою", "voice": {"start": ["Из сохранения"]}}]
+	var session := Factory.create(setup, troops, gear, perks, companions)
+	assert(session != null)
+	var id: int = session._state.units.front().id
+	var roster := session.companion_dialogue()
+	var original := companions.get_companion("vikenty")
+	assert(roster[id].name == "Викентий в бою" and roster[id].lines == original.voice)
+	roster[id].lines.clear()
+	assert(session.companion_dialogue()[id].lines == original.voice)
+	original.voice = {"start": [false]}
+	assert(not companions.replace_data([original]))
+	assert(not companions.get_companion("vikenty").voice.is_empty())

@@ -32,8 +32,9 @@ var _hero_profile: Dictionary = {}
 var _swap_held: bool = false
 var _companion_survival: float
 var _events: Array[Dictionary] = []
+var _companion_dialogue: Dictionary
 
-func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0) -> void:
+func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0, companion_dialogue: Dictionary = {}) -> void:
 	assert(state != null and hero != null and rng != null)
 	assert(hero.hero and hero in state.units)
 	_state = state
@@ -42,6 +43,7 @@ func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: G
 	_gear_catalog = gear_catalog
 	_hero_profile = hero_profile.duplicate(true)
 	_companion_survival = companion_survival
+	_companion_dialogue = companion_dialogue.duplicate(true)
 	_state.record_notice(Event.Kind.BATTLE_STARTED)
 
 func set_hero_input(input: HeroInput) -> bool:
@@ -92,6 +94,9 @@ func advance(dt: float) -> void:
 func result() -> Dictionary:
 	return _result.duplicate(true)
 
+func companion_dialogue() -> Dictionary:
+	return _companion_dialogue.duplicate(true)
+
 ## Transfers the most recent tick's events once. Advance replaces unread events.
 func take_events() -> Array[Dictionary]:
 	var batch := _events
@@ -131,7 +136,7 @@ func snapshot() -> Dictionary:
 		units.append({
 			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
 			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
-			"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted,
+			"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted, "fleeing": unit.fleeing,
 			"facing": unit.facing, "speed": unit.velocity.length(), "blocking": unit.blocking,
 			"windup": unit.attack_windup if unit.hero else unit.ai_windup,
 			"look": unit.appearance.duplicate(true),

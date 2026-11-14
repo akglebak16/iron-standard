@@ -44,19 +44,26 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 		siege_skill += float(resolved.party_effects.get(CharacterConfig.SIEGE_EFFECT, 0.0))
 		if not resolved.fit:
 			continue
-		fit_companions.append(resolved.profile)
+		fit_companions.append(resolved)
 	if setup.siege:
 		SiegeSetup.apply(state, siege_skill)
 	var defender_morale := roundf(Config.SIEGE_DEFENDER_MORALE * (1.0 - state.siege_skill)) if setup.siege else 0.0
 	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale):
 		return null
-	for profile in fit_companions:
+	var dialogue := {}
+	for companion in fit_companions:
+		var profile: Dictionary = companion.profile
 		var gear := HeroGear.resolve(profile, gear_catalog)
 		if gear.is_empty() or perk_catalog == null:
 			return null
 		var effects := PerkEffects.own(profile, perk_catalog)
-		if effects.is_empty() or not CompanionBuilder.spawn(state, profile, gear, effects, rng):
+		if effects.is_empty():
 			return null
+		var unit := CompanionBuilder.spawn(state, profile, gear, effects, rng)
+		if unit == null:
+			return null
+		if not companion.voice.is_empty():
+			dialogue[unit.id] = {"name": unit.name, "lines": companion.voice}
 	state.place_units()
 	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true
@@ -91,4 +98,4 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 				ally.morale = ally.base_morale
 				ally.damage *= 1.0 + damage_bonus
 	state.add_unit(hero)
-	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile, companion_survival)
+	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile, companion_survival, dialogue)

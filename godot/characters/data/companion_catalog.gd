@@ -39,6 +39,15 @@ func replace_data(data: Variant) -> bool:
 			for value in ranks:
 				if not _valid_number(value):
 					return false
+		var voice: Variant = entry.get("voice", {})
+		if not voice is Dictionary:
+			return false
+		for lines in voice.values():
+			if not lines is Array:
+				return false
+			for line in lines:
+				if not line is String or line.strip_edges().is_empty():
+					return false
 		definitions[entry.id] = entry
 	_definitions = definitions.duplicate(true)
 	return true

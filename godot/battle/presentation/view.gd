@@ -8,6 +8,7 @@ const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
 const CombatFeedback = preload("res://battle/presentation/combat_feedback.gd")
 const ImpactEffects = preload("res://battle/presentation/impact_effects.gd")
 const UnitView = preload("res://battle/presentation/unit_view.gd")
+const CompanionDialogue = preload("res://battle/presentation/companion_dialogue.gd")
 const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
 const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
 
@@ -23,6 +24,7 @@ var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
 var _impacts := ImpactEffects.new()
 var _figures := UnitView.new()
+var _dialogue := CompanionDialogue.new()
 var _audio: CombatAudio
 var _music: BattleMusic
 var _effects_enabled := true
@@ -32,6 +34,7 @@ var _result_summary := ""
 func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
+	_dialogue.configure(session.companion_dialogue())
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
 	_impacts.blood_enabled = blood_enabled
@@ -56,14 +59,15 @@ func _ready() -> void:
 	_music = BattleMusic.new()
 	_music.enabled = _music_enabled
 	add_child(_music)
-	_refresh()
+	_refresh(0.0, [])
 
 func _physics_process(dt: float) -> void:
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
-		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units():
+		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles():
 			_feedback.advance(dt, [])
 			_impacts.advance(dt, [])
 			_figures.advance(dt, [])
+			_dialogue.age(dt)
 			queue_redraw()
 		return
 	_music.advance(dt)
@@ -81,7 +85,7 @@ func _physics_process(dt: float) -> void:
 	_feedback.advance(dt, events)
 	_impacts.advance(dt, events)
 	_figures.advance(dt, events)
-	_refresh()
+	_refresh(dt, events)
 	_audio.advance(dt, events, camera.position)
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		battle_finished.emit()
@@ -116,10 +120,12 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 	_update_status()
 	audio_preferences_changed.emit(effects, music)
 
-func _refresh() -> void:
+func _refresh(dt: float, events: Array[Dictionary]) -> void:
 	# One detached read per physics tick, reused by HUD and drawing.
 	_frame = _session.snapshot()
 	camera.position = _frame.camera_target
+	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
+	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished))
 	_update_status()
 	queue_redraw()
 
@@ -150,3 +156,4 @@ func _draw() -> void:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)
 	_feedback.draw(self)
+	_dialogue.draw(self)

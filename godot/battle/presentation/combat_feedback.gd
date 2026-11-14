@@ -65,6 +65,10 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 func journal() -> String:
 	return "\n".join(_journal)
 
+func add_dialogue(lines: PackedStringArray) -> void:
+	for line in lines:
+		_log(line)
+
 func has_effects() -> bool:
 	return not _labels.is_empty()
 

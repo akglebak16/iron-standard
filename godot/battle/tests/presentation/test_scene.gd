@@ -2,6 +2,8 @@ extends SceneTree
 const Session = preload("res://battle/application/session.gd")
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
+const Dialogue = preload("res://battle/presentation/companion_dialogue.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const PresentationPreferences = preload("res://app/presentation_preferences.gd")
 const TICK := 1.0 / 60.0
 
@@ -82,6 +84,7 @@ func _check() -> void:
 	assert(view.get_node("Hud/Status").text == text)
 	assert(not view._figures.has_falling_units())
 	_check_defeat(packed, path)
+	await _check_siege_dialogue(path)
 	assert(DirAccess.remove_absolute(path) == OK)
 	print("Scene tests passed")
 	quit(0)
@@ -117,3 +120,24 @@ func _check_defeat(packed: PackedScene, path: String) -> void:
 	assert(view.get_node("Hud/Status").text.contains("Герой очнулся у города Вентум"))
 	assert(scene._demo_party.position == Vector2(110, 134) and scene._demo_party.gold == 80)
 	assert(scene._demo_world.parties[0].state == "idle" and scene._demo_world.parties[0].cd == 10)
+
+func _check_siege_dialogue(path: String) -> void:
+	var scene = load("res://app/siege_demo.tscn").instantiate()
+	scene.presentation_preferences = PresentationPreferences.new(path)
+	root.add_child(scene)
+	var view = scene.get_node("Battle")
+	view.set_physics_process(false)
+	var session: Session = view._session
+	var rng_state: int = session._rng.state
+	var frame := session.snapshot()
+	var events: Array[Dictionary] = []
+	view._refresh(Dialogue.START_DELAY.y, events)
+	var catalog := CompanionCatalog.new()
+	assert(catalog.load_data())
+	var definition := catalog.get_companion("vikenty")
+	var status: String = view.status.text
+	assert(definition.voice.siege.any(func(line): return status.contains(Dialogue.JOURNAL_LINE % [definition.name, line])))
+	assert(view._dialogue.has_bubbles())
+	assert(session._rng.state == rng_state and session.snapshot() == frame)
+	await process_frame
+	await process_frame

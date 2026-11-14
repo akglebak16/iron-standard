@@ -37,6 +37,7 @@ func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: E
 		"target_leader": target.leader, "target_name": target.name,
 		"source_hero": source != null and source.hero,
 		"source_id": source.id if source != null else -1,
+		"source_alive": source != null and not source.dead,
 		"impact_style": target.impact_style,
 		"damage_fraction": float(amount) / maxf(target.max_hp, 1.0),
 		"lethal": target.hp <= 0.0,
