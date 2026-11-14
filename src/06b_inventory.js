@@ -92,7 +92,8 @@ function tile(o) {
   const it = o.it, t = tierOf(it), cls = ['tile'];
   if (o.on) cls.push('on'); if (o.fit) cls.push('fit'); if (!it) cls.push('empty'); if (it && it.kind === 'goods') cls.push('g'); if (o.price !== undefined) cls.push('hp');
   const st = '--tc:' + (t ? t.c : it ? '#8a7a58' : '#ffffff22') + (it && it.kind === 'goods' ? ';--ic:' + it.c : ''), tag = o.attr ? 'button' : 'div';
-  let h = '<' + tag + ' class="' + cls.join(' ') + '" style="' + st + '"' + (o.title ? ' title="' + o.title + '"' : '') + ' ' + (o.attr || '') + '>' + (it ? itemIc(it) : ic(o.ghost || 'bag'));
+  let h = '<' + tag + ' class="' + cls.join(' ') + '" style="' + st + '"' + (o.title ? ' title="' + o.title + '"' : '') + ' ' + (it ? 'data-item="' + it.id + '" ' : '') + (o.attr || '') + '>' + (it ? itemIc(it) : ic(o.ghost || 'bag'));
+  if (t) h += '<span class="qualitymark" title="' + t.n + '">' + '◆'.repeat(Math.min(4, (it.tier || 0) + 1)) + '</span>';
   if (o.qty > 1) h += '<b class="qty">' + o.qty + '</b>';
   if (o.price !== undefined) h += '<span class="pr ' + (o.tone || '') + '">' + ic('coin') + fmt(o.price) + '</span>';
   if (o.rib) h += '<i class="rib ' + (o.rib[1] || '') + '">' + o.rib[0] + '</i>';
@@ -112,7 +113,7 @@ function cmpDelta(it, cur, key) { // насколько вещь лучше на
   return ' <small class="' + (d > 0 ? 'up' : 'dn') + '">' + (d > 0 ? '▲ +' : '▼ ') + n + '</small>';
 }
 function itemDock(it, o) {
-  o = o || {}; const t = tierOf(it), cur = o.cmp ? eqItem(G.player.hero, it.slot) : null, st = [], tr = []; let sub;
+  o = o || {}; const t = tierOf(it), cur = o.cmp ? eqItem(invWho(G.player), it.slot) : null, st = [], tr = []; let sub;
   if (it.kind === 'goods') { sub = FOODV[it.id] ? 'Товар · провизия' : 'Товар'; st.push(stat('Вес', it.w), stat('Обычная цена', it.price)); if (FOODV[it.id]) st.push(stat('Провизия', '+' + FOODV[it.id] + ' порц.')); }
   else {
     sub = SLOT_NAME[it.slot] + (it.dt ? ' · ' + WTYPE[it.wt] + ' · ' + DTYPE[it.dt].n.toLowerCase() + ' урон' : '') + ' · ' + t.n;

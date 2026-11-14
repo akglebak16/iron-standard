@@ -72,8 +72,8 @@ function buildBattleHud() {
   bt.innerHTML = '<div class="sq plank thin" data-b="pause" title="Пауза (P)">' + ic('pause') + '</div><div class="sq plank thin" data-b="speed" title="Скорость (T)">' + ic('hourglass') + '<span class="kb" id="spv">×1</span></div><div class="sq plank thin" data-b="retreat" title="Отступить">' + ic('retreat') + '</div><div class="sq plank thin" data-b="menu" title="Меню (Esc)">' + ic('gear') + '</div>';
   el('bhero').innerHTML = '<div class="nm"><span id="hn"></span><small id="hs"></small></div><div class="bgrid"><div class="bar st"><i id="bst"></i><span id="tst"></span></div><div class="bar mo"><i id="bmo"></i><span id="tmo"></span></div><div class="bar ar"><i id="bar"></i><span id="tar"></span></div><div class="bar hp"><i id="bhp"></i><span id="thp"></span></div></div><div class="wsw" id="wsw" title="Смена оружия: клавиша X или клик"><div class="wb" data-w="melee" id="wbm">' + ic('sword') + '<span class="wn" id="wnm"></span></div><div class="wb" data-w="ranged" id="wbr">' + ic('bow') + '<span class="wn" id="wnr"></span></div><span class="kb">X</span></div>';
   const gs = [[0, 'Пехота', 'inf'], [1, 'Стрелки', 'arc'], [2, 'Конница', 'cav'], [3, 'Все', null]];
-  el('bgroups').innerHTML = gs.map(g => '<div class="grp" data-g="' + g[0] + '"><span class="kb">' + (g[0] + 1) + '</span><img alt="" id="gi' + g[0] + '"><b id="gc' + g[0] + '">0</b>' + g[1] + '</div>').join('');
-  el('bords').innerHTML = [['hold', 'hold', 'Q', 'Держать позицию'], ['follow', 'follow', 'E', 'За мной'], ['charge', 'charge', 'R', 'В атаку'], ['back', 'back', 'F', 'Отойти']].map(o => '<div class="ord" data-o="' + o[0] + '" title="' + o[3] + ' (' + o[2] + ')">' + ic(o[1]) + '<span class="kb">' + o[2] + '</span></div>').join('');
+  el('bgroups').innerHTML = gs.map(g => '<button type="button" class="grp" data-g="' + g[0] + '"><span class="kb">' + (g[0] + 1) + '</span><img alt="" id="gi' + g[0] + '"><b id="gc' + g[0] + '">0</b>' + '<span class="groupname">' + g[1] + '</span></button>').join('');
+  el('bords').innerHTML = [['hold', 'hold', 'Q', 'Держать позицию'], ['follow', 'follow', 'E', 'За мной'], ['charge', 'charge', 'R', 'В атаку'], ['back', 'back', 'F', 'Отойти']].map(o => '<button type="button" class="ord" data-o="' + o[0] + '" title="' + o[3] + ' (' + o[2] + ')">' + ic(o[1]) + '<span>' + COMMAND_LABEL[o[0]] + '</span><span class="kb">' + o[2] + '</span></button>').join('');
   for (let k = 0; k < 3; k++) { const l = B.units.find(u => u.side === 0 && !u.isHero && !u.comp && u.t.grp === k) || B.units.find(u => u.side === 0 && u.comp && u.t.grp === k); const im = el('gi' + k); if (l) im.src = l.comp ? l.sp.cv.toDataURL() : portrait(l.t.id, B.cfg.pfac); else im.style.visibility = 'hidden'; }
   const hi = el('gi3'); const hu = B.hero; if (hu) hi.src = hu.sp.cv.toDataURL(); else hi.style.visibility = 'hidden';
   el('bhero').hidden = dm || !hero; el('borders').hidden = dm; el('bbtns').hidden = dm; el('btop').hidden = false;
@@ -85,6 +85,7 @@ function updateBattleHud() {
   if (h && B.cfg.hero) { const eq = heroEq(B.cfg.hero), sel = B.cfg.hero.sel === 'ranged' && eq.ranged ? 'ranged' : 'melee', nm = eq.melee ? EQ[eq.melee].name : 'Кулаки', nr = eq.ranged ? EQ[eq.ranged].name : 'нет дальнего'; const wk = sel + '|' + nm + '|' + nr; if (B.wk !== wk) { B.wk = wk; el('wnm').textContent = nm; el('wnr').textContent = nr; el('wbm').classList.toggle('on', sel === 'melee'); el('wbr').classList.toggle('on', sel === 'ranged'); el('wbr').classList.toggle('off', !eq.ranged); } }
   const c = [0, 0, 0]; const mp = myPid(); for (const u of B.units) if (u.side === 0 && fit(u) && !u.isHero && u.own === mp) c[u.t.grp] += u.w || 1; for (let k = 0; k < 3; k++) c[k] = Math.round(c[k]); for (let k = 0; k < 3; k++) { el('gc' + k).textContent = c[k]; el('gi' + k).parentNode.style.opacity = c[k] ? 1 : .35; } el('gc3').textContent = c[0] + c[1] + c[2];
   for (const g of document.querySelectorAll('#bgroups .grp')) g.classList.toggle('on', +g.dataset.g === B.sel);
+  commandHud();
   if (B.logDirty) { B.logDirty = false; el('blog').innerHTML = B.log.slice(-8).reverse().map(l => '<div class="k' + l.kind + '">' + l.txt + '</div>').join(''); }
   const pv = el('spv'); if (pv) pv.textContent = '×' + B.speed;
 }
@@ -134,6 +135,7 @@ function drawWorld(g) {
   g.setTransform(d * z, 0, 0, d * z, d * (VIEW.w / 2 - WC.x * z), d * (VIEW.h / 2 - WC.y * z)); g.drawImage(WT.img, 0, 0);
   const x0 = WC.x - VIEW.w / 2 / z - 120, x1 = WC.x + VIEW.w / 2 / z + 120, y0 = WC.y - VIEW.h / 2 / z - 120, y1 = WC.y + VIEW.h / 2 / z + 160;
   if (P.path.length && P.pi < P.path.length) { g.setLineDash([8, 7]); g.lineCap = 'round'; const pp = rpos(P); g.beginPath(); g.moveTo(pp.x, pp.y); for (let i = P.pi; i < P.path.length; i++) g.lineTo(P.path[i].x, P.path[i].y); g.strokeStyle = 'rgba(20,12,4,.8)'; g.lineWidth = 5; g.stroke(); g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.stroke(); g.setLineDash([]); const e = P.path[P.path.length - 1]; g.strokeStyle = '#ffe9a0'; g.lineWidth = 2.6; g.beginPath(); g.arc(e.x, e.y, 9, 0, TAU); g.stroke(); }
+  routeFinish(g, P);
   const list = []; for (const s of G.settles) if (s.x > x0 && s.x < x1 && s.y > y0 && s.y < y1) list.push({ y: s.y, s }); for (const p of G.parties) if (!p.hide && p.kind !== 'camp' && p.x > x0 && p.x < x1 && p.y > y0 && p.y < y1) { const r = rpos(p); list.push({ y: r.y, p, r }); } for (const Q of G.players) { if (Q !== P && (Q.in || Q.away)) continue; const r = rpos(Q); list.push({ y: r.y, pl: Q, r }); } list.sort((a, b) => a.y - b.y);
   g.textAlign = 'center'; g.lineJoin = 'round';
   const late = []; // названия поселений рисуем последними — поверх фигурок
@@ -147,7 +149,7 @@ function drawWorld(g) {
   }
   if (typeof drawWar === 'function') drawWar(g, label);
   if (typeof drawJqMark === 'function') drawJqMark(g);
-  for (const l of late) label(...l);
+  settlementLabels(g, late, label);
   g.setTransform(1, 0, 0, 1, 0, 0);
   const h = G.hour, night = h >= 21 || h < 4 ? .34 : h >= 19 ? (h - 18) * .1 : h < 6 ? (6 - h) * .1 : 0; if (night > 0) { g.fillStyle = 'rgba(8,16,48,' + night + ')'; g.fillRect(0, 0, cv.width, cv.height); }
   const vg = g.createRadialGradient(cv.width / 2, cv.height / 2, cv.height * .45, cv.width / 2, cv.height / 2, cv.width * .72); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(6,4,2,.5)'); g.fillStyle = vg; g.fillRect(0, 0, cv.width, cv.height);
@@ -230,7 +232,7 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 function init() {
-  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); try { new ResizeObserver(() => resize()).observe(cv); } catch (e) { } bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
+  netProbe(); cv = el('cv'); cx = cv.getContext('2d'); try { IN.touch = window.matchMedia('(pointer:coarse)').matches; } catch (e) { } resize(); bindGearPeek(); try { new ResizeObserver(() => resize()).observe(cv); } catch (e) { } bindInput(); window.__dbg = { get G() { return G; }, get B() { return B; }, get MODE() { return MODE; } };
   el('modal').hidden = true; setTimeout(() => { startDemo(); el('title').hidden = false; buildTitleMenu(); showLoad(false); }, 50); requestAnimationFrame(frame);
 }
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { }); init();
