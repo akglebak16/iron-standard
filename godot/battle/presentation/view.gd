@@ -1,6 +1,7 @@
 extends Node2D
 ## Input/rendering adapter. Simulation is injected before entering the tree.
 const Config = preload("res://battle/config.gd")
+const Event = preload("res://battle/combat_event.gd")
 const Demo = preload("res://battle/presentation/demo_config.gd")
 const Session = preload("res://battle/application/session.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
@@ -17,6 +18,9 @@ const OrderMarker = preload("res://battle/presentation/hud/order_marker.gd")
 const NavigationHud = preload("res://battle/presentation/hud/navigation_hud.gd")
 const BattleCamera = preload("res://battle/presentation/battle_camera.gd")
 const BattleControls = preload("res://battle/presentation/hud/battle_controls.gd")
+const SiegeDefenseView = preload("res://battle/presentation/siege_defense_view.gd")
+const STONE_SHAKE_DISTANCE := 170.0
+const STONE_SHAKE_SECONDS := 0.22
 const PLAYBACK_SPEEDS := [1.0, 2.0, 0.5]
 const BUTTON_ORDER_AHEAD := 60.0
 
@@ -124,6 +128,9 @@ func _physics_process(dt: float) -> void:
 	_figures.advance(simulation_dt, events)
 	_order_marker.advance(simulation_dt, events)
 	_refresh(simulation_dt, events, dt)
+	for event in events:
+		if event.kind == Event.Kind.STONE_LANDED and not _frame.hero_down and Vector2(_frame.hero_position).distance_to(event.position) < STONE_SHAKE_DISTANCE:
+			camera.shake(STONE_SHAKE_SECONDS)
 	_audio.advance(dt, events, camera.position)
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		battle_finished.emit()
@@ -237,6 +244,9 @@ func _update_status() -> void:
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_controls.update_frame(_frame, _selection, _paused, PLAYBACK_SPEEDS[_speed_index], finished)
 	status.text = Demo.HUD_TEXT % [label, _frame.ally_strength, _frame.enemy_strength, roundi(_frame.stamina), Demo.GROUP_NAMES[_selection], BattleControls.format_time(_frame.elapsed_seconds)]
+	var reserve: Array = _frame.get("reserve", [0, 0])
+	if reserve[0] > 0 or reserve[1] > 0:
+		status.text += Demo.RESERVE_HUD_TEXT % [reserve[0], reserve[1]]
 	if not _frame.hero_down and not _frame.hero_weapon_name.is_empty():
 		status.text += Demo.WEAPON_HUD_TEXT % _frame.hero_weapon_name
 	status.text += Demo.CONTROL_HINT
@@ -253,7 +263,9 @@ func _draw() -> void:
 	var visible := (get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
+	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
 	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
+	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)

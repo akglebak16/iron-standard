@@ -10,6 +10,7 @@ const BLOOD_HINT := " · G кровь: %s"
 const SOUND_ON := "вкл."
 const SOUND_OFF := "выкл."
 const HUD_TEXT := "%s  |  Свои: %d  Враги: %d  Силы: %d · Выбрано: %s · %s"
+const RESERVE_HUD_TEXT := "  ·  В запасе: свои +%d, враги +%d"
 const WEAPON_HUD_TEXT := "\nОружие [X]: %s"
 const CONTROL_HINT := "\nWASD ходить · Shift бег · ЛКМ удар · ПКМ блок · Колесо масштаб\n1–4 группа · Q держать · E за мной · R атаковать · F отход"
 

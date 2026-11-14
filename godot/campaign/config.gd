@@ -20,6 +20,10 @@ const SPECIAL_ARMY_SCALE := 1.25
 const CAPTURE_GARRISON_COUNT := 4
 const CAPTURE_GARRISON_QUALITY := 0.3
 const SIEGE_TOWN_GOLD := 350
+const SETTLEMENT_CASTLE := "castle"
+# src/05i_siege.js sgDefCfg: wall supplies of the defenders.
+const SIEGE_SUPPLIES_CASTLE := {"stones": 14, "oil": 3}
+const SIEGE_SUPPLIES_OTHER := {"stones": 10, "oil": 2}
 const SIEGE_OTHER_GOLD := 180
 const INITIAL_GARRISONS := {
 	"town": {"counts": Vector2i(85, 120), "quality": 0.62},

@@ -42,6 +42,9 @@ func advance_shake(dt: float, events: Array[Dictionary]) -> void:
 		offset = Vector2.ZERO
 	fit_viewport()
 
+func shake(seconds: float) -> void:
+	_shake_remaining = maxf(_shake_remaining, seconds)
+
 func change_zoom(inward: bool) -> void:
 	var factor := ZOOM_IN_FACTOR if inward else ZOOM_OUT_FACTOR
 	_set_zoom(clampf(zoom.x * factor, MANUAL_ZOOM_RANGE.x, MANUAL_ZOOM_RANGE.y))

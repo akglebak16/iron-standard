@@ -28,6 +28,13 @@ static func build(battle: State, hero: Unit, rng: RandomNumberGenerator, elapsed
 			result.enemyDead += unit.weight
 		else:
 			result.enemyLeft[unit.troop_id] = float(result.enemyLeft.get(unit.troop_id, 0.0)) + unit.weight
+	# Reserve figures that never entered stay in their army; those lost with a bonded leader count as killed.
+	for troop_id in battle.reserve[1]:
+		result.enemyLeft[troop_id] = float(result.enemyLeft.get(troop_id, 0.0)) + 1.0
+	for troop_id in battle.reserve[0]:
+		result.left[troop_id] = float(result.left.get(troop_id, 0.0)) + 1.0
+	result.enemyDead += battle.reserve_lost[1]
+	result.enemyTotal += battle.reserve[1].size() + battle.reserve_lost[1]
 	for field in ["dead", "wounded", "left", "enemyLeft"]:
 		var counts: Dictionary = result[field]
 		for troop_id in counts.keys():

@@ -17,6 +17,12 @@ const BLOOD_COLORS := {
 	Event.ImpactStyle.BLOOD: Color("#8f1a12"),
 	Event.ImpactStyle.DARK_BLOOD: Color("#3b4a22"),
 }
+const STONE_SPARK_OFFSET := Vector2(0, -6)
+const STONE_DUST_PUFFS := 4
+const STONE_PEBBLES := 4
+const STONE_CRATER_RADII := Vector2(17, 9)
+const STONE_CRATER_COLOR := Color(40 / 255.0, 30 / 255.0, 20 / 255.0, 0.45)
+const STONE_PEBBLE_COLOR := Color("#6d6252")
 const SHAFT_COLOR := Color("#3a2a18")
 const FLETCHING_COLOR := Color("#e6e0cf")
 const MISS_TILT := 0.5
@@ -166,6 +172,14 @@ func advance(dt: float, events: Array[Dictionary]) -> Array[Dictionary]:
 				_emit(Particle.SPARK, event.position + event.contact_offset + DEATH_OFFSET, SPARK_COLOR)
 			Event.Kind.CHARGE:
 				_emit(Particle.DUST, event.position, DUST_COLOR)
+			Event.Kind.STONE_LANDED:
+				_emit(Particle.SPARK, event.position + STONE_SPARK_OFFSET, SPARK_COLOR)
+				for i in STONE_DUST_PUFFS:
+					_emit(Particle.DUST, event.position + Vector2(_rng.randf_range(-20, 20), _rng.randf_range(-12, 12)), DUST_COLOR)
+				var pebbles: Array[Dictionary] = []
+				for i in STONE_PEBBLES:
+					pebbles.append({"offset": Vector2(_rng.randf_range(-14, 14), _rng.randf_range(-7, 7)), "radii": Vector2(_rng.randf_range(2, 4), _rng.randf_range(1.5, 3))})
+				_remember({"position": event.position, "rubble": pebbles})
 			Event.Kind.PROJECTILE_MISSED:
 				_remember({"position": event.position, "trajectory": event.trajectory, "throwing": event.throwing})
 	return labels
@@ -181,7 +195,11 @@ func draw_ground(canvas: CanvasItem, visible: Rect2) -> void:
 	for i in _ground_marks.size():
 		var mark := _ground_marks[(_next_mark + i) % _ground_marks.size()]
 		var point: Vector2 = mark.position
-		if mark.has("trajectory"):
+		if mark.has("rubble"):
+			_draw_ellipse_radii(canvas, point, STONE_CRATER_RADII, STONE_CRATER_COLOR)
+			for pebble in mark.rubble:
+				_draw_ellipse_radii(canvas, point + pebble.offset, pebble.radii, STONE_PEBBLE_COLOR)
+		elif mark.has("trajectory"):
 			var direction := Vector2.from_angle(mark.trajectory.angle() - MISS_TILT)
 			var length := JAVELIN_LENGTH if mark.throwing else ARROW_LENGTH
 			canvas.draw_line(point - direction * length, point, SHAFT_COLOR, SHAFT_WIDTH, true)
@@ -203,6 +221,9 @@ func draw_particles(canvas: CanvasItem) -> void:
 		color.a = clampf(particle.remaining / particle.lifetime, 0.0, 1.0)
 		canvas.draw_circle(particle.position, particle.radius, color)
 	_parts.draw_air(canvas)
+
+static func _draw_ellipse_radii(canvas: CanvasItem, center: Vector2, radii: Vector2, color: Color) -> void:
+	_draw_ellipse(canvas, center, 1.0, radii, color)
 
 static func _draw_ellipse(canvas: CanvasItem, center: Vector2, radius: float, scale: Vector2, color: Color) -> void:
 	var points := PackedVector2Array()
@@ -316,7 +337,7 @@ func _remove_blood_marks() -> void:
 	var kept: Array[Dictionary] = []
 	for i in _ground_marks.size():
 		var mark := _ground_marks[(_next_mark + i) % _ground_marks.size()]
-		if mark.has("trajectory"):
+		if mark.has("trajectory") or mark.has("rubble"):
 			kept.append(mark)
 	_ground_marks = kept
 	_next_mark = _ground_marks.size() % MAX_GROUND_MARKS

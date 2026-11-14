@@ -30,7 +30,8 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	state.setup_groups()
 	var player_cap := setup.unit_cap(setup.player_faction, setup.player_unit_cap)
 	var enemy_cap := setup.unit_cap(setup.enemy_faction, setup.enemy_unit_cap)
-	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, player_cap):
+	state.side_factions = [setup.player_faction, setup.enemy_faction]
+	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, player_cap, "", 0.0, setup.uses_reserve_waves(setup.player_faction)):
 		return null
 	var companion_survival := 0.0
 	var siege_skill := 0.0
@@ -47,10 +48,10 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 			continue
 		fit_companions.append(resolved)
 	if setup.siege:
-		SiegeSetup.apply(state, siege_skill)
+		SiegeSetup.apply(state, siege_skill, setup.wall_damage, setup.wall_defense)
 	state.set_plants(VegetationSetup.create(state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF))
 	var defender_morale := roundf(Config.SIEGE_DEFENDER_MORALE * (1.0 - state.siege_skill)) if setup.siege else 0.0
-	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale):
+	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale, setup.uses_reserve_waves(setup.enemy_faction)):
 		return null
 	var dialogue := {}
 	for companion in fit_companions:
@@ -65,7 +66,7 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 		if unit == null:
 			return null
 		if not companion.voice.is_empty():
-			dialogue[unit.id] = {"name": unit.name, "lines": companion.voice}
+			dialogue[unit.id] = {"name": unit.name, "companion_id": unit.companion_id, "lines": companion.voice}
 	state.place_units()
 	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true
