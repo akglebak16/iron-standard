@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Железный Стяг — роудмап разработки</title>
+<style>
+:root{
+  --ink:#150f09;--wood0:#241a11;--wood1:#33251a;--wood2:#4a3522;--wood3:#6a4d30;
+  --brass:#d1a84c;--brass2:#8f6f2f;--parch:#eadfc2;--parch2:#b3a483;--blood:#b3301f;--moss:#7aa23f;--steel:#9aa2a9;--amber:#e58a1f;--sky:#5f8fbf;--plum:#a77bc9;
+  --disp:"Alegreya SC","Cormorant SC",Georgia,"Times New Roman",serif;--body:"Alegreya Sans","Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at top,#2a1e13,var(--ink) 70%) fixed;color:var(--parch);font:500 15px/1.4 var(--body)}
+a{color:var(--brass)}
+h1,h2,h3{font-family:var(--disp);font-weight:700;letter-spacing:.04em;margin:0;color:var(--brass);text-shadow:0 2px 0 #000}
+.plank{background:linear-gradient(180deg,var(--wood2),var(--wood1) 55%,var(--wood0));border:3px solid var(--ink);border-radius:4px;box-shadow:inset 0 0 0 2px var(--wood3),inset 0 0 22px rgba(0,0,0,.55),0 5px 14px rgba(0,0,0,.6)}
+header{padding:18px 20px 12px;display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;max-width:1700px;margin:0 auto}
+header h1{font-size:30px}
+header .sub{color:var(--parch2);font-size:14px;margin-top:2px}
+.prog{min-width:260px;flex:0 1 380px}
+.prog .bar{height:14px;border:2px solid var(--ink);border-radius:3px;background:#0007;overflow:hidden;box-shadow:inset 0 0 0 1px var(--wood3);display:flex}
+.prog .bar i{display:block;height:100%}
+.prog .lab{display:flex;justify-content:space-between;font:700 14px var(--disp);color:var(--parch2);margin-bottom:4px}
+.prog .lab b{color:var(--parch)}
+.btn{font:700 15px/1 var(--disp);letter-spacing:.05em;color:var(--parch);background:linear-gradient(180deg,#5b4128,#3a2a1a 60%,#2a1d12);border:2px solid var(--ink);border-radius:3px;padding:9px 14px;cursor:pointer;box-shadow:inset 0 0 0 1px #7c5c38,0 2px 0 #000;text-shadow:0 1px 0 #000;text-decoration:none;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.btn:hover{filter:brightness(1.22)}
+.btn.pri{background:linear-gradient(180deg,#b78a32,#8b6420 60%,#5f4313);color:#fff6dc;box-shadow:inset 0 0 0 1px #e0b85c,0 2px 0 #000}
+.tools{max-width:1700px;margin:0 auto;padding:0 20px 12px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.tools input{font:500 15px var(--body);background:#0006;color:var(--parch);border:2px solid var(--ink);box-shadow:inset 0 0 0 1px var(--wood3);border-radius:3px;padding:8px 10px;min-width:220px}
+.grp{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.grp>span{font:700 13px var(--disp);color:var(--parch2);margin-right:2px}
+.chip{font:700 13px var(--disp);padding:5px 9px;background:linear-gradient(180deg,#4a3522,#2b1f14);color:var(--parch);border:2px solid var(--ink);border-radius:3px;cursor:pointer;box-shadow:inset 0 0 0 1px #6f5333}
+.chip.on{background:linear-gradient(180deg,#b78a32,#7a5718);color:#fff}
+.board{display:grid;grid-template-columns:repeat(5,minmax(250px,1fr));gap:12px;padding:0 20px 30px;max-width:1700px;margin:0 auto;overflow-x:auto;align-items:start}
+.col{padding:10px;min-height:120px}
+.col h2{font-size:18px;display:flex;align-items:center;gap:8px;padding:2px 4px 10px}
+.col h2 .n{margin-left:auto;font:700 14px var(--body);color:var(--parch2);background:#0006;border-radius:10px;padding:1px 9px}
+.dot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 0 2px #000,0 0 8px currentColor;background:currentColor}
+.cards{display:flex;flex-direction:column;gap:8px}
+.card{background:linear-gradient(180deg,#e2d5b3,#c7b78e);color:#2a1d10;border:2px solid var(--ink);border-left:6px solid var(--c);border-radius:3px;padding:8px 10px 9px;cursor:pointer;box-shadow:inset 0 0 14px rgba(80,50,10,.35),0 3px 6px #0008;transition:transform .08s}
+.card:hover{transform:translateY(-2px)}
+.card .t{font:700 16px/1.2 var(--disp);color:#24170b}
+.card .meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font:700 11.5px var(--body);padding:1px 6px;border-radius:2px;background:#0000001f;color:#3a2a17;white-space:nowrap}
+.tag.hi{background:var(--blood);color:#fff}.tag.lo{opacity:.65}
+.tag.out{background:#5b3d7a;color:#fff}.tag.br{background:#2f4d6e;color:#fff}.tag.own{background:#3c2a17;color:var(--parch)}
+.empty{color:var(--parch2);font-style:italic;font-size:13px;padding:6px}
+.col.done .card{opacity:.88}
+dialog{max-width:min(720px,94vw);width:100%;padding:0;border:0;background:transparent;color:var(--parch)}
+dialog::backdrop{background:#000b}
+.modal{padding:18px 20px}
+.modal h3{font-size:24px;margin:4px 0 10px}
+.modal .meta .tag{font-size:13px;background:#0005;color:var(--parch)}
+.modal .meta .tag.hi{background:var(--blood)}.modal .meta .tag.out{background:#5b3d7a}.modal .meta .tag.br{background:#2f4d6e}
+.body{background:linear-gradient(180deg,#e2d5b3,#c7b78e);color:#2a1d10;border:2px solid var(--ink);border-radius:3px;padding:10px 14px;margin:12px 0;max-height:52vh;overflow:auto;box-shadow:inset 0 0 18px rgba(80,50,10,.35)}
+.body a{color:#7a3b10}.body code{background:#0001;padding:0 3px;border-radius:2px}
+.body h4{font:700 17px var(--disp);margin:10px 0 4px}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.help{max-width:1700px;margin:0 auto 12px;padding:0 20px}
+.help .plank{padding:12px 16px}
+.help ol{margin:6px 0 0;padding-left:22px}.help li{margin:3px 0}
+.help code{background:#0006;padding:0 4px;border-radius:2px}
+footer{text-align:center;color:var(--parch2);font-size:12px;padding:0 0 24px}
+@media (max-width:700px){header h1{font-size:24px}.board{grid-template-columns:repeat(5,82vw)}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>⚔ Железный Стяг · роудмап</h1>
+    <div class="sub">Общий список задач разработки. Карточка открывается по клику, статус меняется правкой файла задачи.</div>
+  </div>
+  <div class="prog plank" style="padding:10px 12px">
+    <div class="lab"><span>Готово</span><span id="pct"></span></div>
+    <div class="bar" id="bar"></div>
+  </div>
+  <div class="grp">
+    <button class="btn" id="helpBtn">Как пользоваться</button>
+    <a class="btn pri" id="newBtn" target="_blank" rel="noopener">＋ Новая задача</a>
+  </div>
+</header>
+<div class="help" id="help" hidden><div class="plank">
+  <b>Правила коротко</b> (полностью — <a id="ruleLink" target="_blank" rel="noopener">shareness/skills/роудмап-разработки</a>):
+  <ol>
+    <li>Каждая задача — файл <code>roadmap/tasks/&lt;имя&gt;.md</code> со шапкой: название, статус, кто делает, область.</li>
+    <li>Взял задачу — в своей ветке поставь <code>status: в работе</code> и <code>owner</code>, запушь ветку. Здесь карточка переедет в «В работе» с меткой ветки.</li>
+    <li>Делаешь что-то, чего нет в списке, — заведи файл задачи в той же ветке, с <code>outside: да</code>.</li>
+    <li>Открыл PR — <code>на проверке</code> и номер <code>pr</code>; в последнем коммите перед слиянием — <code>готово</code> и дата <code>done</code>.</li>
+    <li>Кнопка «Изменить на GitHub» в карточке открывает файл в редакторе GitHub: правишь статус, GitHub сам предложит ветку и PR.</li>
+  </ol>
+</div></div>
+<div class="tools">
+  <input id="q" type="search" placeholder="Поиск по задачам…">
+  <div class="grp" id="fOwner"></div>
+  <div class="grp" id="fArea"></div>
+  <div class="grp"><button class="chip" id="fOut">Только вне плана</button></div>
+</div>
+<main class="board" id="board"></main>
+<footer id="foot"></footer>
+<dialog id="dlg"><div class="modal plank" id="modal"></div></dialog>
+<script>
+const DATA = /*DATA*/null;
+const COL = { 'идея': 'var(--steel)', 'можно брать': 'var(--sky)', 'в работе': 'var(--amber)', 'на проверке': 'var(--plum)', 'готово': 'var(--moss)' };
+const TITLE = { 'идея': 'Идеи', 'можно брать': 'Можно брать', 'в работе': 'В работе', 'на проверке': 'На проверке', 'готово': 'Готово' };
+const PR_ORDER = { 'высокий': 0, 'обычный': 1, 'низкий': 2 };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const GH = 'https://github.com/' + DATA.repo;
+const st = { q: '', owner: '', area: '', out: false, all: false };
+
+function md(src) { // маленький markdown: заголовки, списки, жирный, код, ссылки, абзацы
+  const inl = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/(^|\s)#(\d+)\b/g, `$1<a href="${GH}/pull/$2" target="_blank" rel="noopener">#$2</a>`);
+  let out = '', list = '';
+  const close = () => { if (list) { out += `</${list}>`; list = ''; } };
+  for (const line of (src || '').split('\n')) {
+    let m;
+    if ((m = /^#{1,6}\s+(.*)/.exec(line))) { close(); out += `<h4>${inl(m[1])}</h4>`; }
+    else if ((m = /^\s*[-*]\s+\[( |x)\]\s+(.*)/i.exec(line))) { if (list !== 'ul') { close(); out += '<ul style="list-style:none;padding-left:4px">'; list = 'ul'; } out += `<li>${m[1].trim() ? '☑' : '☐'} ${inl(m[2])}</li>`; }
+    else if ((m = /^\s*[-*]\s+(.*)/.exec(line))) { if (list !== 'ul') { close(); out += '<ul>'; list = 'ul'; } out += `<li>${inl(m[1])}</li>`; }
+    else if ((m = /^\s*\d+[.)]\s+(.*)/.exec(line))) { if (list !== 'ol') { close(); out += '<ol>'; list = 'ol'; } out += `<li>${inl(m[1])}</li>`; }
+    else if (!line.trim()) close();
+    else { close(); out += `<p>${inl(line)}</p>`; }
+  }
+  close();
+  return out || '<p><i>Описания пока нет.</i></p>';
+}
+const pathOf = t => `roadmap/tasks/${t.id}.md`;
+const visible = t => (!st.owner || (t.owner || '—') === st.owner) && (!st.area || (t.area || '—') === st.area) && (!st.out || t.outside)
+  && (!st.q || (t.title + ' ' + t.body + ' ' + t.area + ' ' + t.owner).toLowerCase().includes(st.q));
+
+function tags(t, full) {
+  let h = '';
+  if (t.priority === 'высокий') h += '<span class="tag hi">важно</span>';
+  if (t.priority === 'низкий') h += '<span class="tag lo">потом</span>';
+  if (t.area) h += `<span class="tag">${esc(t.area)}</span>`;
+  if (t.owner) h += `<span class="tag own">👤 ${esc(t.owner)}</span>`;
+  if (t.outside) h += '<span class="tag out">вне плана</span>';
+  if (t.branch) h += `<span class="tag br">⎇ ${esc(t.branch)}</span>`;
+  if (t.pr) h += `<span class="tag">PR #${esc(t.pr)}</span>`;
+  if (full && t.created) h += `<span class="tag">заведена ${esc(t.created)}</span>`;
+  if (t.done) h += `<span class="tag">✓ ${esc(t.done)}</span>`;
+  return h;
+}
+
+function chips(el, label, key, values) {
+  el.innerHTML = `<span>${label}:</span>` + ['', ...values].map(v => `<button class="chip${st[key] === v ? ' on' : ''}" data-v="${esc(v)}">${v ? (v === '—' ? 'свободные' : esc(v)) : 'все'}</button>`).join('');
+  el.onclick = e => { const b = e.target.closest('.chip'); if (!b) return; st[key] = b.dataset.v; render(); };
+}
+
+function render() {
+  const all = DATA.tasks;
+  const uniq = k => [...new Set(all.map(t => t[k] || '—'))].sort((a, b) => a.localeCompare(b, 'ru'));
+  chips($('#fOwner'), 'Кто', 'owner', uniq('owner'));
+  chips($('#fArea'), 'Область', 'area', uniq('area'));
+  $('#fOut').classList.toggle('on', st.out);
+  const shown = all.filter(visible);
+  $('#board').innerHTML = DATA.statuses.map(s => {
+    const list = shown.filter(t => t.status === s).sort((a, b) => s === 'готово'
+      ? (b.done || '').localeCompare(a.done || '') : (PR_ORDER[a.priority] - PR_ORDER[b.priority]) || (a.created || '').localeCompare(b.created || ''));
+    const cut = s === 'готово' && !st.all && !st.q && list.length > 8 ? list.length - 8 : 0;
+    if (cut) list.length = 8;
+    return `<section class="col plank${s === 'готово' ? ' done' : ''}"><h2><i class="dot" style="color:${COL[s]}"></i>${TITLE[s]}<span class="n">${list.length}</span></h2><div class="cards">`
+      + (list.map(t => `<article class="card" style="--c:${COL[s]}" data-id="${esc(t.id)}"><div class="t">${esc(t.title)}</div><div class="meta">${tags(t)}</div></article>`).join('') || '<div class="empty">пусто</div>')
+      + (cut ? `<button class="chip" id="more">ещё ${cut}</button>` : '') + '</div></section>';
+  }).join('');
+  const n = all.length || 1;
+  $('#bar').innerHTML = DATA.statuses.map(s => `<i title="${TITLE[s]}" style="width:${all.filter(t => t.status === s).length / n * 100}%;background:${COL[s]}"></i>`).join('');
+  const done = all.filter(t => t.status === 'готово').length;
+  $('#pct').innerHTML = `<b>${done}</b> из ${all.length} · ${Math.round(done / n * 100)}%`;
+}
+
+function open(id) {
+  const t = DATA.tasks.find(x => x.id === id); if (!t) return;
+  const ref = t.branch || 'main';
+  $('#modal').innerHTML = `<div class="meta" style="display:flex;gap:6px;flex-wrap:wrap"><span class="tag" style="background:${COL[t.status]};color:#111">${esc(t.status)}</span>${tags(t, true)}</div>
+    <h3>${esc(t.title)}</h3><div class="body">${md(t.body)}</div>
+    <div class="row">
+      ${t.pr ? `<a class="btn" href="${GH}/pull/${esc(t.pr)}" target="_blank" rel="noopener">PR #${esc(t.pr)}</a>` : ''}
+      <a class="btn" href="${GH}/blob/${encodeURIComponent(ref)}/${pathOf(t)}" target="_blank" rel="noopener">Файл задачи</a>
+      <a class="btn pri" href="${GH}/edit/${encodeURIComponent(ref)}/${pathOf(t)}" target="_blank" rel="noopener">✎ Изменить на GitHub</a>
+      <button class="btn" id="cls">Закрыть</button>
+    </div>`;
+  $('#cls').onclick = () => $('#dlg').close();
+  if (!$('#dlg').open) $('#dlg').showModal();
+  history.replaceState(null, '', '#' + id);
+}
+
+const today = new Date().toISOString().slice(0, 10);
+const tpl = `---\ntitle: Название задачи\nstatus: можно брать\nowner:\narea:\npriority: обычный\ncreated: ${today}\npr:\ndone:\noutside: нет\n---\nЧто сделать и зачем. Что значит «готово».\n`;
+$('#newBtn').href = `${GH}/new/main/roadmap/tasks?filename=${encodeURIComponent('new-task.md')}&value=${encodeURIComponent(tpl)}`;
+$('#ruleLink').href = `${GH}/blob/main/shareness/skills/${encodeURIComponent('роудмап-разработки')}/SKILL.md`;
+$('#helpBtn').onclick = () => { $('#help').hidden = !$('#help').hidden; };
+$('#q').oninput = e => { st.q = e.target.value.trim().toLowerCase(); render(); };
+$('#fOut').onclick = () => { st.out = !st.out; render(); };
+$('#board').onclick = e => { if (e.target.id === 'more') { st.all = true; render(); return; } const c = e.target.closest('.card'); if (c) open(c.dataset.id); };
+$('#dlg').addEventListener('close', () => history.replaceState(null, '', location.pathname));
+$('#dlg').onclick = e => { if (e.target === $('#dlg')) $('#dlg').close(); };
+$('#foot').innerHTML = `Собрано ${new Date(DATA.built).toLocaleString('ru-RU')} из <a href="${GH}/tree/main/roadmap/tasks" target="_blank" rel="noopener">roadmap/tasks</a> (main + все ветки)`;
+render();
+if (location.hash.length > 1) open(decodeURIComponent(location.hash.slice(1)));
+</script>
+</body>
+</html>
