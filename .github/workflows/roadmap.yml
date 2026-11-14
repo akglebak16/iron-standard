@@ -1,5 +1,6 @@
-# Пуш в ветку с правкой задач роудмапа → пересобрать сайт из main,
-# чтобы доска /roadmap/ сразу показала новый статус («в работе», новая задача).
+# Пуш в ветку с правкой задач роудмапа (в том числе с доски: ветка roadmap-board)
+# → пересобрать сайт из main, чтобы доска /roadmap/ сразу показала новый статус.
+# Для ветки roadmap-board дополнительно держим открытым Pull Request в main, чтобы Глеб сливал правки одним кликом.
 name: Обновить доску роудмапа
 
 on:
@@ -10,6 +11,8 @@ on:
 
 permissions:
   actions: write
+  pull-requests: write
+  contents: read
 
 concurrency:
   group: roadmap-refresh
@@ -23,3 +26,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref main
+      - name: Держать открытым PR из roadmap-board
+        if: github.ref == 'refs/heads/roadmap-board'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh pr list --repo "$GITHUB_REPOSITORY" --head roadmap-board --base main --state open --json number --jq 'length')
+          if [ "$open" = "0" ]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" --head roadmap-board --base main \
+              --title "Роудмап: изменения с доски" \
+              --body $'Задача в роудмапе: правки статусов, исполнителей и новые задачи, сделанные на доске.\n\n## Для игрока\n- нет'
+          fi
