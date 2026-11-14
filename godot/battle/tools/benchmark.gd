@@ -2,7 +2,7 @@ extends SceneTree
 ## Informational CPU benchmark, not a hardware-dependent pass/fail test.
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
-const Catalog = preload("res://battle/data/catalog.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
 const Config = preload("res://battle/config.gd")
 const Movement = preload("res://battle/rules/movement.gd")
 const CombatStep = preload("res://battle/rules/combat_step.gd")

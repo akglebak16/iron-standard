@@ -1,5 +1,5 @@
 extends SceneTree
-const GearCatalog = preload("res://battle/data/gear_catalog.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 
 func _initialize() -> void:
 	var catalog := GearCatalog.new()

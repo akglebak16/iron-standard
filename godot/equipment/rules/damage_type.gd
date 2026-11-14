@@ -1,6 +1,6 @@
 extends RefCounted
 ## armClass(), dtPierce() and dtMul() from src/01b_gear.js.
-const Config = preload("res://battle/config.gd")
+const Config = preload("res://equipment/config.gd")
 
 static func armor_class(armor: float) -> int:
 	if armor < Config.ARMOR_LIGHT_MAX:

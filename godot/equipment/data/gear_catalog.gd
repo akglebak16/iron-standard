@@ -1,7 +1,7 @@
 extends RefCounted
 ## Validated, detached copy of EQ from src/01b_gear.js.
-const Config = preload("res://battle/config.gd")
-const DATA_PATH := "res://battle/data/items.json"
+const Config = preload("res://equipment/config.gd")
+const DATA_PATH := "res://equipment/data/items.json"
 const SLOTS := ["head", "body", "hands", "legs", "melee", "ranged", "shield", "horse"]
 const ARMOR_SLOTS := ["head", "body", "hands", "legs"]
 const WEAPON_SLOTS := ["melee", "ranged"]

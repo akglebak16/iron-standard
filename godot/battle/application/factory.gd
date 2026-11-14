@@ -1,12 +1,12 @@
 extends RefCounted
 const ArmyBuilder = preload("res://battle/data/army_builder.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
-const Catalog = preload("res://battle/data/catalog.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Session = preload("res://battle/application/session.gd")
-const GearCatalog = preload("res://battle/data/gear_catalog.gd")
-const HeroGear = preload("res://battle/data/hero_gear.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
+const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
 
 static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null) -> Session:

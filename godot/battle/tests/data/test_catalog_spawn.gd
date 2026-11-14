@@ -2,7 +2,7 @@ extends SceneTree
 const ArmyBuilder = preload("res://battle/data/army_builder.gd")
 
 const Config = preload("res://battle/config.gd")
-const Catalog = preload("res://battle/data/catalog.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
 const BattleState = preload("res://battle/model/state.gd")
 
 func _initialize() -> void:

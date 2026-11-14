@@ -1,7 +1,7 @@
 extends RefCounted
 ## Validated definitions; callers receive copies, never shared mutable records.
-const Config = preload("res://battle/config.gd")
-const DATA_PATH := "res://battle/data/troops.json"
+const Config = preload("res://troops/config.gd")
+const DATA_PATH := "res://troops/data/troops.json"
 const REQUIRED_NUMBERS := ["tier", "grp", "hp", "arm", "dmg", "spd", "cd", "block"]
 const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb"]
 var _troops: Dictionary = {}

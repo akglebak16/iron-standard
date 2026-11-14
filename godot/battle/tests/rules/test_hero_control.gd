@@ -1,6 +1,7 @@
 extends SceneTree
 
 const Config = preload("res://battle/config.gd")
+const EquipmentConfig = preload("res://equipment/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const BattleState = preload("res://battle/model/state.gd")
 const HeroControl = preload("res://battle/rules/hero_control.gd")
@@ -66,7 +67,7 @@ func _check_ranged_shot() -> void:
 	hero.attack_range = 300.0
 	hero.attack_interval = 1.2
 	hero.weapon_kind = Config.PROJECTILE_THROW_WEAPON
-	hero.damage_type = Config.DAMAGE_TYPE_PIERCE
+	hero.damage_type = EquipmentConfig.DAMAGE_TYPE_PIERCE
 	var close := Unit.new(1, 1, Vector2(200, 100), 100, 0, 1)
 	var off_axis := Unit.new(2, 1, Vector2(170, 200), 100, 0, 1)
 	battle.add_unit(hero)
@@ -77,7 +78,7 @@ func _check_ranged_shot() -> void:
 	HeroControl.step(battle, hero, {"face": 0.0, "attack": true}, Config.HERO_RANGED_WINDUP, rng)
 	assert(battle.projectiles.size() == 1)
 	var shot: Dictionary = battle.projectiles[0]
-	assert(shot.throwing and shot.damage_type == Config.DAMAGE_TYPE_PIERCE)
+	assert(shot.throwing and shot.damage_type == EquipmentConfig.DAMAGE_TYPE_PIERCE)
 	assert(is_equal_approx(shot.duration, 100.0 / Config.THROW_SPEED + Config.PROJECTILE_START_DELAY))
 	assert(shot.impact.distance_to(close.position) <= Config.SHOT_BASE_SCATTER * 2.0)
 	assert(close.hp == 100.0)

@@ -9,8 +9,8 @@ const Unit = preload("res://battle/model/unit.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 const HeroControl = preload("res://battle/rules/hero_control.gd")
 const Config = preload("res://battle/config.gd")
-const GearCatalog = preload("res://battle/data/gear_catalog.gd")
-const HeroGear = preload("res://battle/data/hero_gear.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
+const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
 

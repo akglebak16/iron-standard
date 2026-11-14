@@ -1,5 +1,6 @@
 extends RefCounted
 ## Balance values copied from the browser battle. Change them here, then run Godot tests.
+const TroopConfig = preload("res://troops/config.gd")
 
 const ARENA_SIZE := Vector2(2600, 1700)
 const SPATIAL_CELL_SIZE := 128.0 # Broad-phase cell; changing it must not change battle results.
@@ -9,11 +10,11 @@ const CENTER_Y := 850.0
 const ARCHER_REAR_OFFSET := 105.0
 const CAVALRY_REAR_OFFSET := 20.0
 const CAVALRY_FLANK_OFFSET := 380.0
-const GROUP_KINDS := 3
-const ALL_GROUPS := 3
-const GROUP_INFANTRY := 0
-const GROUP_ARCHERS := 1
-const GROUP_CAVALRY := 2
+const GROUP_KINDS := TroopConfig.GROUP_KINDS
+const ALL_GROUPS := TroopConfig.GROUP_KINDS
+const GROUP_INFANTRY := TroopConfig.GROUP_INFANTRY
+const GROUP_ARCHERS := TroopConfig.GROUP_ARCHERS
+const GROUP_CAVALRY := TroopConfig.GROUP_CAVALRY
 const ORDER_HOLD := "hold"
 const ORDER_FOLLOW := "follow"
 const ORDER_CHARGE := "charge"
@@ -130,19 +131,6 @@ const HERO_RANGED_AGILITY_COOLDOWN := 0.025
 const HERO_RANGED_MIN_COOLDOWN := 0.35
 const HERO_SWAP_COOLDOWN_FLOOR := 0.35
 const HERO_GEAR_ACCURACY_MULTIPLIER := 1.8
-const SHIELD_ARROW_BONUS := {"kite": 0.18, "round": 0.12, "small": 0.07}
-const DAMAGE_TYPE_CUT := "cut"
-const DAMAGE_TYPE_PIERCE := "pierce"
-const DAMAGE_TYPE_BLUNT := "blunt"
-const ARMOR_LIGHT_MAX := 18.0
-const ARMOR_MEDIUM_MAX := 38.0
-const DAMAGE_TYPE_PIERCE_CAP := 0.8
-const LIGHT_ARMOR_CUT_MULTIPLIER := 1.15
-const DAMAGE_TYPE_ARMOR_PIERCE := {
-	DAMAGE_TYPE_CUT: [0.0, 0.06, 0.0],
-	DAMAGE_TYPE_PIERCE: [0.18, 0.38, 0.22],
-	DAMAGE_TYPE_BLUNT: [0.10, 0.26, 0.42],
-}
 const RANGED_MELEE_DAMAGE_MULTIPLIER := 0.6
 const SHOOT_MOVE_SPEED_LIMIT := 26.0
 const RETARGET_MIN_SECONDS := 0.35

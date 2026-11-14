@@ -1,6 +1,6 @@
 extends RefCounted
 ## Detached heroEq()/heroWield()/heroShield()/heroArmor()/heroGear() projection.
-const GearCatalog = preload("res://battle/data/gear_catalog.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const SLOTS := ["head", "body", "hands", "legs", "melee", "ranged", "shield", "horse"]
 const ARMOR_SLOTS := ["head", "body", "hands", "legs"]
 const LEGACY_WEAPONS := ["sword_old", "sword_knight", "sword_master", "sword_damask"]

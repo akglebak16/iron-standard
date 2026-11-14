@@ -2,7 +2,7 @@ extends RefCounted
 const Config = preload("res://battle/config.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
-const Catalog = preload("res://battle/data/catalog.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
 
 static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator) -> bool:
 	if side < 0 or side > 1 or battle.groups.size() != 2:

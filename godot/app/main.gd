@@ -1,7 +1,7 @@
 extends Node2D
 ## Composition root: the only place that connects storage, scenario and view.
-const Catalog = preload("res://battle/data/catalog.gd")
-const GearCatalog = preload("res://battle/data/gear_catalog.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
 const BattleView = preload("res://battle/presentation/scene.tscn")

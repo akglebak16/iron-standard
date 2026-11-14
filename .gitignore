@@ -4,6 +4,10 @@ node_modules/
 data/
 !godot/battle/data/
 !godot/battle/tests/data/
+!godot/equipment/data/
+!godot/equipment/tests/data/
+!godot/troops/data/
+!godot/troops/tests/data/
 index.html
 _site/
 godot/.godot/

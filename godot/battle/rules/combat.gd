@@ -3,8 +3,9 @@ const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 
 const Config = preload("res://battle/config.gd")
+const EquipmentConfig = preload("res://equipment/config.gd")
 const Block = preload("res://battle/rules/block.gd")
-const DamageType = preload("res://battle/rules/damage_type.gd")
+const DamageType = preload("res://equipment/rules/damage_type.gd")
 
 static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGenerator, damage_scale: float = 1.0) -> int:
 	var incoming: float = (attacker.position - target.position).angle()
@@ -18,7 +19,7 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
 	if attacker.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
-	if attacker.damage_type == Config.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.weapon_kind in ["club", "mace"]):
+	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.weapon_kind in ["club", "mace"]):
 		if target.undead_kind == "skel":
 			raw *= Config.SKELETON_BLUNT_MULTIPLIER
 		elif target.undead_kind == "zombie":
