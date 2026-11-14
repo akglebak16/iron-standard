@@ -17,7 +17,18 @@ function drawBase(g, cx, cy, rx, ry, pal) {
   const gr = g.createLinearGradient(cx - rx, 0, cx + rx, 0); gr.addColorStop(0, '#7b756b'); gr.addColorStop(.5, '#4a453d'); gr.addColorStop(1, '#26221d');
   ell(g, cx, cy, rx, ry); fs(g, gr, 1.4);
   g.strokeStyle = pal.c1; g.lineWidth = 2.2; ell(g, cx, cy, rx - 2.6, ry - 1.6); g.stroke();
-  g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = .8; g.beginPath(); g.ellipse(cx, cy, rx - 1, ry - .6, 0, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
+  g.strokeStyle = 'rgba(255,241,207,.32)'; g.lineWidth = .9; g.beginPath(); g.ellipse(cx, cy, rx - 1, ry - .6, 0, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
+}
+/* Мягкая тень печатается один раз; в бою — только drawImage, без blur на кадр. */
+let CONTACT_SHADOW;
+function contactShadow(g, x, y, rx, ry) {
+  if (!CONTACT_SHADOW) {
+    CONTACT_SHADOW = mkCanvas(128, 64); const s = CONTACT_SHADOW.getContext('2d');
+    s.scale(64, 32); const gr = s.createRadialGradient(1, 1, .1, 1, 1, 1);
+    gr.addColorStop(0, 'rgba(24,23,12,.34)'); gr.addColorStop(.5, 'rgba(24,23,12,.19)'); gr.addColorStop(1, 'rgba(24,23,12,0)');
+    s.fillStyle = gr; s.fillRect(0, 0, 2, 2);
+  }
+  g.drawImage(CONTACT_SHADOW, x - rx, y - ry, rx * 2, ry * 2);
 }
 /* ARMS: стройный торс с руками (true) или прежние пропорции без рук (false). Игрок выбрал прежние. */
 const ARMS = false;
@@ -125,7 +136,10 @@ function drawStump(g, v) {
 function plume(g, x, y, col, big) { g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x - 4, y - (big ? 16 : 10), x - 18, y - (big ? 14 : 9), x - (big ? 22 : 15), y - 1); g.bezierCurveTo(x - 14, y - 5, x - 7, y - 4, x, y); fs(g, col, 1.2); for (let i = 0; i < 5; i++) line(g, [x - 3 - i * 3, y - 2, x - 5 - i * 3.4, y - (big ? 10 : 6)], 'rgba(0,0,0,.28)', .7); }
 function drawHelm(g, L, v, pal, R) {
   const h = L.helm, hair = v.hair;
-  const dome = (c, top) => { g.beginPath(); g.moveTo(25.6, 26); g.bezierCurveTo(25, 16, 30, top, 37.5, top); g.bezierCurveTo(45, top, 49.6, 16, 49.2, 26); g.closePath(); fs(g, c, 1.5); g.fillStyle = 'rgba(255,255,255,.28)'; ell(g, 33, top + 6, 3.5, 4.5); g.fill(); g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.moveTo(42, top + 1); g.bezierCurveTo(47, top + 4, 49.4, 18, 49.2, 26); g.lineTo(43, 26); g.closePath(); g.fill(); };
+  const dome = (c, top) => { g.beginPath(); g.moveTo(25.6, 26); g.bezierCurveTo(25, 16, 30, top, 37.5, top); g.bezierCurveTo(45, top, 49.6, 16, 49.2, 26); g.closePath();
+    const metal = g.createLinearGradient(25, top, 50, 27); metal.addColorStop(0, '#d1d5cf'); metal.addColorStop(.28, c); metal.addColorStop(.7, c); metal.addColorStop(1, '#626970');
+    fs(g, h === 'cap' ? c : metal, 1.5); g.strokeStyle = 'rgba(255,244,216,.55)'; g.lineWidth = .85; g.beginPath(); g.moveTo(27.5, 21); g.quadraticCurveTo(28, top + 2.5, 36, top + 1.5); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.28)'; ell(g, 33, top + 6, 3.5, 4.5); g.fill(); g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.moveTo(42, top + 1); g.bezierCurveTo(47, top + 4, 49.4, 18, 49.2, 26); g.lineTo(43, 26); g.closePath(); g.fill(); };
   const band = c => { g.fillStyle = c; g.fillRect(25.2, 23.4, 24.4, 3.2); g.strokeStyle = OL; g.lineWidth = 1.1; g.strokeRect(25.2, 23.4, 24.4, 3.2); };
   const aventail = () => { g.beginPath(); g.moveTo(25.6, 25); g.lineTo(23.5, 44); g.lineTo(31, 47); g.lineTo(29.6, 33); g.closePath(); fs(g, '#7e8388', 1.1); g.beginPath(); g.moveTo(49.2, 25); g.lineTo(51.5, 44); g.lineTo(44.5, 47); g.lineTo(47, 33); g.closePath(); fs(g, '#63686d', 1.1); g.save(); g.beginPath(); g.rect(23, 25, 9, 22); g.rect(44, 25, 8, 22); g.clip(); mailTex(g, 22, 26, 32, 22, '#3f4347'); g.restore(); };
   if (h === 'none') {
@@ -290,14 +304,14 @@ function crestCanvas(fac, px) { const c = mkCanvas(px, px), g = c.getContext('2d
 
 /* ---------- поле боя ---------- */
 const BIOMES = {
-  grass: { base: '#5f6d2c', a: '#6e7d34', b: '#4d5a25', dirt: '#6f6238', tuft: ['#3f4c1c', '#84903f', '#4b5a22'], stone: '#8f8873', flower: '#e9e6d6' },
+  grass: { base: '#657332', a: '#78863d', b: '#505e29', dirt: '#75663c', tuft: ['#3f4c1c', '#929e48', '#4b5a22'], stone: '#8f8873', flower: '#e9e6d6' },
   snow: { base: '#c3ccce', a: '#dfe6e7', b: '#a7b4b5', dirt: '#8c8f80', tuft: ['#7c8660', '#eef2f2', '#9aa59a'], stone: '#8a8d90', flower: '#f6f8f8' },
   steppe: { base: '#978a48', a: '#ab9d56', b: '#82773f', dirt: '#8a7446', tuft: ['#6c6230', '#c4b46a', '#7a6e38'], stone: '#9a8f72', flower: '#e8d37a' },
   arid: { base: '#bfa56a', a: '#cfb97c', b: '#aa9156', dirt: '#a68a54', tuft: ['#8a7a3c', '#dac98c', '#9a8a48'], stone: '#a99c80', flower: '#e9dba8' }
 };
 function treeSprite(biome, seed) {
   const R = mulberry(seed), c = mkCanvas(200, 250), g = c.getContext('2d'); g.lineJoin = 'round';
-  g.fillStyle = 'rgba(0,0,0,.25)'; ell(g, 104, 232, 46, 12); g.fill();
+  contactShadow(g, 118, 231, 70, 17);
   if (biome === 'snow') {
     g.fillStyle = '#4a3320'; g.fillRect(93, 180, 14, 52); g.strokeStyle = OL; g.lineWidth = 2.5; g.strokeRect(93, 180, 14, 52);
     for (let i = 0; i < 4; i++) { const y = 196 - i * 44, w = 74 - i * 14; g.beginPath(); g.moveTo(100 - w, y); g.lineTo(100, y - 70); g.lineTo(100 + w, y); g.quadraticCurveTo(100, y + 12, 100 - w, y); g.closePath(); g.fillStyle = i % 2 ? '#2f4a3a' : '#28402f'; g.fill(); g.strokeStyle = OL; g.lineWidth = 2.5; g.stroke(); g.beginPath(); g.moveTo(100 - w * .7, y - 12); g.lineTo(100, y - 68); g.lineTo(100 + w * .25, y - 30); g.quadraticCurveTo(100 - w * .2, y - 20, 100 - w * .7, y - 12); g.fillStyle = 'rgba(240,246,248,.85)'; g.fill(); }
@@ -314,7 +328,8 @@ function treeSprite(biome, seed) {
     g.strokeStyle = 'rgba(20,12,6,.5)'; g.lineWidth = 1.2; for (let i = 0; i < 5; i++) { const y = 160 + i * 14 + R() * 4; g.beginPath(); g.moveTo(95 + R() * 4, y); g.lineTo(98 + R() * 5, y + 8 + R() * 4); g.stroke(); }
     g.strokeStyle = '#4a3320'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(98, 156); g.lineTo(78, 122); g.moveTo(104, 156); g.lineTo(126, 118); g.stroke(); g.strokeStyle = OL; g.lineWidth = 1; g.stroke(); g.lineCap = 'butt';
     const cols = steppe ? ['#4a4e1a', '#6f7230', '#8c8f40', '#a8ab58'] : ['#25401a', '#3f6124', '#58802e', '#7aa043'];
-    const blobs = []; for (let i = 0; i < 10; i++) blobs.push([100 + (R() - .5) * 100, 96 + (R() - .5) * 96, 32 + R() * 20]);
+    const shape = seed % 3, spread = [100, 115, 85][shape], height = [96, 74, 110][shape];
+    const blobs = []; for (let i = 0; i < 10; i++) { const x = 100 + (R() - .5) * spread, y = 96 + (R() - .5) * height, r = 32 + R() * 20; blobs.push([clamp(x, r + 3, 197 - r), y, r]); }
     blobs.sort((p, q) => p[1] - q[1]);
     g.fillStyle = OL; for (const b of blobs) { ell(g, b[0], b[1], b[2] + 2.5, b[2] * .92 + 2.5); g.fill(); }
     for (const b of blobs) { g.fillStyle = cols[0]; ell(g, b[0], b[1], b[2], b[2] * .92); g.fill(); g.fillStyle = 'rgba(0,0,0,.16)'; ell(g, b[0] + 5, b[1] + 7, b[2] * .78, b[2] * .62); g.fill(); g.fillStyle = cols[1]; ell(g, b[0] - 6, b[1] - 8, b[2] * .72, b[2] * .62); g.fill(); g.fillStyle = cols[2]; ell(g, b[0] - 10, b[1] - 13, b[2] * .42, b[2] * .34); g.fill(); }
@@ -354,7 +369,10 @@ function paintGround(W, H, biome, seed) {
   // трава куртинами: тёмный корень, светлый кончик; на голой земле её почти нет
   g.lineCap = 'round'; const tufts = snow ? 2600 : 6400;
   for (let i = 0; i < tufts; i++) { const x = R() * W, y = R() * H; if (bare.some(b => Math.abs(b[0] - x) < 80 && Math.abs(b[1] - y) < 46) && R() < .8) continue; if (Math.abs(ry(x) - y) < 46 && R() < .85) continue;
-    const n = 3 + Math.floor(R() * 4), h = 5 + R() * 8, ci = Math.floor(R() * 3); g.globalAlpha = .8;
+    const n = 3 + Math.floor(R() * 4), h = 5 + R() * 8, ci = Math.floor(R() * 3);
+    /* Плавные куртины и просветы вместо одинакового ковра; отдельный шум не меняет seed поля. */
+    const patch = .5 + .25 * Math.sin(x / 87 + Math.sin(y / 123) * 2) + .25 * Math.cos(y / 69 - x / 163);
+    g.globalAlpha = .22 + patch * .65;
     for (let k = 0; k < n; k++) { const bx = x + (k - n / 2) * 2.1, tx = bx + (k - n / 2) * 1.5 + (R() - .5) * 3, ty = y - h * (.6 + R() * .5); g.strokeStyle = P.tuft[ci === 1 ? 0 : ci]; g.lineWidth = 1.5; g.beginPath(); g.moveTo(bx, y); g.lineTo(tx, ty); g.stroke(); if (k % 2 === 0) { g.strokeStyle = P.tuft[1]; g.lineWidth = .9; g.beginPath(); g.moveTo((bx + tx) / 2, (y + ty) / 2); g.lineTo(tx, ty); g.stroke(); } } }
   g.globalAlpha = 1;
   if (!snow) for (let i = 0; i < 90; i++) { const x = R() * W, y = R() * H, col = R() < .6 ? P.flower : R() < .5 ? '#d8b23a' : '#b9566a'; for (let k = 0; k < 8; k++) { const fx = x + (R() - .5) * 34, fy = y + (R() - .5) * 24; g.fillStyle = 'rgba(0,0,0,.2)'; ell(g, fx + .6, fy + .8, 1.7, 1.2); g.fill(); g.fillStyle = col; ell(g, fx, fy, 1.7, 1.5); g.fill(); g.fillStyle = 'rgba(255,255,255,.5)'; ell(g, fx - .4, fy - .4, .6, .5); g.fill(); } }

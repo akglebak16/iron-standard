@@ -14,21 +14,38 @@ function paintTerrain() {
     else col = t === 2 ? COL.forest : t === 3 ? COL.hills : t === 4 ? COL.mount : COL.grass;
     const il = i > 0 ? E[k - 1] : E[k], ir = i < w - 1 ? E[k + 1] : E[k], iu = j > 0 ? E[k - w] : E[k], idn = j < h - 1 ? E[k + w] : E[k];
     let sh = t === 0 ? 0 : ((il - ir) + (iu - idn)) * 3.2; const n = (nD(x / 22, y / 22) - .5) * 30 + (nD(x / 6 + 40, y / 6) - .5) * 14;
-    if (t === 0) { sh = (nD(x / 40 + 9, y / 40) - .5) * .22; }
+    if (t === 0) { sh = (nD(x / 40 + 9, y / 40) - .5) * .16; }
     d[k * 4] = clamp(col[0] + n + sh * 90, 0, 255); d[k * 4 + 1] = clamp(col[1] + n + sh * 90, 0, 255); d[k * 4 + 2] = clamp(col[2] + n * .8 + sh * 90, 0, 255); d[k * 4 + 3] = 255;
     // береговая линия
     if (t === 0 && (i < w - 1 && Tt[k + 1] !== 0 || j < h - 1 && Tt[k + w] !== 0 || i > 0 && Tt[k - 1] !== 0 || j > 0 && Tt[k - w] !== 0)) { d[k * 4] = 205; d[k * 4 + 1] = 205; d[k * 4 + 2] = 180; }
     else if (t === 0 && i > 2 && j > 2 && i < w - 3 && j < h - 3 && (Tt[k + 2] !== 0 || Tt[k - 2] !== 0 || Tt[k + 2 * w] !== 0 || Tt[k - 2 * w] !== 0 || Tt[k + 3] !== 0 || Tt[k - 3] !== 0)) { d[k * 4] = d[k * 4] * .55 + 205 * .45; d[k * 4 + 1] = d[k * 4 + 1] * .55 + 214 * .45; d[k * 4 + 2] = d[k * 4 + 2] * .55 + 205 * .45; }
-    else if (t !== 0 && (i < w - 1 && Tt[k + 1] === 0 || j < h - 1 && Tt[k + w] === 0 || i > 0 && Tt[k - 1] === 0 || j > 0 && Tt[k - w] === 0)) { d[k * 4] = 40; d[k * 4 + 1] = 36; d[k * 4 + 2] = 26; }
+    else if (t !== 0 && (i < w - 1 && Tt[k + 1] === 0 || j < h - 1 && Tt[k + w] === 0 || i > 0 && Tt[k - 1] === 0 || j > 0 && Tt[k - w] === 0)) { d[k * 4] = col[0] * .55 + 166 * .45; d[k * 4 + 1] = col[1] * .55 + 151 * .45; d[k * 4 + 2] = col[2] * .55 + 102 * .45; }
   }
   g.putImageData(im, 0, 0);
   const full = mkCanvas(WW, WH), f = full.getContext('2d'); f.imageSmoothingEnabled = true; f.imageSmoothingQuality = 'high'; f.drawImage(c, 0, 0, WW, WH);
+  /* Редкие спокойные блики на воде рисуются в кэш карты, не на каждом кадре. */
+  f.lineCap = 'round'; f.lineWidth = .8;
+  for (let y = 18; y < WH - 18; y += 26) for (let x = 18; x < WW - 18; x += 41) {
+    const wave = Math.sin(x * .13 + y * .19), xx = x + wave * 12, yy = y + Math.cos(x * .07) * 6;
+    if (W.info(xx - 10, yy).t !== 0 || W.info(xx + 10, yy).t !== 0) continue;
+    f.strokeStyle = 'rgba(184,217,218,' + (.045 + (wave + 1) * .025) + ')';
+    f.beginPath(); f.moveTo(xx - 5, yy); f.quadraticCurveTo(xx, yy + 1.6, xx + 6, yy); f.stroke();
+  }
   drawFarms(f);
   const R = mulberry(G.seed + 3), icons = [];
   for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const k = j * GW + i, t = W.cells[k], bio = W.bio[k], x = i * GC, y = j * GC; if (t === 2) for (let q = 0; q < 3; q++) icons.push({ k: 'tree', bio, x: x + R() * GC, y: y + R() * GC }); else if (t === 3) icons.push({ k: 'hill', bio, x: x + R() * GC, y: y + R() * GC }); else if (t === 4) icons.push({ k: 'mount', bio, x: x + R() * GC, y: y + R() * GC, s: .8 + R() * .6 }); else if (t === 1 && R() < .05) icons.push({ k: 'bush', bio, x: x + R() * GC, y: y + R() * GC }); }
   icons.sort((a, b) => a.y - b.y); f.lineJoin = 'round';
   for (const ic of icons) { const { x, y } = ic;
-    if (ic.k === 'tree') { f.fillStyle = 'rgba(0,0,0,.24)'; ell(f, x + 3, y + 1, 7, 2.6); f.fill(); if (ic.bio === 1) { f.fillStyle = '#3b2a1a'; f.fillRect(x - .8, y - 2, 1.8, 3); poly(f, [x, y - 16, x + 6.5, y - 1, x - 6.5, y - 1]); fs(f, '#2a4434', 1.2); poly(f, [x, y - 16, x + 6.5, y - 1, x + 1, y - 1]); fs(f, 'rgba(0,0,0,.25)', 0); poly(f, [x, y - 16, x + 3.2, y - 9, x - 3.4, y - 9]); fs(f, '#eef4f5', .5); } else { f.fillStyle = '#3b2a1a'; f.fillRect(x - 1, y - 4, 2.2, 5); const dk = ic.bio === 2 ? '#5c6424' : '#2a4619', md = ic.bio === 2 ? '#707a2e' : '#3d6226', lt = ic.bio === 2 ? '#8e9843' : '#5f8a35'; ell(f, x, y - 9, 6.6, 6.8); fs(f, dk, 1.2); f.fillStyle = 'rgba(0,0,0,.18)'; ell(f, x + 2, y - 6.5, 4.4, 3.6); f.fill(); f.fillStyle = md; ell(f, x - 1.6, y - 10.4, 4.6, 4.6); f.fill(); f.fillStyle = lt; ell(f, x - 3, y - 12, 2.4, 2.1); f.fill(); } }
+    if (ic.k === 'tree') {
+      /* Варианты размера/силуэта привязаны к месту, без расходования RNG мира. */
+      const v = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453, q = v - Math.floor(v);
+      const sx = .82 + q * .36, sy = .88 + (1 - q) * .28;
+      contactShadow(f, x + 4, y + 2, 11 * sx, 4 * sy);
+      f.save(); f.translate(x, y); f.scale(sx, sy); f.translate(-x, -y);
+      f.fillStyle = 'rgba(0,0,0,.24)'; ell(f, x + 3, y + 1, 7, 2.6); f.fill(); if (ic.bio === 1) { f.fillStyle = '#3b2a1a'; f.fillRect(x - .8, y - 2, 1.8, 3); poly(f, [x, y - 16, x + 6.5, y - 1, x - 6.5, y - 1]); fs(f, '#2a4434', 1.2); poly(f, [x, y - 16, x + 6.5, y - 1, x + 1, y - 1]); fs(f, 'rgba(0,0,0,.25)', 0); poly(f, [x, y - 16, x + 3.2, y - 9, x - 3.4, y - 9]); fs(f, '#eef4f5', .5); } else { f.fillStyle = '#3b2a1a'; f.fillRect(x - 1, y - 4, 2.2, 5); const dk = ic.bio === 2 ? '#5c6424' : '#2a4619', md = ic.bio === 2 ? '#707a2e' : '#3d6226', lt = ic.bio === 2 ? '#8e9843' : '#5f8a35'; ell(f, x, y - 9, 6.6, 6.8); fs(f, dk, 1.2); f.fillStyle = 'rgba(0,0,0,.18)'; ell(f, x + 2, y - 6.5, 4.4, 3.6); f.fill(); f.fillStyle = md; ell(f, x - 1.6, y - 10.4, 4.6, 4.6); f.fill(); f.fillStyle = lt; ell(f, x - 3, y - 12, 2.4, 2.1); f.fill();
+        f.fillStyle = q > .66 ? '#8b9c48' : '#729441';
+        for (let leaf = 0; leaf < 4; leaf++) { ell(f, x - 3.8 + leaf * 1.7, y - 12 + (leaf % 2) * 2, .9, .6); f.fill(); }
+      } f.restore(); }
     else if (ic.k === 'hill') { f.beginPath(); f.moveTo(x - 17, y); f.quadraticCurveTo(x, y - 18, x + 17, y); f.closePath(); const hc = ic.bio === 1 ? '#c8d2d3' : ic.bio === 2 ? '#a59152' : ic.bio === 3 ? '#bfa268' : '#8a8f4e'; fs(f, hc, 1.1); f.save(); f.beginPath(); f.moveTo(x - 17, y); f.quadraticCurveTo(x, y - 18, x + 17, y); f.closePath(); f.clip(); f.fillStyle = 'rgba(0,0,0,.16)'; f.fillRect(x + 2, y - 20, 20, 22); f.fillStyle = 'rgba(255,255,255,.14)'; ell(f, x - 6, y - 10, 7, 3.4); f.fill(); f.restore(); }
     else if (ic.k === 'mount') { const s = ic.s * 1.5; f.fillStyle = 'rgba(0,0,0,.25)'; ell(f, x + 6 * s, y, 22 * s, 4.4 * s); f.fill(); poly(f, [x - 21 * s, y, x - 3 * s, y - 34 * s, x + 6 * s, y - 24 * s, x + 13 * s, y - 30 * s, x + 25 * s, y]); fs(f, '#948e82', 1.6); poly(f, [x - 3 * s, y - 34 * s, x + 6 * s, y - 24 * s, x + 13 * s, y - 30 * s, x + 25 * s, y, x + 7 * s, y]); fs(f, '#6c675d', 0); poly(f, [x - 3 * s, y - 34 * s, x - 21 * s, y, x - 12 * s, y]); fs(f, 'rgba(255,255,255,.12)', 0); f.strokeStyle = 'rgba(30,26,20,.45)'; f.lineWidth = .9; f.beginPath(); f.moveTo(x - 3 * s, y - 34 * s); f.lineTo(x + 1 * s, y - 14 * s); f.lineTo(x - 3 * s, y - 2 * s); f.moveTo(x + 13 * s, y - 30 * s); f.lineTo(x + 14 * s, y - 14 * s); f.lineTo(x + 18 * s, y - 2 * s); f.moveTo(x + 6 * s, y - 24 * s); f.lineTo(x + 8 * s, y - 12 * s); f.stroke(); poly(f, [x - 7 * s, y - 27 * s, x - 3 * s, y - 34 * s, x + 2.5 * s, y - 27 * s, x + 0 * s, y - 29 * s, x - 3 * s, y - 24 * s]); fs(f, '#f4f6f5', .8); poly(f, [x + 9 * s, y - 27 * s, x + 13 * s, y - 30 * s, x + 16 * s, y - 25 * s, x + 12 * s, y - 26 * s]); fs(f, '#e3e8e8', .6); }
     else { ell(f, x, y - 3, 5, 3.6); fs(f, ic.bio === 1 ? '#8ea08a' : ic.bio === 2 ? '#8c8a3e' : ic.bio === 3 ? '#9a8a4e' : '#4d6b27', 1); } }
