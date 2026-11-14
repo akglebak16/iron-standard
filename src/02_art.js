@@ -297,7 +297,8 @@ function emblem(g, kind, x, y, s, col) {
 }
 function drawBanner(g, x, y, fac, s) { // древко от (x,y) вверх
   const f = FACTIONS[fac]; g.lineCap = 'round'; line(g, [x, y, x, y - s * 2.3], OL, s * .2); line(g, [x, y, x, y - s * 2.3], '#8a6a40', s * .1);
-  g.beginPath(); g.moveTo(x, y - s * 2.25); g.lineTo(x + s * 1.3, y - s * 2.15); g.lineTo(x + s * 1.05, y - s * 1.65); g.lineTo(x + s * 1.3, y - s * 1.15); g.lineTo(x, y - s * 1.05); g.closePath(); g.fillStyle = f.c1; g.fill(); g.strokeStyle = OL; g.lineWidth = Math.max(1, s * .08); g.stroke();
+  const flutter = typeof MODE !== 'undefined' && MODE === 'battle' && B ? Math.sin(B.t * 3 + x * .03) * s * .08 : 0;
+  g.beginPath(); g.moveTo(x, y - s * 2.25); g.lineTo(x + s * 1.3, y - s * 2.15 + flutter); g.lineTo(x + s * 1.05, y - s * 1.65); g.lineTo(x + s * 1.3, y - s * 1.15 + flutter); g.lineTo(x, y - s * 1.05); g.closePath(); g.fillStyle = f.c1; g.fill(); g.strokeStyle = OL; g.lineWidth = Math.max(1, s * .08); g.stroke();
   emblem(g, f.emblem, x + s * .52, y - s * 1.65, s * .3, f.c2);
 }
 function crestCanvas(fac, px) { const c = mkCanvas(px, px), g = c.getContext('2d'), f = FACTIONS[fac]; ell(g, px / 2, px / 2, px / 2 - 2, px / 2 - 2); g.fillStyle = f.c1; g.fill(); g.strokeStyle = '#0d0906'; g.lineWidth = 3; g.stroke(); ell(g, px / 2, px / 2, px / 2 - 5, px / 2 - 5); g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 1.2; g.stroke(); emblem(g, f.emblem, px / 2, px / 2, px * .27, f.c2); return c; }
