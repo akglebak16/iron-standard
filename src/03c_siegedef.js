@@ -44,8 +44,18 @@ function sdUpdate(dt) {
 }
 // слой 0 — под фигурками (огонь, котлы), слой 1 — над ними (летящие камни и кольца падения)
 function sdDraw(g, layer) {
-  const S = B.sd, w = B.wall; if (!S || !w) return;
+  if (!B.wall) return; if (!B.sd) sdInit(); const S = B.sd, w = B.wall;
   if (layer === 0) {
+    for (const gt of w.gates || []) { // закрытые ворота: доски, железные полосы, трещины и полоска прочности
+      if (gt.hp <= 0) continue; if (gt.open) { const xx = w.x - w.hw, hh = (gt.g[1] - gt.g[0]) / 2, cc = (gt.g[0] + gt.g[1]) / 2; g.fillStyle = '#5b3d22'; g.strokeStyle = '#21160b'; g.lineWidth = 2; for (const s of [-1, 1]) { g.fillRect(xx - 4, cc + s * hh - (s > 0 ? 0 : 7), 12, 7); g.strokeRect(xx - 4, cc + s * hh - (s > 0 ? 0 : 7), 12, 7); } continue; } const x0 = w.x - w.hw, ww = w.hw * 2, y0 = gt.g[0], y1 = gt.g[1], dmg = 1 - gt.hp / gt.max;
+      g.fillStyle = 'rgba(0,0,0,.3)'; g.fillRect(x0 - 10, y0 + 8, ww + 8, y1 - y0);
+      g.fillStyle = '#5b3d22'; g.fillRect(x0, y0, ww, y1 - y0); g.strokeStyle = '#21160b'; g.lineWidth = 3; g.strokeRect(x0, y0, ww, y1 - y0);
+      g.lineWidth = 1.4; g.strokeStyle = 'rgba(20,12,4,.7)'; for (let yy = y0 + 12; yy < y1; yy += 12) { g.beginPath(); g.moveTo(x0, yy); g.lineTo(x0 + ww, yy); g.stroke(); }
+      g.fillStyle = '#3a3a3e'; for (const f of [.22, .78]) g.fillRect(x0 + ww * f - 3, y0, 6, y1 - y0); g.strokeStyle = '#14100c'; g.lineWidth = 2; g.beginPath(); g.moveTo(x0, (y0 + y1) / 2); g.lineTo(x0 + ww, (y0 + y1) / 2); g.stroke();
+      g.strokeStyle = 'rgba(15,8,2,.8)'; g.lineWidth = 2; for (let i = 0; i < Math.floor(dmg * 8); i++) { const yy = y0 + 10 + ((i * 53) % Math.max(1, y1 - y0 - 20)), xx = x0 + 5 + ((i * 17) % Math.max(1, ww - 10)); g.beginPath(); g.moveTo(xx, yy); g.lineTo(xx + 9, yy + 12); g.lineTo(xx + 3, yy + 22); g.stroke(); }
+      if (gt.hit > 0) { g.globalAlpha = .3 * gt.hit / .3; g.fillStyle = '#ffd9a0'; g.fillRect(x0, y0, ww, y1 - y0); g.globalAlpha = 1; }
+      if (dmg > .02) { const bw = Math.min(70, y1 - y0), bx = w.x - bw / 2, by = y0 - 16; g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(bx - 1, by - 1, bw + 2, 7); g.fillStyle = dmg > .66 ? '#c4452f' : '#d9a441'; g.fillRect(bx, by, bw * (1 - dmg), 5); }
+    }
     for (const o of S.oil) { const x = w.x + 6, y = o.g[0] - 12; // котёл на стене у пролома
       g.fillStyle = 'rgba(0,0,0,.3)'; ell(g, x + 3, y + 8, 15, 7); g.fill();
       g.fillStyle = o.ch > 0 ? '#2b2824' : '#4a4640'; ell(g, x, y, 13, 11); g.fill(); g.strokeStyle = '#14100c'; g.lineWidth = 2; g.stroke();
