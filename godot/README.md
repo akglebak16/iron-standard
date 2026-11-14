@@ -1,6 +1,6 @@
 # Железный Стяг на Godot
 
-Проект переноса находится на начальном этапе. Перенесены расчёт урона и морали, три группы и приказы, каталог из 67 типов войск, создание армий и движение бойцов по приказам. Игровой бой с атаками и кампания ещё не перенесены.
+Проект переноса находится на начальном этапе. Перенесены расчёт урона и морали, три группы и приказы, каталог из 67 типов войск, создание армий, движение, выбор цели, ближние удары и полёт стрел. Управление героем, отображение боя и кампания ещё не перенесены.
 
 Расположение кода и правила для разработчиков описаны в `ARCHITECTURE.md`. Всё, что относится к бою, лежит внутри `battle/`, включая данные, тесты и инструменты переноса.
 
@@ -10,7 +10,9 @@
 
 Версия движка: Godot 4.7.2. Откройте эту папку в редакторе Godot.
 
-Проверки из корня репозитория:
+Проверка всех тестов Godot из корня репозитория: `powershell -File godot/tools/test.ps1 -EnginePath <путь-к-godot.exe>`. Скрипт считает ошибки компиляции провалом теста, даже если Godot вернул код 0.
+
+Отдельные проверки:
 
 ```text
 godot --headless --path godot --script res://battle/tests/test_damage.gd
@@ -18,4 +20,5 @@ godot --headless --path godot --script res://battle/tests/test_battle_state.gd
 godot --headless --path godot --script res://battle/tests/test_groups.gd
 godot --headless --path godot --script res://battle/tests/test_catalog_spawn.gd
 godot --headless --path godot --script res://battle/tests/test_movement.gd
+godot --headless --path godot --script res://battle/tests/test_combat.gd
 ```

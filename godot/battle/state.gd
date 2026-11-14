@@ -4,10 +4,12 @@ const Damage = preload("res://battle/damage.gd")
 const Group = preload("res://battle/group.gd")
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/unit.gd")
+const Combat = preload("res://battle/combat.gd")
 
 var units: Array = []
 var arena_size := Config.ARENA_SIZE
 var groups: Array = []
+var projectiles: Array = []
 
 func spawn_army(side: int, stacks: Array, faction: String, catalog: RefCounted, rng: RandomNumberGenerator) -> bool:
 	if side < 0 or side > 1 or groups.size() != 2:
@@ -34,10 +36,56 @@ func spawn_army(side: int, stacks: Array, faction: String, catalog: RefCounted, 
 			unit.speed = float(troop.spd) * rng.randf_range(Config.SPEED_RANDOM_MIN, Config.SPEED_RANDOM_MAX)
 			unit.attack_range = float(troop.get("range", 0))
 			unit.mounted = bool(troop.mounted)
+			unit.attack_interval = float(troop.cd)
+			unit.melee_reach = float(troop.get("reach", Config.DEFAULT_MELEE_REACH))
+			unit.block_chance = float(troop.get("block", 0))
+			unit.accuracy = float(troop.get("acc", 0))
+			unit.pierce = float(troop.get("pierce", 0))
+			unit.anti_cavalry = bool(troop.get("anticav", false))
+			var look: Dictionary = troop.get("look", {})
+			unit.weapon_kind = str(look.get("weapon", ""))
+			unit.undead_kind = str(look.get("undead", ""))
 			unit.collision_radius = Config.HORSE_COLLISION_RADIUS if unit.mounted else Config.FOOT_COLLISION_RADIUS
 			unit.mass = Config.HORSE_MASS if unit.mounted else Config.FOOT_MASS
 			add_grouped_unit(unit, kind)
 	return true
+
+func step_combat(dt: float, rng: RandomNumberGenerator) -> void:
+	if dt <= 0.0:
+		return
+	for unit in units:
+		if unit.dead or unit.gone or unit.fleeing or unit.hero:
+			continue
+		unit.attack_cooldown -= dt
+		if unit.attack_cooldown > 0.0:
+			continue
+		var target = _nearest_enemy(unit)
+		if target == null:
+			continue
+		var distance: float = unit.position.distance_to(target.position)
+		if unit.attack_range > 0.0 and distance <= unit.attack_range and unit.velocity.length() < Config.SHOOT_MOVE_SPEED_LIMIT:
+			projectiles.append(Combat.shoot(unit, target, rng))
+			unit.attack_cooldown = unit.attack_interval
+		elif distance <= unit.collision_radius + target.collision_radius + unit.melee_reach:
+			Combat.strike(self, unit, target, rng)
+			unit.attack_cooldown = unit.attack_interval
+	for i in range(projectiles.size() - 1, -1, -1):
+		var shot: Dictionary = projectiles[i]
+		shot.time += dt
+		if shot.time < shot.duration:
+			continue
+		projectiles.remove_at(i)
+		var victim = null
+		var closest := INF
+		for unit in units:
+			if unit.side == shot.side or unit.dead or unit.gone:
+				continue
+			var distance: float = unit.position.distance_to(shot.impact)
+			if distance < unit.collision_radius + Config.PROJECTILE_HIT_PADDING and distance < closest:
+				victim = unit
+				closest = distance
+		if victim != null:
+			Combat.arrow_hit(self, shot, victim, rng)
 
 func step_movement(dt: float, hero_position: Vector2, hero_facing: float = 0.0) -> void:
 	if dt <= 0.0:

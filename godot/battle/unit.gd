@@ -28,6 +28,15 @@ var facing: float = 0.0
 var fleeing: bool = false
 var collision_radius: float = Config.FOOT_COLLISION_RADIUS
 var mass: float = Config.FOOT_MASS
+var attack_interval: float = 1.0
+var attack_cooldown: float = 0.0
+var melee_reach: float = Config.DEFAULT_MELEE_REACH
+var block_chance: float = 0.0
+var accuracy: float = 0.0
+var pierce: float = 0.0
+var anti_cavalry: bool = false
+var weapon_kind: String = ""
+var undead_kind: String = ""
 
 func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection: float, unit_tier: int) -> void:
 	id = unit_id
