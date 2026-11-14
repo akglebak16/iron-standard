@@ -44,7 +44,6 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 	hero.swing_timer -= dt
 	_charge(battle, hero, rng)
 	hero.position += hero.velocity * dt
-	hero.position = hero.position.clamp(Vector2(Config.FIELD_LEFT_RIGHT_MARGIN, Config.FIELD_TOP_MARGIN), battle.arena_size - Vector2(Config.FIELD_LEFT_RIGHT_MARGIN, Config.FIELD_BOTTOM_MARGIN))
 
 static func _charge(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
 	if not hero.mounted or hero.charge_cooldown > 0.0:

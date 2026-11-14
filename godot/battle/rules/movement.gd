@@ -52,9 +52,6 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 		unit.position += unit.velocity * dt
 		if unit.fleeing and (unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING):
 			unit.gone = true
-		if not unit.fleeing:
-			unit.position.x = clampf(unit.position.x, Config.FIELD_LEFT_RIGHT_MARGIN, battle.arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
-		unit.position.y = clampf(unit.position.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
 		if index != null:
 			index.update(unit_index)
 	_resolve_unit_collisions(battle, index)
@@ -83,21 +80,27 @@ static func _resolve_unit_collisions(battle: State, index: SpatialIndex) -> void
 		if index == null:
 			for j in range(i + 1, battle.units.size()):
 				_separate(a, battle.units[j])
-			continue
-		var next_index := i + 1
-		while next_index < battle.units.size():
-			var candidates := index.nearby(a.position, a.collision_radius + max_radius, next_index)
-			var collided := false
-			for j in candidates:
-				next_index = j + 1
-				if not _separate(a, battle.units[j]):
-					continue
-				index.update(i)
-				index.update(j)
-				collided = true
-				break # A moved: refresh candidates for later indices.
-			if not collided:
-				break
+		else:
+			var next_index := i + 1
+			while next_index < battle.units.size():
+				var candidates := index.nearby(a.position, a.collision_radius + max_radius, next_index)
+				var collided := false
+				for j in candidates:
+					next_index = j + 1
+					if not _separate(a, battle.units[j]):
+						continue
+					index.update(i)
+					index.update(j)
+					collided = true
+					break # A moved: refresh candidates for later indices.
+				if not collided:
+					break
+		# Browser battleUpdate clamps each unit after resolving its pair collisions.
+		if not a.fleeing:
+			a.position.x = clampf(a.position.x, Config.FIELD_LEFT_RIGHT_MARGIN, battle.arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
+		a.position.y = clampf(a.position.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
+		if index != null:
+			index.update(i)
 
 static func _separate(a: Unit, b: Unit) -> bool:
 	if b.dead or b.gone:

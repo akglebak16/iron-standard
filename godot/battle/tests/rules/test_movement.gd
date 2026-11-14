@@ -38,5 +38,25 @@ func _initialize() -> void:
 		if foot.gone:
 			break
 	assert(foot.gone)
+	_check_post_collision_field_limits()
 	print("Movement tests passed")
 	quit(0)
+
+func _check_post_collision_field_limits() -> void:
+	var battle := BattleState.new()
+	battle.setup_groups()
+	var hero := Unit.new(0, 0, Vector2(21, Config.FIELD_TOP_MARGIN - 1.0), 100, 0, 1)
+	hero.hero = true
+	var ally := Unit.new(1, 0, Vector2(28, Config.FIELD_TOP_MARGIN), 100, 0, 1)
+	ally.speed = 0.0
+	battle.add_unit(hero)
+	battle.add_grouped_unit(ally, Config.GROUP_INFANTRY)
+	Movement.step(battle, 0.01, hero.position)
+	assert(hero.position.is_equal_approx(Vector2(Config.FIELD_LEFT_RIGHT_MARGIN, Config.FIELD_TOP_MARGIN)))
+	assert(ally.position.x > 28.0)
+	# A fleeing unit retains horizontal freedom but still obeys vertical limits.
+	hero.fleeing = true
+	hero.position = Vector2(-1, Config.FIELD_TOP_MARGIN - 1.0)
+	Movement.step(battle, 0.01, hero.position)
+	assert(hero.position.x == -1.0)
+	assert(hero.position.y == Config.FIELD_TOP_MARGIN)
