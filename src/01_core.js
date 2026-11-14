@@ -77,7 +77,7 @@ const TROOPS = {};
 /* Бой: дальность стрелков ×2 от прежней, разброс ×ACC_K, щит прибавляет шанс заблокировать снаряд (см. blocked в 03_battle.js) */
 const ACC_K = 1.8, SHOT_V = 620, THROW_V = 460;
 /* Подстройка живучести фракций после патча дальнобоя: множитель здоровья всех бойцов фракции (по боям 30/50/80 человек; пакт — самый слабый в среднем) */
-const FAC_HP = { nord: 1.2, khan: .86 };
+const FAC_HP = { nord: 1.15, khan: .86 };
 function shieldArrow(l) { return l === 'kite' ? .18 : l === 'round' ? .12 : l === 'small' ? .07 : 0; }
 function T(id, name, fac, tier, cls, look, up, mod) {
   const t = Object.assign({ id, name, fac, tier, cls, look, up: up || [], reach: 0, block: 0, range: 0 }, BASE[cls][tier], mod || {});
@@ -179,7 +179,7 @@ function unitName(fac) { const f = FACTIONS[fac] || FACTIONS.nord; const n = pic
 function troopCount(list) { let n = 0; for (const s of list) n += s.n; return n; }
 function strength(list) { let s = 0; for (const t of list) { const d = TROOPS[t.type]; s += t.n * (d.tier * d.tier * .6 + .8) * (d.mounted ? 1.35 : 1) * (d.pw || 1); } return s; }
 function genTroops(fac, n, quality, raw) { // quality 0..1; raw — не масштабировать (быстрый бой, демо)
-  if (!raw && MK() > 1 && n > 1) n = Math.round(n * (fac === 'bandit' || fac === 'undead' ? 1 + (MK() - 1) * .25 : MK())); // разбойники и нежить растут лишь на четверть, чтобы начало игры оставалось по силам
+  if (!raw && MK() > 1 && n > 1) n = Math.round(n * (fac === 'bandit' ? 1 : fac === 'undead' ? 1 + (MK() - 1) * .25 : MK())); // разбойники не растут (их больше числом, см. BANDIT_N в 05_world.js), нежить — на четверть
   const ids = Object.keys(TROOPS).filter(k => TROOPS[k].fac === fac), out = {};
   for (let i = 0; i < n; i++) {
     const r = Math.random() + (quality - .5) * .7; const tier = r < .38 ? 1 : r < .78 ? 2 : 3;

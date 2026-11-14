@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node build.mjs && node server/index.js",
     "build": "node build.mjs",
-    "test": "node tests/smoke.cjs"
+    "test": "node tests/smoke.cjs && node tests/ui-polish.cjs"
   },
   "engines": {
     "node": ">=18"

@@ -28,7 +28,13 @@ function startBattle(cfg) {
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
   // Больше BATTLE_CAP юнитов на сторону не рисуем: лишние бойцы сливаются в более крепких. Юнит, который заменяет k бойцов, получает здоровье и урон ×k
   // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
-  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const cap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP, sc = tot > cap ? cap / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
+  B.reserve = [[], []]; B.resDead = [0, 0]; B.cap = [BATTLE_CAP, BATTLE_CAP];
+  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n;
+    const wcap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP; B.cap[side] = wcap;
+    if ((fac === 'undead' || cfg.quick) && !SERVER && tot > wcap) { // нежить (и все в быстром бою) сверх предела ждёт в запасе и выходит волнами (battleWaves), а не сливается в «толстых» бойцов
+      const all = []; for (const s of list) for (let i = 0; i < s.n; i++) all.push(s.type); for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)), x = all[i]; all[i] = all[j]; all[j] = x; }
+      list = []; for (const id of all.slice(0, wcap)) addT(list, id, 1); B.reserve[side] = all.slice(wcap); B.men[side] += B.reserve[side].length; tot = wcap; }
+    const cap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP, sc = tot > cap ? cap / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.comps) for (const c of cfg.comps) spawnComp(c);
   if (cfg.siege) siegeSetup();
@@ -53,7 +59,7 @@ function spawnComp(c) {
   const hd = heroDef(c); hd.id = 'comp:' + c.id; hd.grp = hd.mounted ? 2 : hd.range ? 1 : 0; const g = B.groups[0][hd.grp];
   const u = mkUnit(0, hd, 'player', g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getHeroSprite(c, hd.mounted));
   u.comp = c.id; u.name = c.name; u.hp = Math.max(hd.hp * .3, hd.hp * (c.hp === undefined ? 1 : c.hp)); u.spd = hd.spd; u.mbase = u.morale = 160; u.fx = perkFx(c);
-  const d = typeof COMP !== 'undefined' && COMP[c.id]; if (d && d.voice) { u.voice = d.voice; u.sayCd = 0; u.sayStart = rnd(1, 2.2); u.tauntT = rnd(12, 18); } // реплики в бою (03b_gore.js)
+  const d = typeof COMP !== 'undefined' && COMP[c.id]; if (d && d.voice) { u.voice = d.voice; u.sayCd = 0; u.sayStart = rnd(1, 2.2); u.tauntT = rnd(24, 36); } // реплики в бою (03b_gore.js)
   return u;
 }
 function myPid() { return B.hero ? B.hero.pid : undefined; }
@@ -68,6 +74,15 @@ function layout(g, init) {
   const nc = Math.ceil(n / rows);
   if (init) us.forEach((u, i) => { const row = Math.floor(i / nc), col = i % nc, inRow = Math.min(nc, n - row * nc); u.lx = (col - (inRow - 1) / 2) * sp; u.ly = -row * sp * .92; });
   else us.forEach((u, i) => { const col = Math.floor(i / rows), row = i % rows; u.lx = (col - (nc - 1) / 2) * sp; u.ly = -row * sp * .92; });
+}
+/* волны: когда на поле пала треть предела (у нежити 200 из 600, у живых 100 из 300), из-за края поля выходит следующая треть из запаса */
+function battleWaves(n) {
+  for (let side = 0; side < 2; side++) { const R = B.reserve && B.reserve[side]; if (!R || !R.length) continue; const cap = B.cap[side], wave = Math.round(cap / 3), room = cap - n[side]; if (room < wave && n[side] > 0) continue;
+    const k = Math.min(R.length, room, wave), ex = side ? B.W - 90 : 90, gs = new Set(); let und = false;
+    for (const id of R.splice(0, k)) { const t = TROOPS[id], fac = side ? B.cfg.efac : B.cfg.pfac, u = mkUnit(side, t, fac, ex + rnd(-50, 50), B.H / 2 + rnd(-420, 420), getSprite(id, rint(0, 3), fac)); if (t.fac === 'undead') { u.mbase = u.morale = 999; und = true; } if (!side) u.own = B.cfg.heroPid; B.men[side]--; gs.add(u.grp); }
+    for (const g of gs) layout(g); n[side] += k;
+    if (!B.cfg.demo) { blog((und ? 'Из-за холма выходят ещё ' + k + ' мертвецов' : (side ? 'К врагу подходит подкрепление: ' : 'К нам подходит подкрепление: ') + k) + (R.length ? ' (в запасе ' + R.length + ')' : ' — последняя волна'), side ? 1 : 0); sfx(side ? 'horn2' : 'horn'); }
+  }
 }
 function slotPos(u) { const g = u.grp, c = Math.cos(g.dir), s = Math.sin(g.dir); return [clamp(g.cx - s * u.lx + c * u.ly, 30, B.W - 30), clamp(g.cy + c * u.lx + s * u.ly, 30, B.H - 30)]; }
 function centroid(side) { let x = 0, y = 0, n = 0, m = 0; for (const u of B.units) if (u.side === side && fit(u)) { x += u.x; y += u.y; n++; m += u.w || 1; } return n ? { x: x / n, y: y / n, n, m } : null; } // n — юнитов, m — людей (один юнит может быть слитым отрядом)
@@ -202,13 +217,13 @@ function hurt(t, dmg, src, pierce) {
 }
 function kill(t, src) {
   t.dead = true; t.hp = 0; if (src) { src.kills++; src.morale = Math.min(src.mbase, src.morale + 8); if (src.isHero && src.fx && src.fx.killHeal) src.hp = Math.min(src.maxHp, src.hp + src.maxHp * src.fx.killHeal); }
-  if (!SERVER) { if (src && src.voice && !src.dead) voiceSay(src, t.t.fac === 'undead' && Math.random() < .5 ? 'killUndead' : 'kill'); if (t.voice) voiceSay(t, 'down', true); }
+  if (!SERVER) { if (src && src.voice && !src.dead) voiceSay(src, t.t.fac === 'undead' && Math.random() < .5 ? 'killUndead' : 'kill'); if (t.voice) { voiceSay(t, 'down', true); banterDown(t); } }
   if (!SERVER && !goreKill(t, src)) paintCorpse(t); ev(['k', t.id]);
   if (!SERVER && goreCol(t)) fxBlood(t.x, t.y - 14, 12, goreCol(t)); sfx('death', t);
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) if (g2.own === t.pid) g2.order = 'charge'; for (const u of B.units) if (u.side === 0 && u.own === t.pid) u.morale -= 7; B.hudDirty = true; }
   else if (t.comp) { blog(t.name + ' ранен и вынесен из боя', 1); for (const u of B.units) if (u.side === 0 && Math.hypot(u.x - t.x, u.y - t.y) < 170) u.morale -= 4; B.hudDirty = true; }
-  else if (t.leader && t.t.fac === 'undead') { blog(t.name + ' пал — мертвецы рассыпаются в прах!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side && alive(u) && u.t.fac === 'undead' && Math.random() < .35) { u.leader = false; kill(u, null); } }
+  else if (t.leader && t.t.fac === 'undead') { blog(t.name + ' пал — мертвецы рассыпаются в прах!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side && alive(u) && u.t.fac === 'undead' && Math.random() < .35) { u.leader = false; kill(u, null); } const R = B.reserve && B.reserve[t.side]; if (R && R.length) { const k = Math.round(R.length * .35); R.splice(0, k); B.resDead[t.side] += k; } }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1) * (t.t.pw || 1);
@@ -304,6 +319,7 @@ function battleUpdate(rdt) {
       if (!u.wav && u.morale < 22) { u.wav = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' дрогнул', u.side ? 0 : 1); }
       if (u.morale <= 0 || (my <= B.start[u.side] * .2 && my < th * .5 && !u.leader && B.start[u.side] > 4)) { u.flee = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' бежит с поля боя', u.side ? 0 : 1); } }
     B.hudDirty = true;
+    if (!SERVER && B.reserve) battleWaves(n);
     const f0 = B.units.some(u => u.side === 0 && fit(u)), f1 = B.units.some(u => u.side === 1 && fit(u));
     if ((!f0 || !f1) && !B.over) { B.over = B.t; B.win = f0 && !f1; if (!demo) { blog(B.win ? 'Победа! Враг разбит.' : 'Отряд разбит…', B.win ? 0 : 1); sfx(B.win ? 'horn' : 'horn2'); } }
   }
@@ -330,6 +346,7 @@ function finishBattle() {
       if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + w; } else res.left[id] = (res.left[id] || 0) + w; }
       else { if (u.dead && !u.gone) res.enemyDead += w; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + w; }
     }
+    if (B.reserve) { for (const id of B.reserve[1]) res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; res.enemyDead += B.resDead[1]; for (const id of B.reserve[0]) res.left[id] = (res.left[id] || 0) + 1; } // нежить, не успевшая выйти, остаётся в армии; рассыпанная со смертью некроманта — в убитых
     for (const m of [res.dead, res.wounded, res.left, res.enemyLeft]) for (const id in m) { m[id] = Math.round(m[id]); if (!m[id]) delete m[id]; }
     res.enemyDead = Math.round(res.enemyDead);
     return res;
@@ -373,7 +390,7 @@ function battleDraw(g) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#15120c'; g.fillRect(0, 0, VIEW.w * d, VIEW.h * d);
   const shx = B.shake > 0 ? rnd(-3, 3) : 0, shy = B.shake > 0 ? rnd(-3, 3) : 0;
   g.setTransform(d * z, 0, 0, d * z, d * (VIEW.w / 2 - cam.x * z + shx), d * (VIEW.h / 2 - cam.y * z + shy));
-  g.drawImage(B.ground, 0, 0); goreDrawUnder(g);
+  g.drawImage(B.ground, 0, 0); goreDrawUnder(g); commandDraw(g); if (B.wall && typeof sdDraw === 'function') sdDraw(g, 0);
   const x0 = cam.x - VIEW.w / 2 / z - 80, x1 = cam.x + VIEW.w / 2 / z + 80, y0 = cam.y - VIEW.h / 2 / z - 40, y1 = cam.y + VIEW.h / 2 / z + 140;
   if (B.flag && B.t - B.flag.t < 4) { const f = B.flag, a = clamp(4 - (B.t - f.t), 0, 1); g.globalAlpha = a; g.strokeStyle = '#f1d27a'; g.lineWidth = 2; ell(g, f.x, f.y, 26, 10); g.stroke(); drawBanner(g, f.x, f.y, 'player', 15); g.globalAlpha = 1; }
   drawList.length = 0;
@@ -385,18 +402,22 @@ function battleDraw(g) {
     if (u.cv) { g.drawImage(u.cv, u.x - u.ax, u.y - u.ay, u.w, u.h); continue; }
     const sp = u.sp, mv = Math.hypot(u.vx, u.vy); let ox = 0, oy = mv > 12 ? Math.sin(B.t * (u.t.mounted ? 15 : 11) + u.ph) * (u.t.mounted ? 2 : 1.3) : 0;
     if (u.bump > 0) { const b = Math.sin((1 - u.bump) * Math.PI) * 7; ox = Math.cos(u.face) * b; oy += Math.sin(u.face) * b; }
-    g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(u.x + 3, u.y + 3, u.r * 1.25, u.r * .5, 0, 0, TAU); g.fill();
+    contactShadow(g, u.x + 4, u.y + 3, u.r * 1.65, u.r * .72);
     if (!demo) {
       if (u.isHero && !u.ai) { g.strokeStyle = u === B.hero ? '#ffd86a' : '#7ee07a'; g.lineWidth = 2.2; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.stroke(); if (u.blocking) { g.strokeStyle = 'rgba(210,230,255,.85)'; g.lineWidth = 3.5; g.beginPath(); g.arc(u.x, u.y - 12, 24, u.face - 1.1, u.face + 1.1); g.stroke(); } }
-      else { const al = !u.side && B.hero2 && u.own !== myPid(); g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : al ? 'rgba(110,214,110,.8)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(110,165,235,.75)'); g.lineWidth = u.leader ? 2.6 : 1.5; if (u.comp) { g.strokeStyle = '#7fd6c8'; g.lineWidth = 2.2; } ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); }
+      else { const al = !u.side && B.hero2 && u.own !== myPid(); g.strokeStyle = u.side ? 'rgba(214,52,38,.75)' : al ? 'rgba(110,214,110,.8)' : (B.sel === 3 || u.grp.k === B.sel ? 'rgba(250,222,130,.85)' : 'rgba(110,165,235,.75)'); g.lineWidth = u.leader ? 2.6 : 1.5; if (u.comp) { g.strokeStyle = '#7fd6c8'; g.lineWidth = 2.2; } const selected = !u.side && u.own === myPid() && (B.sel === 3 || u.grp.k === B.sel);
+        if (selected) { g.fillStyle = 'rgba(241,210,122,.15)'; ell(g, u.x, u.y, u.r + 5, (u.r + 5) * .42); g.fill(); g.lineWidth = 2.3; }
+        if (u.side) g.setLineDash([5, 3]);
+        ell(g, u.x, u.y, u.r + 3, (u.r + 3) * .42); g.stroke(); g.setLineDash([]); }
     }
+    unitPolish(g, u, mv);
     g.save(); g.translate(u.x + ox, u.y + oy); if (u.flee) g.globalAlpha = .75; drawUnitSprite(g, u, sp, mv); g.restore();
     if (u.hp < u.maxHp && !demo) { const w = u.r * 1.9, hy = u.y - (sp.m ? 70 : 52); g.fillStyle = 'rgba(15,10,6,.8)'; g.fillRect(u.x - w / 2 - 1, hy - 1, w + 2, 5); g.fillStyle = u.side ? '#c23a2c' : '#7fb04a'; g.fillRect(u.x - w / 2, hy, w * clamp(u.hp / u.maxHp, 0, 1), 3); }
     if (u.leader && !demo) drawBanner(g, u.x - u.dir * 10, u.y - 2, u.fac, 17);
     if (u.comp && !demo) { g.font = '700 12px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center'; const ny = u.y - (sp.m ? 76 : 58); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(u.name, u.x + 1, ny + 1); g.fillStyle = '#9fe3d6'; g.fillText(u.name, u.x, ny); }
     if (u.flee && !demo) { g.fillStyle = '#f4f0e0'; g.fillRect(u.x - 1, u.y - 66, 9, 6); g.fillStyle = '#3a2a18'; g.fillRect(u.x - 2, u.y - 67, 1.5, 14); }
   }
-  fallDraw(g); goreDrawOver(g); voiceDraw(g);
+  fallDraw(g); goreDrawOver(g); voiceDraw(g); if (B.wall && typeof sdDraw === 'function') sdDraw(g, 1);
   const h = B.hero;
   if (h && !h.dead && h.swing > 0) { const p = 1 - h.swing / .26, R = 34 + h.t.reach + (h.t.mounted ? 8 : 0), a0 = h.swingA - 1 + p * 2; g.strokeStyle = 'rgba(255,250,230,' + (.85 - p * .7) + ')'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.arc(h.x, h.y - 14, R, a0 - .7, a0); g.stroke(); }
   // стрелы
@@ -433,7 +454,7 @@ function drawMinimap(c) {
 // стена — вертикальная полоса перед защитниками; пройти можно только через проломы (центральный — выбитые ворота)
 function siegeSetup() {
   const sf = B.siegeF = clamp(B.cfg.csiege || 0, 0, .9); // осадное дело спутника: у защитников слабее дух, стена хуже укрывает
-  const W = B.W, H = B.H, x = W - 980; B.wall = { x, hw: 22, gaps: [[H / 2 - 80, H / 2 + 80], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
+  const W = B.W, H = B.H, x = W - 980, dg = Math.round(60 * clamp(B.cfg.dmg || 0, 0, 1)); B.wall = { x, hw: 22, gaps: [[H / 2 - 80 - dg, H / 2 + 80 + dg], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
   B.trees = B.trees.filter(t => t.x < x - 140); // у стены и во дворе деревьев нет
   const [inf, arc, cav] = B.groups[1]; inf.cx = x + 80; inf.cy = H / 2; arc.cx = x + 52; arc.cy = H / 2; cav.cx = W - 380; cav.cy = H / 2; for (const g of B.groups[1]) { g.dir = Math.PI; g.order = 'hold'; g.st = 'siege'; layout(g, true); }
   for (const u of B.units) if (u.side === 1) { u.mbase += Math.round(28 * (1 - sf)); u.morale = u.mbase; if (!u.isHero) { const p = slotPos(u); u.x = p[0]; u.y = p[1]; } }
@@ -462,6 +483,7 @@ function siegeBrain(dt) {
   if (cav.order !== 'charge' && (inside > 4 || B.t > 170)) { cav.order = 'charge'; if (!B.cfg.demo) blog('Конница гарнизона вышла в бой', 1); }
   if (arc.order !== 'charge' && (inside > 8 || !inf.units.some(fit))) arc.order = 'charge';
   if (near && !B.siegeHorn) { B.siegeHorn = 1; blog('Враг у стен!', 1); sfx('horn2'); }
+  if (!SERVER && typeof sdUpdate === 'function') sdUpdate(dt); // камни, котлы с маслом (03c_siegedef.js)
 }
 function paintWall(g) {
   const w = B.wall, H = B.H, x0 = w.x - w.hw, ww = w.hw * 2, segs = []; let y = 0; for (const gp of w.gaps.slice().sort((a, b) => a[0] - b[0])) { segs.push([y, gp[0]]); y = gp[1]; } segs.push([y, H]);

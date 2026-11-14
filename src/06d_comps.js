@@ -21,14 +21,15 @@ function tavernBody(s) {
 }
 function compsBody() {
   const P = G.player, L = compsOf(P); let b = '<div class="note">Спутники бьются сами в своей группе (пехота, стрелки или конница) и слушаются приказов. В бою их не убивают, а ранят: раненый ниже ' + Math.round(COMP_FIT * 100) + '% здоровья пропускает бои, пока не подлечится. Жалованье спутников: ' + compWage(P) + ' в день.</div>';
-  if (!L.length) b += '<div class="note">Спутников нет. Ищи их в тавернах городов.</div>';
+  if (!L.length) b += '<div class="note">' + (typeof cvList === 'function' && cvList(P).length ? 'Все спутники сидят на наделах (см. ниже).' : 'Спутников нет. Ищи их в тавернах городов.') + '</div>';
   for (const c of L) {
     const d = COMP[c.id], hd = heroDef(c), ok = compFit(c), conf = UI.cfire === c.id;
     b += '<div class="row comp"><img alt="" src="' + compImg(c) + '"><div class="grow"><div class="nm">' + c.name + ' <span class="tag">' + d.role + '</span><span class="tag">Ур. ' + c.lvl + '</span>' + (ok ? '' : '<span class="tag r">ранен</span>') + '</div>' +
       '<div class="ds attrs">' + compAttrs(c) + '<span>Опыт <b>' + c.xp + ' / ' + xpNeed(c.lvl) + '</b></span></div><div class="pbar hp"><i style="width:' + Math.round(c.hp * 100) + '%"></i></div><div class="ds">Здоровье ' + Math.round(c.hp * hd.hp) + ' / ' + hd.hp + ' · ' + compGearLine(c).split(' · здор.')[0] + '</div><div class="ds skill">' + compSkillHtml(c) + '</div></div>' +
-      '<div class="acts col"><span class="ds">' + (d.wage ? d.wage + '/день' : 'служит даром') + '</span><button class="btn sm" data-act="cgear" data-id="' + c.id + '">Снаряжение</button>' +
-      (conf ? '<button class="btn sm danger" data-act="cfireok" data-id="' + c.id + '">Точно отпустить?</button>' : '<button class="btn sm danger" data-act="cfire" data-id="' + c.id + '">Отпустить</button>') + '</div></div>';
+      '<div class="acts col"><span class="ds">' + (d.wage ? d.wage + '/день' : 'служит даром') + '</span><button class="btn sm" data-act="cgear" data-id="' + c.id + '">Снаряжение</button>' +(typeof cvBtn === 'function' ? cvBtn(c) : '') +
+      (conf ? '<button class="btn sm danger" data-act="cfireok" data-id="' + c.id + '">Точно отпустить?</button>' : '<button class="btn sm danger" data-act="cfire" data-id="' + c.id + '">Отпустить</button>') + '</div></div>' + (typeof cvPickHtml === 'function' ? cvPickHtml(c) : '');
   }
+  if (typeof vassalsBlock === 'function') b += vassalsBlock(P);
   return b;
 }
 /* в обозе: чью куклу показываем — героя (UI.who = null) или спутника */
@@ -41,6 +42,6 @@ function whoBar(P) {
 }
 ACT.chire = function (d) { const r = doCompHire(G.player, UI.town.s, d.id); if (r) toast(r); else { sfx('coin'); toast(COMP[d.id].name + ' теперь в твоём отряде'); } keepScroll(renderTown); };
 ACT.cfire = function (d) { UI.cfire = d.id; keepScroll(renderPanel); };
-ACT.cfireok = function (d) { UI.cfire = null; if (doCompFire(G.player, d.id)) sfx('click'); if (!compsOf(G.player).length) UI.panel = 'troops'; keepScroll(renderPanel); };
+ACT.cfireok = function (d) { UI.cfire = null; if (doCompFire(G.player, d.id)) sfx('click'); if (!compsOf(G.player).length && !(typeof cvList === 'function' && cvList(G.player).length)) UI.panel = 'troops'; keepScroll(renderPanel); };
 ACT.cgear = function (d) { UI.who = d.id; UI.isel = null; openPanel('inv'); };
 ACT.cwho = function (d) { UI.who = d.id || null; UI.isel = null; keepScroll(renderPanel); };

@@ -20,7 +20,7 @@ const CLANS_PER_F = 4, CLAN_SIZE = 2, VASS_PER_F = 4; // у каждой фра�
 const warLords = f => CLANS_PER_F * CLAN_SIZE;
 const warVass = f => VASS_PER_F;
 /* оборона поселения: гарнизон с множителем стен; у государства на краю гибели защитники бьются отчаянней */
-function siegeDef(s) { const h = holdOf(s.fac); return (strength(garrisonOf(s)) + 4) * (1.8 + (h.core <= 3 ? .8 : h.core <= 5 ? .35 : 0)); }
+function siegeDef(s) { const h = holdOf(s.fac); return (strength(garrisonOf(s)) + 4) * (1.8 + (h.core <= 3 ? .8 : h.core <= 5 ? .35 : 0)) * (1 - .4 * (s.dmg || 0)); }
 function wlog(msg, kind) { for (const P of G.players) logW(msg, kind || 2, P); if (!SERVER && typeof toast === 'function') toast(msg); }
 
 /* ---------- дипломатия: раз в сутки ---------- */
@@ -52,7 +52,7 @@ function warLordsOf(f) { return G.parties.filter(p => isNoble(p) && p.fac === f 
 function warHour() {
   warInit();
   if (G.hour % 2 === 0) { for (const f of facsAlive()) warCamp(f); for (const s of G.settles) if (s.siege) siegeTick(s); }
-  skirmHour();
+  skirmHour(); if (typeof sgHour === 'function') sgHour();
   if (G.hour === 12) clanRefill();
 }
 function warCamp(f) {
@@ -101,6 +101,7 @@ function siegeTick(s) {
   for (const t of g.slice()) remT(g, t.type, Math.round(t.n * lossD + (Math.random() < t.n * lossD % 1 ? 1 : 0)));
   for (const p of att) for (const t of p.troops.slice()) remT(p.troops, t.type, Math.round(t.n * lossA));
   for (const p of att.slice()) if (troopCount(p.troops) < 6) G.parties.splice(G.parties.indexOf(p), 1);
+  if (typeof sgTick === 'function' && sgTick(s, sg, att, A, k)) return; // вылазки, подмога, пожары (05i_siege.js)
   const left = troopCount(g);
   if (left <= Math.max(7, sg.g0 * .16) && dur >= 12) return warCapture(s, sg.f, att);
   if (A < sg.a0 * .3) return lift('силы осаждающих иссякли');
@@ -115,6 +116,7 @@ function warCapture(s, f, att) {
   for (const v of G.settles) if (v.kind === 'village' && v.fac === old && Math.hypot(v.x - s.x, v.y - s.y) < 170) { v.cult = sCult(v); v.fac = f; }
   wlog(FACTIONS[f].name + ' берёт ' + (t0 === 'castle' ? 'замок ' : 'город ') + s.name + ' (бывший ' + FACTIONS[old].gen + ').', 2);
   for (const P of G.players) { if (P.liege === f && P.call && !P.call.joined && att.some(p => true) && Math.hypot(P.x - s.x, P.y - s.y) < 220) { P.call.joined = true; vassalReward(P, s); } }
+  if (typeof sgSackAI === 'function') sgSackAI(s, f);
   clanLoss(old, f, s);
   if (!facAlive(old)) facFall(old, f);
 }
@@ -138,6 +140,7 @@ function warContact(a, b) {
   for (const p of A.concat(B)) { p.fight = sk.id; p.path = []; p.pi = 0; p.tid = null; p.state = 'idle'; }
   G.skirm.push(sk);
 }
+const SK_LOSS = .06; // доля потерь стороны за час схватки при равных силах (было .16: бой шёл 6–8 ч, теперь ~2,5× дольше, чтобы игрок успевал дойти)
 const skSide = (sk, ids) => ids.map(partyById).filter(p => p && p.fight === sk.id);
 function skirmHour() {
   if (!G.skirm || !G.skirm.length) return;
@@ -149,7 +152,7 @@ function skirmHour() {
       if (p.fight) { p.path = []; p.pi = 0; p.tid = null; p.state = 'idle'; } }
     const A = skSide(sk, sk.A), B = skSide(sk, sk.B), men = L => L.reduce((n, p) => n + troopCount(p.troops), 0);
     if (!A.length || !B.length) { skEnd(sk, A, B, A.length ? 0 : 1); continue; }
-    const sa = A.reduce((n, p) => n + partyStr(p), 0), sb = B.reduce((n, p) => n + partyStr(p), 0), la = clamp(.16 * sb / sa, .02, .4) * rnd(.85, 1.15), lb = clamp(.16 * sa / sb, .02, .4) * rnd(.85, 1.15);
+    const sa = A.reduce((n, p) => n + partyStr(p), 0), sb = B.reduce((n, p) => n + partyStr(p), 0), la = clamp(SK_LOSS * sb / sa, SK_LOSS / 8, SK_LOSS * 2.5) * rnd(.85, 1.15), lb = clamp(SK_LOSS * sa / sb, SK_LOSS / 8, SK_LOSS * 2.5) * rnd(.85, 1.15);
     const hit = (L, l) => { for (const p of L) for (const t of p.troops.slice()) { const f = t.n * l, n = Math.floor(f) + (Math.random() < f % 1 ? 1 : 0); if (n > 0) remT(p.troops, t.type, n); } };
     hit(A, la); hit(B, lb);
     const A2 = A.filter(p => troopCount(p.troops) > 0), B2 = B.filter(p => troopCount(p.troops) > 0);
@@ -299,3 +302,28 @@ function rulerHome(p) { // правитель отходит в своё пос�
   p.fight = null; p.state = 'idle'; p.path = []; p.pi = 0; p.cd = 6; if (troopCount(p.troops) < 90 * MK()) for (const a of genTroops(p.fac, Math.ceil((90 * MK() - troopCount(p.troops)) / MK()), .6)) addT(p.troops, a.type, a.n); sortT(p.troops);
 }
 function rulerSpare(p) { if (!p.ruler || Math.random() > .78) return false; rulerHome(p); return true; } // телохранители выводят правителя из боя
+
+/* ---------- союзники врага в бою с игроком: соседние отряды той же стороны вступают вместе ---------- */
+const ENC_HELP_R = 170; // радиус, в котором союзники врага приходят на помощь (от врага или от игрока)
+function encHelpers(P, p) {
+  if (NET.on || ['camp', 'siege', 'caravan'].includes(p.kind)) return [];
+  return G.parties.filter(o => o !== p && !o.hide && !o.fight && !o.lock && !['camp', 'siege', 'caravan'].includes(o.kind) && o.fac === p.fac && isHostileToPlayer(o, P)
+    && Math.min(Math.hypot(o.x - p.x, o.y - p.y), Math.hypot(o.x - P.x, o.y - P.y)) < ENC_HELP_R);
+}
+function encTroops(p, help) { const t = p.troops.map(s => ({ type: s.type, n: s.n })); for (const h of help) for (const s of h.troops) addT(t, s.type, s.n); sortT(t); return t; }
+/* перед боем союзники вливаются в отряд врага (их снимают с карты), после боя выжившие расходятся обратно пропорционально тому, сколько привёл каждый */
+function encMerge(p, help) {
+  help = help.filter(h => G.parties.includes(h) && !h.fight); if (!help.length) return;
+  p.help = [{ own: true, n: troopCount(p.troops) }];
+  for (const h of help) { p.help.push({ h, n: troopCount(h.troops) }); for (const s of h.troops) addT(p.troops, s.type, s.n); G.parties.splice(G.parties.indexOf(h), 1); }
+  sortT(p.troops);
+}
+function encSplit(p) {
+  const hp = p.help; if (!hp) return; delete p.help;
+  if (!G.parties.includes(p)) return; // враг разбит: союзники пали вместе с ним
+  const tot = hp.reduce((a, x) => a + x.n, 0) || 1, left = p.troops.map(s => ({ type: s.type, n: s.n }));
+  for (const x of hp) { if (x.own) continue; const f = x.n / tot, mine = [];
+    for (const s of left) { const k = Math.min(s.n, Math.round(s.n * f)); if (k > 0) { mine.push({ type: s.type, n: k }); remT(p.troops, s.type, k); } }
+    if (troopCount(mine) > 0) { const h = x.h; h.troops = mine; h.fight = null; h.state = 'idle'; h.path = []; h.pi = 0; h.cd = 10; h.lock = null; G.parties.push(h); } }
+  if (!troopCount(p.troops)) addT(p.troops, left[0] ? left[0].type : 'n1', 1);
+}

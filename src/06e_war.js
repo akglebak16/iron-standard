@@ -14,7 +14,7 @@ ACT.swear = function () { const r = swear(G.player, UI.town.s.fac); if (r) toast
 ACT.leavesvc = function () { leaveService(G.player, null); sfx('click'); renderTown(); };
 /* значки схваток и осад на карте мира */
 function drawWar(g, label) {
-  const t = performance.now() / 400;
+  const t = performance.now() / 400; if (typeof sgDraw === 'function') sgDraw(g, t, label);
   for (const sk of G.skirm || []) { const x = sk.x, y = sk.y - 4, pu = 14 + Math.sin(t) * 2; g.save(); g.strokeStyle = 'rgba(230,70,40,.8)'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, pu, 0, TAU); g.stroke(); g.strokeStyle = '#ffd9a0'; g.lineWidth = 2.4; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - 7, y - 7); g.lineTo(x + 7, y + 7); g.moveTo(x + 7, y - 7); g.lineTo(x - 7, y + 7); g.stroke(); g.restore(); label('Бой', x, y - 22, '#ff9a7a', 12); }
   for (const s of G.settles) if (s.siege) { g.save(); g.strokeStyle = 'rgba(230,70,40,.85)'; g.lineWidth = 3; g.setLineDash([8, 5]); g.beginPath(); g.ellipse(s.x, s.y + 6, s.kind === 'castle' ? 58 : 66, 24, 0, 0, TAU); g.stroke(); g.restore(); label('Осада · ' + FACTIONS[s.siege.f].name.split(' ')[0], s.x, s.y - 52, '#ff9a7a', 13); }
 }

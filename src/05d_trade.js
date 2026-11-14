@@ -20,6 +20,7 @@ const GOODS = {
 const GEAR_APPEAR = [.6, .42, .28, .16];  // шанс, что вещь такого уровня есть у торговца при создании рынка (до поправки на фракцию)
 const GEAR_DAILY = [.13, .09, .06, .035]; // шанс, что отсутствующая вещь появится за день
 const MK_GOLD = { town: 2600, castle: 1400, village: 800 };
+const MKG = () => MK() > 1 ? 2.5 : 1; // в одиночной игре у городов втрое меньше денег, чем нужно армии ×2: растим казну торговцев
 const MK_GOODS = { town: 16, castle: 5, village: 9 };
 
 /* каталог: id → предмет. Снаряжение берётся из EQ (01b_gear.js), товары — из GOODS */
@@ -61,13 +62,13 @@ function gearPool(s) { // что вообще может продаваться 
 }
 function gearOdds(s, id, table) { const it = ITEM[id]; return table[it.tier] * (it.f ? (it.f.includes(sCult(s)) ? 1.5 : .45) : 1); } // местные товары попадаются чаще
 function mkMarket(s) {
-  const m = { day: G.day, gold: Math.round((MK_GOLD[s.kind] || 800) * rnd(.7, 1.1)), stock: {} };
+  const m = { day: G.day, gold: Math.round((MK_GOLD[s.kind] || 800) * MKG() * rnd(.7, 1.1)), stock: {} };
   for (const id in GOODS) m.stock[id] = Math.round(goodTarget(s, id) * rnd(.6, 1.4));
   for (const id of gearPool(s)) if (Math.random() < gearOdds(s, id, GEAR_APPEAR)) m.stock[id] = rint(1, 2);
   return m;
 }
 function marketDay(s, m) {
-  m.gold += Math.round(((MK_GOLD[s.kind] || 800) - m.gold) * .12) + 20;
+  m.gold += Math.round(((MK_GOLD[s.kind] || 800) * MKG() - m.gold) * .12) + Math.round(20 * MKG());
   for (const id in GOODS) { const t = goodTarget(s, id), v = m.stock[id] || 0; m.stock[id] = Math.max(0, v + Math.round((t - v) * .22 + rnd(-1.4, 1.4))); }
   for (const id of gearPool(s)) { const v = m.stock[id] || 0; if (v > 3) m.stock[id] = v - 1; else if (!v && Math.random() < gearOdds(s, id, GEAR_DAILY)) m.stock[id] = 1; }
 }

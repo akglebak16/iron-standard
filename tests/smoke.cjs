@@ -44,6 +44,25 @@ async function singlePlayer(pg) {
   }
   ok('кнопки верхнего меню нажимаются с первого раза', opened === tries, opened + '/' + tries);
 
+  // камера карты мира двигается клавишами WASD, C возвращает её к отряду, при открытом окне не двигается
+  await pg.evaluate(() => { closeModal(); G.paused = true; G.player.path = []; WC.free = false; WC.x = WW / 2; WC.y = WH / 2; WC.z = .9; });
+  const cam0 = await pg.evaluate(() => ({ x: WC.x, y: WC.y }));
+  await pg.keyboard.down('d'); await pg.waitForTimeout(350); await pg.keyboard.up('d');
+  const camD = await pg.evaluate(() => ({ x: WC.x, y: WC.y, free: WC.free }));
+  await pg.keyboard.down('a'); await pg.waitForTimeout(350); await pg.keyboard.up('a');
+  const camA = await pg.evaluate(() => ({ x: WC.x }));
+  await pg.keyboard.down('s'); await pg.waitForTimeout(350); await pg.keyboard.up('s');
+  const camS = await pg.evaluate(() => ({ y: WC.y }));
+  await pg.keyboard.down('w'); await pg.waitForTimeout(350); await pg.keyboard.up('w');
+  const camW = await pg.evaluate(() => ({ y: WC.y }));
+  await pg.evaluate(() => openMenu()); const frozen0 = await pg.evaluate(() => WC.x);
+  await pg.keyboard.down('d'); await pg.waitForTimeout(250); await pg.keyboard.up('d');
+  const frozen1 = await pg.evaluate(() => WC.x); await pg.evaluate(() => closeModal());
+  await pg.keyboard.press('c'); const back = await pg.evaluate(() => WC.free);
+  ok('WASD двигают камеру по карте мира, C возвращает её к отряду, при открытом окне камера стоит',
+    camD.x > cam0.x + 30 && camD.free && camA.x < camD.x - 30 && camS.y > camD.y + 30 && camW.y < camS.y - 30 && Math.abs(frozen1 - frozen0) < 1 && back === false, { cam0, camD, camA, camS, camW, frozen0, frozen1, back });
+  await pg.evaluate(() => { G.paused = false; });
+
   // 3. клавиши не залипают после Alt+Tab
   await pg.keyboard.down('KeyW'); const held = await pg.evaluate(() => !!IN.keys.KeyW);
   const freed = await pg.evaluate(() => { IN.atk = true; window.dispatchEvent(new Event('blur')); return !IN.keys.KeyW && !IN.atk; }); await pg.keyboard.up('KeyW');
@@ -89,8 +108,8 @@ async function sieges(pg) {
   await pg.waitForFunction(() => { const B = __dbg.B, w = B.wall; return B.units.some(u => u.side === 0 && fit(u) && u.x > w.x + w.hw) || B.over; }, null, { timeout: 45000 }).catch(() => {});
   const fight = await pg.evaluate(() => { const B = __dbg.B, w = B.wall; let inWall = 0, inside = 0; for (const u of B.units) if (fit(u)) { if (Math.abs(u.x - w.x) < w.hw && !inGap(u.y, 0)) inWall++; if (u.side === 0 && u.x > w.x + w.hw) inside++; } return { wall: !!w, inWall, inside }; });
   ok('бой-осада: есть стена, бойцы не стоят внутри стены, атакующие проходят через проломы', fight.wall && fight.inWall === 0 && fight.inside > 0, fight);
-  await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=cont2]'), null, { timeout: 10000 });
-  await pg.evaluate(() => ACT.cont2()); await sleep(300);
+  await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=sgspare]'), null, { timeout: 10000 }); // замок взят: игрок выбирает судьбу жителей
+  await pg.evaluate(() => ACT.sgspare()); await sleep(300);
   const own = await pg.evaluate(id => { const s = settleById(id); return { fac: s.fac, mine: s.owner === G.player.id, recruits: s.recruits.length > 0 }; }, c);
   ok('после победы замок наш, в нём можно нанимать', own.fac === 'player' && own.mine && own.recruits, own);
   const gar = await pg.evaluate(id => { const s = settleById(id); const before = troopCount(s.gar); garMove(G.player, s, 'n2a', 5, true); return troopCount(s.gar) - before; }, c);
@@ -124,12 +143,113 @@ async function companions(pg) {
   ok('спутники и таверны сохраняются', sv === 'ingrid,halvdan|true', sv);
 }
 
+async function vassals(pg) {
+  console.log('Вассалы-спутники');
+  await newSinglePlayer(pg);
+  const set = await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); captureSettle(P, s); s.gar = genTroops(sCult(s), 20, .5); const t = G.settles.find(x => x.kind === 'town' && x.fac === 'player'); P.gold = 5000; compsInit(); G.cpos.vikenty = t.id; const r = doCompHire(P, t, 'vikenty'); return { sid: s.id, r, n: P.comps.length }; });
+  ok('есть своё владение и спутник в отряде', !set.r && set.n === 1, set);
+  await pg.evaluate(() => { closeModal(); openPanel('comps'); });
+  ok('у спутника есть кнопка «Дать надел»', await pg.evaluate(() => !!document.querySelector('#modal [data-act=cvpick][data-id=vikenty]')));
+  await pg.click('#modal [data-act=cvpick][data-id=vikenty]'); await sleep(100);
+  ok('кнопка показывает список наделов', await pg.evaluate(id => !!document.querySelector('#modal [data-act=cvgrant][data-s="' + id + '"]'), set.sid));
+  await pg.click('#modal [data-act=cvgrant][data-id=vikenty]'); await sleep(150);
+  const g = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), v = cvOfId(P, 'vikenty'), p = v && cvPartyOf(v); return { out: !compById(P, 'vikenty'), vass: P.vass.length, mark: s.vass === 'vikenty', party: !!p && p.kind === 'cvass' && p.fac === 'player', hired: compHired('vikenty'), ui: /Вассал/.test(el('modal').innerHTML) && !!document.querySelector('#modal [data-act=cvrevoke]'), tab: !!document.querySelector('#modal .tab[data-t=comps]') }; }, set.sid);
+  ok('надел отдан: спутник стал вассалом, на карте его дружина, в таверне его нет', g.out && g.vass === 1 && g.mark && g.party && g.hired && g.ui && g.tab, g);
+  const eco = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), v = cvOfId(P, 'vikenty'), g0 = P.gold, n0 = troopCount(cvPartyOf(v).troops); v.gold = 3000; for (let i = 0; i < 4; i++) { garrisonDay(); cvDay(P); } return { dg: P.gold - g0, n: troopCount(cvPartyOf(v).troops) - n0, vg: v.gold, cap: cvCap(v) }; }, set.sid);
+  ok('вассал платит подать, на казну нанимает дружину, содержание списывается', eco.dg > 0 && eco.n > 0 && eco.vg < 3000 + 4 * 400, eco);
+  const hs = await pg.evaluate(() => { const v = cvOfId(G.player, 'vikenty'), p = cvPartyOf(v), P = G.player; const bd = { kind: 'bandit', fac: 'bandit' }, lord = f => ({ kind: 'lord', fac: f }); const f1 = REAL_F[0], f2 = REAL_F[1]; P.rel[f1] = 40; P.rel[f2] = -45; return { bandit: hostile(p, bd) && hostile(bd, p), friend: !hostile(p, lord(f1)), foe: hostile(p, lord(f2)), own: !hostile(p, { kind: 'cvass', fac: 'player' }), cara: !hostile(p, { kind: 'caravan', fac: f2 }), hunted: isHostileToPlayer(p, P) === false }; });
+  ok('дружина вассала враждует с врагами игрока и не трогает друзей и караваны', hs.bandit && hs.friend && hs.foe && hs.own && hs.cara && hs.hunted, hs);
+  const wr = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), v = cvOfId(P, 'vikenty'), p = cvPartyOf(v); p.x = s.x; p.y = s.y; p.troops = genTroops('emp', 60, .8); s.gar = [{ type: 'n1', n: 1 }]; const f = REAL_F.find(x => x !== sCult(s)) || 'emp'; P.rel[f] = -60; mkParty('lord', f, 'Лорд Тест', s.x + 15, s.y + 5, genTroops(f, 40, .6)); assaultsTick(); return { fac: s.fac, party: !!cvPartyOf(v) }; }, set.sid);
+  ok('дружина вассала у надела помогает отбить штурм при слабом гарнизоне', wr.fac === 'player', wr);
+  const sim = await pg.evaluate(sid => { const P = G.player, v = cvOfId(P, 'vikenty'), p = cvPartyOf(v); for (const m of ['patrol', 'follow', 'guard']) { v.mode = m; for (let i = 0; i < 120; i++) stepWorld(.5); } const s = settleById(sid); return { ok: G.parties.includes(p) ? Math.hypot(p.x - s.x, p.y - s.y) < 400 : true }; }, set.sid);
+  ok('дружина ходит по приказам (дозор, за героем, охрана) без ошибок', sim.ok, sim);
+  const talk = await pg.evaluate(() => { closeModal(); const p = cvPartyOf(cvOfId(G.player, 'vikenty')); if (!p) return true; openEncounter(p, false); return /Твой вассал/.test(el('modal').innerHTML) && !!document.querySelector('#modal [data-act=cvmode][data-m=patrol]') && !document.querySelector('#modal [data-act=attack]'); });
+  ok('при встрече с дружиной вассала — разговор и приказы, а не нападение', talk);
+  await pg.evaluate(() => { const P = G.player, v = cvOfId(P, 'vikenty'); closeModal(); ACT.cvmode({ id: 'vikenty', m: 'patrol' }); });
+  ok('приказ вассалу меняет режим', await pg.evaluate(() => cvOfId(G.player, 'vikenty').mode === 'patrol'));
+  const ally = await pg.evaluate(() => { const P = G.player, v = cvOfId(P, 'vikenty'), a = cvPartyOf(v); if (!a) return { err: 'нет дружины' }; a.x = P.x + 30; a.y = P.y; a.troops = [{ type: a.troops[0].type, n: 20 }]; a.fight = null; a.lock = null; a.hide = false;
+    const e = mkParty('bandit', 'bandit', 'Шайка Тест', P.x + 50, P.y, genTroops('bandit', 60, .6)), far = mkParty('bandit', 'bandit', 'Далёкая', P.x + 900, P.y + 900, [{ type: 'b1', n: 5 }]);
+    a.x = P.x + 900; a.y = P.y + 900; const none = cvHelpers(P, e); void far; a.x = P.x + 30; a.y = P.y; const near = cvHelpers(P, e); openEncounter(e, true); const note = /Рядом с тобой в бой вступят/.test(el('modal').innerHTML); closeModal();
+    const pl0 = troopCount(P.troops), al0 = troopCount(a.troops); cvBattleStart(P, e, near); const cfg = battleCfgFor(P, e), cfgN = cfg.pl.reduce((s, x) => s + x.n, 0);
+    const res = autoResult(P, e); const dead0 = Object.values(res.dead).reduce((s, x) => s + x, 0); cvBattleEnd(P, res, e); const dead1 = Object.values(res.dead).reduce((s, x) => s + x, 0), lost = al0 - troopCount(a.troops);
+    return { near: near.length === 1, none: none.length === 0, note, cfg: cfgN === pl0 + al0, split: dead1 + lost === dead0 && dead1 <= dead0, kept: !!cvPartyOf(v) || lost >= al0, clear: cvAllyTroops(e).length === 0, d0: dead0, d1: dead1, lost }; });
+  ok('дружина вассала рядом вступает в бой игрока: в расчёте, в составе отряда, потери делятся', ally.near && ally.none && ally.note && ally.cfg && ally.split && ally.kept && ally.clear, ally);
+  const rv = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), n0 = troopCount(garrisonOf(s)); cvRevoke(P, 'vikenty'); return { back: !!compById(P, 'vikenty'), no: !P.vass.length, mark: s.vass === undefined, gar: troopCount(garrisonOf(s)) >= n0, party: !G.parties.some(p => p.kind === 'cvass') }; }, set.sid);
+  ok('надел можно забрать: спутник в отряде, дружина распущена в гарнизон', rv.back && rv.no && rv.mark && rv.gar && rv.party, rv);
+  const lost = await pg.evaluate(sid => { const P = G.player, s = settleById(sid); cvGrant(P, 'vikenty', sid); s.fac = 'emp'; s.owner = null; cvDay(P); return { back: !!compById(P, 'vikenty'), no: !P.vass.length, party: !G.parties.some(p => p.kind === 'cvass') }; }, set.sid);
+  ok('потерянный надел снимает вассала автоматически', lost.back && lost.no && lost.party, lost);
+  ok('лишнее: нельзя отдать чужой город или несуществующего спутника', await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player'); return !!cvCan(G.player, 'vikenty', s.id) && !!cvCan(G.player, 'nobody', s.id); }));
+}
+
+async function siegeDefense(pg) {
+  console.log('Осада: вылазки, подмога, пожары, оборона стен');
+  await newSinglePlayer(pg);
+  const w = await pg.evaluate(() => {
+    const s = G.settles.find(x => x.kind === 'castle' && REAL_F.includes(x.fac)), f = REAL_F.find(x => x !== s.fac);
+    for (const p of G.parties.slice()) if (p.kind === 'lord' && p.fac === s.fac) G.parties.splice(G.parties.indexOf(p), 1);
+    s.gar = genTroops(s.fac, 60, .6); const a = mkParty('lord', f, 'Осаждающий Тест', s.x + 30, s.y + 30, genTroops(f, 200, .6)); a.army = true;
+    s.siege = { f, t0: nowH() - 30, a0: strength(a.troops), g0: troopCount(s.gar) }; let fired = false;
+    for (let i = 0; i < 100; i++) { if (!s.gar.length) s.gar = genTroops(s.fac, 60, .6); sgTick(s, s.siege, [a], strength(a.troops), 1); if (s.fire > 0) fired = true; }
+    return { dmg: s.dmg, fired, sally: s.siege ? s.siege.sally : -1 };
+  });
+  ok('осада на карте: гарнизон делает вылазки, стены портятся, начинаются пожары', w.sally >= 1 && w.dmg > .5 && w.fired, w);
+  const r = await pg.evaluate(() => {
+    const s = G.settles.find(x => x.kind === 'town' && REAL_F.includes(x.fac)), f = REAL_F.find(x => x !== s.fac);
+    for (const p of G.parties.slice()) if (p.kind === 'lord' && p.fac === s.fac) G.parties.splice(G.parties.indexOf(p), 1);
+    const a = mkParty('lord', f, 'Осаждающий Тест', s.x + 30, s.y + 30, genTroops(f, 20, .5)); a.army = true; s.gar = genTroops(s.fac, 40, .5); s.siege = { f, t0: nowH() - 30, a0: 9999, g0: 50 };
+    const l = mkParty('lord', s.fac, 'Подмога Тест', s.x + 150, s.y + 150, genTroops(s.fac, 150, .8)); sgTick(s, s.siege, [a], strength(a.troops), 1);
+    const called = l.relief === s.id && l.army === true; l.x = s.x + 20; l.y = s.y + 20; let ended = false; for (let i = 0; i < 4 && !ended; i++) ended = sgTick(s, s.siege, [a], strength(a.troops), 1);
+    return { called, ended, gone: !s.siege, freed: !l.relief && !l.army };
+  });
+  ok('лорды города идут на выручку и снимают осаду', r.called && r.ended && r.gone && r.freed, r);
+  const rp = await pg.evaluate(() => {
+    const s = G.settles.find(x => x.kind === 'town' && REAL_F.includes(x.fac)); delete s.siege; s.dmg = .5; s.fire = 3; const i0 = settleIncome(s); s.dmg = 0; const i1 = settleIncome(s); s.dmg = .5;
+    const d0 = siegeDef(s); s.dmg = 0; const d1 = siegeDef(s); s.dmg = .5; for (let i = 0; i < 60; i++) sgHour(); const mid = s.dmg; for (let i = 0; i < 200; i++) sgHour();
+    return { inc: i0 < i1, def: d0 < d1, mid: mid < .5 && mid > 0, end: s.dmg === 0, fire: s.fire === 0 };
+  });
+  ok('повреждения режут доход и оборону, потом стены чинятся, пожар гаснет', rp.inc && rp.def && rp.mid && rp.end && rp.fire, rp);
+  const ui2 = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); openSiege(s); const b = { talk: !!document.querySelector('#modal [data-act=sgtalk]'), block: !!document.querySelector('#modal [data-act=sgblock]'), food: /Запасы еды/.test(el('modal').innerHTML) }; ACT.sgtalk(); b.win = !!document.querySelector('#modal [data-act=sgdemand]') && !!document.querySelector('#modal [data-act=sgbribe]'); closeModal(); return b; });
+  ok('в окне осады есть переговоры и блокада, видно запасы еды', ui2.talk && ui2.block && ui2.food && ui2.win, ui2);
+  const bl = await pg.evaluate(() => {
+    const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); P.rel[s.fac] = -60; P.x = s.x - 50; P.y = s.y; P.troops = genTroops('nord', 40, .6); s.gar = genTroops(s.fac, 60, .6); delete s.food; delete s.blk;
+    sgBlockStart(P, s); const f0 = sgFood(s); for (let i = 0; i < 48; i++) sgHour(); const f1 = s.food, g1 = troopCount(s.gar);
+    s.food = .05; for (let i = 0; i < 4; i++) sgHour(); const starve = s.food === 0 && !!s.blk.starve; let n = 0; while (s.fac !== 'player' && n++ < 600) sgHour();
+    return { eat: f1 < f0 && f1 > 0, starve, fell: s.fac === 'player', noBlk: !s.blk, owner: s.owner === P.id };
+  });
+  ok('блокада: еда в городе тает, гарнизон голодает и сдаёт город', bl.eat && bl.starve && bl.fell && bl.noBlk && bl.owner, bl);
+  const tk = await pg.evaluate(() => {
+    const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); P.troops = genTroops('nord', 300, .8); s.gar = [{ type: 'n1', n: 3 }]; s.talkT = 0; P.gold = 5000; P.rel[s.fac] = 0; delete s.food;
+    const ch = sgTalkChance(P, s, false), chg = sgTalkChance(P, s, true), rnd0 = Math.random; Math.random = () => .999; const r1 = sgTalk(P, s, false), r2 = sgTalk(P, s, false), cool = s.talkT > nowH(); s.talkT = 0; Math.random = () => 0; const g0 = P.gold, r3 = sgTalk(P, s, true); Math.random = rnd0;
+    return { ch: ch >= .5 && chg >= ch, r1: r1 === false, r2: r2 === null, cool, r3: r3 === true, paid: P.gold < g0, fell: s.fac === 'player' };
+  });
+  ok('переговоры: сильная армия убеждает, неудача закрывает их на сутки, выкуп работает', tk.ch && tk.r1 && tk.r2 && tk.cool && tk.r3 && tk.paid && tk.fell, tk);
+  await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); P.troops = genTroops('nord', 150, .8); s.gar = [{ type: 'n1', n: 1 }]; P.x = s.x - 40; P.y = s.y; P.sid = s.id; const p = siegeParty(s); battleEnded(autoResult(P, p), p); });
+  const ui = await pg.evaluate(() => ({ sack: !!document.querySelector('#modal [data-act=sgsack]'), spare: !!document.querySelector('#modal [data-act=sgspare]'), cont: !!document.querySelector('#modal [data-act=cont2]'), pend: !!G.player.sgPend }));
+  ok('после взятия города выбор: разграбить или пощадить (вместо «Продолжить»)', ui.sack && ui.spare && !ui.cont && ui.pend, ui);
+  const sk = await pg.evaluate(() => { const P = G.player, s = settleById(P.sgPend), cf = sCult(s), g0 = P.gold, r0 = P.rel[cf]; ACT.sgsack(); return { gold: P.gold > g0, rel: P.rel[cf] < r0, dmg: s.dmg >= .6, fire: s.fire > 0, free: !P.sgPend, mode: MODE === 'world', closed: !UI.open }; });
+  ok('грабёж: золото сразу, но город горит и отношение падает', sk.gold && sk.rel && sk.dmg && sk.fire && sk.free && sk.mode && sk.closed, sk);
+  const sp = await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); sgCaptured(P, s, s.fac); const cf = sCult(s), g0 = P.gold, r0 = P.rel[cf]; s.dmg = .6; sgSpare(P, s); return { gold: P.gold > g0, rel: P.rel[cf] > r0, dmg: s.dmg <= .1 }; });
+  ok('пощада: дары, отношение лучше, стены почти целы', sp.gold && sp.rel && sp.dmg, sp);
+  await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'castle' && x.fac !== 'player' && REAL_F.includes(x.fac)); s.dmg = .8; s.gar = genTroops(s.fac, 60, .6); P.troops = [{ type: 'n2a', n: 60 }, { type: 'n2s', n: 60 }]; P.x = s.x - 60; P.y = s.y + 20; launchSiege(siegeParty(s)); });
+  await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(300);
+  const bt = await pg.evaluate(() => { const B = __dbg.B, w = B.wall, g = w.gaps[0]; return { sdef: !!B.cfg.sdef, wide: g[1] - g[0] > 160 }; });
+  ok('штурм повреждённой крепости: пролом шире, запасы обороны заданы', bt.sdef && bt.wide, bt);
+  const sd = await pg.evaluate(() => {
+    const B = __dbg.B, w = B.wall; let i = 0; for (const u of B.units) if (u.side === 0) { u.x = w.x - 40 - (i % 6) * 12; u.y = B.H / 2 - 60 + (i % 10) * 12; i++; }
+    sdInit(); const st0 = B.sd.stones, oil0 = B.sd.oil.reduce((a, o) => a + o.ch, 0), hp0 = B.units.filter(u => u.side === 0).reduce((a, u) => a + u.hp, 0);
+    for (let k = 0; k < 450 && !B.done; k++) battleUpdate(1 / 30);
+    const hp1 = B.units.filter(u => u.side === 0).reduce((a, u) => a + u.hp, 0);
+    return { stones: B.sd.stones < st0, oil: B.sd.oil.reduce((a, o) => a + o.ch, 0) < oil0, hurt: hp1 < hp0 };
+  });
+  ok('защитники швыряют камни и льют масло: запасы тратятся, у атакующих потери', (sd.stones || sd.oil) && sd.hurt, sd);
+}
+
 async function undead(pg) {
   console.log('Нашествие нежити');
   await newSinglePlayer(pg);
   const st = await pg.evaluate(() => { crisisInit(); G.crisis.day = G.day; crisisDay(); const U = G.parties.filter(p => p.fac === 'undead'); return { on: G.crisis.on, armies: U.filter(p => p.kind === 'dead').length, raids: U.filter(p => p.kind === 'raid').length, barrows: G.settles.filter(s => s.barrow).length }; });
   ok('кризис начался: курганы, армии и разъезды нежити на карте', st.on && st.barrows >= 1 && st.armies >= 1 && st.raids >= 1, st);
-  const fall = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'castle' && x.fac !== G.player.culture); for (const q of G.parties.slice()) if (q.hide && q.home === s.id) G.parties.splice(G.parties.indexOf(q), 1); const a = mkParty('dead', 'undead', 'Некромант Тест', s.x, s.y, genUndead(1500, 1)); undeadArrive(a, s); return { fac: s.fac, id: s.id }; });
+  const fall = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'castle' && x.fac !== G.player.culture); for (const q of G.parties.slice()) if (q.hide && q.home === s.id) G.parties.splice(G.parties.indexOf(q), 1); const a = mkParty('dead', 'undead', 'Некромант Тест', s.x, s.y, genUndead(4000, 1)); undeadArrive(a, s); return { fac: s.fac, id: s.id }; });
   ok('большая армия нежити берёт замок, он становится руинами', fall.fac === 'undead', fall);
   ok('руины нежити не пускают внутрь, а предлагают осаду', await pg.evaluate(id => { openTown(settleById(id)); return !UI.town && !!document.querySelector('#modal [data-act=siegeatk]'); }, fall.id));
   await pg.evaluate(() => { closeModal(); const P = G.player, p = mkParty('raid', 'undead', 'Мертвецы', P.x + 5, P.y, genUndead(60, 0)); P.troops = [{ type: 'n2', n: 30 }]; launchBattle(p); });
@@ -171,6 +291,8 @@ async function multiPlayer(pg) {
     await singlePlayer(await open());
     await sieges(await open());
     await companions(await open());
+    { const vp = await open(); await vassals(vp); await vp.close(); } // страница больше не нужна: фоновые вкладки грузят процессор и тормозят игру вдвоём
+    { const sp = await open(); await siegeDefense(sp); await sp.close(); }
     await undead(await open());
     await multiPlayer(await open());
   } catch (e) { console.error(e); failed++; }

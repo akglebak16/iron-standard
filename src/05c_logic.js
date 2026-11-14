@@ -31,28 +31,30 @@ function encFlee(P, p) {
   return false;
 }
 function battleCfgFor(P, p) {
-  return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
+  return { pl: (() => { const l = P.troops.map(s => ({ type: s.type, n: s.n })); if (typeof cvAllyTroops === 'function') for (const s of cvAllyTroops(p)) addT(l, s.type, s.n); return l; })(), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
     title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) || p.kind === 'dead' ? p.name : p.kind === 'camp' && p.fac === 'undead' ? 'Некромант кургана' : p.kind === 'raid' ? 'Некромант ' + unitName('undead') : null, // у нежити всегда есть некромант seed: rint(1, 1e9),
     comps: compsBattle(P), csurv: compFx(P) ? compFx(P).f.surv : 0, csiege: compFx(P) ? compFx(P).f.siege : 0 }; // спутники и лекарь среди них: см. 05e_comps.js
 
 }
 function autoResult(P, p) {
-  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + compStr(P) + 10, sb = partyStr(p) * (p.kind === 'siege' ? 1.35 : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const H = P.hero, sv = perkFx(H).surv, allT = P.troops.map(s => ({ type: s.type, n: s.n })), sa = (typeof cvAllyTroops === 'function' ? (() => { for (const s of cvAllyTroops(p)) addT(allT, s.type, s.n); return strength(allT); })() : strength(P.troops)) + compStr(P) + 10, sb = partyStr(p) * (p.kind === 'siege' ? (typeof sgDefK === 'function' ? sgDefK(settleById(p.sid)) : 1.35) : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
   const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
-  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
+  for (const s of allT) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
   if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
   compsAuto(P, res);
   return res;
 }
+/* Опыт считается по числу убитых: при масштабе ×2 отряды лордов вдвое больше, и уровни шли бы вдвое быстрее. Делим на тот же множитель, на какой выросли враги (разбойники и нежить растут слабее) */
+const xpScale = p => MK() > 1 ? (p.fac === 'bandit' ? 1 : p.fac === 'undead' && p.kind === 'raid' ? 1 + (MK() - 1) * .25 : MK()) : 1; // армии и курганы нежити ×2, разъезды ×1.25 (05f_undead.js)
 function applyBattleResult(P, res, p) {
-  const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0;
+  const H = heroFix(P.hero), F = perkFx(H); let loot = 0, lvl = 0; res.xp = Math.round(res.xp / xpScale(p));
   for (const k in res.dead) remT(P.troops, k, res.dead[k]);
   H.hp = clamp(res.heroHp, .22, 1);
   const lost = Object.values(res.dead).reduce((a, b) => a + b, 0), wounded = Object.values(res.wounded).reduce((a, b) => a + b, 0);
   if (res.win) {
     let sv = 0; for (const s of p.troops) sv += s.n * (TROOPS[s.type].tier * 9 + 6);
     loot = Math.round((sv * rnd(.7, 1.1) * (p.fac === 'undead' ? .2 : 1) + (p.gold || 0) + (p.kind === 'camp' ? 120 : 0)) * (1 + F.loot)); // у мертвецов золота мало
-    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; addProv(P, p.kind === 'caravan' ? rint(10, 30) : rint(0, 8));
+    if (p.fac === 'undead' && p.kind !== 'camp') for (const f of REAL_F) P.rel[f] = Math.min(100, (P.rel[f] || 0) + (p.kind === 'dead' ? 3 : 1)); P.gold += loot; addProv(P, (p.kind === 'caravan' ? rint(10, 30) : rint(0, 8)) * MK());
     P.stats.wins++; P.stats.kills += res.enemyDead; const gx = Math.round((res.xp + 12 + res.heroKills * 4) * xpMul(H)); H.xp += gx; res.gx = gx;
     const pi = G.parties.indexOf(p); if (pi >= 0) G.parties.splice(pi, 1);
     if (p.kind === 'camp') { const c = settleById(p.camp); if (c) { c.camp = null; c.cleared = true; c.respawn = 24 * 9; if (c.barrow) barrowDestroyed(P, c); } for (const q of P.quests.slice()) if (q.type === 'camp' && q.sid === p.camp) questDone(P, q, true); }
@@ -81,9 +83,9 @@ function siegeParty(s) {
   for (const l of lords) for (const t of l.troops) addT(en, t.type, t.n); sortT(en);
   return { id: -s.id, kind: 'siege', fac: s.fac, name: s.name, troops: en, gold: s.kind === 'town' ? 350 : 180, sid: s.id, lord: lords[0] ? lords[0].name : null };
 }
-function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, leader: p.fac === 'undead' ? 'Некромант ' + unitName('undead') : p.lord, biome: biomeName(s.x, s.y), forest: false }); }
+function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, sdef: typeof sgDefCfg === 'function' ? sgDefCfg(s) : null, dmg: s.dmg || 0, leader: p.fac === 'undead' ? 'Некромант ' + unitName('undead') : p.lord, biome: biomeName(s.x, s.y), forest: false }); }
 function siegeAfter(P, res, p) {
   const s = settleById(p.sid); if (!s) return null;
-  if (res.win) { captureSettle(P, s); return s.name; }
+  if (res.win) { const was = s.fac; captureSettle(P, s); if (typeof sgCaptured === 'function') sgCaptured(P, s, was); return s.name; }
   const g = garrisonOf(s), k = res.enemyTotal ? 1 - res.enemyDead / res.enemyTotal : 1; for (const t of g.slice()) remT(g, t.type, Math.round(t.n * (1 - k))); return null;
 }
