@@ -20,7 +20,7 @@ const CLANS_PER_F = 4, CLAN_SIZE = 2, VASS_PER_F = 4; // у каждой фра�
 const warLords = f => CLANS_PER_F * CLAN_SIZE;
 const warVass = f => VASS_PER_F;
 /* оборона поселения: гарнизон с множителем стен; у государства на краю гибели защитники бьются отчаянней */
-function siegeDef(s) { const h = holdOf(s.fac); return (strength(garrisonOf(s)) + 4) * (1.8 + (h.core <= 3 ? .8 : h.core <= 5 ? .35 : 0)); }
+function siegeDef(s) { const h = holdOf(s.fac); return (strength(garrisonOf(s)) + 4) * (1.8 + (h.core <= 3 ? .8 : h.core <= 5 ? .35 : 0)) * (1 - .4 * (s.dmg || 0)); }
 function wlog(msg, kind) { for (const P of G.players) logW(msg, kind || 2, P); if (!SERVER && typeof toast === 'function') toast(msg); }
 
 /* ---------- дипломатия: раз в сутки ---------- */
@@ -52,7 +52,7 @@ function warLordsOf(f) { return G.parties.filter(p => isNoble(p) && p.fac === f 
 function warHour() {
   warInit();
   if (G.hour % 2 === 0) { for (const f of facsAlive()) warCamp(f); for (const s of G.settles) if (s.siege) siegeTick(s); }
-  skirmHour();
+  skirmHour(); if (typeof sgHour === 'function') sgHour();
   if (G.hour === 12) clanRefill();
 }
 function warCamp(f) {
@@ -101,6 +101,7 @@ function siegeTick(s) {
   for (const t of g.slice()) remT(g, t.type, Math.round(t.n * lossD + (Math.random() < t.n * lossD % 1 ? 1 : 0)));
   for (const p of att) for (const t of p.troops.slice()) remT(p.troops, t.type, Math.round(t.n * lossA));
   for (const p of att.slice()) if (troopCount(p.troops) < 6) G.parties.splice(G.parties.indexOf(p), 1);
+  if (typeof sgTick === 'function' && sgTick(s, sg, att, A, k)) return; // вылазки, подмога, пожары (05i_siege.js)
   const left = troopCount(g);
   if (left <= Math.max(7, sg.g0 * .16) && dur >= 12) return warCapture(s, sg.f, att);
   if (A < sg.a0 * .3) return lift('силы осаждающих иссякли');
@@ -115,6 +116,7 @@ function warCapture(s, f, att) {
   for (const v of G.settles) if (v.kind === 'village' && v.fac === old && Math.hypot(v.x - s.x, v.y - s.y) < 170) { v.cult = sCult(v); v.fac = f; }
   wlog(FACTIONS[f].name + ' берёт ' + (t0 === 'castle' ? 'замок ' : 'город ') + s.name + ' (бывший ' + FACTIONS[old].gen + ').', 2);
   for (const P of G.players) { if (P.liege === f && P.call && !P.call.joined && att.some(p => true) && Math.hypot(P.x - s.x, P.y - s.y) < 220) { P.call.joined = true; vassalReward(P, s); } }
+  if (typeof sgSackAI === 'function') sgSackAI(s, f);
   clanLoss(old, f, s);
   if (!facAlive(old)) facFall(old, f);
 }
