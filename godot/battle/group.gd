@@ -1,10 +1,11 @@
 extends RefCounted
+const Config = preload("res://battle/config.gd")
 
 var side: int
 var kind: int # 0 infantry, 1 archers, 2 cavalry
 var center: Vector2
 var direction: float
-var order: String = "hold"
+var order: String = Config.ORDER_HOLD
 var backing: bool = false
 var units: Array = []
 
@@ -22,12 +23,12 @@ func layout(initial: bool = false) -> void:
 	var count := active.size()
 	if count == 0:
 		return
-	var factor := 3.2 if kind == 0 else (6.0 if kind == 1 else 4.0)
-	var minimum := 5 if kind == 1 else 4
+	var factor: float = Config.FORMATION_FACTOR[kind]
+	var minimum: int = Config.FORMATION_MIN_COLUMNS[kind]
 	var columns: int = mini(count, maxi(minimum, ceili(sqrt(count * factor))))
 	var rows: int = ceili(float(count) / columns)
 	var width: int = ceili(float(count) / rows)
-	var spacing := 29.0 if kind == 0 else (38.0 if kind == 1 else 50.0)
+	var spacing: float = Config.FORMATION_SPACING[kind]
 	var perpendicular := Vector2(-sin(direction), cos(direction))
 	if initial:
 		active.sort_custom(func(a, b): return a.tier > b.tier if a.tier != b.tier else a.id < b.id)
@@ -45,12 +46,12 @@ func layout(initial: bool = false) -> void:
 			column = i / rows
 			row = i % rows
 			row_width = width
-		active[i].slot_offset = Vector2((column - (row_width - 1) / 2.0) * spacing, -row * spacing * 0.92)
+		active[i].slot_offset = Vector2((column - (row_width - 1) / 2.0) * spacing, -row * spacing * Config.FORMATION_ROW_DEPTH)
 
 func slot_position(unit: RefCounted, arena_size: Vector2) -> Vector2:
 	var offset: Vector2 = unit.slot_offset
 	var pos := center + Vector2(-sin(direction), cos(direction)) * offset.x + Vector2(cos(direction), sin(direction)) * offset.y
-	return pos.clamp(Vector2(30, 30), arena_size - Vector2(30, 30))
+	return pos.clamp(Vector2.ONE * Config.SLOT_EDGE, arena_size - Vector2.ONE * Config.SLOT_EDGE)
 
 func centroid() -> Vector2:
 	var active := active_units()

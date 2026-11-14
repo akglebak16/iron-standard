@@ -1,4 +1,5 @@
 extends RefCounted
+const Config = preload("res://battle/config.gd")
 
 var id: int
 var side: int
@@ -17,6 +18,11 @@ var leader: bool = false
 var hero: bool = false
 var group_kind: int = 0
 var slot_offset: Vector2 = Vector2.ZERO
+var troop_id: String = ""
+var damage: float = 0.0
+var speed: float = 0.0
+var attack_range: float = 0.0
+var mounted: bool = false
 
 func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection: float, unit_tier: int) -> void:
 	id = unit_id
@@ -26,5 +32,5 @@ func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection:
 	max_hp = health
 	armor = protection
 	tier = unit_tier
-	base_morale = 72.0 + tier * 14.0
+	base_morale = Config.BASE_MORALE + tier * Config.TIER_MORALE
 	morale = base_morale
