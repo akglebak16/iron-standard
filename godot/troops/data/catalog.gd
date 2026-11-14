@@ -3,7 +3,7 @@ extends RefCounted
 const Config = preload("res://troops/config.gd")
 const DATA_PATH := "res://troops/data/troops.json"
 const REQUIRED_NUMBERS := ["tier", "grp", "hp", "arm", "dmg", "spd", "cd", "block"]
-const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb"]
+const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb", "pw"]
 var _troops: Dictionary = {}
 
 func load_data() -> bool:

@@ -12,6 +12,7 @@ const Config = preload("res://battle/config.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
+const BattleResult = preload("res://battle/rules/result.gd")
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
 
 var _state: State
@@ -22,6 +23,7 @@ var _orders: Array[Dictionary] = []
 var _outcome: Outcome = Outcome.RUNNING
 var _battle_over_at: float = -1.0
 var _battle_won: bool = false
+var _result: Dictionary = {}
 var _tick: int = 0
 var _elapsed_seconds: float = 0.0
 var _gear_catalog: GearCatalog
@@ -74,6 +76,10 @@ func advance(dt: float) -> void:
 		_battle_won = _side_alive(0) and not _side_alive(1)
 	if _battle_over_at >= 0.0 and _elapsed_seconds - _battle_over_at > Config.BATTLE_END_DELAY_SECONDS:
 		_outcome = Outcome.VICTORY if _battle_won else Outcome.DEFEAT
+		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won)
+
+func result() -> Dictionary:
+	return _result.duplicate(true)
 
 func _handle_swap() -> void:
 	var pressed: bool = bool(_input.get("swap", false))

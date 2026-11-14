@@ -26,6 +26,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.troop_id = str(stack.type)
 			unit.faction = faction
 			unit.weight = weight
+			unit.xp_multiplier = float(troop.get("pw", 1.0))
 			unit.damage = float(troop.dmg) * weight
 			unit.speed = float(troop.spd) * rng.randf_range(Config.SPEED_RANDOM_MIN, Config.SPEED_RANDOM_MAX)
 			unit.attack_cooldown = rng.randf_range(0.0, Config.AI_INITIAL_ATTACK_COOLDOWN_MAX)

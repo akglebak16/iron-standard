@@ -11,6 +11,7 @@ var morale: float
 var base_morale: float
 var tier: int
 var weight: float = 1.0
+var xp_multiplier: float = 1.0 # Troop pw from the browser catalog.
 var dead: bool = false
 var gone: bool = false
 var kills: int = 0

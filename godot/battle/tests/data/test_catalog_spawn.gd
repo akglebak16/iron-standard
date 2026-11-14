@@ -41,5 +41,6 @@ func _initialize() -> void:
 	undead.setup_groups()
 	assert(ArmyBuilder.spawn(undead, 1, [{"type": "s1", "n": 600}], "undead", catalog, rng))
 	assert(undead.units.size() == Config.UNDEAD_UNIT_CAP)
+	assert(is_equal_approx(undead.units[0].xp_multiplier, float(catalog.get_troop("s1").get("pw", 1.0))))
 	print("Catalog and spawn tests passed")
 	quit(0)
