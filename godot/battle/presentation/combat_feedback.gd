@@ -10,6 +10,8 @@ const HERO_DOWN := "Герой ранен и вынесен из боя."
 const COMPANION_DOWN := "%s ранен и вынесен из боя."
 const LEADER_DOWN := "%s пал!"
 const HERO_KILL := "Герой сразил: %s."
+const FATAL_IMPACT_COLOR := Color("#ff8d79")
+const FATAL_IMPACT_OFFSET := Vector2(0, -26)
 const BATTLE_STARTED := "Битва началась."
 const ENEMY_CHARGE := "Враг идёт в атаку!"
 const WALL_ALERT := "Враг у стен!"
@@ -68,6 +70,10 @@ func journal() -> String:
 func add_dialogue(lines: PackedStringArray) -> void:
 	for line in lines:
 		_log(line)
+
+func add_fatal_impacts(labels: Array[Dictionary]) -> void:
+	for label in labels:
+		_label(label.position + FATAL_IMPACT_OFFSET, label.text, FATAL_IMPACT_COLOR)
 
 func has_effects() -> bool:
 	return not _labels.is_empty()

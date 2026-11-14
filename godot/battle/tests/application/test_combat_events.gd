@@ -49,6 +49,7 @@ func _initialize() -> void:
 	session.advance(STEP)
 	assert(session.take_events().is_empty())
 	_check_notices()
+	_check_fatal_hit_metadata()
 	print("Combat event tests passed")
 	quit(0)
 
@@ -80,3 +81,18 @@ func _check_notices() -> void:
 	assert(session.result().is_empty())
 	session.advance(3.0)
 	assert(session.result().win and session.take_events().is_empty())
+
+func _check_fatal_hit_metadata() -> void:
+	var battle := State.new()
+	var source := Unit.new(1, 0, Vector2.ZERO, 100, 0, 1)
+	var target := Unit.new(2, 1, Vector2.RIGHT, 100, 0, 1)
+	source.weapon_kind = "club"
+	target.hp = 25
+	target.appearance = {"helm": "greathelm"}
+	battle.hurt(target, 32, source, 0.0, null, Event.Attack.MELEE)
+	var events := battle.take_events()
+	assert(events.size() == 2 and events[1].kind == Event.Kind.DOWN)
+	assert(events[1].melee_impact == Event.MeleeImpact.BLUNT and source.damage_type.is_empty())
+	assert(events[1].amount == 32 and is_equal_approx(events[1].damage_fraction, 0.32))
+	events[1].target_visual.look.clear()
+	assert(target.appearance == {"helm": "greathelm"})

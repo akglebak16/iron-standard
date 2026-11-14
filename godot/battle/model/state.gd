@@ -6,6 +6,8 @@ const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
 const Event = preload("res://battle/combat_event.gd")
+const Equipment = preload("res://equipment/config.gd")
+const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
 var siege_skill := 0.0
@@ -30,7 +32,7 @@ func launch_projectile(shot: Dictionary) -> void:
 	record_event(Event.Kind.SHOT, shot.source, null, Event.Attack.PROJECTILE)
 
 func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0, contact_offset: Vector2 = Vector2.ZERO) -> void:
-	_events.append({
+	var event := {
 		"kind": kind, "attack": attack, "amount": amount,
 		"position": target.position, "contact_offset": contact_offset, "target_id": target.id,
 		"target_hero": target.hero, "target_companion": target.companion,
@@ -42,7 +44,26 @@ func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: E
 		"damage_fraction": float(amount) / maxf(target.max_hp, 1.0),
 		"lethal": target.hp <= 0.0,
 		"impact_direction": Vector2.ZERO if source == null else target.position - source.position,
-	})
+	}
+	if kind == Event.Kind.DOWN:
+		event.melee_impact = _melee_impact(attack, source)
+		event.target_visual = {
+			"look": target.appearance.duplicate(true), "side": target.side, "faction": target.faction,
+			"mounted": target.mounted, "facing": target.facing, "hero": target.hero, "companion": target.companion,
+		}
+	_events.append(event)
+
+static func _melee_impact(attack: Event.Attack, source: Unit) -> Event.MeleeImpact:
+	if attack != Event.Attack.MELEE:
+		return Event.MeleeImpact.NONE
+	if source != null:
+		match source.damage_type:
+			Equipment.DAMAGE_TYPE_BLUNT: return Event.MeleeImpact.BLUNT
+			Equipment.DAMAGE_TYPE_PIERCE: return Event.MeleeImpact.PIERCE
+			"":
+				if source.weapon_kind in BLUNT_LOOK_WEAPONS:
+					return Event.MeleeImpact.BLUNT
+	return Event.MeleeImpact.CUT
 
 func take_events() -> Array[Dictionary]:
 	var batch := _events
@@ -135,15 +156,15 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 			target.hp = maxf(1.0, target.max_hp * recovery)
 			record_event(Event.Kind.LAST_STAND, target, source, attack)
 	if target.hp <= 0.0:
-		kill(target, source, rng, attack)
+		kill(target, source, rng, attack, amount)
 	return amount
 
-func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE) -> void:
+func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0) -> void:
 	if target.dead:
 		return
 	target.dead = true
 	target.hp = 0.0
-	record_event(Event.Kind.DOWN, target, source, attack)
+	record_event(Event.Kind.DOWN, target, source, attack, amount)
 	if source != null:
 		source.kills += 1
 		source.morale = minf(source.base_morale, source.morale + Config.KILL_MORALE_BONUS)

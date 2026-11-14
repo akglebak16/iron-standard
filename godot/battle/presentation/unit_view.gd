@@ -2,10 +2,8 @@ extends RefCounted
 const Art = preload("res://battle/presentation/unit_art.gd")
 const Event = preload("res://battle/combat_event.gd")
 const Demo = preload("res://battle/presentation/demo_config.gd")
-const SPRITE_SCALE := 0.43
 const VIEW_MARGIN := 50.0
-const ANCHOR := Vector2(37, 76)
-const MOUNT_WEAPON_OFFSET := Vector2(0, -12)
+const MOUNT_WEAPON_OFFSET := Vector2(0, -Art.MOUNT_RIDER_RISE)
 const BREATH_RATE := 2.1
 const BREATH_SCALE := 0.012
 const PHASE_STEP := 0.618
@@ -59,27 +57,27 @@ func has_falling_units() -> bool:
 			return true
 	return false
 
-func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2) -> void:
+func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary) -> void:
 	var living: Array[Dictionary] = []
 	for unit in frame:
 		if unit.gone or not visible.has_point(unit.position):
 			continue
 		if unit.dead:
 			if not unit.hero and not unit.companion:
-				_draw_unit(canvas, unit, true)
+				_draw_unit(canvas, unit, true, headless_units.has(unit.id))
 		else:
 			living.append(unit)
 	living.sort_custom(func(a: Dictionary, b: Dictionary): return a.position.y < b.position.y)
 	for unit in living:
 		_draw_unit(canvas, unit, false)
 
-func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool) -> void:
-	var appearance := _art.layers(unit)
+func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bool = false) -> void:
+	var appearance := _art.layers(unit, headless)
 	var position: Vector2 = unit.position
 	var direction := -1.0 if cos(unit.facing) < 0.0 else 1.0
 	var phase: float = unit.id * PHASE_STEP
 	var rotation := 0.0
-	var scale := Vector2(direction, 1.0) * SPRITE_SCALE
+	var scale := Vector2(direction, 1.0) * Art.SPRITE_SCALE
 	var tint := Color.WHITE
 	if fallen:
 		var progress := clampf((_time - float(_falls.get(unit.id, _time - FALL_SECONDS))) / FALL_SECONDS, 0.0, 1.0)
@@ -99,8 +97,9 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool) -> void:
 		if _flashes.has(unit.id):
 			tint = Color(1.0 + FLASH_BRIGHTNESS, 1.0 + FLASH_BRIGHTNESS, 1.0 + FLASH_BRIGHTNESS)
 	canvas.draw_set_transform(position, rotation, scale)
-	if appearance.body != null:
-		canvas.draw_texture(appearance.body, -ANCHOR, tint)
+	var body: Texture2D = appearance.headless if headless else appearance.body
+	if body != null:
+		canvas.draw_texture(body, -Art.ANCHOR, tint)
 	if appearance.weapon != null:
 		var offset := MOUNT_WEAPON_OFFSET if unit.mounted else Vector2.ZERO
 		var weapon_rotation := 0.0
@@ -116,7 +115,7 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool) -> void:
 				offset.x += absf(motion) * WEAPON_THRUST
 			else:
 				weapon_rotation = motion
-		var pivot := (Art.PIVOT - ANCHOR + offset) * scale
+		var pivot := (Art.PIVOT - Art.ANCHOR + offset) * scale
 		canvas.draw_set_transform(position + pivot.rotated(rotation), rotation + direction * weapon_rotation, scale)
 		canvas.draw_texture(appearance.weapon, -Art.PIVOT, tint)
 	canvas.draw_set_transform(Vector2.ZERO)

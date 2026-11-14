@@ -2,10 +2,15 @@ extends RefCounted
 ## Procedural bust layers. SVG is rasterized once per appearance and palette.
 const SIZE := Vector2(76, 88)
 const PIVOT := Vector2(53, 52)
+const ANCHOR := Vector2(37, 76)
+const HEAD_CENTER := Vector2(36, 32)
+const MOUNT_RIDER_RISE := 12.0
+const SPRITE_SCALE := 0.43
 const OUTLINE := "#251c16"
 const STEEL := "#b9c4cb"
 const WOOD := "#88623e"
 const SKIN := {"skel": "#d8d0b8", "zombie": "#9aa58a"}
+const DEFAULT_SKIN := "#c79568"
 const ARMOR := {"mail": "#697476", "plate": "#89979e", "scale": "#81786b", "ribs": "#a49a85", "rags": "#657057"}
 const HORSES := {"black": "#302824", "dun": "#b3945c", "grey": "#9c978d", "chestnut": "#8a4b22", "bone": "#cfc6ad"}
 const PALETTES := {
@@ -19,24 +24,41 @@ const LOOK_FIELDS := ["helm", "armor", "weapon", "shield", "horse", "undead"]
 
 var _cache: Dictionary = {}
 
-func layers(unit: Dictionary) -> Dictionary:
+func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 	var look: Dictionary = unit.look
-	var fallback := "nord" if unit.side == 0 else "emp"
-	var faction: String = "player" if unit.hero or unit.companion else unit.faction
-	var palette: Array = PALETTES.get(faction, PALETTES[fallback])
+	var palette := _palette(unit)
 	var key := [palette[0], palette[1], unit.mounted]
 	for field in LOOK_FIELDS:
 		key.append(look.get(field))
 	var cache_key := str(key)
 	if not _cache.has(cache_key):
-		_cache[cache_key] = {"body": _body(look, palette, unit.mounted), "weapon": _weapon(look.get("weapon")),
+		_cache[cache_key] = {"body": _body(look, palette, unit.mounted, false), "weapon": _weapon(look.get("weapon")),
 			"weapon_kind": look.get("weapon")}
-	return _cache[cache_key]
+	var entry: Dictionary = _cache[cache_key]
+	if headless and not entry.has("headless"):
+		entry.headless = _body(look, palette, unit.mounted, true)
+	return entry
 
-static func _body(look: Dictionary, palette: Array, mounted: bool) -> Texture2D:
+func detached_head(unit: Dictionary) -> Texture2D:
+	var entry := layers(unit)
+	if not entry.has("head"):
+		entry.head = _texture(_head_shapes(unit.look, _palette(unit)))
+	return entry.head
+
+static func skin_color(unit: Dictionary) -> Color:
+	return Color(SKIN.get(unit.look.get("undead"), DEFAULT_SKIN))
+
+static func sleeve_color(unit: Dictionary) -> Color:
+	return Color(_palette(unit)[0])
+
+static func _palette(unit: Dictionary) -> Array:
+	var fallback := "nord" if unit.side == 0 else "emp"
+	var faction: String = "player" if unit.hero or unit.companion else unit.faction
+	return PALETTES.get(faction, PALETTES[fallback])
+
+static func _body(look: Dictionary, palette: Array, mounted: bool, headless: bool) -> Texture2D:
 	var primary: String = palette[0]
 	var trim: String = palette[1]
-	var skin: String = SKIN.get(look.get("undead"), "#c79568")
 	var armor: String = ARMOR.get(look.get("armor"), primary)
 	var shapes := ""
 	if mounted:
@@ -45,11 +67,31 @@ static func _body(look: Dictionary, palette: Array, mounted: bool) -> Texture2D:
 		shapes += _path("M46 56 Q53 43 60 33 Q58 46 54 58 Z", OUTLINE)
 		shapes += '<circle cx="65" cy="45" r="1.5" fill="%s"/>' % OUTLINE
 		shapes += _path("M13 60 Q29 56 49 60 L44 78 L17 77 Z", primary, trim)
-		shapes += '<g transform="translate(0 -12)">'
+		shapes += '<g transform="translate(0 %s)">' % -MOUNT_RIDER_RISE
 	shapes += _path("M12 72 Q12 51 25 46 L48 46 Q60 50 61 72 Q37 82 12 72 Z", armor)
 	shapes += _armor_details(look.get("armor"))
 	shapes += _path("M17 66 L52 65 L53 71 Q34 76 17 71 Z", WOOD)
 	shapes += _path("M30 47 L30 65 L41 67 L45 47 Z", primary, trim)
+	if not headless:
+		shapes += _head_shapes(look, palette)
+	var shield: Variant = look.get("shield")
+	match shield:
+		null, "", "none": pass
+		"round", "small":
+			var radius := 10 if shield == "round" else 7
+			shapes += '<circle cx="21" cy="59" r="%d" fill="%s" stroke="%s" stroke-width="2"/><circle cx="21" cy="59" r="3" fill="%s"/>' % [radius, primary, trim, STEEL]
+		_:
+			shapes += _path("M10 49 Q20 45 32 49 L31 65 Q27 74 21 77 Q12 69 10 61 Z", primary, trim)
+			shapes += '<path d="M21 49v20 M13 57h16" stroke="%s" stroke-width="2"/>' % trim
+	if mounted:
+		shapes += "</g>"
+	return _texture(shapes)
+
+static func _head_shapes(look: Dictionary, palette: Array) -> String:
+	var primary: String = palette[0]
+	var trim: String = palette[1]
+	var skin: String = SKIN.get(look.get("undead"), DEFAULT_SKIN)
+	var shapes := ""
 	shapes += _path("M25 40 Q20 27 27 20 Q39 13 47 23 L50 35 L46 38 L45 46 Q34 51 25 40 Z", skin)
 	shapes += '<path d="M38 33h5 M39 41h5" stroke="%s" stroke-width="1.6"/>' % OUTLINE
 	var helm: Variant = look.get("helm", "cap")
@@ -67,18 +109,7 @@ static func _body(look: Dictionary, palette: Array, mounted: bool) -> Texture2D:
 			shapes += '<path d="M31 30h17 M42 36v5" stroke="%s" stroke-width="2"/>' % OUTLINE
 		_:
 			shapes += _path("M20 32 Q20 17 34 15 Q47 15 50 30 L45 31 L45 37 L41 37 L40 31 Z", STEEL)
-	var shield: Variant = look.get("shield")
-	match shield:
-		null, "", "none": pass
-		"round", "small":
-			var radius := 10 if shield == "round" else 7
-			shapes += '<circle cx="21" cy="59" r="%d" fill="%s" stroke="%s" stroke-width="2"/><circle cx="21" cy="59" r="3" fill="%s"/>' % [radius, primary, trim, STEEL]
-		_:
-			shapes += _path("M10 49 Q20 45 32 49 L31 65 Q27 74 21 77 Q12 69 10 61 Z", primary, trim)
-			shapes += '<path d="M21 49v20 M13 57h16" stroke="%s" stroke-width="2"/>' % trim
-	if mounted:
-		shapes += "</g>"
-	return _texture(shapes)
+	return shapes
 
 static func _armor_details(kind: Variant) -> String:
 	var detail := ""

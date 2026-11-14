@@ -83,7 +83,7 @@ func _physics_process(dt: float) -> void:
 	_session.advance(dt)
 	var events := _session.take_events()
 	_feedback.advance(dt, events)
-	_impacts.advance(dt, events)
+	_feedback.add_fatal_impacts(_impacts.advance(dt, events))
 	_figures.advance(dt, events)
 	_refresh(dt, events)
 	_audio.advance(dt, events, camera.position)
@@ -149,9 +149,10 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, _frame.arena_size), Demo.GROUND_COLOR)
 	for segment: Rect2 in _frame.walls:
 		draw_rect(segment, Demo.WALL_COLOR)
-	_impacts.draw_ground(self)
 	var size := get_viewport_rect().size / camera.zoom
-	_figures.draw(self, _frame.units, Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN))
+	var visible := Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN)
+	_impacts.draw_ground(self, visible)
+	_figures.draw(self, _frame.units, visible, _impacts.headless_units())
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)
