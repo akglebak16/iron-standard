@@ -7,7 +7,7 @@ const lines = [], dev = [];
 for (const pr of prs) {
   const body = (pr.body || '').replace(/\r/g, '');
   const m = body.match(/^##\s*Для игрока\s*\n([\s\S]*?)(?=^##\s|(?![\s\S]))/m);
-  const txt = m ? m[1].replace(/<!--[\s\S]*?-->/g, '').trim() : '';
+  const txt = m ? m[1].replace(/<!--[\s\S]*?-->/g, '').split('\n').filter(l => !/^(🤖|_?Generated (with|by)|https:\/\/claude\.ai\/code)/.test(l.trim())).join('\n').trim() : ''; // подписи Claude Code в конце PR не считаем текстом
   if (txt && !/^[-*]?\s*(нет|ничего|—|-)\.?$/i.test(txt)) lines.push(txt.split('\n').map(l => l.trimEnd()).join('\n') + ` (#${pr.number})`);
   else dev.push(`- ${pr.title} (#${pr.number})`);
 }
