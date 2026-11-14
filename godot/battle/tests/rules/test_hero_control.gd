@@ -5,6 +5,7 @@ const EquipmentConfig = preload("res://equipment/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const BattleState = preload("res://battle/model/state.gd")
 const HeroControl = preload("res://battle/rules/hero_control.gd")
+const WIND_RESOLVE_STEP := 0.01
 
 func _initialize() -> void:
 	var battle = BattleState.new()
@@ -52,9 +53,12 @@ func _check_cleave_damage() -> void:
 	var expected_rng := RandomNumberGenerator.new()
 	expected_rng.seed = rng.seed
 	HeroControl.step(battle, hero, {"face": 0.0, "attack": true}, Config.HERO_ATTACK_WINDUP, rng)
+	assert(hero.attack_windup == 0.0)
+	assert(battle.units[1].hp == 1000.0)
+	HeroControl.step(battle, hero, {"face": 0.0}, WIND_RESOLVE_STEP, rng)
 	for index in Config.HERO_MAX_HITS:
 		var scale: float = 1.0 if index == 0 else Config.HERO_FOLLOWUP_DAMAGE
-		var raw := hero.damage * scale * expected_rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
+		var raw := hero.damage * scale * expected_rng.randf_range(Config.HERO_MELEE_DAMAGE_MIN, Config.HERO_MELEE_DAMAGE_MAX)
 		var expected: int = preload("res://battle/rules/damage.gd").after_armor(raw, 0)
 		assert(battle.units[index + 1].hp == 1000 - expected)
 	assert(battle.units.back().hp == 1000) # Hit limit preserved.
@@ -76,6 +80,8 @@ func _check_ranged_shot() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 19
 	HeroControl.step(battle, hero, {"face": 0.0, "attack": true}, Config.HERO_RANGED_WINDUP, rng)
+	assert(battle.projectiles.is_empty())
+	HeroControl.step(battle, hero, {"face": 0.0}, WIND_RESOLVE_STEP, rng)
 	assert(battle.projectiles.size() == 1)
 	var shot: Dictionary = battle.projectiles[0]
 	assert(shot.throwing and shot.damage_type == EquipmentConfig.DAMAGE_TYPE_PIERCE)
@@ -89,6 +95,8 @@ func _check_ranged_shot() -> void:
 	miss.add_unit(other_hero)
 	miss.add_unit(Unit.new(1, 1, Vector2(100, 250), 100, 0, 1))
 	HeroControl.step(miss, other_hero, {"face": 0.0, "attack": true}, Config.HERO_RANGED_WINDUP, rng)
+	assert(miss.projectiles.is_empty())
+	HeroControl.step(miss, other_hero, {"face": 0.0}, WIND_RESOLVE_STEP, rng)
 	assert(miss.projectiles.size() == 1)
 	var missed: Dictionary = miss.projectiles[0]
 	assert(is_equal_approx(missed.duration, 210.0 / Config.SHOT_SPEED + Config.PROJECTILE_START_DELAY))

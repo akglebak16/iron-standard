@@ -32,4 +32,5 @@ static func apply(hero: Unit, profile: Dictionary, gear: Dictionary, initial: bo
 	hero.pierce = float(weapon.get("pb", 0.0))
 	hero.accuracy = float(weapon.get("acc", 0.0)) * Config.HERO_GEAR_ACCURACY_MULTIPLIER
 	hero.anti_cavalry = bool(weapon.get("anticav", false))
+	hero.hero_weapon = weapon.duplicate(true)
 	return true

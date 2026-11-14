@@ -75,7 +75,7 @@ func advance(dt: float) -> void:
 
 func _handle_swap() -> void:
 	var pressed: bool = bool(_input.get("swap", false))
-	if pressed and not _swap_held and _gear_catalog != null and not _hero_profile.is_empty() and _hero.attack_windup <= 0.0:
+	if pressed and not _swap_held and _gear_catalog != null and not _hero_profile.is_empty() and _hero.attack_windup < 0.0:
 		var selection := "melee" if _hero_profile.get("sel", "melee") == "ranged" else "ranged"
 		var candidate: Dictionary = _hero_profile.duplicate(true)
 		candidate.sel = selection

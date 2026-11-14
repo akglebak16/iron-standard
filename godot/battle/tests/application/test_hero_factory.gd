@@ -29,6 +29,7 @@ func _test_factory(gear_catalog: GearCatalog) -> void:
 	assert(hero.block_chance == 0.5)
 	assert(hero.shield_block == 0.12)
 	assert(hero.weapon_kind == "throw" and hero.damage_type == "pierce")
+	assert(hero.hero_weapon.id == "jav_heavy")
 	assert(hero.pierce == 0.1)
 	assert(is_equal_approx(hero.accuracy, 0.081))
 	setup.hero_profile.eq.ranged = "missing"

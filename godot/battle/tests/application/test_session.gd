@@ -128,6 +128,7 @@ func _check_weapon_swap() -> void:
 	setup.hero_profile.eq.ranged = "missing" # Running session owns a detached profile.
 	session.advance(TICK_SECONDS)
 	assert(hero.weapon_kind == "throw" and hero.attack_range == 480.0)
+	assert(hero.hero_weapon.id == "jav_heavy")
 	assert(hero.hp == health and hero.max_hp == maximum)
 	assert(hero.attack_cooldown > 0.0)
 	session.advance(TICK_SECONDS)
@@ -139,6 +140,7 @@ func _check_weapon_swap() -> void:
 	session.set_hero_input(input)
 	session.advance(TICK_SECONDS)
 	assert(hero.weapon_kind == "sword" and hero.attack_range == 0.0)
+	assert(hero.hero_weapon.id == "sword_knight")
 	assert(hero.hp == health)
 	var melee_only: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	melee_only.hero_profile = {"eq": {"melee": "sword_old"}}

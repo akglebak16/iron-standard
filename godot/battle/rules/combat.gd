@@ -28,6 +28,31 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		return battle.hurt(target, raw, attacker)
 	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce))
 
+static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: int, rng: RandomNumberGenerator) -> int:
+	var weapon: Dictionary = hero.hero_weapon
+	var direction: float = (target.position - hero.position).angle()
+	var incoming: float = (hero.position - target.position).angle()
+	var rear := absf(wrapf(incoming - target.facing, -PI, PI)) > Config.REAR_ANGLE
+	if not rear and Block.check(target, incoming, false, rng) and rng.randf() < Config.HERO_BLOCK_HOLD_CHANCE - float(weapon.get("brk", 0.0)):
+		return 0
+	var knockback: float = float(weapon.get("kb", Config.HERO_DEFAULT_KNOCKBACK))
+	target.position += Vector2(cos(direction), sin(direction)) * Config.HERO_KNOCKBACK_DISTANCE * knockback
+	var raw: float = hero.damage * rng.randf_range(Config.HERO_MELEE_DAMAGE_MIN, Config.HERO_MELEE_DAMAGE_MAX)
+	if rear:
+		raw *= Config.REAR_DAMAGE_MULTIPLIER
+	if previous_hits > 0:
+		raw *= float(weapon.get("fall", Config.HERO_FOLLOWUP_DAMAGE))
+	if hero.anti_cavalry and target.mounted:
+		raw *= Config.ANTI_CAVALRY_MULTIPLIER
+	if hero.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT:
+		if target.undead_kind == "skel":
+			raw *= Config.SKELETON_BLUNT_MULTIPLIER
+		elif target.undead_kind == "zombie":
+			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
+	if hero.damage_type.is_empty():
+		return battle.hurt(target, raw, hero)
+	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce))
+
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)
 	var duration: float = _flight_duration(attacker, distance)
