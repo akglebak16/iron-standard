@@ -1,0 +1,36 @@
+# Разовый перенос старого CHANGELOG.md (удалён из репозитория) в GitHub Releases.
+# Срабатывает при пуше в main; уже созданные релизы пропускает. После переноса файл можно удалить.
+name: Перенос CHANGELOG в Releases
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      LAST_CHANGELOG_COMMIT: a9b44e7ecd753865d1b24e433d79c0f419062221
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Создать релизы из старого CHANGELOG.md
+        run: |
+          git show "$LAST_CHANGELOG_COMMIT:CHANGELOG.md" > old.md
+          node .github/scripts/import-changelog.mjs old.md rels.json
+          n=$(jq length rels.json)
+          for i in $(seq 0 $((n-1))); do
+            tag=$(jq -r ".[$i].tag" rels.json); name=$(jq -r ".[$i].name" rels.json)
+            if gh release view "$tag" >/dev/null 2>&1; then echo "$tag уже есть"; continue; fi
+            jq -r ".[$i].body" rels.json > body.md
+            latest=false; [ "$i" -eq $((n-1)) ] && latest=true
+            gh release create "$tag" --target "$LAST_CHANGELOG_COMMIT" --title "$name" --notes-file body.md --latest=$latest
+            sleep 2
+          done
