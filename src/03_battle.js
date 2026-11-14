@@ -390,7 +390,7 @@ function battleDraw(g) {
   g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#15120c'; g.fillRect(0, 0, VIEW.w * d, VIEW.h * d);
   const shx = B.shake > 0 ? rnd(-3, 3) : 0, shy = B.shake > 0 ? rnd(-3, 3) : 0;
   g.setTransform(d * z, 0, 0, d * z, d * (VIEW.w / 2 - cam.x * z + shx), d * (VIEW.h / 2 - cam.y * z + shy));
-  g.drawImage(B.ground, 0, 0); goreDrawUnder(g); commandDraw(g);
+  g.drawImage(B.ground, 0, 0); goreDrawUnder(g); commandDraw(g); if (B.wall && typeof sdDraw === 'function') sdDraw(g, 0);
   const x0 = cam.x - VIEW.w / 2 / z - 80, x1 = cam.x + VIEW.w / 2 / z + 80, y0 = cam.y - VIEW.h / 2 / z - 40, y1 = cam.y + VIEW.h / 2 / z + 140;
   if (B.flag && B.t - B.flag.t < 4) { const f = B.flag, a = clamp(4 - (B.t - f.t), 0, 1); g.globalAlpha = a; g.strokeStyle = '#f1d27a'; g.lineWidth = 2; ell(g, f.x, f.y, 26, 10); g.stroke(); drawBanner(g, f.x, f.y, 'player', 15); g.globalAlpha = 1; }
   drawList.length = 0;
@@ -417,7 +417,7 @@ function battleDraw(g) {
     if (u.comp && !demo) { g.font = '700 12px "Alegreya Sans SC","Alegreya Sans",sans-serif'; g.textAlign = 'center'; const ny = u.y - (sp.m ? 76 : 58); g.fillStyle = 'rgba(0,0,0,.7)'; g.fillText(u.name, u.x + 1, ny + 1); g.fillStyle = '#9fe3d6'; g.fillText(u.name, u.x, ny); }
     if (u.flee && !demo) { g.fillStyle = '#f4f0e0'; g.fillRect(u.x - 1, u.y - 66, 9, 6); g.fillStyle = '#3a2a18'; g.fillRect(u.x - 2, u.y - 67, 1.5, 14); }
   }
-  fallDraw(g); goreDrawOver(g); voiceDraw(g);
+  fallDraw(g); goreDrawOver(g); voiceDraw(g); if (B.wall && typeof sdDraw === 'function') sdDraw(g, 1);
   const h = B.hero;
   if (h && !h.dead && h.swing > 0) { const p = 1 - h.swing / .26, R = 34 + h.t.reach + (h.t.mounted ? 8 : 0), a0 = h.swingA - 1 + p * 2; g.strokeStyle = 'rgba(255,250,230,' + (.85 - p * .7) + ')'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.arc(h.x, h.y - 14, R, a0 - .7, a0); g.stroke(); }
   // стрелы
@@ -454,7 +454,7 @@ function drawMinimap(c) {
 // стена — вертикальная полоса перед защитниками; пройти можно только через проломы (центральный — выбитые ворота)
 function siegeSetup() {
   const sf = B.siegeF = clamp(B.cfg.csiege || 0, 0, .9); // осадное дело спутника: у защитников слабее дух, стена хуже укрывает
-  const W = B.W, H = B.H, x = W - 980; B.wall = { x, hw: 22, gaps: [[H / 2 - 80, H / 2 + 80], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
+  const W = B.W, H = B.H, x = W - 980, dg = Math.round(60 * clamp(B.cfg.dmg || 0, 0, 1)); B.wall = { x, hw: 22, gaps: [[H / 2 - 80 - dg, H / 2 + 80 + dg], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
   B.trees = B.trees.filter(t => t.x < x - 140); // у стены и во дворе деревьев нет
   const [inf, arc, cav] = B.groups[1]; inf.cx = x + 80; inf.cy = H / 2; arc.cx = x + 52; arc.cy = H / 2; cav.cx = W - 380; cav.cy = H / 2; for (const g of B.groups[1]) { g.dir = Math.PI; g.order = 'hold'; g.st = 'siege'; layout(g, true); }
   for (const u of B.units) if (u.side === 1) { u.mbase += Math.round(28 * (1 - sf)); u.morale = u.mbase; if (!u.isHero) { const p = slotPos(u); u.x = p[0]; u.y = p[1]; } }
@@ -483,6 +483,7 @@ function siegeBrain(dt) {
   if (cav.order !== 'charge' && (inside > 4 || B.t > 170)) { cav.order = 'charge'; if (!B.cfg.demo) blog('Конница гарнизона вышла в бой', 1); }
   if (arc.order !== 'charge' && (inside > 8 || !inf.units.some(fit))) arc.order = 'charge';
   if (near && !B.siegeHorn) { B.siegeHorn = 1; blog('Враг у стен!', 1); sfx('horn2'); }
+  if (!SERVER && typeof sdUpdate === 'function') sdUpdate(dt); // камни, котлы с маслом (03c_siegedef.js)
 }
 function paintWall(g) {
   const w = B.wall, H = B.H, x0 = w.x - w.hw, ww = w.hw * 2, segs = []; let y = 0; for (const gp of w.gaps.slice().sort((a, b) => a[0] - b[0])) { segs.push([y, gp[0]]); y = gp[1]; } segs.push([y, H]);

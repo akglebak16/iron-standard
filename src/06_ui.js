@@ -190,9 +190,9 @@ function openQuick() { renderQuick(); }
 
 /* ---------- осада ---------- */
 function openSiege(s) {
-  const P = G.player, p = siegeParty(s), pw = relativePowerOf(P, Object.assign({}, p, { troops: p.troops.map(t => ({ type: t.type, n: Math.round(t.n * 1.35) })) })); P.path = []; P.tid = null; G.wait = false;
+  const P = G.player, p = siegeParty(s), pw = relativePowerOf(P, Object.assign({}, p, { troops: p.troops.map(t => ({ type: t.type, n: Math.round(t.n * (typeof sgDefK === 'function' ? sgDefK(s) : 1.35)) })) })); P.path = []; P.tid = null; G.wait = false;
   UI.siege = { s, p }; const n = troopCount(p.troops), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
   openModal('<div class="whead"><img alt="" src="' + crestURL(s.fac) + '"><h2>Осада: ' + s.name + '<span class="sub">' + KIND[s.kind] + ' · ' + FACTIONS[s.fac].name + ' · ' + n + ' защитников' + (p.lord ? ' · в стенах ' + p.lord : '') + '</span></h2><span class="tag ' + pw[1] + '">' + pw[0] + '</span></div>' +
-    '<div class="wbody"><div class="note">Ворота закрыты. Защитники держат проломы в стене, их стрелки бьют из-за зубцов. Если возьмёшь ' + (s.kind === 'town' ? 'город' : 'замок') + ', он станет твоим и будет приносить ' + settleIncome(s) + ' золота в день.</div>' +
+    '<div class="wbody"><div class="note">Ворота закрыты. Защитники держат проломы в стене, их стрелки бьют из-за зубцов' + (typeof sgNote === 'function' ? sgNote(s) : '') + '. Если возьмёшь ' + (s.kind === 'town' ? 'город' : 'замок') + ', он станет твоим и будет приносить ' + settleIncome(s) + ' золота в день.</div>' +
     list.map(t => troopRow(t, '<div class="cnt">' + t.n + '</div>')).join('') + '</div><div class="wfoot"><button class="btn" data-act="siegeoff">Отойти</button><button class="btn" data-act="siegeauto">Рассчитать штурм</button><button class="btn danger" data-act="siegeatk">На штурм!</button></div>', 'narrow');
 }
