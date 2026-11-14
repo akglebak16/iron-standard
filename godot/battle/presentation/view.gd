@@ -13,6 +13,7 @@ const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
 
 signal battle_finished
 signal audio_preferences_changed(effects: bool, music: bool)
+signal blood_preference_changed(enabled: bool)
 
 @onready var camera: Camera2D = $Camera
 @onready var status: Label = $Hud/Status
@@ -28,11 +29,12 @@ var _effects_enabled := true
 var _music_enabled := true
 var _result_summary := ""
 
-func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true) -> void:
+func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
+	_impacts.blood_enabled = blood_enabled
 
 func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
@@ -92,6 +94,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_set_audio_preferences(not _effects_enabled, _music_enabled)
 		KEY_N:
 			_set_audio_preferences(_effects_enabled, not _music_enabled)
+		KEY_G:
+			_impacts.blood_enabled = not _impacts.blood_enabled
+			blood_preference_changed.emit(_impacts.blood_enabled)
+			_update_status()
+			queue_redraw()
 		KEY_1: _selection = Config.GROUP_INFANTRY
 		KEY_2: _selection = Config.GROUP_ARCHERS
 		KEY_3: _selection = Config.GROUP_CAVALRY
@@ -124,6 +131,7 @@ func _update_status() -> void:
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina)]
 	status.text += Demo.SOUND_HINT % [Demo.SOUND_ON if _effects_enabled else Demo.SOUND_OFF, Demo.SOUND_ON if _music_enabled else Demo.SOUND_OFF]
+	status.text += Demo.BLOOD_HINT % (Demo.SOUND_ON if _impacts.blood_enabled else Demo.SOUND_OFF)
 	var journal := _feedback.journal()
 	if not journal.is_empty():
 		status.text += "\n" + journal

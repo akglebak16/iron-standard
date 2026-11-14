@@ -38,6 +38,9 @@ func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: E
 		"source_hero": source != null and source.hero,
 		"source_id": source.id if source != null else -1,
 		"impact_style": target.impact_style,
+		"damage_fraction": float(amount) / maxf(target.max_hp, 1.0),
+		"lethal": target.hp <= 0.0,
+		"impact_direction": Vector2.ZERO if source == null else target.position - source.position,
 	})
 
 func take_events() -> Array[Dictionary]:

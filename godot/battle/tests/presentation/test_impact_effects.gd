@@ -36,5 +36,21 @@ func _initialize() -> void:
 		effects.advance(1.0, [])
 		effects.advance(0.0, burst)
 	assert(effects._ground_marks.size() == Effects.MAX_GROUND_MARKS)
+	_check_blood_setting()
 	print("Impact effects tests passed")
 	quit(0)
+
+func _check_blood_setting() -> void:
+	var effects := Effects.new()
+	var heavy := {"kind": Event.Kind.HIT, "position": Vector2.ZERO, "impact_style": Event.ImpactStyle.BLOOD,
+		"damage_fraction": 0.18, "amount": 18, "impact_direction": Vector2.RIGHT}
+	effects.advance(0.0, [heavy, {"kind": Event.Kind.PROJECTILE_MISSED, "position": Vector2.ZERO, "trajectory": Vector2.RIGHT, "throwing": false}])
+	assert(effects._particles.size() == 13)
+	assert(float(effects._particles[-1].velocity.x) > 0.0)
+	effects.advance(1.0, [heavy])
+	assert(effects._ground_marks.size() == 14)
+	effects.blood_enabled = false
+	assert(effects._particles.is_empty())
+	assert(effects._ground_marks.size() == 1 and effects._ground_marks[0].has("trajectory"))
+	effects.advance(0.0, [heavy])
+	assert(effects._particles.size() == 6 and effects._particles[0].kind == Effects.Particle.DUST)

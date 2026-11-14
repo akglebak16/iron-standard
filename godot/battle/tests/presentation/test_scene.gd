@@ -2,7 +2,7 @@ extends SceneTree
 const Session = preload("res://battle/application/session.gd")
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
-const AudioPreferences = preload("res://app/audio_preferences.gd")
+const PresentationPreferences = preload("res://app/presentation_preferences.gd")
 const TICK := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -14,8 +14,8 @@ func _check() -> void:
 	var scene = packed.instantiate()
 	var path := "res://.godot/test-audio-%d.cfg" % OS.get_process_id()
 	assert(DirAccess.make_dir_recursive_absolute("res://.godot") == OK)
-	scene.audio_preferences = AudioPreferences.new(path)
-	assert(scene.audio_preferences.save(true, true) == OK)
+	scene.presentation_preferences = PresentationPreferences.new(path)
+	assert(scene.presentation_preferences.save(true, true) == OK)
 	root.add_child(scene)
 	await process_frame
 	var view = scene.get_node("Battle")
@@ -57,7 +57,12 @@ func _check() -> void:
 	mute.keycode = KEY_N
 	view._unhandled_input(mute)
 	assert(not view._music.enabled and view.status.text.contains("музыка: выкл."))
-	assert(AudioPreferences.new(path).read() == {"effects": false, "music": false})
+	mute.keycode = KEY_G
+	view._unhandled_input(mute)
+	assert(not view._impacts.blood_enabled and view.status.text.contains("кровь: выкл."))
+	assert(scene.presentation_preferences.save(false, false) == OK)
+	assert(not PresentationPreferences.new(path).read_blood())
+	assert(PresentationPreferences.new(path).read() == {"effects": false, "music": false})
 	var flight: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(flight.origin.is_finite() and flight.progress > 0.0 and flight.progress < 1.0)
 	await process_frame
@@ -95,13 +100,14 @@ func _check_figure_cache(art) -> void:
 
 func _check_defeat(packed: PackedScene, path: String) -> void:
 	var scene = packed.instantiate()
-	scene.audio_preferences = AudioPreferences.new(path)
+	scene.presentation_preferences = PresentationPreferences.new(path)
 	scene.battle_setup = scene.battle_setup.duplicate(true)
 	scene.battle_setup.player_army.clear()
 	scene.battle_setup.companion_profiles.clear()
 	root.add_child(scene)
 	var view = scene.get_node("Battle")
 	assert(not view._audio.enabled and not view._music.enabled)
+	assert(not view._impacts.blood_enabled)
 	view._music.advance(1.0)
 	assert(view._music._note_players.is_empty())
 	var session: Session = view._session

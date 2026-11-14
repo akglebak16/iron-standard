@@ -25,7 +25,21 @@ const SHAFT_WIDTH := 1.4
 const FLETCHING_WIDTH := 2.0
 const FLETCHING_NEAR := 7.0
 const FLETCHING_FAR := 10.0
-const SPLAT_ALPHA := 0.42
+const SPLAT_ALPHA := 0.6
+const SPLAT_OFFSET := Vector2(0, 14)
+const SPLAT_SCALE := Vector2(0.9, 0.45)
+const SPLAT_SEGMENTS := 12
+const HEAVY_HIT_THRESHOLD := 0.18
+const SPRAY_OFFSET := Vector2(0, -20)
+const SPRAY_BASE_COUNT := 6
+const SPRAY_MAX_EXTRA := 10
+const SPRAY_DAMAGE_PER_EXTRA := 6.0
+const SPRAY_SPREAD := 0.7
+const SPRAY_SPEED := Vector2(45, 150)
+const SPRAY_LIFT := Vector2(40, 80)
+const SPRAY_VERTICAL_SCALE := 0.5
+const SPRAY_LIFE := Vector2(0.3, 0.65)
+const SPRAY_RADIUS := Vector2(1.5, 3.4)
 const PROFILES := {
 	Particle.BLOOD: {"count": BLOOD_HIT_COUNT, "vx": Vector2(-60, 60), "vy": Vector2(-90, 20), "life": Vector2(0.25, 0.55), "radius": Vector2(1.4, 2.8), "jitter_x": Vector2.ZERO, "jitter_y": Vector2.ZERO},
 	Particle.SPARK: {"count": 6, "vx": Vector2(-90, 90), "vy": Vector2(-90, 60), "life": Vector2(0.12, 0.28), "radius": Vector2(1.5, 1.5), "jitter_x": Vector2.ZERO, "jitter_y": Vector2.ZERO},
@@ -36,6 +50,12 @@ var _rng := RandomNumberGenerator.new()
 var _particles: Array[Dictionary] = []
 var _ground_marks: Array[Dictionary] = []
 var _next_mark := 0
+var blood_enabled := true:
+	set(value):
+		blood_enabled = value
+		if not value:
+			_particles = _particles.filter(func(particle): return particle.kind != Particle.BLOOD)
+			_remove_blood_marks()
 
 func _init() -> void:
 	_rng.randomize()
@@ -55,12 +75,14 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 	for event in events:
 		match event.kind:
 			Event.Kind.HIT:
-				if event.impact_style == Event.ImpactStyle.DUST:
+				if not blood_enabled or event.impact_style == Event.ImpactStyle.DUST:
 					_emit(Particle.DUST, event.position + DEATH_OFFSET, DUST_COLOR)
 				else:
 					_emit(Particle.BLOOD, event.position + BLOOD_OFFSET, BLOOD_COLORS[event.impact_style])
+					if event.get("damage_fraction", 0.0) >= HEAVY_HIT_THRESHOLD and not event.get("lethal", false):
+						_spray(event, BLOOD_COLORS[event.impact_style])
 			Event.Kind.DOWN:
-				if BLOOD_COLORS.has(event.impact_style):
+				if blood_enabled and BLOOD_COLORS.has(event.impact_style):
 					_emit(Particle.BLOOD, event.position + DEATH_OFFSET, BLOOD_COLORS[event.impact_style], BLOOD_DOWN_COUNT)
 			Event.Kind.BLOCK:
 				_emit(Particle.SPARK, event.position + event.contact_offset + DEATH_OFFSET, SPARK_COLOR)
@@ -85,13 +107,39 @@ func draw_ground(canvas: CanvasItem) -> void:
 		else:
 			var color: Color = mark.color
 			color.a = SPLAT_ALPHA
-			canvas.draw_circle(point, mark.radius, color)
+			_draw_splat(canvas, point + SPLAT_OFFSET, mark.radius, color)
 
 func draw_particles(canvas: CanvasItem) -> void:
 	for particle in _particles:
 		var color: Color = particle.color
 		color.a = clampf(particle.remaining / particle.lifetime, 0.0, 1.0)
 		canvas.draw_circle(particle.position, particle.radius, color)
+
+static func _draw_splat(canvas: CanvasItem, center: Vector2, radius: float, color: Color) -> void:
+	var points := PackedVector2Array()
+	for i in SPLAT_SEGMENTS:
+		points.append(center + Vector2.from_angle(TAU * i / SPLAT_SEGMENTS) * SPLAT_SCALE * radius)
+	canvas.draw_colored_polygon(points, color)
+
+func _spray(event: Dictionary, color: Color) -> void:
+	var direction: Vector2 = event.impact_direction
+	var angle := direction.angle() if direction != Vector2.ZERO else _rng.randf_range(0.0, TAU)
+	var count := SPRAY_BASE_COUNT + mini(SPRAY_MAX_EXTRA, floori(event.amount / SPRAY_DAMAGE_PER_EXTRA))
+	for i in mini(count, MAX_PARTICLES - _particles.size()):
+		var velocity := Vector2.from_angle(angle + _rng.randf_range(-SPRAY_SPREAD, SPRAY_SPREAD)) * _sample(SPRAY_SPEED)
+		velocity.y = velocity.y * SPRAY_VERTICAL_SCALE - _sample(SPRAY_LIFT)
+		var lifetime := _sample(SPRAY_LIFE)
+		_particles.append({"kind": Particle.BLOOD, "position": event.position + SPRAY_OFFSET,
+			"velocity": velocity, "color": color, "remaining": lifetime, "lifetime": lifetime, "radius": _sample(SPRAY_RADIUS)})
+
+func _remove_blood_marks() -> void:
+	var kept: Array[Dictionary] = []
+	for i in _ground_marks.size():
+		var mark := _ground_marks[(_next_mark + i) % _ground_marks.size()]
+		if mark.has("trajectory"):
+			kept.append(mark)
+	_ground_marks = kept
+	_next_mark = _ground_marks.size() % MAX_GROUND_MARKS
 
 func _emit(kind: Particle, position: Vector2, color: Color, count_override: int = 0) -> void:
 	var profile: Dictionary = PROFILES[kind]

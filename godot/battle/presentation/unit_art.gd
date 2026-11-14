@@ -47,6 +47,7 @@ static func _body(look: Dictionary, palette: Array, mounted: bool) -> Texture2D:
 		shapes += _path("M13 60 Q29 56 49 60 L44 78 L17 77 Z", primary, trim)
 		shapes += '<g transform="translate(0 -12)">'
 	shapes += _path("M12 72 Q12 51 25 46 L48 46 Q60 50 61 72 Q37 82 12 72 Z", armor)
+	shapes += _armor_details(look.get("armor"))
 	shapes += _path("M17 66 L52 65 L53 71 Q34 76 17 71 Z", WOOD)
 	shapes += _path("M30 47 L30 65 L41 67 L45 47 Z", primary, trim)
 	shapes += _path("M25 40 Q20 27 27 20 Q39 13 47 23 L50 35 L46 38 L45 46 Q34 51 25 40 Z", skin)
@@ -54,8 +55,13 @@ static func _body(look: Dictionary, palette: Array, mounted: bool) -> Texture2D:
 	var helm: Variant = look.get("helm", "cap")
 	match helm:
 		"none": shapes += _path("M24 32 Q20 19 35 17 Q45 17 46 24 L29 27 L28 34 Z", WOOD)
-		"hood", "cap", "furcap", "turban", "turbanm":
+		"turban", "turbanm":
+			shapes += _path("M20 31 Q18 20 26 17 Q36 10 48 19 Q54 23 51 31 Q35 27 23 35 Z", primary, trim)
+			shapes += '<path d="M21 27Q35 18 49 25 M21 31Q35 23 50 28" fill="none" stroke="%s"/>' % trim
+		"hood", "cap", "furcap":
 			shapes += _path("M22 38 Q18 22 29 16 Q43 11 50 26 L50 29 L29 30 L27 42 Z", primary, trim)
+		"kettle":
+			shapes += _path("M23 28 Q23 15 36 15 Q47 16 49 28 L55 31 Q49 35 19 34 L17 31 Z", STEEL)
 		"great", "greathelm":
 			shapes += _path("M22 43 L23 18 L46 17 L51 44 L35 47 Z", STEEL)
 			shapes += '<path d="M31 30h17 M42 36v5" stroke="%s" stroke-width="2"/>' % OUTLINE
@@ -73,6 +79,21 @@ static func _body(look: Dictionary, palette: Array, mounted: bool) -> Texture2D:
 	if mounted:
 		shapes += "</g>"
 	return _texture(shapes)
+
+static func _armor_details(kind: Variant) -> String:
+	var detail := ""
+	match kind:
+		"mail", "scale":
+			for row in 4:
+				for column in 6:
+					var x := 20 + column * 6 + (row % 2) * 3
+					var y := 50 + row * 4
+					detail += '<path d="M%d %dq2 3 4 0" fill="none" stroke="%s" stroke-opacity=".65"/>' % [x, y, OUTLINE]
+		"plate":
+			detail = '<path d="M18 54Q36 61 56 53 M17 60Q37 67 57 59" fill="none" stroke="%s"/><path d="M24 49Q37 54 48 49" fill="none" stroke="%s"/>' % [OUTLINE, STEEL]
+		"ribs":
+			detail = '<path d="M21 52Q37 60 51 51 M19 57Q36 66 54 56 M18 62Q37 70 55 61" fill="none" stroke="%s" stroke-width="2"/>' % STEEL
+	return detail
 
 static func _weapon(kind: Variant) -> Texture2D:
 	var shapes := ""

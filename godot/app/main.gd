@@ -11,7 +11,7 @@ const EncounterAftermath = preload("res://app/encounter_aftermath.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
-const AudioPreferences = preload("res://app/audio_preferences.gd")
+const PresentationPreferences = preload("res://app/presentation_preferences.gd")
 const REWARD_SEED_OFFSET := 1
 const DEMO_REWARD_TEXT := "\nПогибло: %d · Ранено: %d · Золото: %+d · Опыт: +%d · Трофеи: %s"
 const NO_DROPS := "—"
@@ -25,7 +25,7 @@ const BARROW_CLEARED_TEXT := "\nЧёрный курган разрушен."
 @export var battle_setup: Setup = preload("res://battle/data/demo_battle.tres")
 var _demo_party: Dictionary
 var _demo_world: Dictionary
-var audio_preferences := AudioPreferences.new()
+var presentation_preferences := PresentationPreferences.new()
 
 func _ready() -> void:
 	var catalog := Catalog.new()
@@ -53,9 +53,10 @@ func _ready() -> void:
 		return
 	var view = BattleView.instantiate()
 	view.name = "Battle"
-	var audio := audio_preferences.read()
-	view.configure(session, audio.effects, audio.music)
+	var audio := presentation_preferences.read()
+	view.configure(session, audio.effects, audio.music, presentation_preferences.read_blood())
 	view.audio_preferences_changed.connect(_save_audio_preferences)
+	view.blood_preference_changed.connect(_save_blood_preference)
 	var profile := battle_setup.hero_profile.duplicate(true)
 	var roster: Array[Dictionary] = []
 	for saved in battle_setup.companion_profiles:
@@ -73,9 +74,14 @@ func _ready() -> void:
 	add_child(view)
 
 func _save_audio_preferences(effects: bool, music: bool) -> void:
-	var error := audio_preferences.save(effects, music)
+	var error := presentation_preferences.save(effects, music)
 	if error != OK:
 		push_warning("Cannot save audio preferences: " + error_string(error))
+
+func _save_blood_preference(enabled: bool) -> void:
+	var error := presentation_preferences.save_blood(enabled)
+	if error != OK:
+		push_warning("Cannot save blood preference: " + error_string(error))
 
 func _show_aftermath(view: Node2D, bridge: EncounterAftermath, opponent: Dictionary, mounted: bool, troops: Catalog, gear: GearCatalog, goods: GoodsCatalog, rng: RandomNumberGenerator, companions: CompanionCatalog, perks: PerkCatalog) -> void:
 	var resolved := bridge.resolve(_demo_party, opponent, mounted, troops, gear, goods, rng, companions, perks, _demo_world)
