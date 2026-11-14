@@ -38,7 +38,8 @@ jobs:
         run: npm test
       - name: Подготовить сайт
         if: github.event_name != 'pull_request'
-        run: mkdir -p _site && cp index.html docs/trailer-glebio.html _site/ && touch _site/.nojekyll # трейлер: /trailer-glebio.html
+        run: |
+          mkdir -p _site && cp index.html docs/trailer-glebio.html _site/ && touch _site/.nojekyll # трейлер: /trailer-glebio.html
           node roadmap/build.mjs --branches _site/roadmap/index.html # доска: /roadmap/
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
