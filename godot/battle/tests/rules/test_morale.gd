@@ -14,7 +14,7 @@ func _initialize() -> void:
 	hero.hero = true
 	hero.morale = -10.0
 	var companion = Unit.new(2, 0, Vector2(120, 100), 80, 0, 2)
-	companion.companion = true
+	companion.companion_id = "test_companion"
 	companion.morale = -10.0
 	var immune = Unit.new(3, 0, Vector2(130, 100), 30, 0, 1)
 	immune.morale_immune = true

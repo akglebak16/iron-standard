@@ -45,7 +45,7 @@ func _initialize() -> void:
 		var morale_us := 0
 		for tick in MEASURED_TICKS:
 			var start := Time.get_ticks_usec()
-			Movement.step(state, TICK_SECONDS, setup.hero_position, 0.0, rng)
+			Movement.step(state, TICK_SECONDS, rng)
 			movement_and_attacks_us += Time.get_ticks_usec() - start
 			start = Time.get_ticks_usec()
 			CombatStep.resolve_projectiles(state, TICK_SECONDS, rng)

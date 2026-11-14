@@ -84,13 +84,11 @@ func _check_survival_bonus() -> void:
 func _check_companion_results() -> void:
 	var pair := _battle()
 	var active := Unit.new(pair.state.units.size(), 0, Vector2.ZERO, 100, 0, 3)
-	active.companion = true
 	active.companion_id = "healer"
 	active.hp = 35
 	active.kills = 2
 	pair.state.add_unit(active)
 	var down := Unit.new(pair.state.units.size(), 0, Vector2.ZERO, 100, 0, 3)
-	down.companion = true
 	down.companion_id = "scout"
 	down.dead = true
 	down.kills = 1

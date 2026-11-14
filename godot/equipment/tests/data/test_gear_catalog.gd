@@ -9,6 +9,7 @@ func _initialize() -> void:
 	assert(catalog.get_item("xbow_heavy").pb == 0.22)
 	assert(catalog.get_item("jav_heavy").wt == "throw")
 	assert(catalog.get_item("horse_war").v == 172)
+	assert(catalog.get_item("shield_heraldic").projectile_block_bonus == 0.18)
 	assert(catalog.get_item("missing").is_empty())
 	var copy := catalog.get_item("sword_old")
 	copy.dmg = 999
@@ -31,6 +32,11 @@ func _initialize() -> void:
 	invalid.erase("spd")
 	assert(not catalog.replace_data({"test_sword": invalid}))
 	assert(catalog.get_item("test_sword").spd == 1)
+	var shield := {"id": "test_shield", "name": "Test shield", "slot": "shield", "tier": 0, "price": 1, "w": 1, "v": 0.5, "projectile_block_bonus": 0.3}
+	assert(catalog.replace_data({"test_shield": shield}))
+	shield.projectile_block_bonus = 1.1
+	assert(not catalog.replace_data({"test_shield": shield}))
+	assert(catalog.get_item("test_shield").projectile_block_bonus == 0.3)
 	assert(catalog.load_data())
 	assert(catalog.size() == 55)
 	print("Gear catalog tests passed")

@@ -35,12 +35,12 @@ func _check_skirmisher_enters_range_after_attack_check() -> void:
 	attacker.damage = 20.0
 	attacker.collision_radius = Config.HORSE_COLLISION_RADIUS
 	attacker.mass = Config.HORSE_MASS
-	Movement.step(pair.battle, TICK_SECONDS, Vector2.ZERO, 0.0, pair.rng)
+	Movement.step(pair.battle, TICK_SECONDS, pair.rng)
 	assert(attacker.ai_mode == Config.AI_MODE_SKIRMISH)
 	assert(attacker.position.distance_to(pair.target.position) < attacker.attack_range)
 	assert(pair.battle.projectiles.is_empty()) # Entry into range happened after this tick's attack check.
 	var position_before_shot: Vector2 = attacker.position
-	Movement.step(pair.battle, TICK_SECONDS, Vector2.ZERO, 0.0, pair.rng)
+	Movement.step(pair.battle, TICK_SECONDS, pair.rng)
 	assert(pair.battle.projectiles.size() == 1)
 	var origin: Vector2 = pair.battle.projectiles[0].origin
 	assert(is_equal_approx(origin.x, position_before_shot.x)) # Shot preceded this tick's movement.
@@ -55,14 +55,14 @@ func _check_melee_wind_expires_before_movement() -> void:
 	attacker.speed = 100.0
 	attacker.damage = 30.0
 	attacker.ai_windup = 0.05
-	attacker.ai_wind_target_id = 1
+	attacker.ai_wind_target_index = 1
 	attacker.attack_cooldown = 1.0
 	target.position = Vector2(150, 100)
 	pair.battle.groups[0][Config.GROUP_INFANTRY].order = Config.ORDER_CHARGE
-	Movement.step(pair.battle, TICK_SECONDS, Vector2.ZERO, 0.0, pair.rng)
+	Movement.step(pair.battle, TICK_SECONDS, pair.rng)
 	assert(attacker.position.x > 100.0)
 	assert(target.hp == 100.0) # Previous position was outside the finishing strike's reach.
-	assert(attacker.ai_wind_target_id == -1)
+	assert(attacker.ai_wind_target_index == -1)
 
 func _check_earlier_unit_can_stop_later_unit() -> void:
 	var pair := _pair()
@@ -71,13 +71,13 @@ func _check_earlier_unit_can_stop_later_unit() -> void:
 	attacker.group_kind = Config.GROUP_INFANTRY
 	attacker.damage = 1000.0
 	attacker.ai_windup = 0.05
-	attacker.ai_wind_target_id = 1
+	attacker.ai_wind_target_index = 1
 	attacker.attack_cooldown = 1.0
 	target.position = Vector2(120, 100)
 	target.speed = 100.0
 	pair.battle.groups[0][Config.GROUP_INFANTRY].order = Config.ORDER_CHARGE
 	pair.battle.groups[1][Config.GROUP_INFANTRY].order = Config.ORDER_CHARGE
 	var target_start: Vector2 = target.position
-	Movement.step(pair.battle, TICK_SECONDS, Vector2.ZERO, 0.0, pair.rng)
+	Movement.step(pair.battle, TICK_SECONDS, pair.rng)
 	assert(target.dead)
 	assert(target.position == target_start) # Dead before its own turn, so it never moves.

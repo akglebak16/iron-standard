@@ -81,7 +81,7 @@ func _check_damage_response() -> void:
 	battle.add_unit(attacker)
 	battle.add_unit(target)
 	var rng := RandomNumberGenerator.new()
-	attacker.weapon_kind = "club"
+	attacker.blunt_melee = true
 	assert(Combat.strike(battle, attacker, target, rng) == 1)
 	attacker.damage_type = EquipmentConfig.DAMAGE_TYPE_BLUNT
 	assert(Combat.hero_strike(battle, attacker, target, 0, rng) == 1)

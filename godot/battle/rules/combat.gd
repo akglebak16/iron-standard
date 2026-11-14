@@ -19,7 +19,7 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
 	if attacker.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
-	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.weapon_kind in ["club", "mace"]):
+	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.blunt_melee):
 		raw *= target.blunt_melee_damage_multiplier
 	if attacker.damage_type.is_empty():
 		return battle.hurt(target, raw, attacker, 0.0, rng)

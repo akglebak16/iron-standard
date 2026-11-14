@@ -80,6 +80,8 @@ func centroid(side: int) -> Vector2:
 	return total / count if count else Vector2.INF
 
 func add_unit(unit: Unit) -> void:
+	assert(unit.battle_index == -1, "A battle unit can only be inserted once")
+	unit.battle_index = units.size()
 	units.append(unit)
 	starting_units[unit.side] += 1
 

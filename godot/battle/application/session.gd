@@ -65,7 +65,7 @@ func advance(dt: float) -> void:
 	Tactics.relayout(_state, dt)
 	_handle_swap()
 	HeroControl.step(_state, _hero, _input, dt, _rng)
-	Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
+	Movement.step(_state, dt, _rng)
 	CombatStep.resolve_projectiles(_state, dt, _rng)
 	var morale_checked: bool = Morale.advance(_state, dt)
 	_tick += 1

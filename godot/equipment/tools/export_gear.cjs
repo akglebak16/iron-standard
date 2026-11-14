@@ -9,6 +9,13 @@ const boundary = source.indexOf('/* ---------- герой и его слоты -
 if (boundary < 0) throw new Error('Gear catalog boundary not found');
 const gear = vm.runInNewContext(source.slice(0, boundary) + '\nJSON.stringify(EQ)', {});
 const items = JSON.parse(gear);
+const core = fs.readFileSync(path.join(root, 'src/01_core.js'), 'utf8');
+const shieldArrowSource = core.match(/^function shieldArrow\([^\n]+/m);
+if (!shieldArrowSource) throw new Error('Browser shield arrow rule not found');
+const shieldArrow = vm.runInNewContext(shieldArrowSource[0] + '\nshieldArrow', {});
+for (const item of Object.values(items)) {
+  if (item.slot === 'shield') item.projectile_block_bonus = shieldArrow(item.look);
+}
 const expected = JSON.stringify(items, null, 2) + '\n';
 const output = path.join(root, 'godot/equipment/data/items.json');
 if (process.argv.includes('--check')) {

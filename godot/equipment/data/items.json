@@ -217,7 +217,8 @@
     "price": 60,
     "w": 2,
     "v": 0.42,
-    "look": "small"
+    "look": "small",
+    "projectile_block_bonus": 0.07
   },
   "shield_plank": {
     "id": "shield_plank",
@@ -227,7 +228,8 @@
     "price": 25,
     "w": 3,
     "v": 0.5,
-    "look": "round"
+    "look": "round",
+    "projectile_block_bonus": 0.12
   },
   "shield_banded": {
     "id": "shield_banded",
@@ -237,7 +239,8 @@
     "price": 240,
     "w": 4,
     "v": 0.68,
-    "look": "round"
+    "look": "round",
+    "projectile_block_bonus": 0.12
   },
   "shield_heraldic": {
     "id": "shield_heraldic",
@@ -247,7 +250,8 @@
     "price": 700,
     "w": 5.5,
     "v": 0.84,
-    "look": "kite"
+    "look": "kite",
+    "projectile_block_bonus": 0.18
   },
   "horse_riding": {
     "id": "horse_riding",

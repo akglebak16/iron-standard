@@ -12,6 +12,7 @@ const troops = vm.runInNewContext(source.slice(0, end) + '\nTROOPS', {});
 // Serialize gameplay traits explicitly so runtime rules never inspect content IDs or artwork.
 for (const troop of Object.values(troops)) {
   const traits = {};
+  if (['club', 'mace'].includes(troop.look?.weapon)) traits.blunt_melee = true;
   if (troop.fac === 'undead') {
     traits.morale_base = 999;
     traits.morale_immune = true;

@@ -2,6 +2,7 @@ extends RefCounted
 const Config = preload("res://battle/config.gd")
 
 var id: int
+var battle_index: int = -1 # Assigned on insertion; independent of ID used for gameplay.
 var side: int
 var position: Vector2
 var hp: float
@@ -32,19 +33,21 @@ var velocity: Vector2 = Vector2.ZERO
 var facing: float = 0.0
 var fleeing: bool = false
 var wavering: bool = false
-var companion: bool = false
 var companion_id: String = "" # Stable campaign identity for the result, distinct from a troop type.
+var companion: bool:
+	get:
+		return not companion_id.is_empty()
 var faction: String = ""
 var collision_radius: float = Config.FOOT_COLLISION_RADIUS
 var mass: float = Config.FOOT_MASS
 var attack_interval: float = 1.0
 var attack_cooldown: float = 0.0
 var charge_cooldown: float = 0.0
-var target_id: int = -1 # Index in State.units; avoids RefCounted cycles between enemies.
+var target_index: int = -1 # Index in State.units; avoids RefCounted cycles between enemies.
 var target_timer: float = 0.0
 var ai_mode: String = Config.AI_MODE_UNASSIGNED
 var ai_windup: float = -1.0
-var ai_wind_target_id: int = -1
+var ai_wind_target_index: int = -1
 var melee_reach: float = Config.DEFAULT_MELEE_REACH
 var block_chance: float = 0.0
 var shield_block: float = 0.0 # Troop shield arrow bonus; hero gear will supply its own value later.
@@ -53,6 +56,7 @@ var pierce: float = 0.0
 var damage_type: String = "" # Empty for troop attacks without an equipped weapon.
 var anti_cavalry: bool = false
 var weapon_kind: String = ""
+var blunt_melee: bool = false # Innate attack classification for troops without an equipped weapon.
 var projectile_damage_multiplier: float = 1.0
 var blunt_melee_damage_multiplier: float = 1.0
 var stamina: float = Config.HERO_MAX_STAMINA

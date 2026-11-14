@@ -50,5 +50,14 @@ func _initialize() -> void:
 	assert(Factory.create(setup, catalog).snapshot().counts == [1, 20])
 	setup.enemy_unit_cap = -1
 	assert(Factory.create(setup, catalog) == null)
+	var custom := catalog.get_troop("n1")
+	custom.id = "test_troop"
+	custom.fac = "test_faction"
+	custom.battle_traits = {"morale_immune": true, "leader_bond": "test_bond", "leader_loss_chance": 0.35}
+	assert(catalog.replace_data({custom.id: custom}))
+	var custom_battle := BattleState.new()
+	custom_battle.setup_groups()
+	assert(ArmyBuilder.spawn(custom_battle, 0, [{"type": custom.id, "n": 1}], "nord", catalog, rng))
+	assert(custom_battle.units[0].morale_immune and custom_battle.units[0].leader_bond == "test_bond")
 	print("Catalog and spawn tests passed")
 	quit(0)

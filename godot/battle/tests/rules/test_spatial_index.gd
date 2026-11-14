@@ -56,7 +56,7 @@ func _check_battle(seed: int, dense: bool) -> void:
 		for unit: Unit in fast.units:
 			var expected: Unit = Targeting.nearest_enemy(fast, unit)
 			assert(index.nearest_enemy(unit) == expected)
-		var updated_index = Movement.step(fast, TEST_DT, Vector2(780, 850))
+		var updated_index = Movement.step_formation_only(fast, TEST_DT)
 		LegacyMovement.step(reference, TEST_DT, Vector2(780, 850))
 		CombatStep.step(fast, TEST_DT, fast_rng, updated_index)
 		LegacyCombatStep.step(reference, TEST_DT, reference_rng)

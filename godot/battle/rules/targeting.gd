@@ -19,9 +19,9 @@ static func nearest_enemy(battle: State, unit: Unit, index: SpatialIndex = null)
 	return nearest
 
 static func current(battle: State, unit: Unit) -> Unit:
-	if unit.target_id < 0 or unit.target_id >= battle.units.size():
+	if unit.target_index < 0 or unit.target_index >= battle.units.size():
 		return null
-	var target: Unit = battle.units[unit.target_id]
+	var target: Unit = battle.units[unit.target_index]
 	return target if target.side != unit.side and not target.dead and not target.gone else null
 
 static func choose(battle: State, unit: Unit) -> Unit:
@@ -47,8 +47,8 @@ static func choose(battle: State, unit: Unit) -> Unit:
 static func refresh(battle: State, unit: Unit, dt: float, rng: RandomNumberGenerator) -> Unit:
 	unit.target_timer -= dt
 	var target := current(battle, unit)
-	if unit.target_timer <= 0.0 or unit.target_id >= 0 and target == null:
+	if unit.target_timer <= 0.0 or unit.target_index >= 0 and target == null:
 		unit.target_timer = Config.RETARGET_MIN_SECONDS + rng.randf() * Config.RETARGET_RANDOM_SECONDS
 		target = choose(battle, unit)
-		unit.target_id = battle.units.find(target) if target != null else -1
+		unit.target_index = target.battle_index if target != null else -1
 	return target

@@ -60,7 +60,7 @@ static func _valid_battle_traits(traits: Variant) -> bool:
 		if field in TRAIT_NUMBERS:
 			if not _valid_number(traits[field]):
 				return false
-		elif field == "morale_immune":
+		elif field in ["morale_immune", "blunt_melee"]:
 			if not traits[field] is bool:
 				return false
 		elif field == "leader_bond":

@@ -1,7 +1,6 @@
 extends RefCounted
 ## Applies a detached hero gear projection to a runtime Unit.
 const Config = preload("res://battle/config.gd")
-const EquipmentConfig = preload("res://equipment/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 
 static func apply(hero: Unit, profile: Dictionary, gear: Dictionary, initial: bool = true) -> bool:
@@ -29,7 +28,7 @@ static func apply(hero: Unit, profile: Dictionary, gear: Dictionary, initial: bo
 	hero.attack_interval = (maxf(Config.HERO_RANGED_MIN_COOLDOWN, float(weapon.cd) * (1.0 - agility * Config.HERO_RANGED_AGILITY_COOLDOWN)) if ranged else maxf(Config.HERO_MELEE_MIN_COOLDOWN, Config.HERO_MELEE_BASE_COOLDOWN - agility * Config.HERO_MELEE_AGILITY_COOLDOWN) * float(weapon.spd)) * (1.0 - float(effects.get("cd", 0.0)))
 	hero.attack_range = roundf(float(weapon.range) * (1.0 + float(effects.get("range", 0.0)))) if ranged else 0.0
 	hero.block_chance = float(gear.block)
-	hero.shield_block = float(EquipmentConfig.SHIELD_ARROW_BONUS.get(gear.shield.get("look", ""), 0.0))
+	hero.shield_block = float(gear.shield.get("projectile_block_bonus", 0.0))
 	hero.weapon_kind = str(weapon.wt)
 	hero.damage_type = str(weapon.dt)
 	hero.pierce = float(weapon.get("pb", 0.0))

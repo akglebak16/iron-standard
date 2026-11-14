@@ -9,7 +9,15 @@ const Charge = preload("res://battle/rules/charge.gd")
 const AiDecision = preload("res://battle/rules/ai_decision.gd")
 const CombatStep = preload("res://battle/rules/combat_step.gd")
 
-static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0, rng: RandomNumberGenerator = null) -> SpatialIndex:
+static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
+	assert(rng != null, "A simulation tick requires the battle RNG")
+	_step(battle, dt, rng)
+
+## Isolates formation movement and collisions for comparison with the pre-index fixture.
+static func step_formation_only(battle: State, dt: float) -> SpatialIndex:
+	return _step(battle, dt, null)
+
+static func _step(battle: State, dt: float, rng: RandomNumberGenerator) -> SpatialIndex:
 	if dt <= 0.0:
 		return null
 	var index: SpatialIndex = SpatialIndex.new(battle.units) if battle.units.size() >= Config.SPATIAL_MIN_UNITS else null
@@ -40,16 +48,11 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 				if destination != unit.position:
 					destination = target.position
 				if index != null:
-					index.update(battle.units.find(target))
+					index.update(target.battle_index)
 		elif group.order == Config.ORDER_CHARGE:
 			var enemy: Unit = Targeting.nearest_enemy(battle, unit, index)
 			if enemy != null:
 				destination = enemy.position
-				if rng != null and Charge.can_hit(unit, enemy):
-					Charge.hit(battle, unit, enemy, rng)
-					destination = enemy.position
-					if index != null:
-						index.update(battle.units.find(enemy))
 		_steer(unit, destination, unit.speed * velocity_scale, dt)
 		if rng != null and not unit.fleeing:
 			unit.facing = ai_face

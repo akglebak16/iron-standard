@@ -74,6 +74,7 @@ static func _apply_traits(unit: Unit, traits: Dictionary) -> void:
 	unit.morale_immune = bool(traits.get("morale_immune", false))
 	unit.leader_bond = str(traits.get("leader_bond", ""))
 	unit.leader_loss_chance = float(traits.get("leader_loss_chance", 0.0))
+	unit.blunt_melee = bool(traits.get("blunt_melee", false))
 	unit.projectile_damage_multiplier = float(traits.get("projectile_damage_multiplier", 1.0))
 	unit.blunt_melee_damage_multiplier = float(traits.get("blunt_melee_damage_multiplier", 1.0))
 

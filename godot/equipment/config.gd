@@ -12,4 +12,3 @@ const DAMAGE_TYPE_ARMOR_PIERCE := {
 	DAMAGE_TYPE_PIERCE: [0.18, 0.38, 0.22],
 	DAMAGE_TYPE_BLUNT: [0.10, 0.26, 0.42],
 }
-const SHIELD_ARROW_BONUS := {"kite": 0.18, "round": 0.12, "small": 0.07}

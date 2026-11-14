@@ -105,9 +105,9 @@ func _check_movement_integration() -> void:
 	var target: Unit = pair.target
 	battle.groups[0][Config.GROUP_CAVALRY].order = Config.ORDER_CHARGE
 	var rng := RandomNumberGenerator.new()
-	Movement.step(battle, 0.01, Vector2.ZERO, 0.0, rng)
+	Movement.step(battle, 0.01, rng)
 	assert(target.hp < 100)
 	assert(rider.charge_cooldown > 0)
 	var hp_after_hit: float = target.hp
-	Movement.step(battle, 0.01, Vector2.ZERO, 0.0, rng)
+	Movement.step(battle, 0.01, rng)
 	assert(target.hp == hp_after_hit) # Cooldown prevents a second charge.

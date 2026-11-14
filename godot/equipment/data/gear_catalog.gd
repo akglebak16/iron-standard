@@ -35,6 +35,9 @@ func replace_data(data: Variant) -> bool:
 		if item.slot in ARMOR_SLOTS or item.slot in ["shield", "horse"]:
 			if not item.has("v"):
 				return false
+		if item.has("projectile_block_bonus"):
+			if item.slot != "shield" or not _valid_number(item.projectile_block_bonus) or item.projectile_block_bonus > 1.0:
+				return false
 		if item.slot == "shield" and item.v > 1.0:
 			return false
 		if item.slot in WEAPON_SLOTS:

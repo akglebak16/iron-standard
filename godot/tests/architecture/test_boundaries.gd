@@ -1,17 +1,30 @@
 extends SceneTree
 ## Keep the feature boundary enforceable as more screens and rules are added.
 func _initialize() -> void:
-	_check_tree("res://battle/presentation", ["battle/model/", "battle/rules/", "battle/data/", "troops/data/", "equipment/data/", "equipment/rules/", "FileAccess", "RandomNumberGenerator"])
-	_check_tree("res://battle/model", ["battle/application/", "battle/presentation/", "battle/data/", "troops/data/", "equipment/data/", "equipment/rules/", "FileAccess", "Input.", "get_tree("])
-	_check_tree("res://battle/rules", ["battle/application/", "battle/presentation/", "battle/data/", "troops/data/", "equipment/data/", "FileAccess", "Input.", "get_tree("])
-	_check_tree("res://battle/application", ["battle/presentation/", "FileAccess", "Input.", "get_tree("])
-	_check_tree("res://equipment/data", ["res://battle/", "res://troops/", "res://campaign/"])
-	_check_tree("res://equipment/rules", ["res://battle/", "res://troops/", "res://campaign/", "FileAccess", "Input.", "get_tree("])
-	_check_tree("res://troops/data", ["res://battle/", "res://equipment/", "res://campaign/"])
-	_check_tree("res://characters/data", ["res://battle/", "res://equipment/", "res://troops/", "res://campaign/"])
-	_check_tree("res://characters/rules", ["res://battle/", "res://equipment/", "res://troops/", "res://campaign/", "FileAccess", "Input.", "get_tree("])
-	_check_file("res://equipment/config.gd", ["res://battle/", "res://troops/"])
-	_check_file("res://troops/config.gd", ["res://battle/", "res://equipment/"])
+	var external_layers := ["res://app/", "res://campaign/"]
+	var scene_and_files := ["FileAccess", "Input.", "get_tree("]
+	var catalogs := ["res://troops/data/", "res://equipment/data/", "res://characters/data/"]
+	var adapters := ["res://battle/application/", "res://battle/presentation/", "res://battle/data/"]
+	_check_tree("res://battle/presentation", external_layers + ["res://battle/model/", "res://battle/rules/", "res://battle/data/", "res://troops/", "res://equipment/", "res://characters/", "FileAccess", "RandomNumberGenerator"])
+	_check_tree("res://battle/model", external_layers + adapters + catalogs + scene_and_files + ["res://equipment/rules/"])
+	_check_tree("res://battle/rules", external_layers + adapters + catalogs + scene_and_files)
+	_check_tree("res://battle/application", external_layers + scene_and_files + ["res://battle/presentation/"])
+	_check_tree("res://battle/data", external_layers + scene_and_files + ["res://battle/application/", "res://battle/presentation/"])
+	# These legacy content identifiers belong to definitions and compatibility adapters.
+	var legacy_content := ['"undead"', '"skel"', '"zombie"', "UNDEAD_FACTION", "undead_kind"]
+	_check_tree("res://battle/model", legacy_content)
+	_check_tree("res://battle/rules", legacy_content)
+	_check_tree("res://battle/data", ["SHIELD_ARROW_BONUS.get"])
+	var content_modules := ["res://equipment/", "res://troops/", "res://characters/"]
+	for module in content_modules:
+		var forbidden := external_layers + ["res://battle/"]
+		for other in content_modules:
+			if other != module:
+				forbidden.append(other)
+		_check_file(module + "config.gd", forbidden)
+		_check_tree(module + "data", forbidden)
+		if DirAccess.dir_exists_absolute(module + "rules"):
+			_check_tree(module + "rules", forbidden + scene_and_files)
 	print("Architecture boundary tests passed")
 	quit(0)
 

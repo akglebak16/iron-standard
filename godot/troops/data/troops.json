@@ -1771,7 +1771,10 @@
     "grp": 0,
     "cost": 25,
     "upCost": 35,
-    "wage": 2
+    "wage": 2,
+    "battle_traits": {
+      "blunt_melee": true
+    }
   },
   "b2": {
     "id": "b2",
@@ -1859,7 +1862,10 @@
     "grp": 0,
     "cost": 130,
     "upCost": 0,
-    "wage": 7
+    "wage": 7,
+    "battle_traits": {
+      "blunt_melee": true
+    }
   },
   "b2c": {
     "id": "b2c",
@@ -1920,6 +1926,7 @@
     "upCost": 35,
     "wage": 2,
     "battle_traits": {
+      "blunt_melee": true,
       "morale_base": 999,
       "morale_immune": true,
       "leader_bond": "animated_dead",

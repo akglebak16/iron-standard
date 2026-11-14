@@ -25,11 +25,11 @@ func _check_target_weights() -> void:
 	for unit in [fighter, fleeing, steady]:
 		state.add_unit(unit)
 	assert(Targeting.choose(state, fighter) == steady) # 60 × 1.7 > 65.
-	fighter.target_id = 1
+	fighter.target_index = 1
 	assert(Targeting.choose(state, fighter) == steady)
 	fleeing.fleeing = false
 	assert(Targeting.choose(state, fighter) == fleeing) # Current target gets × 0.85.
-	fighter.target_id = 2
+	fighter.target_index = 2
 	assert(Targeting.choose(state, fighter) == steady) # Sticky target beats closer enemy.
 	fighter.mounted = true
 	steady.attack_range = 200
@@ -42,8 +42,8 @@ func _check_target_weights() -> void:
 func _check_retarget_timer() -> void:
 	var state := State.new()
 	var fighter := Unit.new(0, 0, Vector2.ZERO, 100, 0, 1)
-	var first := Unit.new(1, 1, Vector2(30, 0), 100, 0, 1)
-	var second := Unit.new(2, 1, Vector2(40, 0), 100, 0, 1)
+	var first := Unit.new(101, 1, Vector2(30, 0), 100, 0, 1)
+	var second := Unit.new(102, 1, Vector2(40, 0), 100, 0, 1)
 	for unit in [fighter, first, second]:
 		state.add_unit(unit)
 	var rng := RandomNumberGenerator.new()
@@ -96,6 +96,6 @@ func _check_live_shoot_mode() -> void:
 	state.add_grouped_unit(foe, Config.GROUP_INFANTRY)
 	state.groups[0][Config.GROUP_ARCHERS].center = archer.position
 	var rng := RandomNumberGenerator.new()
-	Movement.step(state, 0.01, Vector2.ZERO, 0.0, rng)
-	assert(archer.ai_mode == Config.AI_MODE_SHOOT_SLOT and archer.target_id == 1)
+	Movement.step(state, 0.01, rng)
+	assert(archer.ai_mode == Config.AI_MODE_SHOOT_SLOT and archer.target_index == 1)
 	assert(state.projectiles.size() == 1)

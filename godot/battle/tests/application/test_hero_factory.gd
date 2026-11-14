@@ -14,8 +14,24 @@ func _initialize() -> void:
 	_test_battle_perks(catalog)
 	_test_heavy_perk_swap(catalog)
 	_test_named_undead_leader(catalog)
+	_test_custom_shield(catalog)
 	print("Hero factory tests passed")
 	quit(0)
+
+func _test_custom_shield(original_gear: GearCatalog) -> void:
+	var troops := Catalog.new()
+	assert(troops.load_data())
+	var shield := original_gear.get_item("shield_plank")
+	shield.id = "test_shield"
+	shield.look = "custom_art"
+	shield.projectile_block_bonus = 0.3
+	var gear := GearCatalog.new()
+	assert(gear.replace_data({shield.id: shield}))
+	var setup := Setup.new()
+	setup.hero_troop = "n1"
+	setup.hero_profile = {"eq": {"shield": shield.id}}
+	var session := Factory.create(setup, troops, gear)
+	assert(session != null and session._hero.shield_block == 0.3)
 
 func _test_factory(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()

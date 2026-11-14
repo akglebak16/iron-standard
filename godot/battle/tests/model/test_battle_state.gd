@@ -32,7 +32,7 @@ func _initialize() -> void:
 func _check_companion_down_morale() -> void:
 	var battle := BattleState.new()
 	var companion := Unit.new(0, 0, Vector2.ZERO, 30, 0, 3)
-	companion.companion = true
+	companion.companion_id = "test_companion"
 	var close := Unit.new(1, 0, Vector2(100, 0), 100, 0, 1)
 	var far := Unit.new(2, 0, Vector2(200, 0), 100, 0, 1)
 	for unit in [companion, close, far]:
