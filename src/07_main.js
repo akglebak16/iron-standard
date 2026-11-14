@@ -146,6 +146,7 @@ function drawWorld(g) {
     else { const Q = Object.assign(Object.create(it.pl), { x: it.r.x, y: it.r.y }), me = it.pl === P, H = Q.hero, mnt = H.horse > 0, sp = getHeroSprite(H, mnt), k = .4, bf = me ? 'player' : netFac(Q); g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(Q.x + 2, Q.y + 3, 24, 8, 0, 0, TAU); g.fill(); g.strokeStyle = me ? '#ffd86a' : '#8fd0ff'; g.lineWidth = 2; g.beginPath(); g.ellipse(Q.x, Q.y + 1, 26, 9, 0, 0, TAU); g.stroke(); g.save(); g.translate(Q.x, Q.y); g.scale((Q.fx < 0 ? -1 : 1) * k, k); g.drawImage(sp.cv, -sp.ax, -sp.ay); g.restore(); drawBanner(g, Q.x + 16, Q.y + 2, bf, 11); label(Q.name + (Q.fname ? ' [' + Q.fname + ']' : ''), Q.x, inTown(Q.x, Q.y) ? Q.y - 44 : Q.y + 19, me ? '#ffe9a0' : '#bfe4ff', 14); }
   }
   if (typeof drawWar === 'function') drawWar(g, label);
+  if (typeof drawJqMark === 'function') drawJqMark(g);
   for (const l of late) label(...l);
   g.setTransform(1, 0, 0, 1, 0, 0);
   const h = G.hour, night = h >= 21 || h < 4 ? .34 : h >= 19 ? (h - 18) * .1 : h < 6 ? (6 - h) * .1 : 0; if (night > 0) { g.fillStyle = 'rgba(8,16,48,' + night + ')'; g.fillRect(0, 0, cv.width, cv.height); }
