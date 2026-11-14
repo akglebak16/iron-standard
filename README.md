@@ -6,7 +6,7 @@
 
 **Играть:** `https://akglebak16.github.io/iron-standard/`
 
-Что нового — в [CHANGELOG.md](CHANGELOG.md).
+Что нового — в [Releases](https://github.com/akglebak16/iron-standard/releases).
 
 ![Бой](docs/battle.png)
 

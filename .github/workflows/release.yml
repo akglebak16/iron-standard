@@ -1,0 +1,45 @@
+# Выпуск версии: Actions → «Выпустить версию» → Run workflow.
+# Заметки собираются из раздела «## Для игрока» в описаниях PR, слитых в main после прошлого релиза.
+name: Выпустить версию
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия, например 0.19.0 (пусто — следующая минорная)'
+        required: false
+      title:
+        description: 'Короткое название (необязательно)'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Версия и дата прошлого релиза
+        id: v
+        run: |
+          last=$(gh release list --limit 1 --exclude-drafts --json tagName,publishedAt --jq '.[0]')
+          last_tag=$(echo "$last" | jq -r '.tagName // "v0.0.0"')
+          since=$(echo "$last" | jq -r '.publishedAt // "2000-01-01T00:00:00Z"')
+          ver="${{ inputs.version }}"
+          if [ -z "$ver" ]; then IFS=. read -r a b c <<< "${last_tag#v}"; ver="$a.$((b+1)).0"; fi
+          echo "ver=${ver#v}" >> "$GITHUB_OUTPUT"; echo "since=$since" >> "$GITHUB_OUTPUT"
+      - name: Собрать заметки из PR
+        run: |
+          gh pr list --state merged --base main --limit 200 --search "merged:>${{ steps.v.outputs.since }}" \
+            --json number,title,body,mergedAt,url > prs.json
+          node .github/scripts/release-notes.mjs prs.json notes.md
+      - name: Создать релиз
+        run: |
+          name="${{ steps.v.outputs.ver }} — $(date -u +%F)"
+          [ -n "${{ inputs.title }}" ] && name="$name: ${{ inputs.title }}"
+          gh release create "v${{ steps.v.outputs.ver }}" --target main --title "$name" --notes-file notes.md --latest
