@@ -29,12 +29,18 @@ func _check() -> void:
 	var session: Session = view._session
 	var target = session._state.units.filter(func(unit): return unit.side == 1)[0]
 	session._state.hurt(target, 1, session._hero)
-	session._state.projectiles.append(Combat.shoot(session._hero, target, session._rng))
+	session._state.launch_projectile(Combat.shoot(session._hero, target, session._rng))
 	var launch: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(launch.progress == 0.0 and not launch.has("source"))
 	launch.origin = Vector2.INF
 	view._physics_process(TICK)
 	assert(view._feedback._labels.size() == 1)
+	assert(view._audio._last_played.size() == 1)
+	var mute := InputEventKey.new()
+	mute.keycode = KEY_M
+	mute.pressed = true
+	view._unhandled_input(mute)
+	assert(not view._audio.enabled and view.status.text.contains("звук: выкл."))
 	var flight: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(flight.origin.is_finite() and flight.progress > 0.0 and flight.progress < 1.0)
 	await process_frame

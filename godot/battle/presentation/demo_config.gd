@@ -11,6 +11,9 @@ const HERO_DOWN := "Герой ранен — бой продолжается"
 const VICTORY := "Победа"
 const DEFEAT := "Поражение"
 const IN_PROGRESS := "Бой"
+const SOUND_HINT := " · M звук: %s"
+const SOUND_ON := "вкл."
+const SOUND_OFF := "выкл."
 const HUD_TEXT := "%s  |  Свои: %d  Враги: %d  Силы: %d\nWASD ходить · Shift бег · ЛКМ удар · ПКМ блок · 1–4 группа · Q держать · E за мной · R атаковать · F отход"
 
 const HERO_RING_PADDING := 3.0

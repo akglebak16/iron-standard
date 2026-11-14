@@ -5,7 +5,8 @@ func _initialize() -> void:
 	var scene_and_files := ["FileAccess", "Input.", "get_tree("]
 	var catalogs := ["res://troops/data/", "res://equipment/data/", "res://characters/data/"]
 	var adapters := ["res://battle/application/", "res://battle/presentation/", "res://battle/data/"]
-	_check_tree("res://battle/presentation", external_layers + ["res://battle/model/", "res://battle/rules/", "res://battle/data/", "res://troops/", "res://equipment/", "res://characters/", "FileAccess", "RandomNumberGenerator"])
+	# Presentation may create its own RNG for effects. Access to simulation internals stays forbidden.
+	_check_tree("res://battle/presentation", external_layers + ["res://battle/model/", "res://battle/rules/", "res://battle/data/", "res://troops/", "res://equipment/", "res://characters/", "FileAccess", "._rng", "._state"])
 	_check_tree("res://battle/model", external_layers + adapters + catalogs + scene_and_files + ["res://equipment/rules/"])
 	_check_tree("res://battle/rules", external_layers + adapters + catalogs + scene_and_files)
 	_check_tree("res://battle/application", external_layers + scene_and_files + ["res://battle/presentation/"])

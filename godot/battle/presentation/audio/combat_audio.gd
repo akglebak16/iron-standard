@@ -1,0 +1,67 @@
+extends Node
+const Event = preload("res://battle/combat_event.gd")
+const Bank = preload("res://battle/presentation/audio/sound_bank.gd")
+
+const MASTER_GAIN := 0.55
+const NEAR_GAIN := 1.15
+const ATTENUATION_DISTANCE := 900.0
+const MIN_DISTANCE_GAIN := 0.06
+const MAX_VOICES := 12
+var enabled := true:
+	set(value):
+		enabled = value
+		if not enabled:
+			for voice in _voices:
+				voice.stop()
+
+static var _bank: Dictionary = {}
+var _voices: Array[AudioStreamPlayer] = []
+var _last_played := {}
+var _clock := 0.0
+
+func _ready() -> void:
+	if _bank.is_empty():
+		_bank = Bank.build()
+	for i in MAX_VOICES:
+		var voice := AudioStreamPlayer.new()
+		add_child(voice)
+		_voices.append(voice)
+
+func advance(dt: float, events: Array[Dictionary], listener: Vector2) -> void:
+	_clock += dt
+	if not enabled:
+		return
+	for event in events:
+		var sound := sound_for(event)
+		if sound < 0:
+			continue
+		if _clock - float(_last_played.get(sound, -INF)) < Bank.MIN_INTERVALS[sound]:
+			continue
+		for voice in _voices:
+			if voice.playing:
+				continue
+			voice.stream = _bank[sound]
+			voice.volume_db = linear_to_db(MASTER_GAIN * distance_gain(event, listener))
+			voice.play()
+			_last_played[sound] = _clock
+			break
+
+static func sound_for(event: Dictionary) -> int:
+	match event.kind:
+		Event.Kind.SHOT: return Bank.Sound.BOW
+		Event.Kind.SWING: return Bank.Sound.SWING
+		Event.Kind.CHARGE: return Bank.Sound.CHARGE
+		Event.Kind.DOWN: return Bank.Sound.DOWN
+		Event.Kind.BLOCK: return Bank.Sound.THUNK if event.attack == Event.Attack.PROJECTILE else Bank.Sound.CLANG
+		Event.Kind.HIT:
+			if event.attack == Event.Attack.PROJECTILE:
+				return Bank.Sound.ARROW_HIT
+			if event.attack == Event.Attack.MELEE or event.attack == Event.Attack.COUNTER:
+				return Bank.Sound.HIT
+	return -1
+
+static func distance_gain(event: Dictionary, listener: Vector2) -> float:
+	if event.target_hero or event.kind == Event.Kind.SWING:
+		return 1.0
+	var position: Vector2 = event.position
+	return clampf(NEAR_GAIN - listener.distance_to(position) / ATTENUATION_DISTANCE, MIN_DISTANCE_GAIN, 1.0)

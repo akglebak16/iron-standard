@@ -19,6 +19,10 @@ var morale_timer := 0.0
 var formation_timer := 0.0
 var _events: Array[Dictionary] = []
 
+func launch_projectile(shot: Dictionary) -> void:
+	projectiles.append(shot)
+	record_event(Event.Kind.SHOT, shot.source, null, Event.Attack.PROJECTILE)
+
 func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0) -> void:
 	_events.append({
 		"kind": kind, "attack": attack, "amount": amount,

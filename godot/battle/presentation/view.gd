@@ -6,6 +6,7 @@ const Session = preload("res://battle/application/session.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
 const CombatFeedback = preload("res://battle/presentation/combat_feedback.gd")
+const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
 
 signal battle_finished
 
@@ -15,6 +16,8 @@ var _session: Session
 var _frame: Dictionary = {}
 var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
+var _audio: CombatAudio
+var _result_summary := ""
 
 func configure(session: Session) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
@@ -24,7 +27,8 @@ func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
 
 func show_result_summary(summary: String) -> void:
-	status.text += summary
+	_result_summary = summary
+	_update_status()
 
 func _ready() -> void:
 	if _session == null:
@@ -33,6 +37,8 @@ func _ready() -> void:
 		set_process_unhandled_input(false)
 		return
 	camera.zoom = Vector2.ONE * Demo.CAMERA_ZOOM
+	_audio = CombatAudio.new()
+	add_child(_audio)
 	_refresh()
 
 func _physics_process(dt: float) -> void:
@@ -51,8 +57,10 @@ func _physics_process(dt: float) -> void:
 		input.swap = Input.is_key_pressed(KEY_X)
 		_session.set_hero_input(input)
 	_session.advance(dt)
-	_feedback.advance(dt, _session.take_events())
+	var events := _session.take_events()
+	_feedback.advance(dt, events)
 	_refresh()
+	_audio.advance(dt, events, camera.position)
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		battle_finished.emit()
 
@@ -60,6 +68,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _session == null or not event is InputEventKey or not event.pressed or event.echo:
 		return
 	match event.keycode:
+		KEY_M:
+			_audio.enabled = not _audio.enabled
+			_update_status()
 		KEY_1: _selection = Config.GROUP_INFANTRY
 		KEY_2: _selection = Config.GROUP_ARCHERS
 		KEY_3: _selection = Config.GROUP_CAVALRY
@@ -73,16 +84,21 @@ func _refresh() -> void:
 	# One detached read per physics tick, reused by HUD and drawing.
 	_frame = _session.snapshot()
 	camera.position = _frame.camera_target
+	_update_status()
+	queue_redraw()
+
+func _update_status() -> void:
 	var label: String = Demo.IN_PROGRESS
 	match _frame.outcome:
 		Session.Outcome.HERO_DOWN: label = Demo.HERO_DOWN
 		Session.Outcome.VICTORY: label = Demo.VICTORY
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina)]
+	status.text += Demo.SOUND_HINT % [Demo.SOUND_ON if _audio.enabled else Demo.SOUND_OFF]
 	var journal := _feedback.journal()
 	if not journal.is_empty():
 		status.text += "\n" + journal
-	queue_redraw()
+	status.text += _result_summary
 
 func _draw() -> void:
 	if _frame.is_empty():

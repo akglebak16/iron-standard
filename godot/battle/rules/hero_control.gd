@@ -5,6 +5,7 @@ const Unit = preload("res://battle/model/unit.gd")
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
 const Charge = preload("res://battle/rules/charge.gd")
+const Event = preload("res://battle/combat_event.gd")
 
 ## Input keys: move (Vector2), face (float), sprint, block, attack (bool).
 static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: RandomNumberGenerator) -> void:
@@ -37,6 +38,8 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 		hero.attack_windup = Config.HERO_RANGED_WINDUP if hero.attack_range > 0.0 else Config.HERO_ATTACK_WINDUP
 		hero.swing_timer = 0.0 if hero.attack_range > 0.0 else Config.HERO_SWING_SECONDS
 		hero.swing_facing = hero.facing
+		if hero.attack_range <= 0.0:
+			battle.record_event(Event.Kind.SWING, hero, null, Event.Attack.MELEE)
 	if hero.attack_windup >= 0.0:
 		hero.attack_windup -= dt
 		if hero.attack_windup < 0.0:
@@ -105,6 +108,6 @@ static func _shoot(battle: State, hero: Unit, rng: RandomNumberGenerator) -> voi
 			best = enemy
 			best_score = score
 	if best == null:
-		battle.projectiles.append(Combat.shoot_aim(hero, hero.swing_facing, hero.attack_range * Config.HERO_SHOT_MISS_DISTANCE_FRACTION, rng))
+		battle.launch_projectile(Combat.shoot_aim(hero, hero.swing_facing, hero.attack_range * Config.HERO_SHOT_MISS_DISTANCE_FRACTION, rng))
 	else:
-		battle.projectiles.append(Combat.shoot(hero, best, rng))
+		battle.launch_projectile(Combat.shoot(hero, best, rng))

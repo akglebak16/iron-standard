@@ -29,7 +29,7 @@ static func advance_unit(battle: State, unit: Unit, target: Unit, distance: floa
 		if unit.ai_mode == Config.AI_MODE_UNASSIGNED:
 			# Existing test-only units have no AI plan; preserve their old direct attack path.
 			if unit.attack_range > 0.0 and distance <= unit.attack_range and unit.velocity.length() < Config.SHOOT_MOVE_SPEED_LIMIT:
-				battle.projectiles.append(Combat.shoot(unit, target, rng))
+				battle.launch_projectile(Combat.shoot(unit, target, rng))
 				unit.attack_cooldown = unit.attack_interval
 			elif distance <= unit.collision_radius + target.collision_radius + unit.melee_reach:
 				Combat.strike(battle, unit, target, rng)
@@ -39,7 +39,7 @@ static func advance_unit(battle: State, unit: Unit, target: Unit, distance: floa
 			unit.ai_wind_target_index = target.battle_index
 			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_MELEE_COOLDOWN_MIN, Config.AI_MELEE_COOLDOWN_MAX)
 		elif _can_shoot(unit, distance):
-			battle.projectiles.append(Combat.shoot(unit, target, rng))
+			battle.launch_projectile(Combat.shoot(unit, target, rng))
 			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_SHOOT_COOLDOWN_MIN, Config.AI_SHOOT_COOLDOWN_MAX)
 	if unit.ai_mode != Config.AI_MODE_UNASSIGNED:
 		_advance_wind(battle, unit, dt, rng)
