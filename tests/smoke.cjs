@@ -104,10 +104,10 @@ async function sieges(pg) {
   ok('объявление войны: фракция враждебна, в журнале сообщение, открыто окно осады', war.hostile && /враг/.test(war.log) && war.siege, war);
   ok('враждебный замок не пускает в город, а предлагает осаду', await pg.evaluate(id => { closeModal(); openTown(settleById(id)); return !UI.town && !!document.querySelector('#modal [data-act=siegeatk]'); }, c));
   await pg.click('#modal [data-act=siegeatk]'); await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(300);
-  await pg.evaluate(() => { giveOrder('charge', 0, 0, 3); __dbg.B.speed = 2; });
-  await pg.waitForFunction(() => { const B = __dbg.B, w = B.wall; return B.units.some(u => u.side === 0 && fit(u) && u.x > w.x + w.hw) || B.over; }, null, { timeout: 45000 }).catch(() => {});
-  const fight = await pg.evaluate(() => { const B = __dbg.B, w = B.wall; let inWall = 0, inside = 0; for (const u of B.units) if (fit(u)) { if (Math.abs(u.x - w.x) < w.hw && !inGap(u.y, 0)) inWall++; if (u.side === 0 && u.x > w.x + w.hw) inside++; } return { wall: !!w, inWall, inside }; });
-  ok('бой-осада: есть стена, бойцы не стоят внутри стены, атакующие проходят через проломы', fight.wall && fight.inWall === 0 && fight.inside > 0, fight);
+  await pg.evaluate(() => { giveOrder('charge', 0, 0, 3); __dbg.B.speed = 2; __dbg.B.wall.gates[0].hp = 0; }); // ворота выбиты, чтобы проверить проход, а не сам штурм
+  await pg.waitForFunction(() => { const B = __dbg.B, w = B.wall; return B.units.some(u => u.side === 0 && fit(u) && u.x > w.x) || B.over; }, null, { timeout: 45000 }).catch(() => {});
+  const fight = await pg.evaluate(() => { const B = __dbg.B, w = B.wall; let inWall = 0, inside = 0; for (const u of B.units) if (fit(u)) { if (Math.abs(u.x - w.x) < w.hw && !inGap(u.y, 0)) inWall++; if (u.side === 0 && u.x > w.x) inside++; } return { wall: !!w, inWall, inside }; }); // inside: дошли до середины стены, то есть прошли через ворота
+  ok('бой-осада: есть стена, бойцы не стоят внутри стены, атакующие проходят через выбитые ворота', fight.wall && fight.inWall === 0 && fight.inside > 0, fight);
   await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=sgspare]'), null, { timeout: 10000 }); // замок взят: игрок выбирает судьбу жителей
   await pg.evaluate(() => ACT.sgspare()); await sleep(300);
   const own = await pg.evaluate(id => { const s = settleById(id); return { fac: s.fac, mine: s.owner === G.player.id, recruits: s.recruits.length > 0 }; }, c);
@@ -232,8 +232,8 @@ async function siegeDefense(pg) {
   ok('пощада: дары, отношение лучше, стены почти целы', sp.gold && sp.rel && sp.dmg, sp);
   await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'castle' && x.fac !== 'player' && REAL_F.includes(x.fac)); s.dmg = .8; s.gar = genTroops(s.fac, 60, .6); P.troops = [{ type: 'n2a', n: 60 }, { type: 'n2s', n: 60 }]; P.x = s.x - 60; P.y = s.y + 20; launchSiege(siegeParty(s)); });
   await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(300);
-  const bt = await pg.evaluate(() => { const B = __dbg.B, w = B.wall, g = w.gaps[0]; return { sdef: !!B.cfg.sdef, wide: g[1] - g[0] > 160 }; });
-  ok('штурм повреждённой крепости: пролом шире, запасы обороны заданы', bt.sdef && bt.wide, bt);
+  const bt = await pg.evaluate(() => { const B = __dbg.B, w = B.wall; return { sdef: !!B.cfg.sdef, weak: w.gates[0].hp < 1400 * .6, breach: w.gaps.some(g => !g.gate) }; });
+  ok('штурм повреждённой крепости: ворота слабее, в стене пролом, запасы обороны заданы', bt.sdef && bt.weak && bt.breach, bt);
   const sd = await pg.evaluate(() => {
     const B = __dbg.B, w = B.wall; let i = 0; for (const u of B.units) if (u.side === 0) { u.x = w.x - 40 - (i % 6) * 12; u.y = B.H / 2 - 60 + (i % 10) * 12; i++; }
     sdInit(); const st0 = B.sd.stones, oil0 = B.sd.oil.reduce((a, o) => a + o.ch, 0), hp0 = B.units.filter(u => u.side === 0).reduce((a, u) => a + u.hp, 0);
@@ -242,6 +242,19 @@ async function siegeDefense(pg) {
     return { stones: B.sd.stones < st0, oil: B.sd.oil.reduce((a, o) => a + o.ch, 0) < oil0, hurt: hp1 < hp0 };
   });
   ok('защитники швыряют камни и льют масло: запасы тратятся, у атакующих потери', (sd.stones || sd.oil) && sd.hurt, sd);
+  await pg.evaluate(() => { for (const u of __dbg.B.units) if (u.side === 0) { u.dead = true; u.hp = 0; } }); await pg.waitForFunction(() => document.querySelector('#modal [data-act=cont2]'), null, { timeout: 10000 }); await pg.evaluate(() => ACT.cont2()); await sleep(300);
+  await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); s.dmg = 0; s.gar = genTroops(s.fac, 60, .6); P.troops = [{ type: 'n2a', n: 60 }, { type: 'n2s', n: 60 }]; P.x = s.x - 60; P.y = s.y + 20; launchSiege(siegeParty(s)); });
+  await pg.waitForFunction(() => __dbg.MODE === 'battle', null, { timeout: 10000 }); await sleep(300);
+  const fz = await pg.evaluate(() => { const B = __dbg.B, w = B.wall; return { gates: w.gates.length, shut: !inGap(B.H / 2, 0) && !inGap(B.H / 2 - 480, 0), thin: w.hw === 22, nobr: w.gaps.every(g => g.gate) }; });
+  ok('штурм города: главные ворота и две калитки закрыты, стена целая', fz.gates === 3 && fz.shut && fz.thin && fz.nobr, fz);
+  const gb = await pg.evaluate(() => {
+    const B = __dbg.B, w = B.wall, gt = w.gates[0]; let i = 0; for (const u of B.units) if (u.side === 0 && u.t.grp !== 1) { u.x = w.x - w.hw - 14; u.y = B.H / 2 - 60 + (i++ % 10) * 12; u.vx = u.vy = 0; } const h0 = gt.hp;
+    for (let k = 0; k < 20; k++) battleUpdate(1 / 30); const hit = gt.hp < h0; B.t = 10; gt.hp = 1; for (let k = 0; k < 5; k++) battleUpdate(1 / 30);
+    return { hit, broke: gt.dead && !!inGap(B.H / 2, 0) };
+  });
+  ok('ворота ломают бойцы вплотную; выбитые ворота открывают проход', gb.hit && gb.broke, gb);
+  const sl = await pg.evaluate(() => { const B = __dbg.B, w = B.wall, gt = w.gates[1], m = w.gates[0]; m.hp = m.max; m.dead = false; m.open = false; B.t = 50; for (const u of B.units) if (u.side === 1) { u.dead = false; u.hp = u.maxHp; } battleUpdate(1 / 30); return { open: m.open, passable: !!inGap(B.H / 2, 0) }; });
+  ok('через 45 с гарнизон открывает ворота и выходит в бой', sl.open && sl.passable, sl);
 }
 
 async function undead(pg) {
