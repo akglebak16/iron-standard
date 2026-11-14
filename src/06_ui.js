@@ -53,7 +53,7 @@ function renderTown() {
     body += '<div class="note">В отряде ' + cnt + ' из ' + cap + ' бойцов. Свободных рекрутов: ' + troopCount(s.recruits) + '. Новые люди приходят каждые три дня.</div>';
     if (!s.recruits.length) body += '<div class="note">Сегодня здесь никто не хочет воевать.</div>';
     for (const r of s.recruits) { const t = TROOPS[r.type], hc = hireCost(P, r.type), ok = P.gold >= hc && cnt < cap; body += troopRow(r, '<div class="cnt">' + r.n + '</div><div class="acts"><span class="price ' + (P.gold < hc ? 'no' : '') + '">' + ic('coin') + hc + '</span><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="1" ' + (ok ? '' : 'disabled') + '>Нанять</button><button class="btn sm" data-act="hire" data-t="' + r.type + '" data-n="99" ' + (ok ? '' : 'disabled') + '>Всех</button></div>'); }
-    body += '<div class="card" style="margin-top:10px"><h3>Отдых</h3><p class="note">Восемь часов в таверне: герой залечивает раны. Отряд за это время ест.</p><button class="btn sm" data-act="rest">Отдохнуть</button></div>';
+    const where = s.kind === 'town' ? 'городе' : s.kind === 'castle' ? 'замке' : 'деревне'; if (!NET.on) body += '<div class="card" style="margin-top:10px"><h3>Ожидание</h3><p class="note">Время идёт как обычно (скорость 1, 2, 3), без перемотки: отряд стоит за стенами, герой лечится быстрее, а еда расходуется. Любой клик по карте или Z — снова в путь.</p><button class="btn sm" data-act="waitin">Ждать в ' + where + '</button></div>';
   } else if (tab === 'trade') {
     body += tradeBody(s);
   } else if (tab === 'garrison') {
@@ -135,7 +135,7 @@ const ACT = {
   hire(d) { if (NET.on) { NET.send({ t: 'hire', type: d.t, n: +d.n }); sfx('coin'); return; } if (doHire(G.player, UI.town.s, d.t, +d.n)) { sfx('coin'); renderTown(); } },
   buygear(d) { if (NET.on) { NET.send({ t: 'gear', k: d.k }); sfx('coin'); return; } if (doGear(G.player, d.k)) { sfx('coin'); renderTown(); } },
   food(d) { if (NET.on) { NET.send({ t: 'food', n: +d.n, p: +d.p }); sfx('coin'); return; } if (doFood(G.player, +d.n, +d.p)) { sfx('coin'); renderTown(); } },
-  rest() { if (NET.on) { toast('В сетевой игре отдых недоступен'); return; } const P = G.player; for (let i = 0; i < 8; i++) { stepWorld(1); hourTick(); } sfx('click'); toast('Ты отдохнул. Герой здоров на ' + Math.round(P.hero.hp * 100) + '%'); renderTown(); },
+  waitin() { if (NET.on) { toast('В сетевой игре ожидание недоступно'); return; } const s = UI.town && UI.town.s; if (!s) return; closeModal(); const P = G.player; P.in = s.id; G.wait = true; G.waitIn = s.id; G.paused = false; WC.free = false; sfx('click'); toast('Ждём: ' + s.name + '. Любой клик по карте или Z — в путь'); updateWorldHud(); },
   accept(d) { if (NET.on) { NET.send({ t: 'accept', q: +d.q }); sfx('order'); return; } const r = doAccept(G.player, UI.town.s, +d.q); if (r) toast(r); else sfx('order'); renderTown(); },
   party() { const back = UI.town; UI.back = back; openPanel('troops'); },
   hero() { openPanel('hero'); }, journal() { openPanel('journal'); },
