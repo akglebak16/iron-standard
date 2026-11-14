@@ -5,7 +5,7 @@ owner: Глеб
 area: процесс
 priority: обычный
 created: 2026-11-14
-pr:
+pr: 18
 done:
 outside: да
 ---
