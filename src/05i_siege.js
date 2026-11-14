@@ -7,10 +7,10 @@ const SG = { DMG_H: 24 * 10 }; // за сколько часов стены по
 
 // запасы обороны для боя (03c_siegedef.js) и поправка к силе защитников при расчёте
 function sgDefCfg(s) { return s.kind === 'castle' ? { stones: 14, oil: 3 } : { stones: 10, oil: 2 }; }
-function sgDefK(s) { return 1.5 - .4 * ((s && s.dmg) || 0); }
+function sgDefK(s) { return (s && s.kind === 'castle' ? 1.7 : 1.55) - .4 * ((s && s.dmg) || 0); } // закрытые ворота и стены дают защите больше
 function sgNote(s) {
   const d = s.dmg || 0, c = sgDefCfg(s);
-  return d > .15 ? '. Стены повреждены, проломы шире, а запасов камней и масла меньше' : '. На стенах котлы с кипящим маслом (' + c.oil + ') и запас камней: у проломов будет жарко';
+  return d > .15 ? '. Стены повреждены: ворота слабее, в стене может быть пролом, а запасов камней и масла меньше' : '. Ворота закрыты, их надо ломать, пока со стен льют масло. На стенах котлы с кипящим маслом (' + c.oil + ') и запас камней: у проломов будет жарко';
 }
 const sgCut = (list, rate) => { for (const t of list.slice()) remT(list, t.type, Math.floor(t.n * rate + Math.random())); }; // случайное округление: малые отряды тоже тают
 const sgDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);

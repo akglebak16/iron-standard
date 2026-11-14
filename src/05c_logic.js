@@ -83,7 +83,7 @@ function siegeParty(s) {
   for (const l of lords) for (const t of l.troops) addT(en, t.type, t.n); sortT(en);
   return { id: -s.id, kind: 'siege', fac: s.fac, name: s.name, troops: en, gold: s.kind === 'town' ? 350 : 180, sid: s.id, lord: lords[0] ? lords[0].name : null };
 }
-function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, sdef: typeof sgDefCfg === 'function' ? sgDefCfg(s) : null, dmg: s.dmg || 0, leader: p.fac === 'undead' ? 'Некромант ' + unitName('undead') : p.lord, biome: biomeName(s.x, s.y), forest: false }); }
+function siegeCfgFor(P, p) { const s = settleById(p.sid); return Object.assign(battleCfgFor(P, p), { title: 'Штурм: ' + p.name, siege: true, fort: s.kind, sdef: typeof sgDefCfg === 'function' ? sgDefCfg(s) : null, dmg: s.dmg || 0, leader: p.fac === 'undead' ? 'Некромант ' + unitName('undead') : p.lord, biome: biomeName(s.x, s.y), forest: false }); }
 function siegeAfter(P, res, p) {
   const s = settleById(p.sid); if (!s) return null;
   if (res.win) { const was = s.fac; captureSettle(P, s); if (typeof sgCaptured === 'function') sgCaptured(P, s, was); return s.name; }

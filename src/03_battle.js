@@ -454,13 +454,19 @@ function drawMinimap(c) {
 // стена — вертикальная полоса перед защитниками; пройти можно только через проломы (центральный — выбитые ворота)
 function siegeSetup() {
   const sf = B.siegeF = clamp(B.cfg.csiege || 0, 0, .9); // осадное дело спутника: у защитников слабее дух, стена хуже укрывает
-  const W = B.W, H = B.H, x = W - 980, dg = Math.round(60 * clamp(B.cfg.dmg || 0, 0, 1)); B.wall = { x, hw: 22, gaps: [[H / 2 - 80 - dg, H / 2 + 80 + dg], [H / 2 - 520, H / 2 - 425], [H / 2 + 425, H / 2 + 520]] };
+  const W = B.W, H = B.H, x = W - 980, dm = clamp(B.cfg.dmg || 0, 0, 1), castle = B.cfg.fort === 'castle';
+  // замок: толстая стена и одни тяжёлые ворота; город: стена тоньше, главные ворота и две боковые калитки. Ворота закрыты, их надо ломать
+  const gd = castle ? [[H / 2 - 70, H / 2 + 70, 1400]] : [[H / 2 - 75, H / 2 + 75, 900], [H / 2 - 520, H / 2 - 440, 420], [H / 2 + 440, H / 2 + 520, 420]];
+  B.wall = { x, hw: castle ? 32 : 22, gaps: [], gates: [] };
+  for (const [a, b, hp] of gd) { const g = [a, b], m = Math.max(120, Math.round(hp * (1 - .7 * dm) * (1 - .4 * sf))); g.gate = { hp: m, max: m, hit: 0, g, dead: false }; B.wall.gaps.push(g); B.wall.gates.push(g.gate); }
+  if (dm >= .3) { const bw = Math.round(60 + 80 * dm), by = H / 2 + (mulberry((B.cfg.seed || 7) + 3)() < .5 ? -1 : 1) * 230; B.wall.gaps.push([by - bw / 2, by + bw / 2]); } // сильно побитая стена: пролом
   B.trees = B.trees.filter(t => t.x < x - 140); // у стены и во дворе деревьев нет
   const [inf, arc, cav] = B.groups[1]; inf.cx = x + 80; inf.cy = H / 2; arc.cx = x + 52; arc.cy = H / 2; cav.cx = W - 380; cav.cy = H / 2; for (const g of B.groups[1]) { g.dir = Math.PI; g.order = 'hold'; g.st = 'siege'; layout(g, true); }
   for (const u of B.units) if (u.side === 1) { u.mbase += Math.round(28 * (1 - sf)); u.morale = u.mbase; if (!u.isHero) { const p = slotPos(u); u.x = p[0]; u.y = p[1]; } }
   if (!SERVER) paintWall(B.gg);
 }
-function inGap(y, pad) { for (const g of B.wall.gaps) if (y > g[0] + pad && y < g[1] - pad) return g; return null; }
+const gapShut = g => !!(g.gate && g.gate.hp > 0 && !g.gate.open); // закрытые ворота — та же стена
+function inGap(y, pad) { for (const g of B.wall.gaps) if (!gapShut(g) && y > g[0] + pad && y < g[1] - pad) return g; return null; }
 function wallPush(a) {
   const w = B.wall, hw = w.hw + a.r * .8, dx = a.x - w.x; if (Math.abs(dx) >= hw) return;
   const g = inGap(a.y, 0); if (g) { a.y = clamp(a.y, g[0] + a.r * .75, g[1] - a.r * .75); return; }
@@ -469,7 +475,9 @@ function wallPush(a) {
 // цель по ту сторону стены — сперва идём к ближайшему пролому
 function wallVia(u, tx, ty) {
   const w = B.wall, su = u.x < w.x ? -1 : 1, st = tx < w.x ? -1 : 1; if (su === st) return [tx, ty];
-  let best = null, bd = 1e9; for (const g of w.gaps) { const c = (g[0] + g[1]) / 2, d = Math.abs(c - u.y) + Math.abs(c - ty) * .6 + ((u.id * 37) % 23); if (d < bd) { bd = d; best = g; } }
+  const open = w.gaps.filter(g => !gapShut(g)); // все ворота закрыты: идём к ближайшим и бьём их
+  if (!open.length) { let bg = null, bdd = 1e9; for (const g of w.gaps) { const d = Math.abs((g[0] + g[1]) / 2 - u.y) + ((u.id * 37) % 23); if (d < bdd) { bdd = d; bg = g; } } return [w.x + su * (w.hw + u.r + 2), clamp(u.y, bg[0] + u.r, bg[1] - u.r)]; }
+  let best = null, bd = 1e9; for (const g of open) { const c = (g[0] + g[1]) / 2, d = Math.abs(c - u.y) + Math.abs(c - ty) * .6 + ((u.id * 37) % 23); if (d < bd) { bd = d; best = g; } }
   const c = (best[0] + best[1]) / 2, half = (best[1] - best[0]) / 2 - u.r, gy = clamp(u.y, c - half, c + half), adx = Math.abs(u.x - w.x);
   if (adx < w.hw + 34 && Math.abs(u.y - c) < half) return [w.x - su * 70, gy];
   return [w.x + su * (w.hw + 30), adx < 140 ? c : gy];
@@ -479,11 +487,28 @@ function wallCover(hit, a) { const w = B.wall; if (!w) return 1; const behind = 
 // защитники: пехота держит ворота, стрелки — за стеной, конница — в резерве; выходят, когда враг прорвался внутрь
 function siegeBrain(dt) {
   const w = B.wall, [inf, arc, cav] = B.groups[1]; let inside = 0, near = 0; for (const u of B.units) if (u.side === 0 && fit(u)) { if (u.x > w.x + w.hw) inside++; if (u.x > w.x - 160) near++; }
-  if (inf.order !== 'charge' && (inside > 2 || B.t > 150)) inf.order = 'charge';
-  if (cav.order !== 'charge' && (inside > 4 || B.t > 170)) { cav.order = 'charge'; if (!B.cfg.demo) blog('Конница гарнизона вышла в бой', 1); }
+  let open = w.gaps.some(g => !gapShut(g));
+  for (const gt of w.gates) { // ворота: бьют бойцы вплотную, не стрелки; упали — путь открыт
+    gt.hit = Math.max(0, gt.hit - dt); if (gt.dead) continue;
+    if (gt.hp > 0 && !gt.open) { for (const u of B.units) if (u.side === 0 && fit(u) && u.t.grp !== 1 && u.x < w.x && u.x > w.x - w.hw - u.r - 14 && u.y > gt.g[0] - u.r && u.y < gt.g[1] + u.r) { gt.hp -= u.dmg * .35 * dt; gt.hit = .3; } }
+    if (gt.hp <= 0) gateBreak(gt);
+  }
+  const main = w.gates[0]; // гарнизон не сидит вечно: через 45 с с пехотой в строю он распахивает главные ворота и выходит в бой
+  if (main && !main.open && main.hp > 0 && B.t > 45 && inf.units.filter(fit).length > 10) { main.open = true; if (!B.cfg.demo) blog('Гарнизон открыл ворота и вышел в бой!', 1); if (!SERVER) sfx('horn2'); inf.order = 'charge'; }
+  if (inf.order !== 'charge' && (inside > 2 || (open && B.t > 150))) inf.order = 'charge';
+  if (cav.order !== 'charge' && (inside > 4 || (open && B.t > 170))) { cav.order = 'charge'; if (!B.cfg.demo) blog('Конница гарнизона вышла в бой', 1); }
   if (arc.order !== 'charge' && (inside > 8 || !inf.units.some(fit))) arc.order = 'charge';
   if (near && !B.siegeHorn) { B.siegeHorn = 1; blog('Враг у стен!', 1); sfx('horn2'); }
   if (!SERVER && typeof sdUpdate === 'function') sdUpdate(dt); // камни, котлы с маслом (03c_siegedef.js)
+}
+function gateBreak(gt) {
+  gt.hp = 0; gt.dead = true; if (!B.cfg.demo) blog('Ворота пали!', 0); if (SERVER) return; sfx('thud'); B.shake = Math.max(B.shake || 0, .45);
+  const w = B.wall, c = (gt.g[0] + gt.g[1]) / 2; for (let i = 0; i < 10; i++) fxDust(w.x + rnd(-24, 24), c + rnd(-gt.g[1] + gt.g[0], gt.g[1] - gt.g[0]) * .5); if (B.gg) paintRubble(B.gg, gt.g, mulberry((B.cfg.seed || 7) + gt.g[0]));
+}
+function paintRubble(g, gp, R) { // обломки в проломе или на месте выбитых ворот
+  const w = B.wall, x0 = w.x - w.hw, ww = w.hw * 2; g.save();
+  for (let i = 0; i < 26; i++) { const yy = gp[0] + 18 + R() * (gp[1] - gp[0] - 36), xx = x0 - 6 + R() * (ww + 12), r = 3 + R() * 6; g.fillStyle = R() < .5 ? '#7a6f5e' : '#968a74'; ell(g, xx, yy, r, r * .75); g.fill(); g.strokeStyle = '#2a2219'; g.lineWidth = 1; g.stroke(); }
+  g.restore();
 }
 function paintWall(g) {
   const w = B.wall, H = B.H, x0 = w.x - w.hw, ww = w.hw * 2, segs = []; let y = 0; for (const gp of w.gaps.slice().sort((a, b) => a[0] - b[0])) { segs.push([y, gp[0]]); y = gp[1]; } segs.push([y, H]);
@@ -496,8 +521,7 @@ function paintWall(g) {
     g.fillStyle = '#a49884'; for (let yy = a + 6; yy < b - 8; yy += 22) { g.fillRect(x0 + ww - 9, yy, 9, 12); g.strokeStyle = '#2a2219'; g.lineWidth = 1.5; g.strokeRect(x0 + ww - 9, yy, 9, 12); } // зубцы со стороны защитников
     for (const ty of [a, b]) { if (ty <= 0 || ty >= H) continue; g.fillStyle = 'rgba(0,0,0,.3)'; ell(g, w.x - 6, ty + 10, 36, 34); g.fill(); g.fillStyle = '#93877318'; g.fillStyle = '#93876f'; ell(g, w.x, ty, 34, 34); g.fill(); g.strokeStyle = '#2a2219'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#6d6252'; ell(g, w.x, ty, 22, 22); g.fill(); }
   }
-  for (const gp of w.gaps) { const c = (gp[0] + gp[1]) / 2, gate = gp[1] - gp[0] > 140; // обломки в проломах
-    for (let i = 0; i < 26; i++) { const yy = gp[0] + 18 + R() * (gp[1] - gp[0] - 36), xx = x0 - 6 + R() * (ww + 12), r = 3 + R() * 6; g.fillStyle = R() < .5 ? '#7a6f5e' : '#968a74'; ell(g, xx, yy, r, r * .75); g.fill(); g.strokeStyle = '#2a2219'; g.lineWidth = 1; g.stroke(); }
+  for (const gp of w.gaps) { if (gp.gate) continue; const c = (gp[0] + gp[1]) / 2, gate = gp[1] - gp[0] > 140; paintRubble(g, gp, R); // обломки в проломах
     if (gate) for (const s of [-1, 1]) { g.save(); g.translate(w.x + 10, c + s * 52); g.rotate(s * .9); g.fillStyle = '#5b3d22'; g.fillRect(-26, -7, 52, 14); g.strokeStyle = '#21160b'; g.lineWidth = 2; g.strokeRect(-26, -7, 52, 14); g.restore(); } }
   g.restore();
 }
