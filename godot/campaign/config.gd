@@ -1,0 +1,70 @@
+extends RefCounted
+
+const TROOP_GOLD_PER_TIER := 9
+const TROOP_BASE_GOLD := 6
+const BATTLE_GOLD_MIN := 0.7
+const BATTLE_GOLD_MAX := 1.1
+const LOW_LOOT_GOLD_MULTIPLIER := 0.2
+const CAMP_GOLD := 120
+const DEFEAT_GOLD_SHARE := 0.25
+const OPPONENT_DEFEAT_COOLDOWN := 10
+const PARTY_IDLE := "idle"
+const SETTLEMENT_TOWN := "town"
+const SETTLEMENT_VILLAGE := "village"
+const LORD_KIND := "lord"
+const PLAYER_FACTION := "player"
+const UNDEAD_FACTION := "undead"
+const BANDIT_FACTION := "bandit"
+const SOLO_ARMY_SCALE := 2
+const SPECIAL_ARMY_SCALE := 1.25
+const CAPTURE_GARRISON_COUNT := 4
+const CAPTURE_GARRISON_QUALITY := 0.3
+const SIEGE_TOWN_GOLD := 350
+const SIEGE_OTHER_GOLD := 180
+const INITIAL_GARRISONS := {
+	"town": {"counts": Vector2i(85, 120), "quality": 0.62},
+	"castle": {"counts": Vector2i(130, 175), "quality": 0.75},
+}
+const CAPTURE_RELATION_LOSS := 15
+const CAPTURE_RUIN_HOURS := 24 * 10
+const LIBERATION_RELATION_REWARD := 8
+const TOWN_RECOVERY_OFFSET := Vector2(10, 34)
+const RECOVERY_GOLD_THRESHOLD := 60
+const RECOVERY_GOLD := 80
+const CAMP_RESPAWN_HOURS := 24 * 9
+const RELATION_MAX := 100
+const RELATION_MIN := -100
+const HOSTILE_BELOW := -20
+const QUEST_RELATION_REWARD := 6
+const CULTURE_VICTORY_REWARD := 1
+const BARROW_RELATION_REWARD := 5
+const UNDEAD_ARMY_RELATION_REWARD := 3
+const UNDEAD_OTHER_RELATION_REWARD := 1
+const CAMP_QUEST := "camp"
+const PURGE_QUEST := "purge"
+const HERO_MIN_RECOVERY_HEALTH := 0.22
+const COMPANION_MIN_RECOVERY_HEALTH := 0.1
+const COMPANION_BATTLE_XP_SHARE := 0.3
+const COMPANION_KILL_XP := 12
+const COMPANION_BASE_XP := 8
+const VICTORY_BASE_XP := 12
+const HERO_KILL_XP := 4
+const DEFEAT_XP_SHARE := 0.5
+const BATTLE_PROVISIONS := Vector2i(0, 8)
+const CARAVAN_PROVISIONS := Vector2i(10, 30)
+const GRAIN_ID := "grain"
+const PORTIONS_PER_GRAIN := 6
+
+const LOOT_MAX_TIER := 3
+const LOOT_FACTION_PREFERENCE := 2.2
+const LOOT_ROLLS_PER_ENEMY := 0.12
+const LOOT_MAX_ROLLS := 6
+const LOOT_GOODS_CHANCE := 0.3
+const LOOT_GOODS_VALUE := Vector2i(120, 300)
+const LOOT_MAX_GOODS := 14
+const CARGO_BASE := 60
+const CARGO_PER_TROOP := 3
+const CARGO_PER_STRENGTH := 6
+const CARGO_HORSE_BONUS := 30
+const CARGO_WEIGHT_PRECISION := 10.0
+const CARGO_WEIGHT_EPSILON := 0.000001
