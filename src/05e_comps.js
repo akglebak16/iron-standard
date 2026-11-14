@@ -112,7 +112,7 @@ function compStr(P) { let s = 0; for (const c of P.comps || []) if (compFit(c)) 
 
 /* ---------- таверны ---------- */
 function compTowns() { return G.settles.filter(s => s.kind === 'town' && s.fac !== 'bandit'); }
-function compHired(id) { for (const P of G.players) if (compById(P, id)) return true; return false; }
+function compHired(id) { for (const P of G.players) if (compById(P, id) || (P.vass || []).some(v => v.cid === id)) return true; return false; } // вассал-спутник тоже «нанят» (05h_vassals.js)
 function compFixedTown(d) { // город пасхального спутника: по имени, иначе ближайший к его родным местам (Нарочь), на старой карте — первый город
   const all = compTowns(), byName = all.find(s => s.name === d.fixed); if (byName) return byName;
   if (isEU()) { const x = euX(26.85), y = euY(54.88); return all.slice().sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0]; }
