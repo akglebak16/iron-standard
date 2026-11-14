@@ -16,25 +16,37 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: Sp
 			continue
 		unit.attack_cooldown -= dt
 		var target: Unit = Targeting.current(battle, unit) if unit.ai_mode != Config.AI_MODE_UNASSIGNED else Targeting.nearest_enemy(battle, unit, index)
-		if target != null and unit.attack_cooldown <= 0.0:
-			var distance: float = unit.position.distance_to(target.position)
-			if unit.ai_mode == Config.AI_MODE_UNASSIGNED:
-				# Existing test-only units have no AI plan; preserve their old direct attack path.
-				if unit.attack_range > 0.0 and distance <= unit.attack_range and unit.velocity.length() < Config.SHOOT_MOVE_SPEED_LIMIT:
-					battle.projectiles.append(Combat.shoot(unit, target, rng))
-					unit.attack_cooldown = unit.attack_interval
-				elif distance <= unit.collision_radius + target.collision_radius + unit.melee_reach:
-					Combat.strike(battle, unit, target, rng)
-					unit.attack_cooldown = unit.attack_interval
-			elif unit.ai_mode == Config.AI_MODE_MELEE and distance <= unit.collision_radius + target.collision_radius + unit.melee_reach and unit.ai_windup < 0.0:
-				unit.ai_windup = Config.AI_MELEE_WINDUP_SECONDS
-				unit.ai_wind_target_id = battle.units.find(target)
-				unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_MELEE_COOLDOWN_MIN, Config.AI_MELEE_COOLDOWN_MAX)
-			elif _can_shoot(unit, distance):
+		advance_unit(battle, unit, target, dt, rng)
+	resolve_projectiles(battle, dt, rng)
+
+## Called by Movement after steering and before changing this unit's position.
+## The standalone step() above keeps rule-level tests able to exercise attacks without movement.
+static func advance_unit(battle: State, unit: Unit, target: Unit, dt: float, rng: RandomNumberGenerator) -> void:
+	if unit.dead or unit.gone or unit.fleeing or unit.hero:
+		return
+	if target != null and unit.attack_cooldown <= 0.0:
+		var distance: float = unit.position.distance_to(target.position)
+		if unit.ai_mode == Config.AI_MODE_UNASSIGNED:
+			# Existing test-only units have no AI plan; preserve their old direct attack path.
+			if unit.attack_range > 0.0 and distance <= unit.attack_range and unit.velocity.length() < Config.SHOOT_MOVE_SPEED_LIMIT:
 				battle.projectiles.append(Combat.shoot(unit, target, rng))
-				unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_SHOOT_COOLDOWN_MIN, Config.AI_SHOOT_COOLDOWN_MAX)
-		if unit.ai_mode != Config.AI_MODE_UNASSIGNED:
-			_advance_wind(battle, unit, dt, rng)
+				unit.attack_cooldown = unit.attack_interval
+			elif distance <= unit.collision_radius + target.collision_radius + unit.melee_reach:
+				Combat.strike(battle, unit, target, rng)
+				unit.attack_cooldown = unit.attack_interval
+		elif unit.ai_mode == Config.AI_MODE_MELEE and distance <= unit.collision_radius + target.collision_radius + unit.melee_reach and unit.ai_windup < 0.0:
+			unit.ai_windup = Config.AI_MELEE_WINDUP_SECONDS
+			unit.ai_wind_target_id = battle.units.find(target)
+			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_MELEE_COOLDOWN_MIN, Config.AI_MELEE_COOLDOWN_MAX)
+		elif _can_shoot(unit, distance):
+			battle.projectiles.append(Combat.shoot(unit, target, rng))
+			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_SHOOT_COOLDOWN_MIN, Config.AI_SHOOT_COOLDOWN_MAX)
+	if unit.ai_mode != Config.AI_MODE_UNASSIGNED:
+		_advance_wind(battle, unit, dt, rng)
+
+static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
+	if dt <= 0.0:
+		return
 	for i in range(battle.projectiles.size() - 1, -1, -1):
 		var shot: Dictionary = battle.projectiles[i]
 		shot.time += dt

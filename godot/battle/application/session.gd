@@ -61,8 +61,8 @@ func advance(dt: float) -> void:
 	Tactics.relayout(_state, dt)
 	_handle_swap()
 	HeroControl.step(_state, _hero, _input, dt, _rng)
-	var spatial_index = Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
-	CombatStep.step(_state, dt, _rng, spatial_index)
+	Movement.step(_state, dt, _hero.position, _hero.facing, _rng)
+	CombatStep.resolve_projectiles(_state, dt, _rng)
 	Morale.advance(_state, dt)
 	_tick += 1
 	# Preserve preview behavior; full original post-battle rules are tracked in PARITY.md.

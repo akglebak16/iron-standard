@@ -98,5 +98,4 @@ func _check_live_shoot_mode() -> void:
 	var rng := RandomNumberGenerator.new()
 	Movement.step(state, 0.01, Vector2.ZERO, 0.0, rng)
 	assert(archer.ai_mode == Config.AI_MODE_SHOOT_SLOT and archer.target_id == 1)
-	CombatStep.step(state, 0.01, rng)
 	assert(state.projectiles.size() == 1)
