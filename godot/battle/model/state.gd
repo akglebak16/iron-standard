@@ -5,12 +5,14 @@ const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
+const SiegeDefense = preload("res://battle/model/siege_defense.gd")
 const Plant = preload("res://battle/model/plant.gd")
 const Event = preload("res://battle/combat_event.gd")
 const Equipment = preload("res://equipment/config.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
+var siege_defense: SiegeDefense
 var plants: Array[Plant] = []
 var trunks: Array[Plant] = []
 var siege_skill := 0.0

@@ -3,6 +3,7 @@ const Morale = preload("res://battle/rules/morale.gd")
 const CombatStep = preload("res://battle/rules/combat_step.gd")
 const Movement = preload("res://battle/rules/movement.gd")
 const Tactics = preload("res://battle/rules/tactics.gd")
+const SiegeDefense = preload("res://battle/rules/siege_defense.gd")
 ## Single writer for a running battle. No SceneTree, Input, files or translated text.
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
@@ -91,6 +92,7 @@ func advance(dt: float) -> void:
 		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
 	else:
 		Tactics.siege_step(_state, _elapsed_seconds)
+		SiegeDefense.step(_state, dt, _rng)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
 	_handle_swap()
@@ -230,13 +232,19 @@ func snapshot() -> Dictionary:
 	for shot in _state.projectiles:
 		shots.append({"origin": shot.origin, "impact": shot.impact, "progress": clampf(shot.time / shot.duration, 0.0, 1.0), "throwing": shot.throwing, "crossbow": shot.crossbow})
 	var walls: Array[Rect2] = []
+	var wall_defense := {}
 	if _state.wall != null:
 		walls = _state.wall.segments()
+	if _state.siege_defense != null:
+		wall_defense = {"wall_x": _state.wall.x, "stones_left": _state.siege_defense.stones,
+			"stones": _state.siege_defense.stones_in_flight.map(func(s): return {"origin": s.origin, "impact": s.impact, "progress": clampf(s.time / s.duration, 0.0, 1.0)}),
+			"fires": _state.siege_defense.fires.map(func(f): return {"center": f.center, "half_size": f.half_size, "time": f.time, "duration": f.duration, "pour_from": f.pour_from}),
+			"cauldrons": _state.siege_defense.cauldrons.map(func(c): return {"gap": c.gap, "charged": c.charges > 0})}
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
 	var ready_groups: Array[int] = []
 	for weight in group_strength:
 		ready_groups.append(roundi(weight))
-	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls,
+	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls, "wall_defense": wall_defense,
 		"enemy_center": enemy_center, "reserve": [_state.reserve[0].size(), _state.reserve[1].size()], "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
 		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
 		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,

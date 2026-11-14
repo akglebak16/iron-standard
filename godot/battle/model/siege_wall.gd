@@ -7,9 +7,14 @@ var half_width := Config.SIEGE_WALL_HALF_WIDTH
 var _gaps: Array[Vector2] = []
 var _segments: Array[Rect2] = []
 
-func _init(arena_size: Vector2) -> void:
+## `damage` 0..1 widens the central breach (src/03_battle.js siegeSetup, B.cfg.dmg).
+func _init(arena_size: Vector2, damage: float = 0.0) -> void:
 	x = arena_size.x - Config.SIEGE_WALL_RIGHT_OFFSET
-	for offsets: Vector2 in Config.SIEGE_GAP_OFFSETS:
+	var widening := roundf(Config.SIEGE_DAMAGE_GATE_WIDENING * clampf(damage, 0.0, 1.0))
+	for i in Config.SIEGE_GAP_OFFSETS.size():
+		var offsets: Vector2 = Config.SIEGE_GAP_OFFSETS[i]
+		if i == 0:
+			offsets += Vector2(-widening, widening)
 		_gaps.append(offsets + Vector2.ONE * arena_size.y * 0.5)
 	var ordered := _gaps.duplicate()
 	ordered.sort_custom(func(a: Vector2, b: Vector2): return a.x < b.x)
@@ -18,6 +23,9 @@ func _init(arena_size: Vector2) -> void:
 		_segments.append(Rect2(x - half_width, start, half_width * 2.0, gap.x - start))
 		start = gap.y
 	_segments.append(Rect2(x - half_width, start, half_width * 2.0, arena_size.y - start))
+
+func gaps() -> Array[Vector2]:
+	return _gaps.duplicate()
 
 func segments() -> Array[Rect2]:
 	return _segments.duplicate()

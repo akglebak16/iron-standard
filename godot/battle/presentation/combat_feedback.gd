@@ -17,6 +17,8 @@ const RESERVE_ENEMY := "К врагу подходит подкрепление:
 const RESERVE_ALLY := "К нам подходит подкрепление: %d"
 const RESERVE_LEFT := " (в запасе %d)."
 const RESERVE_LAST := " — последняя волна."
+const STONES_STARTED := "Со стены летят камни."
+const OIL_STARTED := "Со стены льют кипящее масло!"
 const UNDEAD_FACTION := "undead" # Presentation text choice only; rules read battle traits.
 const ROUT_MESSAGE_CHANCE := 0.5 # Browser logs every second waver/rout to keep the journal readable.
 const HERO_KILL := "Герой сразил: %s."
@@ -67,6 +69,12 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 			Event.Kind.RESERVE_WAVE:
 				var text: String = RESERVE_UNDEAD % event.count if UNDEAD_FACTION in event.troop_factions else (RESERVE_ENEMY if event.side == 1 else RESERVE_ALLY) % event.count
 				_log(text + (RESERVE_LEFT % event.remaining if event.remaining > 0 else RESERVE_LAST))
+			Event.Kind.STONE_THROWN:
+				if event.first:
+					_log(STONES_STARTED)
+			Event.Kind.OIL_POURED:
+				if event.first:
+					_log(OIL_STARTED)
 			Event.Kind.WAVERED:
 				if _rng.randf() < ROUT_MESSAGE_CHANCE:
 					_log(WAVERED % event.target_name)
