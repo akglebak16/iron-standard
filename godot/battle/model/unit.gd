@@ -55,6 +55,7 @@ var swing_facing: float = 0.0
 var swing_timer: float = 0.0
 var hero_weapon: Dictionary = {} # Detached equipment data; only the controlled hero reads it.
 var perk_effects: Dictionary = {} # Detached character projection, shared by hero combat rules.
+var last_stand_used: bool = false
 
 func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection: float, unit_tier: int) -> void:
 	id = unit_id

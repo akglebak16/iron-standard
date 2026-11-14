@@ -30,6 +30,7 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 
 static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: int, rng: RandomNumberGenerator) -> int:
 	var weapon: Dictionary = hero.hero_weapon
+	var bonus_pierce: float = float(hero.perk_effects.get("mpierce", 0.0))
 	var direction: float = (target.position - hero.position).angle()
 	var incoming: float = (hero.position - target.position).angle()
 	var rear := absf(wrapf(incoming - target.facing, -PI, PI)) > Config.REAR_ANGLE
@@ -50,8 +51,8 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 		elif target.undead_kind == "zombie":
 			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
 	if hero.damage_type.is_empty():
-		return battle.hurt(target, raw, hero)
-	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce))
+		return battle.hurt(target, raw, hero, Config.HERO_UNARMED_PIERCE + bonus_pierce)
+	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce + bonus_pierce))
 
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)

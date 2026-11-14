@@ -4,6 +4,7 @@ const EquipmentConfig = preload("res://equipment/config.gd")
 const Damage = preload("res://battle/rules/damage.gd")
 const DamageType = preload("res://equipment/rules/damage_type.gd")
 const HeroControl = preload("res://battle/rules/hero_control.gd")
+const Combat = preload("res://battle/rules/combat.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const RESOLVE_STEP := 0.01
@@ -12,6 +13,7 @@ func _initialize() -> void:
 	_test_weapon_shape_damage_and_knockback()
 	_test_block_break()
 	_test_mounted_reach_and_locked_direction()
+	_test_perk_armor_pierce()
 	print("Hero strike tests passed")
 	quit(0)
 
@@ -87,3 +89,24 @@ func _test_mounted_reach_and_locked_direction() -> void:
 	hero.attack_cooldown = 0.0
 	_swing(battle, hero, rng)
 	assert(target.hp < 100.0)
+
+func _test_perk_armor_pierce() -> void:
+	for damage_type in [EquipmentConfig.DAMAGE_TYPE_PIERCE, ""]:
+		var battle := State.new()
+		var hero := _hero()
+		hero.damage_type = damage_type
+		hero.pierce = 0.1
+		hero.perk_effects = {"mpierce": 0.06}
+		var target := Unit.new(1, 1, Vector2(140, 100), 100, 50, 1)
+		target.facing = PI
+		battle.add_unit(hero)
+		battle.add_unit(target)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 91
+		var reference := RandomNumberGenerator.new()
+		reference.seed = rng.seed
+		var raw: float = hero.damage * reference.randf_range(Config.HERO_MELEE_DAMAGE_MIN, Config.HERO_MELEE_DAMAGE_MAX)
+		var expected_pierce: float = DamageType.pierce(damage_type, target.armor, hero.pierce + 0.06) if not damage_type.is_empty() else Config.HERO_UNARMED_PIERCE + 0.06
+		var expected: int = Damage.after_armor(raw * (DamageType.multiplier(damage_type, target.armor) if not damage_type.is_empty() else 1.0), target.armor, expected_pierce)
+		assert(Combat.hero_strike(battle, hero, target, 0, rng) == expected)
+		assert(target.hp == 100 - expected)

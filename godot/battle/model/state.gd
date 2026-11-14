@@ -89,6 +89,11 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 	var amount: int = Damage.after_armor(raw_damage, target.armor, pierce)
 	target.hp -= amount
 	target.morale -= amount * Config.HIT_MORALE_PER_DAMAGE
+	if target.hp <= 0.0 and target.hero and not target.last_stand_used:
+		var recovery: float = float(target.perk_effects.get("lastStand", 0.0))
+		if recovery > 0.0:
+			target.last_stand_used = true
+			target.hp = maxf(1.0, target.max_hp * recovery)
 	if target.hp <= 0.0:
 		kill(target, source)
 	return amount
@@ -101,6 +106,10 @@ func kill(target: Unit, source: Unit = null) -> void:
 	if source != null:
 		source.kills += 1
 		source.morale = minf(source.base_morale, source.morale + Config.KILL_MORALE_BONUS)
+		if source.hero:
+			var heal: float = float(source.perk_effects.get("killHeal", 0.0))
+			if heal > 0.0:
+				source.hp = minf(source.max_hp, source.hp + source.max_hp * heal)
 	for unit: Unit in units:
 		if unit.dead or unit.gone or unit.position.distance_to(target.position) > Config.DEATH_MORALE_RADIUS:
 			continue

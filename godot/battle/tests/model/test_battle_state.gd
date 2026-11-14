@@ -21,5 +21,29 @@ func _initialize() -> void:
 	assert(distant.morale == 86.0)
 	assert(battle.hurt(victim, 60.0, attacker) == 0)
 	assert(attacker.kills == 1)
+	_check_last_stand_and_kill_heal()
 	print("Battle state tests passed")
 	quit(0)
+
+func _check_last_stand_and_kill_heal() -> void:
+	var battle := BattleState.new()
+	var hero := Unit.new(0, 0, Vector2.ZERO, 100, 0, 1)
+	hero.hero = true
+	hero.perk_effects = {"lastStand": 0.25, "killHeal": 0.03}
+	var foe := Unit.new(1, 1, Vector2(10, 0), 100, 0, 1)
+	battle.add_unit(hero)
+	battle.add_unit(foe)
+	battle.hurt(hero, 200, foe)
+	assert(not hero.dead and hero.hp == 25.0 and hero.last_stand_used)
+	battle.hurt(hero, 20, foe)
+	assert(hero.hp == 5.0 and not hero.dead)
+	battle.hurt(foe, 200, hero)
+	assert(foe.dead and hero.kills == 1)
+	assert(hero.hp == 8.0) # Three percent of maximum HP for one kill.
+	var second := Unit.new(2, 1, Vector2(12, 0), 50, 0, 1)
+	battle.add_unit(second)
+	hero.hp = 99.0
+	battle.hurt(second, 200, hero)
+	assert(hero.hp == 100.0) # Healing is capped at maximum HP.
+	battle.hurt(hero, 200, foe)
+	assert(hero.dead and hero.hp == 0.0) # Last Stand fires once per battle.
