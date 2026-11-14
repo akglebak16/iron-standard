@@ -62,6 +62,7 @@ async function run() {
       await page.waitForTimeout(180); await shot(name);
     }
     await page.evaluate(() => { gotoTitle(); loadGame(); closeModal(); openTown(G.settles.find(s => s.kind === 'town')); });
+    await page.waitForFunction(() => __dbg.MODE === 'world', null, { timeout: 20000 }); // loadGame грузит мир через setTimeout, на медленном CI режим ещё «loading»
     assert.equal(await page.evaluate(() => __dbg.MODE), 'world');
     await page.waitForTimeout(180); await shot('ui-town');
     assert.equal(await page.evaluate(() => !!window.__err), false);
