@@ -12,12 +12,12 @@ func _check() -> void:
 	await process_frame
 	var view = scene.get_node("Battle")
 	var frame: Dictionary = view.get_battle_snapshot()
-	assert(frame.units.size() == 48)
-	assert(frame.counts == [24, 24])
+	assert(frame.units.size() == 52)
+	assert(frame.counts == [26, 26])
 	assert(frame.outcome == Session.Outcome.RUNNING)
 	assert(view.get_node("Hud/Status").text.contains("Свои"))
 	frame.units.clear()
-	assert(view.get_battle_snapshot().units.size() == 48)
+	assert(view.get_battle_snapshot().units.size() == 52)
 	await physics_frame
 	await process_frame
 	assert(view.get_battle_snapshot().tick > 0)

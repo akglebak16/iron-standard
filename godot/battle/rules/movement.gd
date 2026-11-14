@@ -5,8 +5,9 @@ const Unit = preload("res://battle/model/unit.gd")
 const Group = preload("res://battle/model/group.gd")
 const Targeting = preload("res://battle/rules/targeting.gd")
 const SpatialIndex = preload("res://battle/rules/spatial_index.gd")
+const Charge = preload("res://battle/rules/charge.gd")
 
-static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0) -> SpatialIndex:
+static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0, rng: RandomNumberGenerator = null) -> SpatialIndex:
 	if dt <= 0.0:
 		return null
 	var foe := battle.centroid(1)
@@ -23,6 +24,7 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 		var unit: Unit = battle.units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
 			continue
+		unit.charge_cooldown -= dt
 		var group: Group = battle.groups[unit.side][unit.group_kind]
 		var destination: Vector2 = group.slot_position(unit, battle.arena_size)
 		var velocity_scale := 1.0
@@ -33,6 +35,11 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 			var enemy: Unit = Targeting.nearest_enemy(battle, unit, index)
 			if enemy != null:
 				destination = enemy.position
+				if rng != null and Charge.can_hit(unit, enemy):
+					Charge.hit(battle, unit, enemy, rng)
+					destination = enemy.position
+					if index != null:
+						index.update(battle.units.find(enemy))
 		_steer(unit, destination, unit.speed * velocity_scale, dt)
 		unit.position += unit.velocity * dt
 		if unit.fleeing and (unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING):

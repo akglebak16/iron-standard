@@ -31,7 +31,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.attack_range = float(troop.get("range", 0))
 			unit.mounted = bool(troop.mounted)
 			unit.attack_interval = float(troop.cd)
-			unit.melee_reach = float(troop.get("reach", Config.DEFAULT_MELEE_REACH))
+			unit.melee_reach = Config.DEFAULT_MELEE_REACH + float(troop.get("reach", 0))
 			unit.block_chance = float(troop.get("block", 0))
 			unit.shield_block = float(troop.get("shb", 0))
 			unit.accuracy = float(troop.get("acc", 0))
