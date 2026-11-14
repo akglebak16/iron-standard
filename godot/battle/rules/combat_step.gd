@@ -4,17 +4,20 @@ const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Combat = preload("res://battle/rules/combat.gd")
 const Targeting = preload("res://battle/rules/targeting.gd")
+const SpatialIndex = preload("res://battle/rules/spatial_index.gd")
 
-static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
+static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: SpatialIndex = null) -> void:
 	if dt <= 0.0:
 		return
+	if index == null and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
+		index = SpatialIndex.new(battle.units)
 	for unit: Unit in battle.units:
 		if unit.dead or unit.gone or unit.fleeing or unit.hero:
 			continue
 		unit.attack_cooldown -= dt
 		if unit.attack_cooldown > 0.0:
 			continue
-		var target: Unit = Targeting.nearest_enemy(battle, unit)
+		var target: Unit = Targeting.nearest_enemy(battle, unit, index)
 		if target == null:
 			continue
 		var distance: float = unit.position.distance_to(target.position)

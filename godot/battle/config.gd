@@ -2,6 +2,8 @@ extends RefCounted
 ## Balance values copied from the browser battle. Change them here, then run Godot tests.
 
 const ARENA_SIZE := Vector2(2600, 1700)
+const SPATIAL_CELL_SIZE := 128.0 # Broad-phase cell; changing it must not change battle results.
+const SPATIAL_MIN_UNITS := 64 # Small battles avoid index construction overhead.
 const FRONT_X := 640.0
 const CENTER_Y := 850.0
 const ARCHER_REAR_OFFSET := 105.0
