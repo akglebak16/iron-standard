@@ -109,14 +109,14 @@ function renderPanel() {
 /* ---------- встреча ---------- */
 function relativePowerOld(p) { const a = strength(G.player.troops) + 8, b = partyStr(p); const r = a / Math.max(1, b); return r > 2 ? ['Мы сильнее', 'g'] : r > 1.15 ? ['Мы чуть сильнее', 'g'] : r > .8 ? ['Силы равны', 'b'] : r > .45 ? ['Они сильнее', 'r'] : ['Они намного сильнее', 'r']; }
 function openEncounter(p, forced) {
-  const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp'; UI.enc = { p, forced, hostile: hostileP }; G.player.path = []; G.player.tid = null; G.wait = false;
-  const pw = relativePowerOf(G.player, p), list = p.troops.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
+  const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp', help = hostileP && typeof encHelpers === 'function' ? encHelpers(G.player, p) : []; UI.enc = { p, forced, hostile: hostileP, help }; G.player.path = []; G.player.tid = null; G.wait = false;
+  const all = help.length ? encTroops(p, help) : p.troops, pw = relativePowerOf(G.player, Object.assign({}, p, { troops: all })), list = all.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
   const title = p.kind === 'camp' ? (p.fac === 'undead' ? 'Чёрный курган' : 'Логово разбойников') : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? 'Разбойники' : p.name;
   let btns;
   const cl = !NET.on && typeof clanOf === 'function' ? clanOf(p) : null, parley = cl && G.player.liege && cl.fac !== G.player.liege ? '<button class="btn" data-act="parley">Переговоры</button>' : '';
   if (hostileP) btns = '<button class="btn" data-act="flee">Бежать</button>' + parley + '<button class="btn" data-act="auto">Рассчитать бой</button><button class="btn pri" data-act="fight">В бой!</button>';
   else btns = '<button class="btn pri" data-act="greet">Разойтись с миром</button>' + parley + '<button class="btn danger" data-act="attack">Напасть</button>';
-  openModal('<div class="whead"><img alt="" src="' + crestURL(p.fac) + '"><h2>' + title + '<span class="sub">' + FACTIONS[p.fac].name + ' · ' + troopCount(p.troops) + ' бойцов' + (cl ? ' · ' + cl.name + ', ' + CLAN_TR[cl.trait].n.toLowerCase() + (p.ruler ? ', правящий род' : '') : '') + '</span></h2><span class="tag ' + pw[1] + '">' + pw[0] + '</span></div><div class="wbody"><div class="note">' + (hostileP ? (forced ? 'Они заметили тебя и идут в атаку.' : 'Ты настиг врага.') : 'Они не враждуют с тобой. Нападение испортит отношения с ' + FACTIONS[p.fac].gen + '.') + '</div>' +
+  openModal('<div class="whead"><img alt="" src="' + crestURL(p.fac) + '"><h2>' + title + '<span class="sub">' + FACTIONS[p.fac].name + ' · ' + troopCount(all) + ' бойцов' + (cl ? ' · ' + cl.name + ', ' + CLAN_TR[cl.trait].n.toLowerCase() + (p.ruler ? ', правящий род' : '') : '') + '</span></h2><span class="tag ' + pw[1] + '">' + pw[0] + '</span></div><div class="wbody"><div class="note">' + (hostileP ? (forced ? 'Они заметили тебя и идут в атаку.' : 'Ты настиг врага.') : 'Они не враждуют с тобой. Нападение испортит отношения с ' + FACTIONS[p.fac].gen + '.') + '</div>' + (help.length ? '<div class="note" style="color:#ff9a86">С ними в бой вступят: ' + help.map(h => (h.kind === 'bandit' ? 'разбойники' : h.name) + ' (' + troopCount(h.troops) + ')').join(', ') + '.</div>' : '') +
     list.map(s => troopRow(s, '<div class="cnt">' + s.n + '</div>')).join('') + '</div><div class="wfoot">' + btns + '</div>', 'narrow');
 }
 
@@ -147,8 +147,8 @@ const ACT = {
   menu() { openMenu(); },
   greet() { if (NET.on) { NET.send({ t: 'enc', a: 'greet' }); closeModal(); return; } const p = UI.enc.p; p.cd = 3; closeModal(); },
   attack() { if (NET.on) { NET.send({ t: 'enc', a: 'attack' }); closeModal(); return; } const e = UI.enc; encAttack(G.player, e.p); e.hostile = true; ACT.fight(); },
-  fight() { if (NET.on) { NET.send({ t: 'enc', a: 'fight' }); closeModal(); return; } const p = UI.enc.p; closeModal(); launchBattle(p); },
-  auto() { if (NET.on) { NET.send({ t: 'enc', a: 'auto' }); closeModal(); return; } const p = UI.enc.p; closeModal(); autoPlayer(p); },
+  fight() { if (NET.on) { NET.send({ t: 'enc', a: 'fight' }); closeModal(); return; } const p = UI.enc.p, help = UI.enc.help || []; closeModal(); if (help.length) encMerge(p, help); launchBattle(p); },
+  auto() { if (NET.on) { NET.send({ t: 'enc', a: 'auto' }); closeModal(); return; } const p = UI.enc.p, help = UI.enc.help || []; closeModal(); if (help.length) encMerge(p, help); autoPlayer(p); },
   flee() { if (NET.on) { NET.send({ t: 'enc', a: 'flee' }); closeModal(); return; } const p = UI.enc.p; if (encFlee(G.player, p)) { closeModal(); toast('Ты оторвался от погони'); } else { toast('Не вышло уйти!'); closeModal(); launchBattle(p); } },
   resume() { closeModal(); }, save() { saveGame(); toast('Игра сохранена'); },
   snd() { auSetOn(!AU.on); openMenu(); }, mus() { auSetMusic(!AU.music); openMenu(); },
