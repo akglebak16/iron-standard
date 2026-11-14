@@ -1,6 +1,6 @@
 /* ================= журнал: вкладка «Задания» (активные задания и хроника) =================
    Вызывается из renderPanel (06_ui.js), вкладка 'journal'. Возвращает HTML тела окна.
-   Только отображение: данные заданий не меняются, кроме кнопки «В путь» (прокладывает маршрут, как клик по карте). */
+   Только отображение: данные заданий не меняются (кнопка «Показать на карте» лишь двигает камеру и ставит метку). */
 const JQ_TYPES = {
   camp: { n: 'Разгром', i: 'skull' }, scout: { n: 'Разведка', i: 'zoom' }, purge: { n: 'Охота', i: 'sword' },
   supply: { n: 'Поставка', i: 'bag' }, muster: { n: 'Пополнение', i: 'men' }, deliver: { n: 'Доставка', i: 'horse' }
@@ -48,7 +48,7 @@ function jqCard(P, q) {
   h += '<div class="jq-rw">' + ic('coin') + fmt(jqReward(P, q)) + '</div>';
   h += '<div class="jq-dl"><span>' + (left < 0 ? 'срок вышел' : left === 0 ? 'последний день' : 'осталось ' + jqDays(left)) + '</span><small>до дня ' + q.dl + '</small></div>';
   h += '<div class="jq-time" title="Осталось времени"><i style="width:' + Math.round(frac * 100) + '%"></i></div>';
-  if (!NET.on && tgt && !hard) h += '<button class="btn sm jq-go" data-act="jqgo" data-q="' + q.id + '">В путь</button>';
+  if (tgt && !hard) h += '<button class="btn sm jq-go" data-act="jqgo" data-q="' + q.id + '">Показать на карте</button>';
   return h + '</div></div>';
 }
 function jqChronicle(P) {
@@ -79,13 +79,20 @@ function journalQuestsBody() {
   return h;
 }
 Object.assign(ACT, {
-  /* «В путь»: маршрут к цели задания, как клик по поселению или логову на карте */
+  /* «Показать на карте»: окно закрывается, камера уходит к цели задания и там пульсирует метка (путь прокладывает сам игрок, C возвращает камеру к отряду) */
   jqgo(d) {
-    const P = G.player, q = (P.quests || []).find(x => x.id === +d.q), t = q && jqTarget(q); if (!t || NET.on) return;
-    P.tid = null; P.sid = null; G.wait = false;
-    if (t.kind === 'camp') { if (!t.camp) { toast('Логово пусто'); return; } P.tid = t.camp.id; P.path = findPath(P.x, P.y, t.x, t.y) || []; P.pi = 0; P.rp = .6; }
-    else { P.sid = t.id; P.path = findPath(P.x, P.y, t.x, t.y) || []; P.pi = 0; if (!P.path.length) P.sid = null; }
-    if (!P.path.length) { toast('Туда не пройти'); return; }
-    sfx('order'); closeModal(); toast('Отряд выступил: ' + t.name);
+    const P = G.player, q = (P.quests || []).find(x => x.id === +d.q), t = q && jqTarget(q); if (!t) return;
+    closeModal(); WC.free = true; WC.x = t.x; WC.y = t.y; JQ_MARK = { x: t.x, y: t.y, t0: performance.now(), name: t.name };
+    sfx('click'); toast('«' + t.name + '» на карте. C — вернуть камеру к отряду');
   }
 });
+
+/* метка цели задания на карте: пульсирующие кольца 7 секунд; рисуется из drawWorld (07_main.js) в мировых координатах */
+let JQ_MARK = null;
+function drawJqMark(g) {
+  if (!JQ_MARK) return; const t = (performance.now() - JQ_MARK.t0) / 1000; if (t > 7) { JQ_MARK = null; return; }
+  const fade = t > 5.5 ? (7 - t) / 1.5 : 1, k = 1 / (WC.z || 1);
+  g.save(); g.lineWidth = 3 * k; for (let i = 0; i < 3; i++) { const ph = ((t * .8 + i / 3) % 1), r = (18 + ph * 70) * k; g.strokeStyle = 'rgba(255,214,106,' + (.9 * (1 - ph) * fade) + ')'; g.beginPath(); g.ellipse(JQ_MARK.x, JQ_MARK.y + 4 * k, r, r * .45, 0, 0, TAU); g.stroke(); }
+  g.fillStyle = 'rgba(255,214,106,' + .95 * fade + ')'; g.strokeStyle = 'rgba(40,24,6,' + fade + ')'; g.lineWidth = 2 * k; const y = JQ_MARK.y - 52 * k - Math.abs(Math.sin(t * 3)) * 6 * k;
+  g.beginPath(); g.moveTo(JQ_MARK.x, y + 22 * k); g.lineTo(JQ_MARK.x - 12 * k, y); g.lineTo(JQ_MARK.x + 12 * k, y); g.closePath(); g.fill(); g.stroke(); g.restore();
+}
