@@ -1,11 +1,11 @@
 ---
 title: Спутники-вассалы: наделы и своя армия
-status: в работе
+status: на проверке
 owner: Виталий
 area: спутники
 priority: обычный
 created: 2026-11-14
-pr:
+pr: 22
 done:
 outside: нет
 ---
