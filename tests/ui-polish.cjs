@@ -61,7 +61,9 @@ async function run() {
       await page.evaluate(faction => { QK.me = faction; startQuick(); B.paused = true; B.cam.x = B.hero.x; B.cam.y = B.hero.y; B.t = 1; const u = B.units.find(u => !u.isHero); u.flash = .1; }, faction);
       await page.waitForTimeout(180); await shot(name);
     }
-    await page.evaluate(() => { gotoTitle(); loadGame(); closeModal(); openTown(G.settles.find(s => s.kind === 'town')); });
+    await page.evaluate(() => { gotoTitle(); loadGame(); });
+    await page.waitForFunction(() => __dbg.MODE === 'world', null, { timeout: 15000 });
+    await page.evaluate(() => { closeModal(); openTown(G.settles.find(s => s.kind === 'town')); });
     assert.equal(await page.evaluate(() => __dbg.MODE), 'world');
     await page.waitForTimeout(180); await shot('ui-town');
     assert.equal(await page.evaluate(() => !!window.__err), false);
