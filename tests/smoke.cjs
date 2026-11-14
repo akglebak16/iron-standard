@@ -148,6 +148,13 @@ async function vassals(pg) {
   ok('при встрече с дружиной вассала — разговор и приказы, а не нападение', talk);
   await pg.evaluate(() => { const P = G.player, v = cvOfId(P, 'vikenty'); closeModal(); ACT.cvmode({ id: 'vikenty', m: 'patrol' }); });
   ok('приказ вассалу меняет режим', await pg.evaluate(() => cvOfId(G.player, 'vikenty').mode === 'patrol'));
+  const ally = await pg.evaluate(() => { const P = G.player, v = cvOfId(P, 'vikenty'), a = cvPartyOf(v); if (!a) return { err: 'нет дружины' }; a.x = P.x + 30; a.y = P.y; a.troops = [{ type: a.troops[0].type, n: 20 }]; a.fight = null; a.lock = null; a.hide = false;
+    const e = mkParty('bandit', 'bandit', 'Шайка Тест', P.x + 50, P.y, genTroops('bandit', 60, .6)), far = mkParty('bandit', 'bandit', 'Далёкая', P.x + 900, P.y + 900, [{ type: 'b1', n: 5 }]);
+    a.x = P.x + 900; a.y = P.y + 900; const none = cvHelpers(P, e); void far; a.x = P.x + 30; a.y = P.y; const near = cvHelpers(P, e); openEncounter(e, true); const note = /Рядом с тобой в бой вступят/.test(el('modal').innerHTML); closeModal();
+    const pl0 = troopCount(P.troops), al0 = troopCount(a.troops); cvBattleStart(P, e, near); const cfg = battleCfgFor(P, e), cfgN = cfg.pl.reduce((s, x) => s + x.n, 0);
+    const res = autoResult(P, e); const dead0 = Object.values(res.dead).reduce((s, x) => s + x, 0); cvBattleEnd(P, res, e); const dead1 = Object.values(res.dead).reduce((s, x) => s + x, 0), lost = al0 - troopCount(a.troops);
+    return { near: near.length === 1, none: none.length === 0, note, cfg: cfgN === pl0 + al0, split: dead1 + lost === dead0 && dead1 <= dead0, kept: !!cvPartyOf(v) || lost >= al0, clear: cvAllyTroops(e).length === 0, d0: dead0, d1: dead1, lost }; });
+  ok('дружина вассала рядом вступает в бой игрока: в расчёте, в составе отряда, потери делятся', ally.near && ally.none && ally.note && ally.cfg && ally.split && ally.kept && ally.clear, ally);
   const rv = await pg.evaluate(sid => { const P = G.player, s = settleById(sid), n0 = troopCount(garrisonOf(s)); cvRevoke(P, 'vikenty'); return { back: !!compById(P, 'vikenty'), no: !P.vass.length, mark: s.vass === undefined, gar: troopCount(garrisonOf(s)) >= n0, party: !G.parties.some(p => p.kind === 'cvass') }; }, set.sid);
   ok('надел можно забрать: спутник в отряде, дружина распущена в гарнизон', rv.back && rv.no && rv.mark && rv.gar && rv.party, rv);
   const lost = await pg.evaluate(sid => { const P = G.player, s = settleById(sid); cvGrant(P, 'vikenty', sid); s.fac = 'emp'; s.owner = null; cvDay(P); return { back: !!compById(P, 'vikenty'), no: !P.vass.length, party: !G.parties.some(p => p.kind === 'cvass') }; }, set.sid);
