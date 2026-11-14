@@ -11,6 +11,7 @@ func _initialize() -> void:
 	_check_anti_cavalry()
 	_check_block_and_direction()
 	_check_movement_integration()
+	_check_hold_order_charge()
 	print("Charge tests passed")
 	quit(0)
 
@@ -111,3 +112,17 @@ func _check_movement_integration() -> void:
 	var hp_after_hit: float = target.hp
 	Movement.step(battle, 0.01, rng)
 	assert(target.hp == hp_after_hit) # Cooldown prevents a second charge.
+
+func _check_hold_order_charge() -> void:
+	var pair := _pair()
+	var battle: State = pair.battle
+	var rider: Unit = pair.rider
+	var target: Unit = pair.target
+	var group = battle.groups[0][Config.GROUP_CAVALRY]
+	group.center = rider.position
+	rider.attack_cooldown = 1.0
+	Movement.step(battle, 0.01, RandomNumberGenerator.new())
+	assert(group.order == Config.ORDER_HOLD and rider.ai_mode == Config.AI_MODE_MELEE)
+	assert(target.hp < 100 and rider.charge_cooldown == Config.CHARGE_COOLDOWN)
+	# The target started within melee reach. Knockback must not turn this tick's braking into pursuit.
+	assert(rider.velocity.x < (Config.CHARGE_MIN_SPEED + 20.0) * Config.CHARGE_ATTACKER_VELOCITY_MULTIPLIER)

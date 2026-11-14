@@ -16,16 +16,16 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: Sp
 			continue
 		unit.attack_cooldown -= dt
 		var target: Unit = Targeting.current(battle, unit) if unit.ai_mode != Config.AI_MODE_UNASSIGNED else Targeting.nearest_enemy(battle, unit, index)
-		advance_unit(battle, unit, target, dt, rng)
+		var distance := unit.position.distance_to(target.position) if target != null else INF
+		advance_unit(battle, unit, target, distance, dt, rng)
 	resolve_projectiles(battle, dt, rng)
 
 ## Called by Movement after steering and before changing this unit's position.
 ## The standalone step() above keeps rule-level tests able to exercise attacks without movement.
-static func advance_unit(battle: State, unit: Unit, target: Unit, dt: float, rng: RandomNumberGenerator) -> void:
+static func advance_unit(battle: State, unit: Unit, target: Unit, distance: float, dt: float, rng: RandomNumberGenerator) -> void:
 	if unit.dead or unit.gone or unit.fleeing or unit.hero:
 		return
 	if target != null and unit.attack_cooldown <= 0.0:
-		var distance: float = unit.position.distance_to(target.position)
 		if unit.ai_mode == Config.AI_MODE_UNASSIGNED:
 			# Existing test-only units have no AI plan; preserve their old direct attack path.
 			if unit.attack_range > 0.0 and distance <= unit.attack_range and unit.velocity.length() < Config.SHOOT_MOVE_SPEED_LIMIT:

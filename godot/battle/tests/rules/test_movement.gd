@@ -40,8 +40,23 @@ func _initialize() -> void:
 			break
 	assert(foot.gone)
 	_check_post_collision_field_limits()
+	_check_flee_exit_order()
 	print("Movement tests passed")
 	quit(0)
+
+func _check_flee_exit_order() -> void:
+	var battle := BattleState.new()
+	battle.setup_groups()
+	var runner := Unit.new(0, 0, Vector2(-Config.FLEE_EXIT_PADDING + 1.0, 500), 50, 0, 1)
+	runner.speed = 100.0
+	runner.velocity = Vector2.LEFT * runner.speed
+	runner.fleeing = true
+	battle.add_grouped_unit(runner, Config.GROUP_INFANTRY)
+	var rng := RandomNumberGenerator.new()
+	Movement.step(battle, 0.02, rng)
+	assert(runner.position.x < -Config.FLEE_EXIT_PADDING and not runner.gone)
+	Movement.step(battle, 0.02, rng)
+	assert(runner.gone)
 
 func _check_post_collision_field_limits() -> void:
 	var battle := BattleState.new()

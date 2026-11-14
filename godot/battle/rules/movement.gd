@@ -33,6 +33,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator) -> Spati
 		var velocity_scale := 1.0
 		var ai_face := unit.facing
 		var target: Unit = null
+		var target_distance := INF
 		if unit.fleeing:
 			destination = Vector2(battle.arena_size.x + Config.FLEE_DESTINATION_PADDING if unit.side == 1 else -Config.FLEE_DESTINATION_PADDING, unit.position.y)
 			velocity_scale = Config.FLEE_SPEED_MULTIPLIER
@@ -43,7 +44,9 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator) -> Spati
 			destination = plan.destination
 			velocity_scale = plan.speed_scale
 			ai_face = plan.face
+			target_distance = plan.target_distance
 			if unit.ai_mode == Config.AI_MODE_MELEE and target != null and Charge.can_hit(unit, target):
+				unit.facing = ai_face
 				Charge.hit(battle, unit, target, rng)
 				if destination != unit.position:
 					destination = target.position
@@ -56,12 +59,14 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator) -> Spati
 		if battle.wall != null:
 			destination = battle.wall.route(unit, destination)
 		_steer(unit, destination, unit.speed * velocity_scale, dt)
-		if rng != null and not unit.fleeing:
+		if unit.fleeing:
+			unit.facing = unit.velocity.angle()
+			if unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING:
+				unit.gone = true
+		elif rng != null:
 			unit.facing = ai_face
-			CombatStep.advance_unit(battle, unit, target, dt, rng)
+			CombatStep.advance_unit(battle, unit, target, target_distance, dt, rng)
 		unit.position += unit.velocity * dt
-		if unit.fleeing and (unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING):
-			unit.gone = true
 		if index != null:
 			index.update(unit_index)
 	_resolve_unit_collisions(battle, index)
@@ -105,12 +110,12 @@ static func _resolve_unit_collisions(battle: State, index: SpatialIndex) -> void
 					break # A moved: refresh candidates for later indices.
 				if not collided:
 					break
-		# Browser battleUpdate clamps each unit after resolving its pair collisions.
+		if battle.wall != null:
+			battle.wall.constrain(a)
+		# Browser battleUpdate clamps after pair collisions and terrain contacts.
 		if not a.fleeing:
 			a.position.x = clampf(a.position.x, Config.FIELD_LEFT_RIGHT_MARGIN, battle.arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
 		a.position.y = clampf(a.position.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
-		if battle.wall != null:
-			battle.wall.constrain(a)
 		if index != null:
 			index.update(i)
 

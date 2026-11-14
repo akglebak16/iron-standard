@@ -3,7 +3,7 @@ extends RefCounted
 const Config = preload("res://troops/config.gd")
 const DATA_PATH := "res://troops/data/troops.json"
 const REQUIRED_NUMBERS := ["tier", "grp", "hp", "arm", "dmg", "spd", "cd", "block"]
-const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb", "pw"]
+const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb", "pw", "mdmg"]
 const TRAIT_NUMBERS := ["morale_base", "leader_loss_chance", "projectile_damage_multiplier", "blunt_melee_damage_multiplier"]
 var _troops: Dictionary = {}
 

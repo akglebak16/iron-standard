@@ -26,6 +26,7 @@ var slot_offset: Vector2 = Vector2.ZERO
 var troop_id: String = ""
 var name: String = "" # Optional named leader or companion; empty uses the troop catalog name.
 var damage: float = 0.0
+var ranged_melee_damage: float = 0.0 # Zero uses the fallback derived from ranged damage.
 var speed: float = 0.0
 var attack_range: float = 0.0
 var mounted: bool = false

@@ -6,6 +6,8 @@ const Catalog = preload("res://troops/data/catalog.gd")
 const BattleState = preload("res://battle/model/state.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
 const Factory = preload("res://battle/application/factory.gd")
+const Combat = preload("res://battle/rules/combat.gd")
+const Unit = preload("res://battle/model/unit.gd")
 
 func _initialize() -> void:
 	var catalog = Catalog.new()
@@ -39,6 +41,7 @@ func _initialize() -> void:
 	assert(massive.units[0].weight == 2.0)
 	assert(massive.units[0].hp == float(catalog.get_troop("e1").hp) * 2.0)
 	assert(massive.units[0].damage == float(catalog.get_troop("e1").dmg) * 2.0)
+	_check_archer_melee(catalog)
 	var setup := Setup.new()
 	setup.hero_troop = "n1"
 	setup.enemy_faction = "undead"
@@ -61,3 +64,26 @@ func _initialize() -> void:
 	assert(custom_battle.units[0].morale_immune and custom_battle.units[0].leader_bond == "test_bond")
 	print("Catalog and spawn tests passed")
 	quit(0)
+
+func _check_archer_melee(catalog: Catalog) -> void:
+	var battle := BattleState.new()
+	battle.setup_groups()
+	var rng := RandomNumberGenerator.new()
+	assert(ArmyBuilder.spawn(battle, 0, [{"type": "n2a", "n": 2}], "nord", catalog, rng, 1))
+	var archer: Unit = battle.units[0]
+	var definition := catalog.get_troop("n2a")
+	assert(archer.weight == 2.0 and archer.damage == definition.dmg * 2.0)
+	archer.position = Vector2.ZERO
+	var defender := Unit.new(1, 1, Vector2(20, 0), 100, 0, 1)
+	defender.facing = PI
+	battle.add_unit(defender)
+	var reference := RandomNumberGenerator.new()
+	rng.seed = 12
+	reference.seed = 12
+	var factor := reference.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
+	assert(archer.ranged_melee_damage == definition.mdmg)
+	assert(Combat.strike(battle, archer, defender, rng) == roundi(float(definition.mdmg) * factor))
+	assert(rng.state == reference.state)
+	archer.ranged_melee_damage = 0.0
+	factor = reference.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
+	assert(Combat.strike(battle, archer, defender, rng) == roundi(archer.damage * 0.6 * factor))

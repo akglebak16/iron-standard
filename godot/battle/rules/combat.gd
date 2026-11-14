@@ -10,11 +10,12 @@ const DamageType = preload("res://equipment/rules/damage_type.gd")
 static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGenerator, damage_scale: float = 1.0) -> int:
 	var incoming: float = (attacker.position - target.position).angle()
 	var rear := absf(wrapf(incoming - target.facing, -PI, PI)) > Config.REAR_ANGLE
-	var raw: float = attacker.damage * damage_scale * rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
+	var base := attacker.damage
+	if attacker.attack_range > 0.0:
+		base = attacker.ranged_melee_damage if attacker.ranged_melee_damage > 0.0 else base * Config.RANGED_MELEE_DAMAGE_MULTIPLIER
+	var raw: float = base * damage_scale * rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
 	if not rear and Block.check(target, incoming, false, rng):
 		return 0
-	if attacker.attack_range > 0.0:
-		raw *= Config.RANGED_MELEE_DAMAGE_MULTIPLIER
 	if rear:
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
 	if attacker.anti_cavalry and target.mounted:

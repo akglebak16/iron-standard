@@ -54,4 +54,4 @@ static func plan(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2) -> 
 		if destination.x < margin or destination.x > arena_size.x - margin or destination.y < margin or destination.y > arena_size.y - margin:
 			destination = arena_size * 0.5
 		speed_scale = Config.AI_SKIRMISH_SPEED_MULTIPLIER
-	return {"mode": mode, "destination": destination, "face": face, "speed_scale": speed_scale}
+	return {"mode": mode, "destination": destination, "face": face, "speed_scale": speed_scale, "target_distance": distance}
