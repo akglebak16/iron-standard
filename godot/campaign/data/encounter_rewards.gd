@@ -4,6 +4,7 @@ const Config = preload("res://campaign/config.gd")
 const LOW_LOOT_FACTIONS := ["undead"]
 const CAMP_KIND := "camp"
 const CARAVAN_KIND := "caravan"
+const SIEGE_KIND := "siege"
 const BANDIT_KIND := "bandit"
 const UNDEAD_ARMY_KIND := "dead"
 const CLEARED_BARROW_FACTION := "bandit"

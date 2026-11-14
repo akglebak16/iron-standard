@@ -50,6 +50,13 @@ func size() -> int:
 func get_troop(id: String) -> Dictionary:
 	return _troops.get(id, {}).duplicate(true)
 
+func for_faction(faction: String) -> Array[Dictionary]:
+	var definitions: Array[Dictionary] = []
+	for troop: Dictionary in _troops.values():
+		if troop.fac == faction:
+			definitions.append(troop.duplicate(true))
+	return definitions
+
 static func _valid_number(value: Variant) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and value >= 0
 

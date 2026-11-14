@@ -4,8 +4,10 @@ const Config = preload("res://campaign/config.gd")
 const EncounterRewards = preload("res://campaign/data/encounter_rewards.gd")
 const Relations = preload("res://campaign/rules/relations.gd")
 const Quests = preload("res://campaign/rules/battle_quests.gd")
+const Siege = preload("res://campaign/rules/siege_aftermath.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
 
-static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, result: Dictionary, summary: Dictionary, quest_reward_bonus: float = 0.0) -> Dictionary:
+static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, result: Dictionary, summary: Dictionary, quest_reward_bonus: float = 0.0, troops: Catalog = null, rng: RandomNumberGenerator = null) -> Dictionary:
 	var updated := world.duplicate(true)
 	var factions: Array = updated.get("factions", EncounterRewards.CAMPAIGN_FACTIONS)
 	var parties: Array = updated.get("parties", [])
@@ -37,6 +39,9 @@ static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, re
 					party.gold += Config.RECOVERY_GOLD
 					summary.recovery_gold = Config.RECOVERY_GOLD
 	updated.parties = parties
+	if opponent.get("kind") == EncounterRewards.SIEGE_KIND:
+		assert(troops != null and rng != null, "Siege aftermath requires a troop catalog and RNG")
+		Siege.apply(updated, party, opponent, result, summary, troops, rng)
 	summary.hostility_changes = Relations.refresh(party, factions)
 	return updated
 

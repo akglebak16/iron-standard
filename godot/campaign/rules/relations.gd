@@ -5,7 +5,7 @@ static func reward(party: Dictionary, faction: String, amount: int) -> void:
 	if faction.is_empty():
 		return
 	var values: Dictionary = party.get("rel", {})
-	values[faction] = mini(Config.RELATION_MAX, int(values.get(faction, 0)) + amount)
+	values[faction] = clampi(int(values.get(faction, 0)) + amount, Config.RELATION_MIN, Config.RELATION_MAX)
 	party.rel = values
 
 static func refresh(party: Dictionary, factions: Array) -> Array[Dictionary]:

@@ -10,11 +10,30 @@ const DEFEAT_GOLD_SHARE := 0.25
 const OPPONENT_DEFEAT_COOLDOWN := 10
 const PARTY_IDLE := "idle"
 const SETTLEMENT_TOWN := "town"
+const SETTLEMENT_VILLAGE := "village"
+const LORD_KIND := "lord"
+const PLAYER_FACTION := "player"
+const UNDEAD_FACTION := "undead"
+const BANDIT_FACTION := "bandit"
+const SOLO_ARMY_SCALE := 2
+const SPECIAL_ARMY_SCALE := 1.25
+const CAPTURE_GARRISON_COUNT := 4
+const CAPTURE_GARRISON_QUALITY := 0.3
+const SIEGE_TOWN_GOLD := 350
+const SIEGE_OTHER_GOLD := 180
+const INITIAL_GARRISONS := {
+	"town": {"counts": Vector2i(85, 120), "quality": 0.62},
+	"castle": {"counts": Vector2i(130, 175), "quality": 0.75},
+}
+const CAPTURE_RELATION_LOSS := 15
+const CAPTURE_RUIN_HOURS := 24 * 10
+const LIBERATION_RELATION_REWARD := 8
 const TOWN_RECOVERY_OFFSET := Vector2(10, 34)
 const RECOVERY_GOLD_THRESHOLD := 60
 const RECOVERY_GOLD := 80
 const CAMP_RESPAWN_HOURS := 24 * 9
 const RELATION_MAX := 100
+const RELATION_MIN := -100
 const HOSTILE_BELOW := -20
 const QUEST_RELATION_REWARD := 6
 const CULTURE_VICTORY_REWARD := 1

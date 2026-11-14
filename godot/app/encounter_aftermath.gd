@@ -28,7 +28,7 @@ func resolve(party: Dictionary, opponent: Dictionary, mounted_hero: bool, troops
 	var aftermath := Aftermath.resolve(party, result, encounter, effects, troops, rng, companions, perks)
 	if aftermath.is_empty():
 		return {}
-	aftermath.world = EncounterWorld.apply(world, aftermath.party, opponent, result, aftermath.summary, float(effects.get("quest", 0.0)))
+	aftermath.world = EncounterWorld.apply(world, aftermath.party, opponent, result, aftermath.summary, float(effects.get("quest", 0.0)), troops, rng)
 	aftermath.summary.drops = []
 	if result.win:
 		var reward_effects := CompanionProfile.party_effects(aftermath.party.hero, aftermath.party.get("comps", []), companions, perks)

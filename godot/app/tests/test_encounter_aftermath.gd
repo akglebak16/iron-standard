@@ -6,6 +6,7 @@ const Config = preload("res://battle/config.gd")
 const Troops = preload("res://troops/data/catalog.gd")
 const Gear = preload("res://equipment/data/gear_catalog.gd")
 const Goods = preload("res://campaign/data/goods_catalog.gd")
+const Siege = preload("res://campaign/rules/siege_aftermath.gd")
 const TICK := 1.0 / 60.0
 
 const Companions = preload("res://characters/data/companion_catalog.gd")
@@ -41,5 +42,16 @@ func _initialize() -> void:
 	var final_rng := rng.state
 	assert(bridge.resolve(applied.party, opponent, false, troops, gear, goods, rng, companions, perks).is_empty())
 	assert(rng.state == final_rng)
+	var settlement := {"id": 5, "kind": "town", "fac": "emp", "name": "Вентум", "gar": [{"type": "e1", "n": 1}]}
+	var siege := Siege.defenders(settlement, [], troops, rng)
+	setup.enemy_army.assign(siege.troops)
+	var siege_session := Factory.create(setup, troops)
+	siege_session._state.kill(siege_session._state.units[0], siege_session._hero)
+	siege_session.advance(TICK)
+	siege_session.advance(TICK + Config.BATTLE_END_DELAY_SECONDS)
+	party.id = 7
+	var captured := Aftermath.new(siege_session).resolve(party, siege, false, troops, gear, goods, rng, companions, perks, {"settlements": [settlement]})
+	assert(captured.summary.captured == settlement.name and captured.world.settlements[0].owner == 7)
+	assert(settlement.fac == "emp" and settlement.gar[0].n == 1)
 	print("Encounter aftermath integration tests passed")
 	quit(0)
