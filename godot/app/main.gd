@@ -17,6 +17,8 @@ const NO_DROPS := "—"
 const COMPANION_XP_TEXT := "%s +%d опыта"
 const COMPANION_LEVEL_TEXT := " (ур. %d)"
 const RECOVERY_TEXT := "\nГерой очнулся у города %s."
+const QUEST_REWARDS_TEXT := "\nЗаданий выполнено: %d · Награда: %d золота"
+const BARROW_CLEARED_TEXT := "\nЧёрный курган разрушен."
 @export var demo_world: Dictionary = {}
 @export var demo_party_position := Vector2.ZERO
 @export var battle_setup: Setup = preload("res://battle/data/demo_battle.tres")
@@ -83,6 +85,14 @@ func _show_aftermath(view: Node2D, bridge: EncounterAftermath, opponent: Diction
 	var text := DEMO_REWARD_TEXT % [summary.lost, summary.wounded, gold_change, summary.xp, NO_DROPS if names.is_empty() else ", ".join(names)]
 	if summary.has("recovery_town"):
 		text += RECOVERY_TEXT % summary.recovery_town
+	if summary.get("barrow_destroyed", false):
+		text += BARROW_CLEARED_TEXT
+	var completed: Array = summary.get("completed_quests", [])
+	if not completed.is_empty():
+		var reward := 0
+		for quest in completed:
+			reward += int(quest.gold)
+		text += QUEST_REWARDS_TEXT % [completed.size(), reward]
 	var companions_text := PackedStringArray()
 	for profile in _demo_party.comps:
 		if not summary.comps.has(profile.id):

@@ -2,23 +2,33 @@ extends RefCounted
 ## Detached world update for the opposing party and post-defeat recovery.
 const Config = preload("res://campaign/config.gd")
 const EncounterRewards = preload("res://campaign/data/encounter_rewards.gd")
+const Relations = preload("res://campaign/rules/relations.gd")
+const Quests = preload("res://campaign/rules/battle_quests.gd")
 
-static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, result: Dictionary, summary: Dictionary) -> Dictionary:
+static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, result: Dictionary, summary: Dictionary, quest_reward_bonus: float = 0.0) -> Dictionary:
 	var updated := world.duplicate(true)
+	var factions: Array = updated.get("factions", EncounterRewards.CAMPAIGN_FACTIONS)
 	var parties: Array = updated.get("parties", [])
 	var opponent_id: Variant = opponent.get("id")
 	var index := _party_index(parties, opponent_id)
 	if result.win:
 		if index >= 0:
 			parties.remove_at(index)
-		_clear_camp(updated.get("settlements", []), opponent)
+		var policy := EncounterRewards.victory_policy(opponent)
+		_reward_factions(party, factions, policy.global_relation)
+		if _clear_camp(updated, policy.camp_target):
+			summary.barrow_destroyed = true
+			_reward_factions(party, factions, Config.BARROW_RELATION_REWARD)
+		summary.completed_quests = Quests.apply_victory(party, policy, quest_reward_bonus)
+		if policy.culture_reward:
+			Relations.reward(party, party.get("culture", ""), Config.CULTURE_VICTORY_REWARD)
 	else:
 		if index >= 0:
 			_reset_opponent(parties[index], result.get("enemyLeft", {}))
 			var reinforcements := EncounterRewards.defeat_reinforcements(parties[index].get("fac", ""))
 			if not reinforcements.is_empty():
 				summary.enemy_reinforcements = _reinforce(parties[index].troops, summary.lost, reinforcements)
-		if party.troops.is_empty() and party.get("position") is Vector2:
+		if party.get("position") is Vector2 and party.troops.is_empty():
 			var town := _nearest_town(updated.get("settlements", []), party.position)
 			if not town.is_empty():
 				party.position = town.position + Config.TOWN_RECOVERY_OFFSET
@@ -27,7 +37,14 @@ static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, re
 					party.gold += Config.RECOVERY_GOLD
 					summary.recovery_gold = Config.RECOVERY_GOLD
 	updated.parties = parties
+	summary.hostility_changes = Relations.refresh(party, factions)
 	return updated
+
+static func _reward_factions(party: Dictionary, factions: Array, amount: int) -> void:
+	if amount <= 0:
+		return
+	for faction in factions:
+		Relations.reward(party, faction, amount)
 
 static func _party_index(parties: Array, id: Variant) -> int:
 	if id == null:
@@ -64,16 +81,27 @@ static func _reinforce(troops: Array, lost: int, policy: Dictionary) -> int:
 		matching.n += count
 	return count
 
-static func _clear_camp(settlements: Array, opponent: Dictionary) -> void:
-	var camp_id: Variant = opponent.get("camp")
-	if opponent.get("kind") != EncounterRewards.CAMP_KIND or camp_id == null:
-		return
-	for settlement in settlements:
-		if settlement.get("id") == camp_id:
-			settlement.camp = null
-			settlement.cleared = true
-			settlement.respawn = Config.CAMP_RESPAWN_HOURS
-			return
+static func _clear_camp(world: Dictionary, camp_id: Variant) -> bool:
+	if camp_id == null:
+		return false
+	for settlement in world.get("settlements", []):
+		if settlement.get("id") != camp_id:
+			continue
+		settlement.camp = null
+		settlement.cleared = true
+		settlement.respawn = Config.CAMP_RESPAWN_HOURS
+		if not settlement.get("barrow", false):
+			return false
+		settlement.barrow = false
+		settlement.fac = EncounterRewards.CLEARED_BARROW_FACTION
+		settlement.name = settlement.get("name0", settlement.get("name", ""))
+		if world.get("crisis") is Dictionary:
+			var remaining: Dictionary = world.crisis.get("left", {})
+			var key: Variant = str(camp_id) if remaining.has(str(camp_id)) else camp_id
+			remaining[key] = 0
+			world.crisis.left = remaining
+		return true
+	return false
 
 static func _nearest_town(settlements: Array, position: Vector2) -> Dictionary:
 	var nearest := {}
