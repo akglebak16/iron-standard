@@ -17,6 +17,12 @@ func _initialize() -> void:
 	var opponent := Siege.defenders(settlement, world.parties, catalog, rng)
 	assert(opponent.id == -4 and opponent.sid == 4 and opponent.gold == 350 and opponent.lord == "Lord")
 	assert(opponent.troops == [{"type": "e1", "n": 10}, {"type": "k1", "n": 10}])
+	assert(opponent.wall_damage == 0.0 and opponent.wall_defense == {"stones": 10, "oil": 2})
+	settlement.dmg = 1.7
+	var battered := Siege.defenders(settlement, world.parties, catalog, rng)
+	assert(battered.wall_damage == 1.0, "Damage is clamped to 0..1")
+	settlement.erase("dmg")
+	assert(Siege.supplies({"kind": "castle"}) == {"stones": 14, "oil": 3} and Siege.supplies({"kind": "village"}) == {"stones": 10, "oil": 2})
 	var before := rng.state
 	var failed := World.apply(world, player, opponent, {"win": false, "enemyDead": 10, "enemyTotal": 20}, {}, 0.0, catalog, rng)
 	assert(failed.settlements[0].gar == [{"type": "k1", "n": 5}])

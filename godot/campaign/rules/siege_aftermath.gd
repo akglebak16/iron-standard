@@ -22,7 +22,12 @@ static func defenders(settlement: Dictionary, parties: Array, catalog: Catalog, 
 	var troops := Generation.stacks(counts)
 	troops.sort_custom(func(a, b): return _garrison_precedes(a, b, catalog))
 	var gold := Config.SIEGE_TOWN_GOLD if settlement.kind == Config.SETTLEMENT_TOWN else Config.SIEGE_OTHER_GOLD
-	return {"id": -int(settlement.id), "kind": Rewards.SIEGE_KIND, "sid": settlement.id, "fac": settlement.fac, "name": settlement.name, "gold": gold, "troops": troops, "lord": leader}
+	return {"id": -int(settlement.id), "kind": Rewards.SIEGE_KIND, "sid": settlement.id, "fac": settlement.fac, "name": settlement.name, "gold": gold, "troops": troops, "lord": leader,
+		"wall_damage": clampf(float(settlement.get("dmg", 0.0)), 0.0, 1.0), "wall_defense": supplies(settlement)}
+
+## Stones and oil the garrison has on the walls (src/05i_siege.js sgDefCfg); the battle scales them by wall damage.
+static func supplies(settlement: Dictionary) -> Dictionary:
+	return (Config.SIEGE_SUPPLIES_CASTLE if settlement.get("kind") == Config.SETTLEMENT_CASTLE else Config.SIEGE_SUPPLIES_OTHER).duplicate()
 
 ## Mutates the world and party copies owned by the encounter resolver.
 static func apply(world: Dictionary, party: Dictionary, opponent: Dictionary, result: Dictionary, summary: Dictionary, catalog: Catalog, rng: RandomNumberGenerator) -> void:
