@@ -66,7 +66,7 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 		if unit == null:
 			return null
 		if not companion.voice.is_empty():
-			dialogue[unit.id] = {"name": unit.name, "lines": companion.voice}
+			dialogue[unit.id] = {"name": unit.name, "companion_id": unit.companion_id, "lines": companion.voice}
 	state.place_units()
 	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true

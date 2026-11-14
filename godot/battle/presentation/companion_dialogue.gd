@@ -1,5 +1,6 @@
 extends RefCounted
 const Event = preload("res://battle/combat_event.gd")
+const Banter = preload("res://battle/presentation/banter_lines.gd")
 
 const START := "start"
 const SIEGE := "siege"
@@ -11,18 +12,26 @@ const DOWN := "down"
 const JOURNAL_LINE := "%s: «%s»"
 
 const START_DELAY := Vector2(1.0, 2.2)
-const INITIAL_TAUNT_DELAY := Vector2(12.0, 18.0)
-const TAUNT_INTERVAL := Vector2(12.0, 20.0)
+const INITIAL_TAUNT_DELAY := Vector2(24.0, 36.0) # Browser halved how often companions talk.
+const TAUNT_INTERVAL := Vector2(24.0, 40.0)
 const TAUNT_DISTANCE := 260.0
 const HURT_DAMAGE_FRACTION := 0.1
 const HURT_CHANCE := 0.35
 const UNDEAD_KILL_CHANCE := 0.5
 const COOLDOWN_INTERRUPT_CHANCE := 0.3
 const KILL_COOLDOWN_LIMIT := 0.6
-const KILL_COOLDOWN := 1.1
-const GENERAL_COOLDOWN := 3.0
+const KILL_COOLDOWN := 3.2
+const GENERAL_COOLDOWN := 6.0
+const KILL_SPEECH_CHANCE := 0.5
 const INTRO_DURATION := 3.0
 const REPLY_DURATION := 2.4
+const BANTER_FIRST_DELAY := Vector2(9.0, 14.0)
+const BANTER_INTERVAL := Vector2(20.0, 32.0)
+const BANTER_RETRY_SECONDS := 3.0
+const BANTER_REPLY_DELAY := 3.2
+const BANTER_DOWN_DELAY := 1.3
+const BANTER_DURATION := 3.0
+const BANTER_COOLDOWN := 4.0
 
 const FADE_DURATION := 0.3
 const FONT_SIZE := 13
@@ -42,13 +51,19 @@ const EMPHASIS := Color("#8f1a12")
 
 var _rng := RandomNumberGenerator.new()
 var _speakers := {}
+var _banter_timer := 0.0
+var _banter_reply := {}
+var _banter_last := -1
 
 func configure(roster: Dictionary) -> void:
 	_speakers.clear()
+	_banter_timer = _rng.randf_range(BANTER_FIRST_DELAY.x, BANTER_FIRST_DELAY.y)
+	_banter_reply = {}
+	_banter_last = -1
 	for id in roster:
 		var entry: Dictionary = roster[id]
 		_speakers[id] = {
-			"name": entry.name, "lines": entry.lines.duplicate(true),
+			"name": entry.name, "companion_id": entry.get("companion_id", ""), "lines": entry.lines.duplicate(true),
 			"intro": _rng.randf_range(START_DELAY.x, START_DELAY.y),
 			"taunt": _rng.randf_range(INITIAL_TAUNT_DELAY.x, INITIAL_TAUNT_DELAY.y),
 			"cooldown": 0.0, "text": "", "remaining": 0.0, "unit": {},
@@ -84,8 +99,10 @@ func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], sie
 				if _speakers.has(event.target_id):
 					var speaker: Dictionary = _speakers[event.target_id]
 					journal.append_array(_journal_line(speaker, DOWN))
+					_queue_down_reply(speaker)
 	if finished:
 		return journal
+	journal.append_array(_advance_banter(dt))
 	for speaker: Dictionary in _speakers.values():
 		var unit: Dictionary = speaker.unit
 		if unit.is_empty() or unit.dead or unit.gone:
@@ -128,6 +145,62 @@ func draw(canvas: CanvasItem) -> void:
 		var baseline := center.y + (font.get_ascent(FONT_SIZE) - font.get_descent(FONT_SIZE)) * 0.5
 		canvas.draw_string(font, Vector2(bounds.position.x + HORIZONTAL_PADDING, baseline), speaker.text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, Color(ink, opacity))
 
+## The pair flirts while both are on the field; when one falls, the other reacts (src/03b_gore.js banterUpdate/banterDown).
+func _advance_banter(dt: float) -> PackedStringArray:
+	var journal := PackedStringArray()
+	if not _banter_reply.is_empty():
+		_banter_reply.remaining -= dt
+		if _banter_reply.remaining <= 0.0:
+			var reply := _banter_reply
+			_banter_reply = {}
+			if _banter_speaker_ready(reply.speaker):
+				journal.append_array(_banter_say(reply.speaker, reply.text))
+	_banter_timer -= dt
+	if _banter_timer > 0.0 or not _banter_reply.is_empty():
+		return journal
+	var first := _speaker_by_companion(Banter.FIRST_ID)
+	var second := _speaker_by_companion(Banter.SECOND_ID)
+	if not _banter_speaker_ready(first) or not _banter_speaker_ready(second) or first.remaining > 0.0 or second.remaining > 0.0:
+		_banter_timer = BANTER_RETRY_SECONDS
+		return journal
+	_banter_timer = _rng.randf_range(BANTER_INTERVAL.x, BANTER_INTERVAL.y)
+	var index := _rng.randi_range(0, Banter.EXCHANGES.size() - 1)
+	while index == _banter_last and Banter.EXCHANGES.size() > 1:
+		index = _rng.randi_range(0, Banter.EXCHANGES.size() - 1)
+	_banter_last = index
+	var exchange: Array = Banter.EXCHANGES[index]
+	var opener := first if exchange[0] == "g" else second
+	var other := second if opener == first else first
+	journal.append_array(_banter_say(opener, exchange[1]))
+	_banter_reply = {"remaining": BANTER_REPLY_DELAY, "speaker": other, "text": exchange[2]}
+	return journal
+
+func _queue_down_reply(fallen: Dictionary) -> void:
+	var lines: Array = Banter.DOWN_REPLIES.get(fallen.companion_id, [])
+	if lines.is_empty():
+		return
+	var other := _speaker_by_companion(Banter.SECOND_ID if fallen.companion_id == Banter.FIRST_ID else Banter.FIRST_ID)
+	if not _banter_speaker_ready(other):
+		return
+	_banter_reply = {"remaining": BANTER_DOWN_DELAY, "speaker": other, "text": lines[_rng.randi_range(0, lines.size() - 1)]}
+
+func _banter_say(speaker: Dictionary, text: String) -> PackedStringArray:
+	speaker.text = text
+	speaker.remaining = BANTER_DURATION
+	speaker.cooldown = BANTER_COOLDOWN
+	return PackedStringArray([JOURNAL_LINE % [speaker.name, text]])
+
+func _banter_speaker_ready(speaker: Dictionary) -> bool:
+	if speaker.is_empty() or speaker.unit.is_empty():
+		return false
+	return not speaker.unit.dead and not speaker.unit.gone
+
+func _speaker_by_companion(companion_id: String) -> Dictionary:
+	for speaker: Dictionary in _speakers.values():
+		if speaker.companion_id == companion_id:
+			return speaker
+	return {}
+
 func _journal_line(speaker: Dictionary, kind: String) -> PackedStringArray:
 	if _say(speaker, kind, true):
 		return PackedStringArray([JOURNAL_LINE % [speaker.name, speaker.text]])
@@ -139,7 +212,7 @@ func _say(speaker: Dictionary, kind: String, force: bool = false) -> bool:
 		return false
 	var kill := kind == KILL or kind == KILL_UNDEAD
 	if not force:
-		if kill and speaker.cooldown > KILL_COOLDOWN_LIMIT:
+		if kill and (speaker.cooldown > KILL_COOLDOWN_LIMIT or _rng.randf() > KILL_SPEECH_CHANCE):
 			return false
 		if not kill and speaker.cooldown > 0.0 and _rng.randf() > COOLDOWN_INTERRUPT_CHANCE:
 			return false
