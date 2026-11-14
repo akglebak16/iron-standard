@@ -10,6 +10,11 @@ func _initialize() -> void:
 	_check_tree("res://battle/rules", external_layers + adapters + catalogs + scene_and_files)
 	_check_tree("res://battle/application", external_layers + scene_and_files + ["res://battle/presentation/"])
 	_check_tree("res://battle/data", external_layers + scene_and_files + ["res://battle/application/", "res://battle/presentation/"])
+	var campaign_forbidden := ["res://app/", "res://battle/"]
+	_check_file("res://campaign/config.gd", campaign_forbidden)
+	_check_tree("res://campaign/data", campaign_forbidden)
+	_check_tree("res://campaign/rules", campaign_forbidden + scene_and_files)
+	_check_tree("res://campaign/economy", campaign_forbidden + scene_and_files)
 	# These legacy content identifiers belong to definitions and compatibility adapters.
 	var legacy_content := ['"undead"', '"skel"', '"zombie"', "UNDEAD_FACTION", "undead_kind"]
 	_check_tree("res://battle/model", legacy_content)

@@ -62,5 +62,8 @@ func size() -> int:
 func get_item(id: String) -> Dictionary:
 	return _items.get(id, {}).duplicate(true)
 
+func definitions() -> Dictionary:
+	return _items.duplicate(true)
+
 static func _valid_number(value: Variant) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and value >= 0

@@ -10,6 +10,7 @@ data/
 !godot/troops/tests/data/
 !godot/characters/data/
 !godot/characters/tests/data/
+!godot/campaign/data/
 index.html
 _site/
 godot/.godot/

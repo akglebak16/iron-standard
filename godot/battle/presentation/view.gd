@@ -5,6 +5,8 @@ const Demo = preload("res://battle/presentation/demo_config.gd")
 const Session = preload("res://battle/application/session.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 
+signal battle_finished
+
 @onready var camera: Camera2D = $Camera
 @onready var status: Label = $Hud/Status
 var _session: Session
@@ -17,6 +19,9 @@ func configure(session: Session) -> void:
 
 func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
+
+func show_result_summary(summary: String) -> void:
+	status.text += summary
 
 func _ready() -> void:
 	if _session == null:
@@ -41,6 +46,8 @@ func _physics_process(dt: float) -> void:
 		_session.set_hero_input(input)
 	_session.advance(dt)
 	_refresh()
+	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
+		battle_finished.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _session == null or not event is InputEventKey or not event.pressed or event.echo:
