@@ -27,6 +27,7 @@ func _initialize() -> void:
 	assert(battle.groups[0][Config.GROUP_INFANTRY].units.size() == 10)
 	assert(battle.groups[0][Config.GROUP_CAVALRY].units.size() == 5)
 	assert(battle.units[0].hp == 60.0 and battle.units[0].weight == 1.0)
+	assert(battle.units[0].shield_block == float(catalog.get_troop("n1").get("shb", 0)))
 	var massive = BattleState.new()
 	massive.setup_groups()
 	rng.seed = 8123

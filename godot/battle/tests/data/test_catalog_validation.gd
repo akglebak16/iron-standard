@@ -17,6 +17,9 @@ func _initialize() -> void:
 		var invalid := original.duplicate(true)
 		invalid.hp = bad_value
 		assert(not catalog.replace_data({"n1": invalid}))
+	var invalid_shield := original.duplicate(true)
+	invalid_shield.shb = 1.1
+	assert(not catalog.replace_data({"n1": invalid_shield}))
 	assert(not catalog.replace_data([]))
 	assert(catalog.size() == 67 and catalog.get_troop("n1") == original)
 	var definitions := {"n1": original.duplicate(true)}

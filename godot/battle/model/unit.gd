@@ -35,6 +35,7 @@ var attack_interval: float = 1.0
 var attack_cooldown: float = 0.0
 var melee_reach: float = Config.DEFAULT_MELEE_REACH
 var block_chance: float = 0.0
+var shield_block: float = 0.0 # Troop shield arrow bonus; hero gear will supply its own value later.
 var accuracy: float = 0.0
 var pierce: float = 0.0
 var anti_cavalry: bool = false

@@ -3,7 +3,7 @@ extends RefCounted
 const Config = preload("res://battle/config.gd")
 const DATA_PATH := "res://battle/data/troops.json"
 const REQUIRED_NUMBERS := ["tier", "grp", "hp", "arm", "dmg", "spd", "cd", "block"]
-const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce"]
+const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb"]
 var _troops: Dictionary = {}
 
 func load_data() -> bool:
@@ -34,7 +34,7 @@ func replace_data(data: Variant) -> bool:
 				return false
 		if troop.grp != int(troop.grp) or troop.grp < Config.GROUP_INFANTRY or troop.grp > Config.GROUP_CAVALRY:
 			return false
-		if troop.hp <= 0 or troop.spd <= 0 or troop.cd <= 0 or troop.block > 1:
+		if troop.hp <= 0 or troop.spd <= 0 or troop.cd <= 0 or troop.block > 1 or troop.get("shb", 0) > 1:
 			return false
 		if troop.has("look") and not troop.look is Dictionary:
 			return false

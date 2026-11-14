@@ -51,7 +51,6 @@ func _check_cleave_damage() -> void:
 	expected_rng.seed = rng.seed
 	HeroControl.step(battle, hero, {"face": 0.0, "attack": true}, Config.HERO_ATTACK_WINDUP, rng)
 	for index in Config.HERO_MAX_HITS:
-		expected_rng.randf() # Block roll, same consumption order as Combat.strike.
 		var scale: float = 1.0 if index == 0 else Config.HERO_FOLLOWUP_DAMAGE
 		var raw := hero.damage * scale * expected_rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
 		var expected: int = preload("res://battle/rules/damage.gd").after_armor(raw, 0)

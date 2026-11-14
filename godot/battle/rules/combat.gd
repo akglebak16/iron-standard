@@ -3,13 +3,14 @@ const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 
 const Config = preload("res://battle/config.gd")
+const Block = preload("res://battle/rules/block.gd")
 
 static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGenerator, damage_scale: float = 1.0) -> int:
 	var incoming: float = (attacker.position - target.position).angle()
 	var rear := absf(wrapf(incoming - target.facing, -PI, PI)) > Config.REAR_ANGLE
-	if not rear and _blocked(target, incoming, rng):
-		return 0
 	var raw: float = attacker.damage * damage_scale * rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
+	if not rear and Block.check(target, incoming, false, rng):
+		return 0
 	if attacker.attack_range > 0.0:
 		raw *= Config.RANGED_MELEE_DAMAGE_MULTIPLIER
 	if rear:
@@ -34,15 +35,9 @@ static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> D
 
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
 	var incoming: float = (shot.source.position - target.position).angle()
-	if _blocked(target, incoming, rng):
+	if Block.check(target, incoming, true, rng):
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)
 	if target.undead_kind == "skel":
 		raw *= Config.SKELETON_ARROW_MULTIPLIER
 	return battle.hurt(target, raw, shot.source, shot.pierce)
-
-static func _blocked(target: Unit, incoming: float, rng: RandomNumberGenerator) -> bool:
-	var chance: float = target.block_chance
-	if target.hero:
-		chance = minf(Config.HERO_MAX_BLOCK_CHANCE, chance + Config.HERO_ACTIVE_BLOCK_BONUS) if target.blocking else chance * Config.HERO_IDLE_BLOCK_MULTIPLIER
-	return absf(wrapf(incoming - target.facing, -PI, PI)) <= Config.BLOCK_ARC and rng.randf() < chance

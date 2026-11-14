@@ -27,6 +27,7 @@ static func create(setup: Setup, catalog: Catalog) -> Session:
 	hero.damage = float(troop.dmg)
 	hero.attack_interval = float(troop.cd)
 	hero.block_chance = float(troop.block)
+	hero.shield_block = float(troop.get("shb", 0))
 	state.add_unit(hero)
 	for group in state.groups[1]:
 		group.order = Config.ORDER_CHARGE
