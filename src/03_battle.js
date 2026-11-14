@@ -28,7 +28,13 @@ function startBattle(cfg) {
   for (let s = 0; s < 2; s++) { const sx = s ? W - 640 : 640, d = s ? Math.PI : 0, f = s ? -1 : 1; B.groups.push([0, 1, 2].map(k => ({ side: s, k, units: [], order: 'hold', cx: sx - f * (k === 1 ? 105 : k === 2 ? 20 : 0), cy: H / 2 + (k === 2 ? (R() < .5 ? -1 : 1) * 380 : 0), dir: d, st: 'wait', wx: 0, wy: 0, lt: 0 }))); }
   // Больше BATTLE_CAP юнитов на сторону не рисуем: лишние бойцы сливаются в более крепких. Юнит, который заменяет k бойцов, получает здоровье и урон ×k
   // (сила армии по закону квадратов Ланчестера та же), а потери в конце боя считаются в живых людях (u.w = k).
-  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n; const cap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP, sc = tot > cap ? cap / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
+  B.reserve = [[], []]; B.resDead = [0, 0]; B.cap = [BATTLE_CAP, BATTLE_CAP];
+  const fill = (side, list, fac) => { let tot = 0; for (const s of list) tot += s.n;
+    const wcap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP; B.cap[side] = wcap;
+    if ((fac === 'undead' || cfg.quick) && !SERVER && tot > wcap) { // нежить (и все в быстром бою) сверх предела ждёт в запасе и выходит волнами (battleWaves), а не сливается в «толстых» бойцов
+      const all = []; for (const s of list) for (let i = 0; i < s.n; i++) all.push(s.type); for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)), x = all[i]; all[i] = all[j]; all[j] = x; }
+      list = []; for (const id of all.slice(0, wcap)) addT(list, id, 1); B.reserve[side] = all.slice(wcap); B.men[side] += B.reserve[side].length; tot = wcap; }
+    const cap = fac === 'undead' ? UNDEAD_CAP : BATTLE_CAP, sc = tot > cap ? cap / tot : 1; for (const s of list) { const t = TROOPS[s.type], n = sc < 1 ? Math.max(1, Math.round(s.n * sc)) : s.n, k = s.n / n; for (let i = 0; i < n; i++) { const g = B.groups[side][t.grp]; const u = mkUnit(side, t, fac, g.cx + rnd(-30, 30), g.cy + rnd(-30, 30), SERVER ? null : getSprite(s.type, rint(0, 3), fac)); if (k !== 1) { u.w = k; u.hp = u.maxHp = t.hp * k; u.dmg = t.dmg * k; B.men[side] += k - 1; } } } };
   fill(0, cfg.pl, cfg.pfac); fill(1, cfg.en, cfg.efac);
   if (cfg.comps) for (const c of cfg.comps) spawnComp(c);
   if (cfg.siege) siegeSetup();
@@ -68,6 +74,15 @@ function layout(g, init) {
   const nc = Math.ceil(n / rows);
   if (init) us.forEach((u, i) => { const row = Math.floor(i / nc), col = i % nc, inRow = Math.min(nc, n - row * nc); u.lx = (col - (inRow - 1) / 2) * sp; u.ly = -row * sp * .92; });
   else us.forEach((u, i) => { const col = Math.floor(i / rows), row = i % rows; u.lx = (col - (nc - 1) / 2) * sp; u.ly = -row * sp * .92; });
+}
+/* волны: когда на поле пала треть предела (у нежити 200 из 600, у живых 100 из 300), из-за края поля выходит следующая треть из запаса */
+function battleWaves(n) {
+  for (let side = 0; side < 2; side++) { const R = B.reserve && B.reserve[side]; if (!R || !R.length) continue; const cap = B.cap[side], wave = Math.round(cap / 3), room = cap - n[side]; if (room < wave && n[side] > 0) continue;
+    const k = Math.min(R.length, room, wave), ex = side ? B.W - 90 : 90, gs = new Set(); let und = false;
+    for (const id of R.splice(0, k)) { const t = TROOPS[id], fac = side ? B.cfg.efac : B.cfg.pfac, u = mkUnit(side, t, fac, ex + rnd(-50, 50), B.H / 2 + rnd(-420, 420), getSprite(id, rint(0, 3), fac)); if (t.fac === 'undead') { u.mbase = u.morale = 999; und = true; } if (!side) u.own = B.cfg.heroPid; B.men[side]--; gs.add(u.grp); }
+    for (const g of gs) layout(g); n[side] += k;
+    if (!B.cfg.demo) { blog((und ? 'Из-за холма выходят ещё ' + k + ' мертвецов' : (side ? 'К врагу подходит подкрепление: ' : 'К нам подходит подкрепление: ') + k) + (R.length ? ' (в запасе ' + R.length + ')' : ' — последняя волна'), side ? 1 : 0); sfx(side ? 'horn2' : 'horn'); }
+  }
 }
 function slotPos(u) { const g = u.grp, c = Math.cos(g.dir), s = Math.sin(g.dir); return [clamp(g.cx - s * u.lx + c * u.ly, 30, B.W - 30), clamp(g.cy + c * u.lx + s * u.ly, 30, B.H - 30)]; }
 function centroid(side) { let x = 0, y = 0, n = 0, m = 0; for (const u of B.units) if (u.side === side && fit(u)) { x += u.x; y += u.y; n++; m += u.w || 1; } return n ? { x: x / n, y: y / n, n, m } : null; } // n — юнитов, m — людей (один юнит может быть слитым отрядом)
@@ -208,7 +223,7 @@ function kill(t, src) {
   for (const u of B.units) { if (u.dead || u.gone) continue; const d = Math.hypot(u.x - t.x, u.y - t.y); if (d > 170) continue; if (u.side === t.side) u.morale -= t.leader || t.isHero ? 9 : 1.6 + t.t.tier * .5; else u.morale = Math.min(u.mbase, u.morale + 3); }
   if (t.isHero && t.side === 0 && !t.ai) { t.down = true; if (t === B.hero) B.heroDown = true; blog(t.name + ' ранен и вынесен из боя', 1); for (const g2 of B.groups[0]) if (g2.own === t.pid) g2.order = 'charge'; for (const u of B.units) if (u.side === 0 && u.own === t.pid) u.morale -= 7; B.hudDirty = true; }
   else if (t.comp) { blog(t.name + ' ранен и вынесен из боя', 1); for (const u of B.units) if (u.side === 0 && Math.hypot(u.x - t.x, u.y - t.y) < 170) u.morale -= 4; B.hudDirty = true; }
-  else if (t.leader && t.t.fac === 'undead') { blog(t.name + ' пал — мертвецы рассыпаются в прах!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side && alive(u) && u.t.fac === 'undead' && Math.random() < .35) { u.leader = false; kill(u, null); } }
+  else if (t.leader && t.t.fac === 'undead') { blog(t.name + ' пал — мертвецы рассыпаются в прах!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side && alive(u) && u.t.fac === 'undead' && Math.random() < .35) { u.leader = false; kill(u, null); } const R = B.reserve && B.reserve[t.side]; if (R && R.length) { const k = Math.round(R.length * .35); R.splice(0, k); B.resDead[t.side] += k; } }
   else if (t.leader) { blog(t.name + ' пал!', t.side ? 0 : 1); for (const u of B.units) if (u.side === t.side) u.morale -= 10; }
   else if (src && src === B.hero) blog(B.hero.name + ' сразил: ' + t.t.name.toLowerCase(), 0);
   if (t.side === 1) B.xp += (t.t.tier * 10 + (t.t.mounted ? 5 : 0)) * (t.w || 1) * (t.t.pw || 1);
@@ -304,6 +319,7 @@ function battleUpdate(rdt) {
       if (!u.wav && u.morale < 22) { u.wav = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' дрогнул', u.side ? 0 : 1); }
       if (u.morale <= 0 || (my <= B.start[u.side] * .2 && my < th * .5 && !u.leader && B.start[u.side] > 4)) { u.flee = true; if (Math.random() < .5 && !demo) blog(uname(u) + ' бежит с поля боя', u.side ? 0 : 1); } }
     B.hudDirty = true;
+    if (!SERVER && B.reserve) battleWaves(n);
     const f0 = B.units.some(u => u.side === 0 && fit(u)), f1 = B.units.some(u => u.side === 1 && fit(u));
     if ((!f0 || !f1) && !B.over) { B.over = B.t; B.win = f0 && !f1; if (!demo) { blog(B.win ? 'Победа! Враг разбит.' : 'Отряд разбит…', B.win ? 0 : 1); sfx(B.win ? 'horn' : 'horn2'); } }
   }
@@ -330,6 +346,7 @@ function finishBattle() {
       if (u.side === 0) { if (u.own !== pid) continue; if (u.dead && !u.gone) { const k = Math.random() < .38 + surv ? 'wounded' : 'dead'; res[k][id] = (res[k][id] || 0) + w; } else res.left[id] = (res.left[id] || 0) + w; }
       else { if (u.dead && !u.gone) res.enemyDead += w; else res.enemyLeft[id] = (res.enemyLeft[id] || 0) + w; }
     }
+    if (B.reserve) { for (const id of B.reserve[1]) res.enemyLeft[id] = (res.enemyLeft[id] || 0) + 1; res.enemyDead += B.resDead[1]; for (const id of B.reserve[0]) res.left[id] = (res.left[id] || 0) + 1; } // нежить, не успевшая выйти, остаётся в армии; рассыпанная со смертью некроманта — в убитых
     for (const m of [res.dead, res.wounded, res.left, res.enemyLeft]) for (const id in m) { m[id] = Math.round(m[id]); if (!m[id]) delete m[id]; }
     res.enemyDead = Math.round(res.enemyDead);
     return res;

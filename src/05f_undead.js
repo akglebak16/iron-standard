@@ -13,6 +13,8 @@
 
 const UNDEAD = { ARMY_MIN: 350, ARMY_MAX: 500, RAID_MIN: 40, RAID_MAX: 80, MAX_ARMY: 700, RAISE: .5, ARMIES_PER_SRC: 6, ARMIES_AT_ONCE: 3, RAIDS_AT_ONCE: 3, SPAWN_EVERY: 3, BURN_H: 24 * 6, RUIN_H: 24 * 10 };
 const isUndead = p => p && p.fac === 'undead';
+/* масштаб ×2 одиночной игры (MK() из 01_core.js): армии, стража курганов и предел армии растут как у лордов, разъезды — лишь на четверть, как разбойники */
+const uMK = () => MK(), rMK = () => 1 + (MK() - 1) * .25;
 
 /* состав: больше всего мертвецов и скелетов, немного воинов и всадников, редкие умертвия */
 function genUndead(n, elite) {
@@ -20,7 +22,7 @@ function genUndead(n, elite) {
   for (let i = 0; i < n; i++) { let r = Math.random() * tot; for (const x of w) { r -= x[1]; if (r <= 0) { out[x[0]] = (out[x[0]] || 0) + 1; break; } } }
   return Object.keys(out).map(k => ({ type: k, n: out[k] }));
 }
-function undeadRaise(p, n) { n = Math.min(Math.round(n), UNDEAD.MAX_ARMY - troopCount(p.troops)); if (n > 0) addT(p.troops, 'z1', n); return Math.max(0, n); }
+function undeadRaise(p, n) { n = Math.min(Math.round(n), UNDEAD.MAX_ARMY * uMK() - troopCount(p.troops)); if (n > 0) addT(p.troops, 'z1', n); return Math.max(0, n); }
 function notifyAll(txt, kind, near) { for (const P of G.players) { if (near && Math.hypot(near.x - P.x, near.y - P.y) > 700 && !(near.owner === P.id)) continue; logW(txt, kind, P); } if (!SERVER && typeof toast === 'function' && kind === 1 && !near) toast(txt); }
 
 /* ---------- ход кризиса ---------- */
@@ -41,7 +43,7 @@ function crisisStart() {
   for (const s of src) {
     if (s.camp) { const i = G.parties.indexOf(s.camp); if (i >= 0) G.parties.splice(i, 1); }
     s.barrow = true; s.fac = 'undead'; s.cleared = false; s.name0 = s.name0 || s.name; s.name = 'Чёрный курган'; C.left[s.id] = UNDEAD.ARMIES_PER_SRC;
-    s.camp = mkParty('camp', 'undead', 'Чёрный курган', s.x, s.y, genUndead(rint(110, 140), 1), { home: s.id, hide: false }); s.camp.camp = s.id;
+    s.camp = mkParty('camp', 'undead', 'Чёрный курган', s.x, s.y, genUndead(Math.round(rint(110, 140) * uMK()), 1), { home: s.id, hide: false }); s.camp.camp = s.id;
     crisisSpawn(s, true);
   }
   const where = src.map(s => { const t = G.settles.filter(x => x.kind === 'town').sort((a, b) => Math.hypot(a.x - s.x, a.y - s.y) - Math.hypot(b.x - s.x, b.y - s.y))[0]; return t ? 'у ' + t.name : ''; }).join(' и ');
@@ -50,9 +52,9 @@ function crisisStart() {
 function crisisSpawn(s, first) {
   const C = G.crisis, mine = G.parties.filter(p => isUndead(p) && p.src === s.id), armies = mine.filter(p => p.kind === 'dead').length, raids = mine.filter(p => p.kind === 'raid').length;
   let made = 0; // армии выходят сразу пачкой: до ARMIES_AT_ONCE одновременно
-  for (let a = armies; a < UNDEAD.ARMIES_AT_ONCE && C.left[s.id] > 0; a++) { C.left[s.id]--; made++; const p = mkParty('dead', 'undead', 'Некромант ' + unitName('undead'), s.x + rnd(-40, 40), s.y + 26 + rnd(-10, 20), genUndead(rint(UNDEAD.ARMY_MIN, UNDEAD.ARMY_MAX), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = first ? a : rint(0, 4); }
+  for (let a = armies; a < UNDEAD.ARMIES_AT_ONCE && C.left[s.id] > 0; a++) { C.left[s.id]--; made++; const p = mkParty('dead', 'undead', 'Некромант ' + unitName('undead'), s.x + rnd(-40, 40), s.y + 26 + rnd(-10, 20), genUndead(Math.round(rint(UNDEAD.ARMY_MIN, UNDEAD.ARMY_MAX) * uMK()), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = first ? a : rint(0, 4); }
   if (made && !first) notifyAll(made > 1 ? 'Из Чёрного кургана вышли новые армии мертвецов: ' + made + '.' : 'Из Чёрного кургана вышла новая армия мертвецов.', 1, s);
-  for (let i = raids; i < UNDEAD.RAIDS_AT_ONCE && (first ? i < 2 : i < raids + 1); i++) { const p = mkParty('raid', 'undead', 'Мертвецы', s.x + rnd(-30, 30), s.y + rnd(10, 40), genUndead(rint(UNDEAD.RAID_MIN, UNDEAD.RAID_MAX), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = rint(0, 6); }
+  for (let i = raids; i < UNDEAD.RAIDS_AT_ONCE && (first ? i < 2 : i < raids + 1); i++) { const p = mkParty('raid', 'undead', 'Мертвецы', s.x + rnd(-30, 30), s.y + rnd(10, 40), genUndead(Math.round(rint(UNDEAD.RAID_MIN, UNDEAD.RAID_MAX) * rMK()), 0), { home: s.id, src: s.id }); p.state = 'idle'; p.wait = rint(0, 6); }
 }
 
 /* ---------- ИИ отрядов нежити (вызывается из aiParty, когда отряду нечем заняться) ---------- */
