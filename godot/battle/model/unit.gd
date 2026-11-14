@@ -44,6 +44,7 @@ var block_chance: float = 0.0
 var shield_block: float = 0.0 # Troop shield arrow bonus; hero gear will supply its own value later.
 var accuracy: float = 0.0
 var pierce: float = 0.0
+var damage_type: String = "" # Empty for troop attacks without an equipped weapon.
 var anti_cavalry: bool = false
 var weapon_kind: String = ""
 var undead_kind: String = ""

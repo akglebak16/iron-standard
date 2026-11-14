@@ -4,6 +4,7 @@ const Unit = preload("res://battle/model/unit.gd")
 
 const Config = preload("res://battle/config.gd")
 const Block = preload("res://battle/rules/block.gd")
+const DamageType = preload("res://battle/rules/damage_type.gd")
 
 static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGenerator, damage_scale: float = 1.0) -> int:
 	var incoming: float = (attacker.position - target.position).angle()
@@ -17,12 +18,14 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
 	if attacker.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
-	if attacker.weapon_kind in ["club", "mace"]:
+	if attacker.damage_type == Config.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.weapon_kind in ["club", "mace"]):
 		if target.undead_kind == "skel":
 			raw *= Config.SKELETON_BLUNT_MULTIPLIER
 		elif target.undead_kind == "zombie":
 			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
-	return battle.hurt(target, raw, attacker)
+	if attacker.damage_type.is_empty():
+		return battle.hurt(target, raw, attacker)
+	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce))
 
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)
@@ -32,7 +35,7 @@ static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> D
 	var spread: float = Config.SHOT_BASE_SCATTER + distance * attacker.accuracy
 	var impact: Vector2 = target.position + target.velocity * duration * Config.AIM_VELOCITY_LEAD
 	impact += Vector2((rng.randf() + rng.randf() - 1.0) * spread, (rng.randf() + rng.randf() - 1.0) * spread)
-	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "throwing": is_throw, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
+	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "damage_type": attacker.damage_type, "throwing": is_throw, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
 
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
 	var incoming: float = (shot.origin - target.position).angle()
@@ -41,4 +44,7 @@ static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: Random
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)
 	if target.undead_kind == "skel":
 		raw *= Config.SKELETON_ARROW_MULTIPLIER
-	return battle.hurt(target, raw, shot.source, shot.pierce)
+	var kind: String = shot.get("damage_type", "")
+	if kind.is_empty():
+		return battle.hurt(target, raw, shot.source, shot.pierce)
+	return battle.hurt(target, raw * DamageType.multiplier(kind, target.armor), shot.source, DamageType.pierce(kind, target.armor, shot.pierce))
