@@ -15,4 +15,5 @@ const HUD_TEXT := "%s  |  Свои: %d  Враги: %d  Силы: %d\nWASD хо�
 const HERO_RING_PADDING := 3.0
 const HERO_RING_SEGMENTS := 20
 const HERO_RING_WIDTH := 2.0
+const COMPANION_RING_COLOR := Color("#e4bf70")
 const PROJECTILE_RADIUS := 3.0

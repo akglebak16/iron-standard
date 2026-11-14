@@ -11,8 +11,12 @@ const HeroStats = preload("res://battle/data/hero_stats.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
 const PerkEffects = preload("res://characters/rules/perk_effects.gd")
 const Config = preload("res://battle/config.gd")
+const CharacterConfig = preload("res://characters/config.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
+const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
+const CompanionBuilder = preload("res://battle/data/companion_builder.gd")
 
-static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null) -> Session:
+static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite():
 		return null
 	var troop: Dictionary = catalog.get_troop(setup.hero_troop)
@@ -28,6 +32,22 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 		return null
 	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name):
 		return null
+	var companion_survival := 0.0
+	var companion_ids := {}
+	for saved in setup.companion_profiles:
+		var resolved := CompanionProfile.resolve(saved, companion_catalog)
+		if resolved.is_empty() or companion_ids.has(resolved.profile.id):
+			return null
+		companion_ids[resolved.profile.id] = true
+		companion_survival += float(resolved.party_effects.get(CharacterConfig.SURVIVAL_EFFECT, 0.0))
+		if not resolved.fit:
+			continue
+		var gear := HeroGear.resolve(resolved.profile, gear_catalog)
+		if gear.is_empty() or perk_catalog == null:
+			return null
+		var effects := PerkEffects.own(resolved.profile, perk_catalog)
+		if effects.is_empty() or not CompanionBuilder.spawn(state, resolved.profile, gear, effects, rng):
+			return null
 	state.place_units()
 	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true
@@ -59,4 +79,4 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 				ally.morale = ally.base_morale
 				ally.damage *= 1.0 + damage_bonus
 	state.add_unit(hero)
-	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile)
+	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile, companion_survival)

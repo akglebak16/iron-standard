@@ -3,9 +3,10 @@ extends RefCounted
 const Config = preload("res://battle/config.gd")
 const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
+const CharacterConfig = preload("res://characters/config.gd")
 
-static func build(battle: State, hero: Unit, rng: RandomNumberGenerator, elapsed: float, won: bool) -> Dictionary:
-	var survival: float = float(hero.perk_effects.get("surv", 0.0))
+static func build(battle: State, hero: Unit, rng: RandomNumberGenerator, elapsed: float, won: bool, companion_survival: float = 0.0) -> Dictionary:
+	var survival := float(hero.perk_effects.get(CharacterConfig.SURVIVAL_EFFECT, 0.0)) + companion_survival
 	var result := {"win": won, "dead": {}, "wounded": {}, "left": {}, "comps": {}, "enemyDead": 0.0, "enemyTotal": 0.0, "xp": 0.0, "heroDown": hero.dead, "heroHp": clampf(hero.hp / hero.max_hp, 0.0, 1.0), "heroKills": hero.kills, "time": elapsed, "enemyLeft": {}}
 	for unit: Unit in battle.units:
 		if unit.side == 1:

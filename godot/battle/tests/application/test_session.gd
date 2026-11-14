@@ -119,7 +119,8 @@ func _check_hero_down_continues_battle() -> void:
 func _check_factory_and_repeatability() -> void:
 	var catalog := Catalog.new()
 	assert(catalog.load_data())
-	var setup: Setup = load("res://battle/data/demo_battle.tres")
+	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.companion_profiles.clear()
 	var original_army := setup.player_army.duplicate(true)
 	var first := Factory.create(setup, catalog)
 	var second := Factory.create(setup, catalog)
@@ -158,6 +159,7 @@ func _check_weapon_swap() -> void:
 	var gear_catalog := GearCatalog.new()
 	assert(troops.load_data() and gear_catalog.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "vit": 3, "hp": 0.5, "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank"}, "sel": "melee"}
 	var session := Factory.create(setup, troops, gear_catalog)
 	assert(session != null)
@@ -186,6 +188,7 @@ func _check_weapon_swap() -> void:
 	assert(hero.hero_weapon.id == "sword_knight")
 	assert(hero.hp == health)
 	var melee_only: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	melee_only.companion_profiles.clear()
 	melee_only.hero_profile = {"eq": {"melee": "sword_old"}}
 	var no_ranged := Factory.create(melee_only, troops, gear_catalog)
 	var no_ranged_input := HeroInput.new()

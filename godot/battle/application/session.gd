@@ -29,8 +29,9 @@ var _elapsed_seconds: float = 0.0
 var _gear_catalog: GearCatalog
 var _hero_profile: Dictionary = {}
 var _swap_held: bool = false
+var _companion_survival: float
 
-func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}) -> void:
+func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0) -> void:
 	assert(state != null and hero != null and rng != null)
 	assert(hero.hero and hero in state.units)
 	_state = state
@@ -38,6 +39,7 @@ func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: G
 	_rng = rng
 	_gear_catalog = gear_catalog
 	_hero_profile = hero_profile.duplicate(true)
+	_companion_survival = companion_survival
 
 func set_hero_input(input: HeroInput) -> bool:
 	if _outcome != Outcome.RUNNING or _hero.dead or input == null or not input.move.is_finite() or not is_finite(input.face):
@@ -76,7 +78,7 @@ func advance(dt: float) -> void:
 		_battle_won = _side_alive(0) and not _side_alive(1)
 	if _battle_over_at >= 0.0 and _elapsed_seconds - _battle_over_at > Config.BATTLE_END_DELAY_SECONDS:
 		_outcome = Outcome.VICTORY if _battle_won else Outcome.DEFEAT
-		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won)
+		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won, _companion_survival)
 
 func result() -> Dictionary:
 	return _result.duplicate(true)
@@ -111,7 +113,7 @@ func snapshot() -> Dictionary:
 			if not unit.fleeing:
 				focus_sum[unit.side] += unit.position
 				focus_count[unit.side] += 1
-		units.append({"position": unit.position, "radius": unit.collision_radius, "side": unit.side, "hero": unit.hero, "dead": unit.dead, "gone": unit.gone})
+		units.append({"position": unit.position, "radius": unit.collision_radius, "side": unit.side, "hero": unit.hero, "companion": unit.companion, "dead": unit.dead, "gone": unit.gone})
 	var camera_target: Vector2 = _hero.position
 	if _hero.dead:
 		if focus_count[0] > 0 and focus_count[1] > 0:

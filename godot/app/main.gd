@@ -3,6 +3,7 @@ extends Node2D
 const Catalog = preload("res://troops/data/catalog.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
 const BattleView = preload("res://battle/presentation/scene.tscn")
@@ -21,7 +22,10 @@ func _ready() -> void:
 	if not perk_catalog.load_data():
 		push_error("Cannot load perk catalog")
 		return
-	var session = Factory.create(battle_setup, catalog, gear_catalog, perk_catalog)
+	var companion_catalog := CompanionCatalog.new()
+	if not companion_catalog.load_data():
+		return
+	var session = Factory.create(battle_setup, catalog, gear_catalog, perk_catalog, companion_catalog)
 	if session == null:
 		push_error("Invalid battle setup")
 		return

@@ -37,6 +37,7 @@ func _test_factory(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
 	assert(troops.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "hp": 0.5, "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank", "horse": "horse_riding"}, "sel": "ranged"}
 	var session = Factory.create(setup, troops, gear_catalog)
 	assert(session != null)
@@ -63,6 +64,7 @@ func _test_battle_perks(gear_catalog: GearCatalog) -> void:
 	var perks := PerkCatalog.new()
 	assert(troops.load_data() and perks.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "cha": 2, "hp": 0.5, "perks": ["tough", "hide", "quick", "eagle", "tactician", "inspire"], "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank", "horse": "horse_riding"}, "sel": "ranged"}
 	assert(Factory.create(setup, troops, gear_catalog) == null) # Perks require an injected catalog.
 	var session = Factory.create(setup, troops, gear_catalog, perks)
@@ -87,6 +89,7 @@ func _test_heavy_perk_swap(gear_catalog: GearCatalog) -> void:
 	var perks := PerkCatalog.new()
 	assert(troops.load_data() and perks.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "hp": 0.5, "perks": ["grip", "master", "quick", "tough"], "eq": {"melee": "tw_sword", "ranged": "jav_heavy"}, "sel": "melee"}
 	var session = Factory.create(setup, troops, gear_catalog, perks)
 	assert(session != null)
@@ -109,6 +112,7 @@ func _test_named_undead_leader(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
 	assert(troops.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.companion_profiles.clear()
 	setup.enemy_faction = "emp"
 	setup.enemy_army = [{"type": "s1", "n": 2}, {"type": "s3", "n": 2}, {"type": "e1", "n": 1}]
 	setup.enemy_leader_name = "Некромант"

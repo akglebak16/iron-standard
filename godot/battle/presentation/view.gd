@@ -78,5 +78,7 @@ func _draw() -> void:
 		draw_circle(unit.position, unit.radius, color)
 		if unit.hero and not unit.dead:
 			draw_arc(unit.position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, Color.WHITE, Demo.HERO_RING_WIDTH)
+		elif unit.companion and not unit.dead:
+			draw_arc(unit.position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, Demo.COMPANION_RING_COLOR, Demo.HERO_RING_WIDTH)
 	for impact in _frame.shots:
 		draw_circle(impact, Demo.PROJECTILE_RADIUS, Color.YELLOW)

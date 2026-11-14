@@ -14,6 +14,7 @@ const DEFAULT_UNIT_CAP_OVERRIDE := 0
 @export var enemy_army: Array[Dictionary] = []
 @export var hero_troop: String = ""
 @export var hero_profile: Dictionary = {} # Empty keeps the existing troop-based preview hero.
+@export var companion_profiles: Array[Dictionary] = [] # All hired companions, including injured ones.
 @export var hero_position : Vector2 = Vector2.ZERO
 
 func unit_cap(faction: String, override: int) -> int:
