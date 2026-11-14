@@ -208,6 +208,21 @@ async function siegeDefense(pg) {
     return { inc: i0 < i1, def: d0 < d1, mid: mid < .5 && mid > 0, end: s.dmg === 0, fire: s.fire === 0 };
   });
   ok('повреждения режут доход и оборону, потом стены чинятся, пожар гаснет', rp.inc && rp.def && rp.mid && rp.end && rp.fire, rp);
+  const ui2 = await pg.evaluate(() => { const s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); openSiege(s); const b = { talk: !!document.querySelector('#modal [data-act=sgtalk]'), block: !!document.querySelector('#modal [data-act=sgblock]'), food: /Запасы еды/.test(el('modal').innerHTML) }; ACT.sgtalk(); b.win = !!document.querySelector('#modal [data-act=sgdemand]') && !!document.querySelector('#modal [data-act=sgbribe]'); closeModal(); return b; });
+  ok('в окне осады есть переговоры и блокада, видно запасы еды', ui2.talk && ui2.block && ui2.food && ui2.win, ui2);
+  const bl = await pg.evaluate(() => {
+    const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); P.rel[s.fac] = -60; P.x = s.x - 50; P.y = s.y; P.troops = genTroops('nord', 40, .6); s.gar = genTroops(s.fac, 60, .6); delete s.food; delete s.blk;
+    sgBlockStart(P, s); const f0 = sgFood(s); for (let i = 0; i < 48; i++) sgHour(); const f1 = s.food, g1 = troopCount(s.gar);
+    s.food = .05; for (let i = 0; i < 4; i++) sgHour(); const starve = s.food === 0 && !!s.blk.starve; let n = 0; while (s.fac !== 'player' && n++ < 600) sgHour();
+    return { eat: f1 < f0 && f1 > 0, starve, fell: s.fac === 'player', noBlk: !s.blk, owner: s.owner === P.id };
+  });
+  ok('блокада: еда в городе тает, гарнизон голодает и сдаёт город', bl.eat && bl.starve && bl.fell && bl.noBlk && bl.owner, bl);
+  const tk = await pg.evaluate(() => {
+    const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); P.troops = genTroops('nord', 300, .8); s.gar = [{ type: 'n1', n: 3 }]; s.talkT = 0; P.gold = 5000; P.rel[s.fac] = 0; delete s.food;
+    const ch = sgTalkChance(P, s, false), chg = sgTalkChance(P, s, true), rnd0 = Math.random; Math.random = () => .999; const r1 = sgTalk(P, s, false), r2 = sgTalk(P, s, false), cool = s.talkT > nowH(); s.talkT = 0; Math.random = () => 0; const g0 = P.gold, r3 = sgTalk(P, s, true); Math.random = rnd0;
+    return { ch: ch >= .5 && chg >= ch, r1: r1 === false, r2: r2 === null, cool, r3: r3 === true, paid: P.gold < g0, fell: s.fac === 'player' };
+  });
+  ok('переговоры: сильная армия убеждает, неудача закрывает их на сутки, выкуп работает', tk.ch && tk.r1 && tk.r2 && tk.cool && tk.r3 && tk.paid && tk.fell, tk);
   await pg.evaluate(() => { const P = G.player, s = G.settles.find(x => x.kind === 'town' && x.fac !== 'player' && REAL_F.includes(x.fac)); P.troops = genTroops('nord', 150, .8); s.gar = [{ type: 'n1', n: 1 }]; P.x = s.x - 40; P.y = s.y; P.sid = s.id; const p = siegeParty(s); battleEnded(autoResult(P, p), p); });
   const ui = await pg.evaluate(() => ({ sack: !!document.querySelector('#modal [data-act=sgsack]'), spare: !!document.querySelector('#modal [data-act=sgspare]'), cont: !!document.querySelector('#modal [data-act=cont2]'), pend: !!G.player.sgPend }));
   ok('после взятия города выбор: разграбить или пощадить (вместо «Продолжить»)', ui.sack && ui.spare && !ui.cont && ui.pend, ui);

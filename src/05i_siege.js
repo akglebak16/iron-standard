@@ -12,7 +12,7 @@ function sgNote(s) {
   const d = s.dmg || 0, c = sgDefCfg(s);
   return d > .15 ? '. Стены повреждены, проломы шире, а запасов камней и масла меньше' : '. На стенах котлы с кипящим маслом (' + c.oil + ') и запас камней: у проломов будет жарко';
 }
-const sgCut = (list, rate) => { for (const t of list.slice()) remT(list, t.type, Math.round(t.n * rate)); };
+const sgCut = (list, rate) => { for (const t of list.slice()) remT(list, t.type, Math.floor(t.n * rate + Math.random())); }; // случайное округление: малые отряды тоже тают
 const sgDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // вызывается из siegeTick раз в 2 часа; true — осада закончилась (подмога разбила осаждающих)
@@ -20,6 +20,7 @@ function sgTick(s, sg, att, A, k) {
   const dur = nowH() - sg.t0, g = garrisonOf(s);
   s.dmg = Math.min(1, (s.dmg || 0) + .008 + .014 * clamp(k, 0, 2)); // обстрел и приступы портят стены
   if (!(s.fire > 0) && Math.random() < .04 + .05 * clamp(k, 0, 2)) { s.fire = rint(30, 70); wlog('В ' + (s.kind === 'castle' ? 'замке ' : 'городе ') + s.name + ' начался пожар.', 2); }
+  if (dur > 60) { for (const p of att) sgCut(p.troops, .02); if (!sg.hun) { sg.hun = 1; wlog('Осаждающие ' + s.name + ' голодают и дезертируют.', 2); } } // осада затянулась: у армии кончается провизия
   sgSortie(s, sg, att, A, g, dur);
   return sgRelief(s, sg, att, A, dur);
 }
@@ -47,6 +48,7 @@ function sgRelief(s, sg, att, A, dur) {
 }
 // раз в час: пожары гаснут, стены чинятся, лордов подмоги отзывают, если осада кончилась
 function sgHour() {
+  sgBlockHour();
   for (const s of G.settles) { if (s.fire > 0) s.fire--; if (!s.siege && s.dmg > 0) s.dmg = Math.max(0, s.dmg - 1 / SG.DMG_H); }
   for (const p of G.parties) if (p.relief) { const s = settleById(p.relief); if (!s || !s.siege) { p.army = false; p.relief = null; p.arrived = false; p.state = 'idle'; p.path = []; p.pi = 0; p.wait = rint(1, 4); } }
 }
@@ -68,4 +70,40 @@ function sgSpare(P, s) {
   const gift = Math.round(40 * MK()), cf = sCult(s); P.gold += gift; s.dmg = Math.min(s.dmg || 0, .1);
   if (REAL_F.includes(cf)) P.rel[cf] = Math.min(100, P.rel[cf] + 6);
   logW('Ты пощадил жителей ' + s.name + '. Они подносят дары: +' + gift + ' золота, а отношение к их фракции стало лучше.', 3, P);
+}
+
+/* ---------- блокада игрока, голод и переговоры ----------
+   s.food — запас еды города в днях (по умолчанию sgFoodMax), s.blk = { pid, t0, g0, away, starve } — блокада игрока,
+   s.talkT — час, раньше которого переговоры не повторяют. Едят и гарнизон, и войско игрока (по его обычным правилам). */
+const sgFoodMax = s => s.kind === 'castle' ? 14 : 10;
+function sgFood(s) { if (s.food == null) s.food = sgFoodMax(s); return s.food; }
+function sgBlockStart(P, s) { s.blk = { pid: P.id, t0: nowH(), g0: Math.max(1, troopCount(garrisonOf(s))), away: 0 }; logW('Ты взял ' + s.name + ' в блокаду. Держи отряд рядом, пока в городе не кончится еда. Запас: примерно ' + Math.ceil(sgFood(s)) + ' дн.', 3, P); }
+function sgBlockHour() {
+  for (const s of G.settles) {
+    if (!s.blk) { if (s.food != null && s.food < sgFoodMax(s) && !s.siege && G.hour === 0) s.food = Math.min(sgFoodMax(s), s.food + 1); continue; }
+    const P = G.players.find(p => p.id === s.blk.pid);
+    if (!P || s.fac === 'player' || !relHostile(P, s.fac)) { delete s.blk; continue; }
+    if (sgDist(P, s) > 170 || P.busy === 'battle') { if (++s.blk.away > 12) { delete s.blk; logW('Блокада ' + s.name + ' снята: ты ушёл от стен.', 2, P); } continue; }
+    s.blk.away = 0; const g = garrisonOf(s); s.food = Math.max(0, sgFood(s) - (1 + troopCount(g) / 80) / 24);
+    if (s.food > 0) continue;
+    if (!s.blk.starve) { s.blk.starve = 1; logW('В ' + s.name + ' кончилась еда: гарнизон голодает. Самое время потребовать сдачи.', 3, P); }
+    sgCut(g, .02); if (troopCount(g) < s.blk.g0 * .35) sgSurrender(P, s, 'голод');
+  }
+}
+function sgSurrender(P, s, why) {
+  const was = s.fac; delete s.blk; captureSettle(P, s); if (REAL_F.includes(was)) P.rel[was] = Math.min(100, P.rel[was] + 10); s.dmg = Math.min(s.dmg || 0, .1); s.fire = 0;
+  logW(s.name + ' сдался без боя (' + why + '). Город твой, жители целы.', 3, P); if (!SERVER && typeof toast === 'function' && P === G.player) toast(s.name + ' сдался!');
+}
+// шанс, что город сдастся: сила войска против гарнизона, обаяние героя, голод, повреждения, отношение
+function sgTalkChance(P, s, gold) {
+  const g = garrisonOf(s), ratio = (strength(P.troops) + compStr(P)) / ((strength(g) + 4) * 1.5), f = sgFood(s), hungry = f <= 0 ? .45 : f < 3 ? .2 : 0;
+  return clamp(.35 * ratio - .1 + ((P.hero.cha || 1) - 3) * .035 + hungry + (s.dmg || 0) * .25 + (P.rel[s.fac] || 0) / 400 + (gold ? .3 : 0), .03, .9);
+}
+const sgBribe = s => Math.round((strength(garrisonOf(s)) * 3 + 200) * (s.kind === 'castle' ? 1 : 1.15));
+// попытка переговоров: true — город сдался; при неудаче пауза сутки
+function sgTalk(P, s, gold) {
+  if ((s.talkT || 0) > nowH()) return null; const price = gold ? sgBribe(s) : 0; if (gold && P.gold < price) return null;
+  const ok = Math.random() < sgTalkChance(P, s, gold); if (gold) P.gold -= price;
+  if (ok) { sgSurrender(P, s, gold ? 'выкуп' : 'переговоры'); return true; }
+  s.talkT = nowH() + 24; if (REAL_F.includes(s.fac)) P.rel[s.fac] = Math.max(-100, P.rel[s.fac] - 2); return false;
 }
