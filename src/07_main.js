@@ -53,7 +53,7 @@ function launchSiege(p) { const P = G.player; auInit(); P.busy = 'battle'; enter
 function autoPlayer(p) { battleEnded(autoResult(G.player, p), p); }
 function battleEnded(res, p) {
   if (B && B.cfg.quick) return quickEnded(res);
-  const P = G.player; P.busy = null; UI.res = applyBattleResult(P, res, p); if (typeof encSplit === 'function') encSplit(p); if (UI.res.win) { UI.res.drops = rollLoot(P, p); if (UI.res.drops.length) logW('Трофеи: ' + dropText(UI.res.drops) + '.', 3, P); } showResult(UI.res, p);
+  const P = G.player; P.busy = null; if (typeof cvBattleEnd === 'function') cvBattleEnd(P, res, p); UI.res = applyBattleResult(P, res, p); if (typeof encSplit === 'function') encSplit(p); if (UI.res.win) { UI.res.drops = rollLoot(P, p); if (UI.res.drops.length) logW('Трофеи: ' + dropText(UI.res.drops) + '.', 3, P); } showResult(UI.res, p);
 }
 function showResult(r, p) {
   const res = r.res, H = G.player.hero; const left = Object.keys(res.dead).map(k => '<div class="kv"><span>' + TROOPS[k].name + '</span><b class="dn">−' + res.dead[k] + '</b></div>').join('');

@@ -31,15 +31,15 @@ function encFlee(P, p) {
   return false;
 }
 function battleCfgFor(P, p) {
-  return { pl: P.troops.map(s => ({ type: s.type, n: s.n })), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
+  return { pl: (() => { const l = P.troops.map(s => ({ type: s.type, n: s.n })); if (typeof cvAllyTroops === 'function') for (const s of cvAllyTroops(p)) addT(l, s.type, s.n); return l; })(), en: p.troops.map(s => ({ type: s.type, n: s.n })), pfac: 'player', efac: p.fac, biome: biomeName(P.x, P.y), forest: terrAt(P.x, P.y) === 2,
     title: p.kind === 'camp' ? 'Штурм логова' : 'Бой: ' + p.name, hero: heroBattle(P.hero), heroPid: P.id, leader: isNoble(p) || p.kind === 'dead' ? p.name : p.kind === 'camp' && p.fac === 'undead' ? 'Некромант кургана' : p.kind === 'raid' ? 'Некромант ' + unitName('undead') : null, // у нежити всегда есть некромант seed: rint(1, 1e9),
     comps: compsBattle(P), csurv: compFx(P) ? compFx(P).f.surv : 0, csiege: compFx(P) ? compFx(P).f.siege : 0 }; // спутники и лекарь среди них: см. 05e_comps.js
 
 }
 function autoResult(P, p) {
-  const H = P.hero, sv = perkFx(H).surv, sa = strength(P.troops) + compStr(P) + 10, sb = partyStr(p) * (p.kind === 'siege' ? 1.35 : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
+  const H = P.hero, sv = perkFx(H).surv, allT = P.troops.map(s => ({ type: s.type, n: s.n })), sa = (typeof cvAllyTroops === 'function' ? (() => { for (const s of cvAllyTroops(p)) addT(allT, s.type, s.n); return strength(allT); })() : strength(P.troops)) + compStr(P) + 10, sb = partyStr(p) * (p.kind === 'siege' ? 1.35 : 1), me = sa * rnd(.8, 1.25), foe = sb * rnd(.8, 1.25), win = me >= foe, r = Math.min(me, foe) / Math.max(me, foe);
   const res = { win, dead: {}, wounded: {}, left: {}, enemyDead: 0, enemyTotal: troopCount(p.troops), xp: Math.round(sb * .25), heroDown: false, heroHp: clamp(H.hp - (win ? r * .35 : .55), .25, 1), heroKills: 0, enemyLeft: {}, auto: true, time: 0 };
-  for (const s of P.troops) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
+  for (const s of allT) { let d = 0, w = 0; const pk = win ? r * .75 : .9; for (let i = 0; i < s.n; i++) { if (Math.random() < pk) { if (Math.random() < .35 + sv) w++; else d++; } } if (d) res.dead[s.type] = d; if (w) res.wounded[s.type] = w; res.left[s.type] = s.n - d; }
   if (win) res.enemyDead = res.enemyTotal; else for (const s of p.troops) { res.enemyLeft[s.type] = Math.max(1, s.n - Math.floor(s.n * r * .6)); res.enemyDead += s.n - res.enemyLeft[s.type]; }
   compsAuto(P, res);
   return res;
