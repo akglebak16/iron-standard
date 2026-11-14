@@ -21,11 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # все ветки — для статусов роудмапа
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: Собрать index.html
         run: node build.mjs
+      - name: Проверить роудмап
+        run: node roadmap/build.mjs --check
       - name: Поставить Playwright
         run: |
           npm i --no-save playwright@1
@@ -35,6 +39,7 @@ jobs:
       - name: Подготовить сайт
         if: github.event_name != 'pull_request'
         run: mkdir -p _site && cp index.html docs/trailer-glebio.html _site/ && touch _site/.nojekyll # трейлер: /trailer-glebio.html
+          node roadmap/build.mjs --branches _site/roadmap/index.html # доска: /roadmap/
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
