@@ -111,7 +111,7 @@ function relativePowerOld(p) { const a = strength(G.player.troops) + 8, b = part
 function openEncounter(p, forced) {
   const hostileP = isHostileToPlayer(p, G.player) || p.kind === 'camp', help = hostileP && typeof encHelpers === 'function' ? encHelpers(G.player, p) : []; UI.enc = { p, forced, hostile: hostileP, help }; G.player.path = []; G.player.tid = null; G.wait = false;
   const all = help.length ? encTroops(p, help) : p.troops, pw = relativePowerOf(G.player, Object.assign({}, p, { troops: all })), list = all.slice().sort((a, b) => TROOPS[b.type].tier - TROOPS[a.type].tier);
-  const title = p.kind === 'camp' ? (p.fac === 'undead' ? 'Чёрный курган' : 'Логово разбойников') : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? 'Разбойники' : p.name;
+  const title = p.kind === 'camp' ? (p.fac === 'undead' ? 'Чёрный курган' : 'Логово разбойников') : p.kind === 'caravan' ? 'Караван' : p.kind === 'bandit' ? (p.big ? 'Крупная банда' : 'Разбойники') : p.name;
   let btns;
   const cl = !NET.on && typeof clanOf === 'function' ? clanOf(p) : null, parley = cl && G.player.liege && cl.fac !== G.player.liege ? '<button class="btn" data-act="parley">Переговоры</button>' : '';
   if (hostileP) btns = '<button class="btn" data-act="flee">Бежать</button>' + parley + '<button class="btn" data-act="auto">Рассчитать бой</button><button class="btn pri" data-act="fight">В бой!</button>';
