@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://battle/data/battle_setup.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+seed = 4017
+player_faction = "nord"
+enemy_faction = "emp"
+player_army = Array[Dictionary]([{"type": "n1", "n": 18}, {"type": "n2a", "n": 5}])
+enemy_army = Array[Dictionary]([{"type": "e1", "n": 20}, {"type": "e2a", "n": 4}])
+hero_troop = "n3"
+hero_position = Vector2(780, 850)

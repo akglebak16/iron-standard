@@ -1,4 +1,5 @@
-﻿extends SceneTree
+extends SceneTree
+const CombatStep = preload("res://battle/rules/combat_step.gd")
 
 const Unit = preload("res://battle/model/unit.gd")
 const BattleState = preload("res://battle/model/state.gd")
@@ -24,7 +25,7 @@ func _initialize() -> void:
 	assert(defender.hp < 100.0)
 	defender.block_chance = 0.0
 	for tick in 10:
-		battle.step_combat(1.0, rng)
+		CombatStep.step(battle, 1.0, rng)
 		if defender.dead:
 			break
 	assert(defender.dead and attacker.kills == 1)
@@ -37,10 +38,10 @@ func _initialize() -> void:
 	var target = Unit.new(1, 1, Vector2(200, 100), 100, 0, 1)
 	archers.add_grouped_unit(archer, 1)
 	archers.add_grouped_unit(target, 0)
-	archers.step_combat(0.1, rng)
+	CombatStep.step(archers, 0.1, rng)
 	assert(archers.projectiles.size() == 1)
 	assert(target.hp == 100.0)
-	archers.step_combat(0.5, rng)
+	CombatStep.step(archers, 0.5, rng)
 	assert(archers.projectiles.is_empty())
 	assert(target.hp < 100.0)
 	assert(archer.attack_cooldown > 0.0)

@@ -1,4 +1,5 @@
 extends SceneTree
+const Morale = preload("res://battle/rules/morale.gd")
 
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
@@ -21,14 +22,14 @@ func _initialize() -> void:
 	var foe = Unit.new(4, 1, Vector2(200, 100), 40, 0, 1)
 	for unit in [shaken, hero, companion, undead, foe]:
 		battle.add_grouped_unit(unit, Config.GROUP_INFANTRY)
-	battle.step_morale(0.1)
+	Morale.advance(battle, 0.1)
 	assert(shaken.fleeing)
 	assert(not hero.fleeing and not companion.fleeing and not undead.fleeing)
 	assert(battle.groups[0][Config.GROUP_INFANTRY].active_units().size() == 2)
 	var saved_morale: float = foe.morale
-	battle.step_morale(0.5)
+	Morale.advance(battle, 0.5)
 	assert(foe.morale == saved_morale)
-	battle.step_morale(0.5)
+	Morale.advance(battle, 0.5)
 	assert(foe.morale != saved_morale)
 	var collapse = BattleState.new()
 	collapse.setup_groups()
@@ -37,7 +38,7 @@ func _initialize() -> void:
 		collapse.add_grouped_unit(Unit.new(i + 10, 1, Vector2(100, 0), 40, 0, 1), Config.GROUP_INFANTRY)
 	for i in 8:
 		collapse.units[i * 2].dead = true
-	collapse.step_morale(0.1)
+	Morale.advance(collapse, 0.1)
 	assert(collapse.units[16].fleeing and collapse.units[18].fleeing)
 	print("Morale tests passed")
 	quit(0)

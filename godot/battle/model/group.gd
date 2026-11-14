@@ -1,4 +1,5 @@
 extends RefCounted
+const Unit = preload("res://battle/model/unit.gd")
 const Config = preload("res://battle/config.gd")
 
 var side: int
@@ -7,7 +8,7 @@ var center: Vector2
 var direction: float
 var order: String = Config.ORDER_HOLD
 var backing: bool = false
-var units: Array = []
+var units: Array[Unit] = []
 
 func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void:
 	side = group_side
@@ -15,8 +16,8 @@ func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void
 	center = at
 	direction = facing
 
-func active_units() -> Array:
-	return units.filter(func(u): return not u.dead and not u.gone and not u.fleeing and not u.hero)
+func active_units() -> Array[Unit]:
+	return units.filter(func(u: Unit): return not u.dead and not u.gone and not u.fleeing and not u.hero)
 
 func layout(initial: bool = false) -> void:
 	var active := active_units()
@@ -31,9 +32,9 @@ func layout(initial: bool = false) -> void:
 	var spacing: float = Config.FORMATION_SPACING[kind]
 	var perpendicular := Vector2(-sin(direction), cos(direction))
 	if initial:
-		active.sort_custom(func(a, b): return a.tier > b.tier if a.tier != b.tier else a.id < b.id)
+		active.sort_custom(func(a: Unit, b: Unit): return a.tier > b.tier if a.tier != b.tier else a.id < b.id)
 	else:
-		active.sort_custom(func(a, b): return a.position.dot(perpendicular) < b.position.dot(perpendicular))
+		active.sort_custom(func(a: Unit, b: Unit): return a.position.dot(perpendicular) < b.position.dot(perpendicular))
 	for i in count:
 		var column: int
 		var row: int
@@ -48,7 +49,7 @@ func layout(initial: bool = false) -> void:
 			row_width = width
 		active[i].slot_offset = Vector2((column - (row_width - 1) / 2.0) * spacing, -row * spacing * Config.FORMATION_ROW_DEPTH)
 
-func slot_position(unit: RefCounted, arena_size: Vector2) -> Vector2:
+func slot_position(unit: Unit, arena_size: Vector2) -> Vector2:
 	var offset: Vector2 = unit.slot_offset
 	var pos := center + Vector2(-sin(direction), cos(direction)) * offset.x + Vector2(cos(direction), sin(direction)) * offset.y
 	return pos.clamp(Vector2.ONE * Config.SLOT_EDGE, arena_size - Vector2.ONE * Config.SLOT_EDGE)
@@ -58,6 +59,6 @@ func centroid() -> Vector2:
 	if active.is_empty():
 		return center
 	var total := Vector2.ZERO
-	for unit in active:
+	for unit: Unit in active:
 		total += unit.position
 	return total / active.size()

@@ -1,4 +1,4 @@
-﻿extends SceneTree
+extends SceneTree
 
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
@@ -31,5 +31,30 @@ func _initialize() -> void:
 	assert(not hero.blocking)
 	assert(enemy.dead)
 	assert(hero.kills == 1)
+	_check_cleave_damage()
 	print("Hero control tests passed")
 	quit(0)
+
+func _check_cleave_damage() -> void:
+	var battle := BattleState.new()
+	var hero := Unit.new(0, 0, Vector2(100, 100), 100, 0, 1)
+	hero.hero = true
+	hero.damage = 40
+	battle.add_unit(hero)
+	for index in Config.HERO_MAX_HITS + 1:
+		var enemy := Unit.new(index + 1, 1, Vector2(120, 100), 1000, 0, 1)
+		enemy.facing = PI # Frontal hit without block, armor, or rear bonus.
+		battle.add_unit(enemy)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 15
+	var expected_rng := RandomNumberGenerator.new()
+	expected_rng.seed = rng.seed
+	HeroControl.step(battle, hero, {"face": 0.0, "attack": true}, Config.HERO_ATTACK_WINDUP, rng)
+	for index in Config.HERO_MAX_HITS:
+		expected_rng.randf() # Block roll, same consumption order as Combat.strike.
+		var scale: float = 1.0 if index == 0 else Config.HERO_FOLLOWUP_DAMAGE
+		var raw := hero.damage * scale * expected_rng.randf_range(Config.MELEE_DAMAGE_MIN, Config.MELEE_DAMAGE_MAX)
+		var expected: int = preload("res://battle/rules/damage.gd").after_armor(raw, 0)
+		assert(battle.units[index + 1].hp == 1000 - expected)
+	assert(battle.units.back().hp == 1000) # Hit limit preserved.
+	assert(hero.damage == 40) # Follow-up modifier never changes the base stat.

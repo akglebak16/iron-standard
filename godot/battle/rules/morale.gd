@@ -1,13 +1,15 @@
 extends RefCounted
+const Unit = preload("res://battle/model/unit.gd")
 
+const State = preload("res://battle/model/state.gd")
 const Config = preload("res://battle/config.gd")
 
-static func tick(battle: RefCounted) -> void:
+static func tick(battle: State) -> void:
 	var active := [0, 0]
-	for unit in battle.units:
+	for unit: Unit in battle.units:
 		if not unit.dead and not unit.gone and not unit.fleeing:
 			active[unit.side] += 1
-	for unit in battle.units:
+	for unit: Unit in battle.units:
 		if unit.dead or unit.gone or unit.fleeing or unit.hero or unit.companion or unit.faction == "undead":
 			continue
 		var friends: int = active[unit.side]
@@ -24,3 +26,11 @@ static func tick(battle: RefCounted) -> void:
 		var collapse: bool = friends <= battle.starting_units[unit.side] * Config.MORALE_FORCE_FLEE_START_SHARE and friends < enemies * Config.MORALE_FORCE_FLEE_ENEMY_SHARE and not unit.leader and battle.starting_units[unit.side] > Config.MORALE_FORCE_FLEE_MIN_START
 		if unit.morale <= 0.0 or collapse:
 			unit.fleeing = true
+
+static func advance(battle: State, dt: float) -> void:
+	if dt <= 0.0:
+		return
+	battle.morale_timer -= dt
+	while battle.morale_timer <= 0.0:
+		tick(battle)
+		battle.morale_timer += Config.MORALE_TICK_SECONDS

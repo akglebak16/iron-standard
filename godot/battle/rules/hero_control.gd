@@ -1,10 +1,12 @@
-﻿extends RefCounted
+extends RefCounted
+const State = preload("res://battle/model/state.gd")
+const Unit = preload("res://battle/model/unit.gd")
 
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
 
 ## Input keys: move (Vector2), face (float), sprint, block, attack (bool).
-static func step(battle: RefCounted, hero: RefCounted, input: Dictionary, dt: float, rng: RandomNumberGenerator) -> void:
+static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: RandomNumberGenerator) -> void:
 	if dt <= 0.0 or hero.dead or hero.gone:
 		return
 	var move: Vector2 = input.get("move", Vector2.ZERO)
@@ -37,9 +39,9 @@ static func step(battle: RefCounted, hero: RefCounted, input: Dictionary, dt: fl
 		if hero.attack_windup <= 0.0:
 			_strike(battle, hero, rng)
 
-static func _strike(battle: RefCounted, hero: RefCounted, rng: RandomNumberGenerator) -> void:
+static func _strike(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
 	var hits := 0
-	for enemy in battle.units:
+	for enemy: Unit in battle.units:
 		if enemy.side == hero.side or enemy.dead or enemy.gone:
 			continue
 		var delta: Vector2 = enemy.position - hero.position
@@ -47,11 +49,8 @@ static func _strike(battle: RefCounted, hero: RefCounted, rng: RandomNumberGener
 			continue
 		if absf(wrapf(delta.angle() - hero.swing_facing, -PI, PI)) > Config.HERO_ATTACK_ARC:
 			continue
-		var original_damage: float = hero.damage
-		if hits > 0:
-			hero.damage *= Config.HERO_FOLLOWUP_DAMAGE
-		Combat.strike(battle, hero, enemy, rng)
-		hero.damage = original_damage
+		var damage_scale: float = Config.HERO_FOLLOWUP_DAMAGE if hits > 0 else 1.0
+		Combat.strike(battle, hero, enemy, rng, damage_scale)
 		hits += 1
 		if hits >= Config.HERO_MAX_HITS:
 			break

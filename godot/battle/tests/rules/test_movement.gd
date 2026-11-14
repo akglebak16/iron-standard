@@ -1,4 +1,5 @@
-﻿extends SceneTree
+extends SceneTree
+const Movement = preload("res://battle/rules/movement.gd")
 
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
@@ -21,20 +22,20 @@ func _initialize() -> void:
 	battle.add_grouped_unit(enemy, Config.GROUP_INFANTRY)
 	battle.place_units()
 	var first: Vector2 = foot.position
-	battle.step_movement(0.1, Vector2(640, 850))
+	Movement.step(battle, 0.1, Vector2(640, 850))
 	assert(foot.position.distance_to(first) < 0.01) # holding its slot
 	assert(battle.give_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.GROUP_INFANTRY))
-	battle.step_movement(0.1, Vector2(640, 850))
+	Movement.step(battle, 0.1, Vector2(640, 850))
 	assert(foot.position.x > first.x)
 	assert(foot.facing == 0.0)
 	assert(battle.give_order(Config.ORDER_FOLLOW, Vector2.ZERO, Config.GROUP_CAVALRY))
-	battle.step_movement(0.1, Vector2(900, 850))
+	Movement.step(battle, 0.1, Vector2(900, 850))
 	assert(battle.groups[0][Config.GROUP_CAVALRY].center == Vector2(840, 1020))
 	assert(battle.give_order(Config.ORDER_RETREAT, Vector2.ZERO, Config.GROUP_INFANTRY))
 	assert(battle.groups[0][Config.GROUP_INFANTRY].center.x < foot.position.x)
 	foot.fleeing = true
 	for tick in 1000:
-		battle.step_movement(0.1, Vector2(900, 850))
+		Movement.step(battle, 0.1, Vector2(900, 850))
 		if foot.gone:
 			break
 	assert(foot.gone)
