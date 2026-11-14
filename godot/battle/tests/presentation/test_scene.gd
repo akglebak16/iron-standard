@@ -26,6 +26,8 @@ func _check() -> void:
 	var ground: ShaderMaterial = view._terrain.material
 	assert(ground.get_shader_parameter("arena_size") == frame.arena_size)
 	assert(view._terrain.get_child_count() == 0)
+	assert(view._vegetation.entries.size() == view._session.vegetation_layout().size())
+	assert(not view._vegetation.entries.is_empty())
 	assert(frame.units.size() == 55)
 	assert(frame.counts == [29, 26])
 	assert(frame.units.filter(func(unit): return unit.companion).size() == 3)

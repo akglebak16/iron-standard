@@ -97,6 +97,12 @@ func result() -> Dictionary:
 func companion_dialogue() -> Dictionary:
 	return _companion_dialogue.duplicate(true)
 
+func vegetation_layout() -> Array[Dictionary]:
+	var plants: Array[Dictionary] = []
+	for plant in _state.plants:
+		plants.append(plant.to_dictionary())
+	return plants
+
 ## Transfers the most recent tick's events once. Advance replaces unread events.
 func take_events() -> Array[Dictionary]:
 	var batch := _events

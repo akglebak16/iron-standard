@@ -12,6 +12,7 @@ const CompanionDialogue = preload("res://battle/presentation/companion_dialogue.
 const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
 const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
 const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
+const VegetationView = preload("res://battle/presentation/terrain/vegetation_view.gd")
 
 signal battle_finished
 signal audio_preferences_changed(effects: bool, music: bool)
@@ -32,6 +33,7 @@ var _effects_enabled := true
 var _music_enabled := true
 var _result_summary := ""
 var _terrain := TerrainView.new()
+var _vegetation := VegetationView.new()
 
 func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true,
 		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME) -> void:
@@ -43,6 +45,7 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_impacts.blood_enabled = blood_enabled
 	var frame := session.snapshot()
 	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
+	_vegetation.configure(session.vegetation_layout(), biome, terrain_seed)
 	add_child(_terrain)
 
 func get_battle_snapshot() -> Dictionary:
@@ -155,7 +158,7 @@ func _draw() -> void:
 	var size := get_viewport_rect().size / camera.zoom
 	var visible := Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
-	_figures.draw(self, _frame.units, visible, _impacts.headless_units())
+	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)

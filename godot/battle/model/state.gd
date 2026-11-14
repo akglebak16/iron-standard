@@ -5,11 +5,14 @@ const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
+const Plant = preload("res://battle/model/plant.gd")
 const Event = preload("res://battle/combat_event.gd")
 const Equipment = preload("res://equipment/config.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
+var plants: Array[Plant] = []
+var trunks: Array[Plant] = []
 var siege_skill := 0.0
 
 var units: Array[Unit] = []
@@ -21,6 +24,10 @@ var morale_timer := 0.0
 var formation_timer := 0.0
 var siege_alerted := false
 var _events: Array[Dictionary] = []
+
+func set_plants(layout: Array[Plant]) -> void:
+	plants = layout
+	trunks.assign(plants.filter(func(plant: Plant): return plant.trunk_radius > 0.0))
 
 func record_notice(kind: Event.Kind, details: Dictionary = {}) -> void:
 	var notice := {"kind": kind}

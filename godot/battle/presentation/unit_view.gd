@@ -57,7 +57,8 @@ func has_falling_units() -> bool:
 			return true
 	return false
 
-func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary) -> void:
+func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary,
+		vegetation: Array[Dictionary] = []) -> void:
 	var living: Array[Dictionary] = []
 	for unit in frame:
 		if unit.gone or not visible.has_point(unit.position):
@@ -68,8 +69,18 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 		else:
 			living.append(unit)
 	living.sort_custom(func(a: Dictionary, b: Dictionary): return a.position.y < b.position.y)
+	var plant_index := 0
 	for unit in living:
+		while plant_index < vegetation.size() and vegetation[plant_index].position.y < unit.position.y:
+			_draw_plant(canvas, vegetation[plant_index], visible)
+			plant_index += 1
 		_draw_unit(canvas, unit, false)
+	for i in range(plant_index, vegetation.size()):
+		_draw_plant(canvas, vegetation[i], visible)
+
+static func _draw_plant(canvas: CanvasItem, plant: Dictionary, visible: Rect2) -> void:
+	if visible.intersects(plant.bounds):
+		canvas.draw_texture(plant.texture, plant.bounds.position)
 
 func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bool = false) -> void:
 	var appearance := _art.layers(unit, headless)

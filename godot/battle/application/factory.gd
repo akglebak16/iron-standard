@@ -16,6 +16,7 @@ const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 const CompanionBuilder = preload("res://battle/data/companion_builder.gd")
 const SiegeSetup = preload("res://battle/data/siege_setup.gd")
+const VegetationSetup = preload("res://battle/data/vegetation_setup.gd")
 
 static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite():
@@ -47,6 +48,7 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 		fit_companions.append(resolved)
 	if setup.siege:
 		SiegeSetup.apply(state, siege_skill)
+	state.set_plants(VegetationSetup.create(state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF))
 	var defender_morale := roundf(Config.SIEGE_DEFENDER_MORALE * (1.0 - state.siege_skill)) if setup.siege else 0.0
 	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale):
 		return null

@@ -2,12 +2,14 @@ extends SceneTree
 const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
 const WallView = preload("res://battle/presentation/terrain/wall_view.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
+const VegetationView = preload("res://battle/presentation/terrain/vegetation_view.gd")
 const Config = preload("res://battle/config.gd")
 const TEST_SEED := 4017
 
 func _initialize() -> void:
 	_check_biomes()
 	_check_openings()
+	_check_vegetation()
 	print("Terrain view tests passed")
 	quit(0)
 
@@ -61,3 +63,21 @@ func _ground(biome: String, seed_value: int = TEST_SEED) -> ShaderMaterial:
 	var ground: ShaderMaterial = terrain.material
 	terrain.free()
 	return ground
+
+func _check_vegetation() -> void:
+	var view := VegetationView.new()
+	var layout: Array[Dictionary] = [
+		{"position": Vector2(30, 90), "tree": true, "variant": 0},
+		{"position": Vector2(30, 20), "tree": false, "variant": 0},
+		{"position": Vector2(100, 120), "tree": true, "variant": 0},
+	]
+	view.configure(layout, "grass", TEST_SEED)
+	assert(view.entries[0].position == layout[1].position)
+	assert(view.entries[1].bounds.position == layout[0].position - VegetationView.TREE_ANCHOR)
+	assert(view.entries[2].texture == view.entries[1].texture)
+	assert(view.entries[0].texture != view.entries[1].texture)
+	var grass: Image = view.entries[1].texture.get_image()
+	assert(grass.get_used_rect().has_area())
+	view.configure(layout, "snow", TEST_SEED)
+	assert(view.entries.size() == layout.size())
+	assert(view.entries[1].texture.get_image().get_data() != grass.get_data())
