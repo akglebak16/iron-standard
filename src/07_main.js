@@ -104,7 +104,7 @@ function updateWorldHud(force) {
 
 /* ---------- мир: ввод, шаги, отрисовка ---------- */
 function worldClick(sx, sy) {
-  if (!G || UI.open) return; const w = s2wW(sx, sy), P = G.player; if (NET.on) return netWorldClick(w); auInit(); P.tid = null; P.sid = null; G.wait = false; WC.free = false;
+  if (!G || UI.open) return; const w = s2wW(sx, sy), P = G.player; if (NET.on) return netWorldClick(w); auInit(); P.tid = null; P.sid = null; G.wait = false; G.waitIn = null; P.in = null; WC.free = false;
   let tp = null, bd = 34; for (const p of G.parties) { if (p.hide) continue; const d = Math.hypot(p.x - w.x, p.y - w.y); if (d < bd) { bd = d; tp = p; } }
   if (tp) { P.tid = tp.id; P.path = findPath(P.x, P.y, tp.x, tp.y) || []; P.pi = 0; P.rp = .6; return; }
   let ts = null; bd = 50; for (const s of G.settles) { const d = Math.hypot(s.x - w.x, s.y - w.y); if (d < bd) { bd = d; ts = s; } }
@@ -114,7 +114,7 @@ function worldClick(sx, sy) {
 }
 function worldUpdate(dt) {
   if (NET.on) return netWorldUpdate(dt);
-  if (!G || UI.open) return; const P = G.player, moving = (P.path.length && P.pi < P.path.length) || P.tid != null;
+  if (!G || UI.open) return; const P = G.player; if (P.in && !G.wait) { P.in = null; G.waitIn = null; } /* ожидание в городе кончилось (Z или клик): снова на карте */ const moving = (P.path.length && P.pi < P.path.length) || P.tid != null;
   if (!G.paused && (moving || G.wait)) {
     G.acc += dt * 1.2 * G.speed; G.hourAcc = G.hourAcc || 0; let guard = 0;
     while (G.acc >= .2 && guard++ < 40) { G.acc -= .2; snapWorld(); const evs = stepWorld(.2); G.hourAcc += .2; if (G.hourAcc >= 1) { G.hourAcc -= 1; hourTick(); P.logDirty = true; if (G.hour === 0) { saveGame(true); } } if (evs.length) { handleEvent(evs[0]); break; } }
