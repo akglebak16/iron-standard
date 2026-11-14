@@ -3,7 +3,6 @@ const Event = preload("res://battle/combat_event.gd")
 const Bank = preload("res://battle/presentation/audio/sound_bank.gd")
 const Config = preload("res://battle/config.gd")
 
-const MASTER_GAIN := 0.55
 const NEAR_GAIN := 1.15
 const ATTENUATION_DISTANCE := 900.0
 const MIN_DISTANCE_GAIN := 0.06
@@ -42,7 +41,7 @@ func advance(dt: float, events: Array[Dictionary], listener: Vector2) -> void:
 			if voice.playing:
 				continue
 			voice.stream = _bank[sound]
-			voice.volume_db = linear_to_db(MASTER_GAIN * distance_gain(event, listener))
+			voice.volume_db = linear_to_db(Bank.MASTER_GAIN * distance_gain(event, listener))
 			voice.play()
 			_last_played[sound] = _clock
 			break

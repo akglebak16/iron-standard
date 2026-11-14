@@ -5,6 +5,7 @@ enum Wave { SINE, TRIANGLE, SQUARE, SAW }
 enum Filter { LOW, HIGH, BAND }
 
 const MIX_RATE := 22050
+const MASTER_GAIN := 0.55
 const ATTACK_SECONDS := 0.006
 const ENVELOPE_FLOOR := 0.0001
 const PCM_MAX := 32767.0
@@ -54,9 +55,9 @@ static func _render(tones: Array, noises: Array, rng: RandomNumberGenerator) -> 
 			_mix_tone(samples, layer, frames, offset)
 		else:
 			_mix_noise(samples, layer, frames, rng)
-	return _stream(samples)
+	return pcm_stream(samples)
 
-static func _stream(samples: PackedFloat32Array) -> AudioStreamWAV:
+static func pcm_stream(samples: PackedFloat32Array) -> AudioStreamWAV:
 	var pcm := PackedByteArray()
 	pcm.resize(samples.size() * 2)
 	for i in samples.size():
@@ -136,4 +137,4 @@ static func _horn(pitch: float) -> AudioStreamWAV:
 				envelope = _decay(gain, release)
 			samples[i] += filtered * envelope
 			phase = fposmod(phase + frequency / MIX_RATE, 1.0)
-	return _stream(samples)
+	return pcm_stream(samples)

@@ -7,8 +7,10 @@ const HeroInput = preload("res://battle/application/hero_input.gd")
 const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
 const CombatFeedback = preload("res://battle/presentation/combat_feedback.gd")
 const CombatAudio = preload("res://battle/presentation/audio/combat_audio.gd")
+const BattleMusic = preload("res://battle/presentation/audio/battle_music.gd")
 
 signal battle_finished
+signal audio_preferences_changed(effects: bool, music: bool)
 
 @onready var camera: Camera2D = $Camera
 @onready var status: Label = $Hud/Status
@@ -17,11 +19,16 @@ var _frame: Dictionary = {}
 var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
 var _audio: CombatAudio
+var _music: BattleMusic
+var _effects_enabled := true
+var _music_enabled := true
 var _result_summary := ""
 
-func configure(session: Session) -> void:
+func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
+	_effects_enabled = effects_enabled
+	_music_enabled = music_enabled
 
 func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
@@ -38,7 +45,11 @@ func _ready() -> void:
 		return
 	camera.zoom = Vector2.ONE * Demo.CAMERA_ZOOM
 	_audio = CombatAudio.new()
+	_audio.enabled = _effects_enabled
 	add_child(_audio)
+	_music = BattleMusic.new()
+	_music.enabled = _music_enabled
+	add_child(_music)
 	_refresh()
 
 func _physics_process(dt: float) -> void:
@@ -47,6 +58,7 @@ func _physics_process(dt: float) -> void:
 			_feedback.advance(dt, [])
 			queue_redraw()
 		return
+	_music.advance(dt)
 	if _frame.outcome == Session.Outcome.RUNNING:
 		var input := HeroInput.new()
 		input.move = Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
@@ -69,8 +81,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	match event.keycode:
 		KEY_M:
-			_audio.enabled = not _audio.enabled
-			_update_status()
+			_set_audio_preferences(not _effects_enabled, _music_enabled)
+		KEY_N:
+			_set_audio_preferences(_effects_enabled, not _music_enabled)
 		KEY_1: _selection = Config.GROUP_INFANTRY
 		KEY_2: _selection = Config.GROUP_ARCHERS
 		KEY_3: _selection = Config.GROUP_CAVALRY
@@ -79,6 +92,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_E: _session.issue_order(Config.ORDER_FOLLOW, _frame.hero_position, _selection)
 		KEY_R: _session.issue_order(Config.ORDER_CHARGE, _frame.hero_position, _selection)
 		KEY_F: _session.issue_order(Config.ORDER_RETREAT, _frame.hero_position, _selection)
+
+func _set_audio_preferences(effects: bool, music: bool) -> void:
+	_effects_enabled = effects
+	_music_enabled = music
+	_audio.enabled = effects
+	_music.enabled = music
+	_update_status()
+	audio_preferences_changed.emit(effects, music)
 
 func _refresh() -> void:
 	# One detached read per physics tick, reused by HUD and drawing.
@@ -94,7 +115,7 @@ func _update_status() -> void:
 		Session.Outcome.VICTORY: label = Demo.VICTORY
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina)]
-	status.text += Demo.SOUND_HINT % [Demo.SOUND_ON if _audio.enabled else Demo.SOUND_OFF]
+	status.text += Demo.SOUND_HINT % [Demo.SOUND_ON if _effects_enabled else Demo.SOUND_OFF, Demo.SOUND_ON if _music_enabled else Demo.SOUND_OFF]
 	var journal := _feedback.journal()
 	if not journal.is_empty():
 		status.text += "\n" + journal

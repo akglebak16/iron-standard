@@ -2,6 +2,7 @@ extends SceneTree
 const Audio = preload("res://battle/presentation/audio/combat_audio.gd")
 const Bank = preload("res://battle/presentation/audio/sound_bank.gd")
 const Event = preload("res://battle/combat_event.gd")
+const Music = preload("res://battle/presentation/audio/battle_music.gd")
 
 func _initialize() -> void:
 	var bank := Bank.build()
@@ -30,5 +31,12 @@ func _initialize() -> void:
 	assert(Audio.sound_for({"kind": Event.Kind.ORDER_APPLIED, "order": "charge"}) == Bank.Sound.HORN)
 	assert(Audio.sound_for({"kind": Event.Kind.WALL_ALERT}) == Bank.Sound.ENEMY_HORN)
 	assert(Audio.distance_gain({"kind": Event.Kind.BATTLE_STARTED}, Vector2(3000, 1000)) == 1.0)
+	var note := Music._note(146.83)
+	var offset := roundi(0.38 * Bank.MIX_RATE) * 2
+	var sample := roundi(0.04 * Bank.MIX_RATE) * 2
+	assert(note.get_length() > 3.0)
+	assert(absi(note.data.decode_s16(sample + 3 * offset)) > 20)
+	var drum := Music._make_drum()
+	assert(drum.get_length() > 2.5 and drum.data.decode_s16(10) != 0)
 	print("Combat audio tests passed")
 	quit(0)

@@ -2,6 +2,7 @@ extends SceneTree
 const Session = preload("res://battle/application/session.gd")
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
+const AudioPreferences = preload("res://app/audio_preferences.gd")
 const TICK := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -11,6 +12,10 @@ func _check() -> void:
 	var packed: PackedScene = load("res://app/main.tscn")
 	assert(packed != null)
 	var scene = packed.instantiate()
+	var path := "res://.godot/test-audio-%d.cfg" % OS.get_process_id()
+	assert(DirAccess.make_dir_recursive_absolute("res://.godot") == OK)
+	scene.audio_preferences = AudioPreferences.new(path)
+	assert(scene.audio_preferences.save(true, true) == OK)
 	root.add_child(scene)
 	await process_frame
 	var view = scene.get_node("Battle")
@@ -25,6 +30,7 @@ func _check() -> void:
 	await physics_frame
 	await process_frame
 	assert(view.get_battle_snapshot().tick > 0)
+	assert(view._music._note_players.any(func(player): return player.playing))
 	assert(view.get_node("Camera").position == view.get_battle_snapshot().hero_position)
 	var session: Session = view._session
 	var target = session._state.units.filter(func(unit): return unit.side == 1)[0]
@@ -41,6 +47,11 @@ func _check() -> void:
 	mute.pressed = true
 	view._unhandled_input(mute)
 	assert(not view._audio.enabled and view.status.text.contains("звук: выкл."))
+	assert(view._music.enabled)
+	mute.keycode = KEY_N
+	view._unhandled_input(mute)
+	assert(not view._music.enabled and view.status.text.contains("музыка: выкл."))
+	assert(AudioPreferences.new(path).read() == {"effects": false, "music": false})
 	var flight: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(flight.origin.is_finite() and flight.progress > 0.0 and flight.progress < 1.0)
 	await process_frame
@@ -57,17 +68,22 @@ func _check() -> void:
 	assert(scene._demo_world.parties.is_empty())
 	view._physics_process(TICK)
 	assert(view.get_node("Hud/Status").text == text)
-	_check_defeat(packed)
+	_check_defeat(packed, path)
+	assert(DirAccess.remove_absolute(path) == OK)
 	print("Scene tests passed")
 	quit(0)
 
-func _check_defeat(packed: PackedScene) -> void:
+func _check_defeat(packed: PackedScene, path: String) -> void:
 	var scene = packed.instantiate()
+	scene.audio_preferences = AudioPreferences.new(path)
 	scene.battle_setup = scene.battle_setup.duplicate(true)
 	scene.battle_setup.player_army.clear()
 	scene.battle_setup.companion_profiles.clear()
 	root.add_child(scene)
 	var view = scene.get_node("Battle")
+	assert(not view._audio.enabled and not view._music.enabled)
+	view._music.advance(1.0)
+	assert(view._music._note_players.is_empty())
 	var session: Session = view._session
 	session._state.kill(session._hero)
 	view._physics_process(TICK)
