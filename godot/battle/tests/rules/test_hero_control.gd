@@ -32,6 +32,7 @@ func _initialize() -> void:
 	assert(enemy.dead)
 	assert(hero.kills == 1)
 	_check_cleave_damage()
+	_check_ranged_shot()
 	print("Hero control tests passed")
 	quit(0)
 
@@ -57,3 +58,37 @@ func _check_cleave_damage() -> void:
 		assert(battle.units[index + 1].hp == 1000 - expected)
 	assert(battle.units.back().hp == 1000) # Hit limit preserved.
 	assert(hero.damage == 40) # Follow-up modifier never changes the base stat.
+
+func _check_ranged_shot() -> void:
+	var battle := BattleState.new()
+	var hero := Unit.new(0, 0, Vector2(100, 100), 100, 0, 1)
+	hero.hero = true
+	hero.attack_range = 300.0
+	hero.attack_interval = 1.2
+	hero.weapon_kind = Config.PROJECTILE_THROW_WEAPON
+	hero.damage_type = Config.DAMAGE_TYPE_PIERCE
+	var close := Unit.new(1, 1, Vector2(200, 100), 100, 0, 1)
+	var off_axis := Unit.new(2, 1, Vector2(170, 200), 100, 0, 1)
+	battle.add_unit(hero)
+	battle.add_unit(close)
+	battle.add_unit(off_axis)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 19
+	HeroControl.step(battle, hero, {"face": 0.0, "attack": true}, Config.HERO_RANGED_WINDUP, rng)
+	assert(battle.projectiles.size() == 1)
+	var shot: Dictionary = battle.projectiles[0]
+	assert(shot.throwing and shot.damage_type == Config.DAMAGE_TYPE_PIERCE)
+	assert(is_equal_approx(shot.duration, 100.0 / Config.THROW_SPEED + Config.PROJECTILE_START_DELAY))
+	assert(shot.impact.distance_to(close.position) <= Config.SHOT_BASE_SCATTER * 2.0)
+	assert(close.hp == 100.0)
+	var miss := BattleState.new()
+	var other_hero := Unit.new(0, 0, Vector2(100, 100), 100, 0, 1)
+	other_hero.hero = true
+	other_hero.attack_range = 300.0
+	miss.add_unit(other_hero)
+	miss.add_unit(Unit.new(1, 1, Vector2(100, 250), 100, 0, 1))
+	HeroControl.step(miss, other_hero, {"face": 0.0, "attack": true}, Config.HERO_RANGED_WINDUP, rng)
+	assert(miss.projectiles.size() == 1)
+	var missed: Dictionary = miss.projectiles[0]
+	assert(is_equal_approx(missed.duration, 210.0 / Config.SHOT_SPEED + Config.PROJECTILE_START_DELAY))
+	assert(missed.impact.distance_to(Vector2(310, 100)) <= Config.SHOT_BASE_SCATTER * 2.0)

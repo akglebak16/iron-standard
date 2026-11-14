@@ -29,13 +29,23 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 
 static func shoot(attacker: Unit, target: Unit, rng: RandomNumberGenerator) -> Dictionary:
 	var distance: float = attacker.position.distance_to(target.position)
-	var is_throw := attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON
-	var speed: float = Config.THROW_SPEED if is_throw else Config.SHOT_SPEED
-	var duration: float = distance / speed + Config.PROJECTILE_START_DELAY
+	var duration: float = _flight_duration(attacker, distance)
+	var aim: Vector2 = target.position + target.velocity * duration * Config.AIM_VELOCITY_LEAD
+	return _make_projectile(attacker, aim, distance, duration, rng)
+
+static func shoot_aim(attacker: Unit, direction: float, distance: float, rng: RandomNumberGenerator) -> Dictionary:
+	var aim := attacker.position + Vector2(cos(direction), sin(direction)) * distance
+	return _make_projectile(attacker, aim, distance, _flight_duration(attacker, distance), rng)
+
+static func _flight_duration(attacker: Unit, distance: float) -> float:
+	var speed: float = Config.THROW_SPEED if attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON else Config.SHOT_SPEED
+	return distance / speed + Config.PROJECTILE_START_DELAY
+
+static func _make_projectile(attacker: Unit, aim: Vector2, distance: float, duration: float, rng: RandomNumberGenerator) -> Dictionary:
 	var spread: float = Config.SHOT_BASE_SCATTER + distance * attacker.accuracy
-	var impact: Vector2 = target.position + target.velocity * duration * Config.AIM_VELOCITY_LEAD
+	var impact: Vector2 = aim
 	impact += Vector2((rng.randf() + rng.randf() - 1.0) * spread, (rng.randf() + rng.randf() - 1.0) * spread)
-	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "damage_type": attacker.damage_type, "throwing": is_throw, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
+	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "damage_type": attacker.damage_type, "throwing": attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
 
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
 	var incoming: float = (shot.origin - target.position).angle()

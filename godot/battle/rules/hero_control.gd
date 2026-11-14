@@ -32,7 +32,7 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 	hero.attack_cooldown -= dt
 	if bool(input.get("attack", false)) and hero.attack_cooldown <= 0.0 and hero.attack_windup <= 0.0 and not hero.blocking:
 		hero.attack_cooldown = hero.attack_interval
-		hero.attack_windup = Config.HERO_ATTACK_WINDUP
+		hero.attack_windup = Config.HERO_RANGED_WINDUP if hero.attack_range > 0.0 else Config.HERO_ATTACK_WINDUP
 		hero.swing_facing = hero.facing
 	if hero.attack_windup > 0.0:
 		hero.attack_windup -= dt
@@ -40,6 +40,9 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 			_strike(battle, hero, rng)
 
 static func _strike(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
+	if hero.attack_range > 0.0:
+		_shoot(battle, hero, rng)
+		return
 	var hits := 0
 	for enemy: Unit in battle.units:
 		if enemy.side == hero.side or enemy.dead or enemy.gone:
@@ -54,3 +57,25 @@ static func _strike(battle: State, hero: Unit, rng: RandomNumberGenerator) -> vo
 		hits += 1
 		if hits >= Config.HERO_MAX_HITS:
 			break
+
+static func _shoot(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
+	var best: Unit = null
+	var best_score := INF
+	for enemy: Unit in battle.units:
+		if enemy.side == hero.side or enemy.dead or enemy.gone:
+			continue
+		var delta: Vector2 = enemy.position - hero.position
+		var distance := delta.length()
+		if distance > hero.attack_range or distance < Config.HERO_SHOT_MIN_DISTANCE:
+			continue
+		var angle_difference := absf(wrapf(delta.angle() - hero.swing_facing, -PI, PI))
+		if angle_difference > Config.HERO_SHOT_CONE:
+			continue
+		var score := angle_difference * Config.HERO_SHOT_ANGLE_SCORE + distance * Config.HERO_SHOT_DISTANCE_SCORE
+		if score < best_score:
+			best = enemy
+			best_score = score
+	if best == null:
+		battle.projectiles.append(Combat.shoot_aim(hero, hero.swing_facing, hero.attack_range * Config.HERO_SHOT_MISS_DISTANCE_FRACTION, rng))
+	else:
+		battle.projectiles.append(Combat.shoot(hero, best, rng))
