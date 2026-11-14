@@ -1,6 +1,6 @@
 extends RefCounted
 
-const DATA_PATH := "res://data/troops.json"
+const DATA_PATH := "res://battle/data/troops.json"
 var troops: Dictionary = {}
 
 func load_data() -> bool:

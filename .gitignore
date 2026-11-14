@@ -2,7 +2,7 @@ node_modules/
 *.log
 .DS_Store
 data/
-!godot/data/
+!godot/battle/data/
 index.html
 _site/
 godot/.godot/

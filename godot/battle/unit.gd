@@ -23,6 +23,11 @@ var damage: float = 0.0
 var speed: float = 0.0
 var attack_range: float = 0.0
 var mounted: bool = false
+var velocity: Vector2 = Vector2.ZERO
+var facing: float = 0.0
+var fleeing: bool = false
+var collision_radius: float = Config.FOOT_COLLISION_RADIUS
+var mass: float = Config.FOOT_MASS
 
 func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection: float, unit_tier: int) -> void:
 	id = unit_id

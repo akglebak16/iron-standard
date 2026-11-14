@@ -34,8 +34,88 @@ func spawn_army(side: int, stacks: Array, faction: String, catalog: RefCounted, 
 			unit.speed = float(troop.spd) * rng.randf_range(Config.SPEED_RANDOM_MIN, Config.SPEED_RANDOM_MAX)
 			unit.attack_range = float(troop.get("range", 0))
 			unit.mounted = bool(troop.mounted)
+			unit.collision_radius = Config.HORSE_COLLISION_RADIUS if unit.mounted else Config.FOOT_COLLISION_RADIUS
+			unit.mass = Config.HORSE_MASS if unit.mounted else Config.FOOT_MASS
 			add_grouped_unit(unit, kind)
 	return true
+
+func step_movement(dt: float, hero_position: Vector2, hero_facing: float = 0.0) -> void:
+	if dt <= 0.0:
+		return
+	var foe := _centroid(1)
+	for group in groups[0]:
+		if group.order != Config.ORDER_FOLLOW:
+			continue
+		var facing := (foe - hero_position).angle() if foe != Vector2.INF else hero_facing
+		group.direction = facing
+		var rear: float = Config.FOLLOW_REAR_OFFSET[group.kind]
+		var lateral := Config.FOLLOW_CAVALRY_SIDE_OFFSET if group.kind == Config.GROUP_CAVALRY else 0.0
+		group.center = hero_position - Vector2(cos(facing), sin(facing)) * rear + Vector2(-sin(facing), cos(facing)) * lateral
+	for unit in units:
+		if unit.dead or unit.gone or unit.hero:
+			continue
+		var group = groups[unit.side][unit.group_kind]
+		var destination: Vector2 = group.slot_position(unit, arena_size)
+		var velocity_scale := 1.0
+		if unit.fleeing:
+			destination = Vector2(arena_size.x + Config.FLEE_DESTINATION_PADDING if unit.side == 1 else -Config.FLEE_DESTINATION_PADDING, unit.position.y)
+			velocity_scale = Config.FLEE_SPEED_MULTIPLIER
+		elif group.order == Config.ORDER_CHARGE:
+			var enemy = _nearest_enemy(unit)
+			if enemy != null:
+				destination = enemy.position
+		_steer(unit, destination, unit.speed * velocity_scale, dt)
+		unit.position += unit.velocity * dt
+		if unit.fleeing and (unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > arena_size.x + Config.FLEE_EXIT_PADDING):
+			unit.gone = true
+		if not unit.fleeing:
+			unit.position.x = clampf(unit.position.x, Config.FIELD_LEFT_RIGHT_MARGIN, arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
+		unit.position.y = clampf(unit.position.y, Config.FIELD_TOP_MARGIN, arena_size.y - Config.FIELD_BOTTOM_MARGIN)
+	_resolve_unit_collisions()
+
+func _steer(unit: RefCounted, destination: Vector2, speed: float, dt: float) -> void:
+	var delta: Vector2 = destination - unit.position
+	var distance := delta.length()
+	var desired := Vector2.ZERO
+	if distance > Config.ARRIVAL_DISTANCE and speed > 0.0:
+		desired = delta / distance * minf(speed, distance * Config.ARRIVAL_BRAKE)
+	var rate := Config.HORSE_STEERING_RATE if unit.mounted else Config.FOOT_STEERING_RATE
+	unit.velocity = unit.velocity.lerp(desired, minf(1.0, rate * dt))
+	if unit.velocity.length_squared() > 0.0:
+		unit.facing = unit.velocity.angle()
+
+func _nearest_enemy(unit: RefCounted):
+	var nearest = null
+	var best := INF
+	for enemy in units:
+		if enemy.side == unit.side or enemy.dead or enemy.gone:
+			continue
+		var distance: float = unit.position.distance_squared_to(enemy.position)
+		if distance < best:
+			best = distance
+			nearest = enemy
+	return nearest
+
+func _resolve_unit_collisions() -> void:
+	for i in units.size():
+		var a = units[i]
+		if a.dead or a.gone:
+			continue
+		for j in range(i + 1, units.size()):
+			var b = units[j]
+			if b.dead or b.gone:
+				continue
+			var difference: Vector2 = b.position - a.position
+			var radius: float = a.collision_radius + b.collision_radius
+			if absf(difference.x) >= radius or absf(difference.y) >= radius or difference.length_squared() >= radius * radius:
+				continue
+			var distance := maxf(difference.length(), Config.MIN_COLLISION_DISTANCE)
+			var normal := difference / distance
+			var strength := Config.FRIEND_COLLISION_PUSH if a.side == b.side else Config.ENEMY_COLLISION_PUSH
+			var overlap := (radius - distance) * strength
+			var total_mass: float = a.mass + b.mass
+			a.position -= normal * overlap * b.mass / total_mass
+			b.position += normal * overlap * a.mass / total_mass
 
 func setup_groups(cavalry_flank: int = 1) -> void:
 	groups.clear()
