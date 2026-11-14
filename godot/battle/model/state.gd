@@ -131,12 +131,12 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null) 
 		return
 	if target.hero or target.companion or not target.leader:
 		return
-	if target.faction == Config.UNDEAD_FACTION:
+	if not target.leader_bond.is_empty():
 		if rng == null:
-			push_error("Undead leader collapse requires the battle RNG")
+			push_error("Leader loss requires the battle RNG")
 			return
 		for unit: Unit in units:
-			if unit.side == target.side and not unit.dead and not unit.gone and unit.faction == Config.UNDEAD_FACTION and rng.randf() < Config.UNDEAD_LEADER_COLLAPSE_CHANCE:
+			if unit.side == target.side and not unit.dead and not unit.gone and unit.leader_bond == target.leader_bond and unit.leader_loss_chance > 0.0 and rng.randf() < unit.leader_loss_chance:
 				unit.leader = false
 				kill(unit, null, rng)
 	else:

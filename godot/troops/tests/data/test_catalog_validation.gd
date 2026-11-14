@@ -20,6 +20,10 @@ func _initialize() -> void:
 	var invalid_shield := original.duplicate(true)
 	invalid_shield.shb = 1.1
 	assert(not catalog.replace_data({"n1": invalid_shield}))
+	for traits in [[], {"morale_immune": 1}, {"morale_base": INF}, {"projectile_damage_multiplier": -1}, {"leader_loss_chance": 0.4}, {"leader_bond": " ", "leader_loss_chance": 0.4}, {"leader_bond": "test", "leader_loss_chance": 1.1}, {"unknown": true}]:
+		var invalid := original.duplicate(true)
+		invalid.battle_traits = traits
+		assert(not catalog.replace_data({"n1": invalid}))
 	assert(not catalog.replace_data([]))
 	assert(catalog.size() == 67 and catalog.get_troop("n1") == original)
 	var definitions := {"n1": original.duplicate(true)}

@@ -4,20 +4,28 @@ const State = preload("res://battle/model/state.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 
-static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator) -> bool:
-	if side < 0 or side > 1 or battle.groups.size() != 2:
+static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator, cap: int = Config.SOLO_UNIT_CAP, leader_name: String = "") -> bool:
+	if side < 0 or side > 1 or battle.groups.size() != 2 or cap <= 0:
 		return false
 	var total := 0
+	var definitions: Array[Dictionary] = []
 	for stack in stacks:
-		if not _valid_stack(stack) or catalog.get_troop(stack.type).is_empty():
+		if not _valid_stack(stack):
 			return false
+		var troop := catalog.get_troop(stack.type)
+		if troop.is_empty():
+			return false
+		definitions.append(troop)
 		total += int(stack.n)
-	var cap := Config.unit_cap(faction)
 	var scale := minf(1.0, float(cap) / total) if total > 0 else 1.0
-	for stack in stacks:
-		var troop: Dictionary = catalog.get_troop(str(stack.type))
+	var leader: Unit = null
+	var leader_has_morale_override := false
+	for stack_index in stacks.size():
+		var stack: Dictionary = stacks[stack_index]
+		var troop: Dictionary = definitions[stack_index]
 		var count := maxi(1, roundi(int(stack.n) * scale)) if scale < 1.0 else int(stack.n)
 		var weight := float(stack.n) / count
+		var traits: Dictionary = troop.get("battle_traits", {})
 		for i in count:
 			var kind: int = troop.grp
 			var center: Vector2 = battle.groups[side][kind].center
@@ -42,11 +50,32 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			unit.anti_cavalry = bool(troop.get("anticav", false))
 			var look: Dictionary = troop.get("look", {})
 			unit.weapon_kind = str(look.get("weapon", ""))
-			unit.undead_kind = str(look.get("undead", ""))
 			unit.collision_radius = Config.HORSE_COLLISION_RADIUS if unit.mounted else Config.FOOT_COLLISION_RADIUS
 			unit.mass = Config.HORSE_MASS if unit.mounted else Config.FOOT_MASS
+			_apply_traits(unit, traits)
 			battle.add_grouped_unit(unit, kind)
+			if not leader_name.is_empty() and (leader == null or unit.tier > leader.tier):
+				leader = unit
+				leader_has_morale_override = traits.has("morale_base")
+	if leader != null:
+		leader.leader = true
+		leader.name = leader_name
+		leader.max_hp *= Config.LEADER_HEALTH_MULTIPLIER
+		leader.hp = leader.max_hp
+		leader.damage *= Config.LEADER_DAMAGE_MULTIPLIER
+		if not leader_has_morale_override:
+			leader.base_morale = Config.LEADER_BASE_MORALE
+			leader.morale = leader.base_morale
 	return true
+
+static func _apply_traits(unit: Unit, traits: Dictionary) -> void:
+	unit.base_morale = float(traits.get("morale_base", unit.base_morale))
+	unit.morale = unit.base_morale
+	unit.morale_immune = bool(traits.get("morale_immune", false))
+	unit.leader_bond = str(traits.get("leader_bond", ""))
+	unit.leader_loss_chance = float(traits.get("leader_loss_chance", 0.0))
+	unit.projectile_damage_multiplier = float(traits.get("projectile_damage_multiplier", 1.0))
+	unit.blunt_melee_damage_multiplier = float(traits.get("blunt_melee_damage_multiplier", 1.0))
 
 static func _valid_stack(stack: Variant) -> bool:
 	if not stack is Dictionary or not stack.get("type") is String:

@@ -4,6 +4,8 @@ const ArmyBuilder = preload("res://battle/data/army_builder.gd")
 const Config = preload("res://battle/config.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const BattleState = preload("res://battle/model/state.gd")
+const Setup = preload("res://battle/data/battle_setup.gd")
+const Factory = preload("res://battle/application/factory.gd")
 
 func _initialize() -> void:
 	var catalog = Catalog.new()
@@ -37,10 +39,16 @@ func _initialize() -> void:
 	assert(massive.units[0].weight == 2.0)
 	assert(massive.units[0].hp == float(catalog.get_troop("e1").hp) * 2.0)
 	assert(massive.units[0].damage == float(catalog.get_troop("e1").dmg) * 2.0)
-	var undead = BattleState.new()
-	undead.setup_groups()
-	assert(ArmyBuilder.spawn(undead, 1, [{"type": "s1", "n": 600}], "undead", catalog, rng))
-	assert(undead.units.size() == Config.UNDEAD_UNIT_CAP)
-	assert(is_equal_approx(undead.units[0].xp_multiplier, float(catalog.get_troop("s1").get("pw", 1.0))))
+	var setup := Setup.new()
+	setup.hero_troop = "n1"
+	setup.enemy_faction = "undead"
+	setup.enemy_army = [{"type": "s1", "n": 600}]
+	var session := Factory.create(setup, catalog)
+	assert(session.snapshot().counts == [1, 600])
+	assert(session._state.units[0].xp_multiplier == 0.6)
+	setup.enemy_unit_cap = 20
+	assert(Factory.create(setup, catalog).snapshot().counts == [1, 20])
+	setup.enemy_unit_cap = -1
+	assert(Factory.create(setup, catalog) == null)
 	print("Catalog and spawn tests passed")
 	quit(0)

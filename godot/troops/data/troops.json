@@ -1918,7 +1918,14 @@
     "grp": 0,
     "cost": 25,
     "upCost": 35,
-    "wage": 2
+    "wage": 2,
+    "battle_traits": {
+      "morale_base": 999,
+      "morale_immune": true,
+      "leader_bond": "animated_dead",
+      "leader_loss_chance": 0.35,
+      "blunt_melee_damage_multiplier": 1.15
+    }
   },
   "s1": {
     "id": "s1",
@@ -1948,7 +1955,15 @@
     "grp": 0,
     "cost": 25,
     "upCost": 35,
-    "wage": 2
+    "wage": 2,
+    "battle_traits": {
+      "morale_base": 999,
+      "morale_immune": true,
+      "leader_bond": "animated_dead",
+      "leader_loss_chance": 0.35,
+      "projectile_damage_multiplier": 0.6,
+      "blunt_melee_damage_multiplier": 1.4
+    }
   },
   "s1a": {
     "id": "s1a",
@@ -1979,7 +1994,15 @@
     "grp": 1,
     "cost": 25,
     "upCost": 35,
-    "wage": 2
+    "wage": 2,
+    "battle_traits": {
+      "morale_base": 999,
+      "morale_immune": true,
+      "leader_bond": "animated_dead",
+      "leader_loss_chance": 0.35,
+      "projectile_damage_multiplier": 0.6,
+      "blunt_melee_damage_multiplier": 1.4
+    }
   },
   "s2": {
     "id": "s2",
@@ -2009,7 +2032,15 @@
     "grp": 0,
     "cost": 60,
     "upCost": 85,
-    "wage": 4
+    "wage": 4,
+    "battle_traits": {
+      "morale_base": 999,
+      "morale_immune": true,
+      "leader_bond": "animated_dead",
+      "leader_loss_chance": 0.35,
+      "projectile_damage_multiplier": 0.6,
+      "blunt_melee_damage_multiplier": 1.4
+    }
   },
   "s2c": {
     "id": "s2c",
@@ -2039,7 +2070,15 @@
     "grp": 2,
     "cost": 110,
     "upCost": 85,
-    "wage": 7
+    "wage": 7,
+    "battle_traits": {
+      "morale_base": 999,
+      "morale_immune": true,
+      "leader_bond": "animated_dead",
+      "leader_loss_chance": 0.35,
+      "projectile_damage_multiplier": 0.6,
+      "blunt_melee_damage_multiplier": 1.4
+    }
   },
   "s3": {
     "id": "s3",
@@ -2069,6 +2108,14 @@
     "grp": 0,
     "cost": 130,
     "upCost": 0,
-    "wage": 7
+    "wage": 7,
+    "battle_traits": {
+      "morale_base": 999,
+      "morale_immune": true,
+      "leader_bond": "animated_dead",
+      "leader_loss_chance": 0.35,
+      "projectile_damage_multiplier": 0.6,
+      "blunt_melee_damage_multiplier": 1.4
+    }
   }
 }

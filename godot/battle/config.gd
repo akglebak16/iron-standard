@@ -1,7 +1,7 @@
 extends RefCounted
+
 ## Balance values copied from the browser battle. Change them here, then run Godot tests.
 const TroopConfig = preload("res://troops/config.gd")
-
 const ARENA_SIZE := Vector2(2600, 1700)
 const SPATIAL_CELL_SIZE := 128.0 # Broad-phase cell; changing it must not change battle results.
 const SPATIAL_MIN_UNITS := 64 # Small battles avoid index construction overhead.
@@ -46,14 +46,10 @@ const LEADER_GLOBAL_MORALE_LOSS := 10.0
 const LEADER_HEALTH_MULTIPLIER := 1.9
 const LEADER_DAMAGE_MULTIPLIER := 1.3
 const LEADER_BASE_MORALE := 200.0
-const UNDEAD_BASE_MORALE := 999.0
-const UNDEAD_LEADER_COLLAPSE_CHANCE := 0.35
-const UNDEAD_FACTION := "undead"
 const ALLY_DEATH_MORALE := 1.6
 const ALLY_DEATH_MORALE_PER_TIER := 0.5
 const ENEMY_DEATH_MORALE_BONUS := 3.0
 const SOLO_UNIT_CAP := 300
-const UNDEAD_UNIT_CAP := 600
 const SPAWN_JITTER := 30.0
 const SPEED_RANDOM_MIN := 0.94
 const SPEED_RANDOM_MAX := 1.06
@@ -189,9 +185,6 @@ const AI_SHOOT_COOLDOWN_MAX := 1.2
 const AI_WIND_HIT_EXTRA_REACH := 10.0 # Browser: radius + radius + 16 + troop reach; melee_reach already includes 6.
 const ARROW_DAMAGE_MIN := 0.85
 const ARROW_DAMAGE_MAX := 1.15
-const SKELETON_ARROW_MULTIPLIER := 0.6
-const SKELETON_BLUNT_MULTIPLIER := 1.4
-const ZOMBIE_BLUNT_MULTIPLIER := 1.15
 const HERO_MAX_STAMINA := 100.0
 const HERO_SPRINT_MIN_INPUT := 0.2
 const HERO_SPRINT_MIN_STAMINA := 2.0
@@ -243,6 +236,3 @@ const MORALE_WAVER_THRESHOLD := 22.0
 const MORALE_FORCE_FLEE_START_SHARE := 0.2
 const MORALE_FORCE_FLEE_ENEMY_SHARE := 0.5
 const MORALE_FORCE_FLEE_MIN_START := 4
-
-static func unit_cap(faction: String) -> int:
-	return UNDEAD_UNIT_CAP if faction == UNDEAD_FACTION else SOLO_UNIT_CAP

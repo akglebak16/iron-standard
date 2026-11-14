@@ -20,10 +20,7 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 	if attacker.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
 	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.weapon_kind in ["club", "mace"]):
-		if target.undead_kind == "skel":
-			raw *= Config.SKELETON_BLUNT_MULTIPLIER
-		elif target.undead_kind == "zombie":
-			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
+		raw *= target.blunt_melee_damage_multiplier
 	if attacker.damage_type.is_empty():
 		return battle.hurt(target, raw, attacker, 0.0, rng)
 	return battle.hurt(target, raw * DamageType.multiplier(attacker.damage_type, target.armor), attacker, DamageType.pierce(attacker.damage_type, target.armor, attacker.pierce), rng)
@@ -46,10 +43,7 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 	if hero.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
 	if hero.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT:
-		if target.undead_kind == "skel":
-			raw *= Config.SKELETON_BLUNT_MULTIPLIER
-		elif target.undead_kind == "zombie":
-			raw *= Config.ZOMBIE_BLUNT_MULTIPLIER
+		raw *= target.blunt_melee_damage_multiplier
 	if hero.damage_type.is_empty():
 		return battle.hurt(target, raw, hero, Config.HERO_UNARMED_PIERCE + bonus_pierce, rng)
 	return battle.hurt(target, raw * DamageType.multiplier(hero.damage_type, target.armor), hero, DamageType.pierce(hero.damage_type, target.armor, hero.pierce + bonus_pierce), rng)
@@ -79,8 +73,7 @@ static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: Random
 	if Block.check(target, incoming, true, rng):
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)
-	if target.undead_kind == "skel":
-		raw *= Config.SKELETON_ARROW_MULTIPLIER
+	raw *= target.projectile_damage_multiplier
 	var kind: String = shot.get("damage_type", "")
 	if kind.is_empty():
 		return battle.hurt(target, raw, shot.source, shot.pierce, rng)

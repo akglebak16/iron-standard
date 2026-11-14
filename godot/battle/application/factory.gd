@@ -22,25 +22,12 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	rng.seed = setup.seed
 	var state := State.new()
 	state.setup_groups()
-	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng) or not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng):
+	var player_cap := setup.unit_cap(setup.player_faction, setup.player_unit_cap)
+	var enemy_cap := setup.unit_cap(setup.enemy_faction, setup.enemy_unit_cap)
+	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, player_cap):
 		return null
-	if not setup.enemy_leader_name.is_empty():
-		var leader: Unit = null
-		for candidate: Unit in state.units:
-			if candidate.side == 1 and (leader == null or candidate.tier > leader.tier):
-				leader = candidate
-		if leader != null:
-			leader.leader = true
-			leader.name = setup.enemy_leader_name
-			leader.max_hp *= Config.LEADER_HEALTH_MULTIPLIER
-			leader.hp = leader.max_hp
-			leader.damage *= Config.LEADER_DAMAGE_MULTIPLIER
-			leader.base_morale = Config.LEADER_BASE_MORALE
-			leader.morale = leader.base_morale
-	for unit: Unit in state.units:
-		if unit.faction == Config.UNDEAD_FACTION:
-			unit.base_morale = Config.UNDEAD_BASE_MORALE
-			unit.morale = unit.base_morale
+	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name):
+		return null
 	state.place_units()
 	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true

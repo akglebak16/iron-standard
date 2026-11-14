@@ -93,8 +93,8 @@ func _test_named_undead_leader(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
 	assert(troops.load_data())
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
-	setup.enemy_faction = Config.UNDEAD_FACTION
-	setup.enemy_army = [{"type": "s1", "n": 2}, {"type": "s3", "n": 2}]
+	setup.enemy_faction = "emp"
+	setup.enemy_army = [{"type": "s1", "n": 2}, {"type": "s3", "n": 2}, {"type": "e1", "n": 1}]
 	setup.enemy_leader_name = "Некромант"
 	var session = Factory.create(setup, troops, gear_catalog)
 	assert(session != null)
@@ -105,5 +105,10 @@ func _test_named_undead_leader(gear_catalog: GearCatalog) -> void:
 	assert(leader.hp == float(troops.get_troop("s3").hp) * Config.LEADER_HEALTH_MULTIPLIER)
 	assert(leader.damage == float(troops.get_troop("s3").dmg) * Config.LEADER_DAMAGE_MULTIPLIER)
 	for unit in session._state.units:
-		if unit.faction == Config.UNDEAD_FACTION:
-			assert(unit.morale == Config.UNDEAD_BASE_MORALE and unit.base_morale == Config.UNDEAD_BASE_MORALE)
+		if unit.side != 1:
+			continue
+		if unit.troop_id == "e1":
+			assert(not unit.morale_immune and unit.leader_bond.is_empty())
+		else:
+			assert(unit.morale_immune and unit.morale == 999.0 and unit.base_morale == 999.0)
+			assert(unit.projectile_damage_multiplier == 0.6 and unit.blunt_melee_damage_multiplier == 1.4)

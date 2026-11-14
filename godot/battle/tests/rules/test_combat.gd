@@ -5,6 +5,7 @@ const Unit = preload("res://battle/model/unit.gd")
 const BattleState = preload("res://battle/model/state.gd")
 const Combat = preload("res://battle/rules/combat.gd")
 const Config = preload("res://battle/config.gd")
+const EquipmentConfig = preload("res://equipment/config.gd")
 
 func _initialize() -> void:
 	var rng := RandomNumberGenerator.new()
@@ -46,23 +47,44 @@ func _initialize() -> void:
 	assert(archers.projectiles.is_empty())
 	assert(target.hp < 100.0)
 	assert(archer.attack_cooldown > 0.0)
-	_check_undead_leader_combat_rng()
+	_check_bonded_leader_combat_rng()
+	_check_damage_response()
 	print("Combat tests passed")
 	quit(0)
 
-func _check_undead_leader_combat_rng() -> void:
+func _check_bonded_leader_combat_rng() -> void:
 	var battle := BattleState.new()
 	var attacker := Unit.new(0, 0, Vector2.ZERO, 100, 0, 1)
 	attacker.damage = 200.0
 	var leader := Unit.new(1, 1, Vector2(10, 0), 20, 0, 3)
-	leader.faction = Config.UNDEAD_FACTION
+	leader.leader_bond = "test_bond"
 	leader.leader = true
 	battle.add_unit(attacker)
 	battle.add_unit(leader)
 	var minion := Unit.new(2, 1, Vector2(300, 0), 100, 0, 1)
-	minion.faction = Config.UNDEAD_FACTION
+	minion.leader_bond = leader.leader_bond
+	minion.leader_loss_chance = 1.0
 	battle.add_unit(minion)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 22
 	assert(Combat.strike(battle, attacker, leader, rng) > 0)
-	assert(leader.dead and attacker.kills == 1)
+	assert(leader.dead and minion.dead and attacker.kills == 1)
+
+func _check_damage_response() -> void:
+	var battle := BattleState.new()
+	var attacker := Unit.new(0, 0, Vector2.ZERO, 100, 0, 1)
+	attacker.damage = 30.0
+	var target := Unit.new(1, 1, Vector2(10, 0), 500, 0, 1)
+	target.facing = PI
+	target.projectile_damage_multiplier = 0.0
+	target.blunt_melee_damage_multiplier = 0.0
+	battle.add_unit(attacker)
+	battle.add_unit(target)
+	var rng := RandomNumberGenerator.new()
+	attacker.weapon_kind = "club"
+	assert(Combat.strike(battle, attacker, target, rng) == 1)
+	attacker.damage_type = EquipmentConfig.DAMAGE_TYPE_BLUNT
+	assert(Combat.hero_strike(battle, attacker, target, 0, rng) == 1)
+	assert(Combat.arrow_hit(battle, Combat.shoot(attacker, target, rng), target, rng) == 1)
+	attacker.damage_type = EquipmentConfig.DAMAGE_TYPE_CUT
+	assert(Combat.strike(battle, attacker, target, rng) > 1)

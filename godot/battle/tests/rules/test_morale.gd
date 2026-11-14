@@ -16,15 +16,15 @@ func _initialize() -> void:
 	var companion = Unit.new(2, 0, Vector2(120, 100), 80, 0, 2)
 	companion.companion = true
 	companion.morale = -10.0
-	var undead = Unit.new(3, 0, Vector2(130, 100), 30, 0, 1)
-	undead.faction = "undead"
-	undead.morale = -10.0
+	var immune = Unit.new(3, 0, Vector2(130, 100), 30, 0, 1)
+	immune.morale_immune = true
+	immune.morale = -10.0
 	var foe = Unit.new(4, 1, Vector2(200, 100), 40, 0, 1)
-	for unit in [shaken, hero, companion, undead, foe]:
+	for unit in [shaken, hero, companion, immune, foe]:
 		battle.add_grouped_unit(unit, Config.GROUP_INFANTRY)
 	Morale.advance(battle, 0.1)
 	assert(shaken.fleeing)
-	assert(not hero.fleeing and not companion.fleeing and not undead.fleeing)
+	assert(not hero.fleeing and not companion.fleeing and not immune.fleeing and immune.morale == -10.0)
 	assert(battle.groups[0][Config.GROUP_INFANTRY].active_units().size() == 2)
 	var saved_morale: float = foe.morale
 	Morale.advance(battle, 0.5)

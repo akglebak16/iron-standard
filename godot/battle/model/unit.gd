@@ -9,6 +9,7 @@ var max_hp: float
 var armor: float
 var morale: float
 var base_morale: float
+var morale_immune: bool = false # Skips the periodic morale and rout check.
 var tier: int
 var weight: float = 1.0
 var xp_multiplier: float = 1.0 # Troop pw from the browser catalog.
@@ -16,6 +17,8 @@ var dead: bool = false
 var gone: bool = false
 var kills: int = 0
 var leader: bool = false
+var leader_bond: String = "" # Shared by troops affected by the same leader's death.
+var leader_loss_chance: float = 0.0
 var hero: bool = false
 var group_kind: int = 0
 var slot_offset: Vector2 = Vector2.ZERO
@@ -50,7 +53,8 @@ var pierce: float = 0.0
 var damage_type: String = "" # Empty for troop attacks without an equipped weapon.
 var anti_cavalry: bool = false
 var weapon_kind: String = ""
-var undead_kind: String = ""
+var projectile_damage_multiplier: float = 1.0
+var blunt_melee_damage_multiplier: float = 1.0
 var stamina: float = Config.HERO_MAX_STAMINA
 var blocking: bool = false
 var attack_windup: float = -1.0
