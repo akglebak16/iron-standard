@@ -1,8 +1,8 @@
-extends SceneTree
+﻿extends SceneTree
 
 const Config = preload("res://battle/config.gd")
-const Catalog = preload("res://battle/catalog.gd")
-const BattleState = preload("res://battle/state.gd")
+const Catalog = preload("res://battle/data/catalog.gd")
+const BattleState = preload("res://battle/model/state.gd")
 
 func _initialize() -> void:
 	var catalog = Catalog.new()

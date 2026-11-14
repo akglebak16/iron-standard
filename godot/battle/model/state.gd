@@ -1,10 +1,10 @@
-extends RefCounted
+﻿extends RefCounted
 
-const Damage = preload("res://battle/damage.gd")
-const Group = preload("res://battle/group.gd")
+const Damage = preload("res://battle/rules/damage.gd")
+const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
-const Unit = preload("res://battle/unit.gd")
-const Combat = preload("res://battle/combat.gd")
+const Unit = preload("res://battle/model/unit.gd")
+const Combat = preload("res://battle/rules/combat.gd")
 
 var units: Array = []
 var arena_size := Config.ARENA_SIZE

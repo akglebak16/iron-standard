@@ -3,6 +3,7 @@ node_modules/
 .DS_Store
 data/
 !godot/battle/data/
+!godot/battle/tests/data/
 index.html
 _site/
 godot/.godot/

@@ -1,11 +1,11 @@
 ﻿extends Node2D
 
 const Config = preload("res://battle/config.gd")
-const Demo = preload("res://battle/demo_config.gd")
-const Catalog = preload("res://battle/catalog.gd")
-const State = preload("res://battle/state.gd")
-const Unit = preload("res://battle/unit.gd")
-const HeroControl = preload("res://battle/hero_control.gd")
+const Demo = preload("res://battle/presentation/demo_config.gd")
+const Catalog = preload("res://battle/data/catalog.gd")
+const State = preload("res://battle/model/state.gd")
+const Unit = preload("res://battle/model/unit.gd")
+const HeroControl = preload("res://battle/rules/hero_control.gd")
 
 @onready var camera: Camera2D = $Camera
 @onready var status: Label = $Hud/Status

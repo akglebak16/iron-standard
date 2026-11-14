@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+﻿[gd_scene load_steps=2 format=3]
 
-[ext_resource type="PackedScene" path="res://battle/scene.tscn" id="1_battle"]
+[ext_resource type="PackedScene" path="res://battle/presentation/scene.tscn" id="1_battle"]
 
 [node name="IronStandard" type="Node2D"]
 

@@ -1,7 +1,7 @@
-extends RefCounted
+﻿extends RefCounted
 
 const Config = preload("res://battle/config.gd")
-const Combat = preload("res://battle/combat.gd")
+const Combat = preload("res://battle/rules/combat.gd")
 
 ## Input keys: move (Vector2), face (float), sprint, block, attack (bool).
 static func step(battle: RefCounted, hero: RefCounted, input: Dictionary, dt: float, rng: RandomNumberGenerator) -> void:

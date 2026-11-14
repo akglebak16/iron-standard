@@ -2,9 +2,9 @@
 
 Запускаемый боевой прототип уже есть: Godot открывает встречу двух отрядов, показывает движение, атаки и результат. Бойцы пока обозначены простыми кругами; звук, подробная графика и другие правила исходного боя ещё требуют переноса. Кампания пока не перенесена.
 
-Расположение кода и правила для разработчиков описаны в `ARCHITECTURE.md`. Всё, что относится к бою, лежит внутри `battle/`, включая данные, тесты и инструменты переноса.
+Расположение кода и правила для разработчиков описаны в `ARCHITECTURE.md`. Внутри `battle/`: `model/` — состояние и сущности, `rules/` — действия и формулы, `data/` — войска, `presentation/` — сцена, `tests/` — проверки по тем же областям.
 
-Баланс боя хранится в `battle/config.gd`: размеры поля, построение, приказы, мораль, лимиты армий. Настройки запускаемой встречи лежат отдельно в `battle/demo_config.gd`. Параметры каждого типа войск хранятся в `battle/data/troops.json`. Меняйте значения там, сохраняя поля и идентификаторы. Загрузчик каталога проверяет обязательные поля и допустимые параметры. Названия войск в JSON пока взяты из русской версии; при переносе интерфейса они получат ключи локализации.
+Баланс боя хранится в `battle/config.gd`: размеры поля, построение, приказы, мораль, лимиты армий. Настройки запускаемой встречи лежат отдельно в `battle/presentation/demo_config.gd`. Параметры каждого типа войск хранятся в `battle/data/troops.json`. Меняйте значения там, сохраняя поля и идентификаторы. Загрузчик каталога проверяет обязательные поля и допустимые параметры. Названия войск в JSON пока взяты из русской версии; при переносе интерфейса они получат ключи локализации.
 
 `node godot/battle/tools/export_troops.cjs --check` сверяет каталог с исходным прототипом. Эта проверка полезна для контроля точности переноса и ожидаемо покажет разницу после намеренной правки баланса в Godot.
 
@@ -12,14 +12,9 @@
 
 Проверка всех тестов Godot из корня репозитория: `node godot/tools/test.cjs <путь-к-godot.exe>`. Скрипт считает ошибки компиляции и зависание провалом теста, даже если Godot вернул код 0.
 
-Отдельные проверки:
+Примеры запуска отдельной проверки:
 
 ```text
-godot --headless --path godot --script res://battle/tests/test_damage.gd
-godot --headless --path godot --script res://battle/tests/test_battle_state.gd
-godot --headless --path godot --script res://battle/tests/test_groups.gd
-godot --headless --path godot --script res://battle/tests/test_catalog_spawn.gd
-godot --headless --path godot --script res://battle/tests/test_movement.gd
-godot --headless --path godot --script res://battle/tests/test_combat.gd
-godot --headless --path godot --script res://battle/tests/test_hero_control.gd
+godot --headless --path godot --script res://battle/tests/rules/test_damage.gd
+godot --headless --path godot --script res://battle/tests/presentation/test_scene.gd
 ```

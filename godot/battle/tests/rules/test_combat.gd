@@ -1,8 +1,8 @@
-extends SceneTree
+﻿extends SceneTree
 
-const Unit = preload("res://battle/unit.gd")
-const BattleState = preload("res://battle/state.gd")
-const Combat = preload("res://battle/combat.gd")
+const Unit = preload("res://battle/model/unit.gd")
+const BattleState = preload("res://battle/model/state.gd")
+const Combat = preload("res://battle/rules/combat.gd")
 
 func _initialize() -> void:
 	var rng := RandomNumberGenerator.new()

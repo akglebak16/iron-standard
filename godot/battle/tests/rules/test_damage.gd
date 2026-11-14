@@ -1,6 +1,6 @@
-extends SceneTree
+﻿extends SceneTree
 
-const Damage = preload("res://battle/damage.gd")
+const Damage = preload("res://battle/rules/damage.gd")
 
 func _initialize() -> void:
 	var cases := [[100.0, 0.0, 0.0, 100], [100.0, 55.0, 0.0, 50], [100.0, 110.0, 0.5, 50], [0.0, 0.0, 0.0, 1], [5.0, 55.0, 0.0, 3]]
