@@ -8,6 +8,8 @@ func _initialize() -> void:
 	_check_tree("res://equipment/data", ["res://battle/", "res://troops/", "res://campaign/"])
 	_check_tree("res://equipment/rules", ["res://battle/", "res://troops/", "res://campaign/", "FileAccess", "Input.", "get_tree("])
 	_check_tree("res://troops/data", ["res://battle/", "res://equipment/", "res://campaign/"])
+	_check_tree("res://characters/data", ["res://battle/", "res://equipment/", "res://troops/", "res://campaign/"])
+	_check_tree("res://characters/rules", ["res://battle/", "res://equipment/", "res://troops/", "res://campaign/", "FileAccess", "Input.", "get_tree("])
 	_check_file("res://equipment/config.gd", ["res://battle/", "res://troops/"])
 	_check_file("res://troops/config.gd", ["res://battle/", "res://equipment/"])
 	print("Architecture boundary tests passed")

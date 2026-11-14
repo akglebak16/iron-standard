@@ -8,8 +8,11 @@ const Session = preload("res://battle/application/session.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
+const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const PerkEffects = preload("res://characters/rules/perk_effects.gd")
+const Config = preload("res://battle/config.gd")
 
-static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null) -> Session:
+static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite():
 		return null
 	var troop: Dictionary = catalog.get_troop(setup.hero_troop)
@@ -31,8 +34,25 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	hero.block_chance = float(troop.block)
 	hero.shield_block = float(troop.get("shb", 0))
 	if not setup.hero_profile.is_empty():
+		var selected_perks: Variant = setup.hero_profile.get("perks", [])
+		if not selected_perks is Array or not selected_perks.is_empty() and perk_catalog == null:
+			return null
+		if perk_catalog != null:
+			hero.perk_effects = PerkEffects.own(setup.hero_profile, perk_catalog)
+			if hero.perk_effects.is_empty():
+				return null
 		var gear: Dictionary = HeroGear.resolve(setup.hero_profile, gear_catalog)
 		if gear.is_empty() or not HeroStats.apply(hero, setup.hero_profile, gear):
 			return null
+		var charisma: float = float(setup.hero_profile.get("cha", 0.0))
+		if charisma == 0.0:
+			charisma = float(setup.hero_profile.get("lead", 0.0))
+		var morale_bonus: float = charisma * Config.HERO_ALLY_MORALE_PER_CHARISMA + float(hero.perk_effects.get("morale", 0.0))
+		var damage_bonus: float = float(hero.perk_effects.get("ally", 0.0))
+		for ally: Unit in state.units:
+			if ally.side == hero.side:
+				ally.base_morale += morale_bonus
+				ally.morale = ally.base_morale
+				ally.damage *= 1.0 + damage_bonus
 	state.add_unit(hero)
 	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile)

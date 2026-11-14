@@ -8,6 +8,8 @@ data/
 !godot/equipment/tests/data/
 !godot/troops/data/
 !godot/troops/tests/data/
+!godot/characters/data/
+!godot/characters/tests/data/
 index.html
 _site/
 godot/.godot/

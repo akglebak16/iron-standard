@@ -3,11 +3,16 @@ const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
+const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const Config = preload("res://battle/config.gd")
+const HeroInput = preload("res://battle/application/hero_input.gd")
 
 func _initialize() -> void:
 	var catalog := GearCatalog.new()
 	assert(catalog.load_data())
 	_test_factory(catalog)
+	_test_battle_perks(catalog)
+	_test_heavy_perk_swap(catalog)
 	print("Hero factory tests passed")
 	quit(0)
 
@@ -35,3 +40,50 @@ func _test_factory(gear_catalog: GearCatalog) -> void:
 	setup.hero_profile.eq.ranged = "missing"
 	assert(hero.weapon_kind == "throw")
 	assert(Factory.create(setup, troops) == null)
+
+func _test_battle_perks(gear_catalog: GearCatalog) -> void:
+	var troops := Catalog.new()
+	var perks := PerkCatalog.new()
+	assert(troops.load_data() and perks.load_data())
+	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "cha": 2, "hp": 0.5, "perks": ["tough", "hide", "quick", "eagle", "tactician", "inspire"], "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank", "horse": "horse_riding"}, "sel": "ranged"}
+	assert(Factory.create(setup, troops, gear_catalog) == null) # Perks require an injected catalog.
+	var session = Factory.create(setup, troops, gear_catalog, perks)
+	assert(session != null)
+	var hero = session._hero
+	assert(hero.max_hp == 164.0 and hero.hp == 82.0)
+	assert(hero.armor == 36.0)
+	assert(is_equal_approx(hero.attack_interval, 1.52 * 0.97))
+	assert(hero.attack_range == 504.0)
+	assert(is_equal_approx(hero.accuracy, 0.081 * 0.8))
+	var ally = session._state.units[0]
+	var base: Dictionary = troops.get_troop(ally.troop_id)
+	assert(is_equal_approx(ally.damage, float(base.dmg) * ally.weight * 1.03))
+	assert(is_equal_approx(ally.base_morale, Config.BASE_MORALE + ally.tier * Config.TIER_MORALE + 17.0))
+	assert(ally.morale == ally.base_morale)
+	assert(troops.get_troop(ally.troop_id).dmg == base.dmg) # Buff cannot mutate the catalog.
+	setup.hero_profile.perks.append("tough")
+	assert(hero.perk_effects.hp == 0.05) # Runtime projection is detached from the authoring Resource.
+
+func _test_heavy_perk_swap(gear_catalog: GearCatalog) -> void:
+	var troops := Catalog.new()
+	var perks := PerkCatalog.new()
+	assert(troops.load_data() and perks.load_data())
+	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "hp": 0.5, "perks": ["grip", "master", "quick", "tough"], "eq": {"melee": "tw_sword", "ranged": "jav_heavy"}, "sel": "melee"}
+	var session = Factory.create(setup, troops, gear_catalog, perks)
+	assert(session != null)
+	var hero = session._hero
+	var melee: Dictionary = gear_catalog.get_item("tw_sword")
+	var ranged: Dictionary = gear_catalog.get_item("jav_heavy")
+	assert(is_equal_approx(hero.damage, (float(melee.dmg) + 3.0 * Config.HERO_MELEE_DAMAGE_PER_STRENGTH) * 1.08))
+	var health: float = hero.hp
+	var maximum: float = hero.max_hp
+	var input := HeroInput.new()
+	input.swap = true
+	assert(session.set_hero_input(input))
+	session.advance(0.01)
+	assert(hero.attack_range > 0.0)
+	assert(is_equal_approx(hero.damage, (float(ranged.dmg) + 3.0 * float(ranged.bs)) * 1.04)) # Grip affects melee two-handed weapons only.
+	assert(hero.hp == health and hero.max_hp == maximum)
+	assert(hero.perk_effects.heavy == 0.04)
