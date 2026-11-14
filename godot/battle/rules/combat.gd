@@ -73,6 +73,8 @@ static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: Random
 	if Block.check(target, incoming, true, rng):
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)
+	if battle.wall != null:
+		raw *= battle.wall.projectile_multiplier(target, shot.origin, battle.siege_skill)
 	raw *= target.projectile_damage_multiplier
 	var kind: String = shot.get("damage_type", "")
 	if kind.is_empty():

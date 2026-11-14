@@ -64,6 +64,8 @@ func advance(dt: float) -> void:
 	_elapsed_seconds += dt
 	if _state.wall == null:
 		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
+	else:
+		Tactics.siege_step(_state, _elapsed_seconds)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
 	_handle_swap()

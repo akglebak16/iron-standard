@@ -53,6 +53,8 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator) -> Spati
 			var enemy: Unit = Targeting.nearest_enemy(battle, unit, index)
 			if enemy != null:
 				destination = enemy.position
+		if battle.wall != null:
+			destination = battle.wall.route(unit, destination)
 		_steer(unit, destination, unit.speed * velocity_scale, dt)
 		if rng != null and not unit.fleeing:
 			unit.facing = ai_face

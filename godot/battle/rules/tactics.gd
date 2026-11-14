@@ -44,6 +44,21 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 		if remaining < Config.AI_CAVALRY_WAYPOINT_ARRIVAL or _nearest_foe_distance(battle, cavalry.center, 1 - side) < Config.AI_CAVALRY_CHARGE_DISTANCE:
 			cavalry.order = Config.ORDER_CHARGE
 
+static func siege_step(battle: State, elapsed: float) -> void:
+	var inside := 0
+	for unit: Unit in battle.units:
+		if unit.side == 0 and not unit.dead and not unit.gone and not unit.fleeing and unit.position.x > battle.wall.x + battle.wall.half_width:
+			inside += 1
+	var infantry: Group = battle.groups[1][Config.GROUP_INFANTRY]
+	var cavalry: Group = battle.groups[1][Config.GROUP_CAVALRY]
+	var archers: Group = battle.groups[1][Config.GROUP_ARCHERS]
+	if inside > Config.SIEGE_INFANTRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_INFANTRY_FORCE_CHARGE_SECONDS:
+		infantry.order = Config.ORDER_CHARGE
+	if inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS:
+		cavalry.order = Config.ORDER_CHARGE
+	if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE or infantry.active_units().is_empty():
+		archers.order = Config.ORDER_CHARGE
+
 static func follow_hero(battle: State, hero: Unit) -> void:
 	if hero.dead:
 		return
