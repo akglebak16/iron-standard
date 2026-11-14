@@ -112,14 +112,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			blood_preference_changed.emit(_impacts.blood_enabled)
 			_update_status()
 			queue_redraw()
-		KEY_1: _selection = Config.GROUP_INFANTRY
-		KEY_2: _selection = Config.GROUP_ARCHERS
-		KEY_3: _selection = Config.GROUP_CAVALRY
-		KEY_4: _selection = Config.ALL_GROUPS
+		KEY_1: _select_group(Config.GROUP_INFANTRY)
+		KEY_2: _select_group(Config.GROUP_ARCHERS)
+		KEY_3: _select_group(Config.GROUP_CAVALRY)
+		KEY_4: _select_group(Config.ALL_GROUPS)
 		KEY_Q: _session.issue_order(Config.ORDER_HOLD, get_global_mouse_position(), _selection)
 		KEY_E: _session.issue_order(Config.ORDER_FOLLOW, _frame.hero_position, _selection)
 		KEY_R: _session.issue_order(Config.ORDER_CHARGE, _frame.hero_position, _selection)
 		KEY_F: _session.issue_order(Config.ORDER_RETREAT, _frame.hero_position, _selection)
+
+func _select_group(group: int) -> void:
+	_selection = group
+	_update_status()
+	queue_redraw()
 
 func _set_audio_preferences(effects: bool, music: bool) -> void:
 	_effects_enabled = effects
@@ -144,7 +149,8 @@ func _update_status() -> void:
 		Session.Outcome.HERO_DOWN: label = Demo.HERO_DOWN
 		Session.Outcome.VICTORY: label = Demo.VICTORY
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
-	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina)]
+	status.text = Demo.HUD_TEXT % [label, _frame.counts[0], _frame.counts[1], int(_frame.stamina), Demo.GROUP_NAMES[_selection]]
+	status.text += Demo.CONTROL_HINT
 	status.text += Demo.SOUND_HINT % [Demo.SOUND_ON if _effects_enabled else Demo.SOUND_OFF, Demo.SOUND_ON if _music_enabled else Demo.SOUND_OFF]
 	status.text += Demo.BLOOD_HINT % (Demo.SOUND_ON if _impacts.blood_enabled else Demo.SOUND_OFF)
 	var journal := _feedback.journal()
@@ -158,7 +164,7 @@ func _draw() -> void:
 	var size := get_viewport_rect().size / camera.zoom
 	var visible := Rect2(camera.position - size * 0.5, size).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
-	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries)
+	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)

@@ -10,12 +10,10 @@ const SOUND_HINT := " · M звук: %s · N музыка: %s"
 const BLOOD_HINT := " · G кровь: %s"
 const SOUND_ON := "вкл."
 const SOUND_OFF := "выкл."
-const HUD_TEXT := "%s  |  Свои: %d  Враги: %d  Силы: %d\nWASD ходить · Shift бег · ЛКМ удар · ПКМ блок · 1–4 группа · Q держать · E за мной · R атаковать · F отход"
+const HUD_TEXT := "%s  |  Свои: %d  Враги: %d  Силы: %d · Выбрано: %s"
+const CONTROL_HINT := "\nWASD ходить · Shift бег · ЛКМ удар · ПКМ блок\n1–4 группа · Q держать · E за мной · R атаковать · F отход"
 
-const HERO_RING_PADDING := 3.0
-const HERO_RING_SEGMENTS := 20
-const HERO_RING_WIDTH := 2.0
-const COMPANION_RING_COLOR := Color("#e4bf70")
+const GROUP_NAMES := ["Пехота", "Стрелки", "Конница", "Весь отряд"]
 const ARROW_ARC_SCALE := 0.17
 const BOLT_ARC_SCALE := 0.08
 const PROJECTILE_TILT_SCALE := 1.2

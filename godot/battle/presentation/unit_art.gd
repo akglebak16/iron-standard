@@ -51,6 +51,9 @@ static func skin_color(unit: Dictionary) -> Color:
 static func sleeve_color(unit: Dictionary) -> Color:
 	return Color(_palette(unit)[0])
 
+static func trim_color(unit: Dictionary) -> Color:
+	return Color(_palette(unit)[1])
+
 static func _palette(unit: Dictionary) -> Array:
 	var fallback := "nord" if unit.side == 0 else "emp"
 	var faction: String = "player" if unit.hero or unit.companion else unit.faction

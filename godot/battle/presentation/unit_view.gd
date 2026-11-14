@@ -1,7 +1,8 @@
 extends RefCounted
 const Art = preload("res://battle/presentation/unit_art.gd")
 const Event = preload("res://battle/combat_event.gd")
-const Demo = preload("res://battle/presentation/demo_config.gd")
+const Config = preload("res://battle/config.gd")
+const UnitMarkers = preload("res://battle/presentation/unit_markers.gd")
 const VIEW_MARGIN := 50.0
 const MOUNT_WEAPON_OFFSET := Vector2(0, -Art.MOUNT_RIDER_RISE)
 const BREATH_RATE := 2.1
@@ -24,8 +25,10 @@ const FALL_TILT := 1.28
 const FALL_SINK := 12.0
 const CORPSE_TINT := Color(0.66, 0.61, 0.57, 0.89)
 const SHADOW := Color(0.12, 0.09, 0.06, 0.29)
+const FLEEING_OPACITY := 0.75
 
 var _art := Art.new()
+var _markers := UnitMarkers.new()
 var _time := 0.0
 var _falls: Dictionary = {}
 var _flashes: Dictionary = {}
@@ -58,7 +61,7 @@ func has_falling_units() -> bool:
 	return false
 
 func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary,
-		vegetation: Array[Dictionary] = []) -> void:
+		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS) -> void:
 	var living: Array[Dictionary] = []
 	for unit in frame:
 		if unit.gone or not visible.has_point(unit.position):
@@ -74,7 +77,9 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 		while plant_index < vegetation.size() and vegetation[plant_index].position.y < unit.position.y:
 			_draw_plant(canvas, vegetation[plant_index], visible)
 			plant_index += 1
+		_markers.draw_ring(canvas, unit, selection)
 		_draw_unit(canvas, unit, false)
+		_markers.draw_status(canvas, unit)
 	for i in range(plant_index, vegetation.size()):
 		_draw_plant(canvas, vegetation[i], visible)
 
@@ -97,9 +102,6 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 		tint = Color.WHITE.lerp(CORPSE_TINT, progress)
 	else:
 		canvas.draw_circle(position, unit.radius, SHADOW)
-		if unit.hero or unit.companion:
-			var ring := Color.WHITE if unit.hero else Demo.COMPANION_RING_COLOR
-			canvas.draw_arc(position, unit.radius + Demo.HERO_RING_PADDING, 0.0, TAU, Demo.HERO_RING_SEGMENTS, ring, Demo.HERO_RING_WIDTH, true)
 		scale.y *= 1.0 + sin(_time * BREATH_RATE + phase) * BREATH_SCALE
 		if unit.speed > MOVING_SPEED:
 			var bob := GALLOP_BOB if unit.mounted else WALK_BOB
@@ -107,6 +109,8 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 			rotation = direction * LEAN
 		if _flashes.has(unit.id):
 			tint = Color(1.0 + FLASH_BRIGHTNESS, 1.0 + FLASH_BRIGHTNESS, 1.0 + FLASH_BRIGHTNESS)
+		if unit.fleeing:
+			tint.a = FLEEING_OPACITY
 	canvas.draw_set_transform(position, rotation, scale)
 	var body: Texture2D = appearance.headless if headless else appearance.body
 	if body != null:

@@ -18,7 +18,6 @@ const WALL_ALERT := "Враг у стен!"
 const GARRISON_CAVALRY := "Конница гарнизона вышла в бой."
 const VICTORY := "Победа! Враг разбит."
 const DEFEAT := "Отряд разбит."
-const GROUP_NAMES := ["Пехота", "Стрелки", "Конница", "Весь отряд"]
 const ORDER_NAMES := {
 	Config.ORDER_HOLD: "держать позицию",
 	Config.ORDER_FOLLOW: "за мной",
@@ -36,7 +35,7 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 			Event.Kind.BATTLE_STARTED:
 				_log(BATTLE_STARTED)
 			Event.Kind.ORDER_APPLIED:
-				_log("%s: %s" % [GROUP_NAMES[event.selection], ORDER_NAMES[event.order]])
+				_log("%s: %s" % [Demo.GROUP_NAMES[event.selection], ORDER_NAMES[event.order]])
 			Event.Kind.ENEMY_CHARGE:
 				_log(ENEMY_CHARGE)
 			Event.Kind.WALL_ALERT:

@@ -142,6 +142,9 @@ func snapshot() -> Dictionary:
 		units.append({
 			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
 			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
+			"group_kind": unit.group_kind, "leader": unit.leader,
+			"companion_name": unit.name if unit.companion else "",
+			"health_fraction": clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0,
 			"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted, "fleeing": unit.fleeing,
 			"facing": unit.facing, "speed": unit.velocity.length(), "blocking": unit.blocking,
 			"windup": unit.attack_windup if unit.hero else unit.ai_windup,

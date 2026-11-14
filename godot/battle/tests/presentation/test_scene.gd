@@ -5,6 +5,7 @@ const Combat = preload("res://battle/rules/combat.gd")
 const Dialogue = preload("res://battle/presentation/companion_dialogue.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const PresentationPreferences = preload("res://app/presentation_preferences.gd")
+const UnitMarkers = preload("res://battle/presentation/unit_markers.gd")
 const TICK := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -38,6 +39,7 @@ func _check() -> void:
 	frame.units[0].look.clear()
 	assert(view.get_battle_snapshot().units[0].look == original_look)
 	assert(view.get_node("Hud/Status").text.contains("Свои"))
+	_check_unit_markers(view, frame)
 	frame.units.clear()
 	assert(view.get_battle_snapshot().units.size() == 55)
 	await physics_frame
@@ -48,6 +50,9 @@ func _check() -> void:
 	var session: Session = view._session
 	var target = session._state.units.filter(func(unit): return unit.side == 1)[0]
 	session._state.hurt(target, 1, session._hero)
+	var injured: Dictionary = view.get_battle_snapshot().units[target.id]
+	assert(is_equal_approx(injured.health_fraction, target.hp / target.max_hp))
+	assert(UnitMarkers.health_bar(injured).has_area())
 	session._state.launch_projectile(Combat.shoot(session._hero, target, session._rng))
 	var launch: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(launch.progress == 0.0 and not launch.has("source"))
@@ -93,6 +98,27 @@ func _check() -> void:
 	assert(DirAccess.remove_absolute(path) == OK)
 	print("Scene tests passed")
 	quit(0)
+
+func _check_unit_markers(view, frame: Dictionary) -> void:
+	var foot: Dictionary = frame.units.filter(func(unit): return unit.side == 0 and unit.group_kind == Config.GROUP_INFANTRY and not unit.hero and not unit.companion)[0]
+	var archer: Dictionary = frame.units.filter(func(unit): return unit.side == 0 and unit.group_kind == Config.GROUP_ARCHERS and not unit.companion)[0]
+	var companion: Dictionary = frame.units.filter(func(unit): return unit.companion)[0]
+	var enemy: Dictionary = frame.units.filter(func(unit): return unit.side == 1)[0]
+	assert(companion.companion_name == "Брат Ансельм")
+	assert(not UnitMarkers.health_bar(foot).has_area())
+	assert(UnitMarkers.ring_style(foot, view._selection) == UnitMarkers.ALLY_SELECTED_RING)
+	var key := InputEventKey.new()
+	key.pressed = true
+	key.keycode = KEY_2
+	view._unhandled_input(key)
+	assert(view.status.text.contains("Выбрано: Стрелки"))
+	assert(UnitMarkers.ring_style(foot, view._selection) == UnitMarkers.ALLY_IDLE_RING)
+	assert(UnitMarkers.ring_style(archer, view._selection) == UnitMarkers.ALLY_SELECTED_RING)
+	assert(UnitMarkers.ring_style(enemy, view._selection) == UnitMarkers.ENEMY_RING)
+	assert(UnitMarkers.ring_style(companion, view._selection) == UnitMarkers.COMPANION_RING)
+	key.keycode = KEY_4
+	view._unhandled_input(key)
+	assert(view.status.text.contains("Выбрано: Весь отряд"))
 
 func _check_figure_cache(art) -> void:
 	var unit := {"side": 0, "faction": "nord", "hero": false, "companion": false, "mounted": false, "look": {"weapon": "sword"}}
