@@ -16,7 +16,7 @@ func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void
 	direction = facing
 
 func active_units() -> Array:
-	return units.filter(func(u): return not u.dead and not u.gone and not u.hero)
+	return units.filter(func(u): return not u.dead and not u.gone and not u.fleeing and not u.hero)
 
 func layout(initial: bool = false) -> void:
 	var active := active_units()

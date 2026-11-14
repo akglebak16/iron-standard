@@ -5,11 +5,14 @@ const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const Combat = preload("res://battle/rules/combat.gd")
+const Morale = preload("res://battle/rules/morale.gd")
 
 var units: Array = []
 var arena_size := Config.ARENA_SIZE
 var groups: Array = []
 var projectiles: Array = []
+var starting_units := [0, 0]
+var morale_timer := 0.0
 
 func spawn_army(side: int, stacks: Array, faction: String, catalog: RefCounted, rng: RandomNumberGenerator) -> bool:
 	if side < 0 or side > 1 or groups.size() != 2:
@@ -31,6 +34,7 @@ func spawn_army(side: int, stacks: Array, faction: String, catalog: RefCounted, 
 			var jitter := Vector2(rng.randf_range(-Config.SPAWN_JITTER, Config.SPAWN_JITTER), rng.randf_range(-Config.SPAWN_JITTER, Config.SPAWN_JITTER))
 			var unit = Unit.new(units.size(), side, center + jitter, float(troop.hp) * weight, float(troop.arm), int(troop.tier))
 			unit.troop_id = str(stack.type)
+			unit.faction = faction
 			unit.weight = weight
 			unit.damage = float(troop.dmg) * weight
 			unit.speed = float(troop.spd) * rng.randf_range(Config.SPEED_RANDOM_MIN, Config.SPEED_RANDOM_MAX)
@@ -226,13 +230,22 @@ func _centroid(side: int) -> Vector2:
 	var count := 0
 	var total := Vector2.ZERO
 	for unit in units:
-		if unit.side == side and not unit.dead and not unit.gone:
+		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
 			total += unit.position
 			count += 1
 	return total / count if count else Vector2.INF
 
 func add_unit(unit: RefCounted) -> void:
 	units.append(unit)
+	starting_units[unit.side] += 1
+
+func step_morale(dt: float) -> void:
+	if dt <= 0.0:
+		return
+	morale_timer -= dt
+	while morale_timer <= 0.0:
+		Morale.tick(self)
+		morale_timer += Config.MORALE_TICK_SECONDS
 
 func hurt(target: RefCounted, raw_damage: float, source: RefCounted = null, pierce: float = 0.0) -> int:
 	if target.dead:

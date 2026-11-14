@@ -50,6 +50,7 @@ func _physics_process(dt: float) -> void:
 	HeroControl.step(battle, hero, {"move": move, "face": aim, "sprint": Input.is_key_pressed(KEY_SHIFT), "block": Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT), "attack": Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)}, dt, rng)
 	battle.step_movement(dt, hero.position, hero.facing)
 	battle.step_combat(dt, rng)
+	battle.step_morale(dt)
 	if hero.dead:
 		outcome = Demo.HERO_DOWN
 	elif not _side_alive(1):
@@ -76,7 +77,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _side_alive(side: int) -> bool:
 	for unit in battle.units:
-		if unit.side == side and not unit.dead and not unit.gone:
+		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
 			return true
 	return false
 
