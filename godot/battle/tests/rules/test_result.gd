@@ -8,6 +8,7 @@ const END_TIME := 23.5
 func _initialize() -> void:
 	_check_weighted_losses_and_experience()
 	_check_survival_bonus()
+	_check_companion_results()
 	print("Battle result tests passed")
 	quit(0)
 
@@ -79,3 +80,22 @@ func _check_survival_bonus() -> void:
 	var result: Dictionary = Result.build(pair.state, pair.hero, rng, END_TIME, false)
 	assert(not result.win and result.wounded.n1 == 3)
 	assert(result.dead.is_empty())
+
+func _check_companion_results() -> void:
+	var pair := _battle()
+	var active := Unit.new(pair.state.units.size(), 0, Vector2.ZERO, 100, 0, 3)
+	active.companion = true
+	active.companion_id = "healer"
+	active.hp = 35
+	active.kills = 2
+	pair.state.add_unit(active)
+	var down := Unit.new(pair.state.units.size(), 0, Vector2.ZERO, 100, 0, 3)
+	down.companion = true
+	down.companion_id = "scout"
+	down.dead = true
+	down.kills = 1
+	pair.state.add_unit(down)
+	var result: Dictionary = Result.build(pair.state, pair.hero, RandomNumberGenerator.new(), END_TIME, true)
+	assert(result.comps.healer == {"hp": 0.35, "down": false, "kills": 2})
+	assert(result.comps.scout == {"hp": 0.0, "down": true, "kills": 1})
+	assert(not result.left.has(""))

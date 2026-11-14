@@ -15,7 +15,9 @@ static func build(battle: State, hero: Unit, rng: RandomNumberGenerator, elapsed
 		if unit.hero and unit.side == 0:
 			continue
 		if unit.companion:
-			# Companion identities and ownership have their own later migration stage.
+			if unit.side == 0:
+				assert(not unit.companion_id.is_empty())
+				result.comps[unit.companion_id] = {"hp": 0.0 if unit.dead else clampf(unit.hp / unit.max_hp, 0.0, 1.0), "down": unit.dead, "kills": unit.kills}
 			continue
 		if unit.side == 0:
 			var field: String = "left"

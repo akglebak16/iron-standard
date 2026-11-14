@@ -30,6 +30,7 @@ var facing: float = 0.0
 var fleeing: bool = false
 var wavering: bool = false
 var companion: bool = false
+var companion_id: String = "" # Stable campaign identity for the result, distinct from a troop type.
 var faction: String = ""
 var collision_radius: float = Config.FOOT_COLLISION_RADIUS
 var mass: float = Config.FOOT_MASS

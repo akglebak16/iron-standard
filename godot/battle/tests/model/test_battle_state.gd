@@ -25,8 +25,22 @@ func _initialize() -> void:
 	_check_last_stand_and_kill_heal()
 	_check_undead_leader_collapse()
 	_check_ordinary_leader_morale()
+	_check_companion_down_morale()
 	print("Battle state tests passed")
 	quit(0)
+
+func _check_companion_down_morale() -> void:
+	var battle := BattleState.new()
+	var companion := Unit.new(0, 0, Vector2.ZERO, 30, 0, 3)
+	companion.companion = true
+	var close := Unit.new(1, 0, Vector2(100, 0), 100, 0, 1)
+	var far := Unit.new(2, 0, Vector2(200, 0), 100, 0, 1)
+	for unit in [companion, close, far]:
+		battle.add_unit(unit)
+	battle.kill(companion)
+	assert(companion.dead)
+	assert(close.morale == 86.0 - (1.6 + 3 * 0.5) - Config.COMPANION_DOWN_MORALE_LOSS)
+	assert(far.morale == 86.0)
 
 func _check_last_stand_and_kill_heal() -> void:
 	var battle := BattleState.new()
