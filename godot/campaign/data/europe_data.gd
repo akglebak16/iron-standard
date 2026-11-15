@@ -8,6 +8,9 @@ var shapes: Array = []
 var ridges: Array = []
 var regions: Dictionary = {}
 var rivers: Array = []
+var factions: Array = []
+var town_names: Dictionary = {}
+var camp_names: Array = []
 
 func load_data() -> bool:
 	var parsed = JSON.parse_string(FileAccess.get_file_as_string(PATH))
@@ -18,4 +21,7 @@ func load_data() -> bool:
 	ridges = parsed.ridges
 	regions = parsed.regions
 	rivers = parsed.rivers
+	factions = parsed.factions
+	town_names = parsed.town_names
+	camp_names = parsed.camp_names
 	return true
