@@ -76,7 +76,9 @@ func run(tree: SceneTree) -> void:
 	session.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 	if scenario in ["contact", "cavalry", "volley"]:
 		for group in session._state.groups[1]: group.order = Config.ORDER_CHARGE
-	for i in warmup: session.advance(1.0 / 60.0)
+	if not warm_session(session, warmup, not legacy_snapshot):
+		fail("Battle ended during warmup; choose a shorter warmup or another scenario")
+		return
 	var simulation: Array[int] = []
 	var snapshots: Array[int] = []
 	var phases := {}
@@ -111,6 +113,7 @@ func run(tree: SceneTree) -> void:
 		"cpu": OS.get_processor_name(), "logical_processors": OS.get_processor_count(),
 		"scenario": scenario, "seed": seed_value, "requested_per_side": size, "ordinary_initial": initial,
 		"special_initial": 1, "weight": 1, "warmup_ticks": warmup, "requested_ticks": ticks,
+		"sampling_version": 2, "warmup_snapshots": true, "warmup_events_discarded": true,
 		"measured_ticks": simulation.size(), "live_min": live_min, "live_max": live_max,
 		"simulation": stats(simulation), "snapshot": stats(snapshots), "events": events,
 		"snapshot_format": "legacy-dictionaries" if legacy_snapshot else "compact-columns",
@@ -131,6 +134,18 @@ func run(tree: SceneTree) -> void:
 			return
 		file.store_string(encoded + "\n")
 	_tree.quit(0)
+
+## Warm the same snapshot path that is measured and remove setup/warmup events.
+## A battle already finished cannot provide a meaningful steady-state sample.
+static func warm_session(session, count: int, compact: bool) -> bool:
+	for i in count:
+		session.advance(1.0 / 60.0)
+		var frame: Dictionary = session.snapshot(compact)
+		session.take_events()
+		if frame.outcome in [session.Outcome.VICTORY, session.Outcome.DEFEAT]: return false
+	# Also remove setup notices when warmup is explicitly zero.
+	session.take_events()
+	return true
 
 static func stats(samples: Array[int]) -> Dictionary:
 	var sorted := samples.duplicate()
