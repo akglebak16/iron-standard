@@ -6,6 +6,7 @@ const CompanionText = preload("res://apps/godot/presentation/campaign/companion_
 const TABS := [["troops", "Отряд"], ["hero", "Герой"], ["gear", "Обоз"], ["quests", "Задания"], ["factions", "Фракции"], ["comps", "Спутники"], ["journal", "Журнал"]]
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
+const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
 const GearComparison = preload("res://apps/godot/presentation/campaign/gear_comparison.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
@@ -423,14 +424,84 @@ func _gear(p) -> void:
 	if _selected_gear != "":
 		var it: Dictionary = gear.get_item(_selected_gear)
 		if not it.is_empty():
-			row(it.name, _stats(it), [{"text": "Снять" if _selected_gear in eq.values() else "Надеть", "call": _selected_action}])
+			var worn := _selected_gear in eq.values()
+			var current: Dictionary = gear.get_item(String(eq.get(it.slot))) if eq.get(it.slot) != null else {}
+			_item_card(ItemCard.describe(it, current, not worn), [{"text": "Снять" if worn else "Надеть", "call": _selected_action}])
 			if not _selected_gear in eq.values():
 				_comparison(GearComparison.compare(h, it, gear, state.perks, stat_preview))
 		else:
-			var good: Dictionary = state.market.goods.get(_selected_gear, {})
-			row(good.get("n", _selected_gear), "Торговый товар · продай на рынке города")
+			var good: Dictionary = state.market.goods.get(_selected_gear, {}).duplicate()
+			good["id"] = _selected_gear
+			_item_card(ItemCard.describe(good), [])
+			note("Торговый товар · продай на рынке города")
 	else:
 		note("Выбери предмет, чтобы узнать о нём больше. Двойной щелчок — надеть или снять.")
+
+## The item card (itemDock): name in its tier colour, what it is, figures with ▲/▼ against the worn item,
+## traits, armour piercing bars and the damage type note, then the action buttons.
+func _item_card(card: Dictionary, buttons: Array) -> void:
+	var box := VBoxContainer.new()
+	box.name = "ItemCard"
+	box.add_theme_constant_override("separation", 3)
+	body.add_child(box)
+	var title := Label.new()
+	title.text = card.title
+	GameSkin.title(title, 19)
+	title.add_theme_color_override("font_color", card.color)
+	box.add_child(title)
+	var subtitle := Label.new()
+	subtitle.text = card.subtitle
+	subtitle.add_theme_color_override("font_color", GameSkin.MUTED)
+	box.add_child(subtitle)
+	var grid := GridContainer.new()
+	grid.name = "ItemStats"
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 14)
+	box.add_child(grid)
+	for stat in card.stats:
+		var label := Label.new()
+		label.text = stat.label
+		label.add_theme_color_override("font_color", GameSkin.MUTED)
+		grid.add_child(label)
+		var value := Label.new()
+		value.text = stat.value
+		grid.add_child(value)
+		var change := Label.new()
+		change.text = stat.delta.get("text", "")
+		if not stat.delta.is_empty():
+			change.add_theme_color_override("font_color", Color("#8fc24f") if stat.delta.trend > 0 else Color("#e0705a"))
+		grid.add_child(change)
+	if not card.traits.is_empty():
+		var traits := Label.new()
+		traits.name = "ItemTraits"
+		traits.text = " · ".join(PackedStringArray(card.traits))
+		traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		traits.add_theme_color_override("font_color", GameSkin.BRASS)
+		box.add_child(traits)
+	for bar in card.pierce:
+		var line := HBoxContainer.new()
+		line.name = "PierceBar"
+		box.add_child(line)
+		var label := Label.new()
+		label.text = "%s %s" % [bar.label, bar.value]
+		label.custom_minimum_size.x = 170
+		line.add_child(label)
+		var meter := ProgressBar.new()
+		meter.max_value = 1.0
+		meter.step = 0.01
+		meter.value = bar.fill
+		meter.show_percentage = false
+		meter.custom_minimum_size = Vector2(120, 8)
+		meter.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		line.add_child(meter)
+	if card.note != "":
+		var note_label := Label.new()
+		note_label.text = card.note
+		note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note_label.add_theme_color_override("font_color", GameSkin.MUTED)
+		box.add_child(note_label)
+	if not buttons.is_empty():
+		row("", "", buttons)
 
 func _comparison(cmp: Dictionary) -> void:
 	if cmp.is_empty():
