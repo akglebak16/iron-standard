@@ -36,20 +36,27 @@
       "name": "app",
       "owner": "Godot composition, input and presentation",
       "prefix": "apps/godot/",
-      "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime", "adapters", "content"],
+      "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime", "adapters", "scenario-content"],
       "public": ["apps/godot/composition/", "apps/godot/presentation/battle/scene.tscn"]
     },
     {
       "name": "adapters",
       "owner": "Content I/O, persistence and engine integration",
       "prefix": "adapters/",
-      "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime"],
+      "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime", "gameplay-content"],
       "public": ["adapters/content/", "adapters/godot/resources/", "adapters/godot/native/contacts.gd", "adapters/persistence/"]
     },
     {
-      "name": "content",
-      "owner": "Authored definitions and scenarios",
-      "prefix": "content/",
+      "name": "gameplay-content",
+      "owner": "Authored gameplay definitions, loaded only by content adapters",
+      "prefix": "content/gameplay/",
+      "allowed": [],
+      "public": ["content/gameplay/"]
+    },
+    {
+      "name": "scenario-content",
+      "owner": "Editor scenarios using resource adapters",
+      "prefix": "content/scenarios/",
       "allowed": ["adapters"],
       "public": ["content/scenarios/"]
     },

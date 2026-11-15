@@ -5,6 +5,8 @@ const ROOT = path.resolve(__dirname, '..');
 const MANIFEST = 'docs/architecture/modules.json';
 const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'ResourceSaver', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'DisplayServer', 'ProjectSettings', 'ClassDB', 'GDExtensionManager', 'Engine', 'OS', 'Time', 'JavaScriptBridge', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene', 'Resource'];
 const NATIVE_SUFFIX = /\.(cpp|hpp|h)$/;
+const ASSET_SUFFIX = /\.(png|jpe?g|svg|webp|ogg|wav|mp3|ttf|otf|json|res|gdextension|tscn|tres)$/;
+const REFERENCED_SUFFIX = /\.(gd|tscn|tres|cpp|hpp|h|gdextension|png|jpe?g|svg|webp|ogg|wav|mp3|ttf|otf|json|res)$/;
 const NATIVE_VALUE_HEADERS = new Set(['algorithm','array','cmath','cstddef','cstdint','cstring','limits','numeric','tuple','type_traits','utility','vector']);
 
 // A file entry grants exactly that file, not similarly named internal scripts.
@@ -41,12 +43,15 @@ function contractChangeIssues(changed, contractChanged) {
 // and identifiers inside strings are not executable calls. Both quote styles work.
 function tokens(source) {
   const result = [];
+  let line = 1, previous = 0;
   const re = /#[^\n]*|"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_][A-Za-z_0-9]*|[^\s]/g;
   for (const match of source.matchAll(re)) {
+    line += (source.slice(previous,match.index).match(/\n/g) || []).length;
+    previous = match.index;
     const value = match[0];
     if (value.startsWith('#')) continue;
     result.push({ value: /^['"]/.test(value) ? value.slice(value.startsWith('"""') || value.startsWith("'''") ? 3 : 1, value.startsWith('"""') || value.startsWith("'''") ? -3 : -1) : value,
-      string: /^['"]/.test(value), line: source.slice(0, match.index).split('\n').length });
+      string: /^['"]/.test(value), line });
   }
   return result;
 }
@@ -56,9 +61,11 @@ function collect(root) {
   function walk(dir) {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       if (e.name.startsWith('.')) continue;
+      if (dir === root && e.name === 'docs') continue;
       const full = path.join(dir, e.name);
       if (e.isDirectory()) walk(full);
-      else if (/\.(gd|tscn|tres|uid|cpp|hpp|h|gdextension)$/.test(e.name)) files.set(path.relative(root, full).replaceAll('\\', '/'), fs.readFileSync(full, 'utf8'));
+      else if (/\.(gd|tscn|tres|uid|cpp|hpp|h|gdextension|json|import)$/.test(e.name)) files.set(path.relative(root, full).replaceAll('\\', '/'), fs.readFileSync(full, 'utf8'));
+      else if (ASSET_SUFFIX.test(e.name)) files.set(path.relative(root, full).replaceAll('\\', '/'), '');
     }
   }
   walk(root);
@@ -76,6 +83,14 @@ function analyze(files, manifest) {
   const owner = p => manifest.modules.find(m => p.startsWith(m.prefix));
   const add = (file, rule, target) => issues.push({ file, rule, target, key: `${file}|${rule}|${target}` });
   for (const [file, source] of files) {
+    if (file.endsWith('.import')) {
+      const uid = source.match(/^uid="(uid:\/\/[^\"]+)"/m)?.[1];
+      if (uid) {
+        if (uids.has(uid)) add(file,'duplicate-uid',uid);
+        uids.set(uid,file.slice(0,-7));
+      }
+      continue; // Import cache paths are generated artifacts, not source dependencies.
+    }
     if (file.endsWith('.uid')) {
       if (uids.has(source.trim())) add(file, 'duplicate-uid', source.trim());
       uids.set(source.trim(), file.slice(0, -4)); continue;
@@ -88,6 +103,10 @@ function analyze(files, manifest) {
       }
     }
     let codeSource = source;
+    if (ASSET_SUFFIX.test(file)) {
+      impure.add(file);
+      if (isPure(file) && !test(file)) add(file,'pure-core','engine/content resource');
+    }
     if (NATIVE_SUFFIX.test(file)) {
       codeSource = source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,'');
       const imports = [...codeSource.matchAll(/^\s*#\s*include\s*(["<])([^">]+)[">]/gm)].map(m=>({local:m[1]==='"',path:m[2]}));
@@ -126,8 +145,8 @@ function analyze(files, manifest) {
       else if (t.string && t.value.startsWith('uid://')) dependency = uids.get(t.value);
       else if (!t.string && classes.has(t.value)) dependency = classes.get(t.value);
       else if (t.string && classes.has(t.value) && NATIVE_SUFFIX.test(classes.get(t.value))) dependency = classes.get(t.value);
-      else if (t.string && /^(\.\.?\/).+\.(gd|tscn|tres)$/.test(t.value)) dependency = path.posix.normalize(path.posix.join(path.posix.dirname(file), t.value));
-      if (dependency && dependency !== file && /\.(gd|tscn|tres|cpp|hpp|h)$/.test(dependency)) {
+      else if (t.string && /^(\.\.?\/)/.test(t.value) && REFERENCED_SUFFIX.test(t.value)) dependency = path.posix.normalize(path.posix.join(path.posix.dirname(file), t.value));
+      if (dependency && dependency !== file && REFERENCED_SUFFIX.test(dependency)) {
         if (!files.has(dependency)) add(file, 'missing-reference', dependency);
         else dependencies.add(dependency);
       }

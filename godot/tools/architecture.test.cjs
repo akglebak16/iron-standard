@@ -19,6 +19,11 @@ check({'core/a/x.gd':`const B = preload('uid://abcd')`, 'core/b/private.gd':'ext
 check({'core/a/x.gd':'extends Sprite2D'},'pure-core');
 check({'core/a/x.gd':'var main = Engine.get_main_loop()'},'pure-core');
 check({'core/a/x.gd':'var main = ClassDB.instantiate("Node")'},'pure-core');
+check({'core/a/x.gd':'const Asset=preload("res://apps/icon.png")','apps/icon.png':''},'dependency-direction');
+check({'core/a/x.gd':'const Extension=preload("uid://extension")','adapters/native.gdextension':'[configuration]','adapters/native.gdextension.uid':'uid://extension'},'dependency-direction');
+check({'core/a/x.gd':'const Asset=preload("uid://image")','apps/icon.png':'','apps/icon.png.import':'[remap]\nuid="uid://image"'},'dependency-direction');
+check({'core/a/x.gd':'const Data=preload("res://core/a/data.json")','core/a/data.json':'{}'},'transitive-impurity');
+check({'core/a/x.gd':'const Sound=preload("res://apps/missing.ogg")'},'missing-reference');
 check({'core/a/x.gd':'var main = ClassDB.instantiate("HiddenKernel")','adapters/hidden.cpp':'GDCLASS(HiddenKernel, RefCounted)'},'dependency-direction');
 check({'apps/x.gd':'var main = ClassDB.instantiate("HiddenKernel")','core/b/private.cpp':'GDCLASS(HiddenKernel, RefCounted)'},'module-dependency');
 check({'core/a/native.cpp':'#include <godot_cpp/variant/vector2.hpp>'},'native-purity');
@@ -44,6 +49,7 @@ assert(analyze(new Map([['old/x.gd','extends RefCounted']]),{...manifest,forbidd
 assert(structureIssues(new Set(['core']), {requiredDirectories:['core','runtime'],allowedRoots:['core','runtime']}).some(e=>e.includes('Missing required')));
 assert(structureIssues(new Set(['core','rogue']), {requiredDirectories:['core'],allowedRoots:['core']}).some(e=>e.includes('Unknown root')));
 assert.equal(tokens('# FileAccess\nvar x = "FileAccess"').filter(t=>!t.string&&t.value==='FileAccess').length,0);
+assert.deepEqual(tokens('# comment\nvar text = """a\nb"""\n# next\nvar end = 1').filter(t=>t.value==='var').map(t=>t.line),[2,5]);
 assert.equal(analyze(new Map([['core/a/api/x.gd','extends RefCounted\n# Input.get_tree()']]),manifest).length,0);
 for (const source of ['var p = frame._render_positions', 'frame.get("_render_positions")[0] = Vector2.ZERO']) {
   assert(analyze(new Map([['apps/x.gd',source]]), {...manifest,reservedMembers:[{prefix:'_render_',writers:['core/a/api/writer.gd']}]}).some(i=>i.rule==='private-storage'));
