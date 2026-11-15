@@ -86,7 +86,7 @@ func advance(dt: float) -> void:
 		return
 	_state.profiler.begin()
 	_previous_positions.resize(_state.units.size())
-	for i in _state.units.size(): _previous_positions[i] = _state.units[i].position
+	for unit: Unit in _state.render_units(): _previous_positions[unit.history_index] = unit.position
 	for command in _orders:
 		if _state.give_order(command.order, command.point, command.selection):
 			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection, "point": command.point})
@@ -127,6 +127,9 @@ func advance(dt: float) -> void:
 		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won, _companion_survival)
 	_events.append_array(_state.take_events())
 	_state.profiler.mark("morale_result_events")
+	if _state.pending_retirements > 0:
+		_state.compact_inactive(_tick)
+	_state.profiler.mark("storage_compaction")
 
 func result() -> Dictionary:
 	return _result.duplicate(true)
@@ -194,7 +197,7 @@ func _equip_weapon(selection: String) -> void:
 		_state.record_notice(Event.Kind.WEAPON_SWAPPED, {"position": _hero.position, "weapon_name": gear.weapon.name, "target_id": _hero.id})
 
 func _side_alive(side: int) -> bool:
-	for unit: Unit in _state.units:
+	for unit: Unit in _state.active_units:
 		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
 			return true
 	return false
@@ -226,7 +229,7 @@ func snapshot(compact: bool = false) -> Dictionary:
 	var ally_strength := 0.0
 	var group_strength := PackedFloat64Array()
 	group_strength.resize(Config.GROUP_KINDS)
-	for unit: Unit in _state.units:
+	for unit: Unit in _state.active_units:
 		if not unit.dead and not unit.gone:
 			counts[unit.side] += 1
 			if not unit.fleeing:
@@ -238,7 +241,8 @@ func snapshot(compact: bool = false) -> Dictionary:
 					ally_strength += unit.weight
 					if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
 						group_strength[unit.group_kind] += unit.weight
-		if not compact: units.append(_unit_values(unit))
+	if not compact:
+		for unit: Unit in _state.units: units.append(_unit_values(unit))
 	var camera_target := _camera_target(focus_sum, focus_count)
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
 	var ready_groups: Array[int] = []
@@ -262,7 +266,7 @@ var _render_definitions := {}
 func _render_snapshot() -> RenderSnapshot:
 	var frame := RenderSnapshot.new()
 	# Dead ordinary soldiers leave the render stream. Their DOWN event owns corpse data.
-	for unit: Unit in _state.units:
+	for unit: Unit in _state.render_units():
 		if unit.gone or (unit.dead and not unit.hero and not unit.companion): continue
 		var definition: Dictionary = _render_definitions.get(unit.id, {})
 		if definition.is_empty() or unit.hero:
@@ -273,7 +277,7 @@ func _render_snapshot() -> RenderSnapshot:
 			if not unit.hero: _render_definitions[unit.id] = definition
 		frame._render_definitions.append(definition)
 		frame._render_positions.append(unit.position)
-		frame._render_previous.append(_previous_positions[unit.battle_index] if unit.battle_index < _previous_positions.size() else unit.position)
+		frame._render_previous.append(_previous_position(unit))
 		frame._render_sides.append(unit.side)
 		frame._render_groups.append(unit.group_kind)
 		frame._render_flags.append(int(unit.dead) * RenderSnapshot.DEAD | int(unit.gone) * RenderSnapshot.GONE
@@ -286,6 +290,10 @@ func _render_snapshot() -> RenderSnapshot:
 		frame._render_dynamic.append(unit.velocity.length())
 		frame._render_dynamic.append(unit.attack_windup if unit.hero else unit.ai_windup)
 	return frame
+
+func _previous_position(unit: Unit) -> Vector2:
+	if unit.retired_tick >= 0 and unit.retired_tick < _tick: return unit.position
+	return _previous_positions[unit.history_index] if unit.history_index >= 0 and unit.history_index < _previous_positions.size() else unit.position
 
 ## Appearance copies are cached: only the hero changes looks (weapon swap), and a deep copy of every unit's look
 ## every frame was a large part of a mass battle's frame time.
@@ -319,7 +327,7 @@ func _unit_values(unit: Unit) -> Dictionary:
 			_templates[unit.id] = template
 	var values: Dictionary = template.duplicate()
 	values.position = unit.position
-	values.previous_position = _previous_positions[unit.battle_index] if unit.battle_index < _previous_positions.size() else unit.position
+	values.previous_position = _previous_position(unit)
 	values.radius = unit.collision_radius
 	values.group_kind = unit.group_kind
 	values.leader = unit.leader

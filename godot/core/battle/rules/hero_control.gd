@@ -55,7 +55,7 @@ static func _charge(battle: State, hero: Unit, rng: RandomNumberGenerator) -> vo
 	if speed <= Config.HERO_CHARGE_MIN_SPEED:
 		return
 	var travel_direction := hero.velocity.angle()
-	for enemy: Unit in battle.units:
+	for enemy: Unit in battle.active_units:
 		if enemy.side == hero.side or enemy.dead or enemy.gone:
 			continue
 		var delta := enemy.position - hero.position
@@ -77,7 +77,7 @@ static func _strike(battle: State, hero: Unit, rng: RandomNumberGenerator) -> vo
 	var arc: float = float(weapon.get("arc", Config.HERO_ATTACK_ARC))
 	var max_hits: int = int(weapon.get("cleave", Config.HERO_MAX_HITS))
 	var hits := 0
-	for enemy: Unit in battle.units:
+	for enemy: Unit in battle.active_units:
 		if enemy.side == hero.side or enemy.dead or enemy.gone:
 			continue
 		var delta: Vector2 = enemy.position - hero.position
@@ -93,7 +93,7 @@ static func _strike(battle: State, hero: Unit, rng: RandomNumberGenerator) -> vo
 static func _shoot(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
 	var best: Unit = null
 	var best_score := INF
-	for enemy: Unit in battle.units:
+	for enemy: Unit in battle.active_units:
 		if enemy.side == hero.side or enemy.dead or enemy.gone:
 			continue
 		var delta: Vector2 = enemy.position - hero.position

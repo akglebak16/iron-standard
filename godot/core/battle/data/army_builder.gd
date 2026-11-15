@@ -56,7 +56,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 ## Shared by the initial spawn and reserve waves (src/03_battle.js mkUnit and the fill/battleWaves callers).
 static func create_unit(battle: State, side: int, troop_id: String, troop: Dictionary, faction: String, at: Vector2, weight: float, rng: RandomNumberGenerator, starting_morale_bonus: float = 0.0) -> Unit:
 	var kind: int = troop.grp
-	var unit := Unit.new(battle.units.size(), side, at, float(troop.hp) * weight, float(troop.arm), int(troop.tier))
+	var unit := Unit.new(battle.allocate_unit_id(), side, at, float(troop.hp) * weight, float(troop.arm), int(troop.tier))
 	unit.troop_id = troop_id
 	unit.name = troop.name
 	unit.faction = faction

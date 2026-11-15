@@ -23,7 +23,12 @@ var plants: Array[Plant] = []
 var trunks: Array[Plant] = []
 var siege_skill := 0.0
 
+## Append-only outcome history. Hot systems iterate active_units instead.
 var units: Array[Unit] = []
+var active_units: Array[Unit] = []
+var _visible_units: Array[Unit] = []
+var pending_retirements := 0
+var _next_unit_id := 0
 var handles := GenerationHandles.new()
 var profiler := PhaseProfiler.new()
 ## Phase workspaces belong to this battle; differential tests may disable its index.
@@ -210,7 +215,7 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 func centroid(side: int) -> Vector2:
 	var count := 0
 	var total := Vector2.ZERO
-	for unit: Unit in units:
+	for unit: Unit in active_units:
 		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
 			total += unit.position
 			count += 1
@@ -218,18 +223,60 @@ func centroid(side: int) -> Vector2:
 
 func add_unit(unit: Unit) -> bool:
 	if unit == null or unit.battle_index != -1 or unit.unit_handle != 0 or unit.side < 0 or unit.side > 1: return false
-	unit.battle_index = units.size()
+	unit.battle_index = active_units.size()
+	unit.history_index = units.size()
 	unit.unit_handle = handles.allocate(unit.battle_index)
 	units.append(unit)
+	active_units.append(unit)
+	_visible_units.append(unit)
+	_next_unit_id = maxi(_next_unit_id, unit.id + 1)
 	starting_units[unit.side] += 1
 	return true
 
+func allocate_unit_id() -> int:
+	var allocated := _next_unit_id
+	_next_unit_id += 1
+	return allocated
+
 func unit_for(handle: int) -> Unit:
 	var index := handles.resolve(handle)
-	return units[index] if index >= 0 and index < units.size() else null
+	return active_units[index] if index >= 0 and index < active_units.size() else null
+
+func render_units() -> Array[Unit]:
+	return _visible_units
+
+## Stable compaction preserves iteration/tie order. History owns result data.
+func compact_inactive(tick: int) -> int:
+	var write := 0
+	var before := active_units.size()
+	for read in before:
+		var unit := active_units[read]
+		if unit.dead or unit.gone:
+			handles.release(unit.unit_handle)
+			unit.battle_index = -1
+			unit.retired_tick = tick
+			continue
+		if write != read:
+			var moved := handles.relocate(unit.unit_handle, write)
+			assert(moved, "Active handle must follow compaction")
+			active_units[write] = unit
+			unit.battle_index = write
+		write += 1
+	pending_retirements = 0
+	if write == before: return 0
+	active_units.resize(write)
+	_visible_units.assign(_visible_units.filter(func(u: Unit): return not u.gone and (not u.dead or u.hero or u.companion)))
+	for side in groups:
+		for group: Group in side:
+			group.units.assign(group.units.filter(func(u: Unit): return not u.dead and not u.gone))
+	if movement_index != null: movement_index.rebuild()
+	if projectile_index != null: projectile_index.rebuild()
+	return before - write
 
 func mark_gone(unit: Unit) -> void:
+	if unit.gone: return
 	unit.gone = true
+	pending_retirements += 1
 	handles.release(unit.unit_handle)
 
 func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 0.0, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE) -> int:
@@ -253,6 +300,7 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 	if target.dead:
 		return
 	target.dead = true
+	pending_retirements += 1
 	handles.release(target.unit_handle)
 	target.hp = 0.0
 	record_event(Event.Kind.DOWN, target, source, attack, amount)
@@ -263,7 +311,7 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 			var heal: float = float(source.perk_effects.get("killHeal", 0.0))
 			if heal > 0.0:
 				source.hp = minf(source.max_hp, source.hp + source.max_hp * heal)
-	for unit: Unit in units:
+	for unit: Unit in active_units:
 		if unit.dead or unit.gone or unit.position.distance_to(target.position) > Config.DEATH_MORALE_RADIUS:
 			continue
 		if unit.side == target.side:
@@ -271,14 +319,14 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 		else:
 			unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
 	if target.companion:
-		for unit: Unit in units:
+		for unit: Unit in active_units:
 			if unit.side == target.side and unit.position.distance_to(target.position) < Config.DEATH_MORALE_RADIUS:
 				unit.morale -= Config.COMPANION_DOWN_MORALE_LOSS
 	if target.hero and target.side == 0 and not target.companion:
 		if not groups.is_empty():
 			for group: Group in groups[0]:
 				group.order = Config.ORDER_CHARGE
-		for unit: Unit in units:
+		for unit: Unit in active_units:
 			if unit.side == target.side:
 				unit.morale -= Config.HERO_DOWN_MORALE_LOSS
 		return
@@ -288,7 +336,7 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 		if rng == null:
 			push_error("Leader loss requires the battle RNG")
 			return
-		for unit: Unit in units:
+		for unit: Unit in active_units:
 			if unit.side == target.side and not unit.dead and not unit.gone and unit.leader_bond == target.leader_bond and unit.leader_loss_chance > 0.0 and rng.randf() < unit.leader_loss_chance:
 				unit.leader = false
 				kill(unit, null, rng)
@@ -298,6 +346,6 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 			waiting.assign(waiting.slice(lost))
 			reserve_lost[target.side] += lost
 	else:
-		for unit: Unit in units:
+		for unit: Unit in active_units:
 			if unit.side == target.side:
 				unit.morale -= Config.LEADER_GLOBAL_MORALE_LOSS

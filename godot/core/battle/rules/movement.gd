@@ -24,15 +24,15 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 	if dt <= 0.0:
 		return null
 	var index: SpatialIndex = null
-	if battle.use_spatial_index and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
+	if battle.use_spatial_index and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
 		if battle.movement_index == null:
-			battle.movement_index = SpatialIndex.new(battle.units, battle.arena_size)
+			battle.movement_index = SpatialIndex.new(battle.active_units, battle.arena_size)
 		else:
 			battle.movement_index.synchronize()
 		index = battle.movement_index
 	battle.profiler.mark("movement_index")
-	for unit_index in battle.units.size():
-		var unit: Unit = battle.units[unit_index]
+	for unit_index in battle.active_units.size():
+		var unit: Unit = battle.active_units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
 			continue
 		unit.charge_cooldown -= dt
@@ -98,18 +98,18 @@ static func _resolve_unit_collisions(battle: State, index: SpatialIndex, keep_in
 	if index != null:
 		_resolve_packed(battle, index if keep_index else null)
 		return
-	for i in battle.units.size():
-		var a: Unit = battle.units[i]
+	for i in battle.active_units.size():
+		var a: Unit = battle.active_units[i]
 		if a.dead or a.gone:
 			continue
-		for j in range(i + 1, battle.units.size()):
-			_separate(a, battle.units[j])
+		for j in range(i + 1, battle.active_units.size()):
+			_separate(a, battle.active_units[j])
 		_finish_unit(a, battle)
 
 ## The plain pair loop above, run over packed copies: same pair order, same Vector2 arithmetic, same results.
 ## Candidates come from a fine grid gathered with some slack, so a's small pushes do not force a new query.
 static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index: kept current for callers that reuse it, else null
-	var units := battle.units
+	var units := battle.active_units
 	var n := units.size()
 	var workspace := battle.contacts
 	workspace.resize(n)

@@ -9,7 +9,7 @@ static func nearest_enemy(battle: State, unit: Unit, index: SpatialIndex = null)
 		return index.nearest_enemy(unit)
 	var nearest: Unit = null
 	var best := INF
-	for enemy: Unit in battle.units:
+	for enemy: Unit in battle.active_units:
 		if enemy.side == unit.side or enemy.dead or enemy.gone:
 			continue
 		var distance: float = unit.position.distance_squared_to(enemy.position)
@@ -29,7 +29,7 @@ static func choose(battle: State, unit: Unit, index: SpatialIndex = null) -> Uni
 	var best: Unit = null
 	var best_distance := INF
 	var melee_cavalry := unit.mounted and unit.attack_range <= 0.0
-	for enemy: Unit in battle.units:
+	for enemy: Unit in battle.active_units:
 		if enemy.side == unit.side or enemy.dead or enemy.gone:
 			continue
 		var distance := unit.position.distance_to(enemy.position)

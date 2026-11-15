@@ -50,7 +50,7 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 static func siege_step(battle: State, elapsed: float) -> void:
 	var inside := 0
 	var near_wall := false
-	for unit: Unit in battle.units:
+	for unit: Unit in battle.active_units:
 		if unit.side != 0 or unit.dead or unit.gone or unit.fleeing:
 			continue
 		if unit.position.x > battle.wall.x + battle.wall.half_width:
@@ -96,7 +96,7 @@ static func relayout(battle: State, dt: float) -> void:
 
 static func _nearest_foe_distance(battle: State, point: Vector2, side: int) -> float:
 	var closest := INF
-	for unit: Unit in battle.units:
+	for unit: Unit in battle.active_units:
 		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
 			closest = minf(closest, point.distance_to(unit.position))
 	return closest

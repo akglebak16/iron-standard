@@ -117,6 +117,8 @@ func run(tree: SceneTree) -> void:
 		"phase_profile": phase_stats,
 		"contact_backend": contact_backend, "native_contact_steps": session._state.native_contact_steps,
 		"native_contact_failures": session._state.native_contact_failures,
+		"active_storage_records": session._state.active_units.size(),
+		"outcome_history_records": session._state.units.size(),
 		"memory_start_bytes": memory_start if memory_start > 0 else null,
 		"memory_end_bytes": OS.get_static_memory_usage() if OS.get_static_memory_usage() > 0 else null,
 		"gpu_time": null, "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample."}

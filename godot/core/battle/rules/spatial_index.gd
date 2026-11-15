@@ -1,5 +1,5 @@
 extends RefCounted
-## Mutable broad phase for one simulation phase. Indices refer to State.units order.
+## Mutable broad phase for one simulation phase. Indices refer to State.active_units order.
 ## Coarse per-side cells for enemy searches; the collision pass has its own fine grid (collision_grid.gd).
 ## Results are identical to the plain loops they replace.
 const Config = preload("res://core/battle/config.gd")
@@ -16,6 +16,16 @@ var _spare_buckets: Array[Array] = []
 
 func _init(units: Array[Unit], arena: Vector2 = Config.ARENA_SIZE) -> void:
 	_units = units
+	synchronize()
+
+## Dense indices changed; reuse the allocated buckets for the new ordering.
+func rebuild() -> void:
+	for cells in _cells:
+		for bucket in cells.values():
+			bucket.clear()
+			_spare_buckets.append(bucket)
+		cells.clear()
+	_locations.clear()
 	synchronize()
 
 ## Refresh after movement and append reinforcements without rebuilding buckets.

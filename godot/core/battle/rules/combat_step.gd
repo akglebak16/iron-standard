@@ -10,9 +10,9 @@ const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
 static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: SpatialIndex = null) -> void:
 	if dt <= 0.0:
 		return
-	if index == null and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
-		index = SpatialIndex.new(battle.units)
-	for unit: Unit in battle.units:
+	if index == null and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
+		index = SpatialIndex.new(battle.active_units)
+	for unit: Unit in battle.active_units:
 		if unit.dead or unit.gone or unit.fleeing or unit.hero:
 			continue
 		unit.attack_cooldown -= dt
@@ -52,15 +52,15 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 	# Reusing the pre-movement target grid would miss units pushed across cell boundaries.
 	var index: SpatialIndex = null
 	var hit_radius := Config.PROJECTILE_HIT_PADDING
-	if use_spatial and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
+	if use_spatial and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
 		for shot in battle.projectiles:
 			if shot.time + dt >= shot.duration:
 				if battle.projectile_index == null:
-					battle.projectile_index = SpatialIndex.new(battle.units, battle.arena_size)
+					battle.projectile_index = SpatialIndex.new(battle.active_units, battle.arena_size)
 				else:
 					battle.projectile_index.synchronize()
 				index = battle.projectile_index
-				for unit in battle.units: hit_radius = maxf(hit_radius, unit.collision_radius + Config.PROJECTILE_HIT_PADDING)
+				for unit in battle.active_units: hit_radius = maxf(hit_radius, unit.collision_radius + Config.PROJECTILE_HIT_PADDING)
 				break
 	for i in range(battle.projectiles.size() - 1, -1, -1):
 		var shot: Dictionary = battle.projectiles[i]
@@ -75,9 +75,9 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 			index.nearby_into(shot.impact + Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT), hit_radius, 0, candidates)
 		if index == null:
 			candidates.clear()
-			for unit_index in battle.units.size(): candidates.append(unit_index)
+			for unit_index in battle.active_units.size(): candidates.append(unit_index)
 		for unit_index in candidates:
-			var unit: Unit = battle.units[unit_index]
+			var unit: Unit = battle.active_units[unit_index]
 			if unit.side == shot.side or unit.dead or unit.gone:
 				continue
 			var distance: float = (unit.position - Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT)).distance_to(shot.impact)

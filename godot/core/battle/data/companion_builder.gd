@@ -5,7 +5,7 @@ const Unit = preload("res://core/battle/model/unit.gd")
 const HeroStats = preload("res://core/battle/data/hero_stats.gd")
 
 static func spawn(state: State, profile: Dictionary, gear: Dictionary, effects: Dictionary, rng: RandomNumberGenerator) -> Unit:
-	var unit := Unit.new(state.units.size(), 0, Vector2.ZERO, 0.0, 0.0, Config.COMPANION_TIER)
+	var unit := Unit.new(state.allocate_unit_id(), 0, Vector2.ZERO, 0.0, 0.0, Config.COMPANION_TIER)
 	unit.companion_id = profile.id
 	unit.troop_id = Config.COMPANION_TROOP_PREFIX + unit.companion_id
 	unit.name = profile.name

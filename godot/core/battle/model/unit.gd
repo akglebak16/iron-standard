@@ -6,6 +6,8 @@ const Config = preload("res://core/battle/config.gd")
 var id: int
 var battle_index: int = -1 # Assigned on insertion; independent of ID used for gameplay.
 var unit_handle: int = 0 # Temporary identity in this battle; never a campaign CharacterId.
+var history_index: int = -1 # Stable insertion order for outcome RNG and legacy snapshots.
+var retired_tick: int = -1
 var side: int
 var position: Vector2
 var hp: float

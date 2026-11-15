@@ -93,7 +93,7 @@ static func _spawn_companions(state: State, fit: Array[Dictionary], gear_catalog
 ## Builds the player's hero from the preview troop and, when a profile is set, applies its
 ## gear, perks and the morale and damage bonus it gives to allies. Returns null when invalid.
 static func _create_hero(setup: Setup, troop: Dictionary, state: State, gear_catalog: GearCatalog, perk_catalog: PerkCatalog) -> Unit:
-	var hero := Unit.new(state.units.size(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
+	var hero := Unit.new(state.allocate_unit_id(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true
 	hero.appearance = troop.get("look", {}).duplicate(true)
 	# The preview hero's troop definition provides art but does not equip a mount.

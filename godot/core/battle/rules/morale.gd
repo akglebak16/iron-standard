@@ -7,11 +7,11 @@ const Event = preload("res://core/battle/combat_event.gd")
 
 static func tick(battle: State) -> void:
 	var active := [0, 0]
-	for unit: Unit in battle.units:
+	for unit: Unit in battle.active_units:
 		if not unit.dead and not unit.gone and not unit.fleeing:
 			active[unit.side] += 1
 	battle.active_counts = active.duplicate()
-	for unit: Unit in battle.units:
+	for unit: Unit in battle.active_units:
 		if unit.dead or unit.gone or unit.fleeing or unit.hero or unit.companion or unit.morale_immune:
 			continue
 		var friends: int = active[unit.side]
