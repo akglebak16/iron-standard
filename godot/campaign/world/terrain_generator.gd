@@ -4,6 +4,7 @@ extends RefCounted
 ## Biomes: 0 grass, 1 snow, 2 steppe, 3 arid.
 const WorldNoise = preload("res://campaign/world/noise.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
+const Heap = preload("res://campaign/world/heap.gd")
 
 const WW := 5200
 const WH := 3400
@@ -360,40 +361,6 @@ func _label_comps() -> Dictionary:
 		cid += 1
 	return {"comp": lab, "main": best}
 
-static func _hpush(h: Array, f: float, v: int) -> void:
-	h.append([f, v])
-	var i := h.size() - 1
-	while i > 0:
-		var p := (i - 1) >> 1
-		if h[p][0] <= h[i][0]:
-			break
-		var tmp = h[p]
-		h[p] = h[i]
-		h[i] = tmp
-		i = p
-
-static func _hpop(h: Array) -> Array:
-	var top: Array = h[0]
-	var last: Array = h.pop_back()
-	if not h.is_empty():
-		h[0] = last
-		var i := 0
-		while true:
-			var l := i * 2 + 1
-			var r := l + 1
-			var m := i
-			if l < h.size() and h[l][0] < h[m][0]:
-				m = l
-			if r < h.size() and h[r][0] < h[m][0]:
-				m = r
-			if m == i:
-				break
-			var tmp = h[m]
-			h[m] = h[i]
-			h[i] = tmp
-			i = m
-	return top
-
 func _cut_passes() -> void:
 	var lab := _label_comps()
 	for pass_i in 8:
@@ -411,9 +378,9 @@ func _cut_passes() -> void:
 		for k in cells.size():
 			if lab.comp[k] == lab.main:
 				dist[k] = 0.0
-				_hpush(h, 0.0, k)
+				Heap.push(h, 0.0, k)
 		while not h.is_empty():
-			var top := _hpop(h)
+			var top := Heap.pop(h)
 			var d: float = top[0]
 			var c: int = top[1]
 			if d > dist[c]:
@@ -432,7 +399,7 @@ func _cut_passes() -> void:
 				if nd < dist[k]:
 					dist[k] = nd
 					prev[k] = c
-					_hpush(h, nd, k)
+					Heap.push(h, nd, k)
 		var best_of := {}
 		for k in cells.size():
 			var c: int = lab.comp[k]
