@@ -8,12 +8,27 @@ const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 const MapView = preload("res://campaign/presentation/world_map_view.gd")
 const WorldCamera = preload("res://campaign/presentation/world_camera.gd")
 const PartyLayer = preload("res://campaign/presentation/party_layer.gd")
+const EncounterDialog = preload("res://campaign/presentation/encounter_dialog.gd")
+const Bridge = preload("res://app/world_battle_bridge.gd")
+const Aftermath = preload("res://app/encounter_aftermath.gd")
+const AftermathText = preload("res://app/aftermath_text.gd")
+const BattleView = preload("res://battle/presentation/scene.tscn")
+const BattleFactory = preload("res://battle/application/factory.gd")
+const PresentationPreferences = preload("res://app/presentation_preferences.gd")
+const AutoBattle = preload("res://campaign/world/auto_battle.gd")
+const Rules = preload("res://campaign/world/party_rules.gd")
 const WorldPartiesLayer = preload("res://campaign/presentation/world_parties_layer.gd")
 const WorldHud = preload("res://campaign/presentation/world_hud.gd")
 
 var state: RefCounted
 var map_view: Node2D
 var _meeting: Dictionary = {}
+var _dialog: CanvasLayer
+var _bridge: RefCounted
+var _battle: Node2D
+var _preferences := PresentationPreferences.new()
+var _factions := FactionCatalog.new()
+var _waiting_return := false
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
@@ -59,6 +74,11 @@ func _ready() -> void:
 	add_child(hud)
 	hud.speed_changed.connect(func(s: int): state.clock.speed = s; state.clock.paused = false)
 	hud.pause_toggled.connect(func(): state.clock.paused = not state.clock.paused)
+	_bridge = Bridge.new()
+	_dialog = EncounterDialog.new()
+	add_child(_dialog)
+	_dialog.chosen.connect(_on_encounter_choice)
+	assert(_factions.load_data())
 	state.party_met.connect(_on_party_met)
 	if focus.size() == 3:
 		camera.detached = true
@@ -73,24 +93,127 @@ func _ready() -> void:
 func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	_meeting = party
 	state.clock.paused = true
-	var n := 0
-	for s in party.troops:
-		n += int(s.n)
-	hud.show_notice("Встреча: %s (%d бойцов). Enter — разойтись" % [party.name, n])
+	var hostile := Rules.hostile_to_player(party, state.player.rel)
+	var rows: Array = []
+	var sorted: Array = party.troops.duplicate()
+	sorted.sort_custom(func(a, b): return state.roster.info[a.type].tier > state.roster.info[b.type].tier)
+	for t in sorted:
+		rows.append({"name": _bridge.troops.get_troop(t.type).name, "n": int(t.n)})
+	var title: String = party.name
+	if party.kind == "camp":
+		title = "Логово разбойников"
+	elif party.kind == "caravan":
+		title = "Караван"
+	elif party.kind == "bandit":
+		title = "Крупная банда" if party.get("big", false) else "Разбойники"
+	var sub: String = "%s · %d бойцов" % [_factions.get_faction(party.fac).get("name", party.fac), Rules.troop_count(party.troops)]
+	var actions: Array = []
+	if hostile:
+		actions = [{"id": "flee", "text": "Бежать"}, {"id": "auto", "text": "Рассчитать бой"}, {"id": "fight", "text": "В бой!", "primary": true}]
+	else:
+		actions = [{"id": "greet", "text": "Разойтись с миром", "primary": true}, {"id": "attack", "text": "Напасть"}]
+	_dialog.open(title, sub, AutoBattle.relative_power(state.player.troops, party.troops, state.roster.info), rows, actions)
+
+func _on_encounter_choice(action: String) -> void:
+	var p := _meeting
+	match action:
+		"greet":
+			_end_meeting(3.0)
+		"attack":
+			state.player.rel[p.fac] = maxi(-100, int(state.player.rel.get(p.fac, 0)) - (12 if p.kind == "caravan" else 30))
+			_start_battle(p)
+		"flee":
+			var chance := AutoBattle.flee_chance(state.player.speed_of(state.map.paths), state.roster.speed_of(p), p.kind == "camp")
+			if _bridge.rng.randf() < chance:
+				p.state = "idle"
+				p.path = []
+				_end_meeting(6.0)
+				hud.show_notice("Ты оторвался от погони")
+			else:
+				hud.show_notice("Не вышло уйти!")
+				_start_battle(p)
+		"auto":
+			_finish_auto(p)
+		"fight":
+			_start_battle(p)
+
+func _end_meeting(cooldown: float) -> void:
+	_meeting.cd = cooldown
+	_meeting = {}
+	state.player.busy = ""
+	state.clock.paused = false
+
+func _opponent(p: Dictionary) -> Dictionary:
+	return _bridge.opponent_dict(p, {})
+
+func _finish_auto(p: Dictionary) -> void:
+	var result: Dictionary = _bridge.auto_result(state, p)
+	var party: Dictionary = _bridge.party_dict(state)
+	var opponent := _opponent(p)
+	var world := {"parties": [opponent.duplicate(true)], "settlements": [], "factions": Rules.REAL_FACTIONS}
+	var resolved := Aftermath.resolve_result(result, party, opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
+	if resolved.is_empty():
+		_end_meeting(3.0)
+		return
+	_bridge.apply(state, p, resolved)
+	_meeting = {}
+	hud.show_notice(("Победа!" if result.win else "Поражение.") + AftermathText.build(resolved, _bridge.gear, _bridge.goods))
+	state.clock.paused = false
+
+func _start_battle(p: Dictionary) -> void:
+	var setup: Resource = _bridge.make_setup(state, p)
+	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions)
+	if session == null:
+		push_error("Cannot start the battle")
+		_end_meeting(3.0)
+		return
+	var view = BattleView.instantiate()
+	view.name = "Battle"
+	var audio := _preferences.read()
+	view.configure(session, audio.effects, audio.music, _preferences.read_blood(), setup.seed, setup.biome)
+	view.audio_preferences_changed.connect(func(e: bool, m: bool): _preferences.save(e, m))
+	view.blood_preference_changed.connect(func(on: bool): _preferences.save_blood(on))
+	var opponent := _opponent(p)
+	var bridge := Aftermath.new(session)
+	view.battle_finished.connect(func():
+		var world := {"parties": [opponent.duplicate(true)], "settlements": [], "factions": Rules.REAL_FACTIONS}
+		var resolved := bridge.resolve(_bridge.party_dict(state), opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
+		if resolved.is_empty():
+			return
+		_bridge.apply(state, p, resolved)
+		view.show_result_summary(AftermathText.build(resolved, _bridge.gear, _bridge.goods) + "\nEnter — вернуться на карту")
+		_waiting_return = true, CONNECT_ONE_SHOT)
+	_battle = view
+	_set_world_visible(false)
+	add_child(view)
+
+func _return_to_map() -> void:
+	_waiting_return = false
+	_battle.queue_free()
+	_battle = null
+	_meeting = {}
+	_set_world_visible(true)
+	camera.make_current()
+	state.clock.paused = false
+
+func _set_world_visible(on: bool) -> void:
+	map_view.visible = on
+	hud.visible = on
+	camera.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
 	hud.show_tip(state.settlement_near(world_pos.x, world_pos.y, 46.0), screen_pos)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _battle != null and not _waiting_return:
+		return
 	if not _ready_to_play or not (event is InputEventKey) or not event.pressed or event.echo:
 		return
 	match (event as InputEventKey).keycode:
 		KEY_ENTER, KEY_KP_ENTER:
-			if not _meeting.is_empty():  # the battle hand-off arrives with the encounter slice
-				_meeting.cd = 6.0
-				_meeting = {}
-				state.player.busy = ""
-				state.clock.paused = false
+			if _waiting_return:
+				_return_to_map()
+			else:
 				hud.show_notice("")
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
@@ -99,7 +222,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			state.clock.paused = false
 
 func _process(delta: float) -> void:
-	if not _ready_to_play:
+	if not _ready_to_play or _battle != null:
 		return
 	state.advance(delta)
 	if not camera.detached:

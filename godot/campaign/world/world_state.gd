@@ -32,6 +32,9 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.culture = player_culture
 	state.map = WorldMap.create(seed_value, data)
 	state._place_player(seed_value)
+	state.player.culture = player_culture
+	state.player.hero = {"name": "Безымянный", "lvl": 1, "xp": 0, "pts": 2, "pp": 1, "perks": [], "str": 1, "vit": 1, "agi": 1,
+		"int": 1, "cha": 1, "armor": 0, "weapon": 0, "shield": 0, "horse": 1 if player_culture in ["khan", "emi"] else 0, "hp": 1.0, "seed": seed_value % 99999 + 1}
 	for t in START_TROOPS[player_culture]:
 		state.player.troops.append({"type": t[0], "n": t[1]})
 	state.roster = PartyRoster.new(state.map, seed_value)

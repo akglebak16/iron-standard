@@ -1,0 +1,103 @@
+extends RefCounted
+## Glue between the world map and the battle: builds a battle for a meeting and applies the outcome to the world.
+const Setup = preload("res://battle/data/battle_setup.gd")
+const Catalog = preload("res://troops/data/catalog.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
+const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
+const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
+const HeroGear = preload("res://equipment/rules/hero_gear.gd")
+const Aftermath = preload("res://app/encounter_aftermath.gd")
+const AutoBattle = preload("res://campaign/world/auto_battle.gd")
+const Rules = preload("res://campaign/world/party_rules.gd")
+const Config = preload("res://campaign/config.gd")
+
+var troops := Catalog.new()
+var gear := GearCatalog.new()
+var goods := GoodsCatalog.new()
+var companions := CompanionCatalog.new()
+var perks := PerkCatalog.new()
+var rng := RandomNumberGenerator.new()
+
+func _init() -> void:
+	assert(troops.load_data() and gear.load_data() and goods.load_data() and companions.load_data() and perks.load_data())
+	rng.randomize()
+
+## The browser's hero fights as the strongest troop of his culture (heroBattle picks the tier 3 line).
+func hero_troop(culture: String) -> String:
+	for t in troops.for_faction(culture):
+		if int(t.tier) == 3:
+			return t.id
+	return troops.for_faction(culture)[0].id
+
+func make_setup(state: RefCounted, opponent: Dictionary) -> Setup:
+	var s := Setup.new()
+	s.seed = rng.randi_range(1, 1000000000)
+	s.biome = state.map.terrain.biome_name(state.player.x, state.player.y)
+	s.player_faction = state.player.culture
+	s.enemy_faction = opponent.fac
+	s.player_army.assign(state.player.troops.duplicate(true))
+	s.enemy_army.assign(opponent.troops.duplicate(true))
+	s.hero_troop = hero_troop(state.player.culture)
+	s.hero_profile = state.player.hero.duplicate(true)
+	s.enemy_leader_name = opponent.name if Rules.is_noble(opponent) else ""
+	s.hero_position = Vector2(780, 850)
+	return s
+
+func party_dict(state: RefCounted) -> Dictionary:
+	var p: RefCounted = state.player
+	return {"id": 0, "troops": p.troops.duplicate(true), "hero": p.hero.duplicate(true), "gold": p.gold, "comps": p.comps.duplicate(true),
+		"inv": p.inv.duplicate(true), "rel": p.rel.duplicate(true), "quests": p.quests.duplicate(true), "stats": p.stats.duplicate(true),
+		"culture": p.culture, "position": Vector2(p.x, p.y)}
+
+func opponent_dict(party: Dictionary, camp_settlement: Dictionary) -> Dictionary:
+	var o := party.duplicate(true)
+	if party.kind == "camp":
+		o["camp"] = party.home
+	return o
+
+func auto_result(state: RefCounted, opponent: Dictionary) -> Dictionary:
+	return AutoBattle.resolve(state.player.troops, state.player.hero, opponent.troops, state.roster.info, rng)
+
+func is_hero_mounted(state: RefCounted) -> bool:
+	return bool(HeroGear.resolve(state.player.hero, gear).get("mounted", false))
+
+## Applies a finished battle (played or calculated) to the world. `aftermath` is what EncounterAftermath returned.
+func apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary) -> void:
+	var p: RefCounted = state.player
+	var party: Dictionary = aftermath.party
+	p.troops = party.troops
+	p.hero = party.hero
+	p.gold = party.gold
+	p.inv = party.get("inv", p.inv)
+	p.comps = party.get("comps", p.comps)
+	p.rel = party.get("rel", p.rel)
+	p.quests = party.get("quests", p.quests)
+	p.stats = party.get("stats", p.stats)
+	if party.position != Vector2(p.x, p.y):
+		p.x = party.position.x
+		p.y = party.position.y
+	p.stop()
+	p.busy = ""
+	var updated := _find(aftermath.world.get("parties", []), opponent.id)
+	if updated.is_empty():
+		_remove_opponent(state, opponent)
+	else:
+		for k in ["troops", "cd", "state", "path", "lock"]:
+			opponent[k] = updated[k] if updated.has(k) else opponent.get(k)
+		opponent.pi = 0
+
+func _remove_opponent(state: RefCounted, opponent: Dictionary) -> void:
+	state.roster.remove(opponent)
+	if opponent.kind == "camp":
+		var s: Dictionary = state.map.settlement_by_id(opponent.home)
+		if not s.is_empty():
+			s.camp = null
+			s.cleared = true
+			s.respawn = Config.CAMP_RESPAWN_HOURS
+
+func _find(list: Array, id) -> Dictionary:
+	for p in list:
+		if p.get("id") == id:
+			return p
+	return {}
