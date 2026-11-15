@@ -10,10 +10,10 @@
    ```text
    xvfb-run -a -s "-screen 0 1280x720x24" godot --path godot --fixed-fps 60 --disable-vsync \
      --audio-driver Dummy --resolution 1280x720 --script res://tools/baseline_capture.gd -- \
-     --scene=res://app/main.tscn --out=/tmp/now --reference=godot/tools/baseline
+     --scene=res://apps/godot/composition/main.tscn --out=/tmp/now --reference=godot/tools/baseline
    ```
 
-   То же для `res://app/siege_demo.tscn`. Скрипт отдаёт сцене одинаковый ввод (4 шага отдаления камеры, затем приказ «атаковать»), сохраняет кадры 2/300/900/1500 и считает долю отличающихся пикселей с эталоном. В репозитории лежат кадры 300 и 1500 (по ним идёт сравнение); кадры 2 и 900 скрипт сохраняет, но сравнивает только при наличии файла в эталоне.
+   То же для `res://apps/godot/composition/siege_demo.tscn`. Скрипт отдаёт сцене одинаковый ввод (4 шага отдаления камеры, затем приказ «атаковать»), сохраняет кадры 2/300/900/1500 и считает долю отличающихся пикселей с эталоном. В репозитории лежат кадры 300 и 1500 (по ним идёт сравнение); кадры 2 и 900 скрипт сохраняет, но сравнивает только при наличии файла в эталоне.
 3. Отпечаток поведения (для рефакторингов без смены поведения): `godot --headless --path godot --script res://tools/behavior_fingerprint.gd`. Строки до и после правки должны совпасть.
 4. CPU симуляции без графики: `godot --headless --path godot --script res://battle/tools/benchmark.gd`.
 

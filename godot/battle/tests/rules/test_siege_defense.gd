@@ -7,7 +7,7 @@ const Defense = preload("res://battle/model/siege_defense.gd")
 const SiegeDefense = preload("res://battle/rules/siege_defense.gd")
 const Config = preload("res://battle/config.gd")
 const Event = preload("res://battle/combat_event.gd")
-const Feedback = preload("res://battle/presentation/combat_feedback.gd")
+const Feedback = preload("res://apps/godot/presentation/battle/combat_feedback.gd")
 
 func _initialize() -> void:
 	_check_damaged_wall()

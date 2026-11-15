@@ -1,5 +1,5 @@
 extends SceneTree
-const Dialogue = preload("res://battle/presentation/companion_dialogue.gd")
+const Dialogue = preload("res://apps/godot/presentation/battle/companion_dialogue.gd")
 const Event = preload("res://battle/combat_event.gd")
 const SPEAKER_ID := 3
 const FOE_ID := 8

@@ -1,6 +1,6 @@
 extends SceneTree
-const Motion = preload("res://battle/presentation/unit_motion.gd")
-const UnitView = preload("res://battle/presentation/unit_view.gd")
+const Motion = preload("res://apps/godot/presentation/battle/unit_motion.gd")
+const UnitView = preload("res://apps/godot/presentation/battle/unit_view.gd")
 const Event = preload("res://battle/combat_event.gd")
 const EPSILON := 0.0001
 

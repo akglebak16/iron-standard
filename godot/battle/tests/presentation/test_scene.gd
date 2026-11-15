@@ -2,19 +2,19 @@ extends SceneTree
 const Session = preload("res://battle/application/session.gd")
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
-const Dialogue = preload("res://battle/presentation/companion_dialogue.gd")
+const Dialogue = preload("res://apps/godot/presentation/battle/companion_dialogue.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
-const PresentationPreferences = preload("res://app/presentation_preferences.gd")
-const UnitMarkers = preload("res://battle/presentation/unit_markers.gd")
-const SoundBank = preload("res://battle/presentation/audio/sound_bank.gd")
-const BattleCamera = preload("res://battle/presentation/battle_camera.gd")
+const PresentationPreferences = preload("res://apps/godot/composition/presentation_preferences.gd")
+const UnitMarkers = preload("res://apps/godot/presentation/battle/unit_markers.gd")
+const SoundBank = preload("res://apps/godot/presentation/battle/audio/sound_bank.gd")
+const BattleCamera = preload("res://apps/godot/presentation/battle/battle_camera.gd")
 const TICK := 1.0 / 60.0
 
 func _initialize() -> void:
 	call_deferred("_check")
 
 func _check() -> void:
-	var packed: PackedScene = load("res://app/main.tscn")
+	var packed: PackedScene = load("res://apps/godot/composition/main.tscn")
 	assert(packed != null)
 	var scene = packed.instantiate()
 	var path := "res://.godot/test-audio-%d.cfg" % OS.get_process_id()
@@ -191,7 +191,7 @@ func _check_defeat(packed: PackedScene, path: String) -> void:
 	assert(scene._demo_world.parties[0].state == "idle" and scene._demo_world.parties[0].cd == 10)
 
 func _check_siege_dialogue(path: String) -> void:
-	var scene = load("res://app/siege_demo.tscn").instantiate()
+	var scene = load("res://apps/godot/composition/siege_demo.tscn").instantiate()
 	scene.presentation_preferences = PresentationPreferences.new(path)
 	root.add_child(scene)
 	var view = scene.get_node("Battle")

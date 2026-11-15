@@ -2,10 +2,10 @@ extends SceneTree
 ## Reference frames and timing for a whole app scene. Informational, not a pass/fail test.
 ## Run with rendering (not --headless) and a fixed frame rate so the simulation repeats exactly:
 ##   godot --path godot --fixed-fps 60 --disable-vsync --audio-driver Dummy --resolution 1280x720 \
-##     --script res://tools/baseline_capture.gd -- --scene=res://app/main.tscn --out=<dir> [--reference=<dir>] [--wall-code]
+##     --script res://tools/baseline_capture.gd -- --scene=res://apps/godot/composition/main.tscn --out=<dir> [--reference=<dir>] [--wall-code]
 ## Frames are saved as <name>_<frame>.png. With --reference the frames are compared to the same files there.
-const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
-const DEFAULT_SCENE := "res://app/main.tscn"
+const TerrainView = preload("res://apps/godot/presentation/battle/terrain/terrain_view.gd")
+const DEFAULT_SCENE := "res://apps/godot/composition/main.tscn"
 const DEFAULT_OUT := "user://baseline"
 const CAPTURE_FRAMES: Array[int] = [2, 300, 900, 1500]
 ## Scripted player input: zoom the camera out, then order the whole army to charge.

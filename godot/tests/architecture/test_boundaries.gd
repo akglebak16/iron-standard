@@ -2,25 +2,25 @@ extends SceneTree
 ## Keep the feature boundary enforceable as more screens and rules are added.
 func _initialize() -> void:
 	# The visual library has actual consumers in both campaign and battle, and owns no game rules.
-	_check_tree("res://ui", ["res://app/", "res://campaign/", "res://battle/", "res://troops/", "res://equipment/", "res://characters/"])
-	var external_layers := ["res://app/", "res://campaign/"]
+	_check_tree("res://ui", ["res://apps/godot/composition/", "res://campaign/", "res://battle/", "res://troops/", "res://equipment/", "res://characters/"])
+	var external_layers := ["res://apps/godot/composition/", "res://campaign/"]
 	var scene_and_files := ["FileAccess", "Input.", "get_tree("]
 	var catalogs := ["res://troops/data/", "res://equipment/data/", "res://characters/data/"]
-	var adapters := ["res://battle/application/", "res://battle/presentation/", "res://battle/data/"]
+	var adapters := ["res://battle/application/", "res://apps/godot/presentation/battle/", "res://battle/data/"]
 	# Presentation may create its own RNG for effects. Access to simulation internals stays forbidden.
-	_check_tree("res://battle/presentation", external_layers + ["res://battle/model/", "res://battle/rules/", "res://battle/data/", "res://troops/", "res://equipment/", "res://characters/", "FileAccess", "._rng", "._state"])
+	_check_tree("res://apps/godot/presentation/battle", external_layers + ["res://battle/model/", "res://battle/rules/", "res://battle/data/", "res://troops/", "res://equipment/", "res://characters/", "FileAccess", "._rng", "._state"])
 	_check_tree("res://battle/model", external_layers + adapters + catalogs + scene_and_files + ["res://equipment/rules/"])
 	_check_tree("res://battle/rules", external_layers + adapters + catalogs + scene_and_files)
-	_check_tree("res://battle/application", external_layers + scene_and_files + ["res://battle/presentation/"])
-	_check_tree("res://battle/data", external_layers + scene_and_files + ["res://battle/application/", "res://battle/presentation/"])
-	var campaign_forbidden := ["res://app/", "res://battle/"]
+	_check_tree("res://battle/application", external_layers + scene_and_files + ["res://apps/godot/presentation/battle/"])
+	_check_tree("res://battle/data", external_layers + scene_and_files + ["res://battle/application/", "res://apps/godot/presentation/battle/"])
+	var campaign_forbidden := ["res://apps/godot/composition/", "res://battle/"]
 	_check_file("res://campaign/config.gd", campaign_forbidden)
 	_check_tree("res://campaign/data", campaign_forbidden)
 	_check_tree("res://campaign/rules", campaign_forbidden + scene_and_files)
 	_check_tree("res://campaign/economy", campaign_forbidden + scene_and_files)
 	# World generation is pure simulation: no scenes, no files, no input. Its picture lives in campaign/presentation.
 	_check_tree("res://campaign/world", campaign_forbidden + scene_and_files)
-	_check_tree("res://campaign/presentation", campaign_forbidden + ["FileAccess", "._rng"])
+	_check_tree("res://apps/godot/presentation/campaign", campaign_forbidden + ["FileAccess", "._rng"])
 	# These legacy content identifiers belong to definitions and compatibility adapters.
 	var legacy_content := ['"undead"', '"skel"', '"zombie"', "UNDEAD_FACTION", "undead_kind"]
 	_check_tree("res://battle/model", legacy_content)

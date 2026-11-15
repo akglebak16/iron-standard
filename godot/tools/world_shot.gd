@@ -12,7 +12,7 @@ func _initialize() -> void:
 			_meet = arg.substr(7)
 		elif arg.begins_with("--frames="):
 			_frames = int(arg.substr(9))
-	root.add_child((load("res://app/world_demo.tscn") as PackedScene).instantiate())
+	root.add_child((load("res://apps/godot/composition/world_demo.tscn") as PackedScene).instantiate())
 func _process(_d: float) -> bool:
 	_n += 1
 	if _meet.begins_with("ui_") and _n == 30:

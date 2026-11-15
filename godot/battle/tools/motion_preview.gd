@@ -1,6 +1,6 @@
 extends SceneTree
 ## Capture the actual UnitView renderer at 30 fps, using the same inputs as the Canvas reference.
-const UnitView = preload("res://battle/presentation/unit_view.gd")
+const UnitView = preload("res://apps/godot/presentation/battle/unit_view.gd")
 const Art = preload("res://ui/original_art.gd")
 const FontSource = preload("res://ui/game_theme.gd")
 const CASES := [

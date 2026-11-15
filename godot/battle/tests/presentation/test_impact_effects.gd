@@ -1,6 +1,6 @@
 extends SceneTree
 const Event = preload("res://battle/combat_event.gd")
-const Effects = preload("res://battle/presentation/impact_effects.gd")
+const Effects = preload("res://apps/godot/presentation/battle/impact_effects.gd")
 const CombatStep = preload("res://battle/rules/combat_step.gd")
 const State = preload("res://battle/model/state.gd")
 

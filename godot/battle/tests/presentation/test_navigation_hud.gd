@@ -1,6 +1,6 @@
 extends SceneTree
-const Navigation = preload("res://battle/presentation/hud/navigation_hud.gd")
-const Marker = preload("res://battle/presentation/hud/order_marker.gd")
+const Navigation = preload("res://apps/godot/presentation/battle/hud/navigation_hud.gd")
+const Marker = preload("res://apps/godot/presentation/battle/hud/order_marker.gd")
 const Config = preload("res://battle/config.gd")
 const Event = preload("res://battle/combat_event.gd")
 const State = preload("res://battle/model/state.gd")

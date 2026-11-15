@@ -3,8 +3,8 @@ const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
-const Bridge = preload("res://app/world_battle_bridge.gd")
-const PartyWindow = preload("res://campaign/presentation/party_window.gd")
+const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
+const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()

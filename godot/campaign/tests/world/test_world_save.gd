@@ -2,7 +2,7 @@ extends SceneTree
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
-const SaveStore = preload("res://app/save_store.gd")
+const SaveStore = preload("res://apps/godot/composition/save_store.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()

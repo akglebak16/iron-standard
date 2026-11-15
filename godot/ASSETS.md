@@ -4,8 +4,8 @@
 
 | Файл | Что это | Источник | Лицензия | Автор указывать | Коммерческий релиз |
 | --- | --- | --- | --- | --- | --- |
-| `battle/presentation/audio/assets/battle_theme.ogg` | Зацикленная музыка боя, 53 с | Собственная работа, рендерится `battle/tools/render_battle_theme.py` | CC0 | не нужно | да |
-| `battle/presentation/terrain/wall/assets/wall_*.png` | Текстуры осадной стены: камень, зубцы, башня, створка ворот | Собственная работа, рендерится `battle/tools/render_wall_textures.py` | CC0 | не нужно | да |
+| `apps/godot/presentation/battle/audio/assets/battle_theme.ogg` | Зацикленная музыка боя, 53 с | Собственная работа, рендерится `battle/tools/render_battle_theme.py` | CC0 | не нужно | да |
+| `apps/godot/presentation/battle/terrain/wall/assets/wall_*.png` | Текстуры осадной стены: камень, зубцы, башня, створка ворот | Собственная работа, рендерится `battle/tools/render_wall_textures.py` | CC0 | не нужно | да |
 
 ## Как добавлять
 

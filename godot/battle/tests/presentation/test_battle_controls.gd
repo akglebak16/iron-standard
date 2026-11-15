@@ -1,9 +1,9 @@
 extends SceneTree
 
-const DemoScene = preload("res://app/main.tscn")
+const DemoScene = preload("res://apps/godot/composition/main.tscn")
 const Session = preload("res://battle/application/session.gd")
 const Config = preload("res://battle/config.gd")
-const BattleControls = preload("res://battle/presentation/hud/battle_controls.gd")
+const BattleControls = preload("res://apps/godot/presentation/battle/hud/battle_controls.gd")
 const STEP := 1.0 / 60.0
 
 func _initialize() -> void:

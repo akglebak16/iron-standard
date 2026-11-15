@@ -1,6 +1,6 @@
 extends SceneTree
-const Game = preload("res://app/game.tscn")
-const Options = preload("res://app/game_options.gd")
+const Game = preload("res://apps/godot/composition/game.tscn")
+const Options = preload("res://apps/godot/composition/game_options.gd")
 
 func _initialize() -> void:
 	call_deferred("_check")

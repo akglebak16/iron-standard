@@ -2,8 +2,8 @@ extends SceneTree
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
-const TownWindow = preload("res://campaign/presentation/town_window.gd")
-const PartyWindow = preload("res://campaign/presentation/party_window.gd")
+const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
+const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()

@@ -49,6 +49,7 @@ function analyze(files, manifest) {
     for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') classes.set(ts[i + 1].value, file);
   }
   for (const [file, ts] of parsed) {
+    for (const prefix of manifest.forbiddenPaths || []) if (file.startsWith(prefix)) add(file, 'retired-path', prefix);
     const dependencies = new Set();
     for (const t of ts) {
       let dependency;
@@ -69,7 +70,7 @@ function analyze(files, manifest) {
     const pure = file.startsWith('core/') || file.startsWith('runtime/');
     const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
     if (pure) {
-      for (const symbol of ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree']) {
+      for (const symbol of ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene']) {
         if (ts.some(t => !t.string && t.value === symbol)) add(file, 'pure-core', symbol);
       }
       if (/\bextends\s+(Node\w*|Control|Resource|CharacterBody\w*|RigidBody\w*|Sprite\w*|Canvas\w*|AudioStream\w*)\b/.test(code)) add(file, 'pure-core', 'engine-object');
@@ -83,7 +84,10 @@ function analyze(files, manifest) {
       for (let j = i + 2; j < ts.length && depth; j++) {
         if (!ts[j].string && ts[j].value === '(') depth++;
         if (!ts[j].string && ts[j].value === ')') depth--;
-        if (!ts[j].string && /^(load_data|save|replace_data|create|advance|step|equip|spawn)$/.test(ts[j].value) && ts[j + 1]?.value === '(') add(file, 'assert-side-effect', ts[j].value);
+        // Unknown calls are rejected conservatively: name-based lists of mutations
+        // can be bypassed simply by renaming a mandatory initialization method.
+        const pureAssertionCalls = new Set(['is_empty','is_inside_tree','is_finite','is_nan','is_inf','is_equal_approx','is_zero_approx','is_instance_valid','typeof','len','size','has']);
+        if (!ts[j].string && /^[A-Za-z_][A-Za-z_0-9]*$/.test(ts[j].value) && ts[j + 1]?.value === '(' && !pureAssertionCalls.has(ts[j].value)) add(file, 'assert-side-effect', ts[j].value);
       }
     }
     for (const dependency of dependencies) {
@@ -114,6 +118,24 @@ function analyze(files, manifest) {
     visiting.delete(file); done.add(file);
   }
   for (const file of graph.keys()) visit(file, []);
+  const moduleGraph = new Map(manifest.modules.map(m => [m.name, new Set()]));
+  for (const [file, dependencies] of graph) {
+    if (test(file)) continue;
+    const module = owner(file); if (!module) continue;
+    for (const dependency of dependencies) {
+      const other = owner(dependency);
+      if (other && other.name !== module.name) moduleGraph.get(module.name).add(other.name);
+    }
+  }
+  const activeModules = new Set(), doneModules = new Set();
+  function visitModule(name, route) {
+    if (activeModules.has(name)) { add(manifest.modules.find(m => m.name === name).prefix, 'module-cycle', [...route.slice(route.indexOf(name)), name].join(' -> ')); return; }
+    if (doneModules.has(name)) return;
+    activeModules.add(name);
+    for (const next of moduleGraph.get(name)) visitModule(next, [...route,name]);
+    activeModules.delete(name); doneModules.add(name);
+  }
+  for (const name of moduleGraph.keys()) visitModule(name, []);
   return [...new Map(issues.map(i => [i.key, i])).values()];
 }
 

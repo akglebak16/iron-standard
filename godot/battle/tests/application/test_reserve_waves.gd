@@ -10,7 +10,7 @@ const Reinforcements = preload("res://battle/data/reinforcements.gd")
 const BattleResult = preload("res://battle/rules/result.gd")
 const Config = preload("res://battle/config.gd")
 const Event = preload("res://battle/combat_event.gd")
-const Feedback = preload("res://battle/presentation/combat_feedback.gd")
+const Feedback = preload("res://apps/godot/presentation/battle/combat_feedback.gd")
 
 var _catalog := Catalog.new()
 

@@ -1,7 +1,7 @@
 extends SceneTree
 ## src/03b_gore.js banterUpdate/banterDown: the Glebio/Zahariy pair talks to each other.
-const Dialogue = preload("res://battle/presentation/companion_dialogue.gd")
-const Banter = preload("res://battle/presentation/banter_lines.gd")
+const Dialogue = preload("res://apps/godot/presentation/battle/companion_dialogue.gd")
+const Banter = preload("res://apps/godot/presentation/battle/banter_lines.gd")
 const Event = preload("res://battle/combat_event.gd")
 const GLEBIO_UNIT := 4
 const ZAHARIY_UNIT := 5

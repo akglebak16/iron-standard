@@ -7,7 +7,7 @@ const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const Config = preload("res://battle/config.gd")
-const BattleView = preload("res://battle/presentation/scene.tscn")
+const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
 var _view: Node
 var _n := 0
 var _frames := 240

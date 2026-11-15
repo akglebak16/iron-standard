@@ -1,8 +1,8 @@
 extends SceneTree
-const Audio = preload("res://battle/presentation/audio/combat_audio.gd")
-const Bank = preload("res://battle/presentation/audio/sound_bank.gd")
+const Audio = preload("res://apps/godot/presentation/battle/audio/combat_audio.gd")
+const Bank = preload("res://apps/godot/presentation/battle/audio/sound_bank.gd")
 const Event = preload("res://battle/combat_event.gd")
-const Music = preload("res://battle/presentation/audio/battle_music.gd")
+const Music = preload("res://apps/godot/presentation/battle/audio/battle_music.gd")
 
 func _initialize() -> void:
 	var bank := Bank.build()

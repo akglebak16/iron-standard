@@ -3,7 +3,7 @@ extends Node
 const Europe = preload("res://campaign/data/europe_data.gd")
 const World = preload("res://campaign/world/world_state.gd")
 const Factory = preload("res://battle/application/factory.gd")
-const Bridge = preload("res://app/world_battle_bridge.gd")
+const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
 
 func _ready() -> void:
 	var data := Europe.new()
@@ -14,7 +14,7 @@ func _ready() -> void:
 	if world == null or world.roster.parties.is_empty() or world.player.troops.is_empty():
 		fail("Campaign initialization")
 		return
-	var menu = load("res://app/main_menu.tscn").instantiate()
+	var menu = load("res://apps/godot/composition/main_menu.tscn").instantiate()
 	menu.set_meta("release_smoke_child", true)
 	get_tree().root.add_child.call_deferred(menu)
 	await get_tree().process_frame

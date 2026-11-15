@@ -23,155 +23,155 @@
     },
     {
       "source": "app/aftermath_text.gd",
-      "destination": "app/aftermath_text.gd"
+      "destination": "apps/godot/composition/aftermath_text.gd"
     },
     {
       "source": "app/aftermath_text.gd.uid",
-      "destination": "app/aftermath_text.gd.uid"
+      "destination": "apps/godot/composition/aftermath_text.gd.uid"
     },
     {
       "source": "app/encounter_aftermath.gd",
-      "destination": "app/encounter_aftermath.gd"
+      "destination": "apps/godot/composition/encounter_aftermath.gd"
     },
     {
       "source": "app/encounter_aftermath.gd.uid",
-      "destination": "app/encounter_aftermath.gd.uid"
+      "destination": "apps/godot/composition/encounter_aftermath.gd.uid"
     },
     {
       "source": "app/game_options.gd",
-      "destination": "app/game_options.gd"
+      "destination": "apps/godot/composition/game_options.gd"
     },
     {
       "source": "app/game_options.gd.uid",
-      "destination": "app/game_options.gd.uid"
+      "destination": "apps/godot/composition/game_options.gd.uid"
     },
     {
       "source": "app/main.gd",
-      "destination": "app/main.gd"
+      "destination": "apps/godot/composition/main.gd"
     },
     {
       "source": "app/main.gd.uid",
-      "destination": "app/main.gd.uid"
+      "destination": "apps/godot/composition/main.gd.uid"
     },
     {
       "source": "app/main.tscn",
-      "destination": "app/main.tscn"
+      "destination": "apps/godot/composition/main.tscn"
     },
     {
       "source": "app/main_menu.gd",
-      "destination": "app/main_menu.gd"
+      "destination": "apps/godot/composition/main_menu.gd"
     },
     {
       "source": "app/main_menu.gd.uid",
-      "destination": "app/main_menu.gd.uid"
+      "destination": "apps/godot/composition/main_menu.gd.uid"
     },
     {
       "source": "app/main_menu.tscn",
-      "destination": "app/main_menu.tscn"
+      "destination": "apps/godot/composition/main_menu.tscn"
     },
     {
       "source": "app/pause_menu.gd",
-      "destination": "app/pause_menu.gd"
+      "destination": "apps/godot/composition/pause_menu.gd"
     },
     {
       "source": "app/pause_menu.gd.uid",
-      "destination": "app/pause_menu.gd.uid"
+      "destination": "apps/godot/composition/pause_menu.gd.uid"
     },
     {
       "source": "app/presentation_preferences.gd",
-      "destination": "app/presentation_preferences.gd"
+      "destination": "apps/godot/composition/presentation_preferences.gd"
     },
     {
       "source": "app/presentation_preferences.gd.uid",
-      "destination": "app/presentation_preferences.gd.uid"
+      "destination": "apps/godot/composition/presentation_preferences.gd.uid"
     },
     {
       "source": "app/save_store.gd",
-      "destination": "app/save_store.gd"
+      "destination": "apps/godot/composition/save_store.gd"
     },
     {
       "source": "app/save_store.gd.uid",
-      "destination": "app/save_store.gd.uid"
+      "destination": "apps/godot/composition/save_store.gd.uid"
     },
     {
       "source": "app/siege_demo.tscn",
-      "destination": "app/siege_demo.tscn"
+      "destination": "apps/godot/composition/siege_demo.tscn"
     },
     {
       "source": "app/tests/test_encounter_aftermath.gd",
-      "destination": "app/tests/test_encounter_aftermath.gd"
+      "destination": "tests/integration/app/test_encounter_aftermath.gd"
     },
     {
       "source": "app/tests/test_encounter_aftermath.gd.uid",
-      "destination": "app/tests/test_encounter_aftermath.gd.uid"
+      "destination": "tests/integration/app/test_encounter_aftermath.gd.uid"
     },
     {
       "source": "app/tests/test_gear_and_menu.gd",
-      "destination": "app/tests/test_gear_and_menu.gd"
+      "destination": "tests/integration/app/test_gear_and_menu.gd"
     },
     {
       "source": "app/tests/test_gear_and_menu.gd.uid",
-      "destination": "app/tests/test_gear_and_menu.gd.uid"
+      "destination": "tests/integration/app/test_gear_and_menu.gd.uid"
     },
     {
       "source": "app/tests/test_scenes_compile.gd",
-      "destination": "app/tests/test_scenes_compile.gd"
+      "destination": "tests/integration/app/test_scenes_compile.gd"
     },
     {
       "source": "app/tests/test_scenes_compile.gd.uid",
-      "destination": "app/tests/test_scenes_compile.gd.uid"
+      "destination": "tests/integration/app/test_scenes_compile.gd.uid"
     },
     {
       "source": "app/tests/test_siege_bridge.gd",
-      "destination": "app/tests/test_siege_bridge.gd"
+      "destination": "tests/integration/app/test_siege_bridge.gd"
     },
     {
       "source": "app/tests/test_siege_bridge.gd.uid",
-      "destination": "app/tests/test_siege_bridge.gd.uid"
+      "destination": "tests/integration/app/test_siege_bridge.gd.uid"
     },
     {
       "source": "app/tests/test_siege_window.gd",
-      "destination": "app/tests/test_siege_window.gd"
+      "destination": "tests/integration/app/test_siege_window.gd"
     },
     {
       "source": "app/tests/test_siege_window.gd.uid",
-      "destination": "app/tests/test_siege_window.gd.uid"
+      "destination": "tests/integration/app/test_siege_window.gd.uid"
     },
     {
       "source": "app/tests/test_ui_smoke.gd",
-      "destination": "app/tests/test_ui_smoke.gd"
+      "destination": "tests/integration/app/test_ui_smoke.gd"
     },
     {
       "source": "app/tests/test_ui_smoke.gd.uid",
-      "destination": "app/tests/test_ui_smoke.gd.uid"
+      "destination": "tests/integration/app/test_ui_smoke.gd.uid"
     },
     {
       "source": "app/tests/test_world_battle_bridge.gd",
-      "destination": "app/tests/test_world_battle_bridge.gd"
+      "destination": "tests/integration/app/test_world_battle_bridge.gd"
     },
     {
       "source": "app/tests/test_world_battle_bridge.gd.uid",
-      "destination": "app/tests/test_world_battle_bridge.gd.uid"
+      "destination": "tests/integration/app/test_world_battle_bridge.gd.uid"
     },
     {
       "source": "app/world_battle_bridge.gd",
-      "destination": "app/world_battle_bridge.gd"
+      "destination": "apps/godot/composition/world_battle_bridge.gd"
     },
     {
       "source": "app/world_battle_bridge.gd.uid",
-      "destination": "app/world_battle_bridge.gd.uid"
+      "destination": "apps/godot/composition/world_battle_bridge.gd.uid"
     },
     {
       "source": "app/world_demo.gd",
-      "destination": "app/world_demo.gd"
+      "destination": "apps/godot/composition/world_demo.gd"
     },
     {
       "source": "app/world_demo.gd.uid",
-      "destination": "app/world_demo.gd.uid"
+      "destination": "apps/godot/composition/world_demo.gd.uid"
     },
     {
       "source": "app/world_demo.tscn",
-      "destination": "app/world_demo.tscn"
+      "destination": "apps/godot/composition/world_demo.tscn"
     },
     {
       "source": "battle/PARITY.md",
@@ -335,275 +335,275 @@
     },
     {
       "source": "battle/presentation/audio/assets/battle_theme.ogg",
-      "destination": "battle/presentation/audio/assets/battle_theme.ogg"
+      "destination": "apps/godot/presentation/battle/audio/assets/battle_theme.ogg"
     },
     {
       "source": "battle/presentation/audio/assets/battle_theme.ogg.import",
-      "destination": "battle/presentation/audio/assets/battle_theme.ogg.import"
+      "destination": "apps/godot/presentation/battle/audio/assets/battle_theme.ogg.import"
     },
     {
       "source": "battle/presentation/audio/battle_music.gd",
-      "destination": "battle/presentation/audio/battle_music.gd"
+      "destination": "apps/godot/presentation/battle/audio/battle_music.gd"
     },
     {
       "source": "battle/presentation/audio/battle_music.gd.uid",
-      "destination": "battle/presentation/audio/battle_music.gd.uid"
+      "destination": "apps/godot/presentation/battle/audio/battle_music.gd.uid"
     },
     {
       "source": "battle/presentation/audio/combat_audio.gd",
-      "destination": "battle/presentation/audio/combat_audio.gd"
+      "destination": "apps/godot/presentation/battle/audio/combat_audio.gd"
     },
     {
       "source": "battle/presentation/audio/combat_audio.gd.uid",
-      "destination": "battle/presentation/audio/combat_audio.gd.uid"
+      "destination": "apps/godot/presentation/battle/audio/combat_audio.gd.uid"
     },
     {
       "source": "battle/presentation/audio/sound_bank.gd",
-      "destination": "battle/presentation/audio/sound_bank.gd"
+      "destination": "apps/godot/presentation/battle/audio/sound_bank.gd"
     },
     {
       "source": "battle/presentation/audio/sound_bank.gd.uid",
-      "destination": "battle/presentation/audio/sound_bank.gd.uid"
+      "destination": "apps/godot/presentation/battle/audio/sound_bank.gd.uid"
     },
     {
       "source": "battle/presentation/banter_lines.gd",
-      "destination": "battle/presentation/banter_lines.gd"
+      "destination": "apps/godot/presentation/battle/banter_lines.gd"
     },
     {
       "source": "battle/presentation/banter_lines.gd.uid",
-      "destination": "battle/presentation/banter_lines.gd.uid"
+      "destination": "apps/godot/presentation/battle/banter_lines.gd.uid"
     },
     {
       "source": "battle/presentation/battle_camera.gd",
-      "destination": "battle/presentation/battle_camera.gd"
+      "destination": "apps/godot/presentation/battle/battle_camera.gd"
     },
     {
       "source": "battle/presentation/battle_camera.gd.uid",
-      "destination": "battle/presentation/battle_camera.gd.uid"
+      "destination": "apps/godot/presentation/battle/battle_camera.gd.uid"
     },
     {
       "source": "battle/presentation/combat_feedback.gd",
-      "destination": "battle/presentation/combat_feedback.gd"
+      "destination": "apps/godot/presentation/battle/combat_feedback.gd"
     },
     {
       "source": "battle/presentation/combat_feedback.gd.uid",
-      "destination": "battle/presentation/combat_feedback.gd.uid"
+      "destination": "apps/godot/presentation/battle/combat_feedback.gd.uid"
     },
     {
       "source": "battle/presentation/companion_dialogue.gd",
-      "destination": "battle/presentation/companion_dialogue.gd"
+      "destination": "apps/godot/presentation/battle/companion_dialogue.gd"
     },
     {
       "source": "battle/presentation/companion_dialogue.gd.uid",
-      "destination": "battle/presentation/companion_dialogue.gd.uid"
+      "destination": "apps/godot/presentation/battle/companion_dialogue.gd.uid"
     },
     {
       "source": "battle/presentation/demo_config.gd",
-      "destination": "battle/presentation/demo_config.gd"
+      "destination": "apps/godot/presentation/battle/demo_config.gd"
     },
     {
       "source": "battle/presentation/demo_config.gd.uid",
-      "destination": "battle/presentation/demo_config.gd.uid"
+      "destination": "apps/godot/presentation/battle/demo_config.gd.uid"
     },
     {
       "source": "battle/presentation/detached_parts.gd",
-      "destination": "battle/presentation/detached_parts.gd"
+      "destination": "apps/godot/presentation/battle/detached_parts.gd"
     },
     {
       "source": "battle/presentation/detached_parts.gd.uid",
-      "destination": "battle/presentation/detached_parts.gd.uid"
+      "destination": "apps/godot/presentation/battle/detached_parts.gd.uid"
     },
     {
       "source": "battle/presentation/ground_bake.gd",
-      "destination": "battle/presentation/ground_bake.gd"
+      "destination": "apps/godot/presentation/battle/ground_bake.gd"
     },
     {
       "source": "battle/presentation/ground_bake.gd.uid",
-      "destination": "battle/presentation/ground_bake.gd.uid"
+      "destination": "apps/godot/presentation/battle/ground_bake.gd.uid"
     },
     {
       "source": "battle/presentation/hud/battle_controls.gd",
-      "destination": "battle/presentation/hud/battle_controls.gd"
+      "destination": "apps/godot/presentation/battle/hud/battle_controls.gd"
     },
     {
       "source": "battle/presentation/hud/battle_controls.gd.uid",
-      "destination": "battle/presentation/hud/battle_controls.gd.uid"
+      "destination": "apps/godot/presentation/battle/hud/battle_controls.gd.uid"
     },
     {
       "source": "battle/presentation/hud/navigation_hud.gd",
-      "destination": "battle/presentation/hud/navigation_hud.gd"
+      "destination": "apps/godot/presentation/battle/hud/navigation_hud.gd"
     },
     {
       "source": "battle/presentation/hud/navigation_hud.gd.uid",
-      "destination": "battle/presentation/hud/navigation_hud.gd.uid"
+      "destination": "apps/godot/presentation/battle/hud/navigation_hud.gd.uid"
     },
     {
       "source": "battle/presentation/hud/order_marker.gd",
-      "destination": "battle/presentation/hud/order_marker.gd"
+      "destination": "apps/godot/presentation/battle/hud/order_marker.gd"
     },
     {
       "source": "battle/presentation/hud/order_marker.gd.uid",
-      "destination": "battle/presentation/hud/order_marker.gd.uid"
+      "destination": "apps/godot/presentation/battle/hud/order_marker.gd.uid"
     },
     {
       "source": "battle/presentation/impact_effects.gd",
-      "destination": "battle/presentation/impact_effects.gd"
+      "destination": "apps/godot/presentation/battle/impact_effects.gd"
     },
     {
       "source": "battle/presentation/impact_effects.gd.uid",
-      "destination": "battle/presentation/impact_effects.gd.uid"
+      "destination": "apps/godot/presentation/battle/impact_effects.gd.uid"
     },
     {
       "source": "battle/presentation/projectile_view.gd",
-      "destination": "battle/presentation/projectile_view.gd"
+      "destination": "apps/godot/presentation/battle/projectile_view.gd"
     },
     {
       "source": "battle/presentation/projectile_view.gd.uid",
-      "destination": "battle/presentation/projectile_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/projectile_view.gd.uid"
     },
     {
       "source": "battle/presentation/scene.tscn",
-      "destination": "battle/presentation/scene.tscn"
+      "destination": "apps/godot/presentation/battle/scene.tscn"
     },
     {
       "source": "battle/presentation/siege_defense_view.gd",
-      "destination": "battle/presentation/siege_defense_view.gd"
+      "destination": "apps/godot/presentation/battle/siege_defense_view.gd"
     },
     {
       "source": "battle/presentation/siege_defense_view.gd.uid",
-      "destination": "battle/presentation/siege_defense_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/siege_defense_view.gd.uid"
     },
     {
       "source": "battle/presentation/terrain/ground.gdshader",
-      "destination": "battle/presentation/terrain/ground.gdshader"
+      "destination": "apps/godot/presentation/battle/terrain/ground.gdshader"
     },
     {
       "source": "battle/presentation/terrain/ground.gdshader.uid",
-      "destination": "battle/presentation/terrain/ground.gdshader.uid"
+      "destination": "apps/godot/presentation/battle/terrain/ground.gdshader.uid"
     },
     {
       "source": "battle/presentation/terrain/terrain_view.gd",
-      "destination": "battle/presentation/terrain/terrain_view.gd"
+      "destination": "apps/godot/presentation/battle/terrain/terrain_view.gd"
     },
     {
       "source": "battle/presentation/terrain/terrain_view.gd.uid",
-      "destination": "battle/presentation/terrain/terrain_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/terrain/terrain_view.gd.uid"
     },
     {
       "source": "battle/presentation/terrain/vegetation_view.gd",
-      "destination": "battle/presentation/terrain/vegetation_view.gd"
+      "destination": "apps/godot/presentation/battle/terrain/vegetation_view.gd"
     },
     {
       "source": "battle/presentation/terrain/vegetation_view.gd.uid",
-      "destination": "battle/presentation/terrain/vegetation_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/terrain/vegetation_view.gd.uid"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_disc.png",
-      "destination": "battle/presentation/terrain/wall/assets/wall_disc.png"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_disc.png"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_disc.png.import",
-      "destination": "battle/presentation/terrain/wall/assets/wall_disc.png.import"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_disc.png.import"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png",
-      "destination": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_gate_leaf.png"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png.import",
-      "destination": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png.import"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_gate_leaf.png.import"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_merlon.png",
-      "destination": "battle/presentation/terrain/wall/assets/wall_merlon.png"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_merlon.png"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_merlon.png.import",
-      "destination": "battle/presentation/terrain/wall/assets/wall_merlon.png.import"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_merlon.png.import"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_stone.png",
-      "destination": "battle/presentation/terrain/wall/assets/wall_stone.png"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_stone.png"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_stone.png.import",
-      "destination": "battle/presentation/terrain/wall/assets/wall_stone.png.import"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_stone.png.import"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_tower.png",
-      "destination": "battle/presentation/terrain/wall/assets/wall_tower.png"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_tower.png"
     },
     {
       "source": "battle/presentation/terrain/wall/assets/wall_tower.png.import",
-      "destination": "battle/presentation/terrain/wall/assets/wall_tower.png.import"
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_tower.png.import"
     },
     {
       "source": "battle/presentation/terrain/wall/wall_gate_leaf.tscn",
-      "destination": "battle/presentation/terrain/wall/wall_gate_leaf.tscn"
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_gate_leaf.tscn"
     },
     {
       "source": "battle/presentation/terrain/wall/wall_segment.gd",
-      "destination": "battle/presentation/terrain/wall/wall_segment.gd"
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.gd"
     },
     {
       "source": "battle/presentation/terrain/wall/wall_segment.gd.uid",
-      "destination": "battle/presentation/terrain/wall/wall_segment.gd.uid"
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.gd.uid"
     },
     {
       "source": "battle/presentation/terrain/wall/wall_segment.tscn",
-      "destination": "battle/presentation/terrain/wall/wall_segment.tscn"
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.tscn"
     },
     {
       "source": "battle/presentation/terrain/wall/wall_tower.tscn",
-      "destination": "battle/presentation/terrain/wall/wall_tower.tscn"
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_tower.tscn"
     },
     {
       "source": "battle/presentation/terrain/wall_scene_view.gd",
-      "destination": "battle/presentation/terrain/wall_scene_view.gd"
+      "destination": "apps/godot/presentation/battle/terrain/wall_scene_view.gd"
     },
     {
       "source": "battle/presentation/terrain/wall_scene_view.gd.uid",
-      "destination": "battle/presentation/terrain/wall_scene_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/terrain/wall_scene_view.gd.uid"
     },
     {
       "source": "battle/presentation/terrain/wall_view.gd",
-      "destination": "battle/presentation/terrain/wall_view.gd"
+      "destination": "apps/godot/presentation/battle/terrain/wall_view.gd"
     },
     {
       "source": "battle/presentation/terrain/wall_view.gd.uid",
-      "destination": "battle/presentation/terrain/wall_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/terrain/wall_view.gd.uid"
     },
     {
       "source": "battle/presentation/unit_art.gd",
-      "destination": "battle/presentation/unit_art.gd"
+      "destination": "apps/godot/presentation/battle/unit_art.gd"
     },
     {
       "source": "battle/presentation/unit_art.gd.uid",
-      "destination": "battle/presentation/unit_art.gd.uid"
+      "destination": "apps/godot/presentation/battle/unit_art.gd.uid"
     },
     {
       "source": "battle/presentation/unit_markers.gd",
-      "destination": "battle/presentation/unit_markers.gd"
+      "destination": "apps/godot/presentation/battle/unit_markers.gd"
     },
     {
       "source": "battle/presentation/unit_markers.gd.uid",
-      "destination": "battle/presentation/unit_markers.gd.uid"
+      "destination": "apps/godot/presentation/battle/unit_markers.gd.uid"
     },
     {
       "source": "battle/presentation/unit_view.gd",
-      "destination": "battle/presentation/unit_view.gd"
+      "destination": "apps/godot/presentation/battle/unit_view.gd"
     },
     {
       "source": "battle/presentation/unit_view.gd.uid",
-      "destination": "battle/presentation/unit_view.gd.uid"
+      "destination": "apps/godot/presentation/battle/unit_view.gd.uid"
     },
     {
       "source": "battle/presentation/view.gd",
-      "destination": "battle/presentation/view.gd"
+      "destination": "apps/godot/presentation/battle/view.gd"
     },
     {
       "source": "battle/presentation/view.gd.uid",
-      "destination": "battle/presentation/view.gd.uid"
+      "destination": "apps/godot/presentation/battle/view.gd.uid"
     },
     {
       "source": "battle/rules/ai_decision.gd",
@@ -1163,219 +1163,219 @@
     },
     {
       "source": "campaign/presentation/companion_text.gd",
-      "destination": "campaign/presentation/companion_text.gd"
+      "destination": "apps/godot/presentation/campaign/companion_text.gd"
     },
     {
       "source": "campaign/presentation/companion_text.gd.uid",
-      "destination": "campaign/presentation/companion_text.gd.uid"
+      "destination": "apps/godot/presentation/campaign/companion_text.gd.uid"
     },
     {
       "source": "campaign/presentation/emblem_art.gd",
-      "destination": "campaign/presentation/emblem_art.gd"
+      "destination": "apps/godot/presentation/campaign/emblem_art.gd"
     },
     {
       "source": "campaign/presentation/emblem_art.gd.uid",
-      "destination": "campaign/presentation/emblem_art.gd.uid"
+      "destination": "apps/godot/presentation/campaign/emblem_art.gd.uid"
     },
     {
       "source": "campaign/presentation/encounter_dialog.gd",
-      "destination": "campaign/presentation/encounter_dialog.gd"
+      "destination": "apps/godot/presentation/campaign/encounter_dialog.gd"
     },
     {
       "source": "campaign/presentation/encounter_dialog.gd.uid",
-      "destination": "campaign/presentation/encounter_dialog.gd.uid"
+      "destination": "apps/godot/presentation/campaign/encounter_dialog.gd.uid"
     },
     {
       "source": "campaign/presentation/farm_layer.gd",
-      "destination": "campaign/presentation/farm_layer.gd"
+      "destination": "apps/godot/presentation/campaign/farm_layer.gd"
     },
     {
       "source": "campaign/presentation/farm_layer.gd.uid",
-      "destination": "campaign/presentation/farm_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/farm_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/icon_sheet.gd",
-      "destination": "campaign/presentation/icon_sheet.gd"
+      "destination": "apps/godot/presentation/campaign/icon_sheet.gd"
     },
     {
       "source": "campaign/presentation/icon_sheet.gd.uid",
-      "destination": "campaign/presentation/icon_sheet.gd.uid"
+      "destination": "apps/godot/presentation/campaign/icon_sheet.gd.uid"
     },
     {
       "source": "campaign/presentation/map_brush.gd",
-      "destination": "campaign/presentation/map_brush.gd"
+      "destination": "apps/godot/presentation/campaign/map_brush.gd"
     },
     {
       "source": "campaign/presentation/map_brush.gd.uid",
-      "destination": "campaign/presentation/map_brush.gd.uid"
+      "destination": "apps/godot/presentation/campaign/map_brush.gd.uid"
     },
     {
       "source": "campaign/presentation/modal_window.gd",
-      "destination": "campaign/presentation/modal_window.gd"
+      "destination": "apps/godot/presentation/campaign/modal_window.gd"
     },
     {
       "source": "campaign/presentation/modal_window.gd.uid",
-      "destination": "campaign/presentation/modal_window.gd.uid"
+      "destination": "apps/godot/presentation/campaign/modal_window.gd.uid"
     },
     {
       "source": "campaign/presentation/party_layer.gd",
-      "destination": "campaign/presentation/party_layer.gd"
+      "destination": "apps/godot/presentation/campaign/party_layer.gd"
     },
     {
       "source": "campaign/presentation/party_layer.gd.uid",
-      "destination": "campaign/presentation/party_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/party_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/party_window.gd",
-      "destination": "campaign/presentation/party_window.gd"
+      "destination": "apps/godot/presentation/campaign/party_window.gd"
     },
     {
       "source": "campaign/presentation/party_window.gd.uid",
-      "destination": "campaign/presentation/party_window.gd.uid"
+      "destination": "apps/godot/presentation/campaign/party_window.gd.uid"
     },
     {
       "source": "campaign/presentation/relief_layer.gd",
-      "destination": "campaign/presentation/relief_layer.gd"
+      "destination": "apps/godot/presentation/campaign/relief_layer.gd"
     },
     {
       "source": "campaign/presentation/relief_layer.gd.uid",
-      "destination": "campaign/presentation/relief_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/relief_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/river_layer.gd",
-      "destination": "campaign/presentation/river_layer.gd"
+      "destination": "apps/godot/presentation/campaign/river_layer.gd"
     },
     {
       "source": "campaign/presentation/river_layer.gd.uid",
-      "destination": "campaign/presentation/river_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/river_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/road_layer.gd",
-      "destination": "campaign/presentation/road_layer.gd"
+      "destination": "apps/godot/presentation/campaign/road_layer.gd"
     },
     {
       "source": "campaign/presentation/road_layer.gd.uid",
-      "destination": "campaign/presentation/road_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/road_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/settlement_art.gd",
-      "destination": "campaign/presentation/settlement_art.gd"
+      "destination": "apps/godot/presentation/campaign/settlement_art.gd"
     },
     {
       "source": "campaign/presentation/settlement_art.gd.uid",
-      "destination": "campaign/presentation/settlement_art.gd.uid"
+      "destination": "apps/godot/presentation/campaign/settlement_art.gd.uid"
     },
     {
       "source": "campaign/presentation/settlement_layer.gd",
-      "destination": "campaign/presentation/settlement_layer.gd"
+      "destination": "apps/godot/presentation/campaign/settlement_layer.gd"
     },
     {
       "source": "campaign/presentation/settlement_layer.gd.uid",
-      "destination": "campaign/presentation/settlement_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/settlement_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/siege_window.gd",
-      "destination": "campaign/presentation/siege_window.gd"
+      "destination": "apps/godot/presentation/campaign/siege_window.gd"
     },
     {
       "source": "campaign/presentation/siege_window.gd.uid",
-      "destination": "campaign/presentation/siege_window.gd.uid"
+      "destination": "apps/godot/presentation/campaign/siege_window.gd.uid"
     },
     {
       "source": "campaign/presentation/terrain_common.gdshaderinc",
-      "destination": "campaign/presentation/terrain_common.gdshaderinc"
+      "destination": "apps/godot/presentation/campaign/terrain_common.gdshaderinc"
     },
     {
       "source": "campaign/presentation/terrain_common.gdshaderinc.uid",
-      "destination": "campaign/presentation/terrain_common.gdshaderinc.uid"
+      "destination": "apps/godot/presentation/campaign/terrain_common.gdshaderinc.uid"
     },
     {
       "source": "campaign/presentation/terrain_layer.gd",
-      "destination": "campaign/presentation/terrain_layer.gd"
+      "destination": "apps/godot/presentation/campaign/terrain_layer.gd"
     },
     {
       "source": "campaign/presentation/terrain_layer.gd.uid",
-      "destination": "campaign/presentation/terrain_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/terrain_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/terrain_pass1.gdshader",
-      "destination": "campaign/presentation/terrain_pass1.gdshader"
+      "destination": "apps/godot/presentation/campaign/terrain_pass1.gdshader"
     },
     {
       "source": "campaign/presentation/terrain_pass1.gdshader.uid",
-      "destination": "campaign/presentation/terrain_pass1.gdshader.uid"
+      "destination": "apps/godot/presentation/campaign/terrain_pass1.gdshader.uid"
     },
     {
       "source": "campaign/presentation/terrain_pass2.gdshader",
-      "destination": "campaign/presentation/terrain_pass2.gdshader"
+      "destination": "apps/godot/presentation/campaign/terrain_pass2.gdshader"
     },
     {
       "source": "campaign/presentation/terrain_pass2.gdshader.uid",
-      "destination": "campaign/presentation/terrain_pass2.gdshader.uid"
+      "destination": "apps/godot/presentation/campaign/terrain_pass2.gdshader.uid"
     },
     {
       "source": "campaign/presentation/town_window.gd",
-      "destination": "campaign/presentation/town_window.gd"
+      "destination": "apps/godot/presentation/campaign/town_window.gd"
     },
     {
       "source": "campaign/presentation/town_window.gd.uid",
-      "destination": "campaign/presentation/town_window.gd.uid"
+      "destination": "apps/godot/presentation/campaign/town_window.gd.uid"
     },
     {
       "source": "campaign/presentation/vignette.gdshader",
-      "destination": "campaign/presentation/vignette.gdshader"
+      "destination": "apps/godot/presentation/campaign/vignette.gdshader"
     },
     {
       "source": "campaign/presentation/vignette.gdshader.uid",
-      "destination": "campaign/presentation/vignette.gdshader.uid"
+      "destination": "apps/godot/presentation/campaign/vignette.gdshader.uid"
     },
     {
       "source": "campaign/presentation/world_camera.gd",
-      "destination": "campaign/presentation/world_camera.gd"
+      "destination": "apps/godot/presentation/campaign/world_camera.gd"
     },
     {
       "source": "campaign/presentation/world_camera.gd.uid",
-      "destination": "campaign/presentation/world_camera.gd.uid"
+      "destination": "apps/godot/presentation/campaign/world_camera.gd.uid"
     },
     {
       "source": "campaign/presentation/world_hud.gd",
-      "destination": "campaign/presentation/world_hud.gd"
+      "destination": "apps/godot/presentation/campaign/world_hud.gd"
     },
     {
       "source": "campaign/presentation/world_hud.gd.uid",
-      "destination": "campaign/presentation/world_hud.gd.uid"
+      "destination": "apps/godot/presentation/campaign/world_hud.gd.uid"
     },
     {
       "source": "campaign/presentation/world_map_view.gd",
-      "destination": "campaign/presentation/world_map_view.gd"
+      "destination": "apps/godot/presentation/campaign/world_map_view.gd"
     },
     {
       "source": "campaign/presentation/world_map_view.gd.uid",
-      "destination": "campaign/presentation/world_map_view.gd.uid"
+      "destination": "apps/godot/presentation/campaign/world_map_view.gd.uid"
     },
     {
       "source": "campaign/presentation/world_marks_layer.gd",
-      "destination": "campaign/presentation/world_marks_layer.gd"
+      "destination": "apps/godot/presentation/campaign/world_marks_layer.gd"
     },
     {
       "source": "campaign/presentation/world_marks_layer.gd.uid",
-      "destination": "campaign/presentation/world_marks_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/world_marks_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/world_parties_layer.gd",
-      "destination": "campaign/presentation/world_parties_layer.gd"
+      "destination": "apps/godot/presentation/campaign/world_parties_layer.gd"
     },
     {
       "source": "campaign/presentation/world_parties_layer.gd.uid",
-      "destination": "campaign/presentation/world_parties_layer.gd.uid"
+      "destination": "apps/godot/presentation/campaign/world_parties_layer.gd.uid"
     },
     {
       "source": "campaign/presentation/world_tips.gd",
-      "destination": "campaign/presentation/world_tips.gd"
+      "destination": "apps/godot/presentation/campaign/world_tips.gd"
     },
     {
       "source": "campaign/presentation/world_tips.gd.uid",
-      "destination": "campaign/presentation/world_tips.gd.uid"
+      "destination": "apps/godot/presentation/campaign/world_tips.gd.uid"
     },
     {
       "source": "campaign/rules/battle_aftermath.gd",

@@ -5,7 +5,7 @@ var _frames := 0
 var _create := false
 var _scene: Node
 func _initialize() -> void:
-	var path := "res://app/main_menu.tscn"
+	var path := "res://apps/godot/composition/main_menu.tscn"
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--scene="): path = arg.substr(8)
 		elif arg.begins_with("--out="): _out = arg.substr(6)

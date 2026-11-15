@@ -1,7 +1,7 @@
 extends SceneTree
 ## Capture the actual native battle and menu at a chosen viewport/biome, without stepping simulation.
 ## --out= --size=1366x768 --biome=grass [--menu]
-const MainScene = preload("res://app/main.tscn")
+const MainScene = preload("res://apps/godot/composition/main.tscn")
 var _out := "user://battle.png"
 var _size := Vector2i(1366, 768)
 var _biome := "grass"

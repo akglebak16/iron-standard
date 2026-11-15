@@ -1,8 +1,8 @@
 extends SceneTree
-const Effects = preload("res://battle/presentation/impact_effects.gd")
+const Effects = preload("res://apps/godot/presentation/battle/impact_effects.gd")
 const Event = preload("res://battle/combat_event.gd")
-const Parts = preload("res://battle/presentation/detached_parts.gd")
-const Art = preload("res://battle/presentation/unit_art.gd")
+const Parts = preload("res://apps/godot/presentation/battle/detached_parts.gd")
+const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const STEP := 1.0 / 60.0
 
 func _initialize() -> void:

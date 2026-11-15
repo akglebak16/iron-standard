@@ -17,9 +17,13 @@ check({'core/a/x.gd':`const B = preload('uid://abcd')`, 'core/b/private.gd':'ext
 check({'core/a/x.gd':'extends Sprite2D'},'pure-core');
 check({'core/a/x.gd':'static var world = {}'},'mutable-static');
 check({'apps/x.gd':'assert(catalog.load_data())'},'assert-side-effect');
+check({'apps/x.gd':'assert(service.initialize_required_content())'},'assert-side-effect');
+check({'core/a/x.gd':'var actor = Node2D.new()'},'pure-core');
 check({'core/a/x.gd':'extends Hidden', 'adapters/h.gd':'class_name Hidden\nextends RefCounted'},'dependency-direction');
 check({'core/a/x.gd':`const B=preload('res://core/a/b.gd')`, 'core/a/b.gd':`const A=preload('res://core/a/x.gd')`},'dependency-cycle');
 check({'core/a/x.gd':`const B=preload('uid://scene')`, 'apps/x.tscn':'[gd_scene format=3 uid="uid://scene"]'},'dependency-direction');
+check({'core/a/api/x.gd':`const B=preload('res://core/b/api/y.gd')`, 'core/b/api/y.gd':`const A=preload('res://core/a/api/z.gd')`, 'core/a/api/z.gd':'extends RefCounted'},'module-cycle');
+assert(analyze(new Map([['old/x.gd','extends RefCounted']]),{...manifest,forbiddenPaths:['old/']}).some(i=>i.rule==='retired-path'));
 assert(structureIssues(new Set(['core']), {requiredDirectories:['core','runtime'],allowedRoots:['core','runtime']}).some(e=>e.includes('Missing required')));
 assert(structureIssues(new Set(['core','rogue']), {requiredDirectories:['core'],allowedRoots:['core']}).some(e=>e.includes('Unknown root')));
 assert.equal(tokens('# FileAccess\nvar x = "FileAccess"').filter(t=>!t.string&&t.value==='FileAccess').length,0);

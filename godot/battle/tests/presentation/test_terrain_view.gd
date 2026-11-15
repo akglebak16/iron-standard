@@ -1,9 +1,9 @@
 extends SceneTree
-const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
-const WallView = preload("res://battle/presentation/terrain/wall_view.gd")
-const WallSceneView = preload("res://battle/presentation/terrain/wall_scene_view.gd")
+const TerrainView = preload("res://apps/godot/presentation/battle/terrain/terrain_view.gd")
+const WallView = preload("res://apps/godot/presentation/battle/terrain/wall_view.gd")
+const WallSceneView = preload("res://apps/godot/presentation/battle/terrain/wall_scene_view.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
-const VegetationView = preload("res://battle/presentation/terrain/vegetation_view.gd")
+const VegetationView = preload("res://apps/godot/presentation/battle/terrain/vegetation_view.gd")
 const Config = preload("res://battle/config.gd")
 const TEST_SEED := 4017
 

@@ -1,5 +1,5 @@
 extends SceneTree
-const Camera = preload("res://battle/presentation/battle_camera.gd")
+const Camera = preload("res://apps/godot/presentation/battle/battle_camera.gd")
 const Event = preload("res://battle/combat_event.gd")
 const ARENA := Vector2(2600, 1700)
 const VIEWPORT := Vector2i(900, 700)
