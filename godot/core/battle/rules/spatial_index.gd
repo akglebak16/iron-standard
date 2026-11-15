@@ -4,9 +4,12 @@ extends RefCounted
 ## Results are identical to the plain loops they replace.
 const Config = preload("res://core/battle/config.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
+const MotionStore = preload("res://runtime/simulation/motion_store.gd")
 
 
 var _units: Array[Unit]
+var _motion: MotionStore
+var _positions := PackedVector2Array()
 var _cells: Array[Dictionary] = [{}, {}] # coarse, per side: Vector2i -> Array[int]
 var _locations: Array[Vector2i] = []
 var _target_best: Array = [-1, INF]
@@ -14,8 +17,9 @@ var _far_cells: Array[Vector2i] = []
 var _far_gaps := PackedFloat64Array()
 var _spare_buckets: Array[Array] = []
 
-func _init(units: Array[Unit], arena: Vector2 = Config.ARENA_SIZE) -> void:
+func _init(units: Array[Unit], arena: Vector2 = Config.ARENA_SIZE, motion: MotionStore = null) -> void:
 	_units = units
+	_motion = motion
 	synchronize()
 
 ## Dense indices changed; reuse the allocated buckets for the new ordering.
@@ -30,16 +34,17 @@ func rebuild() -> void:
 
 ## Refresh after movement and append reinforcements without rebuilding buckets.
 func synchronize() -> void:
+	if _motion != null: _positions = _motion.positions
 	for index in _locations.size():
 		update(index)
 	for index in range(_locations.size(), _units.size()):
-		var cell := _cell(_units[index].position)
+		var cell := _cell(_positions[index] if _motion != null else _units[index].position)
 		_locations.append(cell)
 		_add(index, cell)
 
 func update(index: int) -> void:
 	var unit := _units[index]
-	var cell := _cell(unit.position)
+	var cell := _cell(_positions[index] if _motion != null else unit.position)
 	var previous := _locations[index]
 	if cell == previous:
 		return
@@ -71,21 +76,22 @@ func nearby_into(position: Vector2, radius: float, first_index: int, found: Arra
 	found.sort() # Preserve the old pair order, including overlapping stacks.
 
 func nearest_enemy(unit: Unit) -> Unit:
+	var at := unit.position
 	var other_side := 1 - unit.side
 	var best_index := -1
 	var best_distance := INF
 	for cell: Vector2i in _cells[other_side]:
 		var left := cell.x * Config.SPATIAL_CELL_SIZE
 		var top := cell.y * Config.SPATIAL_CELL_SIZE
-		var dx := maxf(maxf(left - unit.position.x, unit.position.x - (left + Config.SPATIAL_CELL_SIZE)), 0.0)
-		var dy := maxf(maxf(top - unit.position.y, unit.position.y - (top + Config.SPATIAL_CELL_SIZE)), 0.0)
+		var dx := maxf(maxf(left - at.x, at.x - (left + Config.SPATIAL_CELL_SIZE)), 0.0)
+		var dy := maxf(maxf(top - at.y, at.y - (top + Config.SPATIAL_CELL_SIZE)), 0.0)
 		if dx * dx + dy * dy > best_distance:
 			continue
 		for index in _cells[other_side][cell]:
 			var enemy: Unit = _units[index]
 			if enemy.dead or enemy.gone:
 				continue
-			var distance := unit.position.distance_squared_to(enemy.position)
+			var distance := at.distance_squared_to(_positions[index] if _motion != null else enemy.position)
 			if distance < best_distance or distance == best_distance and (best_index < 0 or index < best_index):
 				best_distance = distance
 				best_index = index
@@ -93,19 +99,20 @@ func nearest_enemy(unit: Unit) -> Unit:
 
 ## Same choice as Targeting.choose (weighted distance, lowest index on ties) without scanning far cells.
 func best_target(unit: Unit, previous: Unit) -> Unit:
+	var at := unit.position
 	var other_side := 1 - unit.side
 	var cells: Dictionary = _cells[other_side]
 	var melee_cavalry := unit.mounted and unit.attack_range <= 0.0
 	# Only the current target is discounted, so it is weighed first and the bound for everyone else
 	# uses the remaining multipliers (never below the cavalry-versus-archers one).
 	var min_k := Config.CAVALRY_ARCHER_TARGET_MULTIPLIER if melee_cavalry else 1.0
-	var home := _cell(unit.position)
+	var home := _cell(at)
 	var size := Config.SPATIAL_CELL_SIZE
 	var state := _target_best # One synchronous query at a time in this context.
 	state[0] = -1
 	state[1] = INF
 	if previous != null and not previous.dead and not previous.gone:
-		var d := unit.position.distance_to(previous.position)
+		var d := at.distance_to(previous.position)
 		if previous.fleeing:
 			d *= Config.TARGET_FLEE_DISTANCE_MULTIPLIER
 		if melee_cavalry and previous.attack_range > 0.0 and not previous.mounted:
@@ -120,14 +127,14 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 		if ring >= 2 and (ring - 1) * size * min_k > float(state[1]) + 1e-6:
 			return _units[state[0]] if state[0] >= 0 else null
 		if ring == 0:
-			_scan_cell(cells, home, unit, previous, melee_cavalry, min_k, state)
+			_scan_cell(cells, home, at, previous, melee_cavalry, min_k, state)
 		else:
 			for dx in range(-ring, ring + 1):
-				_scan_cell(cells, home + Vector2i(dx, -ring), unit, previous, melee_cavalry, min_k, state)
-				_scan_cell(cells, home + Vector2i(dx, ring), unit, previous, melee_cavalry, min_k, state)
+				_scan_cell(cells, home + Vector2i(dx, -ring), at, previous, melee_cavalry, min_k, state)
+				_scan_cell(cells, home + Vector2i(dx, ring), at, previous, melee_cavalry, min_k, state)
 			for dy in range(-ring + 1, ring):
-				_scan_cell(cells, home + Vector2i(-ring, dy), unit, previous, melee_cavalry, min_k, state)
-				_scan_cell(cells, home + Vector2i(ring, dy), unit, previous, melee_cavalry, min_k, state)
+				_scan_cell(cells, home + Vector2i(-ring, dy), at, previous, melee_cavalry, min_k, state)
+				_scan_cell(cells, home + Vector2i(ring, dy), at, previous, melee_cavalry, min_k, state)
 		ring += 1
 	# Far targets: scan the closest occupied cell first so the bound prunes the rest.
 	var far := _far_cells
@@ -142,8 +149,8 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 			continue
 		var left := cell.x * size
 		var top := cell.y * size
-		var gx := maxf(maxf(left - unit.position.x, unit.position.x - (left + size)), 0.0)
-		var gy := maxf(maxf(top - unit.position.y, unit.position.y - (top + size)), 0.0)
+		var gx := maxf(maxf(left - at.x, at.x - (left + size)), 0.0)
+		var gy := maxf(maxf(top - at.y, at.y - (top + size)), 0.0)
 		var gap := sqrt(gx * gx + gy * gy)
 		if nearest_cell < 0 or gap < gaps[nearest_cell]:
 			nearest_cell = far_count
@@ -151,22 +158,22 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 		gaps[far_count] = gap
 		far_count += 1
 	if nearest_cell >= 0:
-		_scan_cell(cells, far[nearest_cell], unit, previous, melee_cavalry, min_k, state)
+		_scan_cell(cells, far[nearest_cell], at, previous, melee_cavalry, min_k, state)
 	for k in far_count:
 		if k != nearest_cell and gaps[k] * min_k <= float(state[1]) + 1e-6:
-			_scan_cell(cells, far[k], unit, previous, melee_cavalry, min_k, state)
+			_scan_cell(cells, far[k], at, previous, melee_cavalry, min_k, state)
 	return _units[state[0]] if state[0] >= 0 else null
 
 const RING_LIMIT := 3
 
-func _scan_cell(cells: Dictionary, cell: Vector2i, unit: Unit, previous: Unit, melee_cavalry: bool, min_k: float, state: Array) -> void:
+func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, melee_cavalry: bool, min_k: float, state: Array) -> void:
 	var bucket = cells.get(cell)
 	if bucket == null:
 		return
 	var left := cell.x * Config.SPATIAL_CELL_SIZE
 	var top := cell.y * Config.SPATIAL_CELL_SIZE
-	var gx := maxf(maxf(left - unit.position.x, unit.position.x - (left + Config.SPATIAL_CELL_SIZE)), 0.0)
-	var gy := maxf(maxf(top - unit.position.y, unit.position.y - (top + Config.SPATIAL_CELL_SIZE)), 0.0)
+	var gx := maxf(maxf(left - at.x, at.x - (left + Config.SPATIAL_CELL_SIZE)), 0.0)
+	var gy := maxf(maxf(top - at.y, at.y - (top + Config.SPATIAL_CELL_SIZE)), 0.0)
 	var best: float = state[1]
 	if sqrt(gx * gx + gy * gy) * min_k > best + 1e-6:
 		return
@@ -175,7 +182,7 @@ func _scan_cell(cells: Dictionary, cell: Vector2i, unit: Unit, previous: Unit, m
 		var enemy: Unit = _units[index]
 		if enemy.dead or enemy.gone:
 			continue
-		var distance := unit.position.distance_to(enemy.position)
+		var distance := at.distance_to(_positions[index] if _motion != null else enemy.position)
 		if enemy.fleeing:
 			distance *= Config.TARGET_FLEE_DISTANCE_MULTIPLIER
 		if melee_cavalry and enemy.attack_range > 0.0 and not enemy.mounted:

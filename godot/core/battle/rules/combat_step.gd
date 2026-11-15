@@ -11,7 +11,7 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: Sp
 	if dt <= 0.0:
 		return
 	if index == null and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
-		index = SpatialIndex.new(battle.active_units)
+		index = SpatialIndex.new(battle.active_units, battle.arena_size, battle.motion)
 	for unit: Unit in battle.active_units:
 		if unit.dead or unit.gone or unit.fleeing or unit.hero:
 			continue
@@ -56,7 +56,7 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 		for shot in battle.projectiles:
 			if shot.time + dt >= shot.duration:
 				if battle.projectile_index == null:
-					battle.projectile_index = SpatialIndex.new(battle.active_units, battle.arena_size)
+					battle.projectile_index = SpatialIndex.new(battle.active_units, battle.arena_size, battle.motion)
 				else:
 					battle.projectile_index.synchronize()
 				index = battle.projectile_index

@@ -2,6 +2,10 @@ extends RefCounted
 const Event = preload("res://core/battle/combat_event.gd")
 var impact_style := Event.ImpactStyle.BLOOD
 const Config = preload("res://core/battle/config.gd")
+const MotionStore = preload("res://runtime/simulation/motion_store.gd")
+var _motion: MotionStore
+var _detached_position := Vector2.ZERO
+var _detached_velocity := Vector2.ZERO
 
 var id: int
 var battle_index: int = -1 # Assigned on insertion; independent of ID used for gameplay.
@@ -9,7 +13,11 @@ var unit_handle: int = 0 # Temporary identity in this battle; never a campaign C
 var history_index: int = -1 # Stable insertion order for outcome RNG and legacy snapshots.
 var retired_tick: int = -1
 var side: int
-var position: Vector2
+var position: Vector2:
+	get: return _detached_position if _motion == null else _motion.positions[battle_index]
+	set(value):
+		if _motion == null: _detached_position = value
+		else: _motion.positions[battle_index] = value
 var hp: float
 var max_hp: float
 var armor: float
@@ -35,7 +43,11 @@ var ranged_melee_damage: float = 0.0 # Zero uses the fallback derived from range
 var speed: float = 0.0
 var attack_range: float = 0.0
 var mounted: bool = false
-var velocity: Vector2 = Vector2.ZERO
+var velocity: Vector2:
+	get: return _detached_velocity if _motion == null else _motion.velocities[battle_index]
+	set(value):
+		if _motion == null: _detached_velocity = value
+		else: _motion.velocities[battle_index] = value
 var facing: float = 0.0
 var fleeing: bool = false
 var wavering: bool = false
@@ -78,6 +90,18 @@ var swing_timer: float = 0.0
 var hero_weapon: Dictionary = {} # Detached equipment data; only the controlled hero reads it.
 var perk_effects: Dictionary = {} # Detached character projection, shared by hero combat rules.
 var last_stand_used: bool = false
+
+func bind_motion(store: MotionStore) -> void:
+	assert(_motion == null and battle_index >= 0)
+	store.positions[battle_index] = _detached_position
+	store.velocities[battle_index] = _detached_velocity
+	_motion = store
+
+func detach_motion() -> void:
+	if _motion == null: return
+	_detached_position = _motion.positions[battle_index]
+	_detached_velocity = _motion.velocities[battle_index]
+	_motion = null
 
 func _init(unit_id: int, unit_side: int, at: Vector2, health: float, protection: float, unit_tier: int) -> void:
 	id = unit_id

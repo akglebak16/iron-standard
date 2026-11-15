@@ -10,8 +10,10 @@ static func plan(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2) -> 
 
 ## Same decision without allocating: the result goes to unit.ai_mode and unit.plan_*.
 static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2, slot: Vector2) -> void:
-	var slot_distance := unit.position.distance_to(slot)
-	var distance := unit.position.distance_to(enemy.position) if enemy != null else INF
+	var position := unit.position
+	var enemy_position := enemy.position if enemy != null else Vector2.ZERO
+	var slot_distance := position.distance_to(slot)
+	var distance := position.distance_to(enemy_position) if enemy != null else INF
 	var reach := unit.collision_radius + (enemy.collision_radius if enemy != null else 0.0) + unit.melee_reach
 	var mode := Config.AI_MODE_SLOT
 	if group.backing and slot_distance > Config.AI_BACKING_SLOT_DISTANCE:
@@ -32,28 +34,28 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 		else:
 			var engage: float = Config.AI_MOUNTED_ENGAGE_DISTANCE if unit.mounted else Config.AI_FOOT_ENGAGE_DISTANCE
 			var leash: float = Config.AI_MOUNTED_LEASH_DISTANCE if unit.mounted else Config.AI_FOOT_LEASH_DISTANCE
-			if distance < engage and enemy.position.distance_to(slot) < leash:
+			if distance < engage and enemy_position.distance_to(slot) < leash:
 				mode = Config.AI_MODE_MELEE
 	var destination := slot
-	var face: float = group.direction if slot_distance < Config.AI_SLOT_FACE_DISTANCE else (slot - unit.position).angle()
+	var face: float = group.direction if slot_distance < Config.AI_SLOT_FACE_DISTANCE else (slot - position).angle()
 	var speed_scale := 1.0
 	if mode == Config.AI_MODE_MELEE:
-		face = (enemy.position - unit.position).angle()
-		destination = enemy.position if distance > reach else unit.position
+		face = (enemy_position - position).angle()
+		destination = enemy_position if distance > reach else position
 	elif mode == Config.AI_MODE_SHOOT or mode == Config.AI_MODE_SHOOT_SLOT:
-		face = (enemy.position - unit.position).angle()
+		face = (enemy_position - position).angle()
 		if mode == Config.AI_MODE_SHOOT:
-			destination = enemy.position if distance > unit.attack_range * Config.AI_SHOOT_APPROACH_RANGE else unit.position
+			destination = enemy_position if distance > unit.attack_range * Config.AI_SHOOT_APPROACH_RANGE else position
 	elif mode == Config.AI_MODE_SKIRMISH:
-		face = (enemy.position - unit.position).angle()
-		var away := (unit.position - enemy.position).normalized()
+		face = (enemy_position - position).angle()
+		var away := (position - enemy_position).normalized()
 		var side := 1.0 if unit.id % 2 else -1.0
 		if distance < unit.attack_range * Config.AI_SKIRMISH_CLOSE_RANGE:
-			destination = unit.position + away * Config.AI_SKIRMISH_BACK_OFFSET + Vector2(-away.y, away.x) * Config.AI_SKIRMISH_LATERAL_OFFSET * side
+			destination = position + away * Config.AI_SKIRMISH_BACK_OFFSET + Vector2(-away.y, away.x) * Config.AI_SKIRMISH_LATERAL_OFFSET * side
 		elif distance > unit.attack_range * Config.AI_SKIRMISH_APPROACH_RANGE:
-			destination = enemy.position
+			destination = enemy_position
 		else:
-			destination = unit.position + Vector2(-away.y, away.x) * Config.AI_SKIRMISH_ORBIT_OFFSET * side
+			destination = position + Vector2(-away.y, away.x) * Config.AI_SKIRMISH_ORBIT_OFFSET * side
 		var margin := Config.AI_SKIRMISH_EDGE_MARGIN
 		if destination.x < margin or destination.x > arena_size.x - margin or destination.y < margin or destination.y > arena_size.y - margin:
 			destination = arena_size * 0.5

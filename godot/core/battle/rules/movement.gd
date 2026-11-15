@@ -26,11 +26,13 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 	var index: SpatialIndex = null
 	if battle.use_spatial_index and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
 		if battle.movement_index == null:
-			battle.movement_index = SpatialIndex.new(battle.active_units, battle.arena_size)
+			battle.movement_index = SpatialIndex.new(battle.active_units, battle.arena_size, battle.motion)
 		else:
 			battle.movement_index.synchronize()
 		index = battle.movement_index
 	battle.profiler.mark("movement_index")
+	var positions := battle.motion.positions
+	var velocities := battle.motion.velocities
 	for unit_index in battle.active_units.size():
 		var unit: Unit = battle.active_units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
@@ -75,7 +77,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		elif rng != null:
 			unit.facing = ai_face
 			CombatStep.advance_unit(battle, unit, target, target_distance, dt, rng)
-		unit.position += unit.velocity * dt
+		positions[unit_index] += velocities[unit_index] * dt
 		if index != null:
 			index.update(unit_index)
 	battle.profiler.mark("ai_movement_combat")
@@ -90,9 +92,10 @@ static func _steer(unit: Unit, destination: Vector2, speed: float, dt: float) ->
 	if distance > Config.ARRIVAL_DISTANCE and speed > 0.0:
 		desired = delta / distance * minf(speed, distance * Config.ARRIVAL_BRAKE)
 	var rate := Config.HORSE_STEERING_RATE if unit.mounted else Config.FOOT_STEERING_RATE
-	unit.velocity = unit.velocity.lerp(desired, minf(1.0, rate * dt))
-	if unit.velocity.length_squared() > 0.0:
-		unit.facing = unit.velocity.angle()
+	var next_velocity := unit.velocity.lerp(desired, minf(1.0, rate * dt))
+	unit.velocity = next_velocity
+	if next_velocity.length_squared() > 0.0:
+		unit.facing = next_velocity.angle()
 
 static func _resolve_unit_collisions(battle: State, index: SpatialIndex, keep_index := true) -> void:
 	if index != null:
@@ -111,7 +114,7 @@ static func _resolve_unit_collisions(battle: State, index: SpatialIndex, keep_in
 static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index: kept current for callers that reuse it, else null
 	var units := battle.active_units
 	var n := units.size()
-	var workspace := battle.contacts
+	var workspace := battle.motion
 	workspace.resize(n)
 	var pos := workspace.positions
 	var rad := workspace.radii
@@ -121,7 +124,6 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 	var max_radius := 0.0
 	for i in n:
 		var u: Unit = units[i]
-		pos[i] = u.position
 		rad[i] = u.collision_radius
 		mass[i] = u.mass
 		side[i] = u.side
@@ -129,15 +131,13 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 		max_radius = maxf(max_radius, u.collision_radius)
 	if battle.contact_solver.is_valid():
 		for i in n:
-			workspace.velocities[i] = units[i].velocity
 			workspace.fleeing[i] = 1 if units[i].fleeing else 0
 		var solved: Array = battle.contact_solver.call(workspace, battle.contact_geometry())
 		if solved.size() == 2 and solved[0] is PackedVector2Array and solved[1] is PackedVector2Array and solved[0].size() == n and solved[1].size() == n:
-			for i in n:
-				if live[i] == 0: continue
-				units[i].position = solved[0][i]
-				units[i].velocity = solved[1][i]
-				if index != null: index.update(i)
+			workspace.positions = solved[0]
+			workspace.velocities = solved[1]
+			if index != null:
+				index.synchronize() # Native replaced the packed buffers; refresh borrowed columns too.
 			battle.native_contact_steps += 1
 			return
 		battle.native_contact_failures += 1

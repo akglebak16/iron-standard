@@ -229,11 +229,12 @@ func snapshot(compact: bool = false) -> Dictionary:
 	var ally_strength := 0.0
 	var group_strength := PackedFloat64Array()
 	group_strength.resize(Config.GROUP_KINDS)
+	var positions := _state.motion.positions
 	for unit: Unit in _state.active_units:
 		if not unit.dead and not unit.gone:
 			counts[unit.side] += 1
 			if not unit.fleeing:
-				focus_sum[unit.side] += unit.position
+				focus_sum[unit.side] += positions[unit.battle_index]
 				focus_count[unit.side] += 1
 				if unit.side == 1:
 					enemy_strength += unit.weight
@@ -261,35 +262,77 @@ func snapshot(compact: bool = false) -> Dictionary:
 		frame.render = _render_snapshot()
 	return frame
 
-var _render_definitions := {}
+var _render_definitions: Array[Dictionary] = []
 
 func _render_snapshot() -> RenderSnapshot:
 	var frame := RenderSnapshot.new()
+	var positions := _state.motion.positions
+	var velocities := _state.motion.velocities
+	for i in range(_render_definitions.size(), _state.units.size()):
+		_render_definitions.append(_render_definition(_state.units[i]))
+	_render_definitions[_hero.history_index] = _render_definition(_hero)
+	var visible := _state.render_units()
+	var capacity := visible.size()
+	var out_positions := PackedVector2Array()
+	var previous := PackedVector2Array()
+	var sides := PackedInt32Array()
+	var groups := PackedInt32Array()
+	var flags := PackedInt32Array()
+	var dynamic := PackedFloat64Array()
+	var definitions: Array[Dictionary] = []
+	out_positions.resize(capacity)
+	previous.resize(capacity)
+	sides.resize(capacity)
+	groups.resize(capacity)
+	flags.resize(capacity)
+	dynamic.resize(capacity * RenderSnapshot.STRIDE)
+	definitions.resize(capacity)
+	var row := 0
 	# Dead ordinary soldiers leave the render stream. Their DOWN event owns corpse data.
-	for unit: Unit in _state.render_units():
+	for unit: Unit in visible:
 		if unit.gone or (unit.dead and not unit.hero and not unit.companion): continue
-		var definition: Dictionary = _render_definitions.get(unit.id, {})
-		if definition.is_empty() or unit.hero:
-			definition = {"id": unit.id, "side": unit.side, "faction": unit.faction,
-				"hero": unit.hero, "companion": unit.companion,
-				"companion_name": unit.name if unit.companion else "", "look": unit.appearance.duplicate(true)}
-			RenderSnapshot.freeze(definition)
-			if not unit.hero: _render_definitions[unit.id] = definition
-		frame._render_definitions.append(definition)
-		frame._render_positions.append(unit.position)
-		frame._render_previous.append(_previous_position(unit))
-		frame._render_sides.append(unit.side)
-		frame._render_groups.append(unit.group_kind)
-		frame._render_flags.append(int(unit.dead) * RenderSnapshot.DEAD | int(unit.gone) * RenderSnapshot.GONE
+		var dense := unit.battle_index
+		var history := unit.history_index
+		var at := positions[dense] if dense >= 0 else unit.position
+		definitions[row] = _render_definitions[history]
+		out_positions[row] = at
+		previous[row] = at if history >= _previous_positions.size() or unit.retired_tick >= 0 and unit.retired_tick < _tick else _previous_positions[history]
+		sides[row] = unit.side
+		groups[row] = unit.group_kind
+		flags[row] = (int(unit.dead) * RenderSnapshot.DEAD | int(unit.gone) * RenderSnapshot.GONE
 			| int(unit.hero) * RenderSnapshot.HERO | int(unit.companion) * RenderSnapshot.COMPANION
 			| int(unit.mounted) * RenderSnapshot.MOUNTED | int(unit.fleeing) * RenderSnapshot.FLEEING
 			| int(unit.blocking) * RenderSnapshot.BLOCKING | int(unit.leader) * RenderSnapshot.LEADER)
-		frame._render_dynamic.append(unit.collision_radius)
-		frame._render_dynamic.append(clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0)
-		frame._render_dynamic.append(unit.facing)
-		frame._render_dynamic.append(unit.velocity.length())
-		frame._render_dynamic.append(unit.attack_windup if unit.hero else unit.ai_windup)
+		var offset := row * RenderSnapshot.STRIDE
+		dynamic[offset] = unit.collision_radius
+		dynamic[offset + 1] = clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0
+		dynamic[offset + 2] = unit.facing
+		dynamic[offset + 3] = velocities[dense].length() if dense >= 0 else unit.velocity.length()
+		dynamic[offset + 4] = unit.attack_windup if unit.hero else unit.ai_windup
+		row += 1
+	if row < capacity:
+		out_positions.resize(row)
+		previous.resize(row)
+		sides.resize(row)
+		groups.resize(row)
+		flags.resize(row)
+		dynamic.resize(row * RenderSnapshot.STRIDE)
+		definitions.resize(row)
+	frame._render_positions = out_positions
+	frame._render_previous = previous
+	frame._render_sides = sides
+	frame._render_groups = groups
+	frame._render_flags = flags
+	frame._render_dynamic = dynamic
+	frame._render_definitions = definitions
 	return frame
+
+func _render_definition(unit: Unit) -> Dictionary:
+	var definition := {"id": unit.id, "side": unit.side, "faction": unit.faction,
+		"hero": unit.hero, "companion": unit.companion,
+		"companion_name": unit.name if unit.companion else "", "look": unit.appearance.duplicate(true)}
+	RenderSnapshot.freeze(definition)
+	return definition
 
 func _previous_position(unit: Unit) -> Vector2:
 	if unit.retired_tick >= 0 and unit.retired_tick < _tick: return unit.position

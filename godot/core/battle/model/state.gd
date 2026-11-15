@@ -12,7 +12,7 @@ const Equipment = preload("res://core/equipment/config.gd")
 const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
 const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
 const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
-const ContactWorkspace = preload("res://runtime/spatial/contact_workspace.gd")
+const MotionStore = preload("res://runtime/simulation/motion_store.gd")
 const StaticObstacleIndex = preload("res://runtime/spatial/static_obstacle_index.gd")
 const GenerationHandles = preload("res://runtime/simulation/generation_handles.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
@@ -38,7 +38,7 @@ var projectile_index: SpatialIndex
 var collision_grid: CollisionGrid
 var collision_candidates: Array[int] = []
 var projectile_candidates: Array[int] = []
-var contacts := ContactWorkspace.new()
+var motion := MotionStore.new()
 ## Optional batch port injected by composition. The reference solver needs no engine adapter.
 var contact_solver := Callable()
 var native_contact_steps := 0
@@ -224,6 +224,8 @@ func centroid(side: int) -> Vector2:
 func add_unit(unit: Unit) -> bool:
 	if unit == null or unit.battle_index != -1 or unit.unit_handle != 0 or unit.side < 0 or unit.side > 1: return false
 	unit.battle_index = active_units.size()
+	motion.resize(unit.battle_index + 1)
+	unit.bind_motion(motion)
 	unit.history_index = units.size()
 	unit.unit_handle = handles.allocate(unit.battle_index)
 	units.append(unit)
@@ -253,18 +255,21 @@ func compact_inactive(tick: int) -> int:
 		var unit := active_units[read]
 		if unit.dead or unit.gone:
 			handles.release(unit.unit_handle)
+			unit.detach_motion()
 			unit.battle_index = -1
 			unit.retired_tick = tick
 			continue
 		if write != read:
 			var moved := handles.relocate(unit.unit_handle, write)
 			assert(moved, "Active handle must follow compaction")
+			motion.copy_row(read, write)
 			active_units[write] = unit
 			unit.battle_index = write
 		write += 1
 	pending_retirements = 0
 	if write == before: return 0
 	active_units.resize(write)
+	motion.resize(write)
 	_visible_units.assign(_visible_units.filter(func(u: Unit): return not u.gone and (not u.dead or u.hero or u.companion)))
 	for side in groups:
 		for group: Group in side:
