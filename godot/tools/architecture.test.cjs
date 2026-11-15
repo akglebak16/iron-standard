@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { analyze, tokens, structureIssues, manifestIssues, contractChangeIssues, covers } = require('./architecture.cjs');
+const { analyze, tokens, structureIssues, manifestIssues, contractChangeIssues, ignoredSourceIssues, covers } = require('./architecture.cjs');
 const manifest = {modules:[
   {name:'a',prefix:'core/a/',allowed:['b'],public:['core/a/api/']},
   {name:'b',prefix:'core/b/',allowed:[],public:['core/b/api/']},
@@ -54,4 +54,6 @@ assert.equal(contractChangeIssues([],true).length,2);
 assert.equal(contractChangeIssues(['docs/architecture/ADR-008.md'],true).length,1);
 assert.equal(contractChangeIssues(['tests/integration/test_contract.gd'],true).length,1);
 assert.equal(contractChangeIssues(['docs/architecture/ADR-008.md','tools/architecture.test.cjs'],true).length,0);
+assert.deepEqual(ignoredSourceIssues(['']),[]);
+assert(ignoredSourceIssues(['core/troops/data/catalog.gd'])[0].includes('ignored by Git'));
 console.log('Architecture checker negative tests passed');
