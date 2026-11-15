@@ -1,9 +1,10 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 
 func _initialize() -> void:
 	var catalog := GearCatalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	assert(catalog.size() == 55)
 	assert(catalog.get_item("sword_old").dmg == 20)
 	assert(catalog.get_item("xbow_heavy").pb == 0.22)
@@ -37,7 +38,7 @@ func _initialize() -> void:
 	shield.projectile_block_bonus = 1.1
 	assert(not catalog.replace_data({"test_shield": shield}))
 	assert(catalog.get_item("test_shield").projectile_block_bonus == 0.3)
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	assert(catalog.size() == 55)
 	print("Gear catalog tests passed")
 	quit(0)

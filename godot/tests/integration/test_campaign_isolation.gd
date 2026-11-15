@@ -1,13 +1,14 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const World = preload("res://campaign/world/world_state.gd")
 const Europe = preload("res://campaign/data/europe_data.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 
 func _initialize() -> void:
 	var europe := Europe.new()
-	assert(europe.load_data())
-	var first := World.create(4242, europe, "emp")
-	var second := World.create(4242, europe, "emp")
+	assert(ContentLoader.populate(europe))
+	var first := World.create(4242, europe, "emp", ContentLoader.registry())
+	var second := World.create(4242, europe, "emp", ContentLoader.registry())
 	var noble := {"fac": "emp", "kind": "lord"}
 	var enemy := {"fac": "nord", "kind": "lord"}
 	var vassal := {"fac": "player", "kind": "cvass"}

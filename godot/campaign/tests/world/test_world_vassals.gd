@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
@@ -8,8 +9,8 @@ const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var p = s.player
 	var vs = s.vassals
 	var castle: Dictionary = {}
@@ -80,7 +81,7 @@ func _initialize() -> void:
 	assert(vs.revoke(cid))
 	assert(p.vass.is_empty() and p.comps.size() == 1 and not castle.has("vass"))
 	vs.grant(cid, castle.id)
-	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data)
+	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())
 	assert(back.player.vass.size() == 1 and back.player.vass[0].sid is int and back.map.settlement_by_id(castle.id).vass == cid)
 	var pw := PartyWindow.new()
 	root.add_child(pw)

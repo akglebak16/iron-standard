@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## src/03_battle.js fill() / battleWaves() / kill() / finishBattle(): undead and quick battles keep extra figures in reserve.
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
@@ -15,7 +16,7 @@ const Feedback = preload("res://apps/godot/presentation/battle/combat_feedback.g
 var _catalog := Catalog.new()
 
 func _initialize() -> void:
-	assert(_catalog.load_data())
+	assert(ContentLoader.populate(_catalog))
 	_check_reserve_instead_of_merging()
 	_check_wave_release()
 	_check_bonded_leader_scatters_reserve()

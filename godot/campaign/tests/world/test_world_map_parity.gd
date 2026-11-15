@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Settlements, roads and pathfinding must match the browser (fixture from campaign/tools/export_world.cjs).
 const WorldMap = preload("res://campaign/world/world_map.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -7,7 +8,7 @@ const POINT_TOLERANCE := 0.01
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
+	assert(ContentLoader.populate(data))
 	var fixture = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
 	for entry in fixture.seeds:
 		var started := Time.get_ticks_msec()

@@ -1,12 +1,13 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Economy = preload("res://campaign/economy/party_economy.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(1, data, "emp")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(1, data, "emp", ContentLoader.registry())
 	var player = state.player
 	var fx: Dictionary = state.player_effects()
 	var e1: Dictionary = state.roster.catalog.get_troop("e1")

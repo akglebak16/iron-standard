@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Loot = preload("res://campaign/economy/battle_loot.gd")
 const Troops = preload("res://troops/data/catalog.gd")
 const Gear = preload("res://equipment/data/gear_catalog.gd")
@@ -8,7 +9,7 @@ func _initialize() -> void:
 	var troops := Troops.new()
 	var gear := Gear.new()
 	var goods := Goods.new()
-	assert(troops.load_data() and gear.load_data() and goods.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(gear) and ContentLoader.populate(goods))
 	assert(goods.definitions().size() == 11)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 202

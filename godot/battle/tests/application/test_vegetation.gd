@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const Config = preload("res://battle/config.gd")
 const Factory = preload("res://battle/application/factory.gd")
@@ -22,7 +23,7 @@ func _check_layout() -> void:
 	setup.seed = TEST_SEED
 	setup.hero_troop = "n1"
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var field := Factory.create(setup, catalog)
 	var layout := field.vegetation_layout()
 	# Recorded from startBattle's placement loop with mulberry(4017).

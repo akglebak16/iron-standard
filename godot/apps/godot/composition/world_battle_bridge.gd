@@ -1,4 +1,5 @@
 extends RefCounted
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Glue between the world map and the battle: builds a battle for a meeting and applies the outcome to the world.
 const Setup = preload("res://battle/data/battle_setup.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
@@ -23,7 +24,7 @@ var perks := PerkCatalog.new()
 var rng := RandomNumberGenerator.new()
 
 func _init() -> void:
-	if not (troops.load_data() and gear.load_data() and goods.load_data() and companions.load_data() and perks.load_data()):
+	if not (ContentLoader.populate(troops) and ContentLoader.populate(gear) and ContentLoader.populate(goods) and ContentLoader.populate(companions) and ContentLoader.populate(perks)):
 		push_error("Required content failed to load: apps/godot/composition/world_battle_bridge.gd")
 		return
 	rng.randomize()

@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The spatial index must not change a full AI battle: the same seed with and without the index gives identical units.
 const Factory = preload("res://battle/application/factory.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
@@ -29,7 +30,7 @@ func _run(catalog: Catalog, indexed: bool, mixed: bool) -> Array:
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	for mixed in [true, false]:
 		var fast := _run(catalog, true, mixed)
 		var plain := _run(catalog, false, mixed)

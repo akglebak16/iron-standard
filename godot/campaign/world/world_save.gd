@@ -40,10 +40,10 @@ static func to_v1_dict(state: RefCounted) -> Dictionary:
 		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "crisis": state.undead.crisis, "clans": state.clans.to_dict(), "skirmish": state.skirmish.to_dict(), "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
 
 ## Rebuilds a world from saved data; returns null for an unknown format.
-static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
+static func from_dict(data: Dictionary, europe: EuropeData, definitions: Dictionary) -> RefCounted:
 	if data.get("version") == 1:
 		if not _valid_v1_header(data): return null
-		return _from_v1(data.duplicate(true), europe)
+		return _from_v1(data.duplicate(true), europe, definitions)
 	if data.get("version") != VERSION or data.get("encoding") != "godot-variant-values-v1": return null
 	if not data.get("payload") is String or not data.get("sha256") is String: return null
 	if data.payload.length() > MAX_PAYLOAD_BYTES * 4 / 3 + 4 or data.payload.sha256_text() != data.sha256: return null
@@ -52,7 +52,7 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 	# This API does not deserialize Objects; never use bytes_to_var_with_objects here.
 	var values = bytes_to_var(bytes)
 	if not values is Dictionary: return null
-	return Checkpoint.restore(values, europe)
+	return Checkpoint.restore(values, europe, definitions)
 
 static func _valid_v1_header(data: Dictionary) -> bool:
 	if not Checkpoint._plain(data) or not Checkpoint._number(data.get("seed")) or not WorldState.START_TROOPS.has(data.get("culture")): return false
@@ -148,8 +148,8 @@ static func _v1_stacks(value: Variant) -> bool:
 		if not stack.get("type") is String or not Checkpoint._number(stack.get("n")) or stack.n < 0 or stack.n != int(stack.n): return false
 	return true
 
-static func _from_v1(data: Dictionary, europe: EuropeData) -> RefCounted:
-	var state := WorldState.create(int(data.seed), europe, String(data.culture))
+static func _from_v1(data: Dictionary, europe: EuropeData, definitions: Dictionary) -> RefCounted:
+	var state := WorldState.create(int(data.seed), europe, String(data.culture), definitions)
 	if state == null: return null
 	state.clock.day = int(data.clock.day)
 	state.clock.hour = int(data.clock.hour)

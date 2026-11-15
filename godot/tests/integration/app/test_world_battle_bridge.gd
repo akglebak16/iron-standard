@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
 const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
 const Factory = preload("res://battle/application/factory.gd")
@@ -8,8 +9,8 @@ const Rules = preload("res://campaign/world/party_rules.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(1, data, "emp")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(1, data, "emp", ContentLoader.registry())
 	var bridge = Bridge.new()
 	bridge.rng.seed = 11
 	# a played battle can be built from world parties

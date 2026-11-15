@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
@@ -9,7 +10,7 @@ const Unit = preload("res://battle/model/unit.gd")
 func _initialize() -> void:
 	var troops := Catalog.new()
 	var companions := Companions.new()
-	assert(troops.load_data() and companions.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(companions))
 	var setup := Setup.new()
 	setup.siege = true
 	setup.hero_troop = "n1"

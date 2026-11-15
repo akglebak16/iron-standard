@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Session = preload("res://battle/application/session.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
@@ -121,7 +122,7 @@ func _check_hero_down_continues_battle() -> void:
 
 func _check_factory_and_repeatability() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.hero_profile.clear()
@@ -161,7 +162,7 @@ func _check_factory_and_repeatability() -> void:
 func _check_weapon_swap() -> void:
 	var troops := Catalog.new()
 	var gear_catalog := GearCatalog.new()
-	assert(troops.load_data() and gear_catalog.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(gear_catalog))
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "vit": 3, "hp": 0.5, "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank"}, "sel": "melee"}

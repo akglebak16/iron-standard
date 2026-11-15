@@ -1,10 +1,11 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://characters/data/companion_catalog.gd")
 const Profile = preload("res://characters/rules/companion_profile.gd")
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data() and catalog.size() == 13)
+	assert(ContentLoader.populate(catalog) and catalog.size() == 13)
 	for pair in [[1, 0.08], [3, 0.08], [4, 0.15], [6, 0.15], [7, 0.22], [99, 0.22]]:
 		var resolved := Profile.resolve({"id": "anselm", "lvl": pair[0], "hp": 0.24}, catalog)
 		assert(not resolved.fit and resolved.party_effects.surv == pair[1])

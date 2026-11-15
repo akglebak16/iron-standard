@@ -1,20 +1,14 @@
-extends RefCounted
+extends "res://core/content/api/definition_catalog.gd"
 ## Validated definitions; callers receive copies, never shared mutable records.
 const Config = preload("res://troops/config.gd")
-const DATA_PATH := "res://troops/data/troops.json"
+const CONTENT_KEY := "troops"
 const REQUIRED_NUMBERS := ["tier", "grp", "hp", "arm", "dmg", "spd", "cd", "block"]
 const OPTIONAL_NUMBERS := ["range", "reach", "acc", "pierce", "shb", "pw", "mdmg"]
 const TRAIT_NUMBERS := ["morale_base", "leader_loss_chance", "projectile_damage_multiplier", "blunt_melee_damage_multiplier"]
 var _troops: Dictionary = {}
 
-func load_data() -> bool:
-	var file := FileAccess.open(DATA_PATH, FileAccess.READ)
-	if file == null or not replace_data(JSON.parse_string(file.get_as_text())):
-		push_error("Invalid or missing troop catalog: " + DATA_PATH)
-		return false
-	return true
-
 func replace_data(data: Variant) -> bool:
+	if _sealed: return false
 	# Validate before replacing: a rejected reload leaves the working catalog intact.
 	if not data is Dictionary or data.is_empty():
 		return false
@@ -42,6 +36,7 @@ func replace_data(data: Variant) -> bool:
 		if not _valid_battle_traits(troop.get("battle_traits", {})):
 			return false
 	_troops = data.duplicate(true)
+	_valid = true
 	return true
 
 func size() -> int:

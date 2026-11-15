@@ -1,4 +1,5 @@
 extends Node2D
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Composition root: the only place that connects storage, scenario and view.
 const Catalog = preload("res://troops/data/catalog.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
@@ -23,22 +24,22 @@ var presentation_preferences := PresentationPreferences.new()
 
 func _ready() -> void:
 	var catalog := Catalog.new()
-	if not catalog.load_data():
+	if not ContentLoader.populate(catalog):
 		push_error("Cannot load battle catalog")
 		return
 	var gear_catalog := GearCatalog.new()
-	if not gear_catalog.load_data():
+	if not ContentLoader.populate(gear_catalog):
 		push_error("Cannot load gear catalog")
 		return
 	var perk_catalog := PerkCatalog.new()
-	if not perk_catalog.load_data():
+	if not ContentLoader.populate(perk_catalog):
 		push_error("Cannot load perk catalog")
 		return
 	var companion_catalog := CompanionCatalog.new()
-	if not companion_catalog.load_data():
+	if not ContentLoader.populate(companion_catalog):
 		return
 	var goods := GoodsCatalog.new()
-	if not goods.load_data():
+	if not ContentLoader.populate(goods):
 		push_error("Cannot load trade goods catalog")
 		return
 	var session = Factory.create(battle_setup, catalog, gear_catalog, perk_catalog, companion_catalog)

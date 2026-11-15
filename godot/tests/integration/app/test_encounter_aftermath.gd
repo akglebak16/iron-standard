@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
@@ -15,11 +16,11 @@ const Perks = preload("res://characters/data/perk_catalog.gd")
 func _initialize() -> void:
 	var companions := Companions.new()
 	var perks := Perks.new()
-	assert(companions.load_data() and perks.load_data())
+	assert(ContentLoader.populate(companions) and ContentLoader.populate(perks))
 	var troops := Troops.new()
 	var gear := Gear.new()
 	var goods := Goods.new()
-	assert(troops.load_data() and gear.load_data() and goods.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(gear) and ContentLoader.populate(goods))
 	var setup := Setup.new()
 	setup.hero_troop = "n1"
 	setup.enemy_army = [{"type": "e1", "n": 1}]

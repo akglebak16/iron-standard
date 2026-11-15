@@ -1,4 +1,5 @@
 extends Node2D
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The world map as a node: ground texture, fields, relief icons, roads, rivers, bridges, settlements.
 const WorldMap = preload("res://campaign/world/world_map.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -19,7 +20,7 @@ var _settlement_layer: Node2D
 
 func build(seed_value: int) -> void:
 	var data := EuropeData.new()
-	if not (data.load_data()):
+	if not (ContentLoader.populate(data)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/world_map_view.gd")
 		return
 	build_from(WorldMap.create(seed_value, data))

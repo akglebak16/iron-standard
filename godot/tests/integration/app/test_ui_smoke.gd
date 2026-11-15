@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
@@ -9,8 +10,8 @@ func _initialize() -> void:
 	var menu = (load("res://apps/godot/composition/main_menu.tscn") as PackedScene).instantiate()
 	root.add_child(menu)
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(3, data, "nord")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(3, data, "nord", ContentLoader.registry())
 	var town := TownWindow.new()
 	var party := PartyWindow.new()
 	var hud := WorldHud.new()

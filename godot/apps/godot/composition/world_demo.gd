@@ -1,4 +1,5 @@
 extends Node
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## World map demo: generates Europe for a seed, puts the party in its home town. Click to walk, wheel to zoom,
 ## drag or WASD to look around (C — back to the party), Space — pause, 1/2/3 — speed.
 ## Options after `--`: --seed=N, --focus=x,y,zoom (for screenshots).
@@ -69,7 +70,7 @@ func _ready() -> void:
 			for part in arg.substr(8).split(","):
 				focus.append(float(part))
 	var data := EuropeData.new()
-	if not (data.load_data()):
+	if not (ContentLoader.populate(data)):
 		push_error("Required content failed to load: apps/godot/composition/world_demo.gd")
 		return
 	if GameOptions.continue_game:
@@ -83,13 +84,13 @@ func _ready() -> void:
 			layer.add_child(back)
 			return
 	if state == null:
-		state = WorldState.create(seed_value, data, GameOptions.culture)
+		state = WorldState.create(seed_value, data, GameOptions.culture, ContentLoader.registry())
 		state.player.hero.name = GameOptions.hero_name
 	map_view = MapView.new()
 	add_child(map_view)
 	map_view.build_from(state.map)
 	var factions := FactionCatalog.new()
-	factions.load_data()
+	ContentLoader.populate(factions)
 	var others := WorldPartiesLayer.new()
 	map_view.add_child(others)
 	others.build(state.roster, state.player)
@@ -145,7 +146,7 @@ func _ready() -> void:
 	_dialog = EncounterDialog.new()
 	add_child(_dialog)
 	_dialog.chosen.connect(_on_encounter_choice)
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/composition/world_demo.gd")
 		return
 	state.party_met.connect(_on_party_met)

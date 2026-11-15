@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Aftermath = preload("res://campaign/rules/battle_aftermath.gd")
 const Rewards = preload("res://campaign/data/encounter_rewards.gd")
 const Troops = preload("res://troops/data/catalog.gd")
@@ -10,9 +11,9 @@ const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 func _initialize() -> void:
 	var companions := Companions.new()
 	var perks := Perks.new()
-	assert(companions.load_data() and perks.load_data())
+	assert(ContentLoader.populate(companions) and ContentLoader.populate(perks))
 	var troops := Troops.new()
-	assert(troops.load_data())
+	assert(ContentLoader.populate(troops))
 	var party := {"troops": [{"type": "n1", "n": 8}], "hero": {"hp": 1.0, "int": 3, "xp": 170}, "gold": 102}
 	var result := {"win": true, "dead": {"n1": 3}, "wounded": {"n1": 2}, "heroHp": 0.0, "enemyDead": 4, "heroKills": 2, "xp": 80}
 	party.comps = [{"id": "anselm", "hp": 1.0, "xp": 480, "lvl": 3, "int": 4, "vit": 3}, {"id": "vikenty", "hp": 0.2}]

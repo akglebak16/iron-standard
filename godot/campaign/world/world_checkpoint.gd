@@ -78,10 +78,10 @@ static func valid(data: Variant) -> bool:
 	if data.map.next_id <= largest_id or not ids.has(data.world.home_id): return false
 	return true
 
-static func restore(data: Dictionary, europe: Europe) -> RefCounted:
+static func restore(data: Dictionary, europe: Europe, definitions: Dictionary) -> RefCounted:
 	if not valid(data): return null
 	data = data.duplicate(true)
-	var state := World.create(data.world.seed_value, europe, data.world.culture)
+	var state := World.create(data.world.seed_value, europe, data.world.culture, definitions)
 	if state == null: return null
 	# Every component is already validated before any live object is populated.
 	for component in FIELDS:

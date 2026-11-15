@@ -1,5 +1,6 @@
 extends Control
-## Native title / renderCreate / renderQuick from src/06_ui.js and src/07_main.js.
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+## Start screen: hero name, culture, new game (the menu and culture choice in src/06_ui.js and src/07_main.js).
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 const SaveStore = preload("res://apps/godot/composition/save_store.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
@@ -20,7 +21,7 @@ var _background: Node2D
 var _preferences := Preferences.new()
 
 func _ready() -> void:
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/composition/main_menu.gd")
 		return
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

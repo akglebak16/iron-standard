@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Session = preload("res://battle/application/session.gd")
 const Config = preload("res://battle/config.gd")
 const Combat = preload("res://battle/rules/combat.gd")
@@ -206,7 +207,7 @@ func _check_siege_dialogue(path: String) -> void:
 	var events: Array[Dictionary] = []
 	view._refresh(Dialogue.START_DELAY.y, events)
 	var catalog := CompanionCatalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var definition := catalog.get_companion("vikenty")
 	var status: String = view.status.text
 	assert(definition.voice.siege.any(func(line): return status.contains(Dialogue.JOURNAL_LINE % [definition.name, line])))

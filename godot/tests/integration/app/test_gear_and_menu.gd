@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -13,8 +14,8 @@ const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var p = s.player
 	var gear = s.gear
 	# legacy kit becomes slots
@@ -67,7 +68,7 @@ func _initialize() -> void:
 	p.comps.append(s.companions.new_profile(s.companion_catalog.ids()[0]))
 	assert(HeroEquip.equip(p.inv, p.comps[0], shield, gear).ok or true)
 	# save keeps the slots
-	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data)
+	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())
 	assert(back.player.hero.eq.melee == two)
 	# windows
 	var pw := PartyWindow.new()
@@ -97,7 +98,7 @@ func _initialize() -> void:
 	prefs.save(true, true)
 	# tooltips
 	var factions := FactionCatalog.new()
-	assert(factions.load_data())
+	assert(ContentLoader.populate(factions))
 	assert("Отношение" in WorldTips.settlement_tip(s, town, factions))
 	var lord: Dictionary = s.roster.parties.filter(func(q): return q.kind == "lord")[0]
 	assert(lord.name in WorldTips.party_tip(s, lord, factions))

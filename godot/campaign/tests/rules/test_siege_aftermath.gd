@@ -1,11 +1,12 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const World = preload("res://campaign/rules/encounter_world.gd")
 const Siege = preload("res://campaign/rules/siege_aftermath.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 22
 	var settlement := {"id": 4, "name": "Вентум", "kind": "town", "fac": "emp", "cult": "kin", "board": ["old"], "gar": [{"type": "k1", "n": 10}, {"type": "e1", "n": 1}]}

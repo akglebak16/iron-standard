@@ -1,10 +1,11 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 
 func _initialize() -> void:
 	var catalog := GearCatalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var legacy := {"armor": 2, "weapon": 1, "shield": 2, "horse": 1}
 	var before: Dictionary = legacy.duplicate(true)
 	var gear: Dictionary = HeroGear.resolve(legacy, catalog)

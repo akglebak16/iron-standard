@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Informational CPU benchmark, not a hardware-dependent pass/fail test.
 const Factory = preload("res://battle/application/factory.gd")
 const Setup = preload("res://battle/data/battle_setup.gd")
@@ -14,7 +15,7 @@ const MICROSECONDS_PER_MILLISECOND := 1000.0
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	if not (catalog.load_data()):
+	if not (ContentLoader.populate(catalog)):
 		push_error("Required content failed to load: battle/tools/benchmark.gd")
 		return
 	for army_size in [24, Config.SOLO_UNIT_CAP]:

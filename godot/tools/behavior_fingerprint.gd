@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Behaviour fingerprint: runs the demo battles on a fixed seed and prints hashes of the whole snapshot and result.
 ## Run it before and after a refactoring that must not change behaviour; the printed lines must be identical:
 ##   godot --headless --path godot --script res://tools/behavior_fingerprint.gd
@@ -12,10 +13,10 @@ const SNAPSHOT_TICKS := 1200
 const SAMPLE_EVERY := 120
 const TICK_SECONDS := 1.0 / 60.0
 func _initialize() -> void:
-	var c := Catalog.new(); c.load_data()
-	var g := GearCatalog.new(); g.load_data()
-	var p := PerkCatalog.new(); p.load_data()
-	var k := CompanionCatalog.new(); k.load_data()
+	var c := Catalog.new(); ContentLoader.populate(c)
+	var g := GearCatalog.new(); ContentLoader.populate(g)
+	var p := PerkCatalog.new(); ContentLoader.populate(p)
+	var k := CompanionCatalog.new(); ContentLoader.populate(k)
 	for path in ["res://battle/data/demo_battle.tres", "res://battle/data/demo_siege.tres"]:
 		var s = Factory.create(load(path), c, g, p, k)
 		s.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)

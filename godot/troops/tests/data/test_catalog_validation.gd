@@ -1,9 +1,10 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var original := catalog.get_troop("n1")
 	var changed := catalog.get_troop("n1")
 	changed.hp = 0

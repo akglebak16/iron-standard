@@ -1,4 +1,5 @@
 extends RefCounted
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The save file in the user's data folder (the browser used localStorage).
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -49,7 +50,7 @@ static func _load_file(europe: EuropeData, path: String) -> RefCounted:
 	var error := json.parse(file.get_as_text())
 	file.close()
 	if error != OK or not json.data is Dictionary: return null
-	return WorldSave.from_dict(json.data, europe)
+	return WorldSave.from_dict(json.data, europe, ContentLoader.registry())
 
 static func _generations(path: String) -> Array[Dictionary]:
 	var found: Array[Dictionary] = []

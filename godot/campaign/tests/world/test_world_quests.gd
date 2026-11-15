@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -7,8 +8,8 @@ const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var p = s.player
 	var town: Dictionary = {}
 	for t in s.map.settles:
@@ -88,7 +89,7 @@ func _initialize() -> void:
 	# save keeps quests, boards and companions
 	p.quests.append({"id": 1004, "from": town.id, "fac": "emp", "day": 1, "type": "deliver", "sid": town.id, "reward": 120, "dl": 30})
 	var d := WorldSave.to_dict(s)
-	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(d)), data)
+	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(d)), data, ContentLoader.registry())
 	assert(back.player.quests.size() == 1 and back.player.quests[0].sid is int)
 	assert(back.player.comps.size() == 1 and back.player.comps[0].lvl is int)
 	assert(back.companions.pos.size() == s.companions.pos.size())

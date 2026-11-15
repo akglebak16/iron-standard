@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const Factory = preload("res://battle/application/factory.gd")
@@ -9,7 +10,7 @@ const HeroInput = preload("res://battle/application/hero_input.gd")
 
 func _initialize() -> void:
 	var catalog := GearCatalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	_test_factory(catalog)
 	_test_battle_perks(catalog)
 	_test_heavy_perk_swap(catalog)
@@ -20,7 +21,7 @@ func _initialize() -> void:
 
 func _test_custom_shield(original_gear: GearCatalog) -> void:
 	var troops := Catalog.new()
-	assert(troops.load_data())
+	assert(ContentLoader.populate(troops))
 	var shield := original_gear.get_item("shield_plank")
 	shield.id = "test_shield"
 	shield.look = "custom_art"
@@ -35,7 +36,7 @@ func _test_custom_shield(original_gear: GearCatalog) -> void:
 
 func _test_factory(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
-	assert(troops.load_data())
+	assert(ContentLoader.populate(troops))
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "hp": 0.5, "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank", "horse": "horse_riding"}, "sel": "ranged"}
@@ -62,7 +63,7 @@ func _test_factory(gear_catalog: GearCatalog) -> void:
 func _test_battle_perks(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
 	var perks := PerkCatalog.new()
-	assert(troops.load_data() and perks.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(perks))
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "cha": 2, "hp": 0.5, "perks": ["tough", "hide", "quick", "eagle", "tactician", "inspire"], "eq": {"head": "head_cap", "body": "body_mail", "melee": "sword_knight", "ranged": "jav_heavy", "shield": "shield_plank", "horse": "horse_riding"}, "sel": "ranged"}
@@ -87,7 +88,7 @@ func _test_battle_perks(gear_catalog: GearCatalog) -> void:
 func _test_heavy_perk_swap(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
 	var perks := PerkCatalog.new()
-	assert(troops.load_data() and perks.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(perks))
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.hero_profile = {"str": 3, "agi": 2, "vit": 4, "hp": 0.5, "perks": ["grip", "master", "quick", "tough"], "eq": {"melee": "tw_sword", "ranged": "jav_heavy"}, "sel": "melee"}
@@ -110,7 +111,7 @@ func _test_heavy_perk_swap(gear_catalog: GearCatalog) -> void:
 
 func _test_named_undead_leader(gear_catalog: GearCatalog) -> void:
 	var troops := Catalog.new()
-	assert(troops.load_data())
+	assert(ContentLoader.populate(troops))
 	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.enemy_faction = "emp"

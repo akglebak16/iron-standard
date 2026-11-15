@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Market = preload("res://campaign/economy/market.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
@@ -6,10 +7,10 @@ const EuropeData = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(2, data, "emp")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(2, data, "emp", ContentLoader.registry())
 	var catalog := GoodsCatalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
 	var market := Market.new(catalog, rng)

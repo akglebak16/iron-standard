@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Informational: frame cost of a mass battle with its view (simulation + snapshot + drawing).
 ##   godot --path godot --script res://battle/tools/view_bench.gd [-- --n=300 --frames=240]
 const Factory = preload("res://battle/application/factory.gd")
@@ -29,7 +30,7 @@ func _initialize() -> void:
 	var g := GearCatalog.new()
 	var p := PerkCatalog.new()
 	var k := CompanionCatalog.new()
-	if not c.load_data() or not g.load_data() or not p.load_data() or not k.load_data():
+	if not ContentLoader.populate(c) or not ContentLoader.populate(g) or not ContentLoader.populate(p) or not ContentLoader.populate(k):
 		push_error("Benchmark content failed to load")
 		quit(1)
 		return

@@ -1,4 +1,5 @@
 extends "res://apps/godot/presentation/campaign/modal_window.gd"
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The siege of a hostile town or castle: defenders, talks and the choice between calculating and storming (openSiege,
 ## openTalk and the sack/spare choice in src/06_ui.js and src/06i_siege.js).
 const Siege = preload("res://campaign/world/world_siege.gd")
@@ -17,7 +18,7 @@ var _factions := FactionCatalog.new()
 
 func _ready() -> void:
 	super()
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/siege_window.gd")
 		return
 

@@ -1,12 +1,13 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const AutoBattle = preload("res://campaign/world/auto_battle.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(1, data, "emp")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(1, data, "emp", ContentLoader.registry())
 	var info: Dictionary = state.roster.info
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5

@@ -25,22 +25,18 @@ var map: WorldMap
 var player: RefCounted
 var diplomatic_wars: Variant = null
 var rng := RandomNumberGenerator.new()
-var catalog := Catalog.new()
-var factions := FactionCatalog.new()
+var catalog: Catalog
+var factions: FactionCatalog
 var clans_on := false  # houses refill lords themselves (WorldClans.refill)
 var info := {}  # troop id -> {tier, mounted, pw}
 var parties: Array = []
 var _next_party_id := 1000000  # party ids stay clear of settlement ids
 
-func _init(world_map: WorldMap, seed_value: int) -> void:
+func _init(world_map: WorldMap, seed_value: int, troops: Catalog, faction_definitions: FactionCatalog) -> void:
 	map = world_map
 	rng.seed = seed_value + 77
-	if not (catalog.load_data()):
-		push_error("Required content failed to load: campaign/world/party_roster.gd")
-		return
-	if not (factions.load_data()):
-		push_error("Required content failed to load: campaign/world/party_roster.gd")
-		return
+	catalog = troops
+	factions = faction_definitions
 	for f in Rules.REAL_FACTIONS + ["bandit", "undead"]:
 		for t in catalog.for_faction(f):
 			info[t.id] = {"tier": t.tier, "mounted": t.mounted, "pw": t.get("pw", 1.0)}

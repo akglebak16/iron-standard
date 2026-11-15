@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldClock = preload("res://campaign/world/world_clock.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -34,8 +35,8 @@ func _check_clock() -> void:
 
 func _check_walking() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(12345, data, "emp")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(12345, data, "emp", ContentLoader.registry())
 	assert(state.map.paths.passable_type(state.map.paths.terr_at(state.player.x, state.player.y)), "player starts on land")
 	var target: Dictionary = {}
 	for s in state.map.settles:

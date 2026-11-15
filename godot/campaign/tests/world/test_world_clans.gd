@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
@@ -7,8 +8,8 @@ const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.g
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var c = s.clans
 	var p = s.player
 	assert(c.clans.size() == 4 * s.wars.factions_alive().size(), "four houses per state")
@@ -84,7 +85,7 @@ func _initialize() -> void:
 	c.day_tick()
 	# save keeps houses, rulers and the oath
 	c.swear("emp")
-	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data)
+	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())
 	assert(back.clans.clans.size() == c.clans.size() and back.player.liege == p.liege)
 	assert(back.clans.clans[0].id is int)
 	var lord: Dictionary = back.roster.parties.filter(func(q): return q.get("clan") != null)[0]

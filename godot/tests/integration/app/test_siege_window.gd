@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 const SiegeWindow = preload("res://apps/godot/presentation/campaign/siege_window.gd")
@@ -6,8 +7,8 @@ const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.g
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var town: Dictionary = {}
 	for t in s.map.settles:
 		if t.kind == "town" and t.fac == "nord":

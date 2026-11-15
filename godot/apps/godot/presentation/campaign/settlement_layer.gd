@@ -1,4 +1,5 @@
 extends Node2D
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Settlements on the map: sprites from a sheet drawn once, owner banners and name labels (like drawWorld in src/07_main.js).
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
 const OriginalArt = preload("res://ui/original_art.gd")
@@ -24,7 +25,7 @@ class SheetPainter extends Node2D:
 				SettlementArt.draw_settlement(self, KINDS[row], SettlementArt.CULTURES[col], cx, cy)
 
 func build(settles: Array) -> void:
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/settlement_layer.gd")
 		return
 	_settles = settles.duplicate()

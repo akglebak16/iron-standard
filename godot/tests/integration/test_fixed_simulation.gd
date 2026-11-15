@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Clock = preload("res://runtime/scheduling/fixed_step_clock.gd")
 const Simulation = preload("res://core/battle/api/battle_simulation.gd")
 const Factory = preload("res://battle/application/factory.gd")
@@ -7,7 +8,7 @@ const Event = preload("res://battle/combat_event.gd")
 
 func run_at(fps: int) -> Dictionary:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()

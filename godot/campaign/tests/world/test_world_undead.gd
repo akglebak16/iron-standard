@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
@@ -6,8 +7,8 @@ const EuropeData = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var u = s.undead
 	assert(int(u.crisis.day) >= 40 and int(u.crisis.day) <= 60 and not u.crisis.on)
 	var news: Array = []
@@ -62,7 +63,7 @@ func _initialize() -> void:
 	u.barrow_destroyed(s.player, barrow)
 	assert(not barrow.barrow and barrow.fac == "bandit" and int(u.crisis.left[str(barrow.id)]) == 0)
 	# save keeps the crisis
-	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data)
+	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())
 	assert(back.undead.crisis.on and back.undead.crisis.src[0] is int)
 	assert(back.map.settlement_by_id(barrow.id).name == barrow.name)
 	# a few world hours run with the dead on the map

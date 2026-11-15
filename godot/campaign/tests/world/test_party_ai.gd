@@ -1,12 +1,13 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(1, data, "emp")
+	assert(ContentLoader.populate(data))
+	var state := WorldState.create(1, data, "emp", ContentLoader.registry())
 	_check_population(state)
 	_check_rules(state)
 	_check_simulation(state)

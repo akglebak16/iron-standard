@@ -1,4 +1,5 @@
 extends CanvasLayer
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## World HUD: date and speed controls, night tint, settlement tooltip, "near a settlement" label.
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 const Economy = preload("res://campaign/economy/party_economy.gd")
@@ -26,7 +27,7 @@ var _factions := FactionCatalog.new()
 
 func _ready() -> void:
 	layer = 5
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/world_hud.gd")
 		return
 	_night = ColorRect.new()

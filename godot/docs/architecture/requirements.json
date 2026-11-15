@@ -2,7 +2,7 @@
   "blueprint": "docs/architecture/BLUEPRINT.md",
   "requirements": [
     {"id":"ARCH-STRUCTURE","stage":7,"status":"pending","checks":["tools/architecture.cjs","tools/architecture.test.cjs"],"remaining":"Move every production module to target roots and enforce public APIs and module cycles, not only file cycles."},
-    {"id":"ARCH-PURITY","stage":6,"status":"pending","checks":["tools/architecture.cjs"],"remaining":"Remove legacy catalog I/O, resource setup and mutable static campaign state from the entire dependency closure of core."},
+    {"id":"ARCH-PURITY","stage":6,"status":"pending","checks":["tools/architecture.cjs"],"remaining":"Catalog I/O and mutable static campaign state removed; separate Resource authoring setup and finish core dependency closure enforcement."},
     {"id":"ARCH-RATCHET","stage":0,"status":"implemented","checks":["tools/architecture.cjs","tools/architecture.test.cjs"]},
     {"id":"RELEASE-INIT","stage":0,"status":"implemented","checks":["tools/release.cjs","tools/release_smoke.gd"]},
     {"id":"TEST-ISOLATION","stage":0,"status":"implemented","checks":["tools/test.cjs"]},
@@ -18,9 +18,9 @@
     {"id":"MODE-LIFECYCLE","stage":5,"status":"pending","checks":["tests/integration/test_mode_lifecycle.gd","campaign/tests/world/test_world_dispose.gd"],"remaining":"Menu/campaign lifecycle implemented; move campaign/battle transition and resource ownership to coordinator."},
     {"id":"CAMPAIGN-API-ISOLATION","stage":5,"status":"pending","checks":["tests/integration/test_campaign_isolation.gd"],"remaining":"Wars, relations and RNG are isolated; commands/queries must still replace mutable UI access."},
     {"id":"CAMPAIGN-RESULT-ONCE","stage":5,"status":"pending","checks":["tests/integration/app/test_encounter_aftermath.gd"],"remaining":"Preserve existing once-only behavior while relocating aftermath from app bridge to campaign application."},
-    {"id":"CONTENT-REGISTRY","stage":6,"status":"pending","checks":[],"remaining":"Inject validated definitions, separate game/visual/animation/audio schemas."},
+    {"id":"CONTENT-REGISTRY","stage":6,"status":"pending","checks":["tests/integration/test_content_registry.gd"],"remaining":"Validated sealed registry injected into world/roster/save restoration; finish composition-root-only loading and separate game/visual/animation/audio schemas."},
     {"id":"SAVE-V2","stage":6,"status":"pending","checks":["campaign/tests/world/test_world_save.gd","tests/integration/test_save_v2.gd","tools/release_smoke.gd"],"remaining":"v2 data, RNG, clocks, v1 migration and atomic generations implemented; restore pending campaign interaction context, finish nested input schema and relocate persistence ports."},
     {"id":"ACCEPTANCE-RELEASE-PERF","stage":7,"status":"pending","checks":["tools/benchmark.cjs"],"remaining":"60 seconds × five repeats of all scenarios; tick <=6 ms, snapshot <=1 ms, frame p95 <=16.67 ms/p99 <=25 ms, no clock lag, memory growth or >10% regression."},
-    {"id":"DELIVERY-REQUIRED-CHECKS","stage":7,"status":"pending","checks":[],"remaining":"Configure protected-branch required checks and reference Windows performance runner; workflow alone does not protect main."}
+    {"id":"DELIVERY-REQUIRED-CHECKS","stage":7,"status":"pending","checks":[],"remaining":"Owner requested local branch only on 2026-11-15; publishing, PR and GitHub protection deferred. Later configure required checks and reference Windows performance runner; workflow alone does not protect main."}
   ]
 }

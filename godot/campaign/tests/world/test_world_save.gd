@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -6,8 +7,8 @@ const SaveStore = preload("res://apps/godot/composition/save_store.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var a := WorldState.create(7, data, "kin")
+	assert(ContentLoader.populate(data))
+	var a := WorldState.create(7, data, "kin", ContentLoader.registry())
 	a.player.gold = 1234
 	a.player.hero.name = "Тест"
 	a.player.hero.str = 4

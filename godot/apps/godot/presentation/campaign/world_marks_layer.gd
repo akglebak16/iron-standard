@@ -1,4 +1,5 @@
 extends Node2D
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## War and quest marks over the world map (drawWar, sgDraw in src/06e_war.js and src/06i_siege.js, drawJqMark in
 ## src/06f_jquests.js): siege rings, fights lasting hours, fires and smoke, blockades, the quest target pointer.
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
@@ -10,7 +11,7 @@ var _quest_mark: Variant = null # {x, y, t0}
 
 func build(world_state: RefCounted) -> void:
 	state = world_state
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/world_marks_layer.gd")
 		return
 

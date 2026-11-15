@@ -1,12 +1,13 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	assert(s.wars.wars.size() >= 8, "default wars: %d" % s.wars.wars.size())
 	assert(s.wars.at_war("emp", "nord") and not s.wars.at_war("emp", "kin"))
 	var emp_before: int = s.wars.hold_of("emp").all

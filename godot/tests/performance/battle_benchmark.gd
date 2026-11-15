@@ -1,4 +1,5 @@
 extends RefCounted
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## CPU baseline. Count and weight checks execute in release too; --ticks is simulation time, not frame count.
 const Factory = preload("res://battle/application/factory.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
@@ -28,7 +29,7 @@ func run(tree: SceneTree) -> void:
 		fail("Invalid benchmark parameters")
 		return
 	var catalog := Catalog.new()
-	if not catalog.load_data():
+	if not ContentLoader.populate(catalog):
 		fail("Catalog failed to load")
 		return
 	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)

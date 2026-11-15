@@ -1,4 +1,5 @@
 extends Node2D
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Lords, vassals, bandits and caravans on the world map: a figure in faction colours with a small banner (drawWorld in src/07_main.js).
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
@@ -13,7 +14,7 @@ var _factions := FactionCatalog.new()
 func build(party_roster: RefCounted, player_party: RefCounted) -> void:
 	roster = party_roster
 	player = player_party
-	if not (_factions.load_data()):
+	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/world_parties_layer.gd")
 		return
 

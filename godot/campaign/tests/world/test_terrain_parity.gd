@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The Godot terrain must match the browser generator (fixture from campaign/tools/export_world.cjs).
 const Generator = preload("res://campaign/world/terrain_generator.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
@@ -7,7 +8,7 @@ const MAX_CELL_MISMATCH := 0.002
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
+	assert(ContentLoader.populate(data))
 	var fixture = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
 	assert(typeof(fixture) == TYPE_DICTIONARY)
 	for entry in fixture.seeds:

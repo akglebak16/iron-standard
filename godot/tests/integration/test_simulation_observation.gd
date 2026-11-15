@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const Figures = preload("res://apps/godot/presentation/battle/unit_view.gd")
@@ -6,7 +7,7 @@ const Impacts = preload("res://apps/godot/presentation/battle/impact_effects.gd"
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()

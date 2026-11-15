@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
@@ -14,7 +15,7 @@ func _initialize() -> void:
 	var gear := GearCatalog.new()
 	var perks := PerkCatalog.new()
 	var companions := CompanionCatalog.new()
-	assert(troops.load_data() and gear.load_data() and perks.load_data() and companions.load_data())
+	assert(ContentLoader.populate(troops) and ContentLoader.populate(gear) and ContentLoader.populate(perks) and ContentLoader.populate(companions))
 	var setup := Setup.new()
 	setup.hero_troop = "n1"
 	setup.hero_profile = {"cha": 2}

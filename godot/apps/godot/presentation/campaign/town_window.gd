@@ -1,4 +1,5 @@
 extends "res://apps/godot/presentation/campaign/modal_window.gd"
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## A settlement: recruits, market (food, hero gear) and waiting (renderTown in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
 const Market = preload("res://campaign/economy/market.gd")
@@ -17,7 +18,7 @@ var _legacy := {}
 
 func _ready() -> void:
 	super()
-	if not (_gear.load_data() and _factions.load_data()):
+	if not (ContentLoader.populate(_gear) and ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/town_window.gd")
 		return
 	_legacy = {"weapon": HeroGear.LEGACY_WEAPONS, "armor": HeroGear.LEGACY_ARMOR, "shield": HeroGear.LEGACY_SHIELDS, "horse": HeroGear.LEGACY_HORSES}

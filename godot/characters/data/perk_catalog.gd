@@ -1,18 +1,12 @@
-extends RefCounted
+extends "res://core/content/api/definition_catalog.gd"
 ## Validated definitions from src/01c_perks.js; callers receive detached values.
 const Config = preload("res://characters/config.gd")
-const DATA_PATH := "res://characters/data/perks.json"
+const CONTENT_KEY := "perks"
 var _perks: Dictionary = {}
 var _zero: Dictionary = {}
 
-func load_data() -> bool:
-	var file := FileAccess.open(DATA_PATH, FileAccess.READ)
-	if file == null or not replace_data(JSON.parse_string(file.get_as_text())):
-		push_error("Invalid or missing perk catalog: " + DATA_PATH)
-		return false
-	return true
-
 func replace_data(data: Variant) -> bool:
+	if _sealed: return false
 	if not data is Dictionary or not data.get("perks") is Array or not data.get("zero") is Dictionary:
 		return false
 	var zero: Dictionary = data.zero
@@ -43,6 +37,7 @@ func replace_data(data: Variant) -> bool:
 		return false
 	_perks = perks.duplicate(true)
 	_zero = zero.duplicate(true)
+	_valid = true
 	return true
 
 func size() -> int:

@@ -1,21 +1,15 @@
-extends RefCounted
+extends "res://core/content/api/definition_catalog.gd"
 ## Validated, detached copy of EQ from src/01b_gear.js.
 const Config = preload("res://equipment/config.gd")
-const DATA_PATH := "res://equipment/data/items.json"
+const CONTENT_KEY := "gear"
 const SLOTS := ["head", "body", "hands", "legs", "melee", "ranged", "shield", "horse"]
 const ARMOR_SLOTS := ["head", "body", "hands", "legs"]
 const WEAPON_SLOTS := ["melee", "ranged"]
 const NUMERIC_FIELDS := ["tier", "price", "w", "v", "dmg", "spd", "reach", "hands", "arc", "cleave", "fall", "parry", "brk", "kb", "cd", "range", "acc", "pb", "bs", "rng", "unique"]
 var _items: Dictionary = {}
 
-func load_data() -> bool:
-	var file := FileAccess.open(DATA_PATH, FileAccess.READ)
-	if file == null or not replace_data(JSON.parse_string(file.get_as_text())):
-		push_error("Invalid or missing gear catalog: " + DATA_PATH)
-		return false
-	return true
-
 func replace_data(data: Variant) -> bool:
+	if _sealed: return false
 	if not data is Dictionary or data.is_empty():
 		return false
 	for id in data:
@@ -54,6 +48,7 @@ func replace_data(data: Variant) -> bool:
 				if not faction is String or faction.is_empty():
 					return false
 	_items = data.duplicate(true)
+	_valid = true
 	return true
 
 func size() -> int:

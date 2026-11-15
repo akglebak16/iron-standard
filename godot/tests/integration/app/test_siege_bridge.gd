@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
@@ -6,8 +7,8 @@ const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var b := Bridge.new()
 	var town: Dictionary = {}
 	for t in s.map.settles:

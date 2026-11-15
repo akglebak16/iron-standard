@@ -1,15 +1,10 @@
-extends RefCounted
+extends "res://core/content/api/definition_catalog.gd"
 const Config = preload("res://characters/config.gd")
-const DATA_PATH := "res://characters/data/companions.json"
+const CONTENT_KEY := "companions"
 var _definitions: Dictionary = {}
 
-func load_data() -> bool:
-	if not replace_data(JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))):
-		push_error("Invalid or missing companion catalog: " + DATA_PATH)
-		return false
-	return true
-
 func replace_data(data: Variant) -> bool:
+	if _sealed: return false
 	if not data is Array or data.is_empty():
 		return false
 	var definitions := {}
@@ -50,6 +45,7 @@ func replace_data(data: Variant) -> bool:
 					return false
 		definitions[entry.id] = entry
 	_definitions = definitions.duplicate(true)
+	_valid = true
 	return true
 
 func ids() -> Array:

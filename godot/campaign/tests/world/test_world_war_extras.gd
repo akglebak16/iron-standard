@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://campaign/world/world_state.gd")
 const WorldSave = preload("res://campaign/world/world_save.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
@@ -8,8 +9,8 @@ const Marks = preload("res://apps/godot/presentation/campaign/world_marks_layer.
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var s := WorldState.create(5, data, "emp")
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
 	var w = s.wars
 	var p = s.player
 	var news: Array = []
@@ -101,7 +102,7 @@ func _initialize() -> void:
 	assert(s.clans.of_faction("khan").is_empty() and s.clans.of_faction("emi").size() >= houses)
 	# save keeps fights, sieges and blockades
 	s.skirmish.contact(a if a in s.roster.parties else s.roster.make_party("lord", "emp", "Г", 100, 100, [{"type": "e2a", "n": 60}]), s.roster.make_party("lord", "nord", "Д", 102, 100, [{"type": "n2a", "n": 60}]), s.ai.auto_fight)
-	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data)
+	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())
 	assert(back.skirmish.fights.size() == s.skirmish.fights.size())
 	# windows and marks
 	var pw := PartyWindow.new()

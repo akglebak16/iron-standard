@@ -1,11 +1,12 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const World = preload("res://campaign/world/world_state.gd")
 const Europe = preload("res://campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var data := Europe.new()
-	assert(data.load_data())
-	var world = World.create(4242, data)
+	assert(ContentLoader.populate(data))
+	var world = World.create(4242, data, "emp", ContentLoader.registry())
 	var reference: WeakRef = weakref(world)
 	var wars_reference: WeakRef = weakref(world.wars)
 	world.dispose()

@@ -1,9 +1,10 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://characters/data/perk_catalog.gd")
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	assert(catalog.size() == 20)
 	assert(catalog.get_perk("tactician").fx.ally == [0.03, 0.06, 0.09])
 	var detached := catalog.get_perk("tactician")

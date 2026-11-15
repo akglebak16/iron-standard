@@ -23,6 +23,8 @@ const Market = preload("res://campaign/economy/market.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
 const PerkEffects = preload("res://characters/rules/perk_effects.gd")
+const TroopCatalog = preload("res://troops/data/catalog.gd")
+const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 
 ## Starting troops by culture (CULT in src/05_world.js).
 const START_TROOPS := {
@@ -83,7 +85,14 @@ func dispose() -> void:
 	companions = null
 	roster = null
 
-static func create(seed_value: int, data: EuropeData, player_culture := "emp") -> RefCounted:
+static func create(seed_value: int, data: EuropeData, player_culture: String, definitions: Dictionary) -> RefCounted:
+	if not START_TROOPS.has(player_culture) or data == null: return null
+	if not definitions.get("troops") is TroopCatalog or not definitions.get("factions") is FactionCatalog: return null
+	if not definitions.get("gear") is GearCatalog or not definitions.get("goods") is GoodsCatalog: return null
+	if not definitions.get("perks") is PerkCatalog or not definitions.get("companions") is CompanionCatalog: return null
+	if not data.is_ready(): return null
+	for key in ["troops", "factions", "gear", "goods", "perks", "companions"]:
+		if not definitions[key].is_ready(): return null
 	var state := new()
 	state.culture = player_culture
 	state.seed_value = seed_value
@@ -94,22 +103,14 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 		"int": 1, "cha": 1, "armor": 0, "weapon": 0, "shield": 0, "horse": 1 if player_culture in ["khan", "emi"] else 0, "hp": 1.0, "seed": seed_value % 99999 + 1}
 	for t in START_TROOPS[player_culture]:
 		state.player.troops.append({"type": t[0], "n": t[1]})
-	if not (state.perks.load_data()):
-		push_error("Required content failed to load: campaign/world/world_state.gd")
-		return null
-	var goods := GoodsCatalog.new()
-	if not (goods.load_data()):
-		push_error("Required content failed to load: campaign/world/world_state.gd")
-		return null
+	state.perks = definitions.perks
+	var goods: GoodsCatalog = definitions.goods
 	state.market = Market.new(goods, RandomNumberGenerator.new())
 	state.market.rng.seed = seed_value + 191
-	var gear_catalog := GearCatalog.new()
-	if not (gear_catalog.load_data()):
-		push_error("Required content failed to load: campaign/world/world_state.gd")
-		return null
+	var gear_catalog: GearCatalog = definitions.gear
 	state.gear = gear_catalog
 	state.market.gear = gear_catalog.definitions()
-	state.roster = PartyRoster.new(state.map, seed_value)
+	state.roster = PartyRoster.new(state.map, seed_value, definitions.troops, definitions.factions)
 	state.roster.player = state.player
 	state.roster.populate()
 	state.wars = WorldWars.new(state.map, state.roster)
@@ -132,9 +133,7 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.wars.clans = state.clans
 	state.ai.clans = state.clans
 	state.roster.clans_on = true
-	if not (state.companion_catalog.load_data()):
-		push_error("Required content failed to load: campaign/world/world_state.gd")
-		return null
+	state.companion_catalog = definitions.companions
 	state.quests = WorldQuests.new(state.map, state.market.goods, state.roster.catalog, state.wars, state.roster.rng)
 	state.quests.message.connect(state.log_world)
 	state.quests.gen_boards(state.clock.day)

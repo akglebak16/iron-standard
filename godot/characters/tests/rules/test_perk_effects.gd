@@ -1,10 +1,11 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://characters/data/perk_catalog.gd")
 const PerkEffects = preload("res://characters/rules/perk_effects.gd")
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	var none := PerkEffects.own({}, catalog)
 	assert(none.ally == 0 and none.morale == 0 and none.hp == 0)
 	var profile := {"perks": ["tactician", "tactician", "inspire", "quick", "unknown"]}

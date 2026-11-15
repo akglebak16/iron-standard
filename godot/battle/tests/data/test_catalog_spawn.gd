@@ -1,4 +1,5 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const ArmyBuilder = preload("res://battle/data/army_builder.gd")
 
 const Config = preload("res://battle/config.gd")
@@ -11,7 +12,7 @@ const Unit = preload("res://battle/model/unit.gd")
 
 func _initialize() -> void:
 	var catalog = Catalog.new()
-	assert(catalog.load_data())
+	assert(ContentLoader.populate(catalog))
 	assert(catalog.size() == 67)
 	assert(catalog.get_troop("n1").name == "Бонд")
 	assert(catalog.get_troop("n1").hp == 57) # faction health multiplier already applied in source catalog

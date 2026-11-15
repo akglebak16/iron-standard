@@ -1,4 +1,5 @@
 extends "res://apps/godot/presentation/campaign/modal_window.gd"
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Party, hero and journal windows (openPanel in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
 const CompanionText = preload("res://apps/godot/presentation/campaign/companion_text.gd")
@@ -476,7 +477,7 @@ static func _stats(it: Dictionary) -> String:
 ## States: power, ruler, nobles, holdings, wars (journalFactionsBody in src/06g_jfactions.js).
 func _factions_tab(p) -> void:
 	if not _fcat_loaded:
-		_fcat_loaded = _fcat.load_data()
+		_fcat_loaded = ContentLoader.populate(_fcat)
 	var wars = state.wars
 	var clans = state.clans
 	var alive: Array = wars.factions_alive()

@@ -1,4 +1,5 @@
 extends Node
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Explicit checks: assert expressions do not run in exported release builds.
 const Europe = preload("res://campaign/data/europe_data.gd")
 const World = preload("res://campaign/world/world_state.gd")
@@ -8,10 +9,10 @@ const SaveStore = preload("res://apps/godot/composition/save_store.gd")
 
 func _ready() -> void:
 	var data := Europe.new()
-	if not data.load_data():
+	if not ContentLoader.populate(data):
 		fail("Europe content")
 		return
-	var world = World.create(4242, data, "emp")
+	var world = World.create(4242, data, "emp", ContentLoader.registry())
 	if world == null or world.roster.parties.is_empty() or world.player.troops.is_empty():
 		fail("Campaign initialization")
 		return
