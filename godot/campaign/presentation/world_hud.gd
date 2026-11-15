@@ -1,10 +1,12 @@
 extends CanvasLayer
 ## World HUD: date and speed controls, night tint, settlement tooltip, "near a settlement" label.
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const Economy = preload("res://campaign/economy/party_economy.gd")
 const SettlementLayer = preload("res://campaign/presentation/settlement_layer.gd")
 
 signal speed_changed(speed: int)
 signal pause_toggled
+signal panel_requested(tab: String)
 
 var _date: Label
 var _buttons: Dictionary = {}
@@ -12,6 +14,7 @@ var _night: ColorRect
 var _tip: PanelContainer
 var _tip_label: Label
 var _near: Label
+var _stats: Label
 var _notice: Label
 var _factions := FactionCatalog.new()
 
@@ -50,6 +53,15 @@ func _ready() -> void:
 			b.pressed.connect(func(): speed_changed.emit(int(def[0])))
 		row.add_child(b)
 		_buttons[def[0]] = b
+	_stats = Label.new()
+	_stats.add_theme_color_override("font_color", Color("#ffe9a0"))
+	row.add_child(_stats)
+	for def in [["troops", "Отряд"], ["hero", "Герой"], ["journal", "Журнал"]]:
+		var pb := Button.new()
+		pb.text = def[1]
+		pb.focus_mode = Control.FOCUS_NONE
+		pb.pressed.connect(func(): panel_requested.emit(def[0]))
+		row.add_child(pb)
 	_near = Label.new()
 	_near.position = Vector2(16, 64)
 	_near.add_theme_color_override("font_color", Color("#ffe9a0"))
@@ -81,6 +93,11 @@ func refresh(state: RefCounted, near_settlement: Dictionary) -> void:
 		_buttons[key].button_pressed = false
 		_buttons[key].toggle_mode = true
 		_buttons[key].button_pressed = int(key) == clock.speed and not clock.paused
+	var p = state.player
+	var fx: Dictionary = state.player_effects()
+	var portions: int = Economy.provisions(p)
+	var men: int = Economy.troop_count(p.troops)
+	_stats.text = "Золото %d   Порции %d (%d дн.)   Бойцов %d/%d" % [p.gold, portions, ceili(portions / maxf(1.0, ceilf(men / 6.0))), men, Economy.size_cap(p.hero, fx)]
 	_near.text = "Рядом: %s" % near_settlement.name if not near_settlement.is_empty() and near_settlement.kind != "camp" else ""
 
 ## Tooltip for the settlement under the mouse (worldTip in src/07_main.js); empty dict hides it.

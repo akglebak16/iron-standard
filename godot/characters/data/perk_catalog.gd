@@ -56,3 +56,10 @@ func zero_effects() -> Dictionary:
 
 static func _valid_number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value)) and value >= 0.0
+
+## Every perk in the order of the browser's panel.
+func list() -> Array[Dictionary]:
+	var perks: Array[Dictionary] = []
+	for perk in _perks.values():
+		perks.append(perk.duplicate(true))
+	return perks
