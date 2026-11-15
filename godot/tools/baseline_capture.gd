@@ -2,8 +2,9 @@ extends SceneTree
 ## Reference frames and timing for a whole app scene. Informational, not a pass/fail test.
 ## Run with rendering (not --headless) and a fixed frame rate so the simulation repeats exactly:
 ##   godot --path godot --fixed-fps 60 --disable-vsync --audio-driver Dummy --resolution 1280x720 \
-##     --script res://tools/baseline_capture.gd -- --scene=res://app/main.tscn --out=<dir> [--reference=<dir>]
+##     --script res://tools/baseline_capture.gd -- --scene=res://app/main.tscn --out=<dir> [--reference=<dir>] [--wall-code]
 ## Frames are saved as <name>_<frame>.png. With --reference the frames are compared to the same files there.
+const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
 const DEFAULT_SCENE := "res://app/main.tscn"
 const DEFAULT_OUT := "user://baseline"
 const CAPTURE_FRAMES: Array[int] = [2, 300, 900, 1500]
@@ -32,6 +33,8 @@ func _initialize() -> void:
 			_scene_path = arg.trim_prefix("--scene=")
 		elif arg.begins_with("--out="):
 			_out = arg.trim_prefix("--out=")
+		elif arg == "--wall-code":
+			TerrainView.use_wall_scenes = false
 		elif arg.begins_with("--reference="):
 			_reference = arg.trim_prefix("--reference=")
 	_name = _scene_path.get_file().get_basename()

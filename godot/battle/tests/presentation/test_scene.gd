@@ -51,7 +51,7 @@ func _check() -> void:
 	await physics_frame
 	await process_frame
 	assert(view.get_battle_snapshot().tick > 0)
-	assert(view._music._note_players.any(func(player): return player.playing))
+	assert(view._music._theme_player != null and view._music._theme_player.playing)
 	assert(view.camera.position.distance_to(view.get_battle_snapshot().hero_position) <= BattleCamera.INITIAL_LEAD.length())
 	var session: Session = view._session
 	var target = session._state.units.filter(func(unit): return unit.side == 1)[0]

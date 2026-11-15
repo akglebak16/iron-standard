@@ -61,9 +61,7 @@ func configure(walls: Array[Rect2], seed_value: int) -> void:
 func _draw() -> void:
 	for segment in _segments:
 		draw_rect(Rect2(segment.position + SHADOW_OFFSET, segment.size), SHADOW)
-	for piece in _rubble:
-		draw_circle(piece.position, piece.radius, EDGE, true, -1.0, true)
-		draw_circle(piece.position, piece.radius - EDGE_WIDTH * 0.5, piece.color, true, -1.0, true)
+	_draw_rubble()
 	for segment in _segments:
 		_draw_segment(segment)
 	for opening in _openings:
@@ -73,6 +71,11 @@ func _draw() -> void:
 		if opening.size.y > GATE_MIN_WIDTH:
 			_draw_gate_leaf(center, -1.0)
 			_draw_gate_leaf(center, 1.0)
+
+func _draw_rubble() -> void:
+	for piece in _rubble:
+		draw_circle(piece.position, piece.radius, EDGE, true, -1.0, true)
+		draw_circle(piece.position, piece.radius - EDGE_WIDTH * 0.5, piece.color, true, -1.0, true)
 
 func _draw_segment(segment: Rect2) -> void:
 	draw_rect(segment, STONE)

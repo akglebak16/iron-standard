@@ -11,6 +11,12 @@ function findTests(dir) {
     return entry.isFile() && /^test_.*\.gd$/.test(entry.name) ? [full] : [];
   });
 }
+// Assets (audio, images) are loaded through the import cache, which a clean checkout does not have yet.
+const imported = spawnSync(engine, ['--headless', '--path', root, '--import'], { encoding: 'utf8', timeout: 120000 });
+if (imported.error || imported.status !== 0) {
+  process.stderr.write(`${imported.stdout || ''}\n${imported.stderr || ''}`);
+  throw new Error(`Godot asset import failed${imported.error ? ` (${imported.error.message})` : ''}`);
+}
 const tests = findTests(root).sort();
 if (!tests.length) throw new Error('No Godot tests found');
 for (const test of tests) {

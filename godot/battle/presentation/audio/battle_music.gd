@@ -22,9 +22,14 @@ const ECHO_TAPS := 6
 const MUSIC_GAIN := 0.5
 const NOTE_VOICES := 8
 const DRUM_VOICES := 7
+## Authored looping track; rendered by battle/tools/render_battle_theme.py (original work, CC0).
+const THEME_PATH := "res://battle/presentation/audio/assets/battle_theme.ogg"
 
 static var _notes: Array[AudioStreamWAV] = []
 static var _drum: AudioStreamWAV
+## Tests and comparisons may turn the authored track off to hear the procedural voice.
+static var use_theme_asset := true
+var _theme_player: AudioStreamPlayer
 var _rng := RandomNumberGenerator.new()
 var _until_note := 0.0
 var _note_players: Array[AudioStreamPlayer] = []
@@ -34,6 +39,8 @@ var enabled := true:
 		enabled = value
 		for player in _note_players + _drum_players:
 			player.stream_paused = not enabled
+		if _theme_player:
+			_theme_player.stream_paused = not enabled
 
 func _ready() -> void:
 	_rng.randomize()
@@ -42,6 +49,8 @@ func _ready() -> void:
 
 func advance(dt: float) -> void:
 	if not enabled or dt <= 0.0:
+		return
+	if _theme_player:
 		return
 	_until_note -= dt
 	if _until_note > 0.0:
@@ -57,6 +66,8 @@ func advance(dt: float) -> void:
 		_play(_drum_players, _drum)
 
 func _prepare() -> void:
+	if use_theme_asset and _theme_player == null and _start_theme():
+		return
 	if _notes.is_empty():
 		for octave in [1.0, 0.5]:
 			for pitch in SCALE:
@@ -66,6 +77,19 @@ func _prepare() -> void:
 		_note_players.append(_make_player())
 	for i in DRUM_VOICES:
 		_drum_players.append(_make_player())
+
+## The asset replaces the generated notes and drum; reactions to battle events stay in combat_audio.gd.
+func _start_theme() -> bool:
+	if not ResourceLoader.exists(THEME_PATH):
+		return false
+	var theme := load(THEME_PATH) as AudioStreamOggVorbis
+	if theme == null:
+		return false
+	theme.loop = true
+	_theme_player = _make_player()
+	_theme_player.stream = theme
+	_theme_player.play()
+	return true
 
 func _make_player() -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()

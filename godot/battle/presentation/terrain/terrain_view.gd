@@ -2,6 +2,7 @@ extends Node2D
 
 const GroundShader = preload("res://battle/presentation/terrain/ground.gdshader")
 const WallView = preload("res://battle/presentation/terrain/wall_view.gd")
+const WallSceneView = preload("res://battle/presentation/terrain/wall_scene_view.gd")
 const Config = preload("res://battle/config.gd")
 const SNOW_BIOME := "snow"
 const DRY_BIOMES := ["steppe", "arid"]
@@ -18,6 +19,8 @@ const ROAD_SLOPE := 0.175
 const SEED_OFFSET_RANGE := 512.0
 const BACKGROUND_ORDER := -1
 
+## Assemble the siege wall from scenes (editable in the editor); false draws it with code as before.
+static var use_wall_scenes := true
 var _size := Vector2.ZERO
 
 func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: String) -> void:
@@ -40,7 +43,7 @@ func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: Strin
 	_size = size
 	z_index = BACKGROUND_ORDER
 	if not walls.is_empty():
-		var wall := WallView.new()
+		var wall: WallView = WallSceneView.new() if use_wall_scenes else WallView.new()
 		wall.configure(walls, seed_value)
 		add_child(wall)
 

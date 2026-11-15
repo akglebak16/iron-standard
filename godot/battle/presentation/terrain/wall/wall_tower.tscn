@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://battle/presentation/terrain/wall/assets/wall_disc.png" id="1"]
+[ext_resource type="Texture2D" path="res://battle/presentation/terrain/wall/assets/wall_tower.png" id="2"]
+
+[node name="WallTower" type="Node2D"]
+
+[node name="Shadow" type="Sprite2D" parent="."]
+modulate = Color(0, 0, 0, 0.28)
+show_behind_parent = true
+position = Vector2(-6, 10)
+texture = ExtResource("1")
+
+[node name="Body" type="Sprite2D" parent="."]
+texture = ExtResource("2")
