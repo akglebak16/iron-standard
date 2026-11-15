@@ -61,3 +61,8 @@ VSync; второй повтор меняет порядок версий. Па�
 принимать новый образец. complete=false означает незавершённое сравнение.
 
 Результаты первоначального сопоставления — `release-toolchain-comparison.md`.
+
+Профиль и исправление торможения карты — [campaign-map-cache.md](campaign-map-cache.md).
+Общий view-benchmark поддерживает `--measure-seconds=60`, `--camera-route` и
+диагностический `--map-cache=off`; отчёт включает CPU/GPU render, draw calls и
+выборки видеопамяти. Прогрев начинается после готовности статического кэша.

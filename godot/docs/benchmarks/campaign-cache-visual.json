@@ -1,0 +1,14 @@
+[
+	{
+		"normalized_mean_channel_error": 0.001538868180374,
+		"zoom": 0.25
+	},
+	{
+		"normalized_mean_channel_error": 0.00249976832939966,
+		"zoom": 0.9
+	},
+	{
+		"normalized_mean_channel_error": 0.00252341858811426,
+		"zoom": 2.5
+	}
+]
