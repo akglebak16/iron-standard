@@ -1,0 +1,58 @@
+extends Camera2D
+## Pan with the right/middle mouse button or WASD/arrows, zoom with the wheel or +/-.
+const MIN_ZOOM := 0.18
+const MAX_ZOOM := 2.5
+const PAN_SPEED := 900.0
+
+var bounds := Rect2(0, 0, 5200, 3400)
+var _dragging := false
+
+func _ready() -> void:
+	position_smoothing_enabled = false
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var button := event as InputEventMouseButton
+		if button.button_index == MOUSE_BUTTON_WHEEL_UP and button.pressed:
+			_zoom_at(1.15, button.position)
+		elif button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
+			_zoom_at(1.0 / 1.15, button.position)
+		elif button.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_LEFT]:
+			_dragging = button.pressed
+	elif event is InputEventMouseMotion and _dragging:
+		position -= (event as InputEventMouseMotion).relative / zoom.x
+		_clamp()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		var key := (event as InputEventKey).keycode
+		if key == KEY_EQUAL or key == KEY_KP_ADD:
+			_zoom_at(1.25, get_viewport().get_visible_rect().size / 2.0)
+		elif key == KEY_MINUS or key == KEY_KP_SUBTRACT:
+			_zoom_at(0.8, get_viewport().get_visible_rect().size / 2.0)
+
+func _process(delta: float) -> void:
+	var move := Vector2(Input.get_axis("ui_left", "ui_right"), Input.get_axis("ui_up", "ui_down"))
+	for pair in [[KEY_A, Vector2.LEFT], [KEY_D, Vector2.RIGHT], [KEY_W, Vector2.UP], [KEY_S, Vector2.DOWN]]:
+		if Input.is_key_pressed(pair[0]):
+			move += pair[1]
+	if move != Vector2.ZERO:
+		position += move.normalized() * PAN_SPEED * delta / zoom.x
+		_clamp()
+
+func _zoom_at(factor: float, screen_point: Vector2) -> void:
+	var before := _screen_to_world(screen_point)
+	var z := clampf(zoom.x * factor, MIN_ZOOM, MAX_ZOOM)
+	zoom = Vector2(z, z)
+	position += before - _screen_to_world(screen_point)
+	_clamp()
+
+func _screen_to_world(p: Vector2) -> Vector2:
+	return position + (p - get_viewport().get_visible_rect().size / 2.0) / zoom.x
+
+func fit_all() -> void:
+	var view := get_viewport().get_visible_rect().size
+	var z := minf(view.x / bounds.size.x, view.y / bounds.size.y)
+	zoom = Vector2(z, z)
+	position = bounds.get_center()
+
+func _clamp() -> void:
+	position = position.clamp(bounds.position, bounds.end)

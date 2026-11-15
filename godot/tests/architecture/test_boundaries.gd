@@ -16,6 +16,9 @@ func _initialize() -> void:
 	_check_tree("res://campaign/data", campaign_forbidden)
 	_check_tree("res://campaign/rules", campaign_forbidden + scene_and_files)
 	_check_tree("res://campaign/economy", campaign_forbidden + scene_and_files)
+	# World generation is pure simulation: no scenes, no files, no input. Its picture lives in campaign/presentation.
+	_check_tree("res://campaign/world", campaign_forbidden + scene_and_files)
+	_check_tree("res://campaign/presentation", campaign_forbidden + ["FileAccess", "._rng"])
 	# These legacy content identifiers belong to definitions and compatibility adapters.
 	var legacy_content := ['"undead"', '"skel"', '"zombie"', "UNDEAD_FACTION", "undead_kind"]
 	_check_tree("res://battle/model", legacy_content)
