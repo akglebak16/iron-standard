@@ -11,6 +11,8 @@ const Aftermath = preload("res://app/encounter_aftermath.gd")
 const AutoBattle = preload("res://campaign/world/auto_battle.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const Config = preload("res://campaign/config.gd")
+const Siege = preload("res://campaign/world/world_siege.gd")
+const SiegeAftermath = preload("res://campaign/rules/siege_aftermath.gd")
 
 var troops := Catalog.new()
 var gear := GearCatalog.new()
@@ -42,6 +44,10 @@ func make_setup(state: RefCounted, opponent: Dictionary) -> Setup:
 	s.hero_profile = state.player.hero.duplicate(true)
 	s.enemy_leader_name = opponent.name if Rules.is_noble(opponent) else ""
 	s.hero_position = Vector2(780, 850)
+	if opponent.get("kind") == "siege":
+		s.siege = true
+		s.wall_damage = clampf(float(opponent.get("wall_damage", 0.0)), 0.0, 1.0)
+		s.wall_defense = opponent.get("wall_defense", {}).duplicate()
 	return s
 
 func party_dict(state: RefCounted) -> Dictionary:
@@ -57,7 +63,39 @@ func opponent_dict(party: Dictionary, camp_settlement: Dictionary) -> Dictionary
 	return o
 
 func auto_result(state: RefCounted, opponent: Dictionary) -> Dictionary:
-	return AutoBattle.resolve(state.player.troops, state.player.hero, opponent.troops, state.roster.info, rng)
+	var mult := 1.0
+	if opponent.get("kind") == "siege":
+		mult = Siege.def_k(state.map.settlement_by_id(opponent.sid))
+	return AutoBattle.resolve(state.player.troops, state.player.hero, opponent.troops, state.roster.info, rng, 0.0, mult)
+
+## The siege opponent for a town: defenders, wall damage and the stones/oil on the walls.
+func siege_opponent(state: RefCounted, s: Dictionary) -> Dictionary:
+	var o: Dictionary = state.siege.siege_party(s)
+	o["wall_damage"] = clampf(float(s.get("dmg", 0.0)), 0.0, 1.0)
+	o["wall_defense"] = SiegeAftermath.supplies(s)
+	return o
+
+## World dict a siege result is resolved against: the town and the lords inside it.
+func siege_world(state: RefCounted, s: Dictionary) -> Dictionary:
+	var inside: Array = []
+	for p in state.roster.parties:
+		if p.kind == "lord" and p.hide and p.home == s.id and p.fac == s.fac:
+			inside.append(p.duplicate(true))
+	return {"parties": inside, "settlements": [s.duplicate(true)], "factions": Rules.REAL_FACTIONS}
+
+## Writes the updated town back (captured, garrison losses) and removes lords that fled a taken town.
+func apply_siege(state: RefCounted, s: Dictionary, aftermath: Dictionary) -> void:
+	for u in aftermath.world.get("settlements", []):
+		if u.id == s.id:
+			for k in u:
+				s[k] = u[k]
+	var left := {}
+	for p in aftermath.world.get("parties", []):
+		left[p.id] = true
+	for i in range(state.roster.parties.size() - 1, -1, -1):
+		var q: Dictionary = state.roster.parties[i]
+		if q.kind == "lord" and q.hide and q.home == s.id and not left.has(q.id):
+			state.roster.parties.remove_at(i)
 
 func is_hero_mounted(state: RefCounted) -> bool:
 	return bool(HeroGear.resolve(state.player.hero, gear).get("mounted", false))
@@ -79,6 +117,8 @@ func apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary) -> vo
 		p.y = party.position.y
 	p.stop()
 	p.busy = ""
+	if opponent.get("kind") == "siege":
+		return
 	var updated := _find(aftermath.world.get("parties", []), opponent.id)
 	if updated.is_empty():
 		_remove_opponent(state, opponent)

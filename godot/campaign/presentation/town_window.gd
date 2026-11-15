@@ -33,9 +33,14 @@ func render() -> void:
 	var mine: bool = settlement.fac == "player"
 	title_label.text = settlement.name
 	sub_label.text = "%s · %s   ·   золото %d" % [SettlementLayer.KIND_NAMES.get(settlement.kind, ""), _factions.get_faction(settlement.fac).get("name", ""), p.gold]
-	set_tabs([["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]], current_tab if current_tab != "" else "recruit")
+	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]]
+	if mine:
+		tabs.append(["hold", "Владение"])
+	set_tabs(tabs, current_tab if current_tab != "" else "recruit")
 	clear_body()
-	if current_tab == "market":
+	if current_tab == "hold" and mine:
+		_hold(p, fx)
+	elif current_tab == "market":
 		_market(p, fx)
 	elif current_tab == "goods":
 		_goods(p, fx)
@@ -59,6 +64,29 @@ func _recruits(p, fx: Dictionary) -> void:
 	heading("Ожидание")
 	note("Время идёт как обычно, а отряд стоит у стен. Любой клик по карте — в путь.")
 	row("Подождать здесь", "", [{"text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])
+
+func _hold(p, fx: Dictionary) -> void:
+	var siege = state.siege
+	var income: int = siege.income(settlement)
+	var upkeep: int = roundi(siege.upkeep(settlement) * (1.0 - float(fx.get("wage", 0.0))))
+	var garrison: Array = state.wars.garrison_of(settlement)
+	heading("Доход")
+	note("Подати +%d в день, гарнизон стоит %d. Оставь здесь людей: пустой город захватят." % [income, upkeep])
+	if float(settlement.get("ruin", 0)) > 0:
+		note("Руины ещё восстанавливаются: доход сильно меньше.")
+	var cap := Economy.size_cap(p.hero, fx)
+	heading("Гарнизон (%d)" % Economy.troop_count(garrison))
+	for t in garrison.duplicate():
+		var troop: Dictionary = state.roster.catalog.get_troop(t.type)
+		row("%s ×%d" % [troop.name, t.n], "ур. %d" % troop.tier, [
+			{"text": "Забрать", "call": func(): siege.gar_move(p, settlement, t.type, 1, false, cap)},
+			{"text": "×5", "call": func(): siege.gar_move(p, settlement, t.type, 5, false, cap)}])
+	heading("Твой отряд")
+	for t in p.troops.duplicate():
+		var troop: Dictionary = state.roster.catalog.get_troop(t.type)
+		row("%s ×%d" % [troop.name, t.n], "ур. %d" % troop.tier, [
+			{"text": "Оставить", "call": func(): siege.gar_move(p, settlement, t.type, 1, true, cap)},
+			{"text": "×5", "call": func(): siege.gar_move(p, settlement, t.type, 5, true, cap)}])
 
 func _market(p, fx: Dictionary) -> void:
 	heading("Провизия")

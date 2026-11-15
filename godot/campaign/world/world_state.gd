@@ -9,6 +9,7 @@ const PartyAI = preload("res://campaign/world/party_ai.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const PartyEconomy = preload("res://campaign/economy/party_economy.gd")
 const WorldWars = preload("res://campaign/world/world_wars.gd")
+const WorldSiege = preload("res://campaign/world/world_siege.gd")
 const Market = preload("res://campaign/economy/market.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
@@ -26,6 +27,7 @@ signal party_met(party: Dictionary, forced: bool)
 signal log_added(text: String)
 signal settlement_changed(settlement: Dictionary)
 signal settlement_entered(settlement: Dictionary)
+signal siege_requested(settlement: Dictionary)
 
 var map: RefCounted
 var clock := WorldClock.new()
@@ -38,6 +40,7 @@ var roster: PartyRoster
 var perks := PerkCatalog.new()
 var market: Market
 var wars: WorldWars
+var siege: WorldSiege
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
 
@@ -61,6 +64,7 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.roster.populate()
 	state.wars = WorldWars.new(state.map, state.roster)
 	state.wars.start()
+	state.siege = WorldSiege.new(state.wars, state.roster, state.roster.rng)
 	state.wars.announced.connect(state.log_world)
 	state.wars.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai = PartyAI.new(state.roster, state.player)
@@ -104,6 +108,12 @@ func enter(s: Dictionary) -> void:
 	if s.is_empty() or s.kind == "camp" or Vector2(s.x - player.x, s.y - player.y).length() > 60.0:
 		return
 	player.stop()
+	if WorldSiege.hostile(s, player.rel):
+		if s.kind == "village":
+			log_world("%s: жители заперлись, эта фракция враждебна тебе." % s.name)
+		else:
+			siege_requested.emit(s)
+		return
 	if player.rel.has(s.fac):
 		player.rel[s.fac] = minf(100.0, float(player.rel[s.fac]) + 0.5)
 	settlement_entered.emit(s)
@@ -140,6 +150,9 @@ func log_world(text: String) -> void:
 
 func _day_tick() -> void:
 	wars.war_day()
+	var held := siege.holdings_day(player, float(player_effects().get("wage", 0.0)))
+	if held != "":
+		log_world(held)
 	if player.away or player.busy == "battle":
 		return
 	var wage := func(type: String) -> float: return float(roster.catalog.get_troop(type).wage)

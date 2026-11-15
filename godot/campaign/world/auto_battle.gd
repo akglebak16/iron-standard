@@ -3,9 +3,9 @@ extends RefCounted
 const Rules = preload("res://campaign/world/party_rules.gd")
 
 ## Returns the same result shape a played battle produces: win, dead, wounded, left, enemyLeft, heroHp, xp...
-static func resolve(player_troops: Array, hero: Dictionary, enemy_troops: Array, info: Dictionary, rng: RandomNumberGenerator, survival := 0.0) -> Dictionary:
+static func resolve(player_troops: Array, hero: Dictionary, enemy_troops: Array, info: Dictionary, rng: RandomNumberGenerator, survival := 0.0, enemy_mult := 1.0) -> Dictionary:
 	var sa := Rules.strength(player_troops, info) + 10.0
-	var sb := Rules.strength(enemy_troops, info)
+	var sb := Rules.strength(enemy_troops, info) * enemy_mult
 	var me := sa * rng.randf_range(0.8, 1.25)
 	var foe := sb * rng.randf_range(0.8, 1.25)
 	var win := me >= foe

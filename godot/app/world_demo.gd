@@ -13,6 +13,7 @@ const GameOptions = preload("res://app/game_options.gd")
 const SaveStore = preload("res://app/save_store.gd")
 const TownWindow = preload("res://campaign/presentation/town_window.gd")
 const PartyWindow = preload("res://campaign/presentation/party_window.gd")
+const SiegeWindow = preload("res://campaign/presentation/siege_window.gd")
 const Bridge = preload("res://app/world_battle_bridge.gd")
 const Aftermath = preload("res://app/encounter_aftermath.gd")
 const AftermathText = preload("res://app/aftermath_text.gd")
@@ -29,6 +30,9 @@ var map_view: Node2D
 var _meeting: Dictionary = {}
 var _dialog: CanvasLayer
 var _town: CanvasLayer
+var _siege: CanvasLayer
+var _siege_hold := false
+var _loot_pending: Dictionary = {}
 var _party_window: CanvasLayer
 var _bridge: RefCounted
 var _battle: Node2D
@@ -92,6 +96,11 @@ func _ready() -> void:
 	add_child(_party_window)
 	_party_window.closed.connect(func(): state.clock.paused = false)
 	hud.panel_requested.connect(func(tab: String): state.clock.paused = true; _party_window.open_for(state, tab))
+	_siege = SiegeWindow.new()
+	add_child(_siege)
+	_siege.assault.connect(_on_assault)
+	_siege.closed.connect(func(): if not _siege_hold: state.clock.paused = false)
+	state.siege_requested.connect(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s))
 	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s))
 	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
 	state.log_added.connect(func(text: String): hud.show_notice(text))
@@ -112,7 +121,7 @@ func _ready() -> void:
 	_ready_to_play = true
 
 func _on_map_click(at: Vector2) -> void:
-	if _meeting.size() > 0 or _town.visible or _party_window.visible:
+	if _meeting.size() > 0 or _town.visible or _party_window.visible or _siege.visible:
 		return
 	var target: Dictionary = state.settlement_near(at.x, at.y, 46.0)
 	var p = state.player
@@ -174,10 +183,46 @@ func _on_encounter_choice(action: String) -> void:
 			_start_battle(p)
 
 func _end_meeting(cooldown: float) -> void:
+	_siege_hold = false
 	_meeting.cd = cooldown
 	_meeting = {}
 	state.player.busy = ""
 	state.clock.paused = false
+
+func _world_for(p: Dictionary) -> Dictionary:
+	if p.kind == "siege":
+		return _bridge.siege_world(state, state.map.settlement_by_id(p.sid))
+	return {"parties": [p.duplicate(true)], "settlements": [], "factions": Rules.REAL_FACTIONS}
+
+## Applies a resolved battle; for a siege also writes the town back and queues the plunder choice.
+func _apply_resolved(p: Dictionary, resolved: Dictionary) -> void:
+	var was := ""
+	var town: Dictionary = {}
+	if p.kind == "siege":
+		town = state.map.settlement_by_id(p.sid)
+		was = town.fac
+	_bridge.apply(state, p, resolved)
+	if p.kind == "siege":
+		_bridge.apply_siege(state, town, resolved)
+		state.settlement_changed.emit(town)
+		if resolved.summary.has("captured"):
+			state.log_world("%s взят штурмом!" % town.name)
+			if was in Rules.REAL_FACTIONS:
+				_loot_pending = town
+
+func _offer_loot(s: Dictionary, show: bool) -> void:
+	if show:
+		_siege.open_loot(state, s)
+		state.clock.paused = true
+
+func _on_assault(s: Dictionary, calculate: bool) -> void:
+	_siege_hold = true
+	var opp: Dictionary = _bridge.siege_opponent(state, s)
+	state.player.busy = "enc"
+	if calculate:
+		_finish_auto(opp)
+	else:
+		_start_battle(opp)
 
 func _opponent(p: Dictionary) -> Dictionary:
 	return _bridge.opponent_dict(p, {})
@@ -186,15 +231,21 @@ func _finish_auto(p: Dictionary) -> void:
 	var result: Dictionary = _bridge.auto_result(state, p)
 	var party: Dictionary = _bridge.party_dict(state)
 	var opponent := _opponent(p)
-	var world := {"parties": [opponent.duplicate(true)], "settlements": [], "factions": Rules.REAL_FACTIONS}
+	var world := _world_for(opponent)
 	var resolved := Aftermath.resolve_result(result, party, opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
 	if resolved.is_empty():
 		_end_meeting(3.0)
 		return
-	_bridge.apply(state, p, resolved)
+	_apply_resolved(p, resolved)
 	_meeting = {}
 	hud.show_notice(("Победа!" if result.win else "Поражение.") + AftermathText.build(resolved, _bridge.gear, _bridge.goods))
-	state.clock.paused = false
+	_siege_hold = false
+	if _loot_pending.is_empty():
+		state.clock.paused = false
+	else:
+		var town := _loot_pending
+		_loot_pending = {}
+		_offer_loot(town, true)
 
 func _start_battle(p: Dictionary) -> void:
 	var setup: Resource = _bridge.make_setup(state, p)
@@ -212,11 +263,11 @@ func _start_battle(p: Dictionary) -> void:
 	var opponent := _opponent(p)
 	var bridge := Aftermath.new(session)
 	view.battle_finished.connect(func():
-		var world := {"parties": [opponent.duplicate(true)], "settlements": [], "factions": Rules.REAL_FACTIONS}
+		var world := _world_for(opponent)
 		var resolved := bridge.resolve(_bridge.party_dict(state), opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
 		if resolved.is_empty():
 			return
-		_bridge.apply(state, p, resolved)
+		_apply_resolved(p, resolved)
 		view.show_result_summary(AftermathText.build(resolved, _bridge.gear, _bridge.goods) + "\nEnter — вернуться на карту")
 		_waiting_return = true, CONNECT_ONE_SHOT)
 	_battle = view
@@ -230,7 +281,13 @@ func _return_to_map() -> void:
 	_meeting = {}
 	_set_world_visible(true)
 	camera.make_current()
-	state.clock.paused = false
+	_siege_hold = false
+	if _loot_pending.is_empty():
+		state.clock.paused = false
+	else:
+		var town := _loot_pending
+		_loot_pending = {}
+		_offer_loot(town, true)
 
 func _set_world_visible(on: bool) -> void:
 	map_view.visible = on
@@ -259,6 +316,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_ESCAPE:
 			_party_window.close_window()
 			_town.close_window()
+			_siege.close_window()
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
 		KEY_1, KEY_2, KEY_3:
