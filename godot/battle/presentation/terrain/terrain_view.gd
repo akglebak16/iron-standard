@@ -21,6 +21,7 @@ const BACKGROUND_ORDER := -1
 
 ## Assemble the siege wall from scenes (editable in the editor); false draws it with code as before.
 static var use_wall_scenes := true
+static var use_original_ground := true
 var _size := Vector2.ZERO
 
 func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: String) -> void:
@@ -29,6 +30,10 @@ func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: Strin
 	var palette: Array = PALETTES.get(biome, PALETTES[Config.DEFAULT_BIOME])
 	var ground_material := ShaderMaterial.new()
 	ground_material.shader = GroundShader
+	var ground_path := "res://battle/presentation/terrain/assets/ground_%s.png" % biome
+	if use_original_ground and ResourceLoader.exists(ground_path):
+		ground_material.set_shader_parameter("original_ground", load(ground_path))
+		ground_material.set_shader_parameter("use_original_ground", true)
 	ground_material.set_shader_parameter("arena_size", size)
 	ground_material.set_shader_parameter("seed_offset", Vector2(rng.randf(), rng.randf()) * SEED_OFFSET_RANGE)
 	ground_material.set_shader_parameter("road", Vector3(rng.randf_range(0.0, TAU),

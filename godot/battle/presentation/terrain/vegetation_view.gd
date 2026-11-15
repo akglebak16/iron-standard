@@ -46,6 +46,14 @@ func configure(layout: Array[Dictionary], biome: String, seed_value: int) -> voi
 	entries.sort_custom(func(a: Dictionary, b: Dictionary): return a.position.y < b.position.y)
 
 static func _texture(tree: bool, biome: String, seed_value: int) -> Texture2D:
+	var variants := 3 if tree else 2
+	var path := "res://ui/assets/%s_%s_%d.png" % ["tree" if tree else "bush", biome, posmod(seed_value, variants)]
+	if ResourceLoader.exists(path):
+		var original: Texture2D = load(path)
+		var image := original.get_image()
+		var size := TREE_SIZE if tree else BUSH_SIZE
+		image.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)
+		return ImageTexture.create_from_image(image)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var size := TREE_SIZE if tree else BUSH_SIZE

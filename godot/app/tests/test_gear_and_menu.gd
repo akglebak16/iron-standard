@@ -74,7 +74,10 @@ func _initialize() -> void:
 	root.add_child(pw)
 	await process_frame
 	pw.open_for(s, "gear")
-	assert(pw.body.get_child_count() > 9)
+	var figure := pw.body.find_child("EquipmentFigure", true, false) as TextureRect
+	assert(figure != null and figure.texture != null, "equipment shows the dressed hero")
+	for slot in PartyWindow.SLOT_NAMES:
+		assert(pw.body.find_child("Equipped_" + slot, true, false) is Button, "every equipment slot remains accessible")
 	var tw := TownWindow.new()
 	root.add_child(tw)
 	await process_frame

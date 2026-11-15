@@ -4,6 +4,8 @@ render_mode unshaded;
 uniform vec2 arena_size;
 uniform vec2 world_scale = vec2(1.0);
 uniform float map_shade = 1.0;
+uniform bool use_original_ground = false;
+uniform sampler2D original_ground : source_color, filter_linear;
 uniform vec2 seed_offset;
 uniform vec4 base_color : source_color;
 uniform vec4 light_color : source_color;
@@ -108,4 +110,7 @@ void fragment() {
 	}
 	float corner = length((UV - 0.5) * 1.4142);
 	COLOR = vec4(land * mix(1.04, 0.82, corner) * map_shade, 1.0);
+	if (use_original_ground) {
+		COLOR = vec4(texture(original_ground, point / arena_size).rgb * map_shade, 1.0);
+	}
 }

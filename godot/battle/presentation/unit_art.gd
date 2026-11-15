@@ -1,4 +1,5 @@
 extends RefCounted
+const OriginalArt = preload("res://ui/original_art.gd")
 ## Procedural bust layers. SVG is rasterized once per appearance and palette.
 const SIZE := Vector2(76, 88)
 const PIVOT := Vector2(53, 52)
@@ -35,6 +36,11 @@ func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 			if headless and not known.has("headless"):
 				known.headless = _body(unit.look, _palette(unit), unit.mounted, true)
 			return known
+	var original := OriginalArt.layers_for(unit)
+	if not original.is_empty():
+		if cacheable:
+			_by_unit[uid] = original
+		return original
 	var look: Dictionary = unit.look
 	var palette := _palette(unit)
 	var key := [palette[0], palette[1], unit.mounted]

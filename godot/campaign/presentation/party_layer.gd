@@ -3,13 +3,19 @@ extends Node2D
 ## A hero sprite replaces the marker when the characters module is hooked into the map.
 const EmblemArt = preload("res://campaign/presentation/emblem_art.gd")
 const Brush = preload("res://campaign/presentation/map_brush.gd")
+const OriginalArt = preload("res://ui/original_art.gd")
+const HeroGear = preload("res://equipment/rules/hero_gear.gd")
+var gear_catalog: RefCounted
+var _appearance_key := ""
+var _figure: Dictionary = {}
 
 var party: RefCounted
 var look: Dictionary = {}
 
-func build(player: RefCounted, player_look: Dictionary) -> void:
+func build(player: RefCounted, player_look: Dictionary, gear: RefCounted = null) -> void:
 	party = player
 	look = player_look
+	gear_catalog = gear
 
 func _process(_delta: float) -> void:
 	queue_redraw()
@@ -27,9 +33,14 @@ func _draw() -> void:
 	var p := Vector2(party.x, party.y)
 	draw_colored_polygon(Brush.ellipse(p.x + 2, p.y + 3, 24, 8, 16), Color(0, 0, 0, 0.3))
 	draw_arc(p + Vector2(0, 1), 26.0, 0.0, TAU, 28, Color("#ffd86a"), 2.0, true)
-	var body_color := Color(look.get("c1", "#c08a2e"))
-	Brush.fill_stroke(self, Brush.ellipse(p.x, p.y - 8, 9, 11, 14), body_color, 1.8)
-	Brush.fill_stroke(self, Brush.ellipse(p.x, p.y - 22, 6, 6, 12), Color("#d6b48a"), 1.6)
+	if gear_catalog != null:
+		var resolved := HeroGear.resolve(party.hero, gear_catalog)
+		var signature := str(resolved.look)
+		if signature != _appearance_key:
+			_appearance_key = signature
+			_figure = OriginalArt.compose(resolved.look)
+		var k := 0.4
+		draw_texture_rect(_figure.portrait, Rect2(p - Vector2(_figure.anchor) * k, _figure.portrait.get_size() * k), false)
 	if not look.is_empty():
 		EmblemArt.draw_banner(self, p.x + 16, p.y + 2, look, 11.0)
 
