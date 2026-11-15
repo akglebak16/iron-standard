@@ -14,6 +14,7 @@ const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounte
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
+const ResultWindow = preload("res://apps/godot/composition/battle_result_window.gd")
 const Autosave = preload("res://apps/godot/composition/autosave.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
 const HeroStats = preload("res://core/battle/data/hero_stats.gd")
@@ -42,6 +43,8 @@ var _dialog: CanvasLayer
 var _town: CanvasLayer
 var _autosave := Autosave.new()
 var _music: Node
+var _result: CanvasLayer
+var _auto_report := false
 var _siege: CanvasLayer
 var _menu: CanvasLayer
 var _marks: Node2D
@@ -152,6 +155,12 @@ func _ready() -> void:
 			_battle.set_menu_open(false))
 	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
 	_menu.title_requested.connect(func(): _autosave.save(state, _battle != null); title_requested.emit())
+	_result = ResultWindow.new()
+	_result.name = "BattleResult"
+	add_child(_result)
+	_result.action_chosen.connect(func(_action: String):
+		if _waiting_return: _return_to_map()
+		elif _auto_report: _after_auto_report())
 	_siege = SiegeWindow.new()
 	add_child(_siege)
 	_siege.assault.connect(_on_assault)
@@ -186,7 +195,7 @@ func _exit_tree() -> void:
 		state = null
 
 func _on_map_click(at: Vector2) -> void:
-	if _meeting.size() > 0 or _town.visible or _party_window.visible or _siege.visible:
+	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible:
 		return
 	var p = state.player
 	p.tid = -1
@@ -363,9 +372,15 @@ func _finish_auto(p: Dictionary) -> void:
 	_show_resolved(resolved)
 	_battle_ticket = null
 	_meeting = {}
-	hud.show_notice(("Победа!" if resolved.summary.win else "Поражение.") + AftermathText.build(resolved, _bridge.gear, _bridge.goods))
 	_siege_hold = false
 	_autosave.save(state, false)
+	state.clock.paused = true
+	_auto_report = true
+	_result.show_report(bool(resolved.summary.win), "Расчётный бой", ResultWindow.campaign_rows({}, resolved, _bridge.troops, _bridge.gear, _bridge.goods),
+		ResultWindow.campaign_notes(resolved), [["Продолжить", "continue"]])
+
+func _after_auto_report() -> void:
+	_auto_report = false
 	if _loot_pending.is_empty():
 		state.clock.paused = false
 	else:
@@ -401,14 +416,21 @@ func _start_battle(p: Dictionary) -> void:
 			return
 		_show_resolved(resolved)
 		_battle_ticket = null
-		view.show_result_summary(AftermathText.build(resolved, _bridge.gear, _bridge.goods) + "\nEnter — вернуться на карту")
-		_waiting_return = true, CONNECT_ONE_SHOT)
+		view.show_result_summary(AftermathText.build(resolved, _bridge.gear, _bridge.goods))
+		_waiting_return = true
+		view.set_menu_open(true)
+		var result: Dictionary = session.result()
+		_result.show_report(bool(resolved.summary.win), ResultWindow.duration(float(result.get("time", 0.0))),
+			ResultWindow.campaign_rows(result, resolved, _bridge.troops, _bridge.gear, _bridge.goods),
+			ResultWindow.campaign_notes(resolved), [["Продолжить", "continue"]]), CONNECT_ONE_SHOT)
 	_battle = view
 	_set_world_visible(false)
 	add_child(view)
 
 func _return_to_map() -> void:
 	_waiting_return = false
+	if _result.visible:
+		_result.visible = false
 	_battle.queue_free()
 	_battle = null
 	_meeting = {}
@@ -446,7 +468,7 @@ func _open_panel(tab: String) -> void:
 	_party_window.open_for(state, tab)
 
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
-	if _meeting.size() > 0 or _town.visible or _party_window.visible or _siege.visible or _menu.visible:
+	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible:
 		hud.show_tip({}, screen_pos)
 		return
 	var p: Dictionary = state.party_near(world_pos.x, world_pos.y, 30.0)

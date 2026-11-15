@@ -95,6 +95,10 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
 
+## The finished battle result (for the report window).
+func battle_result() -> Dictionary:
+	return _session.result() if _session != null else {}
+
 func show_result_summary(summary: String) -> void:
 	_result_summary = summary
 	_update_status()

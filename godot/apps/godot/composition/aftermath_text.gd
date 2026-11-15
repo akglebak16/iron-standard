@@ -10,14 +10,20 @@ const RECOVERY_TEXT := "\nГерой очнулся у города %s."
 const QUEST_REWARDS_TEXT := "\nЗаданий выполнено: %d · Награда: %d золота"
 const BARROW_CLEARED_TEXT := "\nЧёрный курган разрушен."
 
-static func build(resolved: Dictionary, gear: GearCatalog, goods: GoodsCatalog) -> String:
-	var summary: Dictionary = resolved.summary
+static func drop_names(drops: Array, gear: GearCatalog, goods: GoodsCatalog) -> PackedStringArray:
 	var names: PackedStringArray = []
+	if drops.is_empty():
+		return names
 	var trade_goods := goods.definitions()
-	for drop in summary.drops:
+	for drop in drops:
 		var item := gear.get_item(drop.id)
 		var display_name: String = item.name if not item.is_empty() else trade_goods[drop.id].n
 		names.append("%s ×%d" % [display_name, drop.n])
+	return names
+
+static func build(resolved: Dictionary, gear: GearCatalog, goods: GoodsCatalog) -> String:
+	var summary: Dictionary = resolved.summary
+	var names := drop_names(summary.drops, gear, goods)
 	var gold_change: int = summary.loot - summary.lost_gold + summary.get("recovery_gold", 0)
 	var text := DEMO_REWARD_TEXT % [summary.lost, summary.wounded, gold_change, summary.xp, NO_DROPS if names.is_empty() else ", ".join(names)]
 	if summary.has("recovery_town"):

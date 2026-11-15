@@ -6,6 +6,7 @@ const SaveStore = preload("res://adapters/persistence/save_store.gd")
 const Autosave = preload("res://apps/godot/composition/autosave.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
 const BattleControls = preload("res://apps/godot/presentation/battle/hud/battle_controls.gd")
+const ResultWindow = preload("res://apps/godot/composition/battle_result_window.gd")
 const MarksLayer = preload("res://apps/godot/presentation/campaign/world_marks_layer.gd")
 
 func _initialize() -> void:
@@ -45,6 +46,32 @@ func _initialize() -> void:
 	assert(MarksLayer.route_end(s.player) == Vector2(50, 60))
 	s.player.pi = 2
 	assert(MarksLayer.route_end(s.player) == null, "no marker once the party has arrived")
+	# the battle report has a way out and the rows of the browser report
+	var result := {"win": true, "dead": {"n1": 2}, "wounded": {}, "enemyDead": 9, "enemyTotal": 12, "heroKills": 3, "time": 95.0}
+	var quick := ResultWindow.quick_rows(result)
+	assert(quick[0][1] == "9 из 12" and quick[1][1] == "2" and quick[2][1] == "3")
+	assert(ResultWindow.duration(95.0) == "Битва длилась 1 мин 35 сек")
+	var resolved := {"summary": {"win": true, "lost": 2, "wounded": 1, "loot": 40, "lost_gold": 0, "xp": 30, "drops": [], "levels_gained": 1, "comps": {}},
+		"party": {"hero": {"lvl": 3}, "comps": []}}
+	var rows := ResultWindow.campaign_rows(result, resolved, s.roster.catalog, s.gear, null)
+	var labels: Array = rows.map(func(r): return r[0])
+	assert("Враг убит или бежал" in labels and "Добыча" in labels and "Новый уровень" in labels and "Опыт героя" in labels)
+	assert(not "Враг убит или бежал" in ResultWindow.campaign_rows({}, resolved, null, s.gear, null).map(func(r): return r[0]), "auto battle has no enemy count")
+	var window := ResultWindow.new()
+	root.add_child(window)
+	await process_frame
+	var chosen: Array = []
+	window.action_chosen.connect(func(a: String): chosen.append(a))
+	window.show_report(true, "Расчётный бой", rows, ["Чёрный курган разрушен."], [["В меню", "menu"], ["Ещё бой", "again"]])
+	assert(window.visible and window.title_label.text == "Победа")
+	assert(window.body.find_children("ResultRow", "", true, false).size() == rows.size())
+	var again := window.body.find_child("Action_again", true, false) as Button
+	assert(again != null)
+	again.pressed.emit()
+	assert(chosen == ["again"] and not window.visible)
+	window.show_report(false, "", rows, [], [["Продолжить", "continue"]])
+	window.close_window()
+	assert(chosen == ["again", "continue"], "closing the report takes the first action")
 	s.dispose()
 	print("Autosave, map music and HUD tests passed")
 	quit(0)
