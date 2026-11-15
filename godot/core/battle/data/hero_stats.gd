@@ -14,18 +14,16 @@ static func apply(hero: Unit, profile: Dictionary, gear: Dictionary, initial: bo
 	var weapon: Dictionary = gear.weapon
 	var ranged: bool = weapon.get("slot") == "ranged"
 	var effects: Dictionary = hero.perk_effects
-	var heavy_bonus: float = float(effects.get("heavy", 0.0)) if not ranged and int(weapon.get("hands", 1)) == 2 else 0.0
 	if initial:
 		hero.max_hp = roundf((Config.HERO_BASE_HEALTH + vitality * Config.HERO_HEALTH_PER_VITALITY) * (1.0 + float(effects.get("hp", 0.0))))
 		hero.hp = maxf(hero.max_hp * Config.HERO_MIN_HEALTH_FRACTION, hero.max_hp * float(profile.get("hp", 1.0)))
 		hero.mounted = bool(gear.mounted)
-		hero.speed = float(gear.horse.v) if hero.mounted else Config.HERO_BASE_FOOT_SPEED + agility * Config.HERO_SPEED_PER_AGILITY
-		hero.speed *= 1.0 + float(effects.get("run", 0.0))
+		hero.speed = _speed(agility, gear, effects)
 		hero.collision_radius = Config.HORSE_COLLISION_RADIUS if hero.mounted else Config.FOOT_COLLISION_RADIUS
 		hero.mass = Config.HORSE_MASS if hero.mounted else Config.FOOT_MASS
 	hero.armor = float(gear.armor) + float(effects.get("arm", 0.0))
-	hero.damage = (float(weapon.dmg) + strength * (float(weapon.get("bs", 0.0)) if ranged else Config.HERO_MELEE_DAMAGE_PER_STRENGTH)) * (1.0 + float(effects.get("dmg", 0.0)) + heavy_bonus)
-	hero.attack_interval = (maxf(Config.HERO_RANGED_MIN_COOLDOWN, float(weapon.cd) * (1.0 - agility * Config.HERO_RANGED_AGILITY_COOLDOWN)) if ranged else maxf(Config.HERO_MELEE_MIN_COOLDOWN, Config.HERO_MELEE_BASE_COOLDOWN - agility * Config.HERO_MELEE_AGILITY_COOLDOWN) * float(weapon.spd)) * (1.0 - float(effects.get("cd", 0.0)))
+	hero.damage = _damage(strength, weapon, effects)
+	hero.attack_interval = _attack_interval(agility, weapon, effects)
 	hero.attack_range = roundf(float(weapon.range) * (1.0 + float(effects.get("range", 0.0)))) if ranged else 0.0
 	hero.block_chance = float(gear.block)
 	hero.shield_block = float(gear.shield.get("projectile_block_bonus", 0.0))
@@ -40,3 +38,29 @@ static func apply(hero: Unit, profile: Dictionary, gear: Dictionary, initial: bo
 	hero.hero_weapon = weapon.duplicate(true)
 	hero.appearance = gear.get("look", {}).duplicate(true)
 	return true
+
+## What the hero's figures would be with this gear (heroDef in src/03_battle.js), for the inventory comparison.
+## `effects` are the hero's own perk effects; the same formulas feed `apply`.
+static func preview(profile: Dictionary, gear: Dictionary, effects: Dictionary) -> Dictionary:
+	var weapon: Dictionary = gear.weapon
+	var agility: float = float(profile.get("agi", 0.0))
+	return {
+		"damage": _damage(float(profile.get("str", 0.0)), weapon, effects),
+		"armor": float(gear.armor) + float(effects.get("arm", 0.0)),
+		"speed": _speed(agility, gear, effects),
+		"attack_interval_seconds": _attack_interval(agility, weapon, effects),
+		"block": float(gear.block),
+	}
+
+static func _damage(strength: float, weapon: Dictionary, effects: Dictionary) -> float:
+	var ranged: bool = weapon.get("slot") == "ranged"
+	var heavy_bonus: float = float(effects.get("heavy", 0.0)) if not ranged and int(weapon.get("hands", 1)) == 2 else 0.0
+	return (float(weapon.dmg) + strength * (float(weapon.get("bs", 0.0)) if ranged else Config.HERO_MELEE_DAMAGE_PER_STRENGTH)) * (1.0 + float(effects.get("dmg", 0.0)) + heavy_bonus)
+
+static func _attack_interval(agility: float, weapon: Dictionary, effects: Dictionary) -> float:
+	var ranged: bool = weapon.get("slot") == "ranged"
+	return (maxf(Config.HERO_RANGED_MIN_COOLDOWN, float(weapon.cd) * (1.0 - agility * Config.HERO_RANGED_AGILITY_COOLDOWN)) if ranged else maxf(Config.HERO_MELEE_MIN_COOLDOWN, Config.HERO_MELEE_BASE_COOLDOWN - agility * Config.HERO_MELEE_AGILITY_COOLDOWN) * float(weapon.spd)) * (1.0 - float(effects.get("cd", 0.0)))
+
+static func _speed(agility: float, gear: Dictionary, effects: Dictionary) -> float:
+	var base: float = float(gear.horse.v) if bool(gear.mounted) else Config.HERO_BASE_FOOT_SPEED + agility * Config.HERO_SPEED_PER_AGILITY
+	return base * (1.0 + float(effects.get("run", 0.0)))

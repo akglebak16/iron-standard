@@ -264,7 +264,7 @@ func complete(ticket: RefCounted, result: Dictionary) -> Dictionary:
 		_encounter_apply_siege(state, town, resolved)
 		state.settlement_changed.emit(town)
 		if resolved.summary.has("captured"):
-			state.log_world("%s взят штурмом!" % town.name)
+			state.log_world("%s взят штурмом!" % town.name, state.JOURNAL_GOOD)
 			if was in Rules.REAL_FACTIONS: loot_id = int(town.id)
 	_clear_pending()
 	_encounter_applying = false

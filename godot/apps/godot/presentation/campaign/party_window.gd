@@ -6,6 +6,7 @@ const CompanionText = preload("res://apps/godot/presentation/campaign/companion_
 const TABS := [["troops", "Отряд"], ["hero", "Герой"], ["gear", "Обоз"], ["quests", "Задания"], ["factions", "Фракции"], ["comps", "Спутники"], ["journal", "Журнал"]]
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
+const GearComparison = preload("res://apps/godot/presentation/campaign/gear_comparison.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
 var _selected_gear := ""
@@ -188,11 +189,32 @@ func _perk_card(h: Dictionary, perk: Dictionary) -> Button:
 	button.pressed.connect(func(): Economy.buy_perk(h, perk); render())
 	return button
 
+const CHRONICLE_LIMIT := 30
+const CHRONICLE_COLORS := [Color("#d8c9a5"), Color("#e0705a"), Color("#7fb2e0"), Color("#8fc24f")]
+
+## Chronicle (jqChronicle in src/06f_jquests.js): last 30 entries, newest first, grouped by day.
 func _journal() -> void:
 	if state.journal.is_empty():
-		note("Пока ничего не случилось.")
-	for e in state.journal:
-		row("День %d" % e.day, e.text)
+		note("Записей пока нет.")
+		return
+	var day := -1
+	var box: VBoxContainer = null
+	for e in state.journal.slice(0, CHRONICLE_LIMIT):
+		if int(e.day) != day:
+			day = int(e.day)
+			var head := Label.new()
+			head.text = "День %d%s" % [day, " · сегодня" if day == state.clock.day else ""]
+			GameSkin.title(head, 18)
+			body.add_child(head)
+			box = VBoxContainer.new()
+			box.name = "ChronicleDay_%d" % day
+			body.add_child(box)
+		var line := Label.new()
+		line.name = "ChronicleEvent"
+		line.text = "• " + String(e.text)
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.add_theme_color_override("font_color", CHRONICLE_COLORS[clampi(int(e.get("kind", 0)), 0, 3)])
+		box.add_child(line)
 
 func _comps(p) -> void:
 	var comps = state.companions
@@ -400,11 +422,42 @@ func _gear(p) -> void:
 		var it: Dictionary = gear.get_item(_selected_gear)
 		if not it.is_empty():
 			row(it.name, _stats(it), [{"text": "Снять" if _selected_gear in eq.values() else "Надеть", "call": _selected_action}])
+			if not _selected_gear in eq.values():
+				_comparison(GearComparison.compare(h, it, gear, state.perks))
 		else:
 			var good: Dictionary = state.market.goods.get(_selected_gear, {})
 			row(good.get("n", _selected_gear), "Торговый товар · продай на рынке города")
 	else:
 		note("Выбери предмет, чтобы узнать о нём больше. Двойной щелчок — надеть или снять.")
+
+func _comparison(cmp: Dictionary) -> void:
+	if cmp.is_empty():
+		return
+	var box := VBoxContainer.new()
+	box.name = "GearComparison"
+	body.add_child(box)
+	var head := Label.new()
+	head.text = cmp.title
+	head.add_theme_color_override("font_color", GameSkin.MUTED)
+	box.add_child(head)
+	for r in cmp.rows:
+		var line := HBoxContainer.new()
+		box.add_child(line)
+		var name_label := Label.new()
+		name_label.text = r.name
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_child(name_label)
+		var values := Label.new()
+		values.text = "%s → %s" % [GearComparison.fmt(r.old), GearComparison.fmt(r.next)]
+		values.custom_minimum_size.x = 110
+		line.add_child(values)
+		var delta := Label.new()
+		delta.text = ("+" if float(r.delta) > 0.0 else "") + GearComparison.fmt(r.delta)
+		delta.custom_minimum_size.x = 56
+		delta.add_theme_color_override("font_color", [Color("#e0705a"), GameSkin.MUTED, Color("#8fc24f")][int(r.trend) + 1])
+		line.add_child(delta)
+	if cmp.note != "":
+		note(cmp.note)
 
 func _gear_tile(id: String, count: int, action: Callable, location: String, empty := false) -> Button:
 	var tile := Button.new()
@@ -437,6 +490,12 @@ func _gear_tile(id: String, count: int, action: Callable, location: String, empt
 		tile.add_child(amount)
 	var it: Dictionary = state.gear.get_item(id)
 	tile.tooltip_text = it.get("name", id) + ("\n" + _stats(it) if not it.is_empty() else "")
+	if location == "cargo" and not it.is_empty():
+		var who: Dictionary = state.player.hero
+		for c in state.player.comps:
+			if c.id == _who:
+				who = c
+		tile.tooltip_text += "\n\n" + GearComparison.text(GearComparison.compare(who, it, state.gear, state.perks))
 	var tier: int = clampi(int(it.get("tier", 0)), 0, 3)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("#21170e")
