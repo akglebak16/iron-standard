@@ -19,6 +19,7 @@ const NavigationHud = preload("res://battle/presentation/hud/navigation_hud.gd")
 const BattleCamera = preload("res://battle/presentation/battle_camera.gd")
 const BattleControls = preload("res://battle/presentation/hud/battle_controls.gd")
 const SiegeDefenseView = preload("res://battle/presentation/siege_defense_view.gd")
+const GroundBake = preload("res://battle/presentation/ground_bake.gd")
 const STONE_SHAKE_DISTANCE := 170.0
 const STONE_SHAKE_SECONDS := 0.22
 const PLAYBACK_SPEEDS := [1.0, 2.0, 0.5]
@@ -38,6 +39,7 @@ var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
 var _impacts := ImpactEffects.new()
 var _figures := UnitView.new()
+var _bake := GroundBake.new()
 var _dialogue := CompanionDialogue.new()
 var _audio: CombatAudio
 var _music: BattleMusic
@@ -63,8 +65,17 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
 	_vegetation.configure(session.vegetation_layout(), biome, terrain_seed)
 	add_child(_terrain)
+	if DisplayServer.get_name() != "headless":
+		_bake.configure(frame.arena_size)
+		add_child(_bake)
+		_impacts.on_mark = func(mark: Dictionary): _bake.paint(func(canvas): ImpactEffects.draw_mark(canvas, mark))
+		_figures.on_settled = func(unit: Dictionary, headless: bool): _bake.paint(func(canvas): _figures.draw_corpse(canvas, unit, headless))
 
 func get_battle_snapshot() -> Dictionary:
+	if _task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_post_step(_task_dt, _task_events, 0.0, _task_frame)
+		_task = -1
 	return _session.snapshot() if _session != null else {}
 
 func show_result_summary(summary: String) -> void:
@@ -94,8 +105,80 @@ func _ready() -> void:
 	_music.enabled = _music_enabled
 	add_child(_music)
 	_refresh(0.0, [])
+	set_physics_process(false)
+	# Headless runs (tests, tools) stay single-threaded so scripts may touch the session between frames.
+	threaded = OS.get_processor_count() > 1 and OS.get_name() != "Web" and DisplayServer.get_name() != "headless"
+
+## Live battles step once per rendered frame with dt capped like the browser (battleUpdate: min(dt, 1/30)), so a heavy
+## fight slows down instead of piling up catch-up ticks. Where threads are available the step runs on a worker
+## while the previous frame is drawn. Tests turn frame_driven off and call _physics_process themselves.
+const MAX_FRAME_STEP := 1.0 / 30.0
+var frame_driven := true
+var threaded := false
+var _task := -1
+var _task_dt := 0.0
+var _task_events: Array[Dictionary] = []
+var _task_frame: Dictionary = {}
+var _pending: Array[Callable] = []
+
+func _process(real_dt: float) -> void:
+	if not frame_driven or _session == null:
+		return
+	if _task >= 0:
+		_finish_task(real_dt)
+	var simulation_dt := _pre_step(minf(real_dt, MAX_FRAME_STEP), real_dt)
+	if simulation_dt <= 0.0:
+		return
+	if threaded:
+		_task_dt = simulation_dt
+		_task = WorkerThreadPool.add_task(_worker_step, true, "battle step")
+	else:
+		_session.advance(simulation_dt)
+		_post_step(simulation_dt, _session.take_events(), real_dt)
 
 func _physics_process(dt: float) -> void:
+	_finish_pending_step()
+	var simulation_dt := _pre_step(dt, dt)
+	if simulation_dt > 0.0:
+		_session.advance(simulation_dt)
+		_post_step(simulation_dt, _session.take_events(), dt)
+
+func _worker_step() -> void:
+	_session.advance(_task_dt)
+	_task_events = _session.take_events()
+	_task_frame = _session.snapshot()
+
+func _finish_task(real_dt: float) -> void:
+	WorkerThreadPool.wait_for_task_completion(_task)
+	_task = -1
+	_post_step(_task_dt, _task_events, real_dt, _task_frame)
+	_task_events = []
+	_task_frame = {}
+
+## Session calls from input handlers wait until the worker is done with the session.
+func _to_session(call: Callable) -> void:
+	if _task >= 0:
+		_pending.append(call)
+	else:
+		call.call()
+
+## Rare player actions with an immediate answer just wait for the running step.
+func _finish_pending_step() -> void:
+	if _task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_post_step(_task_dt, _task_events, 0.0, _task_frame)
+		_task = -1
+
+func _exit_tree() -> void:
+	if _task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_task = -1
+
+## Effects of a finished battle, music, pause and hero input. Returns the simulation step to run, or 0.
+func _pre_step(dt: float, real_dt: float) -> float:
+	for call in _pending:
+		call.call()
+	_pending.clear()
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles() or _order_marker.is_visible() or camera.is_shaking():
 			_feedback.advance(dt, [])
@@ -107,10 +190,10 @@ func _physics_process(dt: float) -> void:
 				camera.advance_shake(dt, [])
 				_navigation.queue_redraw()
 			queue_redraw()
-		return
-	_music.advance(dt)
+		return 0.0
+	_music.advance(real_dt)
 	if _paused:
-		return
+		return 0.0
 	var simulation_dt: float = dt * PLAYBACK_SPEEDS[_speed_index]
 	if _frame.outcome == Session.Outcome.RUNNING:
 		var input := HeroInput.new()
@@ -121,17 +204,18 @@ func _physics_process(dt: float) -> void:
 		input.attack = _attack_pressed and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 		input.swap = Input.is_key_pressed(KEY_X)
 		_session.set_hero_input(input)
-	_session.advance(simulation_dt)
-	var events := _session.take_events()
+	return simulation_dt
+
+func _post_step(simulation_dt: float, events: Array[Dictionary], real_dt: float, frame: Dictionary = {}) -> void:
 	_feedback.advance(simulation_dt, events)
 	_feedback.add_fatal_impacts(_impacts.advance(simulation_dt, events))
 	_figures.advance(simulation_dt, events)
 	_order_marker.advance(simulation_dt, events)
-	_refresh(simulation_dt, events, dt)
+	_refresh(simulation_dt, events, real_dt, frame)
 	for event in events:
 		if event.kind == Event.Kind.STONE_LANDED and not _frame.hero_down and Vector2(_frame.hero_position).distance_to(event.position) < STONE_SHAKE_DISTANCE:
 			camera.shake(STONE_SHAKE_SECONDS)
-	_audio.advance(dt, events, camera.position)
+	_audio.advance(real_dt, events, camera.position)
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		battle_finished.emit()
 
@@ -150,6 +234,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_set_audio_preferences(_effects_enabled, not _music_enabled)
 		KEY_G:
 			_impacts.blood_enabled = not _impacts.blood_enabled
+			_rebake()
 			blood_preference_changed.emit(_impacts.blood_enabled)
 			_update_status()
 			queue_redraw()
@@ -157,10 +242,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_2: _select_group(Config.GROUP_ARCHERS)
 		KEY_3: _select_group(Config.GROUP_CAVALRY)
 		KEY_4: _select_group(Config.ALL_GROUPS)
-		KEY_Q: _session.issue_order(Config.ORDER_HOLD, _pointer_world_position(), _selection)
-		KEY_E: _session.issue_order(Config.ORDER_FOLLOW, _frame.hero_position, _selection)
-		KEY_R: _session.issue_order(Config.ORDER_CHARGE, _frame.hero_position, _selection)
-		KEY_F: _session.issue_order(Config.ORDER_RETREAT, _frame.hero_position, _selection)
+		KEY_Q: _to_session(_session.issue_order.bind(Config.ORDER_HOLD, _pointer_world_position(), _selection))
+		KEY_E: _to_session(_session.issue_order.bind(Config.ORDER_FOLLOW, _frame.hero_position, _selection))
+		KEY_R: _to_session(_session.issue_order.bind(Config.ORDER_CHARGE, _frame.hero_position, _selection))
+		KEY_F: _to_session(_session.issue_order.bind(Config.ORDER_RETREAT, _frame.hero_position, _selection))
 		KEY_P: _toggle_pause()
 		KEY_T: _cycle_speed()
 
@@ -196,9 +281,10 @@ func _issue_hud_order(order: String) -> void:
 	var origin: Vector2 = _frame.hero_position
 	var enemy: Vector2 = _frame.enemy_center
 	var direction := origin.direction_to(enemy) if enemy.is_finite() and enemy != origin else Vector2.RIGHT
-	_session.issue_order(order, origin + direction * BUTTON_ORDER_AHEAD, _selection)
+	_to_session(_session.issue_order.bind(order, origin + direction * BUTTON_ORDER_AHEAD, _selection))
 
 func _select_weapon(slot: String) -> void:
+	_finish_pending_step()
 	_session.request_weapon_slot(slot)
 	_update_status()
 
@@ -213,9 +299,20 @@ func _cycle_speed() -> void:
 		_update_status()
 
 func _request_retreat() -> void:
+	_finish_pending_step()
 	if _session.request_retreat():
 		_paused = false
 		_update_status()
+
+## Blood toggled: repaint the bake from what is still kept (marks without blood, settled corpses).
+func _rebake() -> void:
+	if not _impacts.on_mark.is_valid():
+		return
+	_bake.clear()
+	for mark in _impacts.marks():
+		_bake.paint(func(canvas): ImpactEffects.draw_mark(canvas, mark))
+	for corpse in _figures.baked_corpses():
+		_bake.paint(func(canvas): _figures.draw_corpse(canvas, corpse[0], corpse[1]))
 
 func _set_audio_preferences(effects: bool, music: bool) -> void:
 	_effects_enabled = effects
@@ -225,9 +322,9 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 	_update_status()
 	audio_preferences_changed.emit(effects, music)
 
-func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0) -> void:
-	# One detached read per physics tick, reused by HUD and drawing.
-	_frame = _session.snapshot()
+func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
+	# One detached read per simulation step, reused by HUD and drawing (taken on the worker when threaded).
+	_frame = frame if not frame.is_empty() else _session.snapshot()
 	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
 	_navigation.update_frame(_frame, dt)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]

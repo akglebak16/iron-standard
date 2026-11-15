@@ -190,30 +190,42 @@ func has_particles() -> bool:
 func headless_units() -> Dictionary:
 	return _headless
 
-func draw_ground(canvas: CanvasItem, visible: Rect2) -> void:
-	# The ring's oldest element is the next slot to overwrite.
+## Set by the view: marks are painted once into the ground bake instead of every frame.
+var on_mark := Callable()
+
+func marks() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	for i in _ground_marks.size():
-		var mark := _ground_marks[(_next_mark + i) % _ground_marks.size()]
-		var point: Vector2 = mark.position
-		if mark.has("rubble"):
-			_draw_ellipse_radii(canvas, point, STONE_CRATER_RADII, STONE_CRATER_COLOR)
-			for pebble in mark.rubble:
-				_draw_ellipse_radii(canvas, point + pebble.offset, pebble.radii, STONE_PEBBLE_COLOR)
-		elif mark.has("trajectory"):
-			var direction := Vector2.from_angle(mark.trajectory.angle() - MISS_TILT)
-			var length := JAVELIN_LENGTH if mark.throwing else ARROW_LENGTH
-			canvas.draw_line(point - direction * length, point, SHAFT_COLOR, SHAFT_WIDTH, true)
-			canvas.draw_line(point - direction * FLETCHING_FAR, point - direction * FLETCHING_NEAR, FLETCHING_COLOR, FLETCHING_WIDTH, true)
-		else:
-			var color: Color = mark.color
-			var pool: bool = mark.get("pool", false)
-			color.a = POOL_ALPHA if pool else SPLAT_ALPHA
-			_draw_ellipse(canvas, point if pool else point + SPLAT_OFFSET, mark.radius, POOL_SCALE if pool else SPLAT_SCALE, color)
+		out.append(_ground_marks[(_next_mark + i) % _ground_marks.size()])
+	return out
+
+func draw_ground(canvas: CanvasItem, visible: Rect2) -> void:
+	if not on_mark.is_valid():
+		# The ring's oldest element is the next slot to overwrite.
+		for i in _ground_marks.size():
+			draw_mark(canvas, _ground_marks[(_next_mark + i) % _ground_marks.size()])
 	for pool in _pools:
 		var color: Color = pool.color
 		color.a = POOL_ALPHA
 		_draw_ellipse(canvas, pool.position, pool.radius, POOL_SCALE, color)
 	_parts.draw_ground(canvas, visible)
+
+static func draw_mark(canvas: CanvasItem, mark: Dictionary) -> void:
+	var point: Vector2 = mark.position
+	if mark.has("rubble"):
+		_draw_ellipse_radii(canvas, point, STONE_CRATER_RADII, STONE_CRATER_COLOR)
+		for pebble in mark.rubble:
+			_draw_ellipse_radii(canvas, point + pebble.offset, pebble.radii, STONE_PEBBLE_COLOR)
+	elif mark.has("trajectory"):
+		var direction := Vector2.from_angle(mark.trajectory.angle() - MISS_TILT)
+		var length := JAVELIN_LENGTH if mark.throwing else ARROW_LENGTH
+		canvas.draw_line(point - direction * length, point, SHAFT_COLOR, SHAFT_WIDTH, true)
+		canvas.draw_line(point - direction * FLETCHING_FAR, point - direction * FLETCHING_NEAR, FLETCHING_COLOR, FLETCHING_WIDTH, true)
+	else:
+		var color: Color = mark.color
+		var pool: bool = mark.get("pool", false)
+		color.a = POOL_ALPHA if pool else SPLAT_ALPHA
+		_draw_ellipse(canvas, point if pool else point + SPLAT_OFFSET, mark.radius, POOL_SCALE if pool else SPLAT_SCALE, color)
 
 func draw_particles(canvas: CanvasItem) -> void:
 	for particle in _particles:
@@ -357,6 +369,8 @@ func _sample(interval: Vector2) -> float:
 	return _rng.randf_range(interval.x, interval.y)
 
 func _remember(mark: Dictionary) -> void:
+	if on_mark.is_valid():
+		on_mark.call(mark)
 	if _ground_marks.size() < MAX_GROUND_MARKS:
 		_ground_marks.append(mark)
 	else:

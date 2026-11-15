@@ -195,6 +195,7 @@ func _check_siege_dialogue(path: String) -> void:
 	root.add_child(scene)
 	var view = scene.get_node("Battle")
 	view.set_physics_process(false)
+	view.frame_driven = false
 	var session: Session = view._session
 	var rng_state: int = session._rng.state
 	var frame := session.snapshot()

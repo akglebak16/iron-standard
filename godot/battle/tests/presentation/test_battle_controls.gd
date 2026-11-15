@@ -15,6 +15,7 @@ func _check() -> void:
 	root.add_child(scene)
 	var view = scene.get_node("Battle")
 	view.set_physics_process(false)
+	view.frame_driven = false
 	view._audio.enabled = false
 	view._music.enabled = false
 	await process_frame

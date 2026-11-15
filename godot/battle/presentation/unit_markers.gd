@@ -45,6 +45,25 @@ const BANNER_CLOTH := [Vector2(0, -26), Vector2(17, -25),
 const BANNER_MARK := [Vector2(7, -23), Vector2(10, -19), Vector2(7, -15), Vector2(4, -19)]
 
 var _rings: Dictionary = {}
+var _ring_textures: Dictionary = {}
+
+## The flattened ring the polyline used to draw, rasterised once with a soft edge.
+static func _ring_texture(radius: float, width: float, color: Color) -> ImageTexture:
+	var a := radius
+	var b := radius * RING_FLATTEN
+	var w := ceili(2.0 * (a + width) + 4.0)
+	var h := ceili(2.0 * (b + width) + 4.0)
+	var image := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var center := Vector2(w, h) * 0.5
+	for y in h:
+		for x in w:
+			var p := Vector2(x + 0.5, y + 0.5) - center
+			var f := (p.x * p.x) / (a * a) + (p.y * p.y) / (b * b) - 1.0
+			var grad := Vector2(2.0 * p.x / (a * a), 2.0 * p.y / (b * b)).length()
+			var distance := absf(f) / maxf(grad, 0.0001)
+			var alpha := clampf(width * 0.5 + 0.5 - distance, 0.0, 1.0)
+			image.set_pixel(x, y, Color(color.r, color.g, color.b, color.a * alpha))
+	return ImageTexture.create_from_image(image)
 var _banner_cloth := PackedVector2Array(BANNER_CLOTH)
 var _banner_mark := PackedVector2Array(BANNER_MARK)
 
@@ -65,9 +84,14 @@ func draw_ring(canvas: CanvasItem, unit: Dictionary, selection: int) -> void:
 			points.append(Vector2.from_angle(TAU * i / RING_SEGMENTS) * Vector2(radius, radius * RING_FLATTEN))
 		_rings[radius] = points
 	var width := HERO_WIDTH if unit.hero or unit.companion else (LEADER_WIDTH if unit.leader else STANDARD_WIDTH)
-	canvas.draw_set_transform(unit.position)
-	canvas.draw_polyline(_rings[radius], ring_style(unit, selection), width, true)
-	canvas.draw_set_transform(Vector2.ZERO)
+	# One pre-rendered antialiased ring per look: a texture draw instead of a polyline with two transforms.
+	var color := ring_style(unit, selection)
+	var key := Vector3(radius, width, color.to_rgba32())
+	var texture: Texture2D = _ring_textures.get(key)
+	if texture == null:
+		texture = _ring_texture(radius, width, color)
+		_ring_textures[key] = texture
+	canvas.draw_texture(texture, Vector2(unit.position) - texture.get_size() * 0.5)
 	if unit.hero and unit.blocking:
 		canvas.draw_arc(Vector2(unit.position) + BLOCK_ORIGIN, BLOCK_RADIUS, unit.facing - BLOCK_HALF_ANGLE,
 			unit.facing + BLOCK_HALF_ANGLE, RING_SEGMENTS, BLOCK_COLOR, BLOCK_WIDTH, true)

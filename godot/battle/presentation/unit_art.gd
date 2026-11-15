@@ -24,7 +24,17 @@ const LOOK_FIELDS := ["helm", "armor", "weapon", "shield", "horse", "undead"]
 
 var _cache: Dictionary = {}
 
+var _by_unit: Dictionary = {} # unit id -> cache entry; only the hero changes looks
+
 func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
+	var uid = unit.get("id")
+	var cacheable: bool = uid != null and not unit.get("hero", false)
+	if cacheable:
+		var known = _by_unit.get(uid)
+		if known != null:
+			if headless and not known.has("headless"):
+				known.headless = _body(unit.look, _palette(unit), unit.mounted, true)
+			return known
 	var look: Dictionary = unit.look
 	var palette := _palette(unit)
 	var key := [palette[0], palette[1], unit.mounted]
@@ -35,6 +45,8 @@ func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 		_cache[cache_key] = {"body": _body(look, palette, unit.mounted, false), "weapon": _weapon(look.get("weapon")),
 			"weapon_kind": look.get("weapon")}
 	var entry: Dictionary = _cache[cache_key]
+	if cacheable:
+		_by_unit[uid] = entry
 	if headless and not entry.has("headless"):
 		entry.headless = _body(look, palette, unit.mounted, true)
 	return entry
