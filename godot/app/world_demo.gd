@@ -14,6 +14,8 @@ const SaveStore = preload("res://app/save_store.gd")
 const TownWindow = preload("res://campaign/presentation/town_window.gd")
 const PartyWindow = preload("res://campaign/presentation/party_window.gd")
 const SiegeWindow = preload("res://campaign/presentation/siege_window.gd")
+const PauseMenu = preload("res://app/pause_menu.gd")
+const WorldTips = preload("res://campaign/presentation/world_tips.gd")
 const Bridge = preload("res://app/world_battle_bridge.gd")
 const Aftermath = preload("res://app/encounter_aftermath.gd")
 const AftermathText = preload("res://app/aftermath_text.gd")
@@ -31,6 +33,7 @@ var _meeting: Dictionary = {}
 var _dialog: CanvasLayer
 var _town: CanvasLayer
 var _siege: CanvasLayer
+var _menu: CanvasLayer
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
 var _allies: Array = []
@@ -96,7 +99,12 @@ func _ready() -> void:
 	_party_window = PartyWindow.new()
 	add_child(_party_window)
 	_party_window.closed.connect(func(): state.clock.paused = false)
-	hud.panel_requested.connect(func(tab: String): state.clock.paused = true; _party_window.open_for(state, tab))
+	hud.panel_requested.connect(_open_panel)
+	_menu = PauseMenu.new()
+	add_child(_menu)
+	_menu.closed.connect(func(): state.clock.paused = false)
+	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
+	_menu.title_requested.connect(func(): get_tree().change_scene_to_file("res://app/main_menu.tscn"))
 	_siege = SiegeWindow.new()
 	add_child(_siege)
 	_siege.assault.connect(_on_assault)
@@ -152,7 +160,7 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	if party.kind == "cvass":
 		_vassal_talk(party)
 		return
-	var hostile := Rules.hostile_to_player(party, state.player.rel) or party.kind == "camp"
+	var hostile: bool = Rules.hostile_to_player(party, state.player.rel) or party.kind == "camp"
 	var rows: Array = []
 	var sorted: Array = party.troops.duplicate()
 	sorted.sort_custom(func(a, b): return state.roster.info[a.type].tier > state.roster.info[b.type].tier)
@@ -374,8 +382,24 @@ func _set_world_visible(on: bool) -> void:
 	hud.visible = on
 	camera.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 
+func _open_panel(tab: String) -> void:
+	if tab == "menu":
+		state.clock.paused = true
+		_menu.open_menu(_preferences)
+		return
+	state.clock.paused = true
+	_party_window.open_for(state, tab)
+
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
-	hud.show_tip(state.settlement_near(world_pos.x, world_pos.y, 46.0), screen_pos)
+	if _meeting.size() > 0 or _town.visible or _party_window.visible or _siege.visible or _menu.visible:
+		hud.show_tip({}, screen_pos)
+		return
+	var p: Dictionary = state.party_near(world_pos.x, world_pos.y, 30.0)
+	if not p.is_empty():
+		hud.show_tip({}, screen_pos, WorldTips.party_tip(state, p, _factions))
+		return
+	var s: Dictionary = state.settlement_near(world_pos.x, world_pos.y, 46.0)
+	hud.show_tip(s, screen_pos, WorldTips.settlement_tip(state, s, _factions) if not s.is_empty() else "")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _battle != null and not _waiting_return:
@@ -394,9 +418,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F5:
 			hud.show_notice("Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
 		KEY_ESCAPE:
-			_party_window.close_window()
-			_town.close_window()
-			_siege.close_window()
+			if _menu.visible:
+				_menu.close_window()
+			elif _party_window.visible or _town.visible or _siege.visible:
+				_party_window.close_window()
+				_town.close_window()
+				_siege.close_window()
+			elif _meeting.is_empty():
+				_open_panel("menu")
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
 		KEY_1, KEY_2, KEY_3:

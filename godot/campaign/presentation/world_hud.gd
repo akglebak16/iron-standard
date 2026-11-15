@@ -36,9 +36,15 @@ func _ready() -> void:
 	style.set_content_margin_all(8)
 	bar.add_theme_stylebox_override("panel", style)
 	add_child(bar)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 4)
+	bar.add_child(rows)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	bar.add_child(row)
+	rows.add_child(row)
+	var row2 := HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 6)
+	rows.add_child(row2)
 	_date = Label.new()
 	_date.add_theme_color_override("font_color", Color("#f0e6c8"))
 	row.add_child(_date)
@@ -47,6 +53,7 @@ func _ready() -> void:
 		b.text = def[1]
 		b.focus_mode = Control.FOCUS_NONE
 		b.custom_minimum_size = Vector2(40, 0)
+		b.tooltip_text = "Пауза (пробел)" if def[0] == "pause" else "Скорость времени %s (клавиша %s)" % [def[1], {"1": "1", "2": "2", "4": "3"}[def[0]]]
 		if def[0] == "pause":
 			b.pressed.connect(func(): pause_toggled.emit())
 		else:
@@ -56,21 +63,23 @@ func _ready() -> void:
 	_stats = Label.new()
 	_stats.add_theme_color_override("font_color", Color("#ffe9a0"))
 	row.add_child(_stats)
-	for def in [["troops", "Отряд"], ["hero", "Герой"], ["journal", "Журнал"]]:
+	for def in [["troops", "Отряд", "Отряд и улучшение бойцов (P)"], ["comps", "Спутники", "Спутники и вассалы"], ["hero", "Герой", "Характеристики и перки (H)"],
+			["gear", "Снаряжение", "Надеть или снять снаряжение"], ["quests", "Задания", "Взятые задания и сроки"], ["journal", "Журнал", "Журнал событий (J)"], ["menu", "Меню", "Пауза, сохранение и настройки (Esc)"]]:
 		var pb := Button.new()
 		pb.text = def[1]
+		pb.tooltip_text = def[2]
 		pb.focus_mode = Control.FOCUS_NONE
 		pb.pressed.connect(func(): panel_requested.emit(def[0]))
-		row.add_child(pb)
+		row2.add_child(pb)
 	_near = Label.new()
-	_near.position = Vector2(16, 64)
+	_near.position = Vector2(16, 104)
 	_near.add_theme_color_override("font_color", Color("#ffe9a0"))
 	_near.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.9))
 	_near.add_theme_constant_override("outline_size", 4)
 	add_child(_near)
 	_notice = Label.new()
 	_notice.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_notice.position = Vector2(-220, 70)
+	_notice.position = Vector2(-220, 110)
 	_notice.add_theme_font_size_override("font_size", 20)
 	_notice.add_theme_color_override("font_color", Color("#ffd0a0"))
 	_notice.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.95))
@@ -104,13 +113,15 @@ func refresh(state: RefCounted, near_settlement: Dictionary) -> void:
 func show_notice(text: String) -> void:
 	_notice.text = text
 
-func show_tip(settlement: Dictionary, screen_pos: Vector2) -> void:
-	if settlement.is_empty():
+func show_tip(settlement: Dictionary, screen_pos: Vector2, text := "") -> void:
+	if settlement.is_empty() and text == "":
 		_tip.visible = false
 		return
-	var look := _factions.get_faction(settlement.fac)
-	var kind_name: String = SettlementLayer.KIND_NAMES.get(settlement.kind, "")
-	_tip_label.text = "%s\n%s · %s" % [settlement.name, kind_name, look.get("gen", "")]
+	if text == "":
+		var look := _factions.get_faction(settlement.fac)
+		var kind_name: String = SettlementLayer.KIND_NAMES.get(settlement.kind, "")
+		text = "%s\n%s · %s" % [settlement.name, kind_name, look.get("gen", "")]
+	_tip_label.text = text
 	_tip.visible = true
 	var view := _tip.get_viewport().get_visible_rect().size
 	_tip.position = Vector2(minf(screen_pos.x + 18.0, view.x - 270.0), minf(screen_pos.y + 14.0, view.y - 90.0))
