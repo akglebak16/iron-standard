@@ -21,6 +21,7 @@ func _ready() -> void:
 	_legacy = {"weapon": HeroGear.LEGACY_WEAPONS, "armor": HeroGear.LEGACY_ARMOR, "shield": HeroGear.LEGACY_SHIELDS, "horse": HeroGear.LEGACY_HORSES}
 
 func open_for(world_state: RefCounted, s: Dictionary) -> void:
+	_siege_confirm = false
 	state = world_state
 	settlement = s
 	set_tabs([["recruit", "Рекруты"]], "recruit")
@@ -59,6 +60,7 @@ func render() -> void:
 		_goods(p, fx)
 	else:
 		_recruits(p, fx)
+		_siege_offer(p)
 
 func _recruits(p, fx: Dictionary) -> void:
 	var cap := Economy.size_cap(p.hero, fx)
@@ -140,6 +142,27 @@ func _oath(p) -> void:
 		var rl: Dictionary = clans.ruler_of(x)
 		var head: String = rl.name if not rl.is_empty() else ("междуцарствие" if clans.kingless(x) else "")
 		row("%s · владений %d" % [_factions.get_faction(x).name, state.wars.hold_of(x).all], "%s%sвоюет с: %s · родов %d" % [head, " · " if head != "" else "", ", ".join(foes) if not foes.is_empty() else "мир", clans.of_faction(x).size()])
+
+var _siege_confirm := false
+
+## "Besiege" for a town or castle of a state at peace with the player: one more click declares war.
+func _siege_offer(p) -> void:
+	var real: bool = settlement.fac in ["nord", "emp", "khan", "kin", "emi", "dom", "pact"]
+	if not real or settlement.kind == "village" or settlement.kind == "camp":
+		return
+	heading("Осада")
+	if not _siege_confirm:
+		row("Осадить %s" % settlement.name, "Это объявление войны.", [{"text": "Осадить", "call": func(): _siege_confirm = true}])
+	else:
+		note("Отношения с %s станут враждебными: их лорды начнут охотиться за тобой, ворота их городов закроются." % _factions.get_faction(settlement.fac).gen)
+		row("Объявить войну и осадить?", "", [
+			{"text": "Отмена", "call": func(): _siege_confirm = false},
+			{"text": "Объявить войну", "call": func():
+				_siege_confirm = false
+				var s := settlement
+				state.declare_war(s.fac)
+				close_window()
+				state.siege_requested.emit(s)}])
 
 func _say(why: String) -> void:
 	if why != "":
