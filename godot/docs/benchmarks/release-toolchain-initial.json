@@ -1,0 +1,275 @@
+{
+  "source": {
+    "revision": "ffc9ea7b3a9f4371b2f69bbb24fb983b984ab64a",
+    "source_sha256": "cc0a0259a1c1d47ee85bdba9401ad1ddde9f7acbafe2aff023e0139e38ec85ea",
+    "dirty": true
+  },
+  "build": {
+    "source": {
+      "revision": "ffc9ea7b3a9f4371b2f69bbb24fb983b984ab64a",
+      "source_sha256": "cc0a0259a1c1d47ee85bdba9401ad1ddde9f7acbafe2aff023e0139e38ec85ea",
+      "dirty": true
+    },
+    "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "40bac2c7e063205ba1cdc1ea56f61ae6b06d14b2e69ed6a362c6eb4ed1861f5b"
+    },
+    "executable_sha256": "9db2e8bb3f6889fae917256155c15922c7440cfb1077b4457a029701c3064510",
+    "built_at": "2026-11-15T19:50:39.419Z",
+    "smoke_passed": true,
+    "stale_source": false
+  },
+  "options": {
+    "n": 300,
+    "frames": 240,
+    "repeat": 2,
+    "audio": "on",
+    "mode": "both"
+  },
+  "results": [
+    {
+      "backend": "toolchain",
+      "iteration": 1,
+      "report": {
+        "backlog_seconds": 0.00264666666666684,
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": true,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "dropped_seconds": 0,
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 23.6633722222222,
+          "p50_ms": 18.593,
+          "p95_ms": 37.425,
+          "p99_ms": 45.794
+        },
+        "live": [
+          301,
+          300
+        ],
+        "max_fps": 0,
+        "mode": "battle",
+        "music": true,
+        "native_failures": 0,
+        "native_steps": 343,
+        "ordinary_initial": [
+          300,
+          300
+        ],
+        "seed": 4242,
+        "simulation_ticks_measured": 256,
+        "simulation_ticks_total": 343,
+        "sound": true,
+        "special_initial": 1,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60
+      }
+    },
+    {
+      "backend": "release",
+      "iteration": 1,
+      "report": {
+        "backlog_seconds": 0.0159716666666667,
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": false,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "dropped_seconds": 0,
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 17.9501055555556,
+          "p50_ms": 17.376,
+          "p95_ms": 22.813,
+          "p99_ms": 24.107
+        },
+        "live": [
+          301,
+          300
+        ],
+        "max_fps": 0,
+        "mode": "battle",
+        "music": true,
+        "native_failures": 0,
+        "native_steps": 260,
+        "ordinary_initial": [
+          300,
+          300
+        ],
+        "seed": 4242,
+        "simulation_ticks_measured": 194,
+        "simulation_ticks_total": 260,
+        "sound": true,
+        "special_initial": 1,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60
+      }
+    },
+    {
+      "backend": "release",
+      "iteration": 2,
+      "report": {
+        "backlog_seconds": 0.00743037037037037,
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": false,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "dropped_seconds": 0,
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 17.4560722222222,
+          "p50_ms": 17.093,
+          "p95_ms": 20.031,
+          "p99_ms": 24.102
+        },
+        "live": [
+          301,
+          300
+        ],
+        "max_fps": 0,
+        "mode": "battle",
+        "music": true,
+        "native_failures": 0,
+        "native_steps": 257,
+        "ordinary_initial": [
+          300,
+          300
+        ],
+        "seed": 4242,
+        "simulation_ticks_measured": 188,
+        "simulation_ticks_total": 257,
+        "sound": true,
+        "special_initial": 1,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60
+      }
+    },
+    {
+      "backend": "toolchain",
+      "iteration": 2,
+      "report": {
+        "backlog_seconds": 0.0099120000000001,
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": true,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "dropped_seconds": 0,
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 18.1427833333333,
+          "p50_ms": 17.501,
+          "p95_ms": 23.179,
+          "p99_ms": 24.886
+        },
+        "live": [
+          301,
+          300
+        ],
+        "max_fps": 0,
+        "mode": "battle",
+        "music": true,
+        "native_failures": 0,
+        "native_steps": 275,
+        "ordinary_initial": [
+          300,
+          300
+        ],
+        "seed": 4242,
+        "simulation_ticks_measured": 195,
+        "simulation_ticks_total": 275,
+        "sound": true,
+        "special_initial": 1,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60
+      }
+    },
+    {
+      "backend": "toolchain",
+      "iteration": 1,
+      "report": {
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": true,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 80.4362555555556,
+          "p50_ms": 79.385,
+          "p95_ms": 89.236,
+          "p99_ms": 92.469
+        },
+        "max_fps": 0,
+        "mode": "campaign",
+        "parties": 104,
+        "seed": 4242,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60,
+        "world_clock_paused": false,
+        "world_clock_speed": 1
+      }
+    },
+    {
+      "backend": "release",
+      "iteration": 1,
+      "report": {
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": false,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 82.1838222222222,
+          "p50_ms": 81.957,
+          "p95_ms": 90.511,
+          "p99_ms": 94.065
+        },
+        "max_fps": 0,
+        "mode": "campaign",
+        "parties": 104,
+        "seed": 4242,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60,
+        "world_clock_paused": false,
+        "world_clock_speed": 1
+      }
+    },
+    {
+      "backend": "release",
+      "iteration": 2,
+      "report": {
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": false,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 180,
+          "mean_ms": 81.8003777777778,
+          "p50_ms": 81.68,
+          "p95_ms": 90.05,
+          "p99_ms": 92.566
+        },
+        "max_fps": 0,
+        "mode": "campaign",
+        "parties": 104,
+        "seed": 4242,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60,
+        "world_clock_paused": false,
+        "world_clock_speed": 1
+      }
+    }
+  ]
+}

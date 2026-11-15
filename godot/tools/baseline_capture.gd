@@ -2,10 +2,10 @@ extends SceneTree
 ## Reference frames and timing for a whole app scene. Informational, not a pass/fail test.
 ## Run with rendering (not --headless) and a fixed frame rate so the simulation repeats exactly:
 ##   godot --path godot --fixed-fps 60 --disable-vsync --audio-driver Dummy --resolution 1280x720 \
-##     --script res://tools/baseline_capture.gd -- --scene=res://app/main.tscn --out=<dir> [--reference=<dir>] [--wall-code]
+##     --script res://tools/baseline_capture.gd -- --scene=res://apps/godot/composition/main.tscn --out=<dir> [--reference=<dir>] [--wall-code]
 ## Frames are saved as <name>_<frame>.png. With --reference the frames are compared to the same files there.
-const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
-const DEFAULT_SCENE := "res://app/main.tscn"
+const TerrainView = preload("res://apps/godot/presentation/battle/terrain/terrain_view.gd")
+const DEFAULT_SCENE := "res://apps/godot/composition/main.tscn"
 const DEFAULT_OUT := "user://baseline"
 const CAPTURE_FRAMES: Array[int] = [2, 300, 900, 1500]
 ## Scripted player input: zoom the camera out, then order the whole army to charge.
@@ -25,6 +25,7 @@ var _init_msec := 0
 var _last_usec := 0
 var _frame_usec: Array[int] = []
 var _report: Array[String] = []
+var _finishing := false
 
 func _initialize() -> void:
 	_init_msec = Time.get_ticks_msec()
@@ -47,6 +48,7 @@ func _initialize() -> void:
 	root.add_child(packed.instantiate())
 
 func _process(_delta: float) -> bool:
+	if _finishing: return false
 	_frame += 1
 	var now := Time.get_ticks_usec()
 	if _frame == 1:
@@ -60,8 +62,19 @@ func _process(_delta: float) -> bool:
 		_capture()
 	if _frame >= CAPTURE_FRAMES.back():
 		_finish()
-		return true
+		_finishing = true
+		_stop_capture.call_deferred()
 	return false
+
+func _stop_capture() -> void:
+	for child in root.get_children(): child.queue_free()
+	# Release playback/viewport queues while the engine is still running.
+	await process_frame
+	await process_frame
+	# The Dummy audio driver mixes on its own wall-clock thread; --fixed-fps can
+	# execute two rendered frames before that thread has consumed stop requests.
+	OS.delay_msec(100)
+	quit(0)
 
 func _send_scripted_input() -> void:
 	for step in ZOOM_OUT_STEPS:

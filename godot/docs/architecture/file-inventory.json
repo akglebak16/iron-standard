@@ -1,0 +1,5044 @@
+{
+  "revision": "096df30ad9e279d89aacff7dc4e8720903e8a700",
+  "files": [
+    {
+      "source": "ARCHITECTURE.md",
+      "destination": "docs/architecture/DEVELOPMENT.md"
+    },
+    {
+      "source": "ASSETS.md",
+      "destination": "docs/ASSETS.md"
+    },
+    {
+      "source": "DEPENDENCIES.md",
+      "destination": "docs/DEPENDENCIES.md"
+    },
+    {
+      "source": "MIGRATION_CHECKLIST.md",
+      "destination": "docs/modules/PARITY_CHECKLIST.md"
+    },
+    {
+      "source": "README.md",
+      "destination": "docs/README.md"
+    },
+    {
+      "source": "app/aftermath_text.gd",
+      "destination": "apps/godot/composition/aftermath_text.gd"
+    },
+    {
+      "source": "app/aftermath_text.gd.uid",
+      "destination": "apps/godot/composition/aftermath_text.gd.uid"
+    },
+    {
+      "source": "app/encounter_aftermath.gd",
+      "destination": "core/campaign/application/encounter_aftermath.gd"
+    },
+    {
+      "source": "app/encounter_aftermath.gd.uid",
+      "destination": "core/campaign/application/encounter_aftermath.gd.uid"
+    },
+    {
+      "source": "app/game_options.gd",
+      "destination": "apps/godot/composition/game_options.gd"
+    },
+    {
+      "source": "app/game_options.gd.uid",
+      "destination": "apps/godot/composition/game_options.gd.uid"
+    },
+    {
+      "source": "app/main.gd",
+      "destination": "apps/godot/composition/main.gd"
+    },
+    {
+      "source": "app/main.gd.uid",
+      "destination": "apps/godot/composition/main.gd.uid"
+    },
+    {
+      "source": "app/main.tscn",
+      "destination": "apps/godot/composition/main.tscn"
+    },
+    {
+      "source": "app/main_menu.gd",
+      "destination": "apps/godot/composition/main_menu.gd"
+    },
+    {
+      "source": "app/main_menu.gd.uid",
+      "destination": "apps/godot/composition/main_menu.gd.uid"
+    },
+    {
+      "source": "app/main_menu.tscn",
+      "destination": "apps/godot/composition/main_menu.tscn"
+    },
+    {
+      "source": "app/pause_menu.gd",
+      "destination": "apps/godot/composition/pause_menu.gd"
+    },
+    {
+      "source": "app/pause_menu.gd.uid",
+      "destination": "apps/godot/composition/pause_menu.gd.uid"
+    },
+    {
+      "source": "app/presentation_preferences.gd",
+      "destination": "apps/godot/composition/presentation_preferences.gd"
+    },
+    {
+      "source": "app/presentation_preferences.gd.uid",
+      "destination": "apps/godot/composition/presentation_preferences.gd.uid"
+    },
+    {
+      "source": "app/save_store.gd",
+      "destination": "adapters/persistence/save_store.gd"
+    },
+    {
+      "source": "app/save_store.gd.uid",
+      "destination": "adapters/persistence/save_store.gd.uid"
+    },
+    {
+      "source": "app/siege_demo.tscn",
+      "destination": "apps/godot/composition/siege_demo.tscn"
+    },
+    {
+      "source": "app/tests/test_encounter_aftermath.gd",
+      "destination": "tests/integration/app/test_encounter_aftermath.gd"
+    },
+    {
+      "source": "app/tests/test_encounter_aftermath.gd.uid",
+      "destination": "tests/integration/app/test_encounter_aftermath.gd.uid"
+    },
+    {
+      "source": "app/tests/test_gear_and_menu.gd",
+      "destination": "tests/integration/app/test_gear_and_menu.gd"
+    },
+    {
+      "source": "app/tests/test_gear_and_menu.gd.uid",
+      "destination": "tests/integration/app/test_gear_and_menu.gd.uid"
+    },
+    {
+      "source": "app/tests/test_scenes_compile.gd",
+      "destination": "tests/integration/app/test_scenes_compile.gd"
+    },
+    {
+      "source": "app/tests/test_scenes_compile.gd.uid",
+      "destination": "tests/integration/app/test_scenes_compile.gd.uid"
+    },
+    {
+      "source": "app/tests/test_siege_bridge.gd",
+      "destination": "tests/integration/app/test_siege_bridge.gd"
+    },
+    {
+      "source": "app/tests/test_siege_bridge.gd.uid",
+      "destination": "tests/integration/app/test_siege_bridge.gd.uid"
+    },
+    {
+      "source": "app/tests/test_siege_window.gd",
+      "destination": "tests/integration/app/test_siege_window.gd"
+    },
+    {
+      "source": "app/tests/test_siege_window.gd.uid",
+      "destination": "tests/integration/app/test_siege_window.gd.uid"
+    },
+    {
+      "source": "app/tests/test_ui_smoke.gd",
+      "destination": "tests/integration/app/test_ui_smoke.gd"
+    },
+    {
+      "source": "app/tests/test_ui_smoke.gd.uid",
+      "destination": "tests/integration/app/test_ui_smoke.gd.uid"
+    },
+    {
+      "source": "app/tests/test_world_battle_bridge.gd",
+      "destination": "tests/integration/app/test_world_battle_bridge.gd"
+    },
+    {
+      "source": "app/tests/test_world_battle_bridge.gd.uid",
+      "destination": "tests/integration/app/test_world_battle_bridge.gd.uid"
+    },
+    {
+      "source": "app/world_battle_bridge.gd",
+      "destination": "core/campaign/application/battle_encounter.gd"
+    },
+    {
+      "source": "app/world_battle_bridge.gd.uid",
+      "destination": "core/campaign/application/battle_encounter.gd.uid"
+    },
+    {
+      "source": "app/world_demo.gd",
+      "destination": "apps/godot/composition/world_demo.gd"
+    },
+    {
+      "source": "app/world_demo.gd.uid",
+      "destination": "apps/godot/composition/world_demo.gd.uid"
+    },
+    {
+      "source": "app/world_demo.tscn",
+      "destination": "apps/godot/composition/world_demo.tscn"
+    },
+    {
+      "source": "battle/PARITY.md",
+      "destination": "docs/modules/battle/PARITY.md"
+    },
+    {
+      "source": "battle/POST_PARITY_PLAN.md",
+      "destination": "docs/benchmarks/battle-asset-history.md"
+    },
+    {
+      "source": "battle/application/factory.gd",
+      "destination": "core/battle/application/factory.gd"
+    },
+    {
+      "source": "battle/application/factory.gd.uid",
+      "destination": "core/battle/application/factory.gd.uid"
+    },
+    {
+      "source": "battle/application/hero_input.gd",
+      "destination": "core/battle/application/hero_input.gd"
+    },
+    {
+      "source": "battle/application/hero_input.gd.uid",
+      "destination": "core/battle/application/hero_input.gd.uid"
+    },
+    {
+      "source": "battle/application/session.gd",
+      "destination": "core/battle/application/session.gd"
+    },
+    {
+      "source": "battle/application/session.gd.uid",
+      "destination": "core/battle/application/session.gd.uid"
+    },
+    {
+      "source": "battle/combat_event.gd",
+      "destination": "core/battle/combat_event.gd"
+    },
+    {
+      "source": "battle/combat_event.gd.uid",
+      "destination": "core/battle/combat_event.gd.uid"
+    },
+    {
+      "source": "battle/config.gd",
+      "destination": "core/battle/config.gd"
+    },
+    {
+      "source": "battle/config.gd.uid",
+      "destination": "core/battle/config.gd.uid"
+    },
+    {
+      "source": "battle/data/army_builder.gd",
+      "destination": "core/battle/data/army_builder.gd"
+    },
+    {
+      "source": "battle/data/army_builder.gd.uid",
+      "destination": "core/battle/data/army_builder.gd.uid"
+    },
+    {
+      "source": "battle/data/battle_setup.gd",
+      "destination": "core/battle/data/battle_setup.gd"
+    },
+    {
+      "source": "battle/data/battle_setup.gd.uid",
+      "destination": "core/battle/data/battle_setup.gd.uid"
+    },
+    {
+      "source": "battle/data/companion_builder.gd",
+      "destination": "core/battle/data/companion_builder.gd"
+    },
+    {
+      "source": "battle/data/companion_builder.gd.uid",
+      "destination": "core/battle/data/companion_builder.gd.uid"
+    },
+    {
+      "source": "battle/data/demo_battle.tres",
+      "destination": "content/scenarios/demo_battle.tres"
+    },
+    {
+      "source": "battle/data/demo_siege.tres",
+      "destination": "content/scenarios/demo_siege.tres"
+    },
+    {
+      "source": "battle/data/hero_stats.gd",
+      "destination": "core/battle/data/hero_stats.gd"
+    },
+    {
+      "source": "battle/data/hero_stats.gd.uid",
+      "destination": "core/battle/data/hero_stats.gd.uid"
+    },
+    {
+      "source": "battle/data/reinforcements.gd",
+      "destination": "core/battle/data/reinforcements.gd"
+    },
+    {
+      "source": "battle/data/reinforcements.gd.uid",
+      "destination": "core/battle/data/reinforcements.gd.uid"
+    },
+    {
+      "source": "battle/data/siege_setup.gd",
+      "destination": "core/battle/data/siege_setup.gd"
+    },
+    {
+      "source": "battle/data/siege_setup.gd.uid",
+      "destination": "core/battle/data/siege_setup.gd.uid"
+    },
+    {
+      "source": "battle/data/vegetation_setup.gd",
+      "destination": "core/battle/data/vegetation_setup.gd"
+    },
+    {
+      "source": "battle/data/vegetation_setup.gd.uid",
+      "destination": "core/battle/data/vegetation_setup.gd.uid"
+    },
+    {
+      "source": "battle/model/group.gd",
+      "destination": "core/battle/model/group.gd"
+    },
+    {
+      "source": "battle/model/group.gd.uid",
+      "destination": "core/battle/model/group.gd.uid"
+    },
+    {
+      "source": "battle/model/plant.gd",
+      "destination": "core/battle/model/plant.gd"
+    },
+    {
+      "source": "battle/model/plant.gd.uid",
+      "destination": "core/battle/model/plant.gd.uid"
+    },
+    {
+      "source": "battle/model/siege_defense.gd",
+      "destination": "core/battle/model/siege_defense.gd"
+    },
+    {
+      "source": "battle/model/siege_defense.gd.uid",
+      "destination": "core/battle/model/siege_defense.gd.uid"
+    },
+    {
+      "source": "battle/model/siege_wall.gd",
+      "destination": "core/battle/model/siege_wall.gd"
+    },
+    {
+      "source": "battle/model/siege_wall.gd.uid",
+      "destination": "core/battle/model/siege_wall.gd.uid"
+    },
+    {
+      "source": "battle/model/state.gd",
+      "destination": "core/battle/model/state.gd"
+    },
+    {
+      "source": "battle/model/state.gd.uid",
+      "destination": "core/battle/model/state.gd.uid"
+    },
+    {
+      "source": "battle/model/unit.gd",
+      "destination": "core/battle/model/unit.gd"
+    },
+    {
+      "source": "battle/model/unit.gd.uid",
+      "destination": "core/battle/model/unit.gd.uid"
+    },
+    {
+      "source": "battle/presentation/audio/assets/battle_theme.ogg",
+      "destination": "apps/godot/presentation/battle/audio/assets/battle_theme.ogg"
+    },
+    {
+      "source": "battle/presentation/audio/assets/battle_theme.ogg.import",
+      "destination": "apps/godot/presentation/battle/audio/assets/battle_theme.ogg.import"
+    },
+    {
+      "source": "battle/presentation/audio/battle_music.gd",
+      "destination": "apps/godot/presentation/battle/audio/battle_music.gd"
+    },
+    {
+      "source": "battle/presentation/audio/battle_music.gd.uid",
+      "destination": "apps/godot/presentation/battle/audio/battle_music.gd.uid"
+    },
+    {
+      "source": "battle/presentation/audio/combat_audio.gd",
+      "destination": "apps/godot/presentation/battle/audio/combat_audio.gd"
+    },
+    {
+      "source": "battle/presentation/audio/combat_audio.gd.uid",
+      "destination": "apps/godot/presentation/battle/audio/combat_audio.gd.uid"
+    },
+    {
+      "source": "battle/presentation/audio/sound_bank.gd",
+      "destination": "apps/godot/presentation/battle/audio/sound_bank.gd"
+    },
+    {
+      "source": "battle/presentation/audio/sound_bank.gd.uid",
+      "destination": "apps/godot/presentation/battle/audio/sound_bank.gd.uid"
+    },
+    {
+      "source": "battle/presentation/banter_lines.gd",
+      "destination": "apps/godot/presentation/battle/banter_lines.gd"
+    },
+    {
+      "source": "battle/presentation/banter_lines.gd.uid",
+      "destination": "apps/godot/presentation/battle/banter_lines.gd.uid"
+    },
+    {
+      "source": "battle/presentation/battle_camera.gd",
+      "destination": "apps/godot/presentation/battle/battle_camera.gd"
+    },
+    {
+      "source": "battle/presentation/battle_camera.gd.uid",
+      "destination": "apps/godot/presentation/battle/battle_camera.gd.uid"
+    },
+    {
+      "source": "battle/presentation/combat_feedback.gd",
+      "destination": "apps/godot/presentation/battle/combat_feedback.gd"
+    },
+    {
+      "source": "battle/presentation/combat_feedback.gd.uid",
+      "destination": "apps/godot/presentation/battle/combat_feedback.gd.uid"
+    },
+    {
+      "source": "battle/presentation/companion_dialogue.gd",
+      "destination": "apps/godot/presentation/battle/companion_dialogue.gd"
+    },
+    {
+      "source": "battle/presentation/companion_dialogue.gd.uid",
+      "destination": "apps/godot/presentation/battle/companion_dialogue.gd.uid"
+    },
+    {
+      "source": "battle/presentation/demo_config.gd",
+      "destination": "apps/godot/presentation/battle/demo_config.gd"
+    },
+    {
+      "source": "battle/presentation/demo_config.gd.uid",
+      "destination": "apps/godot/presentation/battle/demo_config.gd.uid"
+    },
+    {
+      "source": "battle/presentation/detached_parts.gd",
+      "destination": "apps/godot/presentation/battle/detached_parts.gd"
+    },
+    {
+      "source": "battle/presentation/detached_parts.gd.uid",
+      "destination": "apps/godot/presentation/battle/detached_parts.gd.uid"
+    },
+    {
+      "source": "battle/presentation/ground_bake.gd",
+      "destination": "apps/godot/presentation/battle/ground_bake.gd"
+    },
+    {
+      "source": "battle/presentation/ground_bake.gd.uid",
+      "destination": "apps/godot/presentation/battle/ground_bake.gd.uid"
+    },
+    {
+      "source": "battle/presentation/hud/battle_controls.gd",
+      "destination": "apps/godot/presentation/battle/hud/battle_controls.gd"
+    },
+    {
+      "source": "battle/presentation/hud/battle_controls.gd.uid",
+      "destination": "apps/godot/presentation/battle/hud/battle_controls.gd.uid"
+    },
+    {
+      "source": "battle/presentation/hud/navigation_hud.gd",
+      "destination": "apps/godot/presentation/battle/hud/navigation_hud.gd"
+    },
+    {
+      "source": "battle/presentation/hud/navigation_hud.gd.uid",
+      "destination": "apps/godot/presentation/battle/hud/navigation_hud.gd.uid"
+    },
+    {
+      "source": "battle/presentation/hud/order_marker.gd",
+      "destination": "apps/godot/presentation/battle/hud/order_marker.gd"
+    },
+    {
+      "source": "battle/presentation/hud/order_marker.gd.uid",
+      "destination": "apps/godot/presentation/battle/hud/order_marker.gd.uid"
+    },
+    {
+      "source": "battle/presentation/impact_effects.gd",
+      "destination": "apps/godot/presentation/battle/impact_effects.gd"
+    },
+    {
+      "source": "battle/presentation/impact_effects.gd.uid",
+      "destination": "apps/godot/presentation/battle/impact_effects.gd.uid"
+    },
+    {
+      "source": "battle/presentation/projectile_view.gd",
+      "destination": "apps/godot/presentation/battle/projectile_view.gd"
+    },
+    {
+      "source": "battle/presentation/projectile_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/projectile_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/scene.tscn",
+      "destination": "apps/godot/presentation/battle/scene.tscn"
+    },
+    {
+      "source": "battle/presentation/siege_defense_view.gd",
+      "destination": "apps/godot/presentation/battle/siege_defense_view.gd"
+    },
+    {
+      "source": "battle/presentation/siege_defense_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/siege_defense_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/ground.gdshader",
+      "destination": "apps/godot/presentation/battle/terrain/ground.gdshader"
+    },
+    {
+      "source": "battle/presentation/terrain/ground.gdshader.uid",
+      "destination": "apps/godot/presentation/battle/terrain/ground.gdshader.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/terrain_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/terrain_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/terrain_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/terrain_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/vegetation_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/vegetation_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/vegetation_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/vegetation_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_disc.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_disc.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_disc.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_disc.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_gate_leaf.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_gate_leaf.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_merlon.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_merlon.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_merlon.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_merlon.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_stone.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_stone.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_stone.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_stone.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_tower.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_tower.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_tower.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_tower.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_gate_leaf.tscn",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_gate_leaf.tscn"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.gd",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.tscn",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.tscn"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_tower.tscn",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_tower.tscn"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_scene_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/wall_scene_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_scene_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/wall_scene_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/wall_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/wall_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/unit_art.gd",
+      "destination": "apps/godot/presentation/battle/unit_art.gd"
+    },
+    {
+      "source": "battle/presentation/unit_art.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_art.gd.uid"
+    },
+    {
+      "source": "battle/presentation/unit_markers.gd",
+      "destination": "apps/godot/presentation/battle/unit_markers.gd"
+    },
+    {
+      "source": "battle/presentation/unit_markers.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_markers.gd.uid"
+    },
+    {
+      "source": "battle/presentation/unit_view.gd",
+      "destination": "apps/godot/presentation/battle/unit_view.gd"
+    },
+    {
+      "source": "battle/presentation/unit_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/view.gd",
+      "destination": "apps/godot/presentation/battle/view.gd"
+    },
+    {
+      "source": "battle/presentation/view.gd.uid",
+      "destination": "apps/godot/presentation/battle/view.gd.uid"
+    },
+    {
+      "source": "battle/rules/ai_decision.gd",
+      "destination": "core/battle/rules/ai_decision.gd"
+    },
+    {
+      "source": "battle/rules/ai_decision.gd.uid",
+      "destination": "core/battle/rules/ai_decision.gd.uid"
+    },
+    {
+      "source": "battle/rules/block.gd",
+      "destination": "core/battle/rules/block.gd"
+    },
+    {
+      "source": "battle/rules/block.gd.uid",
+      "destination": "core/battle/rules/block.gd.uid"
+    },
+    {
+      "source": "battle/rules/charge.gd",
+      "destination": "core/battle/rules/charge.gd"
+    },
+    {
+      "source": "battle/rules/charge.gd.uid",
+      "destination": "core/battle/rules/charge.gd.uid"
+    },
+    {
+      "source": "battle/rules/collision_grid.gd",
+      "destination": "core/battle/rules/collision_grid.gd"
+    },
+    {
+      "source": "battle/rules/collision_grid.gd.uid",
+      "destination": "core/battle/rules/collision_grid.gd.uid"
+    },
+    {
+      "source": "battle/rules/combat.gd",
+      "destination": "core/battle/rules/combat.gd"
+    },
+    {
+      "source": "battle/rules/combat.gd.uid",
+      "destination": "core/battle/rules/combat.gd.uid"
+    },
+    {
+      "source": "battle/rules/combat_step.gd",
+      "destination": "core/battle/rules/combat_step.gd"
+    },
+    {
+      "source": "battle/rules/combat_step.gd.uid",
+      "destination": "core/battle/rules/combat_step.gd.uid"
+    },
+    {
+      "source": "battle/rules/damage.gd",
+      "destination": "core/battle/rules/damage.gd"
+    },
+    {
+      "source": "battle/rules/damage.gd.uid",
+      "destination": "core/battle/rules/damage.gd.uid"
+    },
+    {
+      "source": "battle/rules/hero_control.gd",
+      "destination": "core/battle/rules/hero_control.gd"
+    },
+    {
+      "source": "battle/rules/hero_control.gd.uid",
+      "destination": "core/battle/rules/hero_control.gd.uid"
+    },
+    {
+      "source": "battle/rules/morale.gd",
+      "destination": "core/battle/rules/morale.gd"
+    },
+    {
+      "source": "battle/rules/morale.gd.uid",
+      "destination": "core/battle/rules/morale.gd.uid"
+    },
+    {
+      "source": "battle/rules/movement.gd",
+      "destination": "core/battle/rules/movement.gd"
+    },
+    {
+      "source": "battle/rules/movement.gd.uid",
+      "destination": "core/battle/rules/movement.gd.uid"
+    },
+    {
+      "source": "battle/rules/result.gd",
+      "destination": "core/battle/rules/result.gd"
+    },
+    {
+      "source": "battle/rules/result.gd.uid",
+      "destination": "core/battle/rules/result.gd.uid"
+    },
+    {
+      "source": "battle/rules/siege_defense.gd",
+      "destination": "core/battle/rules/siege_defense.gd"
+    },
+    {
+      "source": "battle/rules/siege_defense.gd.uid",
+      "destination": "core/battle/rules/siege_defense.gd.uid"
+    },
+    {
+      "source": "battle/rules/spatial_index.gd",
+      "destination": "core/battle/rules/spatial_index.gd"
+    },
+    {
+      "source": "battle/rules/spatial_index.gd.uid",
+      "destination": "core/battle/rules/spatial_index.gd.uid"
+    },
+    {
+      "source": "battle/rules/tactics.gd",
+      "destination": "core/battle/rules/tactics.gd"
+    },
+    {
+      "source": "battle/rules/tactics.gd.uid",
+      "destination": "core/battle/rules/tactics.gd.uid"
+    },
+    {
+      "source": "battle/rules/targeting.gd",
+      "destination": "core/battle/rules/targeting.gd"
+    },
+    {
+      "source": "battle/rules/targeting.gd.uid",
+      "destination": "core/battle/rules/targeting.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_combat_events.gd",
+      "destination": "tests/unit/battle/application/test_combat_events.gd"
+    },
+    {
+      "source": "battle/tests/application/test_combat_events.gd.uid",
+      "destination": "tests/unit/battle/application/test_combat_events.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_companion_factory.gd",
+      "destination": "tests/unit/battle/application/test_companion_factory.gd"
+    },
+    {
+      "source": "battle/tests/application/test_companion_factory.gd.uid",
+      "destination": "tests/unit/battle/application/test_companion_factory.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_hero_factory.gd",
+      "destination": "tests/unit/battle/application/test_hero_factory.gd"
+    },
+    {
+      "source": "battle/tests/application/test_hero_factory.gd.uid",
+      "destination": "tests/unit/battle/application/test_hero_factory.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_reserve_waves.gd",
+      "destination": "tests/unit/battle/application/test_reserve_waves.gd"
+    },
+    {
+      "source": "battle/tests/application/test_reserve_waves.gd.uid",
+      "destination": "tests/unit/battle/application/test_reserve_waves.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_session.gd",
+      "destination": "tests/unit/battle/application/test_session.gd"
+    },
+    {
+      "source": "battle/tests/application/test_session.gd.uid",
+      "destination": "tests/unit/battle/application/test_session.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_siege_setup.gd",
+      "destination": "tests/unit/battle/application/test_siege_setup.gd"
+    },
+    {
+      "source": "battle/tests/application/test_siege_setup.gd.uid",
+      "destination": "tests/unit/battle/application/test_siege_setup.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_vegetation.gd",
+      "destination": "tests/unit/battle/application/test_vegetation.gd"
+    },
+    {
+      "source": "battle/tests/application/test_vegetation.gd.uid",
+      "destination": "tests/unit/battle/application/test_vegetation.gd.uid"
+    },
+    {
+      "source": "battle/tests/data/test_catalog_spawn.gd",
+      "destination": "tests/unit/battle/data/test_catalog_spawn.gd"
+    },
+    {
+      "source": "battle/tests/data/test_catalog_spawn.gd.uid",
+      "destination": "tests/unit/battle/data/test_catalog_spawn.gd.uid"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_combat_step.gd",
+      "destination": "tests/unit/battle/fixtures/legacy_combat_step.gd"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_combat_step.gd.uid",
+      "destination": "tests/unit/battle/fixtures/legacy_combat_step.gd.uid"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_movement.gd",
+      "destination": "tests/unit/battle/fixtures/legacy_movement.gd"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_movement.gd.uid",
+      "destination": "tests/unit/battle/fixtures/legacy_movement.gd.uid"
+    },
+    {
+      "source": "battle/tests/model/test_battle_state.gd",
+      "destination": "tests/unit/battle/model/test_battle_state.gd"
+    },
+    {
+      "source": "battle/tests/model/test_battle_state.gd.uid",
+      "destination": "tests/unit/battle/model/test_battle_state.gd.uid"
+    },
+    {
+      "source": "battle/tests/model/test_groups.gd",
+      "destination": "tests/unit/battle/model/test_groups.gd"
+    },
+    {
+      "source": "battle/tests/model/test_groups.gd.uid",
+      "destination": "tests/unit/battle/model/test_groups.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_banter.gd",
+      "destination": "tests/unit/battle/presentation/test_banter.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_banter.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_banter.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_camera.gd",
+      "destination": "tests/unit/battle/presentation/test_battle_camera.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_camera.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_battle_camera.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_controls.gd",
+      "destination": "tests/unit/battle/presentation/test_battle_controls.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_controls.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_battle_controls.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_combat_audio.gd",
+      "destination": "tests/unit/battle/presentation/test_combat_audio.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_combat_audio.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_combat_audio.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_companion_dialogue.gd",
+      "destination": "tests/unit/battle/presentation/test_companion_dialogue.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_companion_dialogue.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_companion_dialogue.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_detached_parts.gd",
+      "destination": "tests/unit/battle/presentation/test_detached_parts.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_detached_parts.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_detached_parts.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_impact_effects.gd",
+      "destination": "tests/unit/battle/presentation/test_impact_effects.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_impact_effects.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_impact_effects.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_navigation_hud.gd",
+      "destination": "tests/unit/battle/presentation/test_navigation_hud.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_navigation_hud.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_navigation_hud.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_scene.gd",
+      "destination": "tests/unit/battle/presentation/test_scene.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_scene.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_scene.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_terrain_view.gd",
+      "destination": "tests/unit/battle/presentation/test_terrain_view.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_terrain_view.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_terrain_view.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_attack_timing.gd",
+      "destination": "tests/unit/battle/rules/test_ai_attack_timing.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_attack_timing.gd.uid",
+      "destination": "tests/unit/battle/rules/test_ai_attack_timing.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_decision.gd",
+      "destination": "tests/unit/battle/rules/test_ai_decision.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_decision.gd.uid",
+      "destination": "tests/unit/battle/rules/test_ai_decision.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_tick_order.gd",
+      "destination": "tests/unit/battle/rules/test_ai_tick_order.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_tick_order.gd.uid",
+      "destination": "tests/unit/battle/rules/test_ai_tick_order.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_block.gd",
+      "destination": "tests/unit/battle/rules/test_block.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_block.gd.uid",
+      "destination": "tests/unit/battle/rules/test_block.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_charge.gd",
+      "destination": "tests/unit/battle/rules/test_charge.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_charge.gd.uid",
+      "destination": "tests/unit/battle/rules/test_charge.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_combat.gd",
+      "destination": "tests/unit/battle/rules/test_combat.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_combat.gd.uid",
+      "destination": "tests/unit/battle/rules/test_combat.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_damage.gd",
+      "destination": "tests/unit/battle/rules/test_damage.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_damage.gd.uid",
+      "destination": "tests/unit/battle/rules/test_damage.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_equipment_combat.gd",
+      "destination": "tests/unit/battle/rules/test_equipment_combat.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_equipment_combat.gd.uid",
+      "destination": "tests/unit/battle/rules/test_equipment_combat.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_charge.gd",
+      "destination": "tests/unit/battle/rules/test_hero_charge.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_charge.gd.uid",
+      "destination": "tests/unit/battle/rules/test_hero_charge.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_control.gd",
+      "destination": "tests/unit/battle/rules/test_hero_control.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_control.gd.uid",
+      "destination": "tests/unit/battle/rules/test_hero_control.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_strike.gd",
+      "destination": "tests/unit/battle/rules/test_hero_strike.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_strike.gd.uid",
+      "destination": "tests/unit/battle/rules/test_hero_strike.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_morale.gd",
+      "destination": "tests/unit/battle/rules/test_morale.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_morale.gd.uid",
+      "destination": "tests/unit/battle/rules/test_morale.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_movement.gd",
+      "destination": "tests/unit/battle/rules/test_movement.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_movement.gd.uid",
+      "destination": "tests/unit/battle/rules/test_movement.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_projectile.gd",
+      "destination": "tests/unit/battle/rules/test_projectile.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_projectile.gd.uid",
+      "destination": "tests/unit/battle/rules/test_projectile.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_result.gd",
+      "destination": "tests/unit/battle/rules/test_result.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_result.gd.uid",
+      "destination": "tests/unit/battle/rules/test_result.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_siege.gd",
+      "destination": "tests/unit/battle/rules/test_siege.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_siege.gd.uid",
+      "destination": "tests/unit/battle/rules/test_siege.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_siege_defense.gd",
+      "destination": "tests/unit/battle/rules/test_siege_defense.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_siege_defense.gd.uid",
+      "destination": "tests/unit/battle/rules/test_siege_defense.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_full_battle.gd",
+      "destination": "tests/unit/battle/rules/test_spatial_full_battle.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_full_battle.gd.uid",
+      "destination": "tests/unit/battle/rules/test_spatial_full_battle.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_index.gd",
+      "destination": "tests/unit/battle/rules/test_spatial_index.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_index.gd.uid",
+      "destination": "tests/unit/battle/rules/test_spatial_index.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_tactics.gd",
+      "destination": "tests/unit/battle/rules/test_tactics.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_tactics.gd.uid",
+      "destination": "tests/unit/battle/rules/test_tactics.gd.uid"
+    },
+    {
+      "source": "battle/tools/benchmark.gd",
+      "destination": "tools/battle/benchmark.gd"
+    },
+    {
+      "source": "battle/tools/benchmark.gd.uid",
+      "destination": "tools/battle/benchmark.gd.uid"
+    },
+    {
+      "source": "battle/tools/render_battle_theme.py",
+      "destination": "tools/battle/render_battle_theme.py"
+    },
+    {
+      "source": "battle/tools/render_wall_textures.py",
+      "destination": "tools/battle/render_wall_textures.py"
+    },
+    {
+      "source": "battle/tools/view_bench.gd",
+      "destination": "tools/battle/view_bench.gd"
+    },
+    {
+      "source": "battle/tools/view_bench.gd.uid",
+      "destination": "tools/battle/view_bench.gd.uid"
+    },
+    {
+      "source": "campaign/config.gd",
+      "destination": "core/campaign/config.gd"
+    },
+    {
+      "source": "campaign/config.gd.uid",
+      "destination": "core/campaign/config.gd.uid"
+    },
+    {
+      "source": "campaign/data/encounter_rewards.gd",
+      "destination": "core/campaign/data/encounter_rewards.gd"
+    },
+    {
+      "source": "campaign/data/encounter_rewards.gd.uid",
+      "destination": "core/campaign/data/encounter_rewards.gd.uid"
+    },
+    {
+      "source": "campaign/data/europe.json",
+      "destination": "content/gameplay/campaign/europe.json"
+    },
+    {
+      "source": "campaign/data/europe_data.gd",
+      "destination": "core/campaign/data/europe_data.gd"
+    },
+    {
+      "source": "campaign/data/europe_data.gd.uid",
+      "destination": "core/campaign/data/europe_data.gd.uid"
+    },
+    {
+      "source": "campaign/data/faction_catalog.gd",
+      "destination": "core/campaign/data/faction_catalog.gd"
+    },
+    {
+      "source": "campaign/data/faction_catalog.gd.uid",
+      "destination": "core/campaign/data/faction_catalog.gd.uid"
+    },
+    {
+      "source": "campaign/data/factions.json",
+      "destination": "content/gameplay/campaign/factions.json"
+    },
+    {
+      "source": "campaign/data/goods.json",
+      "destination": "content/gameplay/campaign/goods.json"
+    },
+    {
+      "source": "campaign/data/goods_catalog.gd",
+      "destination": "core/campaign/data/goods_catalog.gd"
+    },
+    {
+      "source": "campaign/data/goods_catalog.gd.uid",
+      "destination": "core/campaign/data/goods_catalog.gd.uid"
+    },
+    {
+      "source": "campaign/economy/battle_loot.gd",
+      "destination": "core/campaign/economy/battle_loot.gd"
+    },
+    {
+      "source": "campaign/economy/battle_loot.gd.uid",
+      "destination": "core/campaign/economy/battle_loot.gd.uid"
+    },
+    {
+      "source": "campaign/economy/market.gd",
+      "destination": "core/campaign/economy/market.gd"
+    },
+    {
+      "source": "campaign/economy/market.gd.uid",
+      "destination": "core/campaign/economy/market.gd.uid"
+    },
+    {
+      "source": "campaign/economy/party_economy.gd",
+      "destination": "core/campaign/economy/party_economy.gd"
+    },
+    {
+      "source": "campaign/economy/party_economy.gd.uid",
+      "destination": "core/campaign/economy/party_economy.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/companion_text.gd",
+      "destination": "apps/godot/presentation/campaign/companion_text.gd"
+    },
+    {
+      "source": "campaign/presentation/companion_text.gd.uid",
+      "destination": "apps/godot/presentation/campaign/companion_text.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/emblem_art.gd",
+      "destination": "apps/godot/presentation/campaign/emblem_art.gd"
+    },
+    {
+      "source": "campaign/presentation/emblem_art.gd.uid",
+      "destination": "apps/godot/presentation/campaign/emblem_art.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/encounter_dialog.gd",
+      "destination": "apps/godot/presentation/campaign/encounter_dialog.gd"
+    },
+    {
+      "source": "campaign/presentation/encounter_dialog.gd.uid",
+      "destination": "apps/godot/presentation/campaign/encounter_dialog.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/farm_layer.gd",
+      "destination": "apps/godot/presentation/campaign/farm_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/farm_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/farm_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/icon_sheet.gd",
+      "destination": "apps/godot/presentation/campaign/icon_sheet.gd"
+    },
+    {
+      "source": "campaign/presentation/icon_sheet.gd.uid",
+      "destination": "apps/godot/presentation/campaign/icon_sheet.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/map_brush.gd",
+      "destination": "apps/godot/presentation/campaign/map_brush.gd"
+    },
+    {
+      "source": "campaign/presentation/map_brush.gd.uid",
+      "destination": "apps/godot/presentation/campaign/map_brush.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/modal_window.gd",
+      "destination": "apps/godot/presentation/campaign/modal_window.gd"
+    },
+    {
+      "source": "campaign/presentation/modal_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/modal_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/party_layer.gd",
+      "destination": "apps/godot/presentation/campaign/party_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/party_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/party_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/party_window.gd",
+      "destination": "apps/godot/presentation/campaign/party_window.gd"
+    },
+    {
+      "source": "campaign/presentation/party_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/party_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/relief_layer.gd",
+      "destination": "apps/godot/presentation/campaign/relief_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/relief_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/relief_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/river_layer.gd",
+      "destination": "apps/godot/presentation/campaign/river_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/river_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/river_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/road_layer.gd",
+      "destination": "apps/godot/presentation/campaign/road_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/road_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/road_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/settlement_art.gd",
+      "destination": "apps/godot/presentation/campaign/settlement_art.gd"
+    },
+    {
+      "source": "campaign/presentation/settlement_art.gd.uid",
+      "destination": "apps/godot/presentation/campaign/settlement_art.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/settlement_layer.gd",
+      "destination": "apps/godot/presentation/campaign/settlement_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/settlement_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/settlement_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/siege_window.gd",
+      "destination": "apps/godot/presentation/campaign/siege_window.gd"
+    },
+    {
+      "source": "campaign/presentation/siege_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/siege_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_common.gdshaderinc",
+      "destination": "apps/godot/presentation/campaign/terrain_common.gdshaderinc"
+    },
+    {
+      "source": "campaign/presentation/terrain_common.gdshaderinc.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_common.gdshaderinc.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_layer.gd",
+      "destination": "apps/godot/presentation/campaign/terrain_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/terrain_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass1.gdshader",
+      "destination": "apps/godot/presentation/campaign/terrain_pass1.gdshader"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass1.gdshader.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_pass1.gdshader.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass2.gdshader",
+      "destination": "apps/godot/presentation/campaign/terrain_pass2.gdshader"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass2.gdshader.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_pass2.gdshader.uid"
+    },
+    {
+      "source": "campaign/presentation/town_window.gd",
+      "destination": "apps/godot/presentation/campaign/town_window.gd"
+    },
+    {
+      "source": "campaign/presentation/town_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/town_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/vignette.gdshader",
+      "destination": "apps/godot/presentation/campaign/vignette.gdshader"
+    },
+    {
+      "source": "campaign/presentation/vignette.gdshader.uid",
+      "destination": "apps/godot/presentation/campaign/vignette.gdshader.uid"
+    },
+    {
+      "source": "campaign/presentation/world_camera.gd",
+      "destination": "apps/godot/presentation/campaign/world_camera.gd"
+    },
+    {
+      "source": "campaign/presentation/world_camera.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_camera.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_hud.gd",
+      "destination": "apps/godot/presentation/campaign/world_hud.gd"
+    },
+    {
+      "source": "campaign/presentation/world_hud.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_hud.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_map_view.gd",
+      "destination": "apps/godot/presentation/campaign/world_map_view.gd"
+    },
+    {
+      "source": "campaign/presentation/world_map_view.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_map_view.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_marks_layer.gd",
+      "destination": "apps/godot/presentation/campaign/world_marks_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/world_marks_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_marks_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_parties_layer.gd",
+      "destination": "apps/godot/presentation/campaign/world_parties_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/world_parties_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_parties_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_tips.gd",
+      "destination": "apps/godot/presentation/campaign/world_tips.gd"
+    },
+    {
+      "source": "campaign/presentation/world_tips.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_tips.gd.uid"
+    },
+    {
+      "source": "campaign/rules/battle_aftermath.gd",
+      "destination": "core/campaign/rules/battle_aftermath.gd"
+    },
+    {
+      "source": "campaign/rules/battle_aftermath.gd.uid",
+      "destination": "core/campaign/rules/battle_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/rules/battle_quests.gd",
+      "destination": "core/campaign/rules/battle_quests.gd"
+    },
+    {
+      "source": "campaign/rules/battle_quests.gd.uid",
+      "destination": "core/campaign/rules/battle_quests.gd.uid"
+    },
+    {
+      "source": "campaign/rules/encounter_world.gd",
+      "destination": "core/campaign/rules/encounter_world.gd"
+    },
+    {
+      "source": "campaign/rules/encounter_world.gd.uid",
+      "destination": "core/campaign/rules/encounter_world.gd.uid"
+    },
+    {
+      "source": "campaign/rules/relations.gd",
+      "destination": "core/campaign/rules/relations.gd"
+    },
+    {
+      "source": "campaign/rules/relations.gd.uid",
+      "destination": "core/campaign/rules/relations.gd.uid"
+    },
+    {
+      "source": "campaign/rules/settlement_recruits.gd",
+      "destination": "core/campaign/rules/settlement_recruits.gd"
+    },
+    {
+      "source": "campaign/rules/settlement_recruits.gd.uid",
+      "destination": "core/campaign/rules/settlement_recruits.gd.uid"
+    },
+    {
+      "source": "campaign/rules/siege_aftermath.gd",
+      "destination": "core/campaign/rules/siege_aftermath.gd"
+    },
+    {
+      "source": "campaign/rules/siege_aftermath.gd.uid",
+      "destination": "core/campaign/rules/siege_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/tests/economy/test_battle_loot.gd",
+      "destination": "tests/unit/campaign/economy/test_battle_loot.gd"
+    },
+    {
+      "source": "campaign/tests/economy/test_battle_loot.gd.uid",
+      "destination": "tests/unit/campaign/economy/test_battle_loot.gd.uid"
+    },
+    {
+      "source": "campaign/tests/economy/test_market.gd",
+      "destination": "tests/unit/campaign/economy/test_market.gd"
+    },
+    {
+      "source": "campaign/tests/economy/test_market.gd.uid",
+      "destination": "tests/unit/campaign/economy/test_market.gd.uid"
+    },
+    {
+      "source": "campaign/tests/fixtures/world_parity.json",
+      "destination": "tests/unit/campaign/fixtures/world_parity.json"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_aftermath.gd",
+      "destination": "tests/unit/campaign/rules/test_battle_aftermath.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_aftermath.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_battle_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_quests.gd",
+      "destination": "tests/unit/campaign/rules/test_battle_quests.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_quests.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_battle_quests.gd.uid"
+    },
+    {
+      "source": "campaign/tests/rules/test_encounter_world.gd",
+      "destination": "tests/unit/campaign/rules/test_encounter_world.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_encounter_world.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_encounter_world.gd.uid"
+    },
+    {
+      "source": "campaign/tests/rules/test_siege_aftermath.gd",
+      "destination": "tests/unit/campaign/rules/test_siege_aftermath.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_siege_aftermath.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_siege_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_auto_battle.gd",
+      "destination": "tests/unit/campaign/world/test_auto_battle.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_auto_battle.gd.uid",
+      "destination": "tests/unit/campaign/world/test_auto_battle.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_party_ai.gd",
+      "destination": "tests/unit/campaign/world/test_party_ai.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_party_ai.gd.uid",
+      "destination": "tests/unit/campaign/world/test_party_ai.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_party_economy.gd",
+      "destination": "tests/unit/campaign/world/test_party_economy.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_party_economy.gd.uid",
+      "destination": "tests/unit/campaign/world/test_party_economy.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_terrain_parity.gd",
+      "destination": "tests/unit/campaign/world/test_terrain_parity.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_terrain_parity.gd.uid",
+      "destination": "tests/unit/campaign/world/test_terrain_parity.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_clans.gd",
+      "destination": "tests/unit/campaign/world/test_world_clans.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_clans.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_clans.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_map_parity.gd",
+      "destination": "tests/unit/campaign/world/test_world_map_parity.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_map_parity.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_map_parity.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_quests.gd",
+      "destination": "tests/unit/campaign/world/test_world_quests.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_quests.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_quests.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_save.gd",
+      "destination": "tests/unit/campaign/world/test_world_save.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_save.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_save.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_siege.gd",
+      "destination": "tests/unit/campaign/world/test_world_siege.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_siege.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_siege.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_state.gd",
+      "destination": "tests/unit/campaign/world/test_world_state.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_state.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_state.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_undead.gd",
+      "destination": "tests/unit/campaign/world/test_world_undead.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_undead.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_undead.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_vassals.gd",
+      "destination": "tests/unit/campaign/world/test_world_vassals.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_vassals.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_vassals.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_war_extras.gd",
+      "destination": "tests/unit/campaign/world/test_world_war_extras.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_war_extras.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_war_extras.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_wars.gd",
+      "destination": "tests/unit/campaign/world/test_world_wars.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_wars.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_wars.gd.uid"
+    },
+    {
+      "source": "campaign/tools/export_goods.cjs",
+      "destination": "tools/campaign/export_goods.cjs"
+    },
+    {
+      "source": "campaign/tools/export_world.cjs",
+      "destination": "tools/campaign/export_world.cjs"
+    },
+    {
+      "source": "campaign/world/auto_battle.gd",
+      "destination": "core/campaign/world/auto_battle.gd"
+    },
+    {
+      "source": "campaign/world/auto_battle.gd.uid",
+      "destination": "core/campaign/world/auto_battle.gd.uid"
+    },
+    {
+      "source": "campaign/world/heap.gd",
+      "destination": "core/campaign/world/heap.gd"
+    },
+    {
+      "source": "campaign/world/heap.gd.uid",
+      "destination": "core/campaign/world/heap.gd.uid"
+    },
+    {
+      "source": "campaign/world/noise.gd",
+      "destination": "core/campaign/world/noise.gd"
+    },
+    {
+      "source": "campaign/world/noise.gd.uid",
+      "destination": "core/campaign/world/noise.gd.uid"
+    },
+    {
+      "source": "campaign/world/party_ai.gd",
+      "destination": "core/campaign/world/party_ai.gd"
+    },
+    {
+      "source": "campaign/world/party_ai.gd.uid",
+      "destination": "core/campaign/world/party_ai.gd.uid"
+    },
+    {
+      "source": "campaign/world/party_roster.gd",
+      "destination": "core/campaign/world/party_roster.gd"
+    },
+    {
+      "source": "campaign/world/party_roster.gd.uid",
+      "destination": "core/campaign/world/party_roster.gd.uid"
+    },
+    {
+      "source": "campaign/world/party_rules.gd",
+      "destination": "core/campaign/world/party_rules.gd"
+    },
+    {
+      "source": "campaign/world/party_rules.gd.uid",
+      "destination": "core/campaign/world/party_rules.gd.uid"
+    },
+    {
+      "source": "campaign/world/pathfinder.gd",
+      "destination": "core/campaign/world/pathfinder.gd"
+    },
+    {
+      "source": "campaign/world/pathfinder.gd.uid",
+      "destination": "core/campaign/world/pathfinder.gd.uid"
+    },
+    {
+      "source": "campaign/world/player_party.gd",
+      "destination": "core/campaign/world/player_party.gd"
+    },
+    {
+      "source": "campaign/world/player_party.gd.uid",
+      "destination": "core/campaign/world/player_party.gd.uid"
+    },
+    {
+      "source": "campaign/world/road_generator.gd",
+      "destination": "core/campaign/world/road_generator.gd"
+    },
+    {
+      "source": "campaign/world/road_generator.gd.uid",
+      "destination": "core/campaign/world/road_generator.gd.uid"
+    },
+    {
+      "source": "campaign/world/settlement_generator.gd",
+      "destination": "core/campaign/world/settlement_generator.gd"
+    },
+    {
+      "source": "campaign/world/settlement_generator.gd.uid",
+      "destination": "core/campaign/world/settlement_generator.gd.uid"
+    },
+    {
+      "source": "campaign/world/terrain_generator.gd",
+      "destination": "core/campaign/world/terrain_generator.gd"
+    },
+    {
+      "source": "campaign/world/terrain_generator.gd.uid",
+      "destination": "core/campaign/world/terrain_generator.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_clans.gd",
+      "destination": "core/campaign/world/world_clans.gd"
+    },
+    {
+      "source": "campaign/world/world_clans.gd.uid",
+      "destination": "core/campaign/world/world_clans.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_clock.gd",
+      "destination": "core/campaign/world/world_clock.gd"
+    },
+    {
+      "source": "campaign/world/world_clock.gd.uid",
+      "destination": "core/campaign/world/world_clock.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_companions.gd",
+      "destination": "core/campaign/world/world_companions.gd"
+    },
+    {
+      "source": "campaign/world/world_companions.gd.uid",
+      "destination": "core/campaign/world/world_companions.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_map.gd",
+      "destination": "core/campaign/world/world_map.gd"
+    },
+    {
+      "source": "campaign/world/world_map.gd.uid",
+      "destination": "core/campaign/world/world_map.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_quests.gd",
+      "destination": "core/campaign/world/world_quests.gd"
+    },
+    {
+      "source": "campaign/world/world_quests.gd.uid",
+      "destination": "core/campaign/world/world_quests.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_save.gd",
+      "destination": "core/campaign/world/world_save.gd"
+    },
+    {
+      "source": "campaign/world/world_save.gd.uid",
+      "destination": "core/campaign/world/world_save.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_siege.gd",
+      "destination": "core/campaign/world/world_siege.gd"
+    },
+    {
+      "source": "campaign/world/world_siege.gd.uid",
+      "destination": "core/campaign/world/world_siege.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_skirmish.gd",
+      "destination": "core/campaign/world/world_skirmish.gd"
+    },
+    {
+      "source": "campaign/world/world_skirmish.gd.uid",
+      "destination": "core/campaign/world/world_skirmish.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_state.gd",
+      "destination": "core/campaign/world/world_state.gd"
+    },
+    {
+      "source": "campaign/world/world_state.gd.uid",
+      "destination": "core/campaign/world/world_state.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_undead.gd",
+      "destination": "core/campaign/world/world_undead.gd"
+    },
+    {
+      "source": "campaign/world/world_undead.gd.uid",
+      "destination": "core/campaign/world/world_undead.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_vassals.gd",
+      "destination": "core/campaign/world/world_vassals.gd"
+    },
+    {
+      "source": "campaign/world/world_vassals.gd.uid",
+      "destination": "core/campaign/world/world_vassals.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_wars.gd",
+      "destination": "core/campaign/world/world_wars.gd"
+    },
+    {
+      "source": "campaign/world/world_wars.gd.uid",
+      "destination": "core/campaign/world/world_wars.gd.uid"
+    },
+    {
+      "source": "characters/config.gd",
+      "destination": "core/characters/config.gd"
+    },
+    {
+      "source": "characters/config.gd.uid",
+      "destination": "core/characters/config.gd.uid"
+    },
+    {
+      "source": "characters/data/companion_catalog.gd",
+      "destination": "core/characters/data/companion_catalog.gd"
+    },
+    {
+      "source": "characters/data/companion_catalog.gd.uid",
+      "destination": "core/characters/data/companion_catalog.gd.uid"
+    },
+    {
+      "source": "characters/data/companions.json",
+      "destination": "content/gameplay/characters/companions.json"
+    },
+    {
+      "source": "characters/data/perk_catalog.gd",
+      "destination": "core/characters/data/perk_catalog.gd"
+    },
+    {
+      "source": "characters/data/perk_catalog.gd.uid",
+      "destination": "core/characters/data/perk_catalog.gd.uid"
+    },
+    {
+      "source": "characters/data/perks.json",
+      "destination": "content/gameplay/characters/perks.json"
+    },
+    {
+      "source": "characters/rules/companion_profile.gd",
+      "destination": "core/characters/rules/companion_profile.gd"
+    },
+    {
+      "source": "characters/rules/companion_profile.gd.uid",
+      "destination": "core/characters/rules/companion_profile.gd.uid"
+    },
+    {
+      "source": "characters/rules/perk_effects.gd",
+      "destination": "core/characters/rules/perk_effects.gd"
+    },
+    {
+      "source": "characters/rules/perk_effects.gd.uid",
+      "destination": "core/characters/rules/perk_effects.gd.uid"
+    },
+    {
+      "source": "characters/rules/progression.gd",
+      "destination": "core/characters/rules/progression.gd"
+    },
+    {
+      "source": "characters/rules/progression.gd.uid",
+      "destination": "core/characters/rules/progression.gd.uid"
+    },
+    {
+      "source": "characters/tests/data/test_perk_catalog.gd",
+      "destination": "tests/unit/characters/data/test_perk_catalog.gd"
+    },
+    {
+      "source": "characters/tests/data/test_perk_catalog.gd.uid",
+      "destination": "tests/unit/characters/data/test_perk_catalog.gd.uid"
+    },
+    {
+      "source": "characters/tests/rules/test_companion_profile.gd",
+      "destination": "tests/unit/characters/rules/test_companion_profile.gd"
+    },
+    {
+      "source": "characters/tests/rules/test_companion_profile.gd.uid",
+      "destination": "tests/unit/characters/rules/test_companion_profile.gd.uid"
+    },
+    {
+      "source": "characters/tests/rules/test_perk_effects.gd",
+      "destination": "tests/unit/characters/rules/test_perk_effects.gd"
+    },
+    {
+      "source": "characters/tests/rules/test_perk_effects.gd.uid",
+      "destination": "tests/unit/characters/rules/test_perk_effects.gd.uid"
+    },
+    {
+      "source": "characters/tools/export_companions.cjs",
+      "destination": "tools/characters/export_companions.cjs"
+    },
+    {
+      "source": "characters/tools/export_perks.cjs",
+      "destination": "tools/characters/export_perks.cjs"
+    },
+    {
+      "source": "equipment/config.gd",
+      "destination": "core/equipment/config.gd"
+    },
+    {
+      "source": "equipment/config.gd.uid",
+      "destination": "core/equipment/config.gd.uid"
+    },
+    {
+      "source": "equipment/data/gear_catalog.gd",
+      "destination": "core/equipment/data/gear_catalog.gd"
+    },
+    {
+      "source": "equipment/data/gear_catalog.gd.uid",
+      "destination": "core/equipment/data/gear_catalog.gd.uid"
+    },
+    {
+      "source": "equipment/data/items.json",
+      "destination": "content/gameplay/equipment/items.json"
+    },
+    {
+      "source": "equipment/rules/damage_type.gd",
+      "destination": "core/equipment/rules/damage_type.gd"
+    },
+    {
+      "source": "equipment/rules/damage_type.gd.uid",
+      "destination": "core/equipment/rules/damage_type.gd.uid"
+    },
+    {
+      "source": "equipment/rules/hero_equip.gd",
+      "destination": "core/equipment/rules/hero_equip.gd"
+    },
+    {
+      "source": "equipment/rules/hero_equip.gd.uid",
+      "destination": "core/equipment/rules/hero_equip.gd.uid"
+    },
+    {
+      "source": "equipment/rules/hero_gear.gd",
+      "destination": "core/equipment/rules/hero_gear.gd"
+    },
+    {
+      "source": "equipment/rules/hero_gear.gd.uid",
+      "destination": "core/equipment/rules/hero_gear.gd.uid"
+    },
+    {
+      "source": "equipment/tests/data/test_gear_catalog.gd",
+      "destination": "tests/unit/equipment/data/test_gear_catalog.gd"
+    },
+    {
+      "source": "equipment/tests/data/test_gear_catalog.gd.uid",
+      "destination": "tests/unit/equipment/data/test_gear_catalog.gd.uid"
+    },
+    {
+      "source": "equipment/tests/rules/test_damage_type.gd",
+      "destination": "tests/unit/equipment/rules/test_damage_type.gd"
+    },
+    {
+      "source": "equipment/tests/rules/test_damage_type.gd.uid",
+      "destination": "tests/unit/equipment/rules/test_damage_type.gd.uid"
+    },
+    {
+      "source": "equipment/tests/rules/test_hero_gear.gd",
+      "destination": "tests/unit/equipment/rules/test_hero_gear.gd"
+    },
+    {
+      "source": "equipment/tests/rules/test_hero_gear.gd.uid",
+      "destination": "tests/unit/equipment/rules/test_hero_gear.gd.uid"
+    },
+    {
+      "source": "equipment/tools/export_gear.cjs",
+      "destination": "tools/equipment/export_gear.cjs"
+    },
+    {
+      "source": "project.godot",
+      "destination": "project.godot"
+    },
+    {
+      "source": "tests/architecture/test_boundaries.gd",
+      "destination": "tests/architecture/test_boundaries.gd"
+    },
+    {
+      "source": "tests/architecture/test_boundaries.gd.uid",
+      "destination": "tests/architecture/test_boundaries.gd.uid"
+    },
+    {
+      "source": "tools/baseline/.gdignore",
+      "destination": "tools/baseline/.gdignore"
+    },
+    {
+      "source": "tools/baseline/README.md",
+      "destination": "tools/baseline/README.md"
+    },
+    {
+      "source": "tools/baseline/main_0300.png",
+      "destination": "tools/baseline/main_0300.png"
+    },
+    {
+      "source": "tools/baseline/main_1500.png",
+      "destination": "tools/baseline/main_1500.png"
+    },
+    {
+      "source": "tools/baseline/siege_demo_0300.png",
+      "destination": "tools/baseline/siege_demo_0300.png"
+    },
+    {
+      "source": "tools/baseline/siege_demo_1500.png",
+      "destination": "tools/baseline/siege_demo_1500.png"
+    },
+    {
+      "source": "tools/baseline_capture.gd",
+      "destination": "tools/baseline_capture.gd"
+    },
+    {
+      "source": "tools/baseline_capture.gd.uid",
+      "destination": "tools/baseline_capture.gd.uid"
+    },
+    {
+      "source": "tools/behavior_fingerprint.gd",
+      "destination": "tools/behavior_fingerprint.gd"
+    },
+    {
+      "source": "tools/behavior_fingerprint.gd.uid",
+      "destination": "tools/behavior_fingerprint.gd.uid"
+    },
+    {
+      "source": "tools/test.cjs",
+      "destination": "tools/test.cjs"
+    },
+    {
+      "source": "tools/world_shot.gd",
+      "destination": "tools/world_shot.gd"
+    },
+    {
+      "source": "tools/world_shot.gd.uid",
+      "destination": "tools/world_shot.gd.uid"
+    },
+    {
+      "source": "troops/config.gd",
+      "destination": "core/troops/config.gd"
+    },
+    {
+      "source": "troops/config.gd.uid",
+      "destination": "core/troops/config.gd.uid"
+    },
+    {
+      "source": "troops/data/catalog.gd",
+      "destination": "core/troops/data/catalog.gd"
+    },
+    {
+      "source": "troops/data/catalog.gd.uid",
+      "destination": "core/troops/data/catalog.gd.uid"
+    },
+    {
+      "source": "troops/data/troops.json",
+      "destination": "content/gameplay/troops/troops.json"
+    },
+    {
+      "source": "troops/rules/generation.gd",
+      "destination": "core/troops/rules/generation.gd"
+    },
+    {
+      "source": "troops/rules/generation.gd.uid",
+      "destination": "core/troops/rules/generation.gd.uid"
+    },
+    {
+      "source": "troops/tests/data/test_catalog_validation.gd",
+      "destination": "tests/unit/troops/data/test_catalog_validation.gd"
+    },
+    {
+      "source": "troops/tests/data/test_catalog_validation.gd.uid",
+      "destination": "tests/unit/troops/data/test_catalog_validation.gd.uid"
+    },
+    {
+      "source": "troops/tools/export_troops.cjs",
+      "destination": "tools/troops/export_troops.cjs"
+    },
+    {
+      "source": "VISUAL_PARITY.md",
+      "destination": "docs/modules/VISUAL_PARITY.md",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "app/tests/test_visual_interface.gd",
+      "destination": "tests/integration/app/test_visual_interface.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "app/tests/test_visual_interface.gd.uid",
+      "destination": "tests/integration/app/test_visual_interface.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_arid.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_arid.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_arid.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_arid.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_grass.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_grass.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_grass.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_grass.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_snow.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_snow.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_snow.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_snow.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_steppe.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_steppe.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_steppe.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_steppe.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/unit_motion.gd",
+      "destination": "apps/godot/presentation/battle/unit_motion.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/unit_motion.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_motion.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/fixtures/hud_layout.json",
+      "destination": "tests/unit/battle/fixtures/hud_layout.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/fixtures/unit_motion.json",
+      "destination": "tests/unit/battle/fixtures/unit_motion.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_hud_layout.gd",
+      "destination": "tests/unit/battle/presentation/test_hud_layout.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_hud_layout.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_hud_layout.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_unit_motion.gd",
+      "destination": "tests/unit/battle/presentation/test_unit_motion.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_unit_motion.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_unit_motion.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/compare_motion.cjs",
+      "destination": "tools/battle/compare_motion.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/export_hud_layout.cjs",
+      "destination": "tools/battle/export_hud_layout.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/export_motion.cjs",
+      "destination": "tools/battle/export_motion.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/motion_preview.gd",
+      "destination": "tools/battle/motion_preview.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/motion_preview.gd.uid",
+      "destination": "tools/battle/motion_preview.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/render_motion_reference.cjs",
+      "destination": "tools/battle/render_motion_reference.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/battle_ui_capture.gd",
+      "destination": "tools/battle_ui_capture.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/battle_ui_capture.gd.uid",
+      "destination": "tools/battle_ui_capture.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/build_theme.gd",
+      "destination": "tools/build_theme.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/build_theme.gd.uid",
+      "destination": "tools/build_theme.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/export_css_styles.cjs",
+      "destination": "tools/export_css_styles.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/export_visuals.cjs",
+      "destination": "tools/export_visuals.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/preview_capture.gd",
+      "destination": "tools/preview_capture.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/preview_capture.gd.uid",
+      "destination": "tools/preview_capture.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/.gdignore",
+      "destination": "tools/previews/.gdignore",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/animation-metric.json",
+      "destination": "tools/previews/animation-metric.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/animations-comparison.gif",
+      "destination": "tools/previews/animations-comparison.gif",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/battle.png",
+      "destination": "tools/previews/battle.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/equipment.png",
+      "destination": "tools/previews/equipment.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/hero.png",
+      "destination": "tools/previews/hero.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/menu.png",
+      "destination": "tools/previews/menu.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/snow.png",
+      "destination": "tools/previews/snow.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_ar.png",
+      "destination": "apps/godot/visuals/assets/bar_ar.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_ar.png.import",
+      "destination": "apps/godot/visuals/assets/bar_ar.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_hp.png",
+      "destination": "apps/godot/visuals/assets/bar_hp.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_hp.png.import",
+      "destination": "apps/godot/visuals/assets/bar_hp.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_mo.png",
+      "destination": "apps/godot/visuals/assets/bar_mo.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_mo.png.import",
+      "destination": "apps/godot/visuals/assets/bar_mo.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_st.png",
+      "destination": "apps/godot/visuals/assets/bar_st.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_st.png.import",
+      "destination": "apps/godot/visuals/assets/bar_st.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body.png",
+      "destination": "apps/godot/visuals/assets/body.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body.png.import",
+      "destination": "apps/godot/visuals/assets/body.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v1.png",
+      "destination": "apps/godot/visuals/assets/body_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v1.png.import",
+      "destination": "apps/godot/visuals/assets/body_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v2.png",
+      "destination": "apps/godot/visuals/assets/body_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v2.png.import",
+      "destination": "apps/godot/visuals/assets/body_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v3.png",
+      "destination": "apps/godot/visuals/assets/body_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v3.png.import",
+      "destination": "apps/godot/visuals/assets/body_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_0.png",
+      "destination": "apps/godot/visuals/assets/bush_arid_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_arid_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_1.png",
+      "destination": "apps/godot/visuals/assets/bush_arid_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_arid_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_0.png",
+      "destination": "apps/godot/visuals/assets/bush_grass_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_grass_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_1.png",
+      "destination": "apps/godot/visuals/assets/bush_grass_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_grass_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_0.png",
+      "destination": "apps/godot/visuals/assets/bush_snow_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_snow_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_1.png",
+      "destination": "apps/godot/visuals/assets/bush_snow_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_snow_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_0.png",
+      "destination": "apps/godot/visuals/assets/bush_steppe_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_steppe_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_1.png",
+      "destination": "apps/godot/visuals/assets/bush_steppe_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_steppe_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/button.png",
+      "destination": "apps/godot/visuals/assets/button.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/button.png.import",
+      "destination": "apps/godot/visuals/assets/button.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/caravan.png",
+      "destination": "apps/godot/visuals/assets/caravan.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/caravan.png.import",
+      "destination": "apps/godot/visuals/assets/caravan.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_0.png",
+      "destination": "apps/godot/visuals/assets/components_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_0.png.import",
+      "destination": "apps/godot/visuals/assets/components_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_1.png",
+      "destination": "apps/godot/visuals/assets/components_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_1.png.import",
+      "destination": "apps/godot/visuals/assets/components_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/contact_shadow.png",
+      "destination": "apps/godot/visuals/assets/contact_shadow.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/contact_shadow.png.import",
+      "destination": "apps/godot/visuals/assets/contact_shadow.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse.png",
+      "destination": "apps/godot/visuals/assets/corpse.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse.png.import",
+      "destination": "apps/godot/visuals/assets/corpse.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v1.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v1.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v2.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v2.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v3.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v3.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v1.png",
+      "destination": "apps/godot/visuals/assets/corpse_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v1.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v2.png",
+      "destination": "apps/godot/visuals/assets/corpse_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v2.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v3.png",
+      "destination": "apps/godot/visuals/assets/corpse_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v3.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_bandit.png",
+      "destination": "apps/godot/visuals/assets/crest_bandit.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_bandit.png.import",
+      "destination": "apps/godot/visuals/assets/crest_bandit.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_dom.png",
+      "destination": "apps/godot/visuals/assets/crest_dom.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_dom.png.import",
+      "destination": "apps/godot/visuals/assets/crest_dom.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emi.png",
+      "destination": "apps/godot/visuals/assets/crest_emi.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emi.png.import",
+      "destination": "apps/godot/visuals/assets/crest_emi.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emp.png",
+      "destination": "apps/godot/visuals/assets/crest_emp.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emp.png.import",
+      "destination": "apps/godot/visuals/assets/crest_emp.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_khan.png",
+      "destination": "apps/godot/visuals/assets/crest_khan.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_khan.png.import",
+      "destination": "apps/godot/visuals/assets/crest_khan.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_kin.png",
+      "destination": "apps/godot/visuals/assets/crest_kin.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_kin.png.import",
+      "destination": "apps/godot/visuals/assets/crest_kin.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_nord.png",
+      "destination": "apps/godot/visuals/assets/crest_nord.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_nord.png.import",
+      "destination": "apps/godot/visuals/assets/crest_nord.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_pact.png",
+      "destination": "apps/godot/visuals/assets/crest_pact.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_pact.png.import",
+      "destination": "apps/godot/visuals/assets/crest_pact.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_player.png",
+      "destination": "apps/godot/visuals/assets/crest_player.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_player.png.import",
+      "destination": "apps/godot/visuals/assets/crest_player.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_undead.png",
+      "destination": "apps/godot/visuals/assets/crest_undead.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_undead.png.import",
+      "destination": "apps/godot/visuals/assets/crest_undead.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/danger.png",
+      "destination": "apps/godot/visuals/assets/danger.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/danger.png.import",
+      "destination": "apps/godot/visuals/assets/danger.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash.png",
+      "destination": "apps/godot/visuals/assets/flash.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash.png.import",
+      "destination": "apps/godot/visuals/assets/flash.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v1.png",
+      "destination": "apps/godot/visuals/assets/flash_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v1.png.import",
+      "destination": "apps/godot/visuals/assets/flash_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v2.png",
+      "destination": "apps/godot/visuals/assets/flash_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v2.png.import",
+      "destination": "apps/godot/visuals/assets/flash_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v3.png",
+      "destination": "apps/godot/visuals/assets/flash_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v3.png.import",
+      "destination": "apps/godot/visuals/assets/flash_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSC-Bold.ttf",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSC-Bold.ttf",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSC-Bold.ttf.import",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSC-Bold.ttf.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSC-OFL.txt",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSC-OFL.txt",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Bold.ttf",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Bold.ttf",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Bold.ttf.import",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Bold.ttf.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Medium.ttf",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Medium.ttf",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Medium.ttf.import",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Medium.ttf.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-OFL.txt",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-OFL.txt",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group.png",
+      "destination": "apps/godot/visuals/assets/group.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group.png.import",
+      "destination": "apps/godot/visuals/assets/group.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group_on.png",
+      "destination": "apps/godot/visuals/assets/group_on.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group_on.png.import",
+      "destination": "apps/godot/visuals/assets/group_on.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head.png",
+      "destination": "apps/godot/visuals/assets/head.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head.png.import",
+      "destination": "apps/godot/visuals/assets/head.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v1.png",
+      "destination": "apps/godot/visuals/assets/head_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v1.png.import",
+      "destination": "apps/godot/visuals/assets/head_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v2.png",
+      "destination": "apps/godot/visuals/assets/head_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v2.png.import",
+      "destination": "apps/godot/visuals/assets/head_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v3.png",
+      "destination": "apps/godot/visuals/assets/head_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v3.png.import",
+      "destination": "apps/godot/visuals/assets/head_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless.png",
+      "destination": "apps/godot/visuals/assets/headless.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless.png.import",
+      "destination": "apps/godot/visuals/assets/headless.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v1.png",
+      "destination": "apps/godot/visuals/assets/headless_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v1.png.import",
+      "destination": "apps/godot/visuals/assets/headless_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v2.png",
+      "destination": "apps/godot/visuals/assets/headless_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v2.png.import",
+      "destination": "apps/godot/visuals/assets/headless_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v3.png",
+      "destination": "apps/godot/visuals/assets/headless_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v3.png.import",
+      "destination": "apps/godot/visuals/assets/headless_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ale.svg",
+      "destination": "apps/godot/visuals/assets/icon_ale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ale.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_ale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_axe.svg",
+      "destination": "apps/godot/visuals/assets/icon_axe.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_axe.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_axe.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_habit.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_habit.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_habit.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_habit.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_mail.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_mail.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_mail.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_mail.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_padded.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_padded.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_padded.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_padded.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_plate.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_plate.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_plate.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_plate.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_scale.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_scale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_scale.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_scale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_back.svg",
+      "destination": "apps/godot/visuals/assets/icon_back.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_back.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_back.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bag.svg",
+      "destination": "apps/godot/visuals/assets/icon_bag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bag.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_bag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_body.svg",
+      "destination": "apps/godot/visuals/assets/icon_body.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_body.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_body.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_book.svg",
+      "destination": "apps/godot/visuals/assets/icon_book.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_book.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_book.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bottle.svg",
+      "destination": "apps/godot/visuals/assets/icon_bottle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bottle.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_bottle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bow.svg",
+      "destination": "apps/godot/visuals/assets/icon_bow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bow.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_bow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_charge.svg",
+      "destination": "apps/godot/visuals/assets/icon_charge.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_charge.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_charge.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_club.svg",
+      "destination": "apps/godot/visuals/assets/icon_club.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_club.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_club.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_coin.svg",
+      "destination": "apps/godot/visuals/assets/icon_coin.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_coin.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_coin.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_flag.svg",
+      "destination": "apps/godot/visuals/assets/icon_flag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_flag.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_flag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_follow.svg",
+      "destination": "apps/godot/visuals/assets/icon_follow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_follow.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_follow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_food.svg",
+      "destination": "apps/godot/visuals/assets/icon_food.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_food.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_food.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_gear.svg",
+      "destination": "apps/godot/visuals/assets/icon_gear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_gear.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_gear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_grain.svg",
+      "destination": "apps/godot/visuals/assets/icon_grain.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_grain.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_grain.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_cap.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_cap.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_cap.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_cap.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_great.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_great.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_great.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_great.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_hood.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_hood.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_hood.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_hood.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_kettle.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_kettle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_kettle.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_kettle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_nasal.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_nasal.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_nasal.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_nasal.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turban.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_turban.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turban.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_turban.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turbanm.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_turbanm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turbanm.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_turbanm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_halberd.svg",
+      "destination": "apps/godot/visuals/assets/icon_halberd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_halberd.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_halberd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hammer.svg",
+      "destination": "apps/godot/visuals/assets/icon_hammer.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hammer.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hammer.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hands.svg",
+      "destination": "apps/godot/visuals/assets/icon_hands.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hands.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hands.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_heart.svg",
+      "destination": "apps/godot/visuals/assets/icon_heart.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_heart.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_heart.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_helm.svg",
+      "destination": "apps/godot/visuals/assets/icon_helm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_helm.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_helm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hide.svg",
+      "destination": "apps/godot/visuals/assets/icon_hide.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hide.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hide.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hold.svg",
+      "destination": "apps/godot/visuals/assets/icon_hold.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hold.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hold.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_horse.svg",
+      "destination": "apps/godot/visuals/assets/icon_horse.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_horse.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_horse.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hourglass.svg",
+      "destination": "apps/godot/visuals/assets/icon_hourglass.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hourglass.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hourglass.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ingot.svg",
+      "destination": "apps/godot/visuals/assets/icon_ingot.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ingot.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_ingot.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jar.svg",
+      "destination": "apps/godot/visuals/assets/icon_jar.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jar.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_jar.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jav.svg",
+      "destination": "apps/godot/visuals/assets/icon_jav.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jav.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_jav.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_legs.svg",
+      "destination": "apps/godot/visuals/assets/icon_legs.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_legs.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_legs.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_mace.svg",
+      "destination": "apps/godot/visuals/assets/icon_mace.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_mace.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_mace.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_men.svg",
+      "destination": "apps/godot/visuals/assets/icon_men.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_men.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_men.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pause.svg",
+      "destination": "apps/godot/visuals/assets/icon_pause.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pause.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_pause.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pelt.svg",
+      "destination": "apps/godot/visuals/assets/icon_pelt.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pelt.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_pelt.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pike.svg",
+      "destination": "apps/godot/visuals/assets/icon_pike.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pike.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_pike.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_play.svg",
+      "destination": "apps/godot/visuals/assets/icon_play.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_play.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_play.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_retreat.svg",
+      "destination": "apps/godot/visuals/assets/icon_retreat.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_retreat.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_retreat.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_roll.svg",
+      "destination": "apps/godot/visuals/assets/icon_roll.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_roll.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_roll.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sabre.svg",
+      "destination": "apps/godot/visuals/assets/icon_sabre.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sabre.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sabre.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sack.svg",
+      "destination": "apps/godot/visuals/assets/icon_sack.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sack.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sack.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_round.svg",
+      "destination": "apps/godot/visuals/assets/icon_sh_round.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_round.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sh_round.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_small.svg",
+      "destination": "apps/godot/visuals/assets/icon_sh_small.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_small.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sh_small.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_shield.svg",
+      "destination": "apps/godot/visuals/assets/icon_shield.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_shield.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_shield.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_skull.svg",
+      "destination": "apps/godot/visuals/assets/icon_skull.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_skull.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_skull.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_snd.svg",
+      "destination": "apps/godot/visuals/assets/icon_snd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_snd.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_snd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_spear.svg",
+      "destination": "apps/godot/visuals/assets/icon_spear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_spear.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_spear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sword.svg",
+      "destination": "apps/godot/visuals/assets/icon_sword.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sword.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sword.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_tent.svg",
+      "destination": "apps/godot/visuals/assets/icon_tent.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_tent.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_tent.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_twohand.svg",
+      "destination": "apps/godot/visuals/assets/icon_twohand.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_twohand.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_twohand.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_xbow.svg",
+      "destination": "apps/godot/visuals/assets/icon_xbow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_xbow.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_xbow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_zoom.svg",
+      "destination": "apps/godot/visuals/assets/icon_zoom.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_zoom.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_zoom.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ale.svg",
+      "destination": "apps/godot/visuals/assets/item_ale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ale.svg.import",
+      "destination": "apps/godot/visuals/assets/item_ale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_axe.svg",
+      "destination": "apps/godot/visuals/assets/item_axe.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_axe.svg.import",
+      "destination": "apps/godot/visuals/assets/item_axe.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_habit.svg",
+      "destination": "apps/godot/visuals/assets/item_b_habit.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_habit.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_habit.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_mail.svg",
+      "destination": "apps/godot/visuals/assets/item_b_mail.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_mail.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_mail.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_padded.svg",
+      "destination": "apps/godot/visuals/assets/item_b_padded.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_padded.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_padded.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_plate.svg",
+      "destination": "apps/godot/visuals/assets/item_b_plate.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_plate.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_plate.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_scale.svg",
+      "destination": "apps/godot/visuals/assets/item_b_scale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_scale.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_scale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_back.svg",
+      "destination": "apps/godot/visuals/assets/item_back.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_back.svg.import",
+      "destination": "apps/godot/visuals/assets/item_back.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bag.svg",
+      "destination": "apps/godot/visuals/assets/item_bag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bag.svg.import",
+      "destination": "apps/godot/visuals/assets/item_bag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_body.svg",
+      "destination": "apps/godot/visuals/assets/item_body.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_body.svg.import",
+      "destination": "apps/godot/visuals/assets/item_body.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_book.svg",
+      "destination": "apps/godot/visuals/assets/item_book.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_book.svg.import",
+      "destination": "apps/godot/visuals/assets/item_book.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bottle.svg",
+      "destination": "apps/godot/visuals/assets/item_bottle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bottle.svg.import",
+      "destination": "apps/godot/visuals/assets/item_bottle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bow.svg",
+      "destination": "apps/godot/visuals/assets/item_bow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bow.svg.import",
+      "destination": "apps/godot/visuals/assets/item_bow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_charge.svg",
+      "destination": "apps/godot/visuals/assets/item_charge.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_charge.svg.import",
+      "destination": "apps/godot/visuals/assets/item_charge.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_club.svg",
+      "destination": "apps/godot/visuals/assets/item_club.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_club.svg.import",
+      "destination": "apps/godot/visuals/assets/item_club.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_coin.svg",
+      "destination": "apps/godot/visuals/assets/item_coin.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_coin.svg.import",
+      "destination": "apps/godot/visuals/assets/item_coin.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_flag.svg",
+      "destination": "apps/godot/visuals/assets/item_flag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_flag.svg.import",
+      "destination": "apps/godot/visuals/assets/item_flag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_follow.svg",
+      "destination": "apps/godot/visuals/assets/item_follow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_follow.svg.import",
+      "destination": "apps/godot/visuals/assets/item_follow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_food.svg",
+      "destination": "apps/godot/visuals/assets/item_food.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_food.svg.import",
+      "destination": "apps/godot/visuals/assets/item_food.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_gear.svg",
+      "destination": "apps/godot/visuals/assets/item_gear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_gear.svg.import",
+      "destination": "apps/godot/visuals/assets/item_gear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_grain.svg",
+      "destination": "apps/godot/visuals/assets/item_grain.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_grain.svg.import",
+      "destination": "apps/godot/visuals/assets/item_grain.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_cap.svg",
+      "destination": "apps/godot/visuals/assets/item_h_cap.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_cap.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_cap.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_great.svg",
+      "destination": "apps/godot/visuals/assets/item_h_great.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_great.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_great.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_hood.svg",
+      "destination": "apps/godot/visuals/assets/item_h_hood.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_hood.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_hood.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_kettle.svg",
+      "destination": "apps/godot/visuals/assets/item_h_kettle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_kettle.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_kettle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_nasal.svg",
+      "destination": "apps/godot/visuals/assets/item_h_nasal.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_nasal.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_nasal.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turban.svg",
+      "destination": "apps/godot/visuals/assets/item_h_turban.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turban.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_turban.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turbanm.svg",
+      "destination": "apps/godot/visuals/assets/item_h_turbanm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turbanm.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_turbanm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_halberd.svg",
+      "destination": "apps/godot/visuals/assets/item_halberd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_halberd.svg.import",
+      "destination": "apps/godot/visuals/assets/item_halberd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hammer.svg",
+      "destination": "apps/godot/visuals/assets/item_hammer.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hammer.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hammer.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hands.svg",
+      "destination": "apps/godot/visuals/assets/item_hands.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hands.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hands.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_heart.svg",
+      "destination": "apps/godot/visuals/assets/item_heart.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_heart.svg.import",
+      "destination": "apps/godot/visuals/assets/item_heart.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_helm.svg",
+      "destination": "apps/godot/visuals/assets/item_helm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_helm.svg.import",
+      "destination": "apps/godot/visuals/assets/item_helm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hide.svg",
+      "destination": "apps/godot/visuals/assets/item_hide.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hide.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hide.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hold.svg",
+      "destination": "apps/godot/visuals/assets/item_hold.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hold.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hold.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_horse.svg",
+      "destination": "apps/godot/visuals/assets/item_horse.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_horse.svg.import",
+      "destination": "apps/godot/visuals/assets/item_horse.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hourglass.svg",
+      "destination": "apps/godot/visuals/assets/item_hourglass.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hourglass.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hourglass.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ingot.svg",
+      "destination": "apps/godot/visuals/assets/item_ingot.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ingot.svg.import",
+      "destination": "apps/godot/visuals/assets/item_ingot.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jar.svg",
+      "destination": "apps/godot/visuals/assets/item_jar.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jar.svg.import",
+      "destination": "apps/godot/visuals/assets/item_jar.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jav.svg",
+      "destination": "apps/godot/visuals/assets/item_jav.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jav.svg.import",
+      "destination": "apps/godot/visuals/assets/item_jav.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_legs.svg",
+      "destination": "apps/godot/visuals/assets/item_legs.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_legs.svg.import",
+      "destination": "apps/godot/visuals/assets/item_legs.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_mace.svg",
+      "destination": "apps/godot/visuals/assets/item_mace.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_mace.svg.import",
+      "destination": "apps/godot/visuals/assets/item_mace.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_men.svg",
+      "destination": "apps/godot/visuals/assets/item_men.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_men.svg.import",
+      "destination": "apps/godot/visuals/assets/item_men.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pause.svg",
+      "destination": "apps/godot/visuals/assets/item_pause.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pause.svg.import",
+      "destination": "apps/godot/visuals/assets/item_pause.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pelt.svg",
+      "destination": "apps/godot/visuals/assets/item_pelt.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pelt.svg.import",
+      "destination": "apps/godot/visuals/assets/item_pelt.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pike.svg",
+      "destination": "apps/godot/visuals/assets/item_pike.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pike.svg.import",
+      "destination": "apps/godot/visuals/assets/item_pike.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_play.svg",
+      "destination": "apps/godot/visuals/assets/item_play.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_play.svg.import",
+      "destination": "apps/godot/visuals/assets/item_play.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_retreat.svg",
+      "destination": "apps/godot/visuals/assets/item_retreat.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_retreat.svg.import",
+      "destination": "apps/godot/visuals/assets/item_retreat.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_roll.svg",
+      "destination": "apps/godot/visuals/assets/item_roll.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_roll.svg.import",
+      "destination": "apps/godot/visuals/assets/item_roll.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sabre.svg",
+      "destination": "apps/godot/visuals/assets/item_sabre.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sabre.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sabre.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sack.svg",
+      "destination": "apps/godot/visuals/assets/item_sack.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sack.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sack.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_round.svg",
+      "destination": "apps/godot/visuals/assets/item_sh_round.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_round.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sh_round.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_small.svg",
+      "destination": "apps/godot/visuals/assets/item_sh_small.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_small.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sh_small.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_shield.svg",
+      "destination": "apps/godot/visuals/assets/item_shield.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_shield.svg.import",
+      "destination": "apps/godot/visuals/assets/item_shield.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_skull.svg",
+      "destination": "apps/godot/visuals/assets/item_skull.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_skull.svg.import",
+      "destination": "apps/godot/visuals/assets/item_skull.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_snd.svg",
+      "destination": "apps/godot/visuals/assets/item_snd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_snd.svg.import",
+      "destination": "apps/godot/visuals/assets/item_snd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_spear.svg",
+      "destination": "apps/godot/visuals/assets/item_spear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_spear.svg.import",
+      "destination": "apps/godot/visuals/assets/item_spear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sword.svg",
+      "destination": "apps/godot/visuals/assets/item_sword.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sword.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sword.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_tent.svg",
+      "destination": "apps/godot/visuals/assets/item_tent.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_tent.svg.import",
+      "destination": "apps/godot/visuals/assets/item_tent.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_twohand.svg",
+      "destination": "apps/godot/visuals/assets/item_twohand.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_twohand.svg.import",
+      "destination": "apps/godot/visuals/assets/item_twohand.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_xbow.svg",
+      "destination": "apps/godot/visuals/assets/item_xbow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_xbow.svg.import",
+      "destination": "apps/godot/visuals/assets/item_xbow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_zoom.svg",
+      "destination": "apps/godot/visuals/assets/item_zoom.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_zoom.svg.import",
+      "destination": "apps/godot/visuals/assets/item_zoom.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/order.png",
+      "destination": "apps/godot/visuals/assets/order.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/order.png.import",
+      "destination": "apps/godot/visuals/assets/order.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/parchment.png",
+      "destination": "apps/godot/visuals/assets/parchment.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/parchment.png.import",
+      "destination": "apps/godot/visuals/assets/parchment.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/plank.png",
+      "destination": "apps/godot/visuals/assets/plank.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/plank.png.import",
+      "destination": "apps/godot/visuals/assets/plank.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait.png",
+      "destination": "apps/godot/visuals/assets/portrait.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait.png.import",
+      "destination": "apps/godot/visuals/assets/portrait.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v1.png",
+      "destination": "apps/godot/visuals/assets/portrait_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v1.png.import",
+      "destination": "apps/godot/visuals/assets/portrait_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v2.png",
+      "destination": "apps/godot/visuals/assets/portrait_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v2.png.import",
+      "destination": "apps/godot/visuals/assets/portrait_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v3.png",
+      "destination": "apps/godot/visuals/assets/portrait_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v3.png.import",
+      "destination": "apps/godot/visuals/assets/portrait_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/primary.png",
+      "destination": "apps/godot/visuals/assets/primary.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/primary.png.import",
+      "destination": "apps/godot/visuals/assets/primary.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/settlements.png",
+      "destination": "apps/godot/visuals/assets/settlements.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/settlements.png.import",
+      "destination": "apps/godot/visuals/assets/settlements.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/square.png",
+      "destination": "apps/godot/visuals/assets/square.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/square.png.import",
+      "destination": "apps/godot/visuals/assets/square.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tile.png",
+      "destination": "apps/godot/visuals/assets/tile.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tile.png.import",
+      "destination": "apps/godot/visuals/assets/tile.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/timer.png",
+      "destination": "apps/godot/visuals/assets/timer.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/timer.png.import",
+      "destination": "apps/godot/visuals/assets/timer.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_0.png",
+      "destination": "apps/godot/visuals/assets/tree_arid_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_arid_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_1.png",
+      "destination": "apps/godot/visuals/assets/tree_arid_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_arid_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_2.png",
+      "destination": "apps/godot/visuals/assets/tree_arid_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_arid_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_0.png",
+      "destination": "apps/godot/visuals/assets/tree_grass_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_grass_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_1.png",
+      "destination": "apps/godot/visuals/assets/tree_grass_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_grass_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_2.png",
+      "destination": "apps/godot/visuals/assets/tree_grass_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_grass_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_0.png",
+      "destination": "apps/godot/visuals/assets/tree_snow_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_snow_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_1.png",
+      "destination": "apps/godot/visuals/assets/tree_snow_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_snow_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_2.png",
+      "destination": "apps/godot/visuals/assets/tree_snow_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_snow_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_0.png",
+      "destination": "apps/godot/visuals/assets/tree_steppe_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_steppe_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_1.png",
+      "destination": "apps/godot/visuals/assets/tree_steppe_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_steppe_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_2.png",
+      "destination": "apps/godot/visuals/assets/tree_steppe_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_steppe_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/visual_manifest.gd",
+      "destination": "apps/godot/visuals/assets/visual_manifest.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/visual_manifest.gd.uid",
+      "destination": "apps/godot/visuals/assets/visual_manifest.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/visuals.json",
+      "destination": "apps/godot/visuals/assets/visuals.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ale.svg",
+      "destination": "apps/godot/visuals/assets/white_ale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ale.svg.import",
+      "destination": "apps/godot/visuals/assets/white_ale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_axe.svg",
+      "destination": "apps/godot/visuals/assets/white_axe.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_axe.svg.import",
+      "destination": "apps/godot/visuals/assets/white_axe.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_habit.svg",
+      "destination": "apps/godot/visuals/assets/white_b_habit.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_habit.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_habit.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_mail.svg",
+      "destination": "apps/godot/visuals/assets/white_b_mail.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_mail.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_mail.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_padded.svg",
+      "destination": "apps/godot/visuals/assets/white_b_padded.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_padded.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_padded.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_plate.svg",
+      "destination": "apps/godot/visuals/assets/white_b_plate.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_plate.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_plate.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_scale.svg",
+      "destination": "apps/godot/visuals/assets/white_b_scale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_scale.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_scale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_back.svg",
+      "destination": "apps/godot/visuals/assets/white_back.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_back.svg.import",
+      "destination": "apps/godot/visuals/assets/white_back.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bag.svg",
+      "destination": "apps/godot/visuals/assets/white_bag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bag.svg.import",
+      "destination": "apps/godot/visuals/assets/white_bag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_body.svg",
+      "destination": "apps/godot/visuals/assets/white_body.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_body.svg.import",
+      "destination": "apps/godot/visuals/assets/white_body.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_book.svg",
+      "destination": "apps/godot/visuals/assets/white_book.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_book.svg.import",
+      "destination": "apps/godot/visuals/assets/white_book.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bottle.svg",
+      "destination": "apps/godot/visuals/assets/white_bottle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bottle.svg.import",
+      "destination": "apps/godot/visuals/assets/white_bottle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bow.svg",
+      "destination": "apps/godot/visuals/assets/white_bow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bow.svg.import",
+      "destination": "apps/godot/visuals/assets/white_bow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_charge.svg",
+      "destination": "apps/godot/visuals/assets/white_charge.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_charge.svg.import",
+      "destination": "apps/godot/visuals/assets/white_charge.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_club.svg",
+      "destination": "apps/godot/visuals/assets/white_club.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_club.svg.import",
+      "destination": "apps/godot/visuals/assets/white_club.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_coin.svg",
+      "destination": "apps/godot/visuals/assets/white_coin.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_coin.svg.import",
+      "destination": "apps/godot/visuals/assets/white_coin.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_flag.svg",
+      "destination": "apps/godot/visuals/assets/white_flag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_flag.svg.import",
+      "destination": "apps/godot/visuals/assets/white_flag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_follow.svg",
+      "destination": "apps/godot/visuals/assets/white_follow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_follow.svg.import",
+      "destination": "apps/godot/visuals/assets/white_follow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_food.svg",
+      "destination": "apps/godot/visuals/assets/white_food.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_food.svg.import",
+      "destination": "apps/godot/visuals/assets/white_food.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_gear.svg",
+      "destination": "apps/godot/visuals/assets/white_gear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_gear.svg.import",
+      "destination": "apps/godot/visuals/assets/white_gear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_grain.svg",
+      "destination": "apps/godot/visuals/assets/white_grain.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_grain.svg.import",
+      "destination": "apps/godot/visuals/assets/white_grain.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_cap.svg",
+      "destination": "apps/godot/visuals/assets/white_h_cap.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_cap.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_cap.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_great.svg",
+      "destination": "apps/godot/visuals/assets/white_h_great.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_great.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_great.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_hood.svg",
+      "destination": "apps/godot/visuals/assets/white_h_hood.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_hood.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_hood.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_kettle.svg",
+      "destination": "apps/godot/visuals/assets/white_h_kettle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_kettle.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_kettle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_nasal.svg",
+      "destination": "apps/godot/visuals/assets/white_h_nasal.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_nasal.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_nasal.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turban.svg",
+      "destination": "apps/godot/visuals/assets/white_h_turban.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turban.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_turban.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turbanm.svg",
+      "destination": "apps/godot/visuals/assets/white_h_turbanm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turbanm.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_turbanm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_halberd.svg",
+      "destination": "apps/godot/visuals/assets/white_halberd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_halberd.svg.import",
+      "destination": "apps/godot/visuals/assets/white_halberd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hammer.svg",
+      "destination": "apps/godot/visuals/assets/white_hammer.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hammer.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hammer.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hands.svg",
+      "destination": "apps/godot/visuals/assets/white_hands.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hands.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hands.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_heart.svg",
+      "destination": "apps/godot/visuals/assets/white_heart.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_heart.svg.import",
+      "destination": "apps/godot/visuals/assets/white_heart.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_helm.svg",
+      "destination": "apps/godot/visuals/assets/white_helm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_helm.svg.import",
+      "destination": "apps/godot/visuals/assets/white_helm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hide.svg",
+      "destination": "apps/godot/visuals/assets/white_hide.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hide.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hide.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hold.svg",
+      "destination": "apps/godot/visuals/assets/white_hold.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hold.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hold.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_horse.svg",
+      "destination": "apps/godot/visuals/assets/white_horse.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_horse.svg.import",
+      "destination": "apps/godot/visuals/assets/white_horse.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hourglass.svg",
+      "destination": "apps/godot/visuals/assets/white_hourglass.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hourglass.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hourglass.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ingot.svg",
+      "destination": "apps/godot/visuals/assets/white_ingot.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ingot.svg.import",
+      "destination": "apps/godot/visuals/assets/white_ingot.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jar.svg",
+      "destination": "apps/godot/visuals/assets/white_jar.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jar.svg.import",
+      "destination": "apps/godot/visuals/assets/white_jar.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jav.svg",
+      "destination": "apps/godot/visuals/assets/white_jav.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jav.svg.import",
+      "destination": "apps/godot/visuals/assets/white_jav.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_legs.svg",
+      "destination": "apps/godot/visuals/assets/white_legs.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_legs.svg.import",
+      "destination": "apps/godot/visuals/assets/white_legs.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_mace.svg",
+      "destination": "apps/godot/visuals/assets/white_mace.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_mace.svg.import",
+      "destination": "apps/godot/visuals/assets/white_mace.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_men.svg",
+      "destination": "apps/godot/visuals/assets/white_men.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_men.svg.import",
+      "destination": "apps/godot/visuals/assets/white_men.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pause.svg",
+      "destination": "apps/godot/visuals/assets/white_pause.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pause.svg.import",
+      "destination": "apps/godot/visuals/assets/white_pause.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pelt.svg",
+      "destination": "apps/godot/visuals/assets/white_pelt.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pelt.svg.import",
+      "destination": "apps/godot/visuals/assets/white_pelt.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pike.svg",
+      "destination": "apps/godot/visuals/assets/white_pike.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pike.svg.import",
+      "destination": "apps/godot/visuals/assets/white_pike.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_play.svg",
+      "destination": "apps/godot/visuals/assets/white_play.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_play.svg.import",
+      "destination": "apps/godot/visuals/assets/white_play.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_retreat.svg",
+      "destination": "apps/godot/visuals/assets/white_retreat.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_retreat.svg.import",
+      "destination": "apps/godot/visuals/assets/white_retreat.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_roll.svg",
+      "destination": "apps/godot/visuals/assets/white_roll.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_roll.svg.import",
+      "destination": "apps/godot/visuals/assets/white_roll.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sabre.svg",
+      "destination": "apps/godot/visuals/assets/white_sabre.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sabre.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sabre.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sack.svg",
+      "destination": "apps/godot/visuals/assets/white_sack.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sack.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sack.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_round.svg",
+      "destination": "apps/godot/visuals/assets/white_sh_round.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_round.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sh_round.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_small.svg",
+      "destination": "apps/godot/visuals/assets/white_sh_small.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_small.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sh_small.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_shield.svg",
+      "destination": "apps/godot/visuals/assets/white_shield.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_shield.svg.import",
+      "destination": "apps/godot/visuals/assets/white_shield.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_skull.svg",
+      "destination": "apps/godot/visuals/assets/white_skull.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_skull.svg.import",
+      "destination": "apps/godot/visuals/assets/white_skull.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_snd.svg",
+      "destination": "apps/godot/visuals/assets/white_snd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_snd.svg.import",
+      "destination": "apps/godot/visuals/assets/white_snd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_spear.svg",
+      "destination": "apps/godot/visuals/assets/white_spear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_spear.svg.import",
+      "destination": "apps/godot/visuals/assets/white_spear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sword.svg",
+      "destination": "apps/godot/visuals/assets/white_sword.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sword.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sword.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_tent.svg",
+      "destination": "apps/godot/visuals/assets/white_tent.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_tent.svg.import",
+      "destination": "apps/godot/visuals/assets/white_tent.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_twohand.svg",
+      "destination": "apps/godot/visuals/assets/white_twohand.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_twohand.svg.import",
+      "destination": "apps/godot/visuals/assets/white_twohand.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_xbow.svg",
+      "destination": "apps/godot/visuals/assets/white_xbow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_xbow.svg.import",
+      "destination": "apps/godot/visuals/assets/white_xbow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_zoom.svg",
+      "destination": "apps/godot/visuals/assets/white_zoom.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_zoom.svg.import",
+      "destination": "apps/godot/visuals/assets/white_zoom.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn.png",
+      "destination": "apps/godot/visuals/assets/wpn.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn.png.import",
+      "destination": "apps/godot/visuals/assets/wpn.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v1.png",
+      "destination": "apps/godot/visuals/assets/wpn_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v1.png.import",
+      "destination": "apps/godot/visuals/assets/wpn_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v2.png",
+      "destination": "apps/godot/visuals/assets/wpn_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v2.png.import",
+      "destination": "apps/godot/visuals/assets/wpn_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v3.png",
+      "destination": "apps/godot/visuals/assets/wpn_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v3.png.import",
+      "destination": "apps/godot/visuals/assets/wpn_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/banner_art.gd",
+      "destination": "apps/godot/visuals/banner_art.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/banner_art.gd.uid",
+      "destination": "apps/godot/visuals/banner_art.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/game_theme.gd",
+      "destination": "apps/godot/visuals/game_theme.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/game_theme.gd.uid",
+      "destination": "apps/godot/visuals/game_theme.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/game_theme.tres",
+      "destination": "apps/godot/visuals/game_theme.tres",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/menu_shade.gdshader",
+      "destination": "apps/godot/visuals/menu_shade.gdshader",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/menu_shade.gdshader.uid",
+      "destination": "apps/godot/visuals/menu_shade.gdshader.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/original_art.gd",
+      "destination": "apps/godot/visuals/original_art.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/original_art.gd.uid",
+      "destination": "apps/godot/visuals/original_art.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/shape_brush.gd",
+      "destination": "apps/godot/visuals/shape_brush.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/shape_brush.gd.uid",
+      "destination": "apps/godot/visuals/shape_brush.gd.uid",
+      "introduced_revision": "8a97999"
+    }
+  ]
+}

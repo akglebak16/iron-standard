@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://adapters/godot/resources/battle_setup_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+seed = 4017
+siege = true
+player_faction = "nord"
+enemy_faction = "emp"
+player_army = Array[Dictionary]([{"type": "n1", "n": 18}, {"type": "n2a", "n": 5}, {"type": "n3c", "n": 2}])
+enemy_army = Array[Dictionary]([{"type": "e1", "n": 20}, {"type": "e2a", "n": 4}, {"type": "e3c", "n": 2}])
+hero_troop = "n3"
+companion_profiles = Array[Dictionary]([{"id": "vikenty"}])
+hero_position = Vector2(730, 850)

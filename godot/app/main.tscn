@@ -1,7 +1,0 @@
-[gd_scene load_steps=2 format=3]
-
-[ext_resource type="Script" path="res://app/main.gd" id="1_main"]
-
-[node name="IronStandard" type="Node2D"]
-script = ExtResource("1_main")
-demo_world = {"settlements": [{"id": "demo_town", "kind": "town", "name": "Вентум", "position": Vector2(100, 100)}]}

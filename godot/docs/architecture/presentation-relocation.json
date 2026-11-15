@@ -1,0 +1,996 @@
+{
+  "base": "b9633c7",
+  "filesMoved": 163,
+  "notes": [
+    "Paths rewritten; UTF-8 BOM removed from battle scene; imported resource cache paths regenerated.",
+    "Mechanical move checked separately from algorithms."
+  ],
+  "fingerprintsBefore": [
+    "FP demo_battle.tres 55 1200 1965093033 313120297 5864093",
+    "FP demo_siege.tres 53 1200 3285071689 402878887 5864093"
+  ],
+  "fingerprintsAfter": [
+    "FP demo_battle.tres 55 1200 1965093033 313120297 5864093",
+    "FP demo_siege.tres 53 1200 3285071689 402878887 5864093"
+  ],
+  "files": [
+    {
+      "source": "app/aftermath_text.gd",
+      "destination": "apps/godot/composition/aftermath_text.gd",
+      "sha256": "6163a701792dfd76449348ffb79d4bfe9dbbce5494a08539d2176ee3c0ec0a99",
+      "afterSha256": "6163a701792dfd76449348ffb79d4bfe9dbbce5494a08539d2176ee3c0ec0a99"
+    },
+    {
+      "source": "app/aftermath_text.gd.uid",
+      "destination": "apps/godot/composition/aftermath_text.gd.uid",
+      "sha256": "ce26e28d5e836b06f0d9eadc4ba542099d9e355dc6dcbd328d01eb57c954e359",
+      "afterSha256": "ce26e28d5e836b06f0d9eadc4ba542099d9e355dc6dcbd328d01eb57c954e359"
+    },
+    {
+      "source": "app/encounter_aftermath.gd",
+      "destination": "apps/godot/composition/encounter_aftermath.gd",
+      "sha256": "668cb4d16c82296f9d5d0b8f6b327da60e9fbec933e866df92f25f5e763382da",
+      "afterSha256": "668cb4d16c82296f9d5d0b8f6b327da60e9fbec933e866df92f25f5e763382da"
+    },
+    {
+      "source": "app/encounter_aftermath.gd.uid",
+      "destination": "apps/godot/composition/encounter_aftermath.gd.uid",
+      "sha256": "ba101b593d5df8cee4d82d123b1f3aa771c70bb3ee8e03e4ba72f1777134c55a",
+      "afterSha256": "ba101b593d5df8cee4d82d123b1f3aa771c70bb3ee8e03e4ba72f1777134c55a"
+    },
+    {
+      "source": "app/game.tscn",
+      "destination": "apps/godot/composition/game.tscn",
+      "sha256": "e5119317bc6ff62a52d145e87c0a648bdd518c2314113a66bad0420179fec9b4",
+      "afterSha256": "2cc4d7e8cd401d32ddfbd52634092b53cb2c8ae1f8370a43baebc8fee247a4de"
+    },
+    {
+      "source": "app/game_mode_coordinator.gd",
+      "destination": "apps/godot/composition/game_mode_coordinator.gd",
+      "sha256": "0a93626c5a3f72b68d42ab8af58d2b65b21840a45c44f9f48e333504a6da483d",
+      "afterSha256": "67631322f81c8c8c70c1b90d071dfed3cd49b354db70399ec3968414230ebf54"
+    },
+    {
+      "source": "app/game_mode_coordinator.gd.uid",
+      "destination": "apps/godot/composition/game_mode_coordinator.gd.uid",
+      "sha256": "11d0341a0e4dcabb1bef67d4ddd779e9338aa3ac278776ffb56a374076dcaa81",
+      "afterSha256": "11d0341a0e4dcabb1bef67d4ddd779e9338aa3ac278776ffb56a374076dcaa81"
+    },
+    {
+      "source": "app/game_options.gd",
+      "destination": "apps/godot/composition/game_options.gd",
+      "sha256": "3b5668d257d6bd1ad1508c7774c474c484fbf978d96ea26611ceec6ff4190eef",
+      "afterSha256": "3b5668d257d6bd1ad1508c7774c474c484fbf978d96ea26611ceec6ff4190eef"
+    },
+    {
+      "source": "app/game_options.gd.uid",
+      "destination": "apps/godot/composition/game_options.gd.uid",
+      "sha256": "1e2f6c0f86ece2df9a7ac25fe9fcbd8b79bff634f8f340d1ee3305b63f44d8a3",
+      "afterSha256": "1e2f6c0f86ece2df9a7ac25fe9fcbd8b79bff634f8f340d1ee3305b63f44d8a3"
+    },
+    {
+      "source": "app/main.gd",
+      "destination": "apps/godot/composition/main.gd",
+      "sha256": "f64e58f0d5540025ce334e06b5895e7b66fd2b968109af1dcc34fe9b4781074d",
+      "afterSha256": "007403016cd653d27387792a464c80d55e291571db8d4527be8b462e5dfadd94"
+    },
+    {
+      "source": "app/main.gd.uid",
+      "destination": "apps/godot/composition/main.gd.uid",
+      "sha256": "cf091c5b71def4edfb2781bac46b57a51a20bee44705b835be4d38f0c81193e9",
+      "afterSha256": "cf091c5b71def4edfb2781bac46b57a51a20bee44705b835be4d38f0c81193e9"
+    },
+    {
+      "source": "app/main.tscn",
+      "destination": "apps/godot/composition/main.tscn",
+      "sha256": "9b2cab6475d03631a7b295adfa3a9dfcf15e8a4df3ecd425358cec5a8fdb57e5",
+      "afterSha256": "b535474fedc689bde07ea9a0b2b2d2a0207255cf294b6f003a318f58bca67f1f"
+    },
+    {
+      "source": "app/main_menu.gd",
+      "destination": "apps/godot/composition/main_menu.gd",
+      "sha256": "971a0940298e9916e1e1f8840701f4a3665289305e696add86e4eb6ee4cf283a",
+      "afterSha256": "79a83273e971b81a3bda35b4b69fd5f55844d21be44b1ec840212ed43565eb7c"
+    },
+    {
+      "source": "app/main_menu.gd.uid",
+      "destination": "apps/godot/composition/main_menu.gd.uid",
+      "sha256": "f8f2751e5efbd77a6c0aecfb67d4fb49ea90879a4027d1617a98fc8eddefd979",
+      "afterSha256": "f8f2751e5efbd77a6c0aecfb67d4fb49ea90879a4027d1617a98fc8eddefd979"
+    },
+    {
+      "source": "app/main_menu.tscn",
+      "destination": "apps/godot/composition/main_menu.tscn",
+      "sha256": "ad85ff1b7b94502478fb90cd74d76b3a2ffb64b7d115fdeda945fda465942d2d",
+      "afterSha256": "09e9505434629260d3fa75e19fd6ec0a4abba8f03c0a247412dfaefd4141498b"
+    },
+    {
+      "source": "app/pause_menu.gd",
+      "destination": "apps/godot/composition/pause_menu.gd",
+      "sha256": "dc2bf84697ceb760b54002561e92e99e19fbc60ffe5cd9219dd21bb481e711af",
+      "afterSha256": "58bd5903b0cca63263eccfd1fff0ab00ec05b1dec5d34cc26245fcdfb5ef66c4"
+    },
+    {
+      "source": "app/pause_menu.gd.uid",
+      "destination": "apps/godot/composition/pause_menu.gd.uid",
+      "sha256": "ebfb1c005a7deac7fe004765fea1089bafc34093a75f1bd3779b6ab1d6641af6",
+      "afterSha256": "ebfb1c005a7deac7fe004765fea1089bafc34093a75f1bd3779b6ab1d6641af6"
+    },
+    {
+      "source": "app/presentation_preferences.gd",
+      "destination": "apps/godot/composition/presentation_preferences.gd",
+      "sha256": "aaac19ebf57723b09862a196014abb9656b2eaf31a8dc18e624fe44cef0e95cc",
+      "afterSha256": "aaac19ebf57723b09862a196014abb9656b2eaf31a8dc18e624fe44cef0e95cc"
+    },
+    {
+      "source": "app/presentation_preferences.gd.uid",
+      "destination": "apps/godot/composition/presentation_preferences.gd.uid",
+      "sha256": "0751b147002b674f69c53c7a119baf244e20b202097dbbb76e74ee8ff297b8ee",
+      "afterSha256": "0751b147002b674f69c53c7a119baf244e20b202097dbbb76e74ee8ff297b8ee"
+    },
+    {
+      "source": "app/save_store.gd",
+      "destination": "apps/godot/composition/save_store.gd",
+      "sha256": "808c82da937cae0b499947db32dc8d9cea30b88aac3551997fe8ded665014459",
+      "afterSha256": "808c82da937cae0b499947db32dc8d9cea30b88aac3551997fe8ded665014459"
+    },
+    {
+      "source": "app/save_store.gd.uid",
+      "destination": "apps/godot/composition/save_store.gd.uid",
+      "sha256": "2cf7d9dd8dd47dcddced075afb307cc60d4d5f1534f3cd278655a2b64c876c5b",
+      "afterSha256": "2cf7d9dd8dd47dcddced075afb307cc60d4d5f1534f3cd278655a2b64c876c5b"
+    },
+    {
+      "source": "app/siege_demo.tscn",
+      "destination": "apps/godot/composition/siege_demo.tscn",
+      "sha256": "d6f7098bf68bda4e834c699c724faeb4e6e78e744c550c572d9c8268a391bc37",
+      "afterSha256": "c5e180a5a4fbbc25af0aeb40d7e3739e3b8b8c7391d0a003903292de234d7736"
+    },
+    {
+      "source": "app/tests/test_encounter_aftermath.gd",
+      "destination": "tests/integration/app/test_encounter_aftermath.gd",
+      "sha256": "de11fe3c17789bc96e9db159ec0b92e870161c486b91da8408ee05121a6df212",
+      "afterSha256": "f85b58acdd44dccf304fdfacb5449ad2dbae9a30e0ec2f4aa659cdf404a55415"
+    },
+    {
+      "source": "app/tests/test_encounter_aftermath.gd.uid",
+      "destination": "tests/integration/app/test_encounter_aftermath.gd.uid",
+      "sha256": "b065ba0c714aee28fdc769e4745b291bdf9e4a8ceb73b481ed6061f2b38d0316",
+      "afterSha256": "b065ba0c714aee28fdc769e4745b291bdf9e4a8ceb73b481ed6061f2b38d0316"
+    },
+    {
+      "source": "app/tests/test_gear_and_menu.gd",
+      "destination": "tests/integration/app/test_gear_and_menu.gd",
+      "sha256": "35f61d4d3b043e2ee68ec34d8d24384d8e29fe4cb8d99dc2dcdd1d6762811ef9",
+      "afterSha256": "2f9dfb59d6c2ee3a1cc47b674131507fd34b730554ac5ef5f0db00aaf4c5bad7"
+    },
+    {
+      "source": "app/tests/test_gear_and_menu.gd.uid",
+      "destination": "tests/integration/app/test_gear_and_menu.gd.uid",
+      "sha256": "0fbaaca2bf25b5e9a3f326412fdad67f238157b263de56095c6ecd4f86ca5db1",
+      "afterSha256": "0fbaaca2bf25b5e9a3f326412fdad67f238157b263de56095c6ecd4f86ca5db1"
+    },
+    {
+      "source": "app/tests/test_scenes_compile.gd",
+      "destination": "tests/integration/app/test_scenes_compile.gd",
+      "sha256": "9f7876227d93e160a0d1a98e42352c94411b813f066b6b2908182c4a41a731ff",
+      "afterSha256": "e003cd27125e6cd7becba16f16ea950e2feea7ae9a25a19f9bc55c6490cd03b4"
+    },
+    {
+      "source": "app/tests/test_scenes_compile.gd.uid",
+      "destination": "tests/integration/app/test_scenes_compile.gd.uid",
+      "sha256": "300784074743970b5a7ffa9a447cb61d77cee405ca31407816fb14366c01372f",
+      "afterSha256": "300784074743970b5a7ffa9a447cb61d77cee405ca31407816fb14366c01372f"
+    },
+    {
+      "source": "app/tests/test_siege_bridge.gd",
+      "destination": "tests/integration/app/test_siege_bridge.gd",
+      "sha256": "ce22708a0b4e35952c2512807753206b78b6a090025926a38dcb149ecbbc55b5",
+      "afterSha256": "3cb12ceb28c2a5cdad821892f208fd8d230fd2fdcc477cde9588f7ed30b191ae"
+    },
+    {
+      "source": "app/tests/test_siege_bridge.gd.uid",
+      "destination": "tests/integration/app/test_siege_bridge.gd.uid",
+      "sha256": "b98e6124c1e9c6cf6be1e2da8750891d66cd93b988ddd11422fdcd38f34ca92e",
+      "afterSha256": "b98e6124c1e9c6cf6be1e2da8750891d66cd93b988ddd11422fdcd38f34ca92e"
+    },
+    {
+      "source": "app/tests/test_siege_window.gd",
+      "destination": "tests/integration/app/test_siege_window.gd",
+      "sha256": "c714347180702801008dc0e6bc1dfabbfa857e42e3e6e8c675e3b262c72c4a42",
+      "afterSha256": "0a6be4c7f8d6d305ce9712752c6479a56874ec019589e65f965a0caadf69d2d7"
+    },
+    {
+      "source": "app/tests/test_siege_window.gd.uid",
+      "destination": "tests/integration/app/test_siege_window.gd.uid",
+      "sha256": "4399b02e5544db8de5f005021cc6ac0054009a018c91933e06ddb546c1e5de5a",
+      "afterSha256": "4399b02e5544db8de5f005021cc6ac0054009a018c91933e06ddb546c1e5de5a"
+    },
+    {
+      "source": "app/tests/test_ui_smoke.gd",
+      "destination": "tests/integration/app/test_ui_smoke.gd",
+      "sha256": "10b1e91672b11ab3356678bc0f40ba487053f10a68f4380ad748a180af4d5b94",
+      "afterSha256": "6210ad9aeb09d44d73d81878936ead1e89064693449d87042dbdefe7d6c6c4c3"
+    },
+    {
+      "source": "app/tests/test_ui_smoke.gd.uid",
+      "destination": "tests/integration/app/test_ui_smoke.gd.uid",
+      "sha256": "7932e49f7be5472b5fbd69bb689199d751cd1d80cb13b6629fc576ac2a1e75a3",
+      "afterSha256": "7932e49f7be5472b5fbd69bb689199d751cd1d80cb13b6629fc576ac2a1e75a3"
+    },
+    {
+      "source": "app/tests/test_world_battle_bridge.gd",
+      "destination": "tests/integration/app/test_world_battle_bridge.gd",
+      "sha256": "9402c2f113e468d9a580ee1adafccd5b1aa58c59236018827497fd252353dd2b",
+      "afterSha256": "d847d4345ecd1babc15e65a7886fac9525af1ef470ab348741e102d059a95986"
+    },
+    {
+      "source": "app/tests/test_world_battle_bridge.gd.uid",
+      "destination": "tests/integration/app/test_world_battle_bridge.gd.uid",
+      "sha256": "c2ee87740a14b554e134bed9a1e8c8840f4c3d8e9c071d9ce2819b004f67a83c",
+      "afterSha256": "c2ee87740a14b554e134bed9a1e8c8840f4c3d8e9c071d9ce2819b004f67a83c"
+    },
+    {
+      "source": "app/world_battle_bridge.gd",
+      "destination": "apps/godot/composition/world_battle_bridge.gd",
+      "sha256": "273c99e20bcbf7f5f1686d7d6ba7c27fcd8de15fe27eb2b9ec4ddda02563b3e2",
+      "afterSha256": "21a359f630bb46cabfed9064bddb9190c24f0b5b09c4fdede512b38b049ec7de"
+    },
+    {
+      "source": "app/world_battle_bridge.gd.uid",
+      "destination": "apps/godot/composition/world_battle_bridge.gd.uid",
+      "sha256": "a749e1b90796783d418e09d2884f967de9c592a9107764c200106f2873219e2c",
+      "afterSha256": "a749e1b90796783d418e09d2884f967de9c592a9107764c200106f2873219e2c"
+    },
+    {
+      "source": "app/world_demo.gd",
+      "destination": "apps/godot/composition/world_demo.gd",
+      "sha256": "f622a1afb7f4bd5b1a3d21ac003b183456c7eaca409c25a9c3a2c0077a2bf572",
+      "afterSha256": "a067685043d691ec13b25feb57488aafa491140df9d4302aff56c9dee6e1c6a8"
+    },
+    {
+      "source": "app/world_demo.gd.uid",
+      "destination": "apps/godot/composition/world_demo.gd.uid",
+      "sha256": "83773aacfe9884380c0b86fde6d228e85b5ca389abb9747cbe76787eec6cc70f",
+      "afterSha256": "83773aacfe9884380c0b86fde6d228e85b5ca389abb9747cbe76787eec6cc70f"
+    },
+    {
+      "source": "app/world_demo.tscn",
+      "destination": "apps/godot/composition/world_demo.tscn",
+      "sha256": "4c372a7ad766e19e96bb684da3fdb512db28833559f1e856e43e25275e6e5390",
+      "afterSha256": "c752b2d211092f3bc76b26cd9670d511c259a896156b7cd2633739cdbbbc5c7e"
+    },
+    {
+      "source": "battle/presentation/audio/assets/battle_theme.ogg",
+      "destination": "apps/godot/presentation/battle/audio/assets/battle_theme.ogg",
+      "sha256": "3d8db7415a8fb81b6a551199b53043cd03edff43891c6c726575ad7f638a2d24",
+      "afterSha256": "3d8db7415a8fb81b6a551199b53043cd03edff43891c6c726575ad7f638a2d24"
+    },
+    {
+      "source": "battle/presentation/audio/assets/battle_theme.ogg.import",
+      "destination": "apps/godot/presentation/battle/audio/assets/battle_theme.ogg.import",
+      "sha256": "665ead8053914a6da2ef85fe2e6df4017a624e0ee4426e3ac07b5b78076a28d3",
+      "afterSha256": "9712524c97cc9f850c408d71137dce5292ea4dcb5cbefcb88c7a6a42efe3e800"
+    },
+    {
+      "source": "battle/presentation/audio/battle_music.gd",
+      "destination": "apps/godot/presentation/battle/audio/battle_music.gd",
+      "sha256": "f0e4febcc543966883460d15fd820143fea1ce0d2fce40ef61f7522841a9d92c",
+      "afterSha256": "c7e082f30472007971306f9ed0bc19c9b75a02043e10767d6d800d3beb942fce"
+    },
+    {
+      "source": "battle/presentation/audio/battle_music.gd.uid",
+      "destination": "apps/godot/presentation/battle/audio/battle_music.gd.uid",
+      "sha256": "42576ddc5c6b43ecb20cf908f065ca3395fbd4a3088a714160a0a9ba6f765c7c",
+      "afterSha256": "42576ddc5c6b43ecb20cf908f065ca3395fbd4a3088a714160a0a9ba6f765c7c"
+    },
+    {
+      "source": "battle/presentation/audio/combat_audio.gd",
+      "destination": "apps/godot/presentation/battle/audio/combat_audio.gd",
+      "sha256": "db74d52037bff54d39774037ba5340e91515de316b0811a1cfe0ca5bcbb64b53",
+      "afterSha256": "7ecf1fc04ac757f10109e2e982d567c299f8c0c4fe23888734822edbdaa06920"
+    },
+    {
+      "source": "battle/presentation/audio/combat_audio.gd.uid",
+      "destination": "apps/godot/presentation/battle/audio/combat_audio.gd.uid",
+      "sha256": "0158544481bdab96154cdfe464dba80a44dcc5d42ace6326fd83394ef9fd1542",
+      "afterSha256": "0158544481bdab96154cdfe464dba80a44dcc5d42ace6326fd83394ef9fd1542"
+    },
+    {
+      "source": "battle/presentation/audio/sound_bank.gd",
+      "destination": "apps/godot/presentation/battle/audio/sound_bank.gd",
+      "sha256": "6f21fbe092b55349ecdd3fd5a22fe291fa4188c9150cd94170827a4cbc94ef77",
+      "afterSha256": "6f21fbe092b55349ecdd3fd5a22fe291fa4188c9150cd94170827a4cbc94ef77"
+    },
+    {
+      "source": "battle/presentation/audio/sound_bank.gd.uid",
+      "destination": "apps/godot/presentation/battle/audio/sound_bank.gd.uid",
+      "sha256": "20e8ef5b1bb321e8e36497e5273bf4d4bae8fdf4f55cf0586ce9ce0e52a4a1ee",
+      "afterSha256": "20e8ef5b1bb321e8e36497e5273bf4d4bae8fdf4f55cf0586ce9ce0e52a4a1ee"
+    },
+    {
+      "source": "battle/presentation/banter_lines.gd",
+      "destination": "apps/godot/presentation/battle/banter_lines.gd",
+      "sha256": "a15730581642d7814b73c1ae79c3fa905e6473da74ff616a5ee4d72730191344",
+      "afterSha256": "a15730581642d7814b73c1ae79c3fa905e6473da74ff616a5ee4d72730191344"
+    },
+    {
+      "source": "battle/presentation/banter_lines.gd.uid",
+      "destination": "apps/godot/presentation/battle/banter_lines.gd.uid",
+      "sha256": "0462cacc0f662bdc61bd47f2d94048d4081d40b82081f32e9eaf9ef05cae5df6",
+      "afterSha256": "0462cacc0f662bdc61bd47f2d94048d4081d40b82081f32e9eaf9ef05cae5df6"
+    },
+    {
+      "source": "battle/presentation/battle_camera.gd",
+      "destination": "apps/godot/presentation/battle/battle_camera.gd",
+      "sha256": "18a99c9dd3280dec42bf3a73aedcf97b82a692b781ca5eb45e8a75b6b8e030bf",
+      "afterSha256": "18a99c9dd3280dec42bf3a73aedcf97b82a692b781ca5eb45e8a75b6b8e030bf"
+    },
+    {
+      "source": "battle/presentation/battle_camera.gd.uid",
+      "destination": "apps/godot/presentation/battle/battle_camera.gd.uid",
+      "sha256": "d7e39645a64ac2aa5ca2899bb534e031baa76050a4109275c19d961afda12385",
+      "afterSha256": "d7e39645a64ac2aa5ca2899bb534e031baa76050a4109275c19d961afda12385"
+    },
+    {
+      "source": "battle/presentation/combat_feedback.gd",
+      "destination": "apps/godot/presentation/battle/combat_feedback.gd",
+      "sha256": "0f002b67e2bf118994eaaea3eece68e88150c964f7a392b0c375ecba8fa7372f",
+      "afterSha256": "479ca444d771156f3a209e1825e724cf634e0e30bd5c8aacecd4e7a6ab51498a"
+    },
+    {
+      "source": "battle/presentation/combat_feedback.gd.uid",
+      "destination": "apps/godot/presentation/battle/combat_feedback.gd.uid",
+      "sha256": "82304d020a4d5789da1bfb1d3b320ce31f8fbd93564f14e4f8f4e351f4630f2c",
+      "afterSha256": "82304d020a4d5789da1bfb1d3b320ce31f8fbd93564f14e4f8f4e351f4630f2c"
+    },
+    {
+      "source": "battle/presentation/companion_dialogue.gd",
+      "destination": "apps/godot/presentation/battle/companion_dialogue.gd",
+      "sha256": "abd431b4ee6b74aaa801037cc7976585f388c1ec2d05dd64ea3ba7a6f6d1ccf0",
+      "afterSha256": "ad8d8072c7cb4feae6b348901b5c78ce0a8a161f25454a99e32c86d79b4d13fd"
+    },
+    {
+      "source": "battle/presentation/companion_dialogue.gd.uid",
+      "destination": "apps/godot/presentation/battle/companion_dialogue.gd.uid",
+      "sha256": "8df742b8d9575a591dba2e3edd32bb5e5764cf275c9de4496c1e790e91af1bf9",
+      "afterSha256": "8df742b8d9575a591dba2e3edd32bb5e5764cf275c9de4496c1e790e91af1bf9"
+    },
+    {
+      "source": "battle/presentation/demo_config.gd",
+      "destination": "apps/godot/presentation/battle/demo_config.gd",
+      "sha256": "1c4ab75092cb943414ab3785d33262266b4a55e7cbb84a2b9bb5b59a156faacc",
+      "afterSha256": "1c4ab75092cb943414ab3785d33262266b4a55e7cbb84a2b9bb5b59a156faacc"
+    },
+    {
+      "source": "battle/presentation/demo_config.gd.uid",
+      "destination": "apps/godot/presentation/battle/demo_config.gd.uid",
+      "sha256": "c1ff52da3ba902dd2f5d52e36f6595e66dcc88d59212936b05567a16bd622d36",
+      "afterSha256": "c1ff52da3ba902dd2f5d52e36f6595e66dcc88d59212936b05567a16bd622d36"
+    },
+    {
+      "source": "battle/presentation/detached_parts.gd",
+      "destination": "apps/godot/presentation/battle/detached_parts.gd",
+      "sha256": "75a72487a95b14213859c2da46426a856b1c4d41a8154c68e52e9d9ad07f3c4b",
+      "afterSha256": "5e81abb4e60d60b8ea1857be31bf8447c81948ffea8eab16c2b55cf5d91e368c"
+    },
+    {
+      "source": "battle/presentation/detached_parts.gd.uid",
+      "destination": "apps/godot/presentation/battle/detached_parts.gd.uid",
+      "sha256": "1438910f580f33f92a7771a0f711e4d2cbf0b58dc4bc449aaad25281a5c92f5c",
+      "afterSha256": "1438910f580f33f92a7771a0f711e4d2cbf0b58dc4bc449aaad25281a5c92f5c"
+    },
+    {
+      "source": "battle/presentation/ground_bake.gd",
+      "destination": "apps/godot/presentation/battle/ground_bake.gd",
+      "sha256": "7adf8c2610b50b44fcda7134cf0790edc29df6cfe0fd0f3e7f47d366a2c82b1c",
+      "afterSha256": "7adf8c2610b50b44fcda7134cf0790edc29df6cfe0fd0f3e7f47d366a2c82b1c"
+    },
+    {
+      "source": "battle/presentation/ground_bake.gd.uid",
+      "destination": "apps/godot/presentation/battle/ground_bake.gd.uid",
+      "sha256": "2ac76da764ab707c1fc3ac2f434e91dd681f989d3b9d50eee729340a1e3b0060",
+      "afterSha256": "2ac76da764ab707c1fc3ac2f434e91dd681f989d3b9d50eee729340a1e3b0060"
+    },
+    {
+      "source": "battle/presentation/hud/battle_controls.gd",
+      "destination": "apps/godot/presentation/battle/hud/battle_controls.gd",
+      "sha256": "2cb2279ce2a056ab481f6caba02cad4e311568c6628a457d3a49618f50cd446d",
+      "afterSha256": "f6af9febe75b443fc3fa355a690aaa334135085d70dfbcd3fb5bccf7c644950d"
+    },
+    {
+      "source": "battle/presentation/hud/battle_controls.gd.uid",
+      "destination": "apps/godot/presentation/battle/hud/battle_controls.gd.uid",
+      "sha256": "670bcb40b2826cb8e4999a1428a251aade0ef65afb5fa7ff3462024b48cf46dd",
+      "afterSha256": "670bcb40b2826cb8e4999a1428a251aade0ef65afb5fa7ff3462024b48cf46dd"
+    },
+    {
+      "source": "battle/presentation/hud/navigation_hud.gd",
+      "destination": "apps/godot/presentation/battle/hud/navigation_hud.gd",
+      "sha256": "b099154082dcf118fbb23b62306fd85367a69c327b84aef4f0196fa073c0bd78",
+      "afterSha256": "b099154082dcf118fbb23b62306fd85367a69c327b84aef4f0196fa073c0bd78"
+    },
+    {
+      "source": "battle/presentation/hud/navigation_hud.gd.uid",
+      "destination": "apps/godot/presentation/battle/hud/navigation_hud.gd.uid",
+      "sha256": "e550743a0a3cefed99f24d3ef3a1fd261406f6bab920234c544e8cb21fef97f6",
+      "afterSha256": "e550743a0a3cefed99f24d3ef3a1fd261406f6bab920234c544e8cb21fef97f6"
+    },
+    {
+      "source": "battle/presentation/hud/order_marker.gd",
+      "destination": "apps/godot/presentation/battle/hud/order_marker.gd",
+      "sha256": "47d49bd00094e5a66a830940f879e6dec668a5cecae5c70bc498cbf92faa4642",
+      "afterSha256": "47d49bd00094e5a66a830940f879e6dec668a5cecae5c70bc498cbf92faa4642"
+    },
+    {
+      "source": "battle/presentation/hud/order_marker.gd.uid",
+      "destination": "apps/godot/presentation/battle/hud/order_marker.gd.uid",
+      "sha256": "72877e5e845ff893717d5f9f79361714ed60bff79aeb7669dc66ab0ca84efc98",
+      "afterSha256": "72877e5e845ff893717d5f9f79361714ed60bff79aeb7669dc66ab0ca84efc98"
+    },
+    {
+      "source": "battle/presentation/impact_effects.gd",
+      "destination": "apps/godot/presentation/battle/impact_effects.gd",
+      "sha256": "c05b7d95b61d55222e45c307007c0a891a08f278e7de8c8f26008cb1af7f9155",
+      "afterSha256": "247d2f874d49c0a1199b3d12905268cc3cbcde1016e11f0ec5e596a15cf96dfd"
+    },
+    {
+      "source": "battle/presentation/impact_effects.gd.uid",
+      "destination": "apps/godot/presentation/battle/impact_effects.gd.uid",
+      "sha256": "948ddb7cd759cd016c1ac4baeb347dd2b04d237ad709c31ed45dafa3458d7f55",
+      "afterSha256": "948ddb7cd759cd016c1ac4baeb347dd2b04d237ad709c31ed45dafa3458d7f55"
+    },
+    {
+      "source": "battle/presentation/projectile_view.gd",
+      "destination": "apps/godot/presentation/battle/projectile_view.gd",
+      "sha256": "e9cea6f4c2625a9245b6cce9d166c1221e4cf68b8635209207b65df959c12a5d",
+      "afterSha256": "75fd39e183992230ebcdf8290f60c11079ea679c8bcadc4bfe48a7e703c53d5f"
+    },
+    {
+      "source": "battle/presentation/projectile_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/projectile_view.gd.uid",
+      "sha256": "1ed43e8581ffafb3d563146df3b238c30e45c34aae13454f20b71e072ed3cbf6",
+      "afterSha256": "1ed43e8581ffafb3d563146df3b238c30e45c34aae13454f20b71e072ed3cbf6"
+    },
+    {
+      "source": "battle/presentation/scene.tscn",
+      "destination": "apps/godot/presentation/battle/scene.tscn",
+      "sha256": "80efa8e61701ff6d2878be8ae94490db95fbc1c9714a16ed500eb7f00f9c70d9",
+      "afterSha256": "c523ef38808ecb0d684a6b4506a8ade88076ed1f8c471054c0b3d9f03446b8dc"
+    },
+    {
+      "source": "battle/presentation/siege_defense_view.gd",
+      "destination": "apps/godot/presentation/battle/siege_defense_view.gd",
+      "sha256": "d96a294a011a6ad63a4f02087beed9d6099e64ebc011b23db7add00baafe4493",
+      "afterSha256": "d96a294a011a6ad63a4f02087beed9d6099e64ebc011b23db7add00baafe4493"
+    },
+    {
+      "source": "battle/presentation/siege_defense_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/siege_defense_view.gd.uid",
+      "sha256": "b5bac70df5937a4c2da7da3851da822a574920fc0ab788e9b24b3d5d38a92765",
+      "afterSha256": "b5bac70df5937a4c2da7da3851da822a574920fc0ab788e9b24b3d5d38a92765"
+    },
+    {
+      "source": "battle/presentation/terrain/ground.gdshader",
+      "destination": "apps/godot/presentation/battle/terrain/ground.gdshader",
+      "sha256": "b2671126a78611d1714bdad0e54c0893c0ffd8be4cd17f8ecd0a3adfd9f5b03f",
+      "afterSha256": "b2671126a78611d1714bdad0e54c0893c0ffd8be4cd17f8ecd0a3adfd9f5b03f"
+    },
+    {
+      "source": "battle/presentation/terrain/ground.gdshader.uid",
+      "destination": "apps/godot/presentation/battle/terrain/ground.gdshader.uid",
+      "sha256": "e3bb7d9cb2bfae806c5f751084b9713223edae93a1d0fa0c80c7cf22321f6f0e",
+      "afterSha256": "e3bb7d9cb2bfae806c5f751084b9713223edae93a1d0fa0c80c7cf22321f6f0e"
+    },
+    {
+      "source": "battle/presentation/terrain/terrain_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/terrain_view.gd",
+      "sha256": "41b4e021525734192d895be82eb71f1e421df3aede569c286745595662607703",
+      "afterSha256": "82ab229653de68a4badb5c4a6ffbcd8c35f6c4ebc0e98f6937afef2d10ea19c1"
+    },
+    {
+      "source": "battle/presentation/terrain/terrain_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/terrain_view.gd.uid",
+      "sha256": "b8a46c419cd37af1343766c0c6b44704fc26c83923c5794c150d0ff159c744a2",
+      "afterSha256": "b8a46c419cd37af1343766c0c6b44704fc26c83923c5794c150d0ff159c744a2"
+    },
+    {
+      "source": "battle/presentation/terrain/vegetation_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/vegetation_view.gd",
+      "sha256": "2b4439afab68c54d921b3e0af8a02c6db5c5c13e66c8c323fa78d1299c72f07b",
+      "afterSha256": "2b4439afab68c54d921b3e0af8a02c6db5c5c13e66c8c323fa78d1299c72f07b"
+    },
+    {
+      "source": "battle/presentation/terrain/vegetation_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/vegetation_view.gd.uid",
+      "sha256": "7960d75622b28923a7483797612461d61ecc575310064568856dc6c4d3a85e25",
+      "afterSha256": "7960d75622b28923a7483797612461d61ecc575310064568856dc6c4d3a85e25"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_disc.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_disc.png",
+      "sha256": "f7e3f6f5be8b4cf2292244b44f5188600651e78c0a55c034e5a7ab726221f5da",
+      "afterSha256": "f7e3f6f5be8b4cf2292244b44f5188600651e78c0a55c034e5a7ab726221f5da"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_disc.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_disc.png.import",
+      "sha256": "8ab39f86dc05f3a7ea50a5fa34bc9e795ddefb4aa6b546f1282756d283b2838e",
+      "afterSha256": "756aae4e8ea0c4c195803096e14afa7a20dad9a7705c1b2f946b7cdc16f0c110"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_gate_leaf.png",
+      "sha256": "9a08f8e7d94414e3e2da3e08d2158a68a46e376155dca041d74d04d7b1029e8a",
+      "afterSha256": "9a08f8e7d94414e3e2da3e08d2158a68a46e376155dca041d74d04d7b1029e8a"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_gate_leaf.png.import",
+      "sha256": "cf2c78791f0652ff473a3fb02846e830ff522cd22e3fef7cd7dc9d6f40322d0f",
+      "afterSha256": "16e0fa8534ae6f0498a60f22c56cab9eac64df995205979c60d6a75a6c78ab59"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_merlon.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_merlon.png",
+      "sha256": "9f54e4ef7f628ae4412ca61514e865c67eff976781cc8112cd2c15ac21f295f5",
+      "afterSha256": "9f54e4ef7f628ae4412ca61514e865c67eff976781cc8112cd2c15ac21f295f5"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_merlon.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_merlon.png.import",
+      "sha256": "87114a9162944a66e17e2d6bbb8cf42d8f0d6ed596bb450d1aab7a6c314b5c16",
+      "afterSha256": "b247638dbe2ce3572d7d4194f5d01a50c0157d043d1697da07630d5f814fc8de"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_stone.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_stone.png",
+      "sha256": "38c10b0e90e0098afa5112308ab11dd46b305cee83468a33a5decb855e9cc3ca",
+      "afterSha256": "38c10b0e90e0098afa5112308ab11dd46b305cee83468a33a5decb855e9cc3ca"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_stone.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_stone.png.import",
+      "sha256": "4fc82d9075394150eed733e5f659b5c13ca873f6c02f48d97b6cb63360638e5a",
+      "afterSha256": "1676debce1848e95b665da0cff4ebf9826d6bba590df9f290058ac40e49d9632"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_tower.png",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_tower.png",
+      "sha256": "dbbd69a012eea3ad449ac1ed66d9ff41b6e75a558516bad13f76fda97e274b9a",
+      "afterSha256": "dbbd69a012eea3ad449ac1ed66d9ff41b6e75a558516bad13f76fda97e274b9a"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_tower.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/wall/assets/wall_tower.png.import",
+      "sha256": "02dde5c42f2c5942ea0096bdadc00eb13b47b6ded33bf1aea14f177952169179",
+      "afterSha256": "8cda1c15a0af666705cd11273e035c1ea47a1feb59e70e2531ff5e85937db274"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_gate_leaf.tscn",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_gate_leaf.tscn",
+      "sha256": "ea7b41e9f42447e8dc8365b93d653c0e9f39217d591e48ac6d3bb41ae4c4f07a",
+      "afterSha256": "b54833044ba26f9c2402502c6aaef06e4d651c06044692d603ae204d8b7a3506"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.gd",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.gd",
+      "sha256": "b1c92e872e5b7b7c622e396d6b12e6e8ec0140c2c96a127ee4efa35482038b21",
+      "afterSha256": "b1c92e872e5b7b7c622e396d6b12e6e8ec0140c2c96a127ee4efa35482038b21"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.gd.uid",
+      "sha256": "cec1d8c8f4e0e09d6ecffbf0ee37b06ce0974e40179630fc270c43eb43aaeabe",
+      "afterSha256": "cec1d8c8f4e0e09d6ecffbf0ee37b06ce0974e40179630fc270c43eb43aaeabe"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.tscn",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_segment.tscn",
+      "sha256": "72ae3526e17e0ac92b2b04b97941e2562693f3f4c1757315d5c34c6d720dfadb",
+      "afterSha256": "e8ca3c1b084eed23a2ed445f68d2fb509c03a37388a57bf941ee548461d48cf5"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_tower.tscn",
+      "destination": "apps/godot/presentation/battle/terrain/wall/wall_tower.tscn",
+      "sha256": "ced606bc5ba1ec1ec7a52feade7b4472660639c88c671f35baccf8c0de095277",
+      "afterSha256": "d24603947a7908862f0bcb303fdecacf46a741616e142081e4259e1651a6e124"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_scene_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/wall_scene_view.gd",
+      "sha256": "a012a6f1ac705d0bdf02ec678286fe4f17764a8e1fe355d3d3986c0114a95128",
+      "afterSha256": "5f5f8b3210c8afe751cff8717d576a1764c2b856b942a82ce304462829f0d9db"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_scene_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/wall_scene_view.gd.uid",
+      "sha256": "3310b7f5e6495dad011f9466f5641b5695c495a029ebba757238a26565d985f0",
+      "afterSha256": "3310b7f5e6495dad011f9466f5641b5695c495a029ebba757238a26565d985f0"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_view.gd",
+      "destination": "apps/godot/presentation/battle/terrain/wall_view.gd",
+      "sha256": "fc58fb1def46b403d4217e47277bf8afed6e0eb8546f3ef3c3de3723974a2661",
+      "afterSha256": "fc58fb1def46b403d4217e47277bf8afed6e0eb8546f3ef3c3de3723974a2661"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/terrain/wall_view.gd.uid",
+      "sha256": "f334df1e79659d491498cb22d813ec937f7209c37f8b98871f2741c902ef5784",
+      "afterSha256": "f334df1e79659d491498cb22d813ec937f7209c37f8b98871f2741c902ef5784"
+    },
+    {
+      "source": "battle/presentation/unit_art.gd",
+      "destination": "apps/godot/presentation/battle/unit_art.gd",
+      "sha256": "f051803f01cadc2f1be25c42a21c2f2b5982d9f49f6ab9971e9b4667277617da",
+      "afterSha256": "f051803f01cadc2f1be25c42a21c2f2b5982d9f49f6ab9971e9b4667277617da"
+    },
+    {
+      "source": "battle/presentation/unit_art.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_art.gd.uid",
+      "sha256": "b5eaea2cc52bbc7de0b9b26cbe444bcebfc5e00bbc09223f83d5628135dcd7ae",
+      "afterSha256": "b5eaea2cc52bbc7de0b9b26cbe444bcebfc5e00bbc09223f83d5628135dcd7ae"
+    },
+    {
+      "source": "battle/presentation/unit_markers.gd",
+      "destination": "apps/godot/presentation/battle/unit_markers.gd",
+      "sha256": "4ff71aa89c6be387bb5c4639523c4b880dd68b2419558d034e1eee330e6765de",
+      "afterSha256": "135eff44c58d270470ced5cdf0bd639095f62f95afd9c628ebdd52dd66950d8b"
+    },
+    {
+      "source": "battle/presentation/unit_markers.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_markers.gd.uid",
+      "sha256": "b8addee624cbd6405e127f603ccb6e33c503e9273903e60388f8ddd69655f176",
+      "afterSha256": "b8addee624cbd6405e127f603ccb6e33c503e9273903e60388f8ddd69655f176"
+    },
+    {
+      "source": "battle/presentation/unit_view.gd",
+      "destination": "apps/godot/presentation/battle/unit_view.gd",
+      "sha256": "d10315c752182fe337a0a9f976e32d806472b919701d938f074bf770c5fa41b4",
+      "afterSha256": "76068365d4563c333cba758b9af16a642801a0b7285cba60ca7314462d985ea0"
+    },
+    {
+      "source": "battle/presentation/unit_view.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_view.gd.uid",
+      "sha256": "e77f18007ecf994a91ebc944b49591a4ca26b868369fd5bc9bae3698a57e9f5c",
+      "afterSha256": "e77f18007ecf994a91ebc944b49591a4ca26b868369fd5bc9bae3698a57e9f5c"
+    },
+    {
+      "source": "battle/presentation/view.gd",
+      "destination": "apps/godot/presentation/battle/view.gd",
+      "sha256": "60a9aa9d919c74964b325208c2fa23118d6c311b50f33d725d863f8bda720ea1",
+      "afterSha256": "a11ac346af765dbf0f835f58ee6f6b88967974e1034c8761c2924a7b9d13152b"
+    },
+    {
+      "source": "battle/presentation/view.gd.uid",
+      "destination": "apps/godot/presentation/battle/view.gd.uid",
+      "sha256": "e07217c809a674483f31914673f255b1014823ef223165d31c92fe181fefb0cb",
+      "afterSha256": "e07217c809a674483f31914673f255b1014823ef223165d31c92fe181fefb0cb"
+    },
+    {
+      "source": "campaign/presentation/companion_text.gd",
+      "destination": "apps/godot/presentation/campaign/companion_text.gd",
+      "sha256": "da8cd7756d8f954d9ce01f3547c20607922d859ca9d43dcec70f377ea0817fff",
+      "afterSha256": "da8cd7756d8f954d9ce01f3547c20607922d859ca9d43dcec70f377ea0817fff"
+    },
+    {
+      "source": "campaign/presentation/companion_text.gd.uid",
+      "destination": "apps/godot/presentation/campaign/companion_text.gd.uid",
+      "sha256": "10ad2016532cefcb8eef4d2e6c42403bed47907c6cc44053ace34db91e5b2d8a",
+      "afterSha256": "10ad2016532cefcb8eef4d2e6c42403bed47907c6cc44053ace34db91e5b2d8a"
+    },
+    {
+      "source": "campaign/presentation/emblem_art.gd",
+      "destination": "apps/godot/presentation/campaign/emblem_art.gd",
+      "sha256": "b40b3a06a6e23d7e2701dd926c3ac3ac9f047c39c632d449f67727da773a3f20",
+      "afterSha256": "7322c6a4761ba094a07be0b4c12f8bf1d8f2853989d68f8d17443cdbe873edb7"
+    },
+    {
+      "source": "campaign/presentation/emblem_art.gd.uid",
+      "destination": "apps/godot/presentation/campaign/emblem_art.gd.uid",
+      "sha256": "542b63d25d04fd5e8540513bcc2eefe4cd06899fc361334b9dd0011e12af519c",
+      "afterSha256": "542b63d25d04fd5e8540513bcc2eefe4cd06899fc361334b9dd0011e12af519c"
+    },
+    {
+      "source": "campaign/presentation/encounter_dialog.gd",
+      "destination": "apps/godot/presentation/campaign/encounter_dialog.gd",
+      "sha256": "bdda788fb5d435ecaa0ed917e47c98fddab224f8fdf209857b06b892bb705b99",
+      "afterSha256": "bdda788fb5d435ecaa0ed917e47c98fddab224f8fdf209857b06b892bb705b99"
+    },
+    {
+      "source": "campaign/presentation/encounter_dialog.gd.uid",
+      "destination": "apps/godot/presentation/campaign/encounter_dialog.gd.uid",
+      "sha256": "3d5765edf8e9ff1a5a592f638738ce066862571142074d84cc8de2dfd773788b",
+      "afterSha256": "3d5765edf8e9ff1a5a592f638738ce066862571142074d84cc8de2dfd773788b"
+    },
+    {
+      "source": "campaign/presentation/farm_layer.gd",
+      "destination": "apps/godot/presentation/campaign/farm_layer.gd",
+      "sha256": "007918883c4d499e9c6e0720e06cecf5d7ccc78bc33ddfe897a9764a892e92d6",
+      "afterSha256": "4158161d53010cfe6d42279a9036a4b89558e0724a5de20dc5b485715d6da672"
+    },
+    {
+      "source": "campaign/presentation/farm_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/farm_layer.gd.uid",
+      "sha256": "1f9c01570e4fff705fe4aa6ec0f9da29a93697311c048076444964c641959732",
+      "afterSha256": "1f9c01570e4fff705fe4aa6ec0f9da29a93697311c048076444964c641959732"
+    },
+    {
+      "source": "campaign/presentation/icon_sheet.gd",
+      "destination": "apps/godot/presentation/campaign/icon_sheet.gd",
+      "sha256": "44f5ec3ab889af994e9d5dca34d87065ddaf724596c1219aac28c11393f04d9e",
+      "afterSha256": "2ec779a6cf69c0c6e227f5f65a18b757bad03a9536d0c2f1355443514bc2f5cf"
+    },
+    {
+      "source": "campaign/presentation/icon_sheet.gd.uid",
+      "destination": "apps/godot/presentation/campaign/icon_sheet.gd.uid",
+      "sha256": "1278fdbf4e603babe2b470e68d5589a2826cb97229d14cdeadf1c94d386e8bd7",
+      "afterSha256": "1278fdbf4e603babe2b470e68d5589a2826cb97229d14cdeadf1c94d386e8bd7"
+    },
+    {
+      "source": "campaign/presentation/map_brush.gd",
+      "destination": "apps/godot/presentation/campaign/map_brush.gd",
+      "sha256": "a8a549cdd8fce7e75f9c219236eb979f252cde09d5b5d5b9e27710a800250425",
+      "afterSha256": "a8a549cdd8fce7e75f9c219236eb979f252cde09d5b5d5b9e27710a800250425"
+    },
+    {
+      "source": "campaign/presentation/map_brush.gd.uid",
+      "destination": "apps/godot/presentation/campaign/map_brush.gd.uid",
+      "sha256": "f11c5ffe4e585ea0b640d287fa0f5b87365a0785b147ac98de568b4688ffcdd7",
+      "afterSha256": "f11c5ffe4e585ea0b640d287fa0f5b87365a0785b147ac98de568b4688ffcdd7"
+    },
+    {
+      "source": "campaign/presentation/modal_window.gd",
+      "destination": "apps/godot/presentation/campaign/modal_window.gd",
+      "sha256": "d3514066d4c96c5de9e436a543cdcc31c800eeb7f9479b7de4966e19cc233aad",
+      "afterSha256": "d3514066d4c96c5de9e436a543cdcc31c800eeb7f9479b7de4966e19cc233aad"
+    },
+    {
+      "source": "campaign/presentation/modal_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/modal_window.gd.uid",
+      "sha256": "46b5bba14871a28f2746731141a87e6815fc57062015054c8f4dd667c04d3a67",
+      "afterSha256": "46b5bba14871a28f2746731141a87e6815fc57062015054c8f4dd667c04d3a67"
+    },
+    {
+      "source": "campaign/presentation/party_layer.gd",
+      "destination": "apps/godot/presentation/campaign/party_layer.gd",
+      "sha256": "1bdeb713024cc0e25eaeed440acfd8081817538de08f43ba9c5472e55c9789ab",
+      "afterSha256": "a35920473d723dacae8b451a9dc2754fbfee02a4e549eaf32536bae5fc29da97"
+    },
+    {
+      "source": "campaign/presentation/party_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/party_layer.gd.uid",
+      "sha256": "f0e859455d4bf4948612321e7ecf89ea62add5a9a10699eeafa525cf8f65e1cc",
+      "afterSha256": "f0e859455d4bf4948612321e7ecf89ea62add5a9a10699eeafa525cf8f65e1cc"
+    },
+    {
+      "source": "campaign/presentation/party_window.gd",
+      "destination": "apps/godot/presentation/campaign/party_window.gd",
+      "sha256": "8823fe49412ff4a652f04d86118a47a3e3556f5e7ce5a99b26391d9a3c725d1f",
+      "afterSha256": "6eee589b36c06a92acb6768b91e5bef9fddbde014c9856c46a58f012e2c1f3dc"
+    },
+    {
+      "source": "campaign/presentation/party_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/party_window.gd.uid",
+      "sha256": "cb7463c16b72945795f344de0a11986b57c176762fe6ee4d67495b560852ab27",
+      "afterSha256": "cb7463c16b72945795f344de0a11986b57c176762fe6ee4d67495b560852ab27"
+    },
+    {
+      "source": "campaign/presentation/relief_layer.gd",
+      "destination": "apps/godot/presentation/campaign/relief_layer.gd",
+      "sha256": "7743b0e76d2311a73eb87f561abe65de059a2471679c654337053fa336127013",
+      "afterSha256": "fa168cd319654cf826558b8ca828895203a6e56ffce4d59bd055d9e0ece6b3d2"
+    },
+    {
+      "source": "campaign/presentation/relief_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/relief_layer.gd.uid",
+      "sha256": "929e4377994d926444a52d1a635c58cc29a6183055c1ea9bcecafd25474e7cf2",
+      "afterSha256": "929e4377994d926444a52d1a635c58cc29a6183055c1ea9bcecafd25474e7cf2"
+    },
+    {
+      "source": "campaign/presentation/river_layer.gd",
+      "destination": "apps/godot/presentation/campaign/river_layer.gd",
+      "sha256": "f46682833152a980d3f0f8de0bc643ab7ccd793098dbf6d1a936a15ed3af2360",
+      "afterSha256": "a42ed182f3652c2a91af21e2089d14859256e612a50c4d75f8a0bfba6385bd39"
+    },
+    {
+      "source": "campaign/presentation/river_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/river_layer.gd.uid",
+      "sha256": "838b6ce79dfc14b6bb5afa17f79d97eae298143cf391ce7f66461f431794d460",
+      "afterSha256": "838b6ce79dfc14b6bb5afa17f79d97eae298143cf391ce7f66461f431794d460"
+    },
+    {
+      "source": "campaign/presentation/road_layer.gd",
+      "destination": "apps/godot/presentation/campaign/road_layer.gd",
+      "sha256": "317ed8cd8440d7754d6ccb43156d2b6e106f6a96af050ca9548d4160934fc7bd",
+      "afterSha256": "eaa116976656dd8b36675e1eaf15260417fd6d8d3925aed3c6c2c005bc23d814"
+    },
+    {
+      "source": "campaign/presentation/road_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/road_layer.gd.uid",
+      "sha256": "d17b79da06343c3e4334977612b2d983718c4ceb1f40350b369d34440fd04b03",
+      "afterSha256": "d17b79da06343c3e4334977612b2d983718c4ceb1f40350b369d34440fd04b03"
+    },
+    {
+      "source": "campaign/presentation/settlement_art.gd",
+      "destination": "apps/godot/presentation/campaign/settlement_art.gd",
+      "sha256": "6609363455ef7e8139e53a1f23bebb31475e9c148d96204063e73b1523c7a90b",
+      "afterSha256": "9f76ff715a5bc396293e50ffd310e4126c7f09e26793ddb43f4f2e94cd69ccfa"
+    },
+    {
+      "source": "campaign/presentation/settlement_art.gd.uid",
+      "destination": "apps/godot/presentation/campaign/settlement_art.gd.uid",
+      "sha256": "466df9ecefb4696a6c53d91c6e45a64e0e8e49fbc51598abe45fbe2b2ac243b7",
+      "afterSha256": "466df9ecefb4696a6c53d91c6e45a64e0e8e49fbc51598abe45fbe2b2ac243b7"
+    },
+    {
+      "source": "campaign/presentation/settlement_layer.gd",
+      "destination": "apps/godot/presentation/campaign/settlement_layer.gd",
+      "sha256": "c89a4d3f204f75aa50ad61a88ac46c4f26d5cc78c4b2f973b2fbcfb9a0dc1bdd",
+      "afterSha256": "eb17c190ee895c8a171ee97556b47e410ff3ae9a1db4b9d26aaffaf05772ef56"
+    },
+    {
+      "source": "campaign/presentation/settlement_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/settlement_layer.gd.uid",
+      "sha256": "3b979c7c2a4a2ea310fdb9559df1154cbbb968252705b9867f2fd618848b415d",
+      "afterSha256": "3b979c7c2a4a2ea310fdb9559df1154cbbb968252705b9867f2fd618848b415d"
+    },
+    {
+      "source": "campaign/presentation/siege_window.gd",
+      "destination": "apps/godot/presentation/campaign/siege_window.gd",
+      "sha256": "226cb56d2a9bcd49555120c6a970c36156a0736aea0b08c2a290746d51180ccc",
+      "afterSha256": "df325abbc82f5537f87c63c7ad49f00c6692db8624ae870be54ecce0b4c5b0c3"
+    },
+    {
+      "source": "campaign/presentation/siege_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/siege_window.gd.uid",
+      "sha256": "53761da558e34a399ddf9e900f64c62945baee255c5ace3d8ccd3715fb528aad",
+      "afterSha256": "53761da558e34a399ddf9e900f64c62945baee255c5ace3d8ccd3715fb528aad"
+    },
+    {
+      "source": "campaign/presentation/terrain_common.gdshaderinc",
+      "destination": "apps/godot/presentation/campaign/terrain_common.gdshaderinc",
+      "sha256": "0031e92372a2524af1232f3d2f0d1c2b94b8642fb1adfa261da7e947797d19cd",
+      "afterSha256": "0031e92372a2524af1232f3d2f0d1c2b94b8642fb1adfa261da7e947797d19cd"
+    },
+    {
+      "source": "campaign/presentation/terrain_common.gdshaderinc.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_common.gdshaderinc.uid",
+      "sha256": "68fee51251a2d65086bdecb6270b6ed85a19112d7d8cf7688bb2b375a983706c",
+      "afterSha256": "68fee51251a2d65086bdecb6270b6ed85a19112d7d8cf7688bb2b375a983706c"
+    },
+    {
+      "source": "campaign/presentation/terrain_layer.gd",
+      "destination": "apps/godot/presentation/campaign/terrain_layer.gd",
+      "sha256": "468ccad078e9b6d71defb976361d114ac2b96e57c20ba79133551bb542bc351e",
+      "afterSha256": "5243f8d090b2806c11336552b96f413a7c3dd4f5ab5654aa3af12e45f80a9f76"
+    },
+    {
+      "source": "campaign/presentation/terrain_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_layer.gd.uid",
+      "sha256": "70728fd2946c2df76ee5c217bb3e02924a48c29c2e1b75f6d29af8e2a792fcc1",
+      "afterSha256": "70728fd2946c2df76ee5c217bb3e02924a48c29c2e1b75f6d29af8e2a792fcc1"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass1.gdshader",
+      "destination": "apps/godot/presentation/campaign/terrain_pass1.gdshader",
+      "sha256": "72d74fd4b1080618a76235d227b5a654408195e45ed77ae024ff1ae0f5d1a308",
+      "afterSha256": "ecc906eec3717eb3dc19d28d6411106d8ae2c2243a9b7b4cd064267612a91074"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass1.gdshader.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_pass1.gdshader.uid",
+      "sha256": "a335e70e25626c0a8a75017fdde0840482e89218f64e3764930808e2fa6b286f",
+      "afterSha256": "a335e70e25626c0a8a75017fdde0840482e89218f64e3764930808e2fa6b286f"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass2.gdshader",
+      "destination": "apps/godot/presentation/campaign/terrain_pass2.gdshader",
+      "sha256": "9082e91a30ff564783cd6e93fb40e4d85db68a7cd8fbcf0942fc4bf8019edfed",
+      "afterSha256": "11cf55743f5c76dcda5ad223d00ff3d42df8fbb5847677349ffb7e72af6b0db6"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass2.gdshader.uid",
+      "destination": "apps/godot/presentation/campaign/terrain_pass2.gdshader.uid",
+      "sha256": "e131922bb231679ef9fe3b96fd275438d357d752ae99cad89fa453ef8f329ba4",
+      "afterSha256": "e131922bb231679ef9fe3b96fd275438d357d752ae99cad89fa453ef8f329ba4"
+    },
+    {
+      "source": "campaign/presentation/town_window.gd",
+      "destination": "apps/godot/presentation/campaign/town_window.gd",
+      "sha256": "76d3e1cab425d886def637d168eb4014f168ed05a914c330c03a3799098545ac",
+      "afterSha256": "4d07f2d9e1ea435f37efb8c61cebd2b8b0a8a4993b0cab7a9ca293b5cd84fdf8"
+    },
+    {
+      "source": "campaign/presentation/town_window.gd.uid",
+      "destination": "apps/godot/presentation/campaign/town_window.gd.uid",
+      "sha256": "05ba2f172e6601a101f1d635a349741481a5b1149d4b3eeca812122f1274c89c",
+      "afterSha256": "05ba2f172e6601a101f1d635a349741481a5b1149d4b3eeca812122f1274c89c"
+    },
+    {
+      "source": "campaign/presentation/vignette.gdshader",
+      "destination": "apps/godot/presentation/campaign/vignette.gdshader",
+      "sha256": "972deeef318a05d3db161fc25ddbe31c609658378a3ffce740c1de10f47fc194",
+      "afterSha256": "972deeef318a05d3db161fc25ddbe31c609658378a3ffce740c1de10f47fc194"
+    },
+    {
+      "source": "campaign/presentation/vignette.gdshader.uid",
+      "destination": "apps/godot/presentation/campaign/vignette.gdshader.uid",
+      "sha256": "58787c11da28621c3aa6ec5efc25280f15dbcb05def78a5d106841af43e9c722",
+      "afterSha256": "58787c11da28621c3aa6ec5efc25280f15dbcb05def78a5d106841af43e9c722"
+    },
+    {
+      "source": "campaign/presentation/world_camera.gd",
+      "destination": "apps/godot/presentation/campaign/world_camera.gd",
+      "sha256": "f698e5b9d65d779aa2eab94fb53cee2df33cbfcc1e7f2c73a2fd1c934cd2c270",
+      "afterSha256": "f698e5b9d65d779aa2eab94fb53cee2df33cbfcc1e7f2c73a2fd1c934cd2c270"
+    },
+    {
+      "source": "campaign/presentation/world_camera.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_camera.gd.uid",
+      "sha256": "f7fb4350f6e081c198b3341816b42e5189336427f520fc16e233d519c26daa10",
+      "afterSha256": "f7fb4350f6e081c198b3341816b42e5189336427f520fc16e233d519c26daa10"
+    },
+    {
+      "source": "campaign/presentation/world_hud.gd",
+      "destination": "apps/godot/presentation/campaign/world_hud.gd",
+      "sha256": "a198d1ed52546c261fadb5ae7bac1ad86215e5233f6d06279a9c2b061aff8073",
+      "afterSha256": "a56727ced099a86f5616c542aab87012b54c26b4ca4307e1a83f5b27531e3058"
+    },
+    {
+      "source": "campaign/presentation/world_hud.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_hud.gd.uid",
+      "sha256": "0f3e033802a5019a545ac37ea1d8646b8f5c4c72dd9e7ec67ad3d08cb506eb57",
+      "afterSha256": "0f3e033802a5019a545ac37ea1d8646b8f5c4c72dd9e7ec67ad3d08cb506eb57"
+    },
+    {
+      "source": "campaign/presentation/world_map_view.gd",
+      "destination": "apps/godot/presentation/campaign/world_map_view.gd",
+      "sha256": "ac95996f36bf40300334c8b7c2f665058bd061fdfce6533678730e433a542747",
+      "afterSha256": "f04cd68fec0386abdb9034520af8275b442a9400b64cc75c5ea2c86d4985cad8"
+    },
+    {
+      "source": "campaign/presentation/world_map_view.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_map_view.gd.uid",
+      "sha256": "ddb10d7568aaa4fdb8f68dc75ddc5073b9b1623d2071d9a132d9428243e7d833",
+      "afterSha256": "ddb10d7568aaa4fdb8f68dc75ddc5073b9b1623d2071d9a132d9428243e7d833"
+    },
+    {
+      "source": "campaign/presentation/world_marks_layer.gd",
+      "destination": "apps/godot/presentation/campaign/world_marks_layer.gd",
+      "sha256": "977c2834b4d970f2577c65711008822e0829bf7ef04c6c5a0634938f36adf1f7",
+      "afterSha256": "0911722e4d005afb44b529e9be87cc70ffcdc61ee6558341191c565304c9074d"
+    },
+    {
+      "source": "campaign/presentation/world_marks_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_marks_layer.gd.uid",
+      "sha256": "d88e3a89ee1e96953030892f526fe18d584136af6123e6d3d200e6dcacd849a9",
+      "afterSha256": "d88e3a89ee1e96953030892f526fe18d584136af6123e6d3d200e6dcacd849a9"
+    },
+    {
+      "source": "campaign/presentation/world_parties_layer.gd",
+      "destination": "apps/godot/presentation/campaign/world_parties_layer.gd",
+      "sha256": "b803bd495396f328abaee1b8638804a7a97bacfa4b0501d5bb6d5576eb6eede2",
+      "afterSha256": "5ebd501e1bfafb0ed2974b0693229c66406e4af8f9c28f2f565e869bd968136e"
+    },
+    {
+      "source": "campaign/presentation/world_parties_layer.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_parties_layer.gd.uid",
+      "sha256": "b26e80974c3bb0016ada0e80286b612f493432b8b2d078ce1bdc465bfb146a96",
+      "afterSha256": "b26e80974c3bb0016ada0e80286b612f493432b8b2d078ce1bdc465bfb146a96"
+    },
+    {
+      "source": "campaign/presentation/world_tips.gd",
+      "destination": "apps/godot/presentation/campaign/world_tips.gd",
+      "sha256": "53f7fe43a1ae13cbfe3cc3f04b510bd13b062cf30363083a3953f7203b81917f",
+      "afterSha256": "d0d35b9dd078ab0d8186feab34e302482fe884fe064d4e921f00764d81741497"
+    },
+    {
+      "source": "campaign/presentation/world_tips.gd.uid",
+      "destination": "apps/godot/presentation/campaign/world_tips.gd.uid",
+      "sha256": "0ce8c74de4f908b79eac950117fff38375becba514692c56cfc87250124e845b",
+      "afterSha256": "0ce8c74de4f908b79eac950117fff38375becba514692c56cfc87250124e845b"
+    }
+  ]
+}

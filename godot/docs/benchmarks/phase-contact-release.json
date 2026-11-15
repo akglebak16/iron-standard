@@ -1,0 +1,111 @@
+{
+  "revision": "feff60dc770f9e99d54f50f800f933eceb9be51b",
+  "dirty": true,
+  "measuredAt": "2026-11-15T16:03:27.299Z",
+  "reports": [
+    {
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "debug": false,
+      "engine": "4.7.2-stable (official)",
+      "events": {
+        "0": 523,
+        "1": 133,
+        "3": 26,
+        "7": 1,
+        "8": 1
+      },
+      "gpu_time": null,
+      "live_max": 2001,
+      "live_min": 1975,
+      "logical_processors": 16,
+      "measured_ticks": 180,
+      "memory_end_bytes": null,
+      "memory_start_bytes": null,
+      "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample.",
+      "ordinary_initial": [
+        1000,
+        1000
+      ],
+      "phase_profile": {
+        "ai_movement_combat": {
+          "count": 180,
+          "mean_ms": 14.2099777777778,
+          "p50_ms": 13.917,
+          "p95_ms": 17.046,
+          "p99_ms": 17.831
+        },
+        "commands_interpolation": {
+          "count": 180,
+          "mean_ms": 0.263727777777778,
+          "p50_ms": 0.24,
+          "p95_ms": 0.401,
+          "p99_ms": 0.475
+        },
+        "contacts": {
+          "count": 180,
+          "mean_ms": 13.8616111111111,
+          "p50_ms": 13.798,
+          "p95_ms": 15.908,
+          "p99_ms": 16.423
+        },
+        "hero": {
+          "count": 180,
+          "mean_ms": 0.0124277777777778,
+          "p50_ms": 0.012,
+          "p95_ms": 0.016,
+          "p99_ms": 0.021
+        },
+        "morale_result_events": {
+          "count": 180,
+          "mean_ms": 0.0449611111111111,
+          "p50_ms": 0.006,
+          "p95_ms": 0.008,
+          "p99_ms": 2.052
+        },
+        "movement_index": {
+          "count": 180,
+          "mean_ms": 0.537577777777778,
+          "p50_ms": 0.527,
+          "p95_ms": 0.655,
+          "p99_ms": 0.929
+        },
+        "projectiles": {
+          "count": 180,
+          "mean_ms": 0.0105333333333333,
+          "p50_ms": 0.01,
+          "p95_ms": 0.013,
+          "p99_ms": 0.014
+        },
+        "tactics_siege": {
+          "count": 180,
+          "mean_ms": 1.13184444444444,
+          "p50_ms": 1.108,
+          "p95_ms": 1.376,
+          "p99_ms": 1.825
+        }
+      },
+      "requested_per_side": 1000,
+      "requested_ticks": 180,
+      "scenario": "contact",
+      "seed": 4242,
+      "simulation": {
+        "count": 180,
+        "mean_ms": 30.0797222222222,
+        "p50_ms": 29.86,
+        "p95_ms": 32.898,
+        "p99_ms": 34.993
+      },
+      "snapshot": {
+        "count": 180,
+        "mean_ms": 4.2541,
+        "p50_ms": 4.123,
+        "p95_ms": 4.994,
+        "p99_ms": 5.54
+      },
+      "snapshot_format": "compact-columns",
+      "special_initial": 1,
+      "warmup_ticks": 60,
+      "weight": 1
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[configuration]
+entry_symbol = "iron_contacts_init"
+compatibility_minimum = "4.7"
+reloadable = false
+
+[libraries]
+windows.debug.x86_64 = "res://adapters/godot/native/bin/iron_contacts.windows.x86_64.dll"
+windows.release.x86_64 = "res://adapters/godot/native/bin/iron_contacts.windows.x86_64.dll"

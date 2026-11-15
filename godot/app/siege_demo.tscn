@@ -1,8 +1,0 @@
-[gd_scene load_steps=3 format=3]
-
-[ext_resource type="Script" path="res://app/main.gd" id="1"]
-[ext_resource type="Resource" path="res://battle/data/demo_siege.tres" id="2"]
-
-[node name="SiegeDemo" type="Node2D"]
-script = ExtResource("1")
-battle_setup = ExtResource("2")

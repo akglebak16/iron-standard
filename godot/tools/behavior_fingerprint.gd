@@ -1,23 +1,30 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## Behaviour fingerprint: runs the demo battles on a fixed seed and prints hashes of the whole snapshot and result.
 ## Run it before and after a refactoring that must not change behaviour; the printed lines must be identical:
 ##   godot --headless --path godot --script res://tools/behavior_fingerprint.gd
-const Factory = preload("res://battle/application/factory.gd")
-const Catalog = preload("res://troops/data/catalog.gd")
-const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
-const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
-const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
-const Config = preload("res://battle/config.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const Catalog = preload("res://core/troops/data/catalog.gd")
+const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
+const PerkCatalog = preload("res://core/characters/data/perk_catalog.gd")
+const CompanionCatalog = preload("res://core/characters/data/companion_catalog.gd")
+const Config = preload("res://core/battle/config.gd")
 const SNAPSHOT_TICKS := 1200
 const SAMPLE_EVERY := 120
 const TICK_SECONDS := 1.0 / 60.0
 func _initialize() -> void:
-	var c := Catalog.new(); c.load_data()
-	var g := GearCatalog.new(); g.load_data()
-	var p := PerkCatalog.new(); p.load_data()
-	var k := CompanionCatalog.new(); k.load_data()
-	for path in ["res://battle/data/demo_battle.tres", "res://battle/data/demo_siege.tres"]:
-		var s = Factory.create(load(path), c, g, p, k)
+	var c := Catalog.new(); ContentLoader.populate(c)
+	var g := GearCatalog.new(); ContentLoader.populate(g)
+	var p := PerkCatalog.new(); ContentLoader.populate(p)
+	var k := CompanionCatalog.new(); ContentLoader.populate(k)
+	for path in ["res://content/scenarios/demo_battle.tres", "res://content/scenarios/demo_siege.tres"]:
+		var solver := Contacts.create() if "--native" in OS.get_cmdline_user_args() else Callable()
+		if "--native" in OS.get_cmdline_user_args() and not solver.is_valid():
+			push_error("Native backend unavailable")
+			quit(1)
+			return
+		var s = Factory.create(load(path).to_setup(), c, g, p, k, solver)
 		s.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 		var trace := 0
 		for i in SNAPSHOT_TICKS:

@@ -6,7 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { createCanvas } = require('@napi-rs/canvas');
 const root = path.resolve(__dirname, '../..');
-const out = path.join(root, 'godot/ui/assets');
+const out = path.join(root, 'godot/apps/godot/visuals/assets');
 fs.mkdirSync(out, { recursive: true });
 const context = vm.createContext({ document: { createElement: () => createCanvas(1, 1), addEventListener() {} }, console });
 const source = ['01_core.js', '01b_gear.js', '01c_perks.js', '02_art.js', '05b_worldart.js', '06_ui.js', '06b_inventory.js'].map(n => fs.readFileSync(path.join(root, 'src', n), 'utf8')).join('\n');
@@ -135,7 +135,7 @@ for (const biome of ['grass', 'snow', 'steppe', 'arid']) for (let variant = 0; v
   fs.writeFileSync(path.join(out, `tree_${biome}_${variant}.png`), a.treeSprite(biome, 4018 + variant).toBuffer('image/png'));
   if (variant < 2) fs.writeFileSync(path.join(out, `bush_${biome}_${variant}.png`), a.bushSprite(biome, 4021 + variant).toBuffer('image/png'));
 }
-const groundOut = path.join(root, 'godot/battle/presentation/terrain/assets');
+const groundOut = path.join(root, 'godot/apps/godot/presentation/battle/terrain/assets');
 fs.mkdirSync(groundOut, { recursive: true });
 for (const biome of process.argv.includes('--skip-ground') ? [] : ['grass', 'snow', 'steppe', 'arid']) {
   fs.writeFileSync(path.join(groundOut, `ground_${biome}.png`), paintGround(2600, 1700, biome, 4017).toBuffer('image/png'));
@@ -159,3 +159,5 @@ for (const [name, colors, inner, border] of [
   fs.writeFileSync(path.join(out, name + '.png'), cv.toBuffer('image/png'));
 }
 console.log(`Exported ${entries.length * 4} original troop variants, ${Object.keys(a.FACTIONS).length} crests, ${Object.keys(a.ICONS).length} icons in three palettes`);
+
+require("./export_asset_paths.cjs");

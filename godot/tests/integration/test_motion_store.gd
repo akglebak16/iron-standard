@@ -1,0 +1,42 @@
+extends SceneTree
+const State = preload("res://core/battle/model/state.gd")
+const Unit = preload("res://core/battle/model/unit.gd")
+const Index = preload("res://core/battle/rules/spatial_index.gd")
+
+func _initialize() -> void:
+	var state := State.new()
+	var a := Unit.new(0,0,Vector2(10,20),100,0,1)
+	var b := Unit.new(1,1,Vector2(30,40),100,0,1)
+	a.velocity = Vector2(1,2)
+	state.add_unit(a)
+	state.add_unit(b)
+	assert(state.motion.positions == PackedVector2Array([Vector2(10,20),Vector2(30,40)]))
+	assert(state.motion.velocities[0] == Vector2(1,2))
+	state.motion.positions[1] = Vector2(50,60)
+	state.motion.velocities[1] = Vector2(3,4)
+	assert(b.position == Vector2(50,60) and b.velocity == Vector2(3,4), "columns own active motion")
+	b.position += Vector2.ONE
+	assert(state.motion.positions[1] == Vector2(51,61))
+	state.kill(a)
+	assert(state.compact_inactive(1) == 1)
+	assert(b.battle_index == 0 and state.motion.positions == PackedVector2Array([Vector2(51,61)]))
+	assert(b.velocity == Vector2(3,4) and a.position == Vector2(10,20))
+	b.position = Vector2(70,80)
+	assert(a.position == Vector2(10,20), "archived motion cannot alias reused rows")
+	var c := Unit.new(2,0,Vector2(90,100),100,0,1)
+	state.add_unit(c)
+	assert(c.battle_index == 1 and c.position == Vector2(90,100) and b.position == Vector2(70,80))
+	var other := State.new()
+	other.add_unit(Unit.new(0,0,Vector2.ZERO,100,0,1))
+	other.motion.positions[0] = Vector2.INF
+	assert(b.position.is_finite())
+	var index := Index.new(state.active_units,Vector2(2600,1800),state.motion)
+	# Batch adapters may replace the entire packed buffer. A synchronized query must
+	# use the replacement, not the previous borrowed array with the same row count.
+	state.motion.positions = PackedVector2Array([Vector2(2500,1700),Vector2(1200,800)])
+	index.synchronize()
+	assert(index.nearby(Vector2(1200,800),1,0) == [1])
+	assert(index.nearby(Vector2(70,80),1,0).is_empty())
+	assert(state.centroid(1) == b.position and state.centroid(0) == c.position)
+	print("Motion store tests passed")
+	quit(0)

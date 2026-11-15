@@ -1,0 +1,26 @@
+[
+  {
+    "archive": "llvm-mingw.zip",
+    "url": "https://github.com/mstorsjo/llvm-mingw/releases/download/20260908/llvm-mingw-20260908-ucrt-x86_64.zip",
+    "sha256": "1bcf74d06b724aeecaa6412ca85f5b26fb1da770e7cdcefa9263c9c5c3ad34b6",
+    "directory": "llvm-mingw-20260908-ucrt-x86_64",
+    "probe": "bin/clang++.exe",
+    "flat": false
+  },
+  {
+    "archive": "godot-cpp.zip",
+    "url": "https://github.com/godotengine/godot-cpp/archive/refs/tags/10.0.0-stable.zip",
+    "sha256": "c763a08b8ec18dae300cd54bb8848faf1a5fd11da629449d16649a72a1884727",
+    "directory": "godot-cpp-10.0.0-stable",
+    "probe": "gdextension/extension_api-4-7.json",
+    "flat": false
+  },
+  {
+    "archive": "python.zip",
+    "url": "https://www.python.org/ftp/python/3.13.17/python-3.13.17-embed-amd64.zip",
+    "sha256": "9e35319bffedab8b36ad44d8f377cb4f1733bcec257a0b6d04d94f01486ddb38",
+    "directory": "python-3.13.17",
+    "probe": "python.exe",
+    "flat": true
+  }
+]

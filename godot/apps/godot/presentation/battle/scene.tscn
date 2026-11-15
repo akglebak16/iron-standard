@@ -1,0 +1,47 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://apps/godot/presentation/battle/view.gd" id="1_view"]
+[ext_resource type="Script" path="res://apps/godot/presentation/battle/hud/navigation_hud.gd" id="2_navigation"]
+[ext_resource type="Script" path="res://apps/godot/presentation/battle/battle_camera.gd" id="3_camera"]
+[ext_resource type="Script" path="res://apps/godot/presentation/battle/hud/battle_controls.gd" id="4_controls"]
+
+[node name="Battle" type="Node2D"]
+script = ExtResource("1_view")
+
+[node name="Camera" type="Camera2D" parent="."]
+enabled = true
+script = ExtResource("3_camera")
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="Navigation" type="Control" parent="Hud"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_navigation")
+
+[node name="MapGround" type="ColorRect" parent="Hud/Navigation"]
+show_behind_parent = true
+mouse_filter = 2
+
+[node name="Status" type="Label" parent="Hud"]
+mouse_filter = 2
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 980.0
+offset_bottom = 86.0
+theme_override_font_sizes/font_size = 18
+
+[node name="Controls" type="PanelContainer" parent="Hud"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -12.0
+offset_right = 12.0
+offset_bottom = -12.0
+grow_vertical = 0
+script = ExtResource("4_controls")

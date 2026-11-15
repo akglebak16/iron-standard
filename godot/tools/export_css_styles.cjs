@@ -14,14 +14,14 @@ const root = path.resolve(__dirname, '../..');
     ['square', 'sq plank thin', 52, 52], ['group', 'grp', 84, 72], ['group_on', 'grp on', 84, 72]
   ]) {
     await page.setContent(`<style>${css}\nhtml,body{background:transparent!important}#asset{position:absolute;inset:0 auto auto 0;width:${width}px;height:${height}px;padding:0;margin:0;min-width:0;box-sizing:border-box}</style><div id="asset" class="${cls}"></div>`);
-    await page.locator('#asset').screenshot({ path: path.join(root, 'godot/ui/assets', name + '.png'), omitBackground: true });
+    await page.locator('#asset').screenshot({ path: path.join(root, 'godot/apps/godot/visuals/assets', name + '.png'), omitBackground: true });
   }
   for (const [name, html, selector] of [
     ['timer', '<div id="btimer"></div>', '#btimer'],
     ...['st', 'mo', 'ar', 'hp'].map(kind => ['bar_' + kind, `<div class="bar ${kind}" style="width:124px;--p:100%"><i></i></div>`, '.bar i'])
   ]) {
     await page.setContent(`<style>${css}\nhtml,body{background:transparent!important}#btimer{margin:0}</style>${html}`);
-    await page.locator(selector).screenshot({path:path.join(root, 'godot/ui/assets', name + '.png'),omitBackground:true});
+    await page.locator(selector).screenshot({path:path.join(root, 'godot/apps/godot/visuals/assets', name + '.png'),omitBackground:true});
   }
   await browser.close();
   console.log('Exported final CSS planks, beveled buttons, order buttons and tiles');

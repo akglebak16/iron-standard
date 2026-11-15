@@ -1,0 +1,84 @@
+{
+  "source": {
+    "revision": "ffc9ea7b3a9f4371b2f69bbb24fb983b984ab64a",
+    "source_sha256": "cc0a0259a1c1d47ee85bdba9401ad1ddde9f7acbafe2aff023e0139e38ec85ea",
+    "dirty": true
+  },
+  "build": {
+    "source": {
+      "revision": "ffc9ea7b3a9f4371b2f69bbb24fb983b984ab64a",
+      "source_sha256": "cc0a0259a1c1d47ee85bdba9401ad1ddde9f7acbafe2aff023e0139e38ec85ea",
+      "dirty": true
+    },
+    "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "40bac2c7e063205ba1cdc1ea56f61ae6b06d14b2e69ed6a362c6eb4ed1861f5b"
+    },
+    "executable_sha256": "9db2e8bb3f6889fae917256155c15922c7440cfb1077b4457a029701c3064510",
+    "built_at": "2026-11-15T19:50:39.419Z",
+    "smoke_passed": true,
+    "stale_source": false
+  },
+  "options": {
+    "n": 300,
+    "frames": 180,
+    "repeat": 1,
+    "audio": "on",
+    "mode": "campaign"
+  },
+  "results": [
+    {
+      "backend": "toolchain",
+      "iteration": 1,
+      "report": {
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": true,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 120,
+          "mean_ms": 85.8200583333333,
+          "p50_ms": 86.035,
+          "p95_ms": 97.805,
+          "p99_ms": 110.908
+        },
+        "max_fps": 0,
+        "mode": "campaign",
+        "parties": 103,
+        "seed": 4242,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60,
+        "world_clock_paused": false,
+        "world_clock_speed": 1
+      }
+    },
+    {
+      "backend": "release",
+      "iteration": 1,
+      "report": {
+        "cpu": "Intel(R) Core(TM) i5-14400F",
+        "debug": false,
+        "diagnostics_only": true,
+        "display": "Windows",
+        "engine": "4.7.2-stable (official)",
+        "frame": {
+          "count": 120,
+          "mean_ms": 82.7920166666667,
+          "p50_ms": 82.205,
+          "p95_ms": 92.632,
+          "p99_ms": 94.648
+        },
+        "max_fps": 0,
+        "mode": "campaign",
+        "parties": 103,
+        "seed": 4242,
+        "viewport": "(1920.0, 1080.0)",
+        "vsync": 0,
+        "warmup_frames": 60,
+        "world_clock_paused": false,
+        "world_clock_speed": 1
+      }
+    }
+  ]
+}
