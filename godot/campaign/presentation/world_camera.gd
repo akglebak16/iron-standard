@@ -5,7 +5,13 @@ const MAX_ZOOM := 2.5
 const PAN_SPEED := 900.0
 
 var bounds := Rect2(0, 0, 5200, 3400)
+var detached := false              ## true once the player moved the view; C returns to the party
 var _dragging := false
+var _press_pos := Vector2.ZERO
+var _moved := false
+
+signal map_clicked(world_pos: Vector2)
+signal map_hovered(world_pos: Vector2, screen_pos: Vector2)
 
 func _ready() -> void:
 	position_smoothing_enabled = false
@@ -18,13 +24,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
 			_zoom_at(1.0 / 1.15, button.position)
 		elif button.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_LEFT]:
+			if button.pressed:
+				_press_pos = button.position
+				_moved = false
+			elif button.button_index == MOUSE_BUTTON_LEFT and not _moved:
+				map_clicked.emit(_screen_to_world(button.position))
 			_dragging = button.pressed
-	elif event is InputEventMouseMotion and _dragging:
-		position -= (event as InputEventMouseMotion).relative / zoom.x
-		_clamp()
+	elif event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if _dragging:
+			if not _moved and motion.position.distance_to(_press_pos) > 6.0:
+				_moved = true
+			if _moved:
+				detached = true
+				position -= motion.relative / zoom.x
+				_clamp()
+		map_hovered.emit(_screen_to_world(motion.position), motion.position)
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var key := (event as InputEventKey).keycode
-		if key == KEY_EQUAL or key == KEY_KP_ADD:
+		if key == KEY_C:
+			detached = false
+		elif key == KEY_EQUAL or key == KEY_KP_ADD:
 			_zoom_at(1.25, get_viewport().get_visible_rect().size / 2.0)
 		elif key == KEY_MINUS or key == KEY_KP_SUBTRACT:
 			_zoom_at(0.8, get_viewport().get_visible_rect().size / 2.0)
@@ -35,6 +55,7 @@ func _process(delta: float) -> void:
 		if Input.is_key_pressed(pair[0]):
 			move += pair[1]
 	if move != Vector2.ZERO:
+		detached = true
 		position += move.normalized() * PAN_SPEED * delta / zoom.x
 		_clamp()
 
