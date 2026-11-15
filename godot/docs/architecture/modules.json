@@ -9,7 +9,7 @@
     {"name":"battle-api","prefix":"core/battle/","allowed":["battle"],"public":["core/battle/api/"]},
     {"name":"runtime","prefix":"runtime/","allowed":[],"public":["runtime/"]},
     {"name":"app","prefix":"apps/godot/","allowed":["battle","campaign","troops","equipment","characters","battle-api","runtime"],"public":["apps/godot/composition/","apps/godot/presentation/battle/scene.tscn"]},
-    {"name":"battle","prefix":"battle/","allowed":["troops","equipment","characters"],"public":["battle/application/","battle/data/","battle/config.gd","battle/combat_event.gd"]},
+    {"name":"battle","prefix":"battle/","allowed":["troops","equipment","characters","runtime"],"public":["battle/application/","battle/data/","battle/config.gd","battle/combat_event.gd"]},
     {"name":"campaign","prefix":"campaign/","allowed":["troops","equipment","characters"],"public":["campaign/"]},
     {"name":"troops","prefix":"troops/","allowed":[],"public":["troops/config.gd","troops/data/","troops/rules/"]},
     {"name":"equipment","prefix":"equipment/","allowed":[],"public":["equipment/config.gd","equipment/data/","equipment/rules/"]},

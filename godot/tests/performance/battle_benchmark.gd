@@ -10,6 +10,7 @@ var scenario := "contact"
 var seed_value := 4242
 var output := ""
 var legacy_snapshot := false
+var profile_phases := false
 var _tree: SceneTree
 
 func run(tree: SceneTree) -> void:
@@ -22,6 +23,7 @@ func run(tree: SceneTree) -> void:
 		elif arg.begins_with("--seed="): seed_value = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--out="): output = arg.trim_prefix("--out=")
 		elif arg == "--legacy-snapshot": legacy_snapshot = true
+		elif arg == "--profile-phases": profile_phases = true
 	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege"]:
 		fail("Invalid benchmark parameters")
 		return
@@ -45,6 +47,7 @@ func run(tree: SceneTree) -> void:
 	if session == null:
 		fail("Cannot create benchmark battle")
 		return
+	if profile_phases: session._state.profiler.clock = Time.get_ticks_usec
 	var initial := [0, 0]
 	for unit in session._state.units:
 		if unit.hero or unit.companion: continue
@@ -65,6 +68,7 @@ func run(tree: SceneTree) -> void:
 	for i in warmup: session.advance(1.0 / 60.0)
 	var simulation: Array[int] = []
 	var snapshots: Array[int] = []
+	var phases := {}
 	var live_min := size * 2 + 1
 	var live_max := 0
 	var events := {}
@@ -73,6 +77,10 @@ func run(tree: SceneTree) -> void:
 		var start := Time.get_ticks_usec()
 		session.advance(1.0 / 60.0)
 		simulation.append(Time.get_ticks_usec() - start)
+		if profile_phases:
+			for phase in session._state.profiler.samples:
+				if not phases.has(phase): phases[phase] = [] as Array[int]
+				phases[phase].append(session._state.profiler.samples[phase])
 		start = Time.get_ticks_usec()
 		var frame: Dictionary = session.snapshot(not legacy_snapshot)
 		snapshots.append(Time.get_ticks_usec() - start)
@@ -83,6 +91,8 @@ func run(tree: SceneTree) -> void:
 			var key := str(event.kind)
 			events[key] = int(events.get(key, 0)) + 1
 		if frame.outcome in [session.Outcome.VICTORY, session.Outcome.DEFEAT]: break
+	var phase_stats := {}
+	for phase in phases: phase_stats[phase] = stats(phases[phase])
 	var report := {"engine": Engine.get_version_info().string, "debug": OS.is_debug_build(),
 		"cpu": OS.get_processor_name(), "logical_processors": OS.get_processor_count(),
 		"scenario": scenario, "seed": seed_value, "requested_per_side": size, "ordinary_initial": initial,
@@ -90,6 +100,7 @@ func run(tree: SceneTree) -> void:
 		"measured_ticks": simulation.size(), "live_min": live_min, "live_max": live_max,
 		"simulation": stats(simulation), "snapshot": stats(snapshots), "events": events,
 		"snapshot_format": "legacy-dictionaries" if legacy_snapshot else "compact-columns",
+		"phase_profile": phase_stats,
 		"memory_start_bytes": memory_start if memory_start > 0 else null,
 		"memory_end_bytes": OS.get_static_memory_usage() if OS.get_static_memory_usage() > 0 else null,
 		"gpu_time": null, "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample."}

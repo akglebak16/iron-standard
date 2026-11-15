@@ -30,6 +30,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		else:
 			battle.movement_index.synchronize()
 		index = battle.movement_index
+	battle.profiler.mark("movement_index")
 	for unit_index in battle.units.size():
 		var unit: Unit = battle.units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
@@ -77,7 +78,9 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		unit.position += unit.velocity * dt
 		if index != null:
 			index.update(unit_index)
+	battle.profiler.mark("ai_movement_combat")
 	_resolve_unit_collisions(battle, index, keep_index)
+	battle.profiler.mark("contacts")
 	return index
 
 static func _steer(unit: Unit, destination: Vector2, speed: float, dt: float) -> void:

@@ -84,6 +84,7 @@ func issue_order(order: String, point: Vector2, selection: int) -> bool:
 func advance(dt: float) -> void:
 	if _outcome in [Outcome.VICTORY, Outcome.DEFEAT] or not is_finite(dt) or dt <= 0.0:
 		return
+	_state.profiler.begin()
 	_previous_positions.resize(_state.units.size())
 	for i in _state.units.size(): _previous_positions[i] = _state.units[i].position
 	for command in _orders:
@@ -96,6 +97,7 @@ func advance(dt: float) -> void:
 		_battle_won = false
 		_state.record_notice(Event.Kind.BATTLE_RETREATED)
 	_elapsed_seconds += dt
+	_state.profiler.mark("commands_interpolation")
 	if _state.wall == null:
 		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
 	else:
@@ -103,10 +105,13 @@ func advance(dt: float) -> void:
 		SiegeDefense.step(_state, dt, _rng)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
+	_state.profiler.mark("tactics_siege")
 	_handle_swap()
 	HeroControl.step(_state, _hero, _input, dt, _rng)
+	_state.profiler.mark("hero")
 	Movement.step(_state, dt, _rng)
 	CombatStep.resolve_projectiles(_state, dt, _rng)
+	_state.profiler.mark("projectiles")
 	var morale_checked: bool = Morale.advance(_state, dt)
 	if morale_checked:
 		Reinforcements.release(_state, _state.active_counts, _rng, _state.side_factions)
@@ -121,6 +126,7 @@ func advance(dt: float) -> void:
 		_outcome = Outcome.VICTORY if _battle_won else Outcome.DEFEAT
 		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won, _companion_survival)
 	_events.append_array(_state.take_events())
+	_state.profiler.mark("morale_result_events")
 
 func result() -> Dictionary:
 	return _result.duplicate(true)

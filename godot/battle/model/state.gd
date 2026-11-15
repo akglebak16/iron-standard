@@ -11,6 +11,7 @@ const Event = preload("res://battle/combat_event.gd")
 const Equipment = preload("res://equipment/config.gd")
 const SpatialIndex = preload("res://battle/rules/spatial_index.gd")
 const CollisionGrid = preload("res://battle/rules/collision_grid.gd")
+const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
@@ -20,6 +21,7 @@ var trunks: Array[Plant] = []
 var siege_skill := 0.0
 
 var units: Array[Unit] = []
+var profiler := PhaseProfiler.new()
 ## Phase workspaces belong to this battle; differential tests may disable its index.
 var use_spatial_index := true
 var movement_index: SpatialIndex
