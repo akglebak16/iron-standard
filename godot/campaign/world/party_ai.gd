@@ -13,6 +13,7 @@ var roster: Roster
 var player: RefCounted  # PlayerParty: x, y, troops, rel, busy, inside, away
 
 var undead: RefCounted = null  # WorldUndead, optional
+var clans: RefCounted = null   # WorldClans, optional: rulers survive lost fights
 
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
@@ -297,7 +298,12 @@ func auto_fight(a: Dictionary, b: Dictionary) -> void:
 			if roster.rng.randf() < wl:
 				dead += 1
 		Rules.remove_troops(w.troops, s.type, dead)
-	roster.remove(l)
+	if l.get("ruler", false) and clans != null and roster.rng.randf() < 0.75:
+		for t in l.troops.duplicate():
+			Rules.remove_troops(l.troops, t.type, floori(int(t.n) * 0.55))
+		clans.ruler_home(l)
+	else:
+		roster.remove(l)
 	if w.troops.is_empty() or Rules.troop_count(w.troops) < 2:
 		roster.remove(w)
 	w.state = "idle"

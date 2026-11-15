@@ -21,6 +21,7 @@ var campaigns: Dictionary = {}  # faction -> {tid, gid, state, t0, t1, t2, army:
 var day := 1
 var hour := 8
 var _tally := 0
+var clans: RefCounted = null  # WorldClans, optional: rulers, oaths and clan loyalty
 
 func _init(world_map: WorldMap, party_roster: Roster) -> void:
 	map = world_map
@@ -138,15 +139,19 @@ func war_day() -> void:
 				if d < 10:
 					continue
 				var weak := 3.0 if minf(hold_of(a).all, hold_of(b).all) < 9 else 1.0
-				if roster.rng.randf() < clampf(0.012 + d * 0.0005, 0.0, 0.07) * (0.35 if r > 1.7 else 1.0) * weak:
+				var peace_k: float = clans.ruler_peace(a, b) if clans != null else 1.0
+				if roster.rng.randf() < clampf(0.012 + d * 0.0005, 0.0, 0.07) * (0.35 if r > 1.7 else 1.0) * weak * peace_k:
 					wars.erase(k)
 					_say("%s и %s заключили мир." % [_name(a), _name(b)])
 			else:
 				if count.call(a) >= 3 or count.call(b) >= 3 or not borders(a, b):
 					continue
+				if clans != null and (clans.kingless(a) or clans.kingless(b)):
+					continue
 				var lone := (3.0 if count.call(a) == 0 else 1.0) * (2.0 if count.call(b) == 0 else 1.0)
 				var top := (pa if pa > pb else pb) / maxf(1.0, (pa + pb) / 2.0)
-				if roster.rng.randf() < 0.005 * lone * top:
+				var war_k: float = clans.ruler_war(a, b) if clans != null else 1.0
+				if roster.rng.randf() < 0.005 * lone * top * war_k:
 					wars[k] = {"since": day}
 					_say("%s объявляет войну: %s." % [_name(a if pa > pb else b), _name(b if pa > pb else a)])
 	_tally += 1
@@ -166,7 +171,7 @@ func war_day() -> void:
 # ---------- campaigns: muster, march, siege ----------
 
 func _lords_of(f: String) -> Array:
-	return roster.parties.filter(func(p): return Rules.is_noble(p) and p.fac == f and not p.get("lock", false))
+	return roster.parties.filter(func(p): return Rules.is_noble(p) and p.fac == f and not p.get("lock", false) and not p.get("ruler", false))
 
 func war_hour() -> void:
 	if hour % 2 == 0:
@@ -218,6 +223,8 @@ func _campaign(f: String) -> void:
 		return
 	if enemies.is_empty() or hour % 6 != 0:
 		return
+	if clans != null and clans.kingless(f):
+		return
 	var lords := _lords_of(f).filter(func(p): return Rules.troop_count(p.troops) >= 20 * MK)
 	var total := 0.0
 	for p in lords:
@@ -261,6 +268,8 @@ func _campaign(f: String) -> void:
 		p.wait = 0.0
 		_go(p, best_ms)
 	_say("%s созывает войска: поход на %s." % [_name(f), best.name])
+	if clans != null:
+		clans.on_campaign(f, best)
 
 func _go(p: Dictionary, s: Dictionary) -> void:
 	if s.is_empty():
@@ -397,6 +406,8 @@ func _capture(s: Dictionary, f: String, att: Array) -> void:
 			settlement_changed.emit(v)
 	_say("%s берёт %s %s (бывший %s)." % [_name(f), "замок" if kind == "castle" else "город", s.name, roster.factions.get_faction(old).get("gen", old)])
 	settlement_changed.emit(s)
+	if clans != null:
+		clans.on_capture(s, old, f)
 	if not alive(old):
 		_fall(old, f)
 

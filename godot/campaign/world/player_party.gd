@@ -24,6 +24,11 @@ var rel: Dictionary = {"nord": 0, "emp": 0, "khan": 0, "kin": 0, "emi": 0, "dom"
 var busy := ""      # "enc" / "battle" while a meeting or fight is running
 var inside := false # inside a settlement
 var away := false
+var liege := ""      # faction the player swore to
+var oath_day := 0
+var strikes := 0
+var summons: Variant = null  # {tid, until, joined}: the liege summons the player to a campaign
+var lure_day := -99
 
 func has_route() -> bool:
 	return pi < path.size()

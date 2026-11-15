@@ -39,6 +39,8 @@ func _ready() -> void:
 	col.add_child(_title)
 	_sub = Label.new()
 	_sub.add_theme_color_override("font_color", Color("#b8a880"))
+	_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_sub.custom_minimum_size = Vector2(420, 0)
 	col.add_child(_sub)
 	_power = Label.new()
 	col.add_child(_power)
