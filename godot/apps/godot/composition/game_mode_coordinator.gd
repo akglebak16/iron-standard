@@ -4,6 +4,7 @@ const Menu = preload("res://apps/godot/composition/main_menu.tscn")
 const Campaign = preload("res://apps/godot/composition/world_demo.tscn")
 const FieldDemo = preload("res://apps/godot/composition/main.tscn")
 const SiegeDemo = preload("res://apps/godot/composition/siege_demo.tscn")
+const QuickSetup = preload("res://apps/godot/composition/quick_battle_setup.gd")
 var _mode: Node
 var _transition_pending := false
 
@@ -31,6 +32,7 @@ func _show_menu() -> void:
 	var menu := Menu.instantiate()
 	menu.campaign_requested.connect(_request_campaign)
 	menu.demo_requested.connect(_request_demo)
+	menu.quick_battle_requested.connect(_request_quick)
 	_replace(menu)
 
 func _show_campaign() -> void:
@@ -53,7 +55,15 @@ func _request_demo(siege: bool) -> void:
 	_transition_pending = true
 	_show_demo.call_deferred(siege)
 
-func _show_demo(siege: bool) -> void:
+func _request_quick(options: Dictionary) -> void:
+	if _transition_pending: return
+	var setup := QuickSetup.build(options)
+	if setup == null: return
+	_transition_pending = true
+	_show_demo.call_deferred(false, setup)
+
+func _show_demo(siege: bool, setup: Resource = null) -> void:
 	var demo := (SiegeDemo if siege else FieldDemo).instantiate()
+	if setup != null: demo.battle_setup = setup
 	demo.title_requested.connect(_request_menu)
 	_replace(demo)

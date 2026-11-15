@@ -40,8 +40,11 @@ function run(args, timeout) {
     const stop = reason => {
       if (stopping) return;
       stopping = true; error = new Error(reason);
-      if (process.platform === 'win32') spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {windowsHide:true, stdio:'ignore'});
-      else child.kill('SIGKILL');
+      if (process.platform === 'win32') {
+        const killed = spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {windowsHide:true, stdio:'ignore', timeout:2000});
+        // Restricted Windows sessions may deny process-tree enumeration. The direct child handle still works.
+        if (killed.error || killed.status !== 0) child.kill('SIGKILL');
+      } else child.kill('SIGKILL');
     };
     const timer = setTimeout(() => stop(`Timeout after ${timeout} ms`), timeout);
     child.stdout.on('data', data => { stdout += data; if (scriptErrors.test(stdout)) stop('Script error'); });

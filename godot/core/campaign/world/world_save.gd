@@ -168,6 +168,7 @@ static func _from_v1(data: Dictionary, europe: EuropeData, definitions: Dictiona
 	p.quests = _quests(pd.quests)
 	p.stats = _ints(pd.stats)
 	p.hero = _hero(pd.hero)
+	if pd.has("banner") and Checkpoint._number(pd.banner): p.hero.banner = int(pd.banner)
 	p.rel = pd.rel
 	p.liege = String(pd.get("liege", ""))
 	p.oath_day = int(pd.get("oath_day", 0))
@@ -294,6 +295,9 @@ static func _ints(d: Dictionary) -> Dictionary:
 
 static func _hero(h: Dictionary) -> Dictionary:
 	var out := h.duplicate(true)
+	if out.has("banner"):
+		if Checkpoint._number(out.banner): out.banner = int(out.banner)
+		else: out.erase("banner")
 	for k in ["lvl", "xp", "pts", "pp", "str", "vit", "agi", "int", "cha", "armor", "weapon", "shield", "horse", "seed"]:
 		if out.has(k):
 			out[k] = int(out[k])

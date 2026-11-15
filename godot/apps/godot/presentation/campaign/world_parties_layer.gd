@@ -36,6 +36,7 @@ func _draw() -> void:
 
 func _draw_party(p: Dictionary) -> void:
 	var look := _factions.get_faction(p.fac)
+	if p.fac == "player": look = OriginalArt.palette("player")
 	var at := Vector2(p.x, p.y)
 	var noble: bool = p.kind == "lord" or p.kind == "dead"
 	var scale := 1.15 if noble else (0.7 if p.kind == "caravan" else 0.9)

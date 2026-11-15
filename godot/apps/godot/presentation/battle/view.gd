@@ -7,6 +7,7 @@ const Session = preload("res://core/battle/application/session.gd")
 const Simulation = preload("res://core/battle/api/battle_simulation.gd")
 const FixedClock = preload("res://runtime/scheduling/fixed_step_clock.gd")
 const ProjectileView = preload("res://apps/godot/presentation/battle/projectile_view.gd")
+const HeroSwing = preload("res://apps/godot/presentation/battle/hero_swing.gd")
 const CombatFeedback = preload("res://apps/godot/presentation/battle/combat_feedback.gd")
 const ImpactEffects = preload("res://apps/godot/presentation/battle/impact_effects.gd")
 const UnitView = preload("res://apps/godot/presentation/battle/unit_view.gd")
@@ -39,6 +40,7 @@ var _session: Session
 var _simulation: Simulation
 var _clock := FixedClock.new()
 var _frame: Dictionary = {}
+var _hero_swing: Dictionary = {}
 var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
 var _impacts := ImpactEffects.new()
@@ -315,6 +317,7 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
 	# One detached read per completed batch of ticks, reused by HUD and drawing.
 	_frame = frame if not frame.is_empty() else _simulation.render_snapshot()
+	_hero_swing = _session.hero_swing_state()
 	# Active storage shrinks on deaths; only newly spawned units need new identities.
 	if _figure_identity_count < 0 or events.any(func(event): return event.kind == Event.Kind.RESERVE_WAVE):
 		var portrait_units: Array[Dictionary] = []
@@ -370,6 +373,7 @@ func _draw() -> void:
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
 	_figures.draw_compact(self, _frame.render, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), attract_mode)
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
+	HeroSwing.draw(self, _hero_swing)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)
