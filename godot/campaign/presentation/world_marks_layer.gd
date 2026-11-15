@@ -10,7 +10,9 @@ var _quest_mark: Variant = null # {x, y, t0}
 
 func build(world_state: RefCounted) -> void:
 	state = world_state
-	assert(_factions.load_data())
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: campaign/presentation/world_marks_layer.gd")
+		return
 
 ## Pulsing rings and a bouncing pointer over a quest target for seven seconds.
 func show_quest_target(x: float, y: float) -> void:

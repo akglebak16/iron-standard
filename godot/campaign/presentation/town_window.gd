@@ -17,7 +17,9 @@ var _legacy := {}
 
 func _ready() -> void:
 	super()
-	assert(_gear.load_data() and _factions.load_data())
+	if not (_gear.load_data() and _factions.load_data()):
+		push_error("Required content failed to load: campaign/presentation/town_window.gd")
+		return
 	_legacy = {"weapon": HeroGear.LEGACY_WEAPONS, "armor": HeroGear.LEGACY_ARMOR, "shield": HeroGear.LEGACY_SHIELDS, "horse": HeroGear.LEGACY_HORSES}
 
 func open_for(world_state: RefCounted, s: Dictionary) -> void:

@@ -24,7 +24,9 @@ class SheetPainter extends Node2D:
 				SettlementArt.draw_settlement(self, KINDS[row], SettlementArt.CULTURES[col], cx, cy)
 
 func build(settles: Array) -> void:
-	assert(_factions.load_data())
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: campaign/presentation/settlement_layer.gd")
+		return
 	_settles = settles.duplicate()
 	_settles.sort_custom(func(a, b): return a.y < b.y)
 	_sheet = SubViewport.new()

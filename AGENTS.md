@@ -4,6 +4,7 @@
 
 ## Прочитай перед работой
 При работе над Godot-версией обязательно прочитай `godot/ARCHITECTURE.md`: там структура модулей, правила для данных, тестов и констант. Для этапов переноса выполняй тесты Godot; браузерные тесты оставлены GitHub по решению владельца.
+Утверждённая миграция: `godot/docs/architecture/BLUEPRINT.md` и `godot/docs/architecture/MIGRATION.md`. При противоречии прежнему размещению действует новый blueprint с явными переходными исключениями в `modules.json`. Перед коммитом обязательны `node godot/tools/architecture.test.cjs`, `node godot/tools/architecture.cjs` и Godot-тесты. Не объявляй этап завершённым без указанных в плане доказательств.
 1. `shareness/README.md` — как устроена папка и как её пополнять.
 2. `shareness/lessons.md` — уроки и грабли, на которые уже наступали.
 3. Нужный навык из `shareness/skills/*/SKILL.md` (сборка и тесты, changelog, графика, git).

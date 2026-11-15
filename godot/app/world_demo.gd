@@ -67,7 +67,9 @@ func _ready() -> void:
 			for part in arg.substr(8).split(","):
 				focus.append(float(part))
 	var data := EuropeData.new()
-	assert(data.load_data())
+	if not (data.load_data()):
+		push_error("Required content failed to load: app/world_demo.gd")
+		return
 	if GameOptions.continue_game:
 		state = SaveStore.load_state(data)
 	if state == null:
@@ -133,7 +135,9 @@ func _ready() -> void:
 	_dialog = EncounterDialog.new()
 	add_child(_dialog)
 	_dialog.chosen.connect(_on_encounter_choice)
-	assert(_factions.load_data())
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: app/world_demo.gd")
+		return
 	state.party_met.connect(_on_party_met)
 	if focus.size() == 3:
 		camera.detached = true

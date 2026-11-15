@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "requiredDirectories": ["app", "battle", "campaign", "tests/architecture", "tests/performance", "docs/architecture"],
+  "modules": [
+    {"name":"app","prefix":"app/","allowed":["battle","campaign","troops","equipment","characters"],"public":["app/"]},
+    {"name":"battle","prefix":"battle/","allowed":["troops","equipment","characters"],"public":["battle/application/","battle/data/","battle/presentation/scene.tscn","battle/config.gd","battle/combat_event.gd"]},
+    {"name":"campaign","prefix":"campaign/","allowed":["troops","equipment","characters"],"public":["campaign/"]},
+    {"name":"troops","prefix":"troops/","allowed":[],"public":["troops/config.gd","troops/data/","troops/rules/"]},
+    {"name":"equipment","prefix":"equipment/","allowed":[],"public":["equipment/config.gd","equipment/data/","equipment/rules/"]},
+    {"name":"characters","prefix":"characters/","allowed":[],"public":["characters/config.gd","characters/data/","characters/rules/"]}
+  ],
+  "exceptions": [
+    {"key":"app/main_menu.gd|dependency-cycle|app/main_menu.gd -> app/world_demo.tscn -> app/world_demo.gd -> app/main_menu.tscn -> app/main_menu.gd", "reason":"Existing menu/world navigation cycle; move scene transitions into GameModeCoordinator.", "removeByStage":5}
+  ]
+}

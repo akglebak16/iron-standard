@@ -23,7 +23,9 @@ var perks := PerkCatalog.new()
 var rng := RandomNumberGenerator.new()
 
 func _init() -> void:
-	assert(troops.load_data() and gear.load_data() and goods.load_data() and companions.load_data() and perks.load_data())
+	if not (troops.load_data() and gear.load_data() and goods.load_data() and companions.load_data() and perks.load_data()):
+		push_error("Required content failed to load: app/world_battle_bridge.gd")
+		return
 	rng.randomize()
 
 ## The browser's hero fights as the strongest troop of his culture (heroBattle picks the tier 3 line).

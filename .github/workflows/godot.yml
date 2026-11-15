@@ -1,0 +1,65 @@
+name: Godot — архитектура и Windows
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [main, 'codex/godot-blueprint-migration']
+permissions:
+  contents: read
+concurrency:
+  group: godot-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  architecture:
+    name: godot-architecture
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node godot/tools/architecture.test.cjs
+      - run: node godot/tools/architecture.cjs
+  content:
+    name: godot-content
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node godot/troops/tools/export_troops.cjs --check
+      - run: node godot/equipment/tools/export_gear.cjs --check
+      - run: node godot/characters/tools/export_perks.cjs --check
+      - run: node godot/characters/tools/export_companions.cjs --check
+      - run: node godot/campaign/tools/export_goods.cjs --check
+  windows:
+    name: godot-tests-and-release
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Закреплённый Godot и export templates
+        shell: pwsh
+        run: |
+          $version = '4.7.2'
+          $base = "https://github.com/godotengine/godot/releases/download/$version-stable"
+          Invoke-WebRequest "$base/Godot_v$version-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/godot.zip"
+          Expand-Archive "$env:RUNNER_TEMP/godot.zip" "$env:RUNNER_TEMP/godot"
+          Invoke-WebRequest "$base/Godot_v$version-stable_export_templates.tpz" -OutFile "$env:RUNNER_TEMP/templates.zip"
+          Expand-Archive "$env:RUNNER_TEMP/templates.zip" "$env:RUNNER_TEMP/templates"
+          New-Item -ItemType File "$env:RUNNER_TEMP/godot/_sc_" | Out-Null
+          $target = "$env:RUNNER_TEMP/godot/editor_data/export_templates/$version.stable"
+          New-Item -ItemType Directory -Force $target | Out-Null
+          Copy-Item "$env:RUNNER_TEMP/templates/templates/*" $target -Recurse
+          "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
+      - run: node godot/tools/test.cjs "$env:GODOT"
+      - run: node godot/tools/release.cjs "$env:GODOT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-release-and-logs
+          path: dist/godot/migration-release/

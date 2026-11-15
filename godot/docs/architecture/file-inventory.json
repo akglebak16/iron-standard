@@ -1,0 +1,2049 @@
+{
+  "revision": "096df30ad9e279d89aacff7dc4e8720903e8a700",
+  "files": [
+    {
+      "source": "ARCHITECTURE.md",
+      "destination": "ARCHITECTURE.md"
+    },
+    {
+      "source": "ASSETS.md",
+      "destination": "ASSETS.md"
+    },
+    {
+      "source": "DEPENDENCIES.md",
+      "destination": "DEPENDENCIES.md"
+    },
+    {
+      "source": "MIGRATION_CHECKLIST.md",
+      "destination": "MIGRATION_CHECKLIST.md"
+    },
+    {
+      "source": "README.md",
+      "destination": "README.md"
+    },
+    {
+      "source": "app/aftermath_text.gd",
+      "destination": "app/aftermath_text.gd"
+    },
+    {
+      "source": "app/aftermath_text.gd.uid",
+      "destination": "app/aftermath_text.gd.uid"
+    },
+    {
+      "source": "app/encounter_aftermath.gd",
+      "destination": "app/encounter_aftermath.gd"
+    },
+    {
+      "source": "app/encounter_aftermath.gd.uid",
+      "destination": "app/encounter_aftermath.gd.uid"
+    },
+    {
+      "source": "app/game_options.gd",
+      "destination": "app/game_options.gd"
+    },
+    {
+      "source": "app/game_options.gd.uid",
+      "destination": "app/game_options.gd.uid"
+    },
+    {
+      "source": "app/main.gd",
+      "destination": "app/main.gd"
+    },
+    {
+      "source": "app/main.gd.uid",
+      "destination": "app/main.gd.uid"
+    },
+    {
+      "source": "app/main.tscn",
+      "destination": "app/main.tscn"
+    },
+    {
+      "source": "app/main_menu.gd",
+      "destination": "app/main_menu.gd"
+    },
+    {
+      "source": "app/main_menu.gd.uid",
+      "destination": "app/main_menu.gd.uid"
+    },
+    {
+      "source": "app/main_menu.tscn",
+      "destination": "app/main_menu.tscn"
+    },
+    {
+      "source": "app/pause_menu.gd",
+      "destination": "app/pause_menu.gd"
+    },
+    {
+      "source": "app/pause_menu.gd.uid",
+      "destination": "app/pause_menu.gd.uid"
+    },
+    {
+      "source": "app/presentation_preferences.gd",
+      "destination": "app/presentation_preferences.gd"
+    },
+    {
+      "source": "app/presentation_preferences.gd.uid",
+      "destination": "app/presentation_preferences.gd.uid"
+    },
+    {
+      "source": "app/save_store.gd",
+      "destination": "app/save_store.gd"
+    },
+    {
+      "source": "app/save_store.gd.uid",
+      "destination": "app/save_store.gd.uid"
+    },
+    {
+      "source": "app/siege_demo.tscn",
+      "destination": "app/siege_demo.tscn"
+    },
+    {
+      "source": "app/tests/test_encounter_aftermath.gd",
+      "destination": "app/tests/test_encounter_aftermath.gd"
+    },
+    {
+      "source": "app/tests/test_encounter_aftermath.gd.uid",
+      "destination": "app/tests/test_encounter_aftermath.gd.uid"
+    },
+    {
+      "source": "app/tests/test_gear_and_menu.gd",
+      "destination": "app/tests/test_gear_and_menu.gd"
+    },
+    {
+      "source": "app/tests/test_gear_and_menu.gd.uid",
+      "destination": "app/tests/test_gear_and_menu.gd.uid"
+    },
+    {
+      "source": "app/tests/test_scenes_compile.gd",
+      "destination": "app/tests/test_scenes_compile.gd"
+    },
+    {
+      "source": "app/tests/test_scenes_compile.gd.uid",
+      "destination": "app/tests/test_scenes_compile.gd.uid"
+    },
+    {
+      "source": "app/tests/test_siege_bridge.gd",
+      "destination": "app/tests/test_siege_bridge.gd"
+    },
+    {
+      "source": "app/tests/test_siege_bridge.gd.uid",
+      "destination": "app/tests/test_siege_bridge.gd.uid"
+    },
+    {
+      "source": "app/tests/test_siege_window.gd",
+      "destination": "app/tests/test_siege_window.gd"
+    },
+    {
+      "source": "app/tests/test_siege_window.gd.uid",
+      "destination": "app/tests/test_siege_window.gd.uid"
+    },
+    {
+      "source": "app/tests/test_ui_smoke.gd",
+      "destination": "app/tests/test_ui_smoke.gd"
+    },
+    {
+      "source": "app/tests/test_ui_smoke.gd.uid",
+      "destination": "app/tests/test_ui_smoke.gd.uid"
+    },
+    {
+      "source": "app/tests/test_world_battle_bridge.gd",
+      "destination": "app/tests/test_world_battle_bridge.gd"
+    },
+    {
+      "source": "app/tests/test_world_battle_bridge.gd.uid",
+      "destination": "app/tests/test_world_battle_bridge.gd.uid"
+    },
+    {
+      "source": "app/world_battle_bridge.gd",
+      "destination": "app/world_battle_bridge.gd"
+    },
+    {
+      "source": "app/world_battle_bridge.gd.uid",
+      "destination": "app/world_battle_bridge.gd.uid"
+    },
+    {
+      "source": "app/world_demo.gd",
+      "destination": "app/world_demo.gd"
+    },
+    {
+      "source": "app/world_demo.gd.uid",
+      "destination": "app/world_demo.gd.uid"
+    },
+    {
+      "source": "app/world_demo.tscn",
+      "destination": "app/world_demo.tscn"
+    },
+    {
+      "source": "battle/PARITY.md",
+      "destination": "battle/PARITY.md"
+    },
+    {
+      "source": "battle/POST_PARITY_PLAN.md",
+      "destination": "battle/POST_PARITY_PLAN.md"
+    },
+    {
+      "source": "battle/application/factory.gd",
+      "destination": "battle/application/factory.gd"
+    },
+    {
+      "source": "battle/application/factory.gd.uid",
+      "destination": "battle/application/factory.gd.uid"
+    },
+    {
+      "source": "battle/application/hero_input.gd",
+      "destination": "battle/application/hero_input.gd"
+    },
+    {
+      "source": "battle/application/hero_input.gd.uid",
+      "destination": "battle/application/hero_input.gd.uid"
+    },
+    {
+      "source": "battle/application/session.gd",
+      "destination": "battle/application/session.gd"
+    },
+    {
+      "source": "battle/application/session.gd.uid",
+      "destination": "battle/application/session.gd.uid"
+    },
+    {
+      "source": "battle/combat_event.gd",
+      "destination": "battle/combat_event.gd"
+    },
+    {
+      "source": "battle/combat_event.gd.uid",
+      "destination": "battle/combat_event.gd.uid"
+    },
+    {
+      "source": "battle/config.gd",
+      "destination": "battle/config.gd"
+    },
+    {
+      "source": "battle/config.gd.uid",
+      "destination": "battle/config.gd.uid"
+    },
+    {
+      "source": "battle/data/army_builder.gd",
+      "destination": "battle/data/army_builder.gd"
+    },
+    {
+      "source": "battle/data/army_builder.gd.uid",
+      "destination": "battle/data/army_builder.gd.uid"
+    },
+    {
+      "source": "battle/data/battle_setup.gd",
+      "destination": "battle/data/battle_setup.gd"
+    },
+    {
+      "source": "battle/data/battle_setup.gd.uid",
+      "destination": "battle/data/battle_setup.gd.uid"
+    },
+    {
+      "source": "battle/data/companion_builder.gd",
+      "destination": "battle/data/companion_builder.gd"
+    },
+    {
+      "source": "battle/data/companion_builder.gd.uid",
+      "destination": "battle/data/companion_builder.gd.uid"
+    },
+    {
+      "source": "battle/data/demo_battle.tres",
+      "destination": "battle/data/demo_battle.tres"
+    },
+    {
+      "source": "battle/data/demo_siege.tres",
+      "destination": "battle/data/demo_siege.tres"
+    },
+    {
+      "source": "battle/data/hero_stats.gd",
+      "destination": "battle/data/hero_stats.gd"
+    },
+    {
+      "source": "battle/data/hero_stats.gd.uid",
+      "destination": "battle/data/hero_stats.gd.uid"
+    },
+    {
+      "source": "battle/data/reinforcements.gd",
+      "destination": "battle/data/reinforcements.gd"
+    },
+    {
+      "source": "battle/data/reinforcements.gd.uid",
+      "destination": "battle/data/reinforcements.gd.uid"
+    },
+    {
+      "source": "battle/data/siege_setup.gd",
+      "destination": "battle/data/siege_setup.gd"
+    },
+    {
+      "source": "battle/data/siege_setup.gd.uid",
+      "destination": "battle/data/siege_setup.gd.uid"
+    },
+    {
+      "source": "battle/data/vegetation_setup.gd",
+      "destination": "battle/data/vegetation_setup.gd"
+    },
+    {
+      "source": "battle/data/vegetation_setup.gd.uid",
+      "destination": "battle/data/vegetation_setup.gd.uid"
+    },
+    {
+      "source": "battle/model/group.gd",
+      "destination": "battle/model/group.gd"
+    },
+    {
+      "source": "battle/model/group.gd.uid",
+      "destination": "battle/model/group.gd.uid"
+    },
+    {
+      "source": "battle/model/plant.gd",
+      "destination": "battle/model/plant.gd"
+    },
+    {
+      "source": "battle/model/plant.gd.uid",
+      "destination": "battle/model/plant.gd.uid"
+    },
+    {
+      "source": "battle/model/siege_defense.gd",
+      "destination": "battle/model/siege_defense.gd"
+    },
+    {
+      "source": "battle/model/siege_defense.gd.uid",
+      "destination": "battle/model/siege_defense.gd.uid"
+    },
+    {
+      "source": "battle/model/siege_wall.gd",
+      "destination": "battle/model/siege_wall.gd"
+    },
+    {
+      "source": "battle/model/siege_wall.gd.uid",
+      "destination": "battle/model/siege_wall.gd.uid"
+    },
+    {
+      "source": "battle/model/state.gd",
+      "destination": "battle/model/state.gd"
+    },
+    {
+      "source": "battle/model/state.gd.uid",
+      "destination": "battle/model/state.gd.uid"
+    },
+    {
+      "source": "battle/model/unit.gd",
+      "destination": "battle/model/unit.gd"
+    },
+    {
+      "source": "battle/model/unit.gd.uid",
+      "destination": "battle/model/unit.gd.uid"
+    },
+    {
+      "source": "battle/presentation/audio/assets/battle_theme.ogg",
+      "destination": "battle/presentation/audio/assets/battle_theme.ogg"
+    },
+    {
+      "source": "battle/presentation/audio/assets/battle_theme.ogg.import",
+      "destination": "battle/presentation/audio/assets/battle_theme.ogg.import"
+    },
+    {
+      "source": "battle/presentation/audio/battle_music.gd",
+      "destination": "battle/presentation/audio/battle_music.gd"
+    },
+    {
+      "source": "battle/presentation/audio/battle_music.gd.uid",
+      "destination": "battle/presentation/audio/battle_music.gd.uid"
+    },
+    {
+      "source": "battle/presentation/audio/combat_audio.gd",
+      "destination": "battle/presentation/audio/combat_audio.gd"
+    },
+    {
+      "source": "battle/presentation/audio/combat_audio.gd.uid",
+      "destination": "battle/presentation/audio/combat_audio.gd.uid"
+    },
+    {
+      "source": "battle/presentation/audio/sound_bank.gd",
+      "destination": "battle/presentation/audio/sound_bank.gd"
+    },
+    {
+      "source": "battle/presentation/audio/sound_bank.gd.uid",
+      "destination": "battle/presentation/audio/sound_bank.gd.uid"
+    },
+    {
+      "source": "battle/presentation/banter_lines.gd",
+      "destination": "battle/presentation/banter_lines.gd"
+    },
+    {
+      "source": "battle/presentation/banter_lines.gd.uid",
+      "destination": "battle/presentation/banter_lines.gd.uid"
+    },
+    {
+      "source": "battle/presentation/battle_camera.gd",
+      "destination": "battle/presentation/battle_camera.gd"
+    },
+    {
+      "source": "battle/presentation/battle_camera.gd.uid",
+      "destination": "battle/presentation/battle_camera.gd.uid"
+    },
+    {
+      "source": "battle/presentation/combat_feedback.gd",
+      "destination": "battle/presentation/combat_feedback.gd"
+    },
+    {
+      "source": "battle/presentation/combat_feedback.gd.uid",
+      "destination": "battle/presentation/combat_feedback.gd.uid"
+    },
+    {
+      "source": "battle/presentation/companion_dialogue.gd",
+      "destination": "battle/presentation/companion_dialogue.gd"
+    },
+    {
+      "source": "battle/presentation/companion_dialogue.gd.uid",
+      "destination": "battle/presentation/companion_dialogue.gd.uid"
+    },
+    {
+      "source": "battle/presentation/demo_config.gd",
+      "destination": "battle/presentation/demo_config.gd"
+    },
+    {
+      "source": "battle/presentation/demo_config.gd.uid",
+      "destination": "battle/presentation/demo_config.gd.uid"
+    },
+    {
+      "source": "battle/presentation/detached_parts.gd",
+      "destination": "battle/presentation/detached_parts.gd"
+    },
+    {
+      "source": "battle/presentation/detached_parts.gd.uid",
+      "destination": "battle/presentation/detached_parts.gd.uid"
+    },
+    {
+      "source": "battle/presentation/ground_bake.gd",
+      "destination": "battle/presentation/ground_bake.gd"
+    },
+    {
+      "source": "battle/presentation/ground_bake.gd.uid",
+      "destination": "battle/presentation/ground_bake.gd.uid"
+    },
+    {
+      "source": "battle/presentation/hud/battle_controls.gd",
+      "destination": "battle/presentation/hud/battle_controls.gd"
+    },
+    {
+      "source": "battle/presentation/hud/battle_controls.gd.uid",
+      "destination": "battle/presentation/hud/battle_controls.gd.uid"
+    },
+    {
+      "source": "battle/presentation/hud/navigation_hud.gd",
+      "destination": "battle/presentation/hud/navigation_hud.gd"
+    },
+    {
+      "source": "battle/presentation/hud/navigation_hud.gd.uid",
+      "destination": "battle/presentation/hud/navigation_hud.gd.uid"
+    },
+    {
+      "source": "battle/presentation/hud/order_marker.gd",
+      "destination": "battle/presentation/hud/order_marker.gd"
+    },
+    {
+      "source": "battle/presentation/hud/order_marker.gd.uid",
+      "destination": "battle/presentation/hud/order_marker.gd.uid"
+    },
+    {
+      "source": "battle/presentation/impact_effects.gd",
+      "destination": "battle/presentation/impact_effects.gd"
+    },
+    {
+      "source": "battle/presentation/impact_effects.gd.uid",
+      "destination": "battle/presentation/impact_effects.gd.uid"
+    },
+    {
+      "source": "battle/presentation/projectile_view.gd",
+      "destination": "battle/presentation/projectile_view.gd"
+    },
+    {
+      "source": "battle/presentation/projectile_view.gd.uid",
+      "destination": "battle/presentation/projectile_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/scene.tscn",
+      "destination": "battle/presentation/scene.tscn"
+    },
+    {
+      "source": "battle/presentation/siege_defense_view.gd",
+      "destination": "battle/presentation/siege_defense_view.gd"
+    },
+    {
+      "source": "battle/presentation/siege_defense_view.gd.uid",
+      "destination": "battle/presentation/siege_defense_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/ground.gdshader",
+      "destination": "battle/presentation/terrain/ground.gdshader"
+    },
+    {
+      "source": "battle/presentation/terrain/ground.gdshader.uid",
+      "destination": "battle/presentation/terrain/ground.gdshader.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/terrain_view.gd",
+      "destination": "battle/presentation/terrain/terrain_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/terrain_view.gd.uid",
+      "destination": "battle/presentation/terrain/terrain_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/vegetation_view.gd",
+      "destination": "battle/presentation/terrain/vegetation_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/vegetation_view.gd.uid",
+      "destination": "battle/presentation/terrain/vegetation_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_disc.png",
+      "destination": "battle/presentation/terrain/wall/assets/wall_disc.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_disc.png.import",
+      "destination": "battle/presentation/terrain/wall/assets/wall_disc.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png",
+      "destination": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png.import",
+      "destination": "battle/presentation/terrain/wall/assets/wall_gate_leaf.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_merlon.png",
+      "destination": "battle/presentation/terrain/wall/assets/wall_merlon.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_merlon.png.import",
+      "destination": "battle/presentation/terrain/wall/assets/wall_merlon.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_stone.png",
+      "destination": "battle/presentation/terrain/wall/assets/wall_stone.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_stone.png.import",
+      "destination": "battle/presentation/terrain/wall/assets/wall_stone.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_tower.png",
+      "destination": "battle/presentation/terrain/wall/assets/wall_tower.png"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/assets/wall_tower.png.import",
+      "destination": "battle/presentation/terrain/wall/assets/wall_tower.png.import"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_gate_leaf.tscn",
+      "destination": "battle/presentation/terrain/wall/wall_gate_leaf.tscn"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.gd",
+      "destination": "battle/presentation/terrain/wall/wall_segment.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.gd.uid",
+      "destination": "battle/presentation/terrain/wall/wall_segment.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_segment.tscn",
+      "destination": "battle/presentation/terrain/wall/wall_segment.tscn"
+    },
+    {
+      "source": "battle/presentation/terrain/wall/wall_tower.tscn",
+      "destination": "battle/presentation/terrain/wall/wall_tower.tscn"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_scene_view.gd",
+      "destination": "battle/presentation/terrain/wall_scene_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_scene_view.gd.uid",
+      "destination": "battle/presentation/terrain/wall_scene_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_view.gd",
+      "destination": "battle/presentation/terrain/wall_view.gd"
+    },
+    {
+      "source": "battle/presentation/terrain/wall_view.gd.uid",
+      "destination": "battle/presentation/terrain/wall_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/unit_art.gd",
+      "destination": "battle/presentation/unit_art.gd"
+    },
+    {
+      "source": "battle/presentation/unit_art.gd.uid",
+      "destination": "battle/presentation/unit_art.gd.uid"
+    },
+    {
+      "source": "battle/presentation/unit_markers.gd",
+      "destination": "battle/presentation/unit_markers.gd"
+    },
+    {
+      "source": "battle/presentation/unit_markers.gd.uid",
+      "destination": "battle/presentation/unit_markers.gd.uid"
+    },
+    {
+      "source": "battle/presentation/unit_view.gd",
+      "destination": "battle/presentation/unit_view.gd"
+    },
+    {
+      "source": "battle/presentation/unit_view.gd.uid",
+      "destination": "battle/presentation/unit_view.gd.uid"
+    },
+    {
+      "source": "battle/presentation/view.gd",
+      "destination": "battle/presentation/view.gd"
+    },
+    {
+      "source": "battle/presentation/view.gd.uid",
+      "destination": "battle/presentation/view.gd.uid"
+    },
+    {
+      "source": "battle/rules/ai_decision.gd",
+      "destination": "battle/rules/ai_decision.gd"
+    },
+    {
+      "source": "battle/rules/ai_decision.gd.uid",
+      "destination": "battle/rules/ai_decision.gd.uid"
+    },
+    {
+      "source": "battle/rules/block.gd",
+      "destination": "battle/rules/block.gd"
+    },
+    {
+      "source": "battle/rules/block.gd.uid",
+      "destination": "battle/rules/block.gd.uid"
+    },
+    {
+      "source": "battle/rules/charge.gd",
+      "destination": "battle/rules/charge.gd"
+    },
+    {
+      "source": "battle/rules/charge.gd.uid",
+      "destination": "battle/rules/charge.gd.uid"
+    },
+    {
+      "source": "battle/rules/collision_grid.gd",
+      "destination": "battle/rules/collision_grid.gd"
+    },
+    {
+      "source": "battle/rules/collision_grid.gd.uid",
+      "destination": "battle/rules/collision_grid.gd.uid"
+    },
+    {
+      "source": "battle/rules/combat.gd",
+      "destination": "battle/rules/combat.gd"
+    },
+    {
+      "source": "battle/rules/combat.gd.uid",
+      "destination": "battle/rules/combat.gd.uid"
+    },
+    {
+      "source": "battle/rules/combat_step.gd",
+      "destination": "battle/rules/combat_step.gd"
+    },
+    {
+      "source": "battle/rules/combat_step.gd.uid",
+      "destination": "battle/rules/combat_step.gd.uid"
+    },
+    {
+      "source": "battle/rules/damage.gd",
+      "destination": "battle/rules/damage.gd"
+    },
+    {
+      "source": "battle/rules/damage.gd.uid",
+      "destination": "battle/rules/damage.gd.uid"
+    },
+    {
+      "source": "battle/rules/hero_control.gd",
+      "destination": "battle/rules/hero_control.gd"
+    },
+    {
+      "source": "battle/rules/hero_control.gd.uid",
+      "destination": "battle/rules/hero_control.gd.uid"
+    },
+    {
+      "source": "battle/rules/morale.gd",
+      "destination": "battle/rules/morale.gd"
+    },
+    {
+      "source": "battle/rules/morale.gd.uid",
+      "destination": "battle/rules/morale.gd.uid"
+    },
+    {
+      "source": "battle/rules/movement.gd",
+      "destination": "battle/rules/movement.gd"
+    },
+    {
+      "source": "battle/rules/movement.gd.uid",
+      "destination": "battle/rules/movement.gd.uid"
+    },
+    {
+      "source": "battle/rules/result.gd",
+      "destination": "battle/rules/result.gd"
+    },
+    {
+      "source": "battle/rules/result.gd.uid",
+      "destination": "battle/rules/result.gd.uid"
+    },
+    {
+      "source": "battle/rules/siege_defense.gd",
+      "destination": "battle/rules/siege_defense.gd"
+    },
+    {
+      "source": "battle/rules/siege_defense.gd.uid",
+      "destination": "battle/rules/siege_defense.gd.uid"
+    },
+    {
+      "source": "battle/rules/spatial_index.gd",
+      "destination": "battle/rules/spatial_index.gd"
+    },
+    {
+      "source": "battle/rules/spatial_index.gd.uid",
+      "destination": "battle/rules/spatial_index.gd.uid"
+    },
+    {
+      "source": "battle/rules/tactics.gd",
+      "destination": "battle/rules/tactics.gd"
+    },
+    {
+      "source": "battle/rules/tactics.gd.uid",
+      "destination": "battle/rules/tactics.gd.uid"
+    },
+    {
+      "source": "battle/rules/targeting.gd",
+      "destination": "battle/rules/targeting.gd"
+    },
+    {
+      "source": "battle/rules/targeting.gd.uid",
+      "destination": "battle/rules/targeting.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_combat_events.gd",
+      "destination": "battle/tests/application/test_combat_events.gd"
+    },
+    {
+      "source": "battle/tests/application/test_combat_events.gd.uid",
+      "destination": "battle/tests/application/test_combat_events.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_companion_factory.gd",
+      "destination": "battle/tests/application/test_companion_factory.gd"
+    },
+    {
+      "source": "battle/tests/application/test_companion_factory.gd.uid",
+      "destination": "battle/tests/application/test_companion_factory.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_hero_factory.gd",
+      "destination": "battle/tests/application/test_hero_factory.gd"
+    },
+    {
+      "source": "battle/tests/application/test_hero_factory.gd.uid",
+      "destination": "battle/tests/application/test_hero_factory.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_reserve_waves.gd",
+      "destination": "battle/tests/application/test_reserve_waves.gd"
+    },
+    {
+      "source": "battle/tests/application/test_reserve_waves.gd.uid",
+      "destination": "battle/tests/application/test_reserve_waves.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_session.gd",
+      "destination": "battle/tests/application/test_session.gd"
+    },
+    {
+      "source": "battle/tests/application/test_session.gd.uid",
+      "destination": "battle/tests/application/test_session.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_siege_setup.gd",
+      "destination": "battle/tests/application/test_siege_setup.gd"
+    },
+    {
+      "source": "battle/tests/application/test_siege_setup.gd.uid",
+      "destination": "battle/tests/application/test_siege_setup.gd.uid"
+    },
+    {
+      "source": "battle/tests/application/test_vegetation.gd",
+      "destination": "battle/tests/application/test_vegetation.gd"
+    },
+    {
+      "source": "battle/tests/application/test_vegetation.gd.uid",
+      "destination": "battle/tests/application/test_vegetation.gd.uid"
+    },
+    {
+      "source": "battle/tests/data/test_catalog_spawn.gd",
+      "destination": "battle/tests/data/test_catalog_spawn.gd"
+    },
+    {
+      "source": "battle/tests/data/test_catalog_spawn.gd.uid",
+      "destination": "battle/tests/data/test_catalog_spawn.gd.uid"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_combat_step.gd",
+      "destination": "battle/tests/fixtures/legacy_combat_step.gd"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_combat_step.gd.uid",
+      "destination": "battle/tests/fixtures/legacy_combat_step.gd.uid"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_movement.gd",
+      "destination": "battle/tests/fixtures/legacy_movement.gd"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_movement.gd.uid",
+      "destination": "battle/tests/fixtures/legacy_movement.gd.uid"
+    },
+    {
+      "source": "battle/tests/model/test_battle_state.gd",
+      "destination": "battle/tests/model/test_battle_state.gd"
+    },
+    {
+      "source": "battle/tests/model/test_battle_state.gd.uid",
+      "destination": "battle/tests/model/test_battle_state.gd.uid"
+    },
+    {
+      "source": "battle/tests/model/test_groups.gd",
+      "destination": "battle/tests/model/test_groups.gd"
+    },
+    {
+      "source": "battle/tests/model/test_groups.gd.uid",
+      "destination": "battle/tests/model/test_groups.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_banter.gd",
+      "destination": "battle/tests/presentation/test_banter.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_banter.gd.uid",
+      "destination": "battle/tests/presentation/test_banter.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_camera.gd",
+      "destination": "battle/tests/presentation/test_battle_camera.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_camera.gd.uid",
+      "destination": "battle/tests/presentation/test_battle_camera.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_controls.gd",
+      "destination": "battle/tests/presentation/test_battle_controls.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_controls.gd.uid",
+      "destination": "battle/tests/presentation/test_battle_controls.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_combat_audio.gd",
+      "destination": "battle/tests/presentation/test_combat_audio.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_combat_audio.gd.uid",
+      "destination": "battle/tests/presentation/test_combat_audio.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_companion_dialogue.gd",
+      "destination": "battle/tests/presentation/test_companion_dialogue.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_companion_dialogue.gd.uid",
+      "destination": "battle/tests/presentation/test_companion_dialogue.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_detached_parts.gd",
+      "destination": "battle/tests/presentation/test_detached_parts.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_detached_parts.gd.uid",
+      "destination": "battle/tests/presentation/test_detached_parts.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_impact_effects.gd",
+      "destination": "battle/tests/presentation/test_impact_effects.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_impact_effects.gd.uid",
+      "destination": "battle/tests/presentation/test_impact_effects.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_navigation_hud.gd",
+      "destination": "battle/tests/presentation/test_navigation_hud.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_navigation_hud.gd.uid",
+      "destination": "battle/tests/presentation/test_navigation_hud.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_scene.gd",
+      "destination": "battle/tests/presentation/test_scene.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_scene.gd.uid",
+      "destination": "battle/tests/presentation/test_scene.gd.uid"
+    },
+    {
+      "source": "battle/tests/presentation/test_terrain_view.gd",
+      "destination": "battle/tests/presentation/test_terrain_view.gd"
+    },
+    {
+      "source": "battle/tests/presentation/test_terrain_view.gd.uid",
+      "destination": "battle/tests/presentation/test_terrain_view.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_attack_timing.gd",
+      "destination": "battle/tests/rules/test_ai_attack_timing.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_attack_timing.gd.uid",
+      "destination": "battle/tests/rules/test_ai_attack_timing.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_decision.gd",
+      "destination": "battle/tests/rules/test_ai_decision.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_decision.gd.uid",
+      "destination": "battle/tests/rules/test_ai_decision.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_tick_order.gd",
+      "destination": "battle/tests/rules/test_ai_tick_order.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_tick_order.gd.uid",
+      "destination": "battle/tests/rules/test_ai_tick_order.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_block.gd",
+      "destination": "battle/tests/rules/test_block.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_block.gd.uid",
+      "destination": "battle/tests/rules/test_block.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_charge.gd",
+      "destination": "battle/tests/rules/test_charge.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_charge.gd.uid",
+      "destination": "battle/tests/rules/test_charge.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_combat.gd",
+      "destination": "battle/tests/rules/test_combat.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_combat.gd.uid",
+      "destination": "battle/tests/rules/test_combat.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_damage.gd",
+      "destination": "battle/tests/rules/test_damage.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_damage.gd.uid",
+      "destination": "battle/tests/rules/test_damage.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_equipment_combat.gd",
+      "destination": "battle/tests/rules/test_equipment_combat.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_equipment_combat.gd.uid",
+      "destination": "battle/tests/rules/test_equipment_combat.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_charge.gd",
+      "destination": "battle/tests/rules/test_hero_charge.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_charge.gd.uid",
+      "destination": "battle/tests/rules/test_hero_charge.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_control.gd",
+      "destination": "battle/tests/rules/test_hero_control.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_control.gd.uid",
+      "destination": "battle/tests/rules/test_hero_control.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_strike.gd",
+      "destination": "battle/tests/rules/test_hero_strike.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_strike.gd.uid",
+      "destination": "battle/tests/rules/test_hero_strike.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_morale.gd",
+      "destination": "battle/tests/rules/test_morale.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_morale.gd.uid",
+      "destination": "battle/tests/rules/test_morale.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_movement.gd",
+      "destination": "battle/tests/rules/test_movement.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_movement.gd.uid",
+      "destination": "battle/tests/rules/test_movement.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_projectile.gd",
+      "destination": "battle/tests/rules/test_projectile.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_projectile.gd.uid",
+      "destination": "battle/tests/rules/test_projectile.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_result.gd",
+      "destination": "battle/tests/rules/test_result.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_result.gd.uid",
+      "destination": "battle/tests/rules/test_result.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_siege.gd",
+      "destination": "battle/tests/rules/test_siege.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_siege.gd.uid",
+      "destination": "battle/tests/rules/test_siege.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_siege_defense.gd",
+      "destination": "battle/tests/rules/test_siege_defense.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_siege_defense.gd.uid",
+      "destination": "battle/tests/rules/test_siege_defense.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_full_battle.gd",
+      "destination": "battle/tests/rules/test_spatial_full_battle.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_full_battle.gd.uid",
+      "destination": "battle/tests/rules/test_spatial_full_battle.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_index.gd",
+      "destination": "battle/tests/rules/test_spatial_index.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_index.gd.uid",
+      "destination": "battle/tests/rules/test_spatial_index.gd.uid"
+    },
+    {
+      "source": "battle/tests/rules/test_tactics.gd",
+      "destination": "battle/tests/rules/test_tactics.gd"
+    },
+    {
+      "source": "battle/tests/rules/test_tactics.gd.uid",
+      "destination": "battle/tests/rules/test_tactics.gd.uid"
+    },
+    {
+      "source": "battle/tools/benchmark.gd",
+      "destination": "battle/tools/benchmark.gd"
+    },
+    {
+      "source": "battle/tools/benchmark.gd.uid",
+      "destination": "battle/tools/benchmark.gd.uid"
+    },
+    {
+      "source": "battle/tools/render_battle_theme.py",
+      "destination": "battle/tools/render_battle_theme.py"
+    },
+    {
+      "source": "battle/tools/render_wall_textures.py",
+      "destination": "battle/tools/render_wall_textures.py"
+    },
+    {
+      "source": "battle/tools/view_bench.gd",
+      "destination": "battle/tools/view_bench.gd"
+    },
+    {
+      "source": "battle/tools/view_bench.gd.uid",
+      "destination": "battle/tools/view_bench.gd.uid"
+    },
+    {
+      "source": "campaign/config.gd",
+      "destination": "campaign/config.gd"
+    },
+    {
+      "source": "campaign/config.gd.uid",
+      "destination": "campaign/config.gd.uid"
+    },
+    {
+      "source": "campaign/data/encounter_rewards.gd",
+      "destination": "campaign/data/encounter_rewards.gd"
+    },
+    {
+      "source": "campaign/data/encounter_rewards.gd.uid",
+      "destination": "campaign/data/encounter_rewards.gd.uid"
+    },
+    {
+      "source": "campaign/data/europe.json",
+      "destination": "campaign/data/europe.json"
+    },
+    {
+      "source": "campaign/data/europe_data.gd",
+      "destination": "campaign/data/europe_data.gd"
+    },
+    {
+      "source": "campaign/data/europe_data.gd.uid",
+      "destination": "campaign/data/europe_data.gd.uid"
+    },
+    {
+      "source": "campaign/data/faction_catalog.gd",
+      "destination": "campaign/data/faction_catalog.gd"
+    },
+    {
+      "source": "campaign/data/faction_catalog.gd.uid",
+      "destination": "campaign/data/faction_catalog.gd.uid"
+    },
+    {
+      "source": "campaign/data/factions.json",
+      "destination": "campaign/data/factions.json"
+    },
+    {
+      "source": "campaign/data/goods.json",
+      "destination": "campaign/data/goods.json"
+    },
+    {
+      "source": "campaign/data/goods_catalog.gd",
+      "destination": "campaign/data/goods_catalog.gd"
+    },
+    {
+      "source": "campaign/data/goods_catalog.gd.uid",
+      "destination": "campaign/data/goods_catalog.gd.uid"
+    },
+    {
+      "source": "campaign/economy/battle_loot.gd",
+      "destination": "campaign/economy/battle_loot.gd"
+    },
+    {
+      "source": "campaign/economy/battle_loot.gd.uid",
+      "destination": "campaign/economy/battle_loot.gd.uid"
+    },
+    {
+      "source": "campaign/economy/market.gd",
+      "destination": "campaign/economy/market.gd"
+    },
+    {
+      "source": "campaign/economy/market.gd.uid",
+      "destination": "campaign/economy/market.gd.uid"
+    },
+    {
+      "source": "campaign/economy/party_economy.gd",
+      "destination": "campaign/economy/party_economy.gd"
+    },
+    {
+      "source": "campaign/economy/party_economy.gd.uid",
+      "destination": "campaign/economy/party_economy.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/companion_text.gd",
+      "destination": "campaign/presentation/companion_text.gd"
+    },
+    {
+      "source": "campaign/presentation/companion_text.gd.uid",
+      "destination": "campaign/presentation/companion_text.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/emblem_art.gd",
+      "destination": "campaign/presentation/emblem_art.gd"
+    },
+    {
+      "source": "campaign/presentation/emblem_art.gd.uid",
+      "destination": "campaign/presentation/emblem_art.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/encounter_dialog.gd",
+      "destination": "campaign/presentation/encounter_dialog.gd"
+    },
+    {
+      "source": "campaign/presentation/encounter_dialog.gd.uid",
+      "destination": "campaign/presentation/encounter_dialog.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/farm_layer.gd",
+      "destination": "campaign/presentation/farm_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/farm_layer.gd.uid",
+      "destination": "campaign/presentation/farm_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/icon_sheet.gd",
+      "destination": "campaign/presentation/icon_sheet.gd"
+    },
+    {
+      "source": "campaign/presentation/icon_sheet.gd.uid",
+      "destination": "campaign/presentation/icon_sheet.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/map_brush.gd",
+      "destination": "campaign/presentation/map_brush.gd"
+    },
+    {
+      "source": "campaign/presentation/map_brush.gd.uid",
+      "destination": "campaign/presentation/map_brush.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/modal_window.gd",
+      "destination": "campaign/presentation/modal_window.gd"
+    },
+    {
+      "source": "campaign/presentation/modal_window.gd.uid",
+      "destination": "campaign/presentation/modal_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/party_layer.gd",
+      "destination": "campaign/presentation/party_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/party_layer.gd.uid",
+      "destination": "campaign/presentation/party_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/party_window.gd",
+      "destination": "campaign/presentation/party_window.gd"
+    },
+    {
+      "source": "campaign/presentation/party_window.gd.uid",
+      "destination": "campaign/presentation/party_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/relief_layer.gd",
+      "destination": "campaign/presentation/relief_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/relief_layer.gd.uid",
+      "destination": "campaign/presentation/relief_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/river_layer.gd",
+      "destination": "campaign/presentation/river_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/river_layer.gd.uid",
+      "destination": "campaign/presentation/river_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/road_layer.gd",
+      "destination": "campaign/presentation/road_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/road_layer.gd.uid",
+      "destination": "campaign/presentation/road_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/settlement_art.gd",
+      "destination": "campaign/presentation/settlement_art.gd"
+    },
+    {
+      "source": "campaign/presentation/settlement_art.gd.uid",
+      "destination": "campaign/presentation/settlement_art.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/settlement_layer.gd",
+      "destination": "campaign/presentation/settlement_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/settlement_layer.gd.uid",
+      "destination": "campaign/presentation/settlement_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/siege_window.gd",
+      "destination": "campaign/presentation/siege_window.gd"
+    },
+    {
+      "source": "campaign/presentation/siege_window.gd.uid",
+      "destination": "campaign/presentation/siege_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_common.gdshaderinc",
+      "destination": "campaign/presentation/terrain_common.gdshaderinc"
+    },
+    {
+      "source": "campaign/presentation/terrain_common.gdshaderinc.uid",
+      "destination": "campaign/presentation/terrain_common.gdshaderinc.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_layer.gd",
+      "destination": "campaign/presentation/terrain_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/terrain_layer.gd.uid",
+      "destination": "campaign/presentation/terrain_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass1.gdshader",
+      "destination": "campaign/presentation/terrain_pass1.gdshader"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass1.gdshader.uid",
+      "destination": "campaign/presentation/terrain_pass1.gdshader.uid"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass2.gdshader",
+      "destination": "campaign/presentation/terrain_pass2.gdshader"
+    },
+    {
+      "source": "campaign/presentation/terrain_pass2.gdshader.uid",
+      "destination": "campaign/presentation/terrain_pass2.gdshader.uid"
+    },
+    {
+      "source": "campaign/presentation/town_window.gd",
+      "destination": "campaign/presentation/town_window.gd"
+    },
+    {
+      "source": "campaign/presentation/town_window.gd.uid",
+      "destination": "campaign/presentation/town_window.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/vignette.gdshader",
+      "destination": "campaign/presentation/vignette.gdshader"
+    },
+    {
+      "source": "campaign/presentation/vignette.gdshader.uid",
+      "destination": "campaign/presentation/vignette.gdshader.uid"
+    },
+    {
+      "source": "campaign/presentation/world_camera.gd",
+      "destination": "campaign/presentation/world_camera.gd"
+    },
+    {
+      "source": "campaign/presentation/world_camera.gd.uid",
+      "destination": "campaign/presentation/world_camera.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_hud.gd",
+      "destination": "campaign/presentation/world_hud.gd"
+    },
+    {
+      "source": "campaign/presentation/world_hud.gd.uid",
+      "destination": "campaign/presentation/world_hud.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_map_view.gd",
+      "destination": "campaign/presentation/world_map_view.gd"
+    },
+    {
+      "source": "campaign/presentation/world_map_view.gd.uid",
+      "destination": "campaign/presentation/world_map_view.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_marks_layer.gd",
+      "destination": "campaign/presentation/world_marks_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/world_marks_layer.gd.uid",
+      "destination": "campaign/presentation/world_marks_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_parties_layer.gd",
+      "destination": "campaign/presentation/world_parties_layer.gd"
+    },
+    {
+      "source": "campaign/presentation/world_parties_layer.gd.uid",
+      "destination": "campaign/presentation/world_parties_layer.gd.uid"
+    },
+    {
+      "source": "campaign/presentation/world_tips.gd",
+      "destination": "campaign/presentation/world_tips.gd"
+    },
+    {
+      "source": "campaign/presentation/world_tips.gd.uid",
+      "destination": "campaign/presentation/world_tips.gd.uid"
+    },
+    {
+      "source": "campaign/rules/battle_aftermath.gd",
+      "destination": "campaign/rules/battle_aftermath.gd"
+    },
+    {
+      "source": "campaign/rules/battle_aftermath.gd.uid",
+      "destination": "campaign/rules/battle_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/rules/battle_quests.gd",
+      "destination": "campaign/rules/battle_quests.gd"
+    },
+    {
+      "source": "campaign/rules/battle_quests.gd.uid",
+      "destination": "campaign/rules/battle_quests.gd.uid"
+    },
+    {
+      "source": "campaign/rules/encounter_world.gd",
+      "destination": "campaign/rules/encounter_world.gd"
+    },
+    {
+      "source": "campaign/rules/encounter_world.gd.uid",
+      "destination": "campaign/rules/encounter_world.gd.uid"
+    },
+    {
+      "source": "campaign/rules/relations.gd",
+      "destination": "campaign/rules/relations.gd"
+    },
+    {
+      "source": "campaign/rules/relations.gd.uid",
+      "destination": "campaign/rules/relations.gd.uid"
+    },
+    {
+      "source": "campaign/rules/settlement_recruits.gd",
+      "destination": "campaign/rules/settlement_recruits.gd"
+    },
+    {
+      "source": "campaign/rules/settlement_recruits.gd.uid",
+      "destination": "campaign/rules/settlement_recruits.gd.uid"
+    },
+    {
+      "source": "campaign/rules/siege_aftermath.gd",
+      "destination": "campaign/rules/siege_aftermath.gd"
+    },
+    {
+      "source": "campaign/rules/siege_aftermath.gd.uid",
+      "destination": "campaign/rules/siege_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/tests/economy/test_battle_loot.gd",
+      "destination": "campaign/tests/economy/test_battle_loot.gd"
+    },
+    {
+      "source": "campaign/tests/economy/test_battle_loot.gd.uid",
+      "destination": "campaign/tests/economy/test_battle_loot.gd.uid"
+    },
+    {
+      "source": "campaign/tests/economy/test_market.gd",
+      "destination": "campaign/tests/economy/test_market.gd"
+    },
+    {
+      "source": "campaign/tests/economy/test_market.gd.uid",
+      "destination": "campaign/tests/economy/test_market.gd.uid"
+    },
+    {
+      "source": "campaign/tests/fixtures/world_parity.json",
+      "destination": "campaign/tests/fixtures/world_parity.json"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_aftermath.gd",
+      "destination": "campaign/tests/rules/test_battle_aftermath.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_aftermath.gd.uid",
+      "destination": "campaign/tests/rules/test_battle_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_quests.gd",
+      "destination": "campaign/tests/rules/test_battle_quests.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_quests.gd.uid",
+      "destination": "campaign/tests/rules/test_battle_quests.gd.uid"
+    },
+    {
+      "source": "campaign/tests/rules/test_encounter_world.gd",
+      "destination": "campaign/tests/rules/test_encounter_world.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_encounter_world.gd.uid",
+      "destination": "campaign/tests/rules/test_encounter_world.gd.uid"
+    },
+    {
+      "source": "campaign/tests/rules/test_siege_aftermath.gd",
+      "destination": "campaign/tests/rules/test_siege_aftermath.gd"
+    },
+    {
+      "source": "campaign/tests/rules/test_siege_aftermath.gd.uid",
+      "destination": "campaign/tests/rules/test_siege_aftermath.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_auto_battle.gd",
+      "destination": "campaign/tests/world/test_auto_battle.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_auto_battle.gd.uid",
+      "destination": "campaign/tests/world/test_auto_battle.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_party_ai.gd",
+      "destination": "campaign/tests/world/test_party_ai.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_party_ai.gd.uid",
+      "destination": "campaign/tests/world/test_party_ai.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_party_economy.gd",
+      "destination": "campaign/tests/world/test_party_economy.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_party_economy.gd.uid",
+      "destination": "campaign/tests/world/test_party_economy.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_terrain_parity.gd",
+      "destination": "campaign/tests/world/test_terrain_parity.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_terrain_parity.gd.uid",
+      "destination": "campaign/tests/world/test_terrain_parity.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_clans.gd",
+      "destination": "campaign/tests/world/test_world_clans.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_clans.gd.uid",
+      "destination": "campaign/tests/world/test_world_clans.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_map_parity.gd",
+      "destination": "campaign/tests/world/test_world_map_parity.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_map_parity.gd.uid",
+      "destination": "campaign/tests/world/test_world_map_parity.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_quests.gd",
+      "destination": "campaign/tests/world/test_world_quests.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_quests.gd.uid",
+      "destination": "campaign/tests/world/test_world_quests.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_save.gd",
+      "destination": "campaign/tests/world/test_world_save.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_save.gd.uid",
+      "destination": "campaign/tests/world/test_world_save.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_siege.gd",
+      "destination": "campaign/tests/world/test_world_siege.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_siege.gd.uid",
+      "destination": "campaign/tests/world/test_world_siege.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_state.gd",
+      "destination": "campaign/tests/world/test_world_state.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_state.gd.uid",
+      "destination": "campaign/tests/world/test_world_state.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_undead.gd",
+      "destination": "campaign/tests/world/test_world_undead.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_undead.gd.uid",
+      "destination": "campaign/tests/world/test_world_undead.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_vassals.gd",
+      "destination": "campaign/tests/world/test_world_vassals.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_vassals.gd.uid",
+      "destination": "campaign/tests/world/test_world_vassals.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_war_extras.gd",
+      "destination": "campaign/tests/world/test_world_war_extras.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_war_extras.gd.uid",
+      "destination": "campaign/tests/world/test_world_war_extras.gd.uid"
+    },
+    {
+      "source": "campaign/tests/world/test_world_wars.gd",
+      "destination": "campaign/tests/world/test_world_wars.gd"
+    },
+    {
+      "source": "campaign/tests/world/test_world_wars.gd.uid",
+      "destination": "campaign/tests/world/test_world_wars.gd.uid"
+    },
+    {
+      "source": "campaign/tools/export_goods.cjs",
+      "destination": "campaign/tools/export_goods.cjs"
+    },
+    {
+      "source": "campaign/tools/export_world.cjs",
+      "destination": "campaign/tools/export_world.cjs"
+    },
+    {
+      "source": "campaign/world/auto_battle.gd",
+      "destination": "campaign/world/auto_battle.gd"
+    },
+    {
+      "source": "campaign/world/auto_battle.gd.uid",
+      "destination": "campaign/world/auto_battle.gd.uid"
+    },
+    {
+      "source": "campaign/world/heap.gd",
+      "destination": "campaign/world/heap.gd"
+    },
+    {
+      "source": "campaign/world/heap.gd.uid",
+      "destination": "campaign/world/heap.gd.uid"
+    },
+    {
+      "source": "campaign/world/noise.gd",
+      "destination": "campaign/world/noise.gd"
+    },
+    {
+      "source": "campaign/world/noise.gd.uid",
+      "destination": "campaign/world/noise.gd.uid"
+    },
+    {
+      "source": "campaign/world/party_ai.gd",
+      "destination": "campaign/world/party_ai.gd"
+    },
+    {
+      "source": "campaign/world/party_ai.gd.uid",
+      "destination": "campaign/world/party_ai.gd.uid"
+    },
+    {
+      "source": "campaign/world/party_roster.gd",
+      "destination": "campaign/world/party_roster.gd"
+    },
+    {
+      "source": "campaign/world/party_roster.gd.uid",
+      "destination": "campaign/world/party_roster.gd.uid"
+    },
+    {
+      "source": "campaign/world/party_rules.gd",
+      "destination": "campaign/world/party_rules.gd"
+    },
+    {
+      "source": "campaign/world/party_rules.gd.uid",
+      "destination": "campaign/world/party_rules.gd.uid"
+    },
+    {
+      "source": "campaign/world/pathfinder.gd",
+      "destination": "campaign/world/pathfinder.gd"
+    },
+    {
+      "source": "campaign/world/pathfinder.gd.uid",
+      "destination": "campaign/world/pathfinder.gd.uid"
+    },
+    {
+      "source": "campaign/world/player_party.gd",
+      "destination": "campaign/world/player_party.gd"
+    },
+    {
+      "source": "campaign/world/player_party.gd.uid",
+      "destination": "campaign/world/player_party.gd.uid"
+    },
+    {
+      "source": "campaign/world/road_generator.gd",
+      "destination": "campaign/world/road_generator.gd"
+    },
+    {
+      "source": "campaign/world/road_generator.gd.uid",
+      "destination": "campaign/world/road_generator.gd.uid"
+    },
+    {
+      "source": "campaign/world/settlement_generator.gd",
+      "destination": "campaign/world/settlement_generator.gd"
+    },
+    {
+      "source": "campaign/world/settlement_generator.gd.uid",
+      "destination": "campaign/world/settlement_generator.gd.uid"
+    },
+    {
+      "source": "campaign/world/terrain_generator.gd",
+      "destination": "campaign/world/terrain_generator.gd"
+    },
+    {
+      "source": "campaign/world/terrain_generator.gd.uid",
+      "destination": "campaign/world/terrain_generator.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_clans.gd",
+      "destination": "campaign/world/world_clans.gd"
+    },
+    {
+      "source": "campaign/world/world_clans.gd.uid",
+      "destination": "campaign/world/world_clans.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_clock.gd",
+      "destination": "campaign/world/world_clock.gd"
+    },
+    {
+      "source": "campaign/world/world_clock.gd.uid",
+      "destination": "campaign/world/world_clock.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_companions.gd",
+      "destination": "campaign/world/world_companions.gd"
+    },
+    {
+      "source": "campaign/world/world_companions.gd.uid",
+      "destination": "campaign/world/world_companions.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_map.gd",
+      "destination": "campaign/world/world_map.gd"
+    },
+    {
+      "source": "campaign/world/world_map.gd.uid",
+      "destination": "campaign/world/world_map.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_quests.gd",
+      "destination": "campaign/world/world_quests.gd"
+    },
+    {
+      "source": "campaign/world/world_quests.gd.uid",
+      "destination": "campaign/world/world_quests.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_save.gd",
+      "destination": "campaign/world/world_save.gd"
+    },
+    {
+      "source": "campaign/world/world_save.gd.uid",
+      "destination": "campaign/world/world_save.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_siege.gd",
+      "destination": "campaign/world/world_siege.gd"
+    },
+    {
+      "source": "campaign/world/world_siege.gd.uid",
+      "destination": "campaign/world/world_siege.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_skirmish.gd",
+      "destination": "campaign/world/world_skirmish.gd"
+    },
+    {
+      "source": "campaign/world/world_skirmish.gd.uid",
+      "destination": "campaign/world/world_skirmish.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_state.gd",
+      "destination": "campaign/world/world_state.gd"
+    },
+    {
+      "source": "campaign/world/world_state.gd.uid",
+      "destination": "campaign/world/world_state.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_undead.gd",
+      "destination": "campaign/world/world_undead.gd"
+    },
+    {
+      "source": "campaign/world/world_undead.gd.uid",
+      "destination": "campaign/world/world_undead.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_vassals.gd",
+      "destination": "campaign/world/world_vassals.gd"
+    },
+    {
+      "source": "campaign/world/world_vassals.gd.uid",
+      "destination": "campaign/world/world_vassals.gd.uid"
+    },
+    {
+      "source": "campaign/world/world_wars.gd",
+      "destination": "campaign/world/world_wars.gd"
+    },
+    {
+      "source": "campaign/world/world_wars.gd.uid",
+      "destination": "campaign/world/world_wars.gd.uid"
+    },
+    {
+      "source": "characters/config.gd",
+      "destination": "characters/config.gd"
+    },
+    {
+      "source": "characters/config.gd.uid",
+      "destination": "characters/config.gd.uid"
+    },
+    {
+      "source": "characters/data/companion_catalog.gd",
+      "destination": "characters/data/companion_catalog.gd"
+    },
+    {
+      "source": "characters/data/companion_catalog.gd.uid",
+      "destination": "characters/data/companion_catalog.gd.uid"
+    },
+    {
+      "source": "characters/data/companions.json",
+      "destination": "characters/data/companions.json"
+    },
+    {
+      "source": "characters/data/perk_catalog.gd",
+      "destination": "characters/data/perk_catalog.gd"
+    },
+    {
+      "source": "characters/data/perk_catalog.gd.uid",
+      "destination": "characters/data/perk_catalog.gd.uid"
+    },
+    {
+      "source": "characters/data/perks.json",
+      "destination": "characters/data/perks.json"
+    },
+    {
+      "source": "characters/rules/companion_profile.gd",
+      "destination": "characters/rules/companion_profile.gd"
+    },
+    {
+      "source": "characters/rules/companion_profile.gd.uid",
+      "destination": "characters/rules/companion_profile.gd.uid"
+    },
+    {
+      "source": "characters/rules/perk_effects.gd",
+      "destination": "characters/rules/perk_effects.gd"
+    },
+    {
+      "source": "characters/rules/perk_effects.gd.uid",
+      "destination": "characters/rules/perk_effects.gd.uid"
+    },
+    {
+      "source": "characters/rules/progression.gd",
+      "destination": "characters/rules/progression.gd"
+    },
+    {
+      "source": "characters/rules/progression.gd.uid",
+      "destination": "characters/rules/progression.gd.uid"
+    },
+    {
+      "source": "characters/tests/data/test_perk_catalog.gd",
+      "destination": "characters/tests/data/test_perk_catalog.gd"
+    },
+    {
+      "source": "characters/tests/data/test_perk_catalog.gd.uid",
+      "destination": "characters/tests/data/test_perk_catalog.gd.uid"
+    },
+    {
+      "source": "characters/tests/rules/test_companion_profile.gd",
+      "destination": "characters/tests/rules/test_companion_profile.gd"
+    },
+    {
+      "source": "characters/tests/rules/test_companion_profile.gd.uid",
+      "destination": "characters/tests/rules/test_companion_profile.gd.uid"
+    },
+    {
+      "source": "characters/tests/rules/test_perk_effects.gd",
+      "destination": "characters/tests/rules/test_perk_effects.gd"
+    },
+    {
+      "source": "characters/tests/rules/test_perk_effects.gd.uid",
+      "destination": "characters/tests/rules/test_perk_effects.gd.uid"
+    },
+    {
+      "source": "characters/tools/export_companions.cjs",
+      "destination": "characters/tools/export_companions.cjs"
+    },
+    {
+      "source": "characters/tools/export_perks.cjs",
+      "destination": "characters/tools/export_perks.cjs"
+    },
+    {
+      "source": "equipment/config.gd",
+      "destination": "equipment/config.gd"
+    },
+    {
+      "source": "equipment/config.gd.uid",
+      "destination": "equipment/config.gd.uid"
+    },
+    {
+      "source": "equipment/data/gear_catalog.gd",
+      "destination": "equipment/data/gear_catalog.gd"
+    },
+    {
+      "source": "equipment/data/gear_catalog.gd.uid",
+      "destination": "equipment/data/gear_catalog.gd.uid"
+    },
+    {
+      "source": "equipment/data/items.json",
+      "destination": "equipment/data/items.json"
+    },
+    {
+      "source": "equipment/rules/damage_type.gd",
+      "destination": "equipment/rules/damage_type.gd"
+    },
+    {
+      "source": "equipment/rules/damage_type.gd.uid",
+      "destination": "equipment/rules/damage_type.gd.uid"
+    },
+    {
+      "source": "equipment/rules/hero_equip.gd",
+      "destination": "equipment/rules/hero_equip.gd"
+    },
+    {
+      "source": "equipment/rules/hero_equip.gd.uid",
+      "destination": "equipment/rules/hero_equip.gd.uid"
+    },
+    {
+      "source": "equipment/rules/hero_gear.gd",
+      "destination": "equipment/rules/hero_gear.gd"
+    },
+    {
+      "source": "equipment/rules/hero_gear.gd.uid",
+      "destination": "equipment/rules/hero_gear.gd.uid"
+    },
+    {
+      "source": "equipment/tests/data/test_gear_catalog.gd",
+      "destination": "equipment/tests/data/test_gear_catalog.gd"
+    },
+    {
+      "source": "equipment/tests/data/test_gear_catalog.gd.uid",
+      "destination": "equipment/tests/data/test_gear_catalog.gd.uid"
+    },
+    {
+      "source": "equipment/tests/rules/test_damage_type.gd",
+      "destination": "equipment/tests/rules/test_damage_type.gd"
+    },
+    {
+      "source": "equipment/tests/rules/test_damage_type.gd.uid",
+      "destination": "equipment/tests/rules/test_damage_type.gd.uid"
+    },
+    {
+      "source": "equipment/tests/rules/test_hero_gear.gd",
+      "destination": "equipment/tests/rules/test_hero_gear.gd"
+    },
+    {
+      "source": "equipment/tests/rules/test_hero_gear.gd.uid",
+      "destination": "equipment/tests/rules/test_hero_gear.gd.uid"
+    },
+    {
+      "source": "equipment/tools/export_gear.cjs",
+      "destination": "equipment/tools/export_gear.cjs"
+    },
+    {
+      "source": "project.godot",
+      "destination": "project.godot"
+    },
+    {
+      "source": "tests/architecture/test_boundaries.gd",
+      "destination": "tests/architecture/test_boundaries.gd"
+    },
+    {
+      "source": "tests/architecture/test_boundaries.gd.uid",
+      "destination": "tests/architecture/test_boundaries.gd.uid"
+    },
+    {
+      "source": "tools/baseline/.gdignore",
+      "destination": "tools/baseline/.gdignore"
+    },
+    {
+      "source": "tools/baseline/README.md",
+      "destination": "tools/baseline/README.md"
+    },
+    {
+      "source": "tools/baseline/main_0300.png",
+      "destination": "tools/baseline/main_0300.png"
+    },
+    {
+      "source": "tools/baseline/main_1500.png",
+      "destination": "tools/baseline/main_1500.png"
+    },
+    {
+      "source": "tools/baseline/siege_demo_0300.png",
+      "destination": "tools/baseline/siege_demo_0300.png"
+    },
+    {
+      "source": "tools/baseline/siege_demo_1500.png",
+      "destination": "tools/baseline/siege_demo_1500.png"
+    },
+    {
+      "source": "tools/baseline_capture.gd",
+      "destination": "tools/baseline_capture.gd"
+    },
+    {
+      "source": "tools/baseline_capture.gd.uid",
+      "destination": "tools/baseline_capture.gd.uid"
+    },
+    {
+      "source": "tools/behavior_fingerprint.gd",
+      "destination": "tools/behavior_fingerprint.gd"
+    },
+    {
+      "source": "tools/behavior_fingerprint.gd.uid",
+      "destination": "tools/behavior_fingerprint.gd.uid"
+    },
+    {
+      "source": "tools/test.cjs",
+      "destination": "tools/test.cjs"
+    },
+    {
+      "source": "tools/world_shot.gd",
+      "destination": "tools/world_shot.gd"
+    },
+    {
+      "source": "tools/world_shot.gd.uid",
+      "destination": "tools/world_shot.gd.uid"
+    },
+    {
+      "source": "troops/config.gd",
+      "destination": "troops/config.gd"
+    },
+    {
+      "source": "troops/config.gd.uid",
+      "destination": "troops/config.gd.uid"
+    },
+    {
+      "source": "troops/data/catalog.gd",
+      "destination": "troops/data/catalog.gd"
+    },
+    {
+      "source": "troops/data/catalog.gd.uid",
+      "destination": "troops/data/catalog.gd.uid"
+    },
+    {
+      "source": "troops/data/troops.json",
+      "destination": "troops/data/troops.json"
+    },
+    {
+      "source": "troops/rules/generation.gd",
+      "destination": "troops/rules/generation.gd"
+    },
+    {
+      "source": "troops/rules/generation.gd.uid",
+      "destination": "troops/rules/generation.gd.uid"
+    },
+    {
+      "source": "troops/tests/data/test_catalog_validation.gd",
+      "destination": "troops/tests/data/test_catalog_validation.gd"
+    },
+    {
+      "source": "troops/tests/data/test_catalog_validation.gd.uid",
+      "destination": "troops/tests/data/test_catalog_validation.gd.uid"
+    },
+    {
+      "source": "troops/tools/export_troops.cjs",
+      "destination": "troops/tools/export_troops.cjs"
+    }
+  ]
+}

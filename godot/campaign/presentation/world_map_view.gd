@@ -19,7 +19,9 @@ var _settlement_layer: Node2D
 
 func build(seed_value: int) -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
+	if not (data.load_data()):
+		push_error("Required content failed to load: campaign/presentation/world_map_view.gd")
+		return
 	build_from(WorldMap.create(seed_value, data))
 
 func build_from(world_map: RefCounted) -> void:

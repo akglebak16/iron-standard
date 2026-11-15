@@ -17,7 +17,9 @@ var _factions := FactionCatalog.new()
 
 func _ready() -> void:
 	super()
-	assert(_factions.load_data())
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: campaign/presentation/siege_window.gd")
+		return
 
 func open_for(world_state: RefCounted, s: Dictionary) -> void:
 	state = world_state

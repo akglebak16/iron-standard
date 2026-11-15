@@ -13,7 +13,9 @@ var _factions := FactionCatalog.new()
 func build(party_roster: RefCounted, player_party: RefCounted) -> void:
 	roster = party_roster
 	player = player_party
-	assert(_factions.load_data())
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: campaign/presentation/world_parties_layer.gd")
+		return
 
 func _process(_delta: float) -> void:
 	queue_redraw()

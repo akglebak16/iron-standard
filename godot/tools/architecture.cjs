@@ -1,0 +1,141 @@
+const fs = require('fs');
+const path = require('path');
+const cp = require('child_process');
+const ROOT = path.resolve(__dirname, '..');
+const MANIFEST = 'docs/architecture/modules.json';
+
+// Tokenize strings/comments separately: imports in comments are not dependencies,
+// and identifiers inside strings are not executable calls. Both quote styles work.
+function tokens(source) {
+  const result = [];
+  const re = /#[^\n]*|"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_][A-Za-z_0-9]*|[^\s]/g;
+  for (const match of source.matchAll(re)) {
+    const value = match[0];
+    if (value.startsWith('#')) continue;
+    result.push({ value: /^['"]/.test(value) ? value.slice(value.startsWith('"""') || value.startsWith("'''") ? 3 : 1, value.startsWith('"""') || value.startsWith("'''") ? -3 : -1) : value,
+      string: /^['"]/.test(value), line: source.slice(0, match.index).split('\n').length });
+  }
+  return result;
+}
+
+function collect(root) {
+  const files = new Map();
+  function walk(dir) {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.name.startsWith('.')) continue;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (/\.(gd|tscn|tres|uid)$/.test(e.name)) files.set(path.relative(root, full).replaceAll('\\', '/'), fs.readFileSync(full, 'utf8'));
+    }
+  }
+  walk(root);
+  return files;
+}
+
+function analyze(files, manifest) {
+  const issues = [];
+  const graph = new Map(), classes = new Map(), uids = new Map();
+  const parsed = new Map();
+  const test = p => p.startsWith('tests/') || p.includes('/tests/') || p.startsWith('tools/') || p.includes('/tools/');
+  const owner = p => manifest.modules.find(m => p.startsWith(m.prefix));
+  const add = (file, rule, target) => issues.push({ file, rule, target, key: `${file}|${rule}|${target}` });
+  for (const [file, source] of files) {
+    if (file.endsWith('.uid')) { uids.set(source.trim(), file.slice(0, -4)); continue; }
+    const ts = tokens(source); parsed.set(file, ts);
+    for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') classes.set(ts[i + 1].value, file);
+  }
+  for (const [file, ts] of parsed) {
+    const dependencies = new Set();
+    for (const t of ts) {
+      let dependency;
+      if (t.string && t.value.startsWith('res://')) dependency = path.posix.normalize(t.value.slice(6));
+      else if (t.string && t.value.startsWith('uid://')) dependency = uids.get(t.value);
+      else if (!t.string && classes.has(t.value)) dependency = classes.get(t.value);
+      else if (t.string && /^(\.\.?\/).+\.(gd|tscn|tres)$/.test(t.value)) dependency = path.posix.normalize(path.posix.join(path.posix.dirname(file), t.value));
+      if (dependency && dependency !== file && /\.(gd|tscn|tres)$/.test(dependency)) {
+        if (!files.has(dependency)) add(file, 'missing-reference', dependency);
+        else dependencies.add(dependency);
+      }
+      if (t.string && t.value.startsWith('uid://') && !uids.has(t.value)) add(file, 'unknown-uid', t.value);
+    }
+    graph.set(file, dependencies);
+    if (test(file)) continue;
+    const module = owner(file);
+    if (!module) add(file, 'unowned-file', file);
+    const pure = file.startsWith('core/') || file.startsWith('runtime/');
+    const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
+    if (pure) {
+      for (const symbol of ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree']) {
+        if (ts.some(t => !t.string && t.value === symbol)) add(file, 'pure-core', symbol);
+      }
+      if (/\bextends\s+(Node\w*|Control|Resource|CharacterBody\w*|RigidBody\w*|Sprite\w*|Canvas\w*|AudioStream\w*)\b/.test(code)) add(file, 'pure-core', 'engine-object');
+      if (/\bstatic var\b/.test(code)) add(file, 'mutable-static', 'state');
+      // Runtime loading cannot hide dependency edges from this graph.
+      if (/\bload\s*\(/.test(code)) add(file, 'dynamic-load', 'load');
+    }
+    for (let i = 0; i < ts.length; i++) {
+      if (ts[i].string || ts[i].value !== 'assert' || ts[i + 1]?.value !== '(') continue;
+      let depth = 1;
+      for (let j = i + 2; j < ts.length && depth; j++) {
+        if (!ts[j].string && ts[j].value === '(') depth++;
+        if (!ts[j].string && ts[j].value === ')') depth--;
+        if (!ts[j].string && /^(load_data|save|replace_data|create|advance|step|equip|spawn)$/.test(ts[j].value) && ts[j + 1]?.value === '(') add(file, 'assert-side-effect', ts[j].value);
+      }
+    }
+    for (const dependency of dependencies) {
+      const other = owner(dependency);
+      if (pure && /^(apps|adapters)\//.test(dependency)) add(file, 'dependency-direction', dependency);
+      if (module && other && module.name !== other.name) {
+        if (!module.allowed.includes(other.name)) add(file, 'module-dependency', dependency);
+        else if (!other.public.some(p => dependency.startsWith(p))) add(file, 'private-api', dependency);
+      }
+    }
+  }
+  // Transitive engine access must not be concealed in another core helper.
+  for (const [file] of graph) {
+    if (!/^(core|runtime)\//.test(file)) continue;
+    const seen = new Set([file]), stack = [...graph.get(file)];
+    while (stack.length) {
+      const next = stack.pop(); if (seen.has(next)) continue; seen.add(next);
+      if (/^(apps|adapters)\//.test(next)) add(file, 'transitive-direction', next);
+      stack.push(...(graph.get(next) || []));
+    }
+  }
+  const visiting = new Set(), done = new Set();
+  function visit(file, route) {
+    if (visiting.has(file)) { add(file, 'dependency-cycle', [...route.slice(route.indexOf(file)), file].join(' -> ')); return; }
+    if (done.has(file) || test(file)) return;
+    visiting.add(file);
+    for (const next of graph.get(file) || []) visit(next, [...route, file]);
+    visiting.delete(file); done.add(file);
+  }
+  for (const file of graph.keys()) visit(file, []);
+  return [...new Map(issues.map(i => [i.key, i])).values()];
+}
+
+function check() {
+  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, MANIFEST), 'utf8'));
+  const files = collect(ROOT);
+  for (const dir of manifest.requiredDirectories) if (!fs.existsSync(path.join(ROOT, dir))) throw new Error(`Missing required directory: ${dir}`);
+  const issues = analyze(files, manifest);
+  const exceptions = new Map(manifest.exceptions.map(e => [e.key, e]));
+  for (const e of exceptions.values()) if (!e.reason || !Number.isInteger(e.removeByStage)) throw new Error(`Invalid exception: ${e.key}`);
+  const active = new Set(issues.map(i => i.key));
+  const errors = issues.filter(i => !exceptions.has(i.key)).map(i => i.key);
+  for (const key of exceptions.keys()) if (!active.has(key)) errors.push(`Remove resolved exception: ${key}`);
+  const inventory = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/architecture/file-inventory.json'), 'utf8'));
+  for (const file of inventory.files) if (!fs.existsSync(path.join(ROOT, file.destination))) errors.push(`Lost migration file: ${file.source} -> ${file.destination}`);
+  const baseArg = process.argv.find(a => a.startsWith('--base='));
+  if (baseArg) {
+    const base = baseArg.slice(7);
+    const previous = cp.spawnSync('git', ['show', `${base}:godot/${MANIFEST}`], { encoding: 'utf8', cwd: ROOT });
+    if (previous.status === 0) {
+      const prior = new Set(JSON.parse(previous.stdout).exceptions.map(e => e.key));
+      for (const key of exceptions.keys()) if (!prior.has(key)) errors.push(`Exception added against ${base}: ${key}`);
+    } else if (manifest.exceptions.length) errors.push(`Cannot verify exceptions against ${base}`);
+  }
+  if (errors.length) throw new Error(errors.join('\n'));
+  console.log(`Architecture passed: ${files.size} source/resources, ${exceptions.size} explicit migration exceptions`);
+}
+if (require.main === module) check();
+module.exports = { tokens, collect, analyze, check };

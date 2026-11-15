@@ -19,7 +19,15 @@ var _background: Node2D
 var _preferences := Preferences.new()
 
 func _ready() -> void:
-	assert(_factions.load_data())
+	if "--cpu-benchmark" in OS.get_cmdline_user_args():
+		load("res://tests/performance/battle_benchmark.gd").new().run(get_tree())
+		return
+	if "--release-smoke" in OS.get_cmdline_user_args() and not has_meta("release_smoke_child"):
+		add_child(load("res://tools/release_smoke.gd").new())
+		return
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: app/main_menu.gd")
+		return
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if DisplayServer.get_name() != "headless":
 		_background = preload("res://app/main.tscn").instantiate()

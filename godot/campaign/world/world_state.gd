@@ -61,6 +61,28 @@ var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
 
+## Release owned subscriptions and the deliberate cross-links between campaign systems.
+## Called when leaving the campaign; disposing one context must not clear another's data.
+func dispose() -> void:
+	for source in [wars, undead, clans, quests, companions, vassals, siege]:
+		if source == null: continue
+		for info in source.get_signal_list():
+			for connection in source.get_signal_connection_list(info.name):
+				source.disconnect(info.name, connection.callable)
+	if wars != null: wars.clans = null
+	if clans != null: clans.siege = null
+	if siege != null: siege.vassals = null
+	ai = null
+	wars = null
+	clans = null
+	siege = null
+	quests = null
+	undead = null
+	vassals = null
+	skirmish = null
+	companions = null
+	roster = null
+
 static func create(seed_value: int, data: EuropeData, player_culture := "emp") -> RefCounted:
 	var state := new()
 	state.culture = player_culture
@@ -72,13 +94,19 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 		"int": 1, "cha": 1, "armor": 0, "weapon": 0, "shield": 0, "horse": 1 if player_culture in ["khan", "emi"] else 0, "hp": 1.0, "seed": seed_value % 99999 + 1}
 	for t in START_TROOPS[player_culture]:
 		state.player.troops.append({"type": t[0], "n": t[1]})
-	assert(state.perks.load_data())
+	if not (state.perks.load_data()):
+		push_error("Required content failed to load: campaign/world/world_state.gd")
+		return null
 	var goods := GoodsCatalog.new()
-	assert(goods.load_data())
+	if not (goods.load_data()):
+		push_error("Required content failed to load: campaign/world/world_state.gd")
+		return null
 	state.market = Market.new(goods, RandomNumberGenerator.new())
 	state.market.rng.seed = seed_value + 191
 	var gear_catalog := GearCatalog.new()
-	assert(gear_catalog.load_data())
+	if not (gear_catalog.load_data()):
+		push_error("Required content failed to load: campaign/world/world_state.gd")
+		return null
 	state.gear = gear_catalog
 	state.market.gear = gear_catalog.definitions()
 	state.roster = PartyRoster.new(state.map, seed_value)
@@ -103,7 +131,9 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.wars.clans = state.clans
 	state.ai.clans = state.clans
 	state.roster.clans_on = true
-	assert(state.companion_catalog.load_data())
+	if not (state.companion_catalog.load_data()):
+		push_error("Required content failed to load: campaign/world/world_state.gd")
+		return null
 	state.quests = WorldQuests.new(state.map, state.market.goods, state.roster.catalog, state.wars, state.roster.rng)
 	state.quests.message.connect(state.log_world)
 	state.quests.gen_boards(state.clock.day)

@@ -26,7 +26,9 @@ var _factions := FactionCatalog.new()
 
 func _ready() -> void:
 	layer = 5
-	assert(_factions.load_data())
+	if not (_factions.load_data()):
+		push_error("Required content failed to load: campaign/presentation/world_hud.gd")
+		return
 	_night = ColorRect.new()
 	_night.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_night.mouse_filter = Control.MOUSE_FILTER_IGNORE

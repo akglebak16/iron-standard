@@ -14,7 +14,9 @@ const MICROSECONDS_PER_MILLISECOND := 1000.0
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
-	assert(catalog.load_data())
+	if not (catalog.load_data()):
+		push_error("Required content failed to load: battle/tools/benchmark.gd")
+		return
 	for army_size in [24, Config.SOLO_UNIT_CAP]:
 		var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 		setup.companion_profiles.clear()
