@@ -122,6 +122,7 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.skirmish.undead = state.undead
 	state.ai.skirmish = state.skirmish
 	Rules.player_rel = state.player.rel
+	state.rel_watch()
 	return state
 
 func _place_player(seed_value: int) -> void:
@@ -210,6 +211,7 @@ func hour_tick() -> void:
 	wars.war_hour()
 	undead.day = clock.day
 	undead.hour_tick()
+	rel_watch()
 	skirmish.hour_now = wars.now_h()
 	skirmish.hour_tick()
 	if clock.hour == 12:
@@ -226,6 +228,28 @@ func hour_tick() -> void:
 		WorldCompanions.heal(player, heal)
 	if clock.hour == 0:
 		_day_tick()
+
+var _hostile := {}
+
+## Tells the player when a state turns hostile or makes peace with him (relWatch).
+func rel_watch() -> void:
+	for f in Rules.REAL_FACTIONS:
+		var h: bool = float(player.rel.get(f, 0)) < -20.0
+		if not _hostile.has(f):
+			_hostile[f] = h
+			continue
+		if _hostile[f] == h:
+			continue
+		_hostile[f] = h
+		var gen: String = roster.factions.get_faction(f).get("gen", f)
+		log_world(("Ты теперь враг %s: их лорды нападут, ворота их городов закрыты." if h else "Ты больше не враг %s.") % gen)
+
+## The player declares war to besiege a town of a state he is at peace with (declareWar).
+func declare_war(f: String) -> void:
+	if not f in Rules.REAL_FACTIONS:
+		return
+	player.rel[f] = minf(float(player.rel.get(f, 0)), -45.0)
+	rel_watch()
 
 func player_effects() -> Dictionary:
 	return CompanionProfile.party_effects(player.hero, player.comps, companion_catalog, perks)

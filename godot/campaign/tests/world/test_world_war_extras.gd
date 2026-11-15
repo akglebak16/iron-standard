@@ -119,5 +119,14 @@ func _initialize() -> void:
 	marks.show_quest_target(town.x, town.y)
 	await process_frame
 	await process_frame
+	# declaring war to besiege a peaceful town, and the hostility notice
+	var logged: Array = []
+	s.log_added.connect(func(t): logged.append(t))
+	p.rel["kin"] = 10
+	s.rel_watch()
+	var asked: Array = []
+	s.siege_requested.connect(func(t): asked.append(t.id))
+	s.declare_war("kin")
+	assert(float(p.rel["kin"]) <= -45.0 and logged.any(func(t): return "враг" in t))
 	print("War extras tests passed")
 	quit(0)
