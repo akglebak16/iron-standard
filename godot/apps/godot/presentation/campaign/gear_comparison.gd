@@ -27,8 +27,8 @@ static func compare(profile: Dictionary, item: Dictionary, catalog, perks, previ
 		before.sel = item.slot
 		after.sel = item.slot
 	var effects: Dictionary = PerkEffects.own(profile, perks)
-	var then := preview.call(before, HeroGear.resolve(before, catalog), effects)
-	var now := preview.call(after, HeroGear.resolve(after, catalog), effects)
+	var then: Dictionary = preview.call(before, HeroGear.resolve(before, catalog), effects)
+	var now: Dictionary = preview.call(after, HeroGear.resolve(after, catalog), effects)
 	var rows: Array = []
 	for def in ROWS:
 		var old := snappedf(float(then[def[0]]) * float(def[2]), 0.1)
