@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
+const {sourceIdentity,hashFile,hashSources} = require('./build_identity.cjs');
 const engine = process.argv[2] || 'godot';
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(root, '../dist/godot/migration-release');
@@ -15,7 +16,11 @@ function run(exe, args, name, timeout = 120000) {
   return output;
 }
 const exe = path.join(out, 'IronStandard.exe');
+run(engine, ['--headless','--path',root,'--import'], 'import');
+const source = sourceIdentity(root);
 run(engine, ['--headless','--path',root,'--export-release','Windows',exe], 'export');
 const smoke = run(exe, ['--headless','--','--release-smoke'], 'smoke');
 if (!smoke.includes('Release smoke passed; debug=false')) throw new Error(`Release smoke did not complete in release mode: ${smoke}`);
+if (hashSources(root) !== source.source_sha256) throw new Error('Sources changed during export; rebuild before measuring');
+fs.writeFileSync(exe + '.build.json',JSON.stringify({source,executable_sha256:hashFile(exe),built_at:new Date().toISOString(),smoke_passed:true},null,2));
 console.log(`Windows release and smoke passed: ${exe}`);

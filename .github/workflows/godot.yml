@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: 22
       - run: node godot/tools/architecture.test.cjs
+      - run: node godot/tools/build_identity.test.cjs
       - name: Архитектура и запрет новых исключений
         env:
           ARCH_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}

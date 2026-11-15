@@ -1,0 +1,18 @@
+{
+  "recorded_on": "2026-11-15",
+  "cpu": "Intel Core i5-14400F",
+  "physical_cores": 10,
+  "logical_processors": 16,
+  "physical_memory_bytes": 34068267008,
+  "gpu": "NVIDIA GeForce RTX 4070 SUPER",
+  "windows_driver_version": "32.0.16.1060",
+  "opengl_driver_version": "610.60",
+  "power_scheme": "Lenovo Default",
+  "power_scheme_guid": "6de5128e-246c-44b3-a5df-974de778670d",
+  "renderer": "gl_compatibility",
+  "acceptance_resolution": [1920, 1080],
+  "godot": "4.7.2.stable.official.ed1daf0bf",
+  "node": "26.13.1",
+  "execution_context": "host",
+  "note": "CIM/powercfg read-only inventory. CIM's 2500 MHz value is not a measurement of instantaneous turbo frequency. These data do not certify performance acceptance."
+}

@@ -2,10 +2,14 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const cp = require('child_process');
+const {hashSources,readBuild} = require('./build_identity.cjs');
 const root = path.resolve(__dirname, '..');
 const exe = process.argv[2];
 if (!exe) throw new Error('Usage: node godot/tools/benchmark.cjs <exported-release.exe> [--n=1000 --ticks=3600 --scenario=contact --repeat=5]');
-const options = process.argv.slice(3).filter(x=>!x.startsWith('--repeat='));
+const executionContext = process.argv.find(x=>x.startsWith('--execution-context='))?.split('=')[1] || 'unspecified';
+if (!['host','sandbox','unspecified'].includes(executionContext)) throw new Error('Invalid execution context');
+const build = readBuild(path.resolve(exe), hashSources(root), process.argv.includes('--allow-stale-build'));
+const options = process.argv.slice(3).filter(x=>!x.startsWith('--repeat=') && !x.startsWith('--execution-context=') && x!=='--allow-stale-build');
 const repeat = Number(process.argv.find(x=>x.startsWith('--repeat='))?.slice(9) || 5);
 if (!Number.isInteger(repeat) || repeat<1) throw new Error('Invalid repeat count');
 const dir = fs.mkdtempSync(path.resolve(root,'../dist/godot/benchmark-'));
@@ -21,6 +25,6 @@ for(let i=0;i<repeat;i++){
   reports.push(report);
   console.log(`${report.scenario} ${report.requested_per_side}×${report.requested_per_side}: tick p95 ${report.simulation.p95_ms} ms; snapshot p95 ${report.snapshot.p95_ms} ms`);
 }
-const git=(args)=>cp.execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();
-fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify({revision:git(['rev-parse','HEAD']),dirty:!!git(['status','--porcelain','--untracked-files=no']),measuredAt:new Date().toISOString(),reports},null,2));
+fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify({revision:build.source.revision,dirty:build.source.dirty,
+  build,execution_context:executionContext,measuredAt:new Date().toISOString(),reports},null,2));
 console.log(`Report: ${dir}`);
