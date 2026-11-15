@@ -10,6 +10,10 @@ const Rules = preload("res://campaign/world/party_rules.gd")
 const PartyEconomy = preload("res://campaign/economy/party_economy.gd")
 const WorldWars = preload("res://campaign/world/world_wars.gd")
 const WorldSiege = preload("res://campaign/world/world_siege.gd")
+const WorldQuests = preload("res://campaign/world/world_quests.gd")
+const WorldCompanions = preload("res://campaign/world/world_companions.gd")
+const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
+const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 const Market = preload("res://campaign/economy/market.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
@@ -41,6 +45,9 @@ var perks := PerkCatalog.new()
 var market: Market
 var wars: WorldWars
 var siege: WorldSiege
+var quests: WorldQuests
+var companions: WorldCompanions
+var companion_catalog := CompanionCatalog.new()
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
 
@@ -68,6 +75,13 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.wars.announced.connect(state.log_world)
 	state.wars.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai = PartyAI.new(state.roster, state.player)
+	assert(state.companion_catalog.load_data())
+	state.quests = WorldQuests.new(state.map, state.market.goods, state.roster.catalog, state.wars, state.roster.rng)
+	state.quests.message.connect(state.log_world)
+	state.quests.gen_boards(state.clock.day)
+	state.companions = WorldCompanions.new(state.map, state.companion_catalog, state.roster.rng)
+	state.companions.message.connect(state.log_world)
+	state.companions.ensure(state.player)
 	return state
 
 func _place_player(seed_value: int) -> void:
@@ -116,6 +130,7 @@ func enter(s: Dictionary) -> void:
 		return
 	if player.rel.has(s.fac):
 		player.rel[s.fac] = minf(100.0, float(player.rel[s.fac]) + 0.5)
+	quests.on_enter(player, s, float(player_effects().get("quest", 0.0)))
 	settlement_entered.emit(s)
 
 func _meetings() -> void:
@@ -136,11 +151,16 @@ func hour_tick() -> void:
 	wars.day = clock.day
 	wars.hour = clock.hour
 	wars.war_hour()
+	if not player.away and player.busy != "battle":
+		quests.scout_tick(player)
+		var heal := (0.035 if player.inside else (0.006 if player.has_route() else 0.014)) * (1.0 + (float(player.hero.get("int", 1)) - 1.0) * 0.04 + float(player_effects().get("heal", 0.0)))
+		player.hero.hp = minf(1.0, float(player.hero.get("hp", 1.0)) + heal)
+		WorldCompanions.heal(player, heal)
 	if clock.hour == 0:
 		_day_tick()
 
 func player_effects() -> Dictionary:
-	return PerkEffects.own(player.hero, perks)
+	return CompanionProfile.party_effects(player.hero, player.comps, companion_catalog, perks)
 
 func log_world(text: String) -> void:
 	journal.push_front({"day": clock.day, "text": text})
@@ -150,6 +170,8 @@ func log_world(text: String) -> void:
 
 func _day_tick() -> void:
 	wars.war_day()
+	quests.gen_boards(clock.day)
+	companions.day(player, clock.day)
 	var held := siege.holdings_day(player, float(player_effects().get("wage", 0.0)))
 	if held != "":
 		log_world(held)
@@ -157,8 +179,16 @@ func _day_tick() -> void:
 		return
 	var wage := func(type: String) -> float: return float(roster.catalog.get_troop(type).wage)
 	var name := func(type: String) -> String: return roster.catalog.get_troop(type).name
-	for line in PartyEconomy.day_tick(player, wage, player_effects(), roster.rng, name):
+	var fx := player_effects()
+	var comp_wage := roundi(companions.wage(player) * (1.0 - float(fx.get("wage", 0.0))))
+	if player.gold >= comp_wage:
+		player.gold -= comp_wage
+	else:
+		player.gold = 0
+		companions.unpaid(player)
+	for line in PartyEconomy.day_tick(player, wage, fx, roster.rng, name):
 		log_world(line)
+	quests.deadline_day(player, clock.day)
 
 func settlement_near(x: float, y: float, radius: float) -> Dictionary:
 	var best: Dictionary = {}

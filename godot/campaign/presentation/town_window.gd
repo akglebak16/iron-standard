@@ -6,6 +6,7 @@ const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const SettlementLayer = preload("res://campaign/presentation/settlement_layer.gd")
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const PartyWindowText = preload("res://campaign/presentation/companion_text.gd")
 
 signal wait_requested(settlement: Dictionary)
 var state: RefCounted
@@ -34,12 +35,20 @@ func render() -> void:
 	title_label.text = settlement.name
 	sub_label.text = "%s · %s   ·   золото %d" % [SettlementLayer.KIND_NAMES.get(settlement.kind, ""), _factions.get_faction(settlement.fac).get("name", ""), p.gold]
 	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]]
+	if settlement.kind == "town":
+		tabs.append(["tavern", "Таверна"])
 	if mine:
 		tabs.append(["hold", "Владение"])
+	elif settlement.kind == "town":
+		tabs.append(["quests", "Задания"])
 	set_tabs(tabs, current_tab if current_tab != "" else "recruit")
 	clear_body()
 	if current_tab == "hold" and mine:
 		_hold(p, fx)
+	elif current_tab == "tavern":
+		_tavern(p)
+	elif current_tab == "quests":
+		_quests(p)
 	elif current_tab == "market":
 		_market(p, fx)
 	elif current_tab == "goods":
@@ -64,6 +73,42 @@ func _recruits(p, fx: Dictionary) -> void:
 	heading("Ожидание")
 	note("Время идёт как обычно, а отряд стоит у стен. Любой клик по карте — в путь.")
 	row("Подождать здесь", "", [{"text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])
+
+func _tavern(p) -> void:
+	var comps = state.companions
+	var here: Array = comps.at(p, settlement)
+	var n: int = p.comps.size()
+	note("Наёмники-одиночки сидят по тавернам и переходят из города в город. Спутник сражается рядом с тобой, растёт в уровнях и даёт отряду своё умение. Спутников в отряде: %d из %d." % [n, comps.COMP_MAX])
+	if here.is_empty():
+		note("Сегодня здесь только местные пьяницы и игроки в кости.")
+	for c in here:
+		var d: Dictionary = state.companion_catalog.get_companion(c.id)
+		var price := int(d.price)
+		var can: bool = p.gold >= price and n < comps.COMP_MAX
+		var cost := ("%d зол., жалованье %d/день" % [price, d.wage]) if price > 0 else "бесплатно, служит за честь"
+		row("%s · %s%s" % [c.name, d.role, (" · ур. %d" % c.lvl) if int(c.lvl) > 1 else ""], "«%s»\n%s: %s\n%s" % [d.story, d.skn, PartyWindowText.skill_text(d, c), cost],
+			[{"text": "Нанять", "disabled": not can, "call": func(): _say(comps.hire(p, settlement, c.id))}])
+	var rm: Dictionary = comps.rumor(p, settlement)
+	if not rm.is_empty():
+		note("Трактирщик шепчет: «%s (%s) сейчас в %s. Ищет, к кому бы пристать»." % [rm.c.name, String(rm.c.role).to_lower(), rm.t.name])
+
+func _quests(p) -> void:
+	var q = state.quests
+	var board: Array = settlement.get("board", [])
+	note("Заказы города. Награду выплачивают сразу, как дело сделано.")
+	if board.is_empty():
+		note("Доска пуста.")
+	for item in board.duplicate():
+		row(q.text(item), "Срок: до дня %d · %s · награда %d" % [item.dl, q.detail(item, settlement), item.reward],
+			[{"text": "Взять", "disabled": p.quests.size() >= q.MAX_QUESTS, "call": func(): _say(q.accept(p, settlement, int(item.id)))}])
+	if not p.quests.is_empty():
+		heading("Твои задания")
+		for item in p.quests:
+			row(q.text(item), "До дня %d · награда %d" % [item.dl, item.reward])
+
+func _say(why: String) -> void:
+	if why != "":
+		sub_label.text = why
 
 func _hold(p, fx: Dictionary) -> void:
 	var siege = state.siege

@@ -1,11 +1,14 @@
 extends "res://campaign/presentation/modal_window.gd"
 ## Party, hero and journal windows (openPanel in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
+const CompanionText = preload("res://campaign/presentation/companion_text.gd")
+const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["quests", "Задания"], ["journal", "Журнал"]]
+var _confirm := ""
 var state: RefCounted
 
 func open_for(world_state: RefCounted, tab: String = "troops") -> void:
 	state = world_state
-	set_tabs([["troops", "Отряд"], ["hero", "Герой"], ["journal", "Журнал"]], tab)
+	set_tabs(TABS, tab)
 	open_window()
 
 func render() -> void:
@@ -15,13 +18,17 @@ func render() -> void:
 	var fx: Dictionary = state.player_effects()
 	title_label.text = p.hero.name
 	sub_label.text = "Уровень %d · золото %d · порций %d" % [p.hero.lvl, p.gold, Economy.provisions(p)]
-	set_tabs([["troops", "Отряд"], ["hero", "Герой"], ["journal", "Журнал"]], current_tab if current_tab != "" else "troops")
+	set_tabs(TABS, current_tab if current_tab != "" else "troops")
 	clear_body()
 	match current_tab:
 		"hero":
 			_hero(p)
 		"journal":
 			_journal()
+		"comps":
+			_comps(p)
+		"quests":
+			_quests(p)
 		_:
 			_troops(p, fx)
 
@@ -58,3 +65,25 @@ func _journal() -> void:
 		note("Пока ничего не случилось.")
 	for e in state.journal:
 		row("День %d" % e.day, e.text)
+
+func _comps(p) -> void:
+	var comps = state.companions
+	note("Спутники бьются сами в своей группе и слушаются приказов. В бою их не убивают, а ранят: раненый ниже 25%% здоровья пропускает бои, пока не подлечится. Жалованье спутников: %d в день." % comps.wage(p))
+	if p.comps.is_empty():
+		note("Спутников нет. Ищи их в тавернах городов.")
+	for c in p.comps.duplicate():
+		var d: Dictionary = state.companion_catalog.get_companion(c.id)
+		var ok: bool = comps.fit(c)
+		var btn: Dictionary
+		if _confirm == c.id:
+			btn = {"text": "Точно отпустить?", "call": func(): comps.fire(p, c.id); _confirm = ""}
+		else:
+			btn = {"text": "Отпустить", "call": func(): _confirm = c.id}
+		row("%s · %s · ур. %d%s" % [c.name, d.role, c.lvl, "" if ok else " · ранен"], "здоровье %d%% · опыт %d\n%s: %s" % [roundi(float(c.hp) * 100.0), int(c.get("xp", 0)), d.skn, CompanionText.skill_text(d, c)], [btn])
+
+func _quests(p) -> void:
+	if p.quests.is_empty():
+		note("Заданий нет. Их дают на досках в городах.")
+	for q in p.quests:
+		var left: int = int(q.dl) - int(state.clock.day)
+		row(state.quests.text(q), "%s · награда %d" % ["срок вышел" if left < 0 else ("последний день" if left == 0 else "осталось дней: %d" % left), q.reward])

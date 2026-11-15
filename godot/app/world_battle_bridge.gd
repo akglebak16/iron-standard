@@ -12,6 +12,7 @@ const AutoBattle = preload("res://campaign/world/auto_battle.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const Config = preload("res://campaign/config.gd")
 const Siege = preload("res://campaign/world/world_siege.gd")
+const WorldCompanions = preload("res://campaign/world/world_companions.gd")
 const SiegeAftermath = preload("res://campaign/rules/siege_aftermath.gd")
 
 var troops := Catalog.new()
@@ -44,6 +45,7 @@ func make_setup(state: RefCounted, opponent: Dictionary) -> Setup:
 	s.hero_profile = state.player.hero.duplicate(true)
 	s.enemy_leader_name = opponent.name if Rules.is_noble(opponent) else ""
 	s.hero_position = Vector2(780, 850)
+	s.companion_profiles.assign(state.player.comps.duplicate(true))
 	if opponent.get("kind") == "siege":
 		s.siege = true
 		s.wall_damage = clampf(float(opponent.get("wall_damage", 0.0)), 0.0, 1.0)
@@ -66,7 +68,9 @@ func auto_result(state: RefCounted, opponent: Dictionary) -> Dictionary:
 	var mult := 1.0
 	if opponent.get("kind") == "siege":
 		mult = Siege.def_k(state.map.settlement_by_id(opponent.sid))
-	return AutoBattle.resolve(state.player.troops, state.player.hero, opponent.troops, state.roster.info, rng, 0.0, mult)
+	var res := AutoBattle.resolve(state.player.troops, state.player.hero, opponent.troops, state.roster.info, rng, float(state.player_effects().get("surv", 0.0)), mult, WorldCompanions.strength(state.player))
+	res["comps"] = state.companions.auto_outcomes(state.player, res.win)
+	return res
 
 ## The siege opponent for a town: defenders, wall damage and the stones/oil on the walls.
 func siege_opponent(state: RefCounted, s: Dictionary) -> Dictionary:
