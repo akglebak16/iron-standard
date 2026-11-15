@@ -18,30 +18,12 @@ const timeouts = {
 };
 // Бюджет полного прогона Godot-тестов (правило в docs/architecture/DEVELOPMENT.md). Превышение — предупреждение CI.
 const BUDGET_MS = 180000;
-// Какие тесты гонять при правке `--changed=<base>`: путь относительно godot/ -> префиксы тестов. tests/architecture идёт всегда.
-const SELECTION = [
-  [/^core\/battle\//, ['tests/unit/battle/', 'tests/integration/']],
-  [/^core\/campaign\//, ['tests/unit/campaign/', 'tests/integration/']],
-  [/^core\/troops\//, ['tests/unit/troops/', 'tests/unit/battle/', 'tests/integration/']],
-  [/^core\/equipment\//, ['tests/unit/equipment/', 'tests/unit/battle/', 'tests/integration/']],
-  [/^core\/characters\//, ['tests/unit/characters/', 'tests/unit/campaign/', 'tests/integration/']],
-  [/^apps\/godot\//, ['tests/integration/', 'tests/unit/battle/presentation/']],
-];
-// Документация и .uid не меняют поведение; всё остальное, чего нет в таблице (adapters, content, runtime, tools, native,
-// project.godot), может задеть всё, поэтому гоняет полный набор.
-const IGNORED = /^docs\/.*\.md$|\.uid$/;
-function selectPrefixes(base) {
+// При `--changed=<base>` берём только тесты, до которых доходят ссылки от изменённых файлов (tools/test_selection.cjs).
+const { selectTests } = require('./test_selection.cjs');
+function selectChanged(base) {
   const diff = spawnSync('git', ['diff', '--name-only', '--relative', base, 'HEAD', '--', '.'], {cwd: root, encoding: 'utf8'});
-  if (diff.error || diff.status !== 0) return null;
-  const prefixes = new Set(['tests/architecture/']);
-  for (const file of diff.stdout.split(/\r?\n/).filter(Boolean)) {
-    if (IGNORED.test(file)) continue;
-    if (file.startsWith('tests/')) { prefixes.add(/\.gd$/.test(file) ? file : file.replace(/[^/]*$/, '')); continue; }
-    const rule = SELECTION.find(([pattern]) => pattern.test(file));
-    if (!rule) return null;
-    rule[1].forEach(prefix => prefixes.add(prefix));
-  }
-  return [...prefixes];
+  if (diff.error || diff.status !== 0) return {full: true, reason: 'не удалось получить diff'};
+  return selectTests(root, diff.stdout.split(/\r?\n/).filter(Boolean));
 }
 const scriptErrors = /SCRIPT ERROR|Parse Error|Compile Error|Failed to load script|Assertion failed/i;
 function findTests(dir) {
@@ -81,11 +63,11 @@ if (imported.error || imported.status !== 0 || scriptErrors.test(`${imported.std
 const filterArg = process.argv.find(a => a.startsWith('--filter='));
 const filter = filterArg ? new RegExp(filterArg.slice(9)) : null;
 const changedArg = process.argv.find(a => a.startsWith('--changed='));
-const prefixes = changedArg ? selectPrefixes(changedArg.slice(10)) : null;
-if (changedArg) console.log(prefixes ? `Selected by changes: ${prefixes.join(', ')}` : 'Changes touch shared code: running the full suite');
+const selection = changedArg ? selectChanged(changedArg.slice(10)) : null;
+if (selection) console.log(selection.full ? `Полный набор: ${selection.reason}` : `Выбрано по зависимостям: ${selection.tests.size} тестов`);
 const tests = findTests(root).sort().filter(file => {
   const relative = path.relative(root, file).replaceAll('\\', '/');
-  return (!filter || filter.test(relative)) && (!prefixes || prefixes.some(prefix => relative.startsWith(prefix)));
+  return (!filter || filter.test(relative)) && (!selection || selection.full || selection.tests.has(relative));
 });
 const started = Date.now();
 const timings = [];
