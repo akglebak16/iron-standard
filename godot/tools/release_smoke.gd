@@ -44,6 +44,9 @@ func _ready() -> void:
 	if session == null:
 		fail("Battle initialization")
 		return
+	if session._state.add_unit(session._state.units[0]):
+		fail("Duplicate battle insertion accepted in release")
+		return
 	for i in 60: session.advance(1.0 / 60.0)
 	if session.snapshot().tick != 60:
 		fail("Battle did not advance")

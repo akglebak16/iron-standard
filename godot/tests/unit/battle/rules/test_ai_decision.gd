@@ -25,11 +25,11 @@ func _check_target_weights() -> void:
 	for unit in [fighter, fleeing, steady]:
 		state.add_unit(unit)
 	assert(Targeting.choose(state, fighter) == steady) # 60 × 1.7 > 65.
-	fighter.target_index = 1
+	fighter.target_handle = fleeing.unit_handle
 	assert(Targeting.choose(state, fighter) == steady)
 	fleeing.fleeing = false
 	assert(Targeting.choose(state, fighter) == fleeing) # Current target gets × 0.85.
-	fighter.target_index = 2
+	fighter.target_handle = steady.unit_handle
 	assert(Targeting.choose(state, fighter) == steady) # Sticky target beats closer enemy.
 	fighter.mounted = true
 	steady.attack_range = 200
@@ -97,5 +97,5 @@ func _check_live_shoot_mode() -> void:
 	state.groups[0][Config.GROUP_ARCHERS].center = archer.position
 	var rng := RandomNumberGenerator.new()
 	Movement.step(state, 0.01, rng)
-	assert(archer.ai_mode == Config.AI_MODE_SHOOT_SLOT and archer.target_index == 1)
+	assert(archer.ai_mode == Config.AI_MODE_SHOOT_SLOT and archer.target_handle == foe.unit_handle)
 	assert(state.projectiles.size() == 1)

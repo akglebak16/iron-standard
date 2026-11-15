@@ -64,7 +64,7 @@ func _compare(a, b, tick: int) -> void:
 		var x = a._state.units[i]
 		var y = b._state.units[i]
 		assert(x.position == y.position and x.velocity == y.velocity, "Native contact differs at tick %d unit %d: %s/%s vs %s/%s" % [tick,i,x.position,x.velocity,y.position,y.velocity])
-		assert([x.hp,x.dead,x.gone,x.target_index,x.kills] == [y.hp,y.dead,y.gone,y.target_index,y.kills])
+		assert([x.hp,x.dead,x.gone,x.target_handle,x.kills] == [y.hp,y.dead,y.gone,y.target_handle,y.kills])
 	assert(a._state.take_events() == b._state.take_events())
 	assert(a.take_events() == b.take_events())
 	assert(a._rng.state == b._rng.state)

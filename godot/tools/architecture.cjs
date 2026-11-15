@@ -135,6 +135,10 @@ function analyze(files, manifest) {
     }
     graph.set(file, dependencies);
     if (test(file)) continue;
+    for (const rule of manifest.retiredSymbols || []) {
+      if (!file.startsWith(rule.prefix)) continue;
+      for (const token of ts) if (rule.names.includes(token.value)) add(file,'retired-symbol',token.value);
+    }
     for (const contract of manifest.reservedMembers || []) {
       if (contract.writers.includes(file)) continue;
       // Covers direct access and literal get/set/index access. This is a reserved

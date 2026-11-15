@@ -66,4 +66,7 @@ assert.equal(contractChangeIssues(['tests/integration/test_contract.gd'],true).l
 assert.equal(contractChangeIssues(['docs/architecture/ADR-008.md','tools/architecture.test.cjs'],true).length,0);
 assert.deepEqual(ignoredSourceIssues(['']),[]);
 assert(ignoredSourceIssues(['core/troops/data/catalog.gd'])[0].includes('ignored by Git'));
+for(const source of ['var target_index = 4','unit.set("target_index", 4)']) {
+ assert(analyze(new Map([['core/a/x.gd',source]]),{...manifest,retiredSymbols:[{prefix:'core/a/',names:['target_index']}]}).some(i=>i.rule==='retired-symbol'));
+}
 console.log('Architecture checker negative tests passed');

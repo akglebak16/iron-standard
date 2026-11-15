@@ -71,7 +71,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		if unit.fleeing:
 			unit.facing = unit.velocity.angle()
 			if unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING:
-				unit.gone = true
+				battle.mark_gone(unit)
 		elif rng != null:
 			unit.facing = ai_face
 			CombatStep.advance_unit(battle, unit, target, target_distance, dt, rng)

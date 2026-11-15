@@ -14,6 +14,7 @@ const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
 const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
 const ContactWorkspace = preload("res://runtime/spatial/contact_workspace.gd")
 const StaticObstacleIndex = preload("res://runtime/spatial/static_obstacle_index.gd")
+const GenerationHandles = preload("res://runtime/simulation/generation_handles.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
@@ -23,6 +24,7 @@ var trunks: Array[Plant] = []
 var siege_skill := 0.0
 
 var units: Array[Unit] = []
+var handles := GenerationHandles.new()
 var profiler := PhaseProfiler.new()
 ## Phase workspaces belong to this battle; differential tests may disable its index.
 var use_spatial_index := true
@@ -160,8 +162,9 @@ func setup_groups(cavalry_flank: int = 1) -> void:
 		])
 
 func add_grouped_unit(unit: Unit, kind: int) -> void:
+	if unit == null or kind < 0 or kind >= Config.GROUP_KINDS or groups.is_empty(): return
+	if not add_unit(unit): return
 	unit.group_kind = kind
-	add_unit(unit)
 	groups[unit.side][kind].units.append(unit)
 
 func place_units() -> void:
@@ -213,11 +216,21 @@ func centroid(side: int) -> Vector2:
 			count += 1
 	return total / count if count else Vector2.INF
 
-func add_unit(unit: Unit) -> void:
-	assert(unit.battle_index == -1, "A battle unit can only be inserted once")
+func add_unit(unit: Unit) -> bool:
+	if unit == null or unit.battle_index != -1 or unit.unit_handle != 0 or unit.side < 0 or unit.side > 1: return false
 	unit.battle_index = units.size()
+	unit.unit_handle = handles.allocate(unit.battle_index)
 	units.append(unit)
 	starting_units[unit.side] += 1
+	return true
+
+func unit_for(handle: int) -> Unit:
+	var index := handles.resolve(handle)
+	return units[index] if index >= 0 and index < units.size() else null
+
+func mark_gone(unit: Unit) -> void:
+	unit.gone = true
+	handles.release(unit.unit_handle)
 
 func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 0.0, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE) -> int:
 	if target.dead:
@@ -240,6 +253,7 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 	if target.dead:
 		return
 	target.dead = true
+	handles.release(target.unit_handle)
 	target.hp = 0.0
 	record_event(Event.Kind.DOWN, target, source, attack, amount)
 	if source != null:

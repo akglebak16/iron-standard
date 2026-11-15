@@ -18,10 +18,10 @@ func _pair(ranged: bool = false) -> Dictionary:
 	attacker.attack_interval = 1.0
 	attacker.ai_mode = Config.AI_MODE_SHOOT if ranged else Config.AI_MODE_MELEE
 	attacker.attack_range = 300 if ranged else 0
-	attacker.target_index = 1
 	var target := Unit.new(101, 1, Vector2(200, 100) if ranged else Vector2(120, 100), 100, 0, 1)
 	battle.add_unit(attacker)
 	battle.add_unit(target)
+	attacker.target_handle = target.unit_handle
 	return {"battle": battle, "attacker": attacker, "target": target}
 
 func _check_melee_windup() -> void:
@@ -31,7 +31,7 @@ func _check_melee_windup() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 37
 	CombatStep.step(pair.battle, 0.1, rng)
-	assert(attacker.ai_wind_target_index == 1)
+	assert(attacker.ai_wind_target_handle == target.unit_handle)
 	assert(is_equal_approx(attacker.ai_windup, Config.AI_MELEE_WINDUP_SECONDS - 0.1))
 	assert(attacker.attack_cooldown >= Config.AI_MELEE_COOLDOWN_MIN and attacker.attack_cooldown <= Config.AI_MELEE_COOLDOWN_MAX)
 	assert(target.hp == 100)
@@ -39,7 +39,7 @@ func _check_melee_windup() -> void:
 	assert(target.hp == 100) # Exactly zero windup is not a hit in the browser.
 	CombatStep.step(pair.battle, 0.01, rng)
 	assert(target.hp < 100)
-	assert(attacker.ai_wind_target_index == -1)
+	assert(attacker.ai_wind_target_handle == 0)
 	var hit_hp: float = target.hp
 	CombatStep.step(pair.battle, 0.1, rng)
 	assert(target.hp == hit_hp) # Ordinary attack cooldown still applies.
@@ -55,7 +55,7 @@ func _check_lost_target() -> void:
 	CombatStep.step(dead_pair.battle, 0.01, rng)
 	dead_pair.target.dead = true
 	CombatStep.step(dead_pair.battle, Config.AI_MELEE_WINDUP_SECONDS, rng)
-	assert(dead_pair.attacker.ai_wind_target_index == -1)
+	assert(dead_pair.attacker.ai_wind_target_handle == 0)
 	assert(dead_pair.target.hp == 100)
 
 func _check_ranged_cooldown() -> void:

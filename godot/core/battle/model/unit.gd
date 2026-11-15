@@ -5,6 +5,7 @@ const Config = preload("res://core/battle/config.gd")
 
 var id: int
 var battle_index: int = -1 # Assigned on insertion; independent of ID used for gameplay.
+var unit_handle: int = 0 # Temporary identity in this battle; never a campaign CharacterId.
 var side: int
 var position: Vector2
 var hp: float
@@ -47,7 +48,7 @@ var mass: float = Config.FOOT_MASS
 var attack_interval: float = 1.0
 var attack_cooldown: float = 0.0
 var charge_cooldown: float = 0.0
-var target_index: int = -1 # Index in State.units; avoids RefCounted cycles between enemies.
+var target_handle: int = 0 # Generation-checked identity; does not retain the target.
 var target_timer: float = 0.0
 var ai_mode: String = Config.AI_MODE_UNASSIGNED
 var ai_windup: float = -1.0
@@ -55,7 +56,7 @@ var plan_destination := Vector2.ZERO # AiDecision.plan_into results for the curr
 var plan_face := 0.0
 var plan_speed := 1.0
 var plan_distance := INF
-var ai_wind_target_index: int = -1
+var ai_wind_target_handle: int = 0
 var melee_reach: float = Config.DEFAULT_MELEE_REACH
 var block_chance: float = 0.0
 var shield_block: float = 0.0 # Troop shield arrow bonus; hero gear will supply its own value later.

@@ -55,14 +55,14 @@ func _check_melee_wind_expires_before_movement() -> void:
 	attacker.speed = 100.0
 	attacker.damage = 30.0
 	attacker.ai_windup = 0.05
-	attacker.ai_wind_target_index = 1
+	attacker.ai_wind_target_handle = target.unit_handle
 	attacker.attack_cooldown = 1.0
 	target.position = Vector2(150, 100)
 	pair.battle.groups[0][Config.GROUP_INFANTRY].order = Config.ORDER_CHARGE
 	Movement.step(pair.battle, TICK_SECONDS, pair.rng)
 	assert(attacker.position.x > 100.0)
 	assert(target.hp == 100.0) # Previous position was outside the finishing strike's reach.
-	assert(attacker.ai_wind_target_index == -1)
+	assert(attacker.ai_wind_target_handle == 0)
 
 func _check_earlier_unit_can_stop_later_unit() -> void:
 	var pair := _pair()
@@ -71,7 +71,7 @@ func _check_earlier_unit_can_stop_later_unit() -> void:
 	attacker.group_kind = Config.GROUP_INFANTRY
 	attacker.damage = 1000.0
 	attacker.ai_windup = 0.05
-	attacker.ai_wind_target_index = 1
+	attacker.ai_wind_target_handle = target.unit_handle
 	attacker.attack_cooldown = 1.0
 	target.position = Vector2(120, 100)
 	target.speed = 100.0

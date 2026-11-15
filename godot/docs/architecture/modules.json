@@ -1,5 +1,8 @@
 {
   "version": 1,
+  "retiredSymbols": [
+    {"prefix":"core/battle/", "names":["target_index", "ai_wind_target_index"]}
+  ],
   "reservedMembers": [
     {
       "prefix": "_render_",

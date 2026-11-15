@@ -25,7 +25,7 @@ func _run(catalog: Catalog, indexed: bool, mixed: bool) -> Array:
 		session.advance(1.0 / 60.0)
 	var out: Array = []
 	for u in session._state.units:
-		out.append([u.position, u.velocity, u.hp, u.dead, u.gone, u.target_index, u.kills])
+		out.append([u.position, u.velocity, u.hp, u.dead, u.gone, u.target_handle, u.kills])
 	return out
 
 func _initialize() -> void:

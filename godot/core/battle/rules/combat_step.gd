@@ -37,7 +37,7 @@ static func advance_unit(battle: State, unit: Unit, target: Unit, distance: floa
 				unit.attack_cooldown = unit.attack_interval
 		elif unit.ai_mode == Config.AI_MODE_MELEE and distance <= unit.collision_radius + target.collision_radius + unit.melee_reach and unit.ai_windup < 0.0:
 			unit.ai_windup = Config.AI_MELEE_WINDUP_SECONDS
-			unit.ai_wind_target_index = target.battle_index
+			unit.ai_wind_target_handle = target.unit_handle
 			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_MELEE_COOLDOWN_MIN, Config.AI_MELEE_COOLDOWN_MAX)
 		elif _can_shoot(unit, distance):
 			battle.launch_projectile(Combat.shoot(unit, target, rng))
@@ -104,8 +104,7 @@ static func _advance_wind(battle: State, unit: Unit, dt: float, rng: RandomNumbe
 	unit.ai_windup -= dt
 	if unit.ai_windup >= 0.0:
 		return
-	if unit.ai_wind_target_index >= 0 and unit.ai_wind_target_index < battle.units.size():
-		var target: Unit = battle.units[unit.ai_wind_target_index]
-		if not target.dead and not target.gone and unit.position.distance_to(target.position) < unit.collision_radius + target.collision_radius + unit.melee_reach + Config.AI_WIND_HIT_EXTRA_REACH:
-			Combat.strike(battle, unit, target, rng)
-	unit.ai_wind_target_index = -1
+	var target := battle.unit_for(unit.ai_wind_target_handle)
+	if target != null and not target.dead and not target.gone and unit.position.distance_to(target.position) < unit.collision_radius + target.collision_radius + unit.melee_reach + Config.AI_WIND_HIT_EXTRA_REACH:
+		Combat.strike(battle, unit, target, rng)
+	unit.ai_wind_target_handle = 0
