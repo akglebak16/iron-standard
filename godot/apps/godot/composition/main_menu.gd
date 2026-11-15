@@ -1,4 +1,5 @@
 extends Control
+const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Start screen: hero name, culture, new game (the menu and culture choice in src/06_ui.js and src/07_main.js).
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
@@ -30,6 +31,7 @@ var _buttons := {}
 var _dialog: CanvasLayer
 var _menu: VBoxContainer
 var _background: Node2D
+var _music: Node
 var _preferences := Preferences.new()
 var _banner_buttons: Array[Button] = []
 var _quick_options := {"me":"nord", "foe":"emp", "size":50}
@@ -54,9 +56,14 @@ func _ready() -> void:
 		add_child(_background)
 		var battle = _background.get_node("Battle")
 		battle.attract_mode = true
+		battle.suppress_music()
 		battle._session.issue_order("charge", Vector2(battle.get_battle_snapshot().enemy_center), 3)
 		battle.get_node("Hud").hide()
 		battle.set_process_unhandled_input(false)
+	_music = WorldMusic.new()
+	_music.name = "WorldMusic"
+	add_child(_music)
+	_sync_music()
 	var ui := CanvasLayer.new()
 	ui.layer = 2
 	add_child(ui)
@@ -105,6 +112,10 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(func():
 		if is_instance_valid(_dialog) and _dialog.visible: _fit_start_dialog.call_deferred(_dialog))
 
+func _sync_music() -> void:
+	var audio := _preferences.read()
+	_music.enabled = audio.effects and audio.music
+
 func _button(parent: Node, text: String, action: Callable, primary := false) -> Button:
 	var b := Button.new()
 	b.text = text
@@ -128,6 +139,7 @@ func _build_menu() -> void:
 		_preferences.save(not audio.effects, audio.music)
 		if _background != null:
 			_background.get_node("Battle")._set_audio_preferences(not audio.effects, audio.music)
+		_sync_music()
 		_build_menu())
 	for b in _menu.get_children():
 		b.custom_minimum_size.y = 50

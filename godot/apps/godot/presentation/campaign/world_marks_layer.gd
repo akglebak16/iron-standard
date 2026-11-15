@@ -39,12 +39,33 @@ func _ellipse(center: Vector2, rx: float, ry: float, color: Color, width: float,
 	else:
 		draw_polyline(points, color, width, true)
 
+## Where the player's walk ends, or null when he stands (routeFinish in src/06h_polish.js).
+static func route_end(player: RefCounted) -> Variant:
+	if player == null or player.pi >= player.path.size():
+		return null
+	return player.path[player.path.size() - 1]
+
+## A diamond and «Цель пути» at the end of the route, the same size on screen at any zoom.
+func _route_finish(k: float) -> void:
+	var end: Variant = route_end(state.player)
+	if end == null:
+		return
+	var e: Vector2 = end
+	var diamond := PackedVector2Array([e + Vector2(0, -9) * k, e + Vector2(7, 0) * k, e + Vector2(0, 9) * k, e + Vector2(-7, 0) * k])
+	draw_colored_polygon(diamond, Color("#ffe9a0"))
+	diamond.append(diamond[0])
+	draw_polyline(diamond, Color("#292013"), 2.0 * k, true)
+	draw_set_transform(e, 0.0, Vector2(k, k))
+	_label("Цель пути", 0.0, -16.0, Color("#ffe9a0"), 12)
+	draw_set_transform(Vector2.ZERO)
+
 func _draw() -> void:
 	if state == null:
 		return
 	var zoom: float = get_viewport().get_canvas_transform().get_scale().x
 	var k := 1.0 / maxf(0.2, zoom)
 	var t := _time * 2.5
+	_route_finish(k)
 	for s in state.map.settles:
 		var fire := int(s.get("fire", 0)) > 0
 		var smoke := not fire and (float(s.get("dmg", 0.0)) > 0.3 or int(s.get("burnt", 0)) > 0)

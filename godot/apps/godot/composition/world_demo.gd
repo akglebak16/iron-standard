@@ -13,6 +13,8 @@ const PartyLayer = preload("res://apps/godot/presentation/campaign/party_layer.g
 const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounter_dialog.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
+const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
+const Autosave = preload("res://apps/godot/composition/autosave.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
 const HeroStats = preload("res://core/battle/data/hero_stats.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
@@ -38,6 +40,8 @@ var map_view: Node2D
 var _meeting: Dictionary = {}
 var _dialog: CanvasLayer
 var _town: CanvasLayer
+var _autosave := Autosave.new()
+var _music: Node
 var _siege: CanvasLayer
 var _menu: CanvasLayer
 var _marks: Node2D
@@ -114,6 +118,10 @@ func _ready() -> void:
 	camera.fit_all()
 	camera.map_clicked.connect(_on_map_click)
 	camera.map_hovered.connect(_on_hover)
+	_music = WorldMusic.new()
+	_music.name = "WorldMusic"
+	add_child(_music)
+	_sync_music()
 	hud = WorldHud.new()
 	add_child(hud)
 	hud.speed_changed.connect(func(s: int): state.clock.speed = s; state.clock.paused = false)
@@ -134,6 +142,7 @@ func _ready() -> void:
 	_menu = PauseMenu.new()
 	add_child(_menu)
 	_menu.settings_changed.connect(func(effects: bool, music: bool, blood: bool):
+		_sync_music()
 		if is_instance_valid(_battle): _battle.apply_preferences(effects, music, blood))
 	_menu.closed.connect(func(): state.clock.paused = false)
 	_menu.closed.connect(func():
@@ -142,13 +151,13 @@ func _ready() -> void:
 			_battle.apply_preferences(current.effects, current.music, _preferences.read_blood())
 			_battle.set_menu_open(false))
 	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
-	_menu.title_requested.connect(func(): title_requested.emit())
+	_menu.title_requested.connect(func(): _autosave.save(state, _battle != null); title_requested.emit())
 	_siege = SiegeWindow.new()
 	add_child(_siege)
 	_siege.assault.connect(_on_assault)
 	_siege.closed.connect(func(): if not _siege_hold: state.clock.paused = false)
 	state.siege_requested.connect(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s))
-	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s))
+	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s); _autosave.save(state, _battle != null))
 	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
 	state.log_added.connect(func(text: String): hud.show_notice(text))
 	_bridge = Bridge.new(ContentLoader.registry(), state.roster.rng)
@@ -356,6 +365,7 @@ func _finish_auto(p: Dictionary) -> void:
 	_meeting = {}
 	hud.show_notice(("Победа!" if resolved.summary.win else "Поражение.") + AftermathText.build(resolved, _bridge.gear, _bridge.goods))
 	_siege_hold = false
+	_autosave.save(state, false)
 	if _loot_pending.is_empty():
 		state.clock.paused = false
 	else:
@@ -376,6 +386,7 @@ func _start_battle(p: Dictionary) -> void:
 	var view = BattleView.instantiate()
 	view.name = "Battle"
 	var audio := _preferences.read()
+	view.hero_level = int(state.player.hero.get("lvl", 1))
 	view.configure(session, audio.effects, audio.music, _preferences.read_blood(), setup.seed, setup.biome)
 	view.audio_preferences_changed.connect(func(e: bool, m: bool): _preferences.save(e, m))
 	view.blood_preference_changed.connect(func(on: bool): _preferences.save_blood(on))
@@ -402,6 +413,7 @@ func _return_to_map() -> void:
 	_battle = null
 	_meeting = {}
 	_set_world_visible(true)
+	_autosave.save(state, false)
 	camera.make_current()
 	_siege_hold = false
 	if _loot_pending.is_empty():
@@ -411,7 +423,14 @@ func _return_to_map() -> void:
 		_loot_pending = {}
 		_offer_loot(town, true)
 
+func _sync_music() -> void:
+	var audio := _preferences.read()
+	_music.enabled = audio.effects and audio.music and _battle == null
+
 func _set_world_visible(on: bool) -> void:
+	if _music != null:
+		_music.enabled = on
+		if on: _sync_music()
 	map_view.visible = on
 	hud.visible = on
 	camera.enabled = on
@@ -472,6 +491,8 @@ func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
 	state.advance(delta)
+	if _autosave.crossed_midnight(state):
+		_autosave.save(state, false)
 	if not camera.detached:
 		camera.position = Vector2(state.player.x, state.player.y)
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))

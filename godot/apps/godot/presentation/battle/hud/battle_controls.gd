@@ -298,6 +298,15 @@ func _layout_controls() -> void:
 	_score.get_child(_score.get_child_count() - 1).position.x = _score.size.x / 2 - 33
 	for i in 2: _set_rect(_reserve_labels[i], Rect2(17 + 170 * i, 48, 110, 18))
 
+## Campaign hero level, 0 in a quick battle (updateBattleHud in src/07_main.js shows it only in the campaign).
+var hero_level := 0
+
+## «уровень N · оружие [X]»: the level only in the campaign, [X] only with a ranged weapon to switch to.
+static func hero_line(level: int, weapon: String, has_ranged: bool, down: bool) -> String:
+	if down:
+		return "ранен"
+	return ("уровень %d · " % level if level > 0 else "") + weapon + (" [X]" if has_ranged and not weapon.is_empty() else "")
+
 func update_frame(frame: Dictionary, selection: int, paused: bool, speed: float, finished: bool) -> void:
 	var hero: Dictionary = frame.hero_status
 	var previous_counts := _counter.text + "|" + _enemy_counter.text
@@ -306,7 +315,7 @@ func update_frame(frame: Dictionary, selection: int, paused: bool, speed: float,
 	_clock.text = format_time(frame.elapsed_seconds)
 	var previous_name := _heading.text
 	_heading.text = hero.name if not hero.name.is_empty() else "Герой"
-	_defense.text = "ранен" if frame.hero_down else frame.hero_weapon_name + " [X]"
+	_defense.text = hero_line(hero_level, frame.hero_weapon_name, not String(hero.weapon_names.get("ranged", "")).is_empty(), frame.hero_down)
 	_health_text.text = "%d / %d" % [maxi(0, roundi(hero.hp)), roundi(hero.max_hp)]
 	_stamina_text.text = "Силы %d / 100" % roundi(frame.stamina)
 	_armor_text.text = "Броня %s%s" % [str(int(hero.armor)) if hero.armor == floorf(hero.armor) else str(hero.armor), " · щит %d%%" % roundi(hero.block * 100) if hero.block else ""]
