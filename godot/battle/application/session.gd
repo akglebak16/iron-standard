@@ -10,6 +10,7 @@ const Unit = preload("res://battle/model/unit.gd")
 const HeroInput = preload("res://battle/application/hero_input.gd")
 const HeroControl = preload("res://battle/rules/hero_control.gd")
 const Config = preload("res://battle/config.gd")
+const NativeSwitch = preload("res://battle/rules/native_switch.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
@@ -185,7 +186,9 @@ func _side_alive(side: int) -> bool:
 			return true
 	return false
 
-func snapshot() -> Dictionary:
+## live: for the battle view, which draws fighters from "render"; ordinary fighters' dictionaries may then be
+## reused from an earlier frame with stale moving fields (BattleCore.frame_values). Native path only.
+func snapshot(live := false) -> Dictionary:
 	# Detached values: presentation cannot mutate simulation through this query.
 	var units: Array[Dictionary] = []
 	var counts := [0, 0]
@@ -195,25 +198,41 @@ func snapshot() -> Dictionary:
 	var ally_strength := 0.0
 	var group_strength := PackedFloat64Array()
 	group_strength.resize(Config.GROUP_KINDS)
-	for unit: Unit in _state.units:
-		if not unit.dead and not unit.gone:
-			counts[unit.side] += 1
-			if not unit.fleeing:
-				focus_sum[unit.side] += unit.position
-				focus_count[unit.side] += 1
-				if unit.side == 1:
-					enemy_strength += unit.weight
-				else:
-					ally_strength += unit.weight
-					if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
-						group_strength[unit.group_kind] += unit.weight
-		units.append(_unit_values(unit))
+	var render := PackedFloat64Array()
+	if NativeSwitch.on:
+		var stats: Array = BattleCore.frame_stats(_state.units, Config.GROUP_KINDS)
+		counts = stats[0]
+		focus_sum = stats[1]
+		focus_count = stats[2]
+		enemy_strength = stats[3]
+		ally_strength = stats[4]
+		group_strength = stats[5]
+		_sync_templates()
+		if live:
+			units.assign(BattleCore.frame_values(_state.units, _template_list, _look_list, _frame_cache, _frame_kinds))
+		else:
+			units.assign(BattleCore.unit_values(_state.units, _template_list, _look_list))
+		render = BattleCore.render_data(_state.units)
+	else:
+		for unit: Unit in _state.units:
+			if not unit.dead and not unit.gone:
+				counts[unit.side] += 1
+				if not unit.fleeing:
+					focus_sum[unit.side] += unit.position
+					focus_count[unit.side] += 1
+					if unit.side == 1:
+						enemy_strength += unit.weight
+					else:
+						ally_strength += unit.weight
+						if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
+							group_strength[unit.group_kind] += unit.weight
+			units.append(_unit_values(unit))
 	var camera_target := _camera_target(focus_sum, focus_count)
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
 	var ready_groups: Array[int] = []
 	for weight in group_strength:
 		ready_groups.append(roundi(weight))
-	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(),
+	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "render": render, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(),
 		"enemy_center": enemy_center, "reserve": [_state.reserve[0].size(), _state.reserve[1].size()], "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
 		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
 		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,
@@ -236,6 +255,33 @@ func _look(unit: Unit) -> Dictionary:
 	return cached.duplicate() # a shallow copy keeps every snapshot detached
 
 var _templates := {}
+var _template_list: Array = [] # per State.units index, for the native snapshot
+var _look_list: Array = []
+var _frame_cache: Array = [] # BattleCore.frame_values: unit dictionaries by index and the kind each was made for
+var _frame_kinds: Array = []
+
+## Keeps the per-unit templates and looks the native snapshot copies; the hero's are rebuilt every frame.
+func _sync_templates() -> void:
+	var units := _state.units
+	for i in range(_template_list.size(), units.size()):
+		var unit: Unit = units[i]
+		_template_list.append(_template(unit))
+		_look_list.append(unit.appearance.duplicate(true))
+	for i in units.size():
+		var unit: Unit = units[i]
+		if unit.hero:
+			_template_list[i] = _template(unit)
+			_look_list[i] = unit.appearance.duplicate(true)
+
+func _template(unit: Unit) -> Dictionary:
+	return {
+		"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
+		"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
+		"group_kind": unit.group_kind, "leader": unit.leader,
+		"companion_name": unit.name if unit.companion else "",
+		"health_fraction": 0.0, "dead": false, "gone": false, "mounted": unit.mounted, "fleeing": false,
+		"facing": 0.0, "speed": 0.0, "blocking": false, "windup": 0.0, "look": {},
+	}
 
 ## A fresh dictionary per unit and frame (snapshots stay detached), copied from a per-unit template of the
 ## fields that never change, which is much cheaper than building all of them every frame.

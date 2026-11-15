@@ -146,7 +146,7 @@ func _physics_process(dt: float) -> void:
 func _worker_step() -> void:
 	_session.advance(_task_dt)
 	_task_events = _session.take_events()
-	_task_frame = _session.snapshot()
+	_task_frame = _session.snapshot(true)
 
 func _finish_task(real_dt: float) -> void:
 	WorkerThreadPool.wait_for_task_completion(_task)
@@ -324,11 +324,11 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 
 func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
 	# One detached read per simulation step, reused by HUD and drawing (taken on the worker when threaded).
-	_frame = frame if not frame.is_empty() else _session.snapshot()
+	_frame = frame if not frame.is_empty() else _session.snapshot(true)
 	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
 	_navigation.update_frame(_frame, dt)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
-	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished))
+	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished, _frame.get("render", PackedFloat64Array())))
 	_update_status()
 	queue_redraw()
 
@@ -361,7 +361,7 @@ func _draw() -> void:
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
-	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
+	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection, _frame.get("render", PackedFloat64Array()))
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)

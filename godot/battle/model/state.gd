@@ -3,6 +3,7 @@ extends RefCounted
 const Damage = preload("res://battle/rules/damage.gd")
 const Group = preload("res://battle/model/group.gd")
 const Config = preload("res://battle/config.gd")
+const NativeSwitch = preload("res://battle/rules/native_switch.gd")
 const Unit = preload("res://battle/model/unit.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
 const SiegeDefense = preload("res://battle/model/siege_defense.gd")
@@ -120,7 +121,7 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 	var foe := centroid(1)
 	var changed := false
 	for group in groups[0]:
-		if selection != Config.ALL_GROUPS and group.kind != selection or group.active_units().is_empty():
+		if selection != Config.ALL_GROUPS and group.kind != selection or not group.has_active():
 			continue
 		changed = true
 		if order == Config.ORDER_HOLD:
@@ -148,6 +149,12 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 	return changed
 
 func centroid(side: int) -> Vector2:
+	if not NativeSwitch.on:
+		return centroid_reference(side)
+	return BattleCore.centroid(units, side)
+
+## The GDScript reference of centroid() (kept for differential tests).
+func centroid_reference(side: int) -> Vector2:
 	var count := 0
 	var total := Vector2.ZERO
 	for unit: Unit in units:
@@ -192,13 +199,16 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 			var heal: float = float(source.perk_effects.get("killHeal", 0.0))
 			if heal > 0.0:
 				source.hp = minf(source.max_hp, source.hp + source.max_hp * heal)
-	for unit: Unit in units:
-		if unit.dead or unit.gone or unit.position.distance_to(target.position) > Config.DEATH_MORALE_RADIUS:
-			continue
-		if unit.side == target.side:
-			unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
-		else:
-			unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
+	if NativeSwitch.on:
+		BattleCore.death_morale(units, target, Config.DEATH_MORALE_RADIUS, Config.LEADER_DEATH_MORALE, Config.ALLY_DEATH_MORALE, Config.ALLY_DEATH_MORALE_PER_TIER, Config.ENEMY_DEATH_MORALE_BONUS)
+	else:
+		for unit: Unit in units:
+			if unit.dead or unit.gone or unit.position.distance_to(target.position) > Config.DEATH_MORALE_RADIUS:
+				continue
+			if unit.side == target.side:
+				unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
+			else:
+				unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
 	if target.companion:
 		for unit: Unit in units:
 			if unit.side == target.side and unit.position.distance_to(target.position) < Config.DEATH_MORALE_RADIUS:

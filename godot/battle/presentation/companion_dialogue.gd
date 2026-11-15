@@ -79,7 +79,10 @@ func has_bubbles() -> bool:
 			return true
 	return false
 
-func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], siege: bool, finished: bool = false) -> PackedStringArray:
+## render: BattleCore.render_data of the frame when it has one; the moving fields of ordinary fighters'
+## dictionaries are then stale, so positions and states are read from it.
+func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], siege: bool, finished: bool = false,
+		render := PackedFloat64Array()) -> PackedStringArray:
 	var journal := PackedStringArray()
 	if _speakers.is_empty():
 		return journal
@@ -116,7 +119,7 @@ func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], sie
 		speaker.taunt -= dt
 		if speaker.taunt <= 0.0:
 			speaker.taunt = _rng.randf_range(TAUNT_INTERVAL.x, TAUNT_INTERVAL.y)
-			if _enemy_near(unit, units):
+			if (_enemy_near_packed(unit, render) if render.size() == units.size() * RENDER_STRIDE else _enemy_near(unit, units)):
 				_say(speaker, TAUNT)
 	return journal
 
@@ -228,6 +231,17 @@ static func _has_undead_appearance(units: Array[Dictionary], target_id: int) -> 
 	for unit in units:
 		if unit.id == target_id:
 			return not str(unit.look.get("undead", "")).is_empty()
+	return false
+
+const RENDER_STRIDE := 12 # BattleCore.render_data: id, x, y, ..., side at 8, flags at 10 (2 fleeing, 4 dead, 8 gone)
+
+static func _enemy_near_packed(unit: Dictionary, render: PackedFloat64Array) -> bool:
+	var origin: Vector2 = unit.position
+	var side := float(unit.side)
+	for i in range(0, render.size(), RENDER_STRIDE):
+		if render[i + 8] != side and (int(render[i + 10]) & 14) == 0:
+			if origin.distance_squared_to(Vector2(render[i + 1], render[i + 2])) < TAUNT_DISTANCE * TAUNT_DISTANCE:
+				return true
 	return false
 
 static func _enemy_near(unit: Dictionary, units: Array[Dictionary]) -> bool:

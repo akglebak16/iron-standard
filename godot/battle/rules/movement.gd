@@ -9,15 +9,38 @@ const Charge = preload("res://battle/rules/charge.gd")
 const AiDecision = preload("res://battle/rules/ai_decision.gd")
 const CombatStep = preload("res://battle/rules/combat_step.gd")
 const CollisionGrid = preload("res://battle/rules/collision_grid.gd")
+const CombatRules = preload("res://battle/rules/combat.gd")
 
 const COLLISION_SLACK := 10.0
 
 ## Off only in differential tests: the plain loops are the reference the index must match exactly.
 static var use_index := true
 
+const NativeSwitch = preload("res://battle/rules/native_switch.gd")
+## Off only in differential tests: the GDScript loop below is the reference the native core must match exactly.
+static var use_native: bool:
+	get:
+		return NativeSwitch.on
+	set(value):
+		NativeSwitch.on = value
+
 static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 	assert(rng != null, "A simulation tick requires the battle RNG")
-	_step(battle, dt, rng)
+	if use_native:
+		native_step(battle, dt, rng)
+	else:
+		_step(battle, dt, rng)
+
+## The same tick in the native battle core (godot/native/src/battle_core.cpp); damage, shots and walls are called back.
+static func native_step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
+	if not BattleCore.is_configured():
+		BattleCore.configure((Config as Script).get_script_constant_map(), Charge, CombatRules)
+	var trunk_positions := PackedVector2Array()
+	var trunk_radii := PackedFloat64Array()
+	for trunk in battle.trunks:
+		trunk_positions.append(trunk.position)
+		trunk_radii.append(trunk.trunk_radius)
+	BattleCore.step(battle, battle.units, battle.groups, battle.arena_size, dt, rng, battle.wall, trunk_positions, trunk_radii)
 
 ## Isolates formation movement and collisions for comparison with the pre-index fixture.
 static func step_formation_only(battle: State, dt: float) -> SpatialIndex:

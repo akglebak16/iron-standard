@@ -1,6 +1,7 @@
 extends RefCounted
 const Unit = preload("res://battle/model/unit.gd")
 const Config = preload("res://battle/config.gd")
+const NativeSwitch = preload("res://battle/rules/native_switch.gd")
 
 var side: int
 var kind: int # 0 infantry, 1 archers, 2 cavalry
@@ -17,6 +18,12 @@ func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void
 	kind = group_kind
 	center = at
 	direction = facing
+
+## True while someone in the group still fights (native, no array allocation).
+func has_active() -> bool:
+	if not NativeSwitch.on:
+		return not active_units().is_empty()
+	return BattleCore.has_active(units)
 
 func active_units() -> Array[Unit]:
 	return units.filter(func(u: Unit): return not u.dead and not u.gone and not u.fleeing and not u.hero)

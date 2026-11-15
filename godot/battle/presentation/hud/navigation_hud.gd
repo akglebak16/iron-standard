@@ -30,6 +30,7 @@ const ARROW_OUTLINE_WIDTH := 3
 const ARROW_SHAPE := [Vector2(22, 0), Vector2(-10, -15), Vector2(-4, 0), Vector2(-10, 15)]
 
 @onready var _ground: ColorRect = $MapGround
+const RENDER_STRIDE := 12 # BattleCore.render_data: x, y at 1, 2; side at 8; flags at 10
 var _frame: Dictionary = {}
 var _map := Rect2()
 var _time := 0.0
@@ -73,6 +74,28 @@ func _draw_minimap(camera_rect: Rect2) -> void:
 	var scale := _map.size / Vector2(_frame.arena_size)
 	for wall: Rect2 in _frame.walls:
 		draw_rect(Rect2(_map.position + wall.position * scale, wall.size * scale), MAP_WALL)
+	var render: PackedFloat64Array = _frame.get("render", PackedFloat64Array())
+	if render.size() == _frame.units.size() * RENDER_STRIDE and not render.is_empty():
+		for i in range(0, render.size(), RENDER_STRIDE):
+			var flags := int(render[i + 10])
+			if flags & 12: # dead or gone
+				continue
+			var point := _map.position + Vector2(render[i + 1], render[i + 2]) * scale
+			if not _map.has_point(point):
+				continue
+			var hero := bool(flags & 16)
+			var dot := MAP_HERO_DOT if hero else (MAP_MOUNT_DOT if flags & 1 else MAP_FOOT_DOT)
+			var color := MAP_ENEMY if render[i + 8] != 0.0 else (Color.WHITE if hero else MAP_ALLY)
+			draw_rect(Rect2(point - Vector2.ONE * dot * 0.5, Vector2.ONE * dot).intersection(_map), color)
+	else:
+		_draw_minimap_units(scale)
+	var outline := map_camera_rect(camera_rect, _map, _frame.arena_size)
+	if outline.has_area():
+		draw_rect(outline, MAP_CAMERA, false, 1.0)
+	draw_rect(_map, MAP_BORDER, false, 1.0)
+
+## The dictionary path, for frames without packed drawing data (GDScript rules).
+func _draw_minimap_units(scale: Vector2) -> void:
 	for unit: Dictionary in _frame.units:
 		if unit.dead or unit.gone:
 			continue
@@ -82,10 +105,6 @@ func _draw_minimap(camera_rect: Rect2) -> void:
 		var dot := MAP_HERO_DOT if unit.hero else (MAP_MOUNT_DOT if unit.mounted else MAP_FOOT_DOT)
 		var color := MAP_ENEMY if unit.side != 0 else (Color.WHITE if unit.hero else MAP_ALLY)
 		draw_rect(Rect2(point - Vector2.ONE * dot * 0.5, Vector2.ONE * dot).intersection(_map), color)
-	var outline := map_camera_rect(camera_rect, _map, _frame.arena_size)
-	if outline.has_area():
-		draw_rect(outline, MAP_CAMERA, false, 1.0)
-	draw_rect(_map, MAP_BORDER, false, 1.0)
 
 func _draw_enemy_arrow(enemy_screen: Vector2) -> void:
 	var placement := arrow_layout(enemy_screen, size)

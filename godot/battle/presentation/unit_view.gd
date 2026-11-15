@@ -38,6 +38,10 @@ var _attacks: Dictionary = {}
 var on_settled := Callable()
 var _baked: Dictionary = {} # unit id -> [unit, headless]
 
+func _init() -> void:
+	if native_painter:
+		UnitPainter.forget() # unit ids start over in every battle
+
 func advance(dt: float, events: Array[Dictionary]) -> void:
 	_time += dt
 	for id in _flashes.keys():
@@ -73,7 +77,32 @@ func has_falling_units() -> bool:
 	return false
 
 func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary,
-		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS) -> void:
+		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS, render := PackedFloat64Array()) -> void:
+	if native_painter and render.size() == frame.size() * RENDER_STRIDE and not frame.is_empty():
+		# Native: sorting the frame, ordinary fighters and plants in depth order (godot/native/src/unit_painter.cpp).
+		# Corpses still falling are drawn first, heroes, companions and leaders on top.
+		if not _painter_ready:
+			UnitPainter.configure(_painter_config())
+			_painter_ready = true
+		var lists: Array = UnitPainter.prepare(render, frame, visible, _art)
+		for i in lists[0]:
+			var unit: Dictionary = frame[i]
+			var headless: bool = headless_units.has(unit.id)
+			_draw_unit(canvas, unit, true, headless)
+			if on_settled.is_valid() and _time - float(_falls.get(unit.id, _time - FALL_SECONDS)) >= FALL_SECONDS:
+				_baked[unit.id] = [unit, headless]
+				UnitPainter.mark_baked(unit.id)
+				on_settled.call(unit, headless)
+		UnitPainter.draw_ordinary(canvas.get_canvas_item(), vegetation, visible, selection, _time, _flashes, _attacks)
+		var special: Array[Dictionary] = []
+		for i in lists[1]:
+			special.append(frame[i])
+		special.sort_custom(func(a: Dictionary, b: Dictionary): return a.position.y < b.position.y)
+		for unit in special:
+			_markers.draw_ring(canvas, unit, selection)
+			_draw_unit(canvas, unit, false)
+			_markers.draw_status(canvas, unit)
+		return
 	var living: Array[Dictionary] = []
 	for unit in frame:
 		if unit.gone or not visible.has_point(unit.position):
@@ -108,6 +137,20 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 		_markers.draw_status(canvas, unit)
 	for i in range(plant_index, vegetation.size()):
 		_draw_plant(canvas, vegetation[i], visible)
+
+## Native drawing of ordinary fighters (godot/native/src/unit_painter.cpp); the GDScript path above is the reference.
+static var native_painter := true
+const RENDER_STRIDE := 12 # BattleCore.render_data
+static var _painter_ready := false
+
+func _painter_config() -> Dictionary:
+	var d := {}
+	for map in [(get_script() as Script).get_script_constant_map(), (UnitMarkers as Script).get_script_constant_map(), (Art as Script).get_script_constant_map()]:
+		for k in map:
+			if not (map[k] is Script):
+				d[k] = map[k]
+	d["ALL_GROUPS"] = Config.ALL_GROUPS
+	return d
 
 static func _draw_plant(canvas: CanvasItem, plant: Dictionary, visible: Rect2) -> void:
 	if visible.intersects(plant.bounds):

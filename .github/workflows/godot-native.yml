@@ -1,0 +1,49 @@
+# Builds the native battle core (godot/native, a GDExtension) for Windows, Linux and macOS.
+# The binaries are committed to godot/bin/ by whoever changes godot/native: download the artifacts of this run
+# (gh run download <run id> -D /tmp/native) and copy the files into godot/bin/ (see godot/ARCHITECTURE.md).
+name: Godot native core
+on:
+  workflow_dispatch:
+  push:
+    paths: ['godot/native/**', '.github/workflows/godot-native.yml']
+  pull_request:
+    paths: ['godot/native/**', '.github/workflows/godot-native.yml']
+env:
+  GODOT_CPP_REF: 27d9dd23c83871e0619fca5dc2cddfbfd69e926a # branch 4.5
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            name: linux
+            extra: ''
+          - os: windows-latest
+            name: windows
+            extra: ''
+          - os: macos-latest
+            name: macos
+            extra: '-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: godotengine/godot-cpp
+          ref: ${{ env.GODOT_CPP_REF }}
+          path: godot-cpp
+      - name: Build
+        shell: bash
+        run: |
+          cmake -S godot/native -B build -DGODOT_CPP_DIR="$PWD/godot-cpp" -DCMAKE_BUILD_TYPE=Release ${{ matrix.extra }}
+          cmake --build build --config Release -j 4
+          ls -la godot/bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: battle_core-${{ matrix.name }}
+          path: |
+            godot/bin/*.so
+            godot/bin/*.dll
+            godot/bin/*.dylib
+          if-no-files-found: error

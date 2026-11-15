@@ -1,6 +1,6 @@
 extends SceneTree
 ## Informational: frame cost of a mass battle with its view (simulation + snapshot + drawing).
-##   godot --path godot --script res://battle/tools/view_bench.gd [-- --n=300 --frames=240]
+##   godot --path godot --script res://battle/tools/view_bench.gd [-- --n=300 --frames=240 --shot=/tmp/b.png]
 const Factory = preload("res://battle/application/factory.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
@@ -15,6 +15,7 @@ var _last := 0
 var _times: Array[int] = []
 var _size := 300
 var _threads := -1
+var _shot := "" # save the last frame to this png
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
@@ -22,6 +23,8 @@ func _initialize() -> void:
 			_size = int(arg.substr(4))
 		elif arg.begins_with("--threads="):
 			_threads = int(arg.substr(10))
+		elif arg.begins_with("--shot="):
+			_shot = arg.substr(7)
 		elif arg.begins_with("--frames="):
 			_frames = int(arg.substr(9))
 	var c := Catalog.new(); c.load_data()
@@ -47,6 +50,8 @@ func _process(_d: float) -> bool:
 	_last = now
 	_n += 1
 	if _n >= _frames:
+		if not _shot.is_empty():
+			root.get_texture().get_image().save_png(_shot)
 		_times.sort()
 		var sum := 0
 		for t in _times:
