@@ -22,6 +22,7 @@ func _check() -> void:
 	await process_frame
 	var controls: BattleControls = view._controls
 	var session: Session = view._session
+	_check_menu(scene, view, controls)
 	_check_slots(view, controls, session)
 	_check_orders(view, controls, session)
 	_check_playback(view, controls)
@@ -30,6 +31,21 @@ func _check() -> void:
 	scene.free()
 	print("Battle controls tests passed")
 	quit(0)
+
+func _check_menu(scene: Node, view, controls: BattleControls) -> void:
+	var menu = scene.get_node("BattlePause")
+	controls._menu.pressed.emit()
+	assert(menu.visible and menu.battle_mode and view._paused)
+	var before: Dictionary = view.get_battle_snapshot()
+	view._physics_process(STEP)
+	assert(view.get_battle_snapshot() == before)
+	menu.close_window()
+	assert(not view._paused and not view._menu_open)
+	view._toggle_pause()
+	controls._menu.pressed.emit()
+	menu.close_window()
+	assert(view._paused, "closing menu must preserve a pre-existing tactical pause")
+	view._toggle_pause()
 
 func _check_slots(view, controls: BattleControls, session: Session) -> void:
 	var sword: Button = controls._slot_buttons[Session.WEAPON_SLOT_MELEE]

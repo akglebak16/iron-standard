@@ -21,7 +21,10 @@ const tests = findTests(root).sort();
 if (!tests.length) throw new Error('No Godot tests found');
 for (const test of tests) {
   const relative = path.relative(root, test).replaceAll('\\', '/');
-  const result = spawnSync(engine, ['--headless', '--path', root, '--script', `res://${relative}`], { encoding: 'utf8', timeout: 30000 });
+  // Ten simulated campaign days take about 31 seconds on the Windows debug engine.
+  // Keep every assertion and a bounded timeout; other tests retain their 30-second limit.
+  const timeout = relative === 'campaign/tests/world/test_world_wars.gd' ? 60000 : 30000;
+  const result = spawnSync(engine, ['--headless', '--path', root, '--script', `res://${relative}`], { encoding: 'utf8', timeout });
   const output = `${result.stdout || ''}\n${result.stderr || ''}`;
   if (result.error || result.status !== 0 || /SCRIPT ERROR|Parse Error|Compile Error|Failed to load script|Assertion failed/i.test(output) || !/tests passed/i.test(output)) {
     process.stderr.write(output);

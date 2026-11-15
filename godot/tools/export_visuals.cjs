@@ -13,7 +13,25 @@ const source = ['01_core.js', '01b_gear.js', '01c_perks.js', '02_art.js', '05b_w
 context.sCult = s => s.cult || s.fac;
 vm.runInContext(source + '\nglobalThis.art = { TROOPS, FACTIONS, EQ, ICONS, PERKS, perkParts, GOOD_IC, buildSprite, hashStr, palOf, crestCanvas, settleSprite, caravanSprite, treeSprite, bushSprite, iconKey, drawTorso, drawHead, drawHelm, drawShield, drawWeapon, drawBase, drawHorse, drawStump, quiver, makeVariant, mulberry };', context);
 const a = context.art;
+// Godot's SVG rasterizer does not accept CSS four-digit hex alpha attributes.
+function svgShapes(shapes) {
+  return shapes.replace(/(fill|stroke)="#([\da-f])([\da-f])([\da-f])([\da-f])"/gi,
+    (_, property, r, g, b, alpha) => `${property}="#${r}${r}${g}${g}${b}${b}" ${property}-opacity="${parseInt(alpha,16)/15}"`);
+}
+function exportIcons() {
+  for (const [id, shapes] of Object.entries(a.ICONS)) {
+    for (const [prefix, color] of [['icon_', '#d1a84c'], ['item_', '#e2d6b4'], ['white_', '#ffffff']]) {
+      fs.writeFileSync(path.join(out, prefix + id + '.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="${color}" color="${color}">${svgShapes(shapes).replaceAll('currentColor',color)}</svg>`);
+    }
+  }
+}
+if (process.argv.includes('--icons-only')) { exportIcons(); process.exit(0); }
 const paintGround = vm.runInContext('paintGround', context);
+let contactShadowTexture;
+const shadowCapture = createCanvas(1, 1).getContext('2d');
+shadowCapture.drawImage = image => { contactShadowTexture = image; };
+vm.runInContext('contactShadow', context)(shadowCapture, 0, 0, 1, 1);
+fs.writeFileSync(path.join(out, 'contact_shadow.png'), contactShadowTexture.toBuffer('image/png'));
 // Fixed-size cells keep lookups independent of troop/faction ordering.
 const cell = 256, columns = 16;
 const entries = [];
@@ -25,26 +43,35 @@ for (const [id, troop] of Object.entries(a.TROOPS)) {
   }
 }
 const manifest = { troops: {}, crests: {}, icons: {}, items: {}, components: {}, settlements: {}, perks: {} };
-const rows = Math.ceil(entries.length / columns);
+manifest.palettes = Object.fromEntries(Object.entries(a.FACTIONS).map(([id, f]) => [id, { c1: f.c1, c2: f.c2, emblem: f.emblem }]));
+let troopX = 0, troopY = 0, troopRowHeight = 0;
+const troopWidth = 2048;
+for (const entry of entries) {
+  if (troopX + entry.sp.w > troopWidth) { troopX = 0; troopY += troopRowHeight; troopRowHeight = 0; }
+  entry.x = troopX; entry.y = troopY;
+  troopX += entry.sp.w; troopRowHeight = Math.max(troopRowHeight, entry.sp.h);
+}
+const troopHeight = troopY + troopRowHeight;
 // Separate sheets preserve the original weapon pivot and decapitation layers.
-for (const part of ['body', 'wpn', 'portrait', 'headless', 'head']) {
-  const sheet = createCanvas(columns * cell, rows * cell), g = sheet.getContext('2d');
-  entries.forEach(({ key, sp, look }, i) => {
-    const x = i % columns * cell, y = Math.floor(i / columns) * cell;
-    const image = part === 'portrait' ? sp.cv : part === 'headless' ? sp.mk(false, { part: 'body', nohead: true }) : part === 'head' ? sp.mk(false, { only: 'head' }) : sp[part];
+for (let variant = 0; variant < 4; variant++) {
+  const variantEntries = variant === 0 ? entries : entries.map(entry => ({ ...entry, sp: a.buildSprite(entry.look, a.palOf(entry.key.split('|')[1]), a.hashStr(entry.key.split('|')[0]) + variant * 977) }));
+for (const part of ['body', 'wpn', 'portrait', 'headless', 'head', 'flash', 'corpse', 'corpse_headless']) {
+  const sheet = createCanvas(troopWidth, troopHeight), g = sheet.getContext('2d');
+  variantEntries.forEach(({ key, sp, look, x, y }) => {
+    const image = part === 'portrait' ? sp.cv : part === 'headless' ? sp.mk(false, { part: 'body', nohead: true }) : part === 'head' ? sp.mk(false, { only: 'head' }) : part === 'corpse' ? sp.mk(false) : part === 'corpse_headless' ? sp.mk(false, { nohead: true }) : sp[part];
     g.drawImage(image, x, y);
     manifest.troops[key] = { rect: [x, y, sp.w, sp.h], anchor: [sp.ax / 2, sp.ay / 2], pivot: sp.piv.map(v => v / 2), look };
   });
-  fs.writeFileSync(path.join(out, part + '.png'), sheet.toBuffer('image/png'));
+  fs.writeFileSync(path.join(out, part + (variant ? '_v' + variant : '') + '.png'), sheet.toBuffer('image/png'));
+}
 }
 for (const [id] of Object.entries(a.FACTIONS)) {
   fs.writeFileSync(path.join(out, 'crest_' + id + '.png'), a.crestCanvas(id, 96).toBuffer('image/png'));
   manifest.crests[id] = 'crest_' + id + '.png';
 }
-for (const [id, shapes] of Object.entries(a.ICONS)) {
+exportIcons();
+for (const [id] of Object.entries(a.ICONS)) {
   const name = 'icon_' + id + '.svg';
-  fs.writeFileSync(path.join(out, name), '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="#d1a84c" color="#d1a84c">' + shapes.replaceAll('currentColor', '#d1a84c') + '</svg>');
-  fs.writeFileSync(path.join(out, 'item_' + id + '.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="#e2d6b4" color="#e2d6b4">' + shapes.replaceAll('currentColor', '#e2d6b4') + '</svg>');
   manifest.icons[id] = name;
 }
 for (const [id, item] of Object.entries(a.EQ)) manifest.items[id] = a.iconKey(item);
@@ -73,8 +100,8 @@ for (const fac of Object.keys(a.FACTIONS)) {
   for (const shield of values('shield', 'shield')) addComponent(`shield|${fac}|${shield}`, g => a.drawShield(g, { shield }, pal, a.mulberry(7)));
   for (const weapon of values('weapon', 'melee', gearLooks('ranged'))) addComponent(`weapon|${fac}|${weapon}`, g => a.drawWeapon(g, { weapon }, pal, v));
   addComponent(`base|${fac}`, g => a.drawBase(g, 36, 72, 24, 8.5, pal));
-  for (const horse of values('horse', 'horse')) addComponent(`horse|${fac}|${horse}`, g => {
-    a.drawBase(g, 54, 104, 40, 10.5, pal); g.save(); g.translate(2, 14); a.drawHorse(g, horse, pal); g.restore();
+  for (const horse of values('horse', 'horse')) for (const base of [true, false]) addComponent(`${base ? 'horse' : 'horse_corpse'}|${fac}|${horse}`, g => {
+    if (base) a.drawBase(g, 54, 104, 40, 10.5, pal); g.save(); g.translate(2, 14); a.drawHorse(g, horse, pal); g.restore();
     g.fillStyle = horse === 'barded' ? pal.c2 : '#3a2a1a'; g.beginPath(); g.moveTo(18, 72); g.quadraticCurveTo(40, 64, 62, 72); g.lineTo(59, 82); g.quadraticCurveTo(40, 87, 21, 82); g.closePath(); g.fill(); g.strokeStyle = '#1b130c'; g.lineWidth = 1.2; g.stroke();
   }, 240, 244);
 }
@@ -110,7 +137,7 @@ for (const biome of ['grass', 'snow', 'steppe', 'arid']) for (let variant = 0; v
 }
 const groundOut = path.join(root, 'godot/battle/presentation/terrain/assets');
 fs.mkdirSync(groundOut, { recursive: true });
-for (const biome of ['grass', 'snow', 'steppe', 'arid']) {
+for (const biome of process.argv.includes('--skip-ground') ? [] : ['grass', 'snow', 'steppe', 'arid']) {
   fs.writeFileSync(path.join(groundOut, `ground_${biome}.png`), paintGround(2600, 1700, biome, 4017).toBuffer('image/png'));
 }
 fs.writeFileSync(path.join(out, 'visuals.json'), JSON.stringify(manifest));
@@ -131,4 +158,4 @@ for (const [name, colors, inner, border] of [
   g.fillStyle = gradient; g.fillRect(border + 1, border + 1, 94 - border * 2, 94 - border * 2);
   fs.writeFileSync(path.join(out, name + '.png'), cv.toBuffer('image/png'));
 }
-console.log(`Exported ${entries.length} original troop appearances, ${Object.keys(a.FACTIONS).length} crests, ${Object.keys(a.ICONS).length} icons`);
+console.log(`Exported ${entries.length * 4} original troop variants, ${Object.keys(a.FACTIONS).length} crests, ${Object.keys(a.ICONS).length} icons in three palettes`);

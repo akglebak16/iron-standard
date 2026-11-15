@@ -1,10 +1,11 @@
 extends Control
+const GameSkin = preload("res://ui/game_theme.gd")
 
 const MAP_SIZE := Vector2(190, 125)
 const SMALL_MAP_SIZE := Vector2(120, 80)
-const COMPACT_WIDTH := 720.0
-const MAP_MARGIN := Vector2(12, 12)
-const MAP_SHADE := 0.76
+const COMPACT_WIDTH := 760.0
+const MAP_MARGIN := Vector2(15, 15)
+const MAP_SHADE := 0.675
 const MAP_BORDER := Color("#8a7951")
 const MAP_WALL := Color("#4e4235")
 const MAP_CAMERA := Color(1.0, 1.0, 1.0, 0.72)
@@ -22,11 +23,11 @@ const COMPACT_ARROW_MARGIN := Vector2(48, 58)
 const ARROW_PULSE_SPEED := 5.0
 const ARROW_PULSE_BASE := 0.75
 const ARROW_PULSE_RANGE := 0.25
-const ARROW_LABEL_UP := -23.0
-const ARROW_LABEL_DOWN := 33.0
+const ARROW_LABEL_UP := -26.0
+const ARROW_LABEL_DOWN := 34.0
 const DOWNWARD_THRESHOLD := 0.3
 const ARROW_FONT_SIZE := 15
-const ARROW_OUTLINE_WIDTH := 3
+const ARROW_OUTLINE_WIDTH := 4
 const ARROW_SHAPE := [Vector2(22, 0), Vector2(-10, -15), Vector2(-4, 0), Vector2(-10, 15)]
 
 @onready var _ground: ColorRect = $MapGround
@@ -35,8 +36,15 @@ var _map := Rect2()
 var _time := 0.0
 var _arrow := PackedVector2Array(ARROW_SHAPE)
 var _arrow_outline := PackedVector2Array(ARROW_SHAPE + [ARROW_SHAPE[0]])
+var _map_frame := GameSkin.box("plank", 0)
+var _frame_panel := Panel.new()
 
 func _ready() -> void:
+	_frame_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_frame_panel.show_behind_parent = true
+	_frame_panel.add_theme_stylebox_override("panel", _map_frame)
+	add_child(_frame_panel)
+	move_child(_frame_panel, 0)
 	resized.connect(_layout_map)
 
 func configure(ground: ShaderMaterial) -> void:
@@ -55,6 +63,8 @@ func _layout_map() -> void:
 	var map_size := SMALL_MAP_SIZE if size.x < COMPACT_WIDTH else MAP_SIZE
 	map_size = map_size.min((size - MAP_MARGIN * 2.0).max(Vector2.ONE))
 	_map = Rect2(size - MAP_MARGIN - map_size, map_size)
+	_frame_panel.position = _map.position - Vector2(7, 7)
+	_frame_panel.size = _map.size + Vector2(14, 14)
 	_ground.position = _map.position
 	_ground.size = _map.size
 	var arena_size: Vector2 = _ground.material.get_shader_parameter("arena_size")
@@ -98,7 +108,7 @@ func _draw_enemy_arrow(enemy_screen: Vector2) -> void:
 	draw_colored_polygon(_arrow, Color(ARROW_COLOR, alpha))
 	draw_polyline(_arrow_outline, Color(ARROW_OUTLINE, alpha), ARROW_OUTLINE_WIDTH, true)
 	draw_set_transform(Vector2.ZERO)
-	var font := ThemeDB.fallback_font
+	var font := GameSkin.BODY_BOLD
 	var text := ARROW_TEXT % _frame.enemy_strength
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, ARROW_FONT_SIZE).x
 	var offset := ARROW_LABEL_UP if direction.y > DOWNWARD_THRESHOLD else ARROW_LABEL_DOWN

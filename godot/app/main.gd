@@ -66,6 +66,20 @@ func _ready() -> void:
 	var bridge := EncounterAftermath.new(session)
 	view.battle_finished.connect(_show_aftermath.bind(view, bridge, opponent, mounted, catalog, gear_catalog, goods, rng, companion_catalog, perk_catalog), CONNECT_ONE_SHOT)
 	add_child(view)
+	var menu := preload("res://app/pause_menu.gd").new()
+	menu.name = "BattlePause"
+	menu.battle_mode = true
+	add_child(menu)
+	menu.settings_changed.connect(view.apply_preferences)
+	view.menu_requested.connect(func():
+		if not view.attract_mode:
+			view.set_menu_open(true)
+			menu.open_menu(presentation_preferences))
+	menu.closed.connect(func():
+		var current := presentation_preferences.read()
+		view.apply_preferences(current.effects, current.music, presentation_preferences.read_blood())
+		view.set_menu_open(false))
+	menu.title_requested.connect(func(): get_tree().change_scene_to_file("res://app/main_menu.tscn"))
 
 func _save_audio_preferences(effects: bool, music: bool) -> void:
 	var error := presentation_preferences.save(effects, music)

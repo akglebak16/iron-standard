@@ -111,7 +111,14 @@ func _ready() -> void:
 	hud.panel_requested.connect(_open_panel)
 	_menu = PauseMenu.new()
 	add_child(_menu)
+	_menu.settings_changed.connect(func(effects: bool, music: bool, blood: bool):
+		if is_instance_valid(_battle): _battle.apply_preferences(effects, music, blood))
 	_menu.closed.connect(func(): state.clock.paused = false)
+	_menu.closed.connect(func():
+		if is_instance_valid(_battle):
+			var current := _preferences.read()
+			_battle.apply_preferences(current.effects, current.music, _preferences.read_blood())
+			_battle.set_menu_open(false))
 	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
 	_menu.title_requested.connect(func(): get_tree().change_scene_to_file("res://app/main_menu.tscn"))
 	_siege = SiegeWindow.new()
@@ -367,6 +374,10 @@ func _start_battle(p: Dictionary) -> void:
 	view.configure(session, audio.effects, audio.music, _preferences.read_blood(), setup.seed, setup.biome)
 	view.audio_preferences_changed.connect(func(e: bool, m: bool): _preferences.save(e, m))
 	view.blood_preference_changed.connect(func(on: bool): _preferences.save_blood(on))
+	view.menu_requested.connect(func():
+		view.set_menu_open(true)
+		_menu.battle_mode = true
+		_menu.open_menu(_preferences))
 	var opponent := _opponent(p)
 	var bridge := Aftermath.new(session)
 	view.battle_finished.connect(func():
@@ -404,6 +415,7 @@ func _set_world_visible(on: bool) -> void:
 func _open_panel(tab: String) -> void:
 	if tab == "menu":
 		state.clock.paused = true
+		_menu.battle_mode = false
 		_menu.open_menu(_preferences)
 		return
 	state.clock.paused = true
