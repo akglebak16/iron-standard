@@ -8,7 +8,7 @@ const CompanionCatalog = preload("res://core/characters/data/companion_catalog.g
 const Factory = preload("res://core/battle/application/factory.gd")
 const Setup = preload("res://adapters/godot/resources/battle_setup_resource.gd")
 const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
-const EncounterAftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
+const EncounterAftermath = preload("res://core/campaign/application/encounter_aftermath.gd")
 const AftermathText = preload("res://apps/godot/composition/aftermath_text.gd")
 const GoodsCatalog = preload("res://core/campaign/data/goods_catalog.gd")
 const CompanionProfile = preload("res://core/characters/rules/companion_profile.gd")
@@ -64,7 +64,7 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = battle_setup.seed + REWARD_SEED_OFFSET
 	var mounted := bool(HeroGear.resolve(profile, gear_catalog).get("mounted", false))
-	var bridge := EncounterAftermath.new(session)
+	var bridge := EncounterAftermath.new(session.result)
 	view.battle_finished.connect(_show_aftermath.bind(view, bridge, opponent, mounted, catalog, gear_catalog, goods, rng, companion_catalog, perk_catalog), CONNECT_ONE_SHOT)
 	add_child(view)
 	var menu := preload("res://apps/godot/composition/pause_menu.gd").new()

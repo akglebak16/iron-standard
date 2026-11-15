@@ -4,7 +4,7 @@ const WorldState = preload("res://core/campaign/world/world_state.gd")
 const WorldSave = preload("res://core/campaign/world/world_save.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
-const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
+const Bridge = preload("res://core/campaign/application/battle_encounter.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 
 func _initialize() -> void:
@@ -52,7 +52,7 @@ func _initialize() -> void:
 	var help: Array = vs.helpers(enemy)
 	assert(help == [retinue])
 	var allies: Array = Bridge.snapshot(help)
-	var b := Bridge.new()
+	var b := Bridge.new(ContentLoader.registry(), RandomNumberGenerator.new())
 	p.troops = [{"type": "e1", "n": 10}]
 	var before: int = Rules.troop_count(retinue.troops)
 	var party: Dictionary = b.party_dict(s, allies)

@@ -2,14 +2,14 @@ extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
-const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
-const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
+const Bridge = preload("res://core/campaign/application/battle_encounter.gd")
+const Aftermath = preload("res://core/campaign/application/encounter_aftermath.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
 	assert(ContentLoader.populate(data))
 	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
-	var b := Bridge.new()
+	var b := Bridge.new(ContentLoader.registry(), RandomNumberGenerator.new())
 	var town: Dictionary = {}
 	for t in s.map.settles:
 		if t.kind == "castle" and t.fac == "nord":
@@ -27,8 +27,8 @@ func _initialize() -> void:
 	var party := b.party_dict(s)
 	var resolved := Aftermath.resolve_result(result, party, opp, false, b.troops, b.gear, b.goods, b.rng, b.companions, b.perks, b.siege_world(s, town))
 	assert(not resolved.is_empty() and resolved.summary.has("captured"), "captured is reported")
-	b.apply(s, opp, resolved)
-	b.apply_siege(s, town, resolved)
+	b._encounter_apply(s, opp, resolved)
+	b._encounter_apply_siege(s, town, resolved)
 	assert(town.fac == "player" and town.owner == 0 and town.gar.size() > 0)
 	# a hopeless calculated assault loses and thins the garrison
 	var other: Dictionary = {}
@@ -44,8 +44,8 @@ func _initialize() -> void:
 	var r2 := b.auto_result(s, opp2)
 	assert(not r2.win)
 	var res2 := Aftermath.resolve_result(r2, b.party_dict(s), opp2, false, b.troops, b.gear, b.goods, b.rng, b.companions, b.perks, b.siege_world(s, other))
-	b.apply(s, opp2, res2)
-	b.apply_siege(s, other, res2)
+	b._encounter_apply(s, opp2, res2)
+	b._encounter_apply_siege(s, other, res2)
 	var after := 0
 	for st in other.gar:
 		after += int(st.n)

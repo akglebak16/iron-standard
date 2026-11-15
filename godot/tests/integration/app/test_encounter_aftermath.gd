@@ -1,6 +1,6 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
+const Aftermath = preload("res://core/campaign/application/encounter_aftermath.gd")
 const Factory = preload("res://core/battle/application/factory.gd")
 const Setup = preload("res://core/battle/data/battle_setup.gd")
 const Config = preload("res://core/battle/config.gd")
@@ -25,7 +25,7 @@ func _initialize() -> void:
 	setup.hero_troop = "n1"
 	setup.enemy_army = [{"type": "e1", "n": 1}]
 	var session := Factory.create(setup, troops)
-	var bridge := Aftermath.new(session)
+	var bridge := Aftermath.new(session.result)
 	var party := {"troops": [], "hero": {"str": 2}, "gold": 25}
 	var opponent := {"troops": setup.enemy_army, "kind": "caravan", "fac": "emp"}
 	var rng := RandomNumberGenerator.new()
@@ -51,7 +51,7 @@ func _initialize() -> void:
 	siege_session.advance(TICK)
 	siege_session.advance(TICK + Config.BATTLE_END_DELAY_SECONDS)
 	party.id = 7
-	var captured := Aftermath.new(siege_session).resolve(party, siege, false, troops, gear, goods, rng, companions, perks, {"settlements": [settlement]})
+	var captured := Aftermath.new(siege_session.result).resolve(party, siege, false, troops, gear, goods, rng, companions, perks, {"settlements": [settlement]})
 	assert(captured.summary.captured == settlement.name and captured.world.settlements[0].owner == 7)
 	assert(settlement.fac == "emp" and settlement.gar[0].n == 1)
 	print("Encounter aftermath integration tests passed")

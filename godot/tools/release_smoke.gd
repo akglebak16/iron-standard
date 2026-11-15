@@ -4,7 +4,7 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Europe = preload("res://core/campaign/data/europe_data.gd")
 const World = preload("res://core/campaign/world/world_state.gd")
 const Factory = preload("res://core/battle/application/factory.gd")
-const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
+const Bridge = preload("res://core/campaign/application/battle_encounter.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
 
 func _ready() -> void:
@@ -32,7 +32,7 @@ func _ready() -> void:
 	if menu.get_child_count() == 0:
 		fail("Main menu initialization")
 		return
-	var bridge := Bridge.new()
+	var bridge := Bridge.new(ContentLoader.registry(), RandomNumberGenerator.new())
 	var opponent: Dictionary = world.roster.parties[0]
 	var setup = bridge.make_setup(world, opponent)
 	var session = Factory.create(setup, bridge.troops, bridge.gear, bridge.perks, bridge.companions)

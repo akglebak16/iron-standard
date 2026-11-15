@@ -31,11 +31,11 @@
     },
     {
       "source": "app/encounter_aftermath.gd",
-      "destination": "apps/godot/composition/encounter_aftermath.gd"
+      "destination": "core/campaign/application/encounter_aftermath.gd"
     },
     {
       "source": "app/encounter_aftermath.gd.uid",
-      "destination": "apps/godot/composition/encounter_aftermath.gd.uid"
+      "destination": "core/campaign/application/encounter_aftermath.gd.uid"
     },
     {
       "source": "app/game_options.gd",
@@ -155,11 +155,11 @@
     },
     {
       "source": "app/world_battle_bridge.gd",
-      "destination": "apps/godot/composition/world_battle_bridge.gd"
+      "destination": "core/campaign/application/battle_encounter.gd"
     },
     {
       "source": "app/world_battle_bridge.gd.uid",
-      "destination": "apps/godot/composition/world_battle_bridge.gd.uid"
+      "destination": "core/campaign/application/battle_encounter.gd.uid"
     },
     {
       "source": "app/world_demo.gd",

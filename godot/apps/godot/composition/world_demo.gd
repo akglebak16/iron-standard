@@ -18,8 +18,7 @@ const SiegeWindow = preload("res://apps/godot/presentation/campaign/siege_window
 const PauseMenu = preload("res://apps/godot/composition/pause_menu.gd")
 const WorldTips = preload("res://apps/godot/presentation/campaign/world_tips.gd")
 const WorldMarksLayer = preload("res://apps/godot/presentation/campaign/world_marks_layer.gd")
-const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
-const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
+const Bridge = preload("res://core/campaign/application/battle_encounter.gd")
 const AftermathText = preload("res://apps/godot/composition/aftermath_text.gd")
 const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
 const BattleFactory = preload("res://core/battle/application/factory.gd")
@@ -42,7 +41,7 @@ var _menu: CanvasLayer
 var _marks: Node2D
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
-var _allies: Array = []
+var _battle_ticket: RefCounted
 var _party_window: CanvasLayer
 var _bridge: RefCounted
 var _battle: Node2D
@@ -143,7 +142,7 @@ func _ready() -> void:
 	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s))
 	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
 	state.log_added.connect(func(text: String): hud.show_notice(text))
-	_bridge = Bridge.new()
+	_bridge = Bridge.new(ContentLoader.registry(), state.roster.rng)
 	_dialog = EncounterDialog.new()
 	add_child(_dialog)
 	_dialog.chosen.connect(_on_encounter_choice)
@@ -163,6 +162,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	_ready_to_play = false
+	if _bridge != null: _bridge.dispose()
 	if state != null:
 		state.dispose()
 		state = null
@@ -317,30 +317,9 @@ func _end_meeting(cooldown: float) -> void:
 	state.player.busy = ""
 	state.clock.paused = false
 
-func _world_for(p: Dictionary) -> Dictionary:
-	if p.kind == "siege":
-		return _bridge.siege_world(state, state.map.settlement_by_id(p.sid))
-	return {"parties": [p.duplicate(true)], "settlements": [], "factions": Rules.REAL_FACTIONS}
-
-## Applies a resolved battle; for a siege also writes the town back and queues the plunder choice.
-func _apply_resolved(p: Dictionary, resolved: Dictionary) -> void:
-	var was := ""
-	var town: Dictionary = {}
-	if p.kind == "siege":
-		town = state.map.settlement_by_id(p.sid)
-		was = town.fac
-	_bridge.apply(state, p, resolved, _allies)
-	state.skirmish.split(p)
-	if not _allies.is_empty():
-		state.log_world("Дружины вассалов бились рядом с тобой.")
-	_allies = []
-	if p.kind == "siege":
-		_bridge.apply_siege(state, town, resolved)
-		state.settlement_changed.emit(town)
-		if resolved.summary.has("captured"):
-			state.log_world("%s взят штурмом!" % town.name)
-			if was in Rules.REAL_FACTIONS:
-				_loot_pending = town
+func _show_resolved(resolved: Dictionary) -> void:
+	var town_id := int(resolved.get("loot_settlement_id", -1))
+	_loot_pending = state.map.settlement_by_id(town_id) if town_id >= 0 else {}
 
 func _offer_loot(s: Dictionary, show: bool) -> void:
 	if show:
@@ -356,23 +335,17 @@ func _on_assault(s: Dictionary, calculate: bool) -> void:
 	else:
 		_start_battle(opp)
 
-func _opponent(p: Dictionary) -> Dictionary:
-	return _bridge.opponent_dict(p, {})
-
 func _finish_auto(p: Dictionary) -> void:
-	state.skirmish.merge(p, state.skirmish.helpers(state.player, p))
-	_allies = Bridge.snapshot(state.vassals.helpers(p))
-	var result: Dictionary = _bridge.auto_result(state, p, _allies)
-	var party: Dictionary = _bridge.party_dict(state, _allies)
-	var opponent := _opponent(p)
-	var world := _world_for(opponent)
-	var resolved := Aftermath.resolve_result(result, party, opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
+	_battle_ticket = _bridge.begin(state, p)
+	var resolved: Dictionary = _bridge.calculate(_battle_ticket)
 	if resolved.is_empty():
+		_bridge.cancel(_battle_ticket)
 		_end_meeting(3.0)
 		return
-	_apply_resolved(p, resolved)
+	_show_resolved(resolved)
+	_battle_ticket = null
 	_meeting = {}
-	hud.show_notice(("Победа!" if result.win else "Поражение.") + AftermathText.build(resolved, _bridge.gear, _bridge.goods))
+	hud.show_notice(("Победа!" if resolved.summary.win else "Поражение.") + AftermathText.build(resolved, _bridge.gear, _bridge.goods))
 	_siege_hold = false
 	if _loot_pending.is_empty():
 		state.clock.paused = false
@@ -382,11 +355,12 @@ func _finish_auto(p: Dictionary) -> void:
 		_offer_loot(town, true)
 
 func _start_battle(p: Dictionary) -> void:
-	state.skirmish.merge(p, state.skirmish.helpers(state.player, p))
-	_allies = Bridge.snapshot(state.vassals.helpers(p))
-	var setup: BattleSetup = _bridge.make_setup(state, p, _allies)
+	_battle_ticket = _bridge.begin(state, p)
+	var setup: BattleSetup = _bridge.battle_setup(_battle_ticket)
+	if setup == null: return
 	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions)
 	if session == null:
+		_bridge.cancel(_battle_ticket)
 		push_error("Cannot start the battle")
 		_end_meeting(3.0)
 		return
@@ -400,14 +374,13 @@ func _start_battle(p: Dictionary) -> void:
 		view.set_menu_open(true)
 		_menu.battle_mode = true
 		_menu.open_menu(_preferences))
-	var opponent := _opponent(p)
-	var bridge := Aftermath.new(session)
+	var ticket := _battle_ticket
 	view.battle_finished.connect(func():
-		var world := _world_for(opponent)
-		var resolved := bridge.resolve(_bridge.party_dict(state, _allies), opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
+		var resolved: Dictionary = _bridge.complete(ticket, session.result())
 		if resolved.is_empty():
 			return
-		_apply_resolved(p, resolved)
+		_show_resolved(resolved)
+		_battle_ticket = null
 		view.show_result_summary(AftermathText.build(resolved, _bridge.gear, _bridge.goods) + "\nEnter — вернуться на карту")
 		_waiting_return = true, CONNECT_ONE_SHOT)
 	_battle = view
