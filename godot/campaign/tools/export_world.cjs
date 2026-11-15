@@ -11,7 +11,7 @@ vm.runInContext(code + tail, ctx, { filename: 'world.js' });
 const A = ctx.__api;
 const outData = path.join(root, 'godot', 'campaign', 'data', 'europe.json');
 fs.writeFileSync(outData, JSON.stringify({ eu: A.EU, shapes: A.EU_SHAPES, ridges: A.EU_RIDGES, regions: A.EU_REG, rivers: A.EU_RIVERS, factions: A.FAC_V[A.DEFAULT_MAPV], town_names: A.SNAMES2, camp_names: A.CAMPN2 }));
-const facs = {}; for (const [id, f] of Object.entries(A.FACTIONS)) facs[id] = { name: f.name, gen: f.gen, c1: f.c1, c2: f.c2, emblem: f.emblem, title: f.title, biome: f.biome || 'grass' };
+const facs = {}; for (const [id, f] of Object.entries(A.FACTIONS)) facs[id] = { name: f.name, gen: f.gen, c1: f.c1, c2: f.c2, emblem: f.emblem, title: f.title, biome: f.biome || 'grass', names: f.names || [], nicks: f.nicks || [] };
 fs.writeFileSync(path.join(root, 'godot', 'campaign', 'data', 'factions.json'), JSON.stringify(facs));
 const fix = { seeds: [] };
 for (const seed of [1, 12345, 777777]) {

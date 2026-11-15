@@ -12,6 +12,7 @@ var _night: ColorRect
 var _tip: PanelContainer
 var _tip_label: Label
 var _near: Label
+var _notice: Label
 var _factions := FactionCatalog.new()
 
 func _ready() -> void:
@@ -55,6 +56,14 @@ func _ready() -> void:
 	_near.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.9))
 	_near.add_theme_constant_override("outline_size", 4)
 	add_child(_near)
+	_notice = Label.new()
+	_notice.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_notice.position = Vector2(-220, 70)
+	_notice.add_theme_font_size_override("font_size", 20)
+	_notice.add_theme_color_override("font_color", Color("#ffd0a0"))
+	_notice.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.95))
+	_notice.add_theme_constant_override("outline_size", 6)
+	add_child(_notice)
 	_tip = PanelContainer.new()
 	_tip.visible = false
 	_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -75,6 +84,9 @@ func refresh(state: RefCounted, near_settlement: Dictionary) -> void:
 	_near.text = "Рядом: %s" % near_settlement.name if not near_settlement.is_empty() and near_settlement.kind != "camp" else ""
 
 ## Tooltip for the settlement under the mouse (worldTip in src/07_main.js); empty dict hides it.
+func show_notice(text: String) -> void:
+	_notice.text = text
+
 func show_tip(settlement: Dictionary, screen_pos: Vector2) -> void:
 	if settlement.is_empty():
 		_tip.visible = false

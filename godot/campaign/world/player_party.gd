@@ -8,6 +8,11 @@ var y := 0.0
 var fx := 1.0
 var path: Array = []    # Vector2 points
 var pi := 0
+var troops: Array = []
+var rel: Dictionary = {"nord": 0, "emp": 0, "khan": 0, "kin": 0, "emi": 0, "dom": 0, "pact": 0, "bandit": -100}
+var busy := ""      # "enc" / "battle" while a meeting or fight is running
+var inside := false # inside a settlement
+var away := false
 
 func has_route() -> bool:
 	return pi < path.size()
