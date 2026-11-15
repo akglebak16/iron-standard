@@ -2,7 +2,7 @@ extends SceneTree
 ## Keep the feature boundary enforceable as more screens and rules are added.
 func _initialize() -> void:
 	# The visual library has actual consumers in both campaign and battle, and owns no game rules.
-	_check_tree("res://ui", ["res://apps/godot/composition/", "res://core/campaign/", "res://core/battle/", "res://core/troops/", "res://core/equipment/", "res://core/characters/"])
+	_check_tree("res://apps/godot/visuals", ["res://apps/godot/composition/", "res://core/campaign/", "res://core/battle/", "res://core/troops/", "res://core/equipment/", "res://core/characters/"])
 	var external_layers := ["res://apps/godot/composition/", "res://core/campaign/"]
 	var scene_and_files := ["FileAccess", "Input.", "get_tree("]
 	var catalogs := ["res://core/troops/data/", "res://core/equipment/data/", "res://core/characters/data/"]

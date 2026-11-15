@@ -10,6 +10,23 @@ func _check() -> void:
 	Options.continue_game = false
 	var game := Game.instantiate()
 	root.add_child(game)
+	for siege in [false, true]:
+		game._mode.demo_requested.emit(siege)
+		game._mode.demo_requested.emit(siege)
+		for frame in 3: await process_frame
+		assert(game.get_child_count() == 1 and game._mode.has_node("Battle"))
+		var view = game._mode.get_node("Battle")
+		var session_ref: WeakRef = weakref(view._session)
+		assert(game._mode.battle_setup.siege == siege)
+		view.set_menu_open(true)
+		var tick: int = view._frame.tick
+		for frame in 3: await process_frame
+		assert(view._paused and view._frame.tick == tick)
+		game._mode.title_requested.emit()
+		view = null
+		for frame in 3: await process_frame
+		assert(game.get_child_count() == 1 and game._mode.has_signal("demo_requested"))
+		assert(session_ref.get_ref() == null)
 	for iteration in 2:
 		game._mode.campaign_requested.emit()
 		# Duplicate requests within the same frame must not create a second context.

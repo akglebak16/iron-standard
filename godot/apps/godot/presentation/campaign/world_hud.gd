@@ -5,7 +5,7 @@ const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const Economy = preload("res://core/campaign/economy/party_economy.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
 
-const GameSkin = preload("res://ui/game_theme.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 
 signal speed_changed(speed: int)
 signal pause_toggled

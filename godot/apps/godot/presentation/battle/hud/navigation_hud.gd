@@ -1,5 +1,5 @@
 extends Control
-const GameSkin = preload("res://ui/game_theme.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 const RenderSnapshot = preload("res://core/battle/application/render_snapshot.gd")
 
 const MAP_SIZE := Vector2(190, 125)

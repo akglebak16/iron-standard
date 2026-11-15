@@ -2,8 +2,8 @@ extends CanvasLayer
 ## Base of the world windows: dimmed backdrop, titled panel, tab row, scrolling body and a close button (openModal in src/06_ui.js).
 signal closed
 
-const GameSkin = preload("res://ui/game_theme.gd")
-const OriginalArt = preload("res://ui/original_art.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const WIDTH := 900.0
 const HEIGHT := 620.0
 var title_label: Label

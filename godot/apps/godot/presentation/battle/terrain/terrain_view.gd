@@ -1,4 +1,10 @@
 extends Node2D
+const ORIGINAL_GROUND_PATHS := {
+	"grass": "res://apps/godot/presentation/battle/terrain/assets/ground_grass.png",
+	"snow": "res://apps/godot/presentation/battle/terrain/assets/ground_snow.png",
+	"steppe": "res://apps/godot/presentation/battle/terrain/assets/ground_steppe.png",
+	"arid": "res://apps/godot/presentation/battle/terrain/assets/ground_arid.png",
+}
 
 const GroundShader = preload("res://apps/godot/presentation/battle/terrain/ground.gdshader")
 const WallView = preload("res://apps/godot/presentation/battle/terrain/wall_view.gd")
@@ -30,7 +36,7 @@ func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: Strin
 	var palette: Array = PALETTES.get(biome, PALETTES[Config.DEFAULT_BIOME])
 	var ground_material := ShaderMaterial.new()
 	ground_material.shader = GroundShader
-	var ground_path := "res://apps/godot/presentation/battle/terrain/assets/ground_%s.png" % biome
+	var ground_path: String = ORIGINAL_GROUND_PATHS.get(biome, "")
 	if use_original_ground and ResourceLoader.exists(ground_path):
 		ground_material.set_shader_parameter("original_ground", load(ground_path))
 		ground_material.set_shader_parameter("use_original_ground", true)

@@ -1,5 +1,5 @@
 extends RefCounted
-const GameSkin = preload("res://ui/game_theme.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 const Demo = preload("res://apps/godot/presentation/battle/demo_config.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 const Config = preload("res://core/battle/config.gd")

@@ -1,17 +1,20 @@
 extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The new equipment UI must preserve real inventory actions, including its two-click gesture.
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
-const Art = preload("res://ui/original_art.gd")
+const Art = preload("res://apps/godot/visuals/original_art.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
-	assert(data.load_data())
-	var state := WorldState.create(4017, data, "emp")
+	var loaded := ContentLoader.populate(data)
+	assert(loaded)
+	var state := WorldState.create(4017, data, "emp", ContentLoader.registry())
 	var window := PartyWindow.new()
 	root.add_child(window)
 	await process_frame
+	assert(ThemeDB.get_project_theme().default_font != null, "runtime theme installs imported fonts")
 	state.player.inv["head_nasal"] = 1
 	window.open_for(state, "gear")
 	await process_frame

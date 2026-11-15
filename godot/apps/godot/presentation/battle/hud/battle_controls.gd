@@ -1,7 +1,8 @@
 extends PanelContainer
+const AssetPaths = preload("res://apps/godot/visuals/asset_paths.gd")
 ## Native controls sized from style.css + polish.css, including responsive breakpoints.
-const GameSkin = preload("res://ui/game_theme.gd")
-const OriginalArt = preload("res://ui/original_art.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const Config = preload("res://core/battle/config.gd")
 const Demo = preload("res://apps/godot/presentation/battle/demo_config.gd")
 const Session = preload("res://core/battle/application/session.gd")
@@ -144,7 +145,7 @@ func _ready() -> void:
 	_counter.add_theme_color_override("font_color", GameSkin.BRASS)
 	_enemy_counter.add_theme_color_override("font_color", GameSkin.BRASS)
 	var timer := TextureRect.new()
-	timer.texture = load("res://ui/assets/timer.png")
+	timer.texture = load("res://apps/godot/visuals/assets/timer.png")
 	timer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	timer.size = Vector2(62, 62)
 	timer.position = Vector2(117, 8)
@@ -372,7 +373,7 @@ func _add_bar(bar: ProgressBar, label: Label, kind: String) -> void:
 	background.border_color = Color("#0d0905")
 	background.set_border_width_all(2)
 	var fill := StyleBoxTexture.new()
-	fill.texture = load("res://ui/assets/bar_%s.png" % kind)
+	fill.texture = load(AssetPaths.path("bar_%s" % kind))
 	fill.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
 	fill.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE
 	fill.expand_margin_left = -2

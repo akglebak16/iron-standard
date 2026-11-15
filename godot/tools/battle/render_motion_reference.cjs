@@ -5,7 +5,7 @@ const { createCanvas, GlobalFonts } = require('@napi-rs/canvas');
 const root = path.resolve(__dirname, '../../..');
 const out = process.argv[2]; if (!out) throw Error('Usage: node render_motion_reference.cjs <output-directory>');
 fs.mkdirSync(out, { recursive: true });
-GlobalFonts.registerFromPath(path.join(root, 'godot/ui/assets/fonts/AlegreyaSans-Bold.ttf'), 'Alegreya Sans');
+GlobalFonts.registerFromPath(path.join(root, 'godot/apps/godot/visuals/assets/fonts/AlegreyaSans-Bold.ttf'), 'Alegreya Sans');
 const ctx = vm.createContext({ document: { createElement: () => createCanvas(1, 1) }, console });
 vm.runInContext(['01_core.js', '02_art.js', '03_battle.js'].map(f => fs.readFileSync(path.join(root, 'src', f), 'utf8')).join('\n') + '\nglobalThis.source = { getSprite, drawUnitSprite };', ctx);
 const cases = [

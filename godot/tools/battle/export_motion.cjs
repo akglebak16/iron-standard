@@ -32,6 +32,6 @@ for (const elapsed of [0, .03, .085, .17, .255, .339, .34, .5]) for (const rotat
   source.fallDraw(g);
   fixtures.falls.push({ elapsed, rotation, at: [320, 240], anchor: [76, 158], call: calls[0] });
 }
-const out = path.join(root, 'godot/battle/tests/fixtures/unit_motion.json');
+const out = path.join(root, 'godot/tests/unit/battle/fixtures/unit_motion.json');
 fs.writeFileSync(out, JSON.stringify(fixtures, null, 2) + '\n');
 console.log(`Original Canvas fixtures: ${fixtures.poses.length} poses, ${fixtures.bodies.length} body/weapon transforms, ${fixtures.falls.length} falls`);

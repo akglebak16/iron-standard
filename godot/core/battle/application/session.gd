@@ -216,7 +216,7 @@ func selected_orders(selection: int) -> Array[String]:
 	var orders: Array[String] = []
 	for group in _state.groups[0]:
 		if selection != Config.ALL_GROUPS and group.kind != selection: continue
-		if group.active_units().is_empty(): continue
+		if not group.has_active_units(): continue
 		var order: String = Config.ORDER_RETREAT if group.backing else group.order
 		if not orders.has(order): orders.append(order)
 	return orders

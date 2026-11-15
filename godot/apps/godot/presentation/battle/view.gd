@@ -105,7 +105,7 @@ func _ready() -> void:
 	log_panel.position = Vector2(8, 8)
 	log_panel.size = Vector2(330, 34)
 	log_panel.clip_contents = true
-	log_panel.add_theme_stylebox_override("panel", preload("res://ui/game_theme.gd").box("parchment", 10))
+	log_panel.add_theme_stylebox_override("panel", preload("res://apps/godot/visuals/game_theme.gd").box("parchment", 10))
 	$Hud.add_child(log_panel)
 	_journal_label = Label.new()
 	_journal_label.position = Vector2(13, 6)
@@ -255,7 +255,6 @@ func _select_group(group: int) -> void:
 	queue_redraw()
 
 func set_menu_open(open: bool) -> void:
-	_finish_pending_step()
 	if open and not _menu_open:
 		_paused_before_menu = _paused
 		_paused = true
@@ -316,7 +315,8 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
 	# One detached read per completed batch of ticks, reused by HUD and drawing.
 	_frame = frame if not frame.is_empty() else _simulation.render_snapshot()
-	if _figure_identity_count != _frame.render.size():
+	# Active storage shrinks on deaths; only newly spawned units need new identities.
+	if _figure_identity_count < 0 or events.any(func(event): return event.kind == Event.Kind.RESERVE_WAVE):
 		var portrait_units: Array[Dictionary] = []
 		for index in _frame.render.size(): portrait_units.append(_frame.render.unit_at(index))
 		_figures.configure_identities(_session.unit_appearance_ids(), _figure_seed)

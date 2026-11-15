@@ -1,5 +1,5 @@
 extends RefCounted
-const OriginalArt = preload("res://ui/original_art.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 ## Procedural bust layers. SVG is rasterized once per appearance and palette.
 const SIZE := Vector2(76, 88)
 const PIVOT := Vector2(53, 52)

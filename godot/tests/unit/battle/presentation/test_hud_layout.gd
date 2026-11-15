@@ -1,6 +1,6 @@
 extends SceneTree
 const Controls = preload("res://apps/godot/presentation/battle/hud/battle_controls.gd")
-const GameSkin = preload("res://ui/game_theme.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 const EPSILON := 0.04 # Chrome rounds layout to 1/64 px.
 
 func _initialize() -> void:

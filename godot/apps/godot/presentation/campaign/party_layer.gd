@@ -3,7 +3,7 @@ extends Node2D
 ## A hero sprite replaces the marker when the characters module is hooked into the map.
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
-const OriginalArt = preload("res://ui/original_art.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 var gear_catalog: RefCounted
 var _appearance_key := ""

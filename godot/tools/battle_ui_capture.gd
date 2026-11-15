@@ -24,7 +24,7 @@ func _capture() -> void:
 	scene.battle_setup.biome = _biome
 	root.add_child(scene)
 	var view = scene.get_node("Battle")
-	view.frame_driven = false
+	view.set_process(false)
 	view._audio.enabled = false
 	view._music.enabled = false
 	if _menu: view._controls._menu.pressed.emit()

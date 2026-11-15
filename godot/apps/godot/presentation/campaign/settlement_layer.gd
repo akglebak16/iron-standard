@@ -2,7 +2,7 @@ extends Node2D
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Settlements on the map: sprites from a sheet drawn once, owner banners and name labels (like drawWorld in src/07_main.js).
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
-const OriginalArt = preload("res://ui/original_art.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
@@ -78,7 +78,7 @@ func _draw() -> void:
 	_draw_labels()
 
 func _draw_labels() -> void:
-	var font := preload("res://ui/game_theme.gd").BODY
+	var font := preload("res://apps/godot/visuals/game_theme.gd").BODY
 	var entries: Array = []
 	for s in _settles:
 		var size := 13 if s.kind == "village" else 16

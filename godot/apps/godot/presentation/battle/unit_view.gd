@@ -9,7 +9,7 @@ const VIEW_MARGIN := 50.0
 const PHASE_STEP := 0.618
 const FLASH_SECONDS := 0.13
 const FALL_SECONDS := Motion.FALL_SECONDS
-const SHADOW = preload("res://ui/assets/contact_shadow.png")
+const SHADOW = preload("res://apps/godot/visuals/assets/contact_shadow.png")
 const FLEEING_OPACITY := 0.75
 
 var _art := Art.new()

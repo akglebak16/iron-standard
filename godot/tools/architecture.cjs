@@ -262,6 +262,7 @@ function structureIssues(directories, manifest) {
 }
 
 function check() {
+  cp.execFileSync(process.execPath, [path.join(ROOT, 'tools/export_asset_paths.cjs'), '--check'], {stdio:'pipe'});
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, MANIFEST), 'utf8'));
   const malformed = manifestIssues(manifest);
   if (malformed.length) throw new Error(malformed.join('\n'));

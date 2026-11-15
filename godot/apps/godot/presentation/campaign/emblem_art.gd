@@ -1,1 +1,1 @@
-extends "res://ui/banner_art.gd"
+extends "res://apps/godot/visuals/banner_art.gd"

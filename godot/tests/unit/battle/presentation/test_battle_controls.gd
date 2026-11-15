@@ -37,7 +37,7 @@ func _check_menu(scene: Node, view, controls: BattleControls) -> void:
 	controls._menu.pressed.emit()
 	assert(menu.visible and menu.battle_mode and view._paused)
 	var before: Dictionary = view.get_battle_snapshot()
-	view._physics_process(STEP)
+	_advance_view(view, STEP)
 	assert(view.get_battle_snapshot() == before)
 	menu.close_window()
 	assert(not view._paused and not view._menu_open)

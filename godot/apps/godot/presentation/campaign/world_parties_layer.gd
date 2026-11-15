@@ -3,7 +3,7 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Lords, vassals, bandits and caravans on the world map: a figure in faction colours with a small banner (drawWorld in src/07_main.js).
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
-const OriginalArt = preload("res://ui/original_art.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const DRAW_MARGIN := 64.0 # banner, hostile ring and shadow extend beyond the party centre
@@ -43,7 +43,7 @@ func _draw_party(p: Dictionary) -> void:
 	if Rules.hostile_to_player(p, player.rel):
 		draw_arc(at + Vector2(0, 1), 22.0 * scale, 0.0, TAU, 24, Color(0.85, 0.2, 0.15, 0.85), 1.8, true)
 	if p.kind == "caravan":
-		draw_texture_rect(preload("res://ui/assets/caravan.png"), Rect2(at - Vector2(27.5, 28), Vector2(55, 35)), false)
+		draw_texture_rect(preload("res://apps/godot/visuals/assets/caravan.png"), Rect2(at - Vector2(27.5, 28), Vector2(55, 35)), false)
 		return
 	var troop := ""
 	var tier := -1

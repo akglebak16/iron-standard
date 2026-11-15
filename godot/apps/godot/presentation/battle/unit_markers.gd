@@ -2,7 +2,7 @@ extends RefCounted
 
 const Config = preload("res://core/battle/config.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
-const BannerArt = preload("res://ui/banner_art.gd")
+const BannerArt = preload("res://apps/godot/visuals/banner_art.gd")
 const HERO_RING := Color("#ffd86a")
 const COMPANION_RING := Color("#7fd6c8")
 const ALLY_SELECTED_RING := Color(0.98, 0.87, 0.51, 0.85)
@@ -143,7 +143,7 @@ func draw_status(canvas: CanvasItem, unit: Dictionary, battle_time := -1.0) -> v
 		canvas.draw_rect(Rect2(flag, FLEE_FLAG_SIZE), FLEE_FLAG_COLOR)
 
 static func _draw_name(canvas: CanvasItem, unit: Dictionary) -> void:
-	var font := preload("res://ui/game_theme.gd").BODY_BOLD
+	var font := preload("res://apps/godot/visuals/game_theme.gd").BODY_BOLD
 	var text: String = unit.companion_name
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, NAME_FONT_SIZE).x
 	var y := MOUNT_HEALTH_Y if unit.mounted else FOOT_HEALTH_Y

@@ -1,4 +1,5 @@
 extends RefCounted
+const AssetPaths = preload("res://apps/godot/visuals/asset_paths.gd")
 
 const TREE_SIZE := Vector2i(100, 125)
 const BUSH_SIZE := Vector2i(60, 46)
@@ -47,8 +48,8 @@ func configure(layout: Array[Dictionary], biome: String, seed_value: int) -> voi
 
 static func _texture(tree: bool, biome: String, seed_value: int) -> Texture2D:
 	var variants := 3 if tree else 2
-	var path := "res://ui/assets/%s_%s_%d.png" % ["tree" if tree else "bush", biome, posmod(seed_value, variants)]
-	if ResourceLoader.exists(path):
+	var path := AssetPaths.path("%s_%s_%d" % ["tree" if tree else "bush", biome, posmod(seed_value, variants)])
+	if not path.is_empty() and ResourceLoader.exists(path):
 		var original: Texture2D = load(path)
 		var image := original.get_image()
 		var size := TREE_SIZE if tree else BUSH_SIZE

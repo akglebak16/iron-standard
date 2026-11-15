@@ -10,5 +10,5 @@ const {pathToFileURL}=require('url');const path=require('path'),fs=require('fs')
   results[`${width}x${height}`]=await page.evaluate(()=>Object.fromEntries(['#bhero','#bhero .nm','#bhero .bgrid','#bhero .bar','#bhero .wsw','#borders','#commandState','#bords','.ord','#bgroups','.grp','#btop','#btimer','#bbtns','#bmini','#bmini canvas','#blog'].map(s=>{const e=document.querySelector(s);if(!e)return[s,null];const r=e.getBoundingClientRect(),c=getComputedStyle(e);return[s,{x:r.x,y:r.y,w:r.width,h:r.height,font:c.font,padding:c.padding,gap:c.gap,border:c.borderWidth}]})));
 
  }
- fs.writeFileSync(path.join(__dirname,'../tests/fixtures/hud_layout.json'),JSON.stringify(results,null,2));await browser.close();console.log('Captured original browser HUD geometry at six resolutions');
+ fs.writeFileSync(path.join(__dirname,'../../tests/unit/battle/fixtures/hud_layout.json'),JSON.stringify(results,null,2));await browser.close();console.log('Captured original browser HUD geometry at six resolutions');
 })().catch(e=>{console.error(e);process.exit(1)});

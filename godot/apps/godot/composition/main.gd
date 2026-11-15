@@ -16,6 +16,7 @@ const CompanionProfile = preload("res://core/characters/rules/companion_profile.
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const PresentationPreferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const REWARD_SEED_OFFSET := 1
+signal title_requested
 @export var demo_world: Dictionary = {}
 @export var demo_party_position := Vector2.ZERO
 @export var battle_setup: Setup = preload("res://content/scenarios/demo_battle.tres")
@@ -81,7 +82,7 @@ func _ready() -> void:
 		var current := presentation_preferences.read()
 		view.apply_preferences(current.effects, current.music, presentation_preferences.read_blood())
 		view.set_menu_open(false))
-	menu.title_requested.connect(func(): get_tree().change_scene_to_file("res://apps/godot/composition/main_menu.tscn"))
+	menu.title_requested.connect(func(): title_requested.emit())
 
 func _save_audio_preferences(effects: bool, music: bool) -> void:
 	var error := presentation_preferences.save(effects, music)

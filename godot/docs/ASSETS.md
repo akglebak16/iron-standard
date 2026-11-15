@@ -13,10 +13,10 @@
 
 | Файлы | Источник | Условия |
 | --- | --- | --- |
-| `ui/assets/*.png`, `icon_*.svg`, `item_*.svg`, `white_*.svg` | Canvas и окончательный CSS из `src/`; экспортёры в `tools/` | Производные собственной графики репозитория; права исходных авторов сохраняются, новая лицензия не назначается |
-| `battle/presentation/terrain/assets/ground_*.png` | `src/02_art.js: paintGround`, seed 4017, 2600×1700 | Те же условия исходного проекта; внешний материал не используется |
-| `ui/assets/fonts/AlegreyaSC-Bold.ttf` | [Google Fonts / Alegreya SC](https://github.com/google/fonts/tree/main/ofl/alegreyasc) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSC-OFL.txt` включена |
-| `ui/assets/fonts/AlegreyaSans-Medium.ttf`, `AlegreyaSans-Bold.ttf` | [Google Fonts / Alegreya Sans](https://github.com/google/fonts/tree/main/ofl/alegreyasans) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSans-OFL.txt` включена |
+| `apps/godot/visuals/assets/*.png`, `icon_*.svg`, `item_*.svg`, `white_*.svg` | Canvas и окончательный CSS из `src/`; экспортёры в `tools/` | Производные собственной графики репозитория; права исходных авторов сохраняются, новая лицензия не назначается |
+| `apps/godot/presentation/battle/terrain/assets/ground_*.png` | `src/02_art.js: paintGround`, seed 4017, 2600×1700 | Те же условия исходного проекта; внешний материал не используется |
+| `apps/godot/visuals/assets/fonts/AlegreyaSC-Bold.ttf` | [Google Fonts / Alegreya SC](https://github.com/google/fonts/tree/main/ofl/alegreyasc) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSC-OFL.txt` включена |
+| `apps/godot/visuals/assets/fonts/AlegreyaSans-Medium.ttf`, `AlegreyaSans-Bold.ttf` | [Google Fonts / Alegreya Sans](https://github.com/google/fonts/tree/main/ofl/alegreyasans) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSans-OFL.txt` включена |
 
 - Звук кладём в `apps/godot/presentation/<режим>/audio/assets/`, картинки и сцены — рядом с кодом владельца (`terrain/wall/`). Общего каталога ассетов нет, пока второй потребитель не появился.
 - Файл `*.import` коммитим вместе с ассетом, кэш `.godot/` — нет. `node godot/tools/test.cjs` перед тестами сам запускает импорт.

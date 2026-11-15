@@ -1,5 +1,5 @@
 extends CanvasLayer
-const GameSkin = preload("res://ui/game_theme.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 ## The meeting window: who it is, how strong they are and what to do (openEncounter in src/06_ui.js).
 signal chosen(action: String)
 

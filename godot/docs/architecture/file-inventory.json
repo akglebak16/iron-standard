@@ -2044,6 +2044,3001 @@
     {
       "source": "troops/tools/export_troops.cjs",
       "destination": "tools/troops/export_troops.cjs"
+    },
+    {
+      "source": "VISUAL_PARITY.md",
+      "destination": "docs/modules/VISUAL_PARITY.md",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "app/tests/test_visual_interface.gd",
+      "destination": "tests/integration/app/test_visual_interface.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "app/tests/test_visual_interface.gd.uid",
+      "destination": "tests/integration/app/test_visual_interface.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_arid.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_arid.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_arid.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_arid.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_grass.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_grass.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_grass.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_grass.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_snow.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_snow.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_snow.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_snow.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_steppe.png",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_steppe.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/terrain/assets/ground_steppe.png.import",
+      "destination": "apps/godot/presentation/battle/terrain/assets/ground_steppe.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/unit_motion.gd",
+      "destination": "apps/godot/presentation/battle/unit_motion.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/presentation/unit_motion.gd.uid",
+      "destination": "apps/godot/presentation/battle/unit_motion.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/fixtures/hud_layout.json",
+      "destination": "tests/unit/battle/fixtures/hud_layout.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/fixtures/unit_motion.json",
+      "destination": "tests/unit/battle/fixtures/unit_motion.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_hud_layout.gd",
+      "destination": "tests/unit/battle/presentation/test_hud_layout.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_hud_layout.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_hud_layout.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_unit_motion.gd",
+      "destination": "tests/unit/battle/presentation/test_unit_motion.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tests/presentation/test_unit_motion.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_unit_motion.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/compare_motion.cjs",
+      "destination": "tools/battle/compare_motion.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/export_hud_layout.cjs",
+      "destination": "tools/battle/export_hud_layout.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/export_motion.cjs",
+      "destination": "tools/battle/export_motion.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/motion_preview.gd",
+      "destination": "tools/battle/motion_preview.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/motion_preview.gd.uid",
+      "destination": "tools/battle/motion_preview.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "battle/tools/render_motion_reference.cjs",
+      "destination": "tools/battle/render_motion_reference.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/battle_ui_capture.gd",
+      "destination": "tools/battle_ui_capture.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/battle_ui_capture.gd.uid",
+      "destination": "tools/battle_ui_capture.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/build_theme.gd",
+      "destination": "tools/build_theme.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/build_theme.gd.uid",
+      "destination": "tools/build_theme.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/export_css_styles.cjs",
+      "destination": "tools/export_css_styles.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/export_visuals.cjs",
+      "destination": "tools/export_visuals.cjs",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/preview_capture.gd",
+      "destination": "tools/preview_capture.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/preview_capture.gd.uid",
+      "destination": "tools/preview_capture.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/.gdignore",
+      "destination": "tools/previews/.gdignore",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/animation-metric.json",
+      "destination": "tools/previews/animation-metric.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/animations-comparison.gif",
+      "destination": "tools/previews/animations-comparison.gif",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/battle.png",
+      "destination": "tools/previews/battle.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/equipment.png",
+      "destination": "tools/previews/equipment.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/hero.png",
+      "destination": "tools/previews/hero.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/menu.png",
+      "destination": "tools/previews/menu.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/previews/snow.png",
+      "destination": "tools/previews/snow.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_ar.png",
+      "destination": "apps/godot/visuals/assets/bar_ar.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_ar.png.import",
+      "destination": "apps/godot/visuals/assets/bar_ar.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_hp.png",
+      "destination": "apps/godot/visuals/assets/bar_hp.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_hp.png.import",
+      "destination": "apps/godot/visuals/assets/bar_hp.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_mo.png",
+      "destination": "apps/godot/visuals/assets/bar_mo.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_mo.png.import",
+      "destination": "apps/godot/visuals/assets/bar_mo.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_st.png",
+      "destination": "apps/godot/visuals/assets/bar_st.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bar_st.png.import",
+      "destination": "apps/godot/visuals/assets/bar_st.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body.png",
+      "destination": "apps/godot/visuals/assets/body.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body.png.import",
+      "destination": "apps/godot/visuals/assets/body.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v1.png",
+      "destination": "apps/godot/visuals/assets/body_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v1.png.import",
+      "destination": "apps/godot/visuals/assets/body_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v2.png",
+      "destination": "apps/godot/visuals/assets/body_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v2.png.import",
+      "destination": "apps/godot/visuals/assets/body_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v3.png",
+      "destination": "apps/godot/visuals/assets/body_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/body_v3.png.import",
+      "destination": "apps/godot/visuals/assets/body_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_0.png",
+      "destination": "apps/godot/visuals/assets/bush_arid_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_arid_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_1.png",
+      "destination": "apps/godot/visuals/assets/bush_arid_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_arid_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_arid_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_0.png",
+      "destination": "apps/godot/visuals/assets/bush_grass_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_grass_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_1.png",
+      "destination": "apps/godot/visuals/assets/bush_grass_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_grass_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_grass_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_0.png",
+      "destination": "apps/godot/visuals/assets/bush_snow_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_snow_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_1.png",
+      "destination": "apps/godot/visuals/assets/bush_snow_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_snow_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_snow_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_0.png",
+      "destination": "apps/godot/visuals/assets/bush_steppe_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_0.png.import",
+      "destination": "apps/godot/visuals/assets/bush_steppe_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_1.png",
+      "destination": "apps/godot/visuals/assets/bush_steppe_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/bush_steppe_1.png.import",
+      "destination": "apps/godot/visuals/assets/bush_steppe_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/button.png",
+      "destination": "apps/godot/visuals/assets/button.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/button.png.import",
+      "destination": "apps/godot/visuals/assets/button.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/caravan.png",
+      "destination": "apps/godot/visuals/assets/caravan.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/caravan.png.import",
+      "destination": "apps/godot/visuals/assets/caravan.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_0.png",
+      "destination": "apps/godot/visuals/assets/components_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_0.png.import",
+      "destination": "apps/godot/visuals/assets/components_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_1.png",
+      "destination": "apps/godot/visuals/assets/components_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/components_1.png.import",
+      "destination": "apps/godot/visuals/assets/components_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/contact_shadow.png",
+      "destination": "apps/godot/visuals/assets/contact_shadow.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/contact_shadow.png.import",
+      "destination": "apps/godot/visuals/assets/contact_shadow.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse.png",
+      "destination": "apps/godot/visuals/assets/corpse.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse.png.import",
+      "destination": "apps/godot/visuals/assets/corpse.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v1.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v1.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v2.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v2.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v3.png",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_headless_v3.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_headless_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v1.png",
+      "destination": "apps/godot/visuals/assets/corpse_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v1.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v2.png",
+      "destination": "apps/godot/visuals/assets/corpse_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v2.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v3.png",
+      "destination": "apps/godot/visuals/assets/corpse_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/corpse_v3.png.import",
+      "destination": "apps/godot/visuals/assets/corpse_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_bandit.png",
+      "destination": "apps/godot/visuals/assets/crest_bandit.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_bandit.png.import",
+      "destination": "apps/godot/visuals/assets/crest_bandit.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_dom.png",
+      "destination": "apps/godot/visuals/assets/crest_dom.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_dom.png.import",
+      "destination": "apps/godot/visuals/assets/crest_dom.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emi.png",
+      "destination": "apps/godot/visuals/assets/crest_emi.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emi.png.import",
+      "destination": "apps/godot/visuals/assets/crest_emi.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emp.png",
+      "destination": "apps/godot/visuals/assets/crest_emp.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_emp.png.import",
+      "destination": "apps/godot/visuals/assets/crest_emp.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_khan.png",
+      "destination": "apps/godot/visuals/assets/crest_khan.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_khan.png.import",
+      "destination": "apps/godot/visuals/assets/crest_khan.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_kin.png",
+      "destination": "apps/godot/visuals/assets/crest_kin.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_kin.png.import",
+      "destination": "apps/godot/visuals/assets/crest_kin.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_nord.png",
+      "destination": "apps/godot/visuals/assets/crest_nord.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_nord.png.import",
+      "destination": "apps/godot/visuals/assets/crest_nord.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_pact.png",
+      "destination": "apps/godot/visuals/assets/crest_pact.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_pact.png.import",
+      "destination": "apps/godot/visuals/assets/crest_pact.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_player.png",
+      "destination": "apps/godot/visuals/assets/crest_player.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_player.png.import",
+      "destination": "apps/godot/visuals/assets/crest_player.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_undead.png",
+      "destination": "apps/godot/visuals/assets/crest_undead.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/crest_undead.png.import",
+      "destination": "apps/godot/visuals/assets/crest_undead.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/danger.png",
+      "destination": "apps/godot/visuals/assets/danger.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/danger.png.import",
+      "destination": "apps/godot/visuals/assets/danger.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash.png",
+      "destination": "apps/godot/visuals/assets/flash.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash.png.import",
+      "destination": "apps/godot/visuals/assets/flash.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v1.png",
+      "destination": "apps/godot/visuals/assets/flash_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v1.png.import",
+      "destination": "apps/godot/visuals/assets/flash_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v2.png",
+      "destination": "apps/godot/visuals/assets/flash_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v2.png.import",
+      "destination": "apps/godot/visuals/assets/flash_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v3.png",
+      "destination": "apps/godot/visuals/assets/flash_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/flash_v3.png.import",
+      "destination": "apps/godot/visuals/assets/flash_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSC-Bold.ttf",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSC-Bold.ttf",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSC-Bold.ttf.import",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSC-Bold.ttf.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSC-OFL.txt",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSC-OFL.txt",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Bold.ttf",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Bold.ttf",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Bold.ttf.import",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Bold.ttf.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Medium.ttf",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Medium.ttf",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-Medium.ttf.import",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-Medium.ttf.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/fonts/AlegreyaSans-OFL.txt",
+      "destination": "apps/godot/visuals/assets/fonts/AlegreyaSans-OFL.txt",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group.png",
+      "destination": "apps/godot/visuals/assets/group.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group.png.import",
+      "destination": "apps/godot/visuals/assets/group.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group_on.png",
+      "destination": "apps/godot/visuals/assets/group_on.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/group_on.png.import",
+      "destination": "apps/godot/visuals/assets/group_on.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head.png",
+      "destination": "apps/godot/visuals/assets/head.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head.png.import",
+      "destination": "apps/godot/visuals/assets/head.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v1.png",
+      "destination": "apps/godot/visuals/assets/head_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v1.png.import",
+      "destination": "apps/godot/visuals/assets/head_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v2.png",
+      "destination": "apps/godot/visuals/assets/head_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v2.png.import",
+      "destination": "apps/godot/visuals/assets/head_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v3.png",
+      "destination": "apps/godot/visuals/assets/head_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/head_v3.png.import",
+      "destination": "apps/godot/visuals/assets/head_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless.png",
+      "destination": "apps/godot/visuals/assets/headless.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless.png.import",
+      "destination": "apps/godot/visuals/assets/headless.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v1.png",
+      "destination": "apps/godot/visuals/assets/headless_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v1.png.import",
+      "destination": "apps/godot/visuals/assets/headless_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v2.png",
+      "destination": "apps/godot/visuals/assets/headless_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v2.png.import",
+      "destination": "apps/godot/visuals/assets/headless_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v3.png",
+      "destination": "apps/godot/visuals/assets/headless_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/headless_v3.png.import",
+      "destination": "apps/godot/visuals/assets/headless_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ale.svg",
+      "destination": "apps/godot/visuals/assets/icon_ale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ale.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_ale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_axe.svg",
+      "destination": "apps/godot/visuals/assets/icon_axe.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_axe.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_axe.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_habit.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_habit.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_habit.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_habit.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_mail.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_mail.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_mail.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_mail.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_padded.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_padded.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_padded.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_padded.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_plate.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_plate.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_plate.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_plate.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_scale.svg",
+      "destination": "apps/godot/visuals/assets/icon_b_scale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_b_scale.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_b_scale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_back.svg",
+      "destination": "apps/godot/visuals/assets/icon_back.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_back.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_back.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bag.svg",
+      "destination": "apps/godot/visuals/assets/icon_bag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bag.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_bag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_body.svg",
+      "destination": "apps/godot/visuals/assets/icon_body.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_body.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_body.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_book.svg",
+      "destination": "apps/godot/visuals/assets/icon_book.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_book.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_book.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bottle.svg",
+      "destination": "apps/godot/visuals/assets/icon_bottle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bottle.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_bottle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bow.svg",
+      "destination": "apps/godot/visuals/assets/icon_bow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_bow.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_bow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_charge.svg",
+      "destination": "apps/godot/visuals/assets/icon_charge.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_charge.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_charge.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_club.svg",
+      "destination": "apps/godot/visuals/assets/icon_club.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_club.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_club.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_coin.svg",
+      "destination": "apps/godot/visuals/assets/icon_coin.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_coin.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_coin.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_flag.svg",
+      "destination": "apps/godot/visuals/assets/icon_flag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_flag.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_flag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_follow.svg",
+      "destination": "apps/godot/visuals/assets/icon_follow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_follow.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_follow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_food.svg",
+      "destination": "apps/godot/visuals/assets/icon_food.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_food.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_food.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_gear.svg",
+      "destination": "apps/godot/visuals/assets/icon_gear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_gear.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_gear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_grain.svg",
+      "destination": "apps/godot/visuals/assets/icon_grain.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_grain.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_grain.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_cap.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_cap.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_cap.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_cap.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_great.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_great.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_great.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_great.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_hood.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_hood.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_hood.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_hood.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_kettle.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_kettle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_kettle.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_kettle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_nasal.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_nasal.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_nasal.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_nasal.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turban.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_turban.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turban.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_turban.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turbanm.svg",
+      "destination": "apps/godot/visuals/assets/icon_h_turbanm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_h_turbanm.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_h_turbanm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_halberd.svg",
+      "destination": "apps/godot/visuals/assets/icon_halberd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_halberd.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_halberd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hammer.svg",
+      "destination": "apps/godot/visuals/assets/icon_hammer.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hammer.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hammer.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hands.svg",
+      "destination": "apps/godot/visuals/assets/icon_hands.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hands.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hands.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_heart.svg",
+      "destination": "apps/godot/visuals/assets/icon_heart.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_heart.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_heart.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_helm.svg",
+      "destination": "apps/godot/visuals/assets/icon_helm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_helm.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_helm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hide.svg",
+      "destination": "apps/godot/visuals/assets/icon_hide.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hide.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hide.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hold.svg",
+      "destination": "apps/godot/visuals/assets/icon_hold.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hold.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hold.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_horse.svg",
+      "destination": "apps/godot/visuals/assets/icon_horse.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_horse.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_horse.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hourglass.svg",
+      "destination": "apps/godot/visuals/assets/icon_hourglass.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_hourglass.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_hourglass.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ingot.svg",
+      "destination": "apps/godot/visuals/assets/icon_ingot.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_ingot.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_ingot.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jar.svg",
+      "destination": "apps/godot/visuals/assets/icon_jar.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jar.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_jar.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jav.svg",
+      "destination": "apps/godot/visuals/assets/icon_jav.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_jav.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_jav.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_legs.svg",
+      "destination": "apps/godot/visuals/assets/icon_legs.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_legs.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_legs.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_mace.svg",
+      "destination": "apps/godot/visuals/assets/icon_mace.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_mace.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_mace.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_men.svg",
+      "destination": "apps/godot/visuals/assets/icon_men.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_men.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_men.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pause.svg",
+      "destination": "apps/godot/visuals/assets/icon_pause.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pause.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_pause.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pelt.svg",
+      "destination": "apps/godot/visuals/assets/icon_pelt.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pelt.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_pelt.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pike.svg",
+      "destination": "apps/godot/visuals/assets/icon_pike.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_pike.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_pike.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_play.svg",
+      "destination": "apps/godot/visuals/assets/icon_play.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_play.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_play.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_retreat.svg",
+      "destination": "apps/godot/visuals/assets/icon_retreat.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_retreat.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_retreat.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_roll.svg",
+      "destination": "apps/godot/visuals/assets/icon_roll.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_roll.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_roll.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sabre.svg",
+      "destination": "apps/godot/visuals/assets/icon_sabre.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sabre.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sabre.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sack.svg",
+      "destination": "apps/godot/visuals/assets/icon_sack.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sack.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sack.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_round.svg",
+      "destination": "apps/godot/visuals/assets/icon_sh_round.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_round.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sh_round.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_small.svg",
+      "destination": "apps/godot/visuals/assets/icon_sh_small.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sh_small.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sh_small.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_shield.svg",
+      "destination": "apps/godot/visuals/assets/icon_shield.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_shield.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_shield.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_skull.svg",
+      "destination": "apps/godot/visuals/assets/icon_skull.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_skull.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_skull.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_snd.svg",
+      "destination": "apps/godot/visuals/assets/icon_snd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_snd.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_snd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_spear.svg",
+      "destination": "apps/godot/visuals/assets/icon_spear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_spear.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_spear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sword.svg",
+      "destination": "apps/godot/visuals/assets/icon_sword.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_sword.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_sword.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_tent.svg",
+      "destination": "apps/godot/visuals/assets/icon_tent.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_tent.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_tent.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_twohand.svg",
+      "destination": "apps/godot/visuals/assets/icon_twohand.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_twohand.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_twohand.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_xbow.svg",
+      "destination": "apps/godot/visuals/assets/icon_xbow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_xbow.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_xbow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_zoom.svg",
+      "destination": "apps/godot/visuals/assets/icon_zoom.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/icon_zoom.svg.import",
+      "destination": "apps/godot/visuals/assets/icon_zoom.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ale.svg",
+      "destination": "apps/godot/visuals/assets/item_ale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ale.svg.import",
+      "destination": "apps/godot/visuals/assets/item_ale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_axe.svg",
+      "destination": "apps/godot/visuals/assets/item_axe.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_axe.svg.import",
+      "destination": "apps/godot/visuals/assets/item_axe.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_habit.svg",
+      "destination": "apps/godot/visuals/assets/item_b_habit.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_habit.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_habit.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_mail.svg",
+      "destination": "apps/godot/visuals/assets/item_b_mail.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_mail.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_mail.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_padded.svg",
+      "destination": "apps/godot/visuals/assets/item_b_padded.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_padded.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_padded.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_plate.svg",
+      "destination": "apps/godot/visuals/assets/item_b_plate.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_plate.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_plate.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_scale.svg",
+      "destination": "apps/godot/visuals/assets/item_b_scale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_b_scale.svg.import",
+      "destination": "apps/godot/visuals/assets/item_b_scale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_back.svg",
+      "destination": "apps/godot/visuals/assets/item_back.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_back.svg.import",
+      "destination": "apps/godot/visuals/assets/item_back.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bag.svg",
+      "destination": "apps/godot/visuals/assets/item_bag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bag.svg.import",
+      "destination": "apps/godot/visuals/assets/item_bag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_body.svg",
+      "destination": "apps/godot/visuals/assets/item_body.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_body.svg.import",
+      "destination": "apps/godot/visuals/assets/item_body.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_book.svg",
+      "destination": "apps/godot/visuals/assets/item_book.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_book.svg.import",
+      "destination": "apps/godot/visuals/assets/item_book.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bottle.svg",
+      "destination": "apps/godot/visuals/assets/item_bottle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bottle.svg.import",
+      "destination": "apps/godot/visuals/assets/item_bottle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bow.svg",
+      "destination": "apps/godot/visuals/assets/item_bow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_bow.svg.import",
+      "destination": "apps/godot/visuals/assets/item_bow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_charge.svg",
+      "destination": "apps/godot/visuals/assets/item_charge.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_charge.svg.import",
+      "destination": "apps/godot/visuals/assets/item_charge.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_club.svg",
+      "destination": "apps/godot/visuals/assets/item_club.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_club.svg.import",
+      "destination": "apps/godot/visuals/assets/item_club.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_coin.svg",
+      "destination": "apps/godot/visuals/assets/item_coin.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_coin.svg.import",
+      "destination": "apps/godot/visuals/assets/item_coin.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_flag.svg",
+      "destination": "apps/godot/visuals/assets/item_flag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_flag.svg.import",
+      "destination": "apps/godot/visuals/assets/item_flag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_follow.svg",
+      "destination": "apps/godot/visuals/assets/item_follow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_follow.svg.import",
+      "destination": "apps/godot/visuals/assets/item_follow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_food.svg",
+      "destination": "apps/godot/visuals/assets/item_food.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_food.svg.import",
+      "destination": "apps/godot/visuals/assets/item_food.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_gear.svg",
+      "destination": "apps/godot/visuals/assets/item_gear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_gear.svg.import",
+      "destination": "apps/godot/visuals/assets/item_gear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_grain.svg",
+      "destination": "apps/godot/visuals/assets/item_grain.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_grain.svg.import",
+      "destination": "apps/godot/visuals/assets/item_grain.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_cap.svg",
+      "destination": "apps/godot/visuals/assets/item_h_cap.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_cap.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_cap.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_great.svg",
+      "destination": "apps/godot/visuals/assets/item_h_great.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_great.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_great.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_hood.svg",
+      "destination": "apps/godot/visuals/assets/item_h_hood.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_hood.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_hood.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_kettle.svg",
+      "destination": "apps/godot/visuals/assets/item_h_kettle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_kettle.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_kettle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_nasal.svg",
+      "destination": "apps/godot/visuals/assets/item_h_nasal.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_nasal.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_nasal.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turban.svg",
+      "destination": "apps/godot/visuals/assets/item_h_turban.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turban.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_turban.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turbanm.svg",
+      "destination": "apps/godot/visuals/assets/item_h_turbanm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_h_turbanm.svg.import",
+      "destination": "apps/godot/visuals/assets/item_h_turbanm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_halberd.svg",
+      "destination": "apps/godot/visuals/assets/item_halberd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_halberd.svg.import",
+      "destination": "apps/godot/visuals/assets/item_halberd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hammer.svg",
+      "destination": "apps/godot/visuals/assets/item_hammer.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hammer.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hammer.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hands.svg",
+      "destination": "apps/godot/visuals/assets/item_hands.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hands.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hands.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_heart.svg",
+      "destination": "apps/godot/visuals/assets/item_heart.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_heart.svg.import",
+      "destination": "apps/godot/visuals/assets/item_heart.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_helm.svg",
+      "destination": "apps/godot/visuals/assets/item_helm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_helm.svg.import",
+      "destination": "apps/godot/visuals/assets/item_helm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hide.svg",
+      "destination": "apps/godot/visuals/assets/item_hide.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hide.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hide.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hold.svg",
+      "destination": "apps/godot/visuals/assets/item_hold.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hold.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hold.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_horse.svg",
+      "destination": "apps/godot/visuals/assets/item_horse.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_horse.svg.import",
+      "destination": "apps/godot/visuals/assets/item_horse.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hourglass.svg",
+      "destination": "apps/godot/visuals/assets/item_hourglass.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_hourglass.svg.import",
+      "destination": "apps/godot/visuals/assets/item_hourglass.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ingot.svg",
+      "destination": "apps/godot/visuals/assets/item_ingot.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_ingot.svg.import",
+      "destination": "apps/godot/visuals/assets/item_ingot.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jar.svg",
+      "destination": "apps/godot/visuals/assets/item_jar.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jar.svg.import",
+      "destination": "apps/godot/visuals/assets/item_jar.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jav.svg",
+      "destination": "apps/godot/visuals/assets/item_jav.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_jav.svg.import",
+      "destination": "apps/godot/visuals/assets/item_jav.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_legs.svg",
+      "destination": "apps/godot/visuals/assets/item_legs.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_legs.svg.import",
+      "destination": "apps/godot/visuals/assets/item_legs.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_mace.svg",
+      "destination": "apps/godot/visuals/assets/item_mace.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_mace.svg.import",
+      "destination": "apps/godot/visuals/assets/item_mace.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_men.svg",
+      "destination": "apps/godot/visuals/assets/item_men.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_men.svg.import",
+      "destination": "apps/godot/visuals/assets/item_men.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pause.svg",
+      "destination": "apps/godot/visuals/assets/item_pause.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pause.svg.import",
+      "destination": "apps/godot/visuals/assets/item_pause.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pelt.svg",
+      "destination": "apps/godot/visuals/assets/item_pelt.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pelt.svg.import",
+      "destination": "apps/godot/visuals/assets/item_pelt.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pike.svg",
+      "destination": "apps/godot/visuals/assets/item_pike.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_pike.svg.import",
+      "destination": "apps/godot/visuals/assets/item_pike.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_play.svg",
+      "destination": "apps/godot/visuals/assets/item_play.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_play.svg.import",
+      "destination": "apps/godot/visuals/assets/item_play.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_retreat.svg",
+      "destination": "apps/godot/visuals/assets/item_retreat.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_retreat.svg.import",
+      "destination": "apps/godot/visuals/assets/item_retreat.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_roll.svg",
+      "destination": "apps/godot/visuals/assets/item_roll.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_roll.svg.import",
+      "destination": "apps/godot/visuals/assets/item_roll.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sabre.svg",
+      "destination": "apps/godot/visuals/assets/item_sabre.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sabre.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sabre.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sack.svg",
+      "destination": "apps/godot/visuals/assets/item_sack.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sack.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sack.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_round.svg",
+      "destination": "apps/godot/visuals/assets/item_sh_round.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_round.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sh_round.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_small.svg",
+      "destination": "apps/godot/visuals/assets/item_sh_small.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sh_small.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sh_small.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_shield.svg",
+      "destination": "apps/godot/visuals/assets/item_shield.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_shield.svg.import",
+      "destination": "apps/godot/visuals/assets/item_shield.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_skull.svg",
+      "destination": "apps/godot/visuals/assets/item_skull.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_skull.svg.import",
+      "destination": "apps/godot/visuals/assets/item_skull.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_snd.svg",
+      "destination": "apps/godot/visuals/assets/item_snd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_snd.svg.import",
+      "destination": "apps/godot/visuals/assets/item_snd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_spear.svg",
+      "destination": "apps/godot/visuals/assets/item_spear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_spear.svg.import",
+      "destination": "apps/godot/visuals/assets/item_spear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sword.svg",
+      "destination": "apps/godot/visuals/assets/item_sword.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_sword.svg.import",
+      "destination": "apps/godot/visuals/assets/item_sword.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_tent.svg",
+      "destination": "apps/godot/visuals/assets/item_tent.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_tent.svg.import",
+      "destination": "apps/godot/visuals/assets/item_tent.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_twohand.svg",
+      "destination": "apps/godot/visuals/assets/item_twohand.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_twohand.svg.import",
+      "destination": "apps/godot/visuals/assets/item_twohand.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_xbow.svg",
+      "destination": "apps/godot/visuals/assets/item_xbow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_xbow.svg.import",
+      "destination": "apps/godot/visuals/assets/item_xbow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_zoom.svg",
+      "destination": "apps/godot/visuals/assets/item_zoom.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/item_zoom.svg.import",
+      "destination": "apps/godot/visuals/assets/item_zoom.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/order.png",
+      "destination": "apps/godot/visuals/assets/order.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/order.png.import",
+      "destination": "apps/godot/visuals/assets/order.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/parchment.png",
+      "destination": "apps/godot/visuals/assets/parchment.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/parchment.png.import",
+      "destination": "apps/godot/visuals/assets/parchment.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/plank.png",
+      "destination": "apps/godot/visuals/assets/plank.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/plank.png.import",
+      "destination": "apps/godot/visuals/assets/plank.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait.png",
+      "destination": "apps/godot/visuals/assets/portrait.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait.png.import",
+      "destination": "apps/godot/visuals/assets/portrait.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v1.png",
+      "destination": "apps/godot/visuals/assets/portrait_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v1.png.import",
+      "destination": "apps/godot/visuals/assets/portrait_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v2.png",
+      "destination": "apps/godot/visuals/assets/portrait_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v2.png.import",
+      "destination": "apps/godot/visuals/assets/portrait_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v3.png",
+      "destination": "apps/godot/visuals/assets/portrait_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/portrait_v3.png.import",
+      "destination": "apps/godot/visuals/assets/portrait_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/primary.png",
+      "destination": "apps/godot/visuals/assets/primary.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/primary.png.import",
+      "destination": "apps/godot/visuals/assets/primary.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/settlements.png",
+      "destination": "apps/godot/visuals/assets/settlements.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/settlements.png.import",
+      "destination": "apps/godot/visuals/assets/settlements.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/square.png",
+      "destination": "apps/godot/visuals/assets/square.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/square.png.import",
+      "destination": "apps/godot/visuals/assets/square.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tile.png",
+      "destination": "apps/godot/visuals/assets/tile.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tile.png.import",
+      "destination": "apps/godot/visuals/assets/tile.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/timer.png",
+      "destination": "apps/godot/visuals/assets/timer.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/timer.png.import",
+      "destination": "apps/godot/visuals/assets/timer.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_0.png",
+      "destination": "apps/godot/visuals/assets/tree_arid_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_arid_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_1.png",
+      "destination": "apps/godot/visuals/assets/tree_arid_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_arid_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_2.png",
+      "destination": "apps/godot/visuals/assets/tree_arid_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_arid_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_arid_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_0.png",
+      "destination": "apps/godot/visuals/assets/tree_grass_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_grass_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_1.png",
+      "destination": "apps/godot/visuals/assets/tree_grass_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_grass_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_2.png",
+      "destination": "apps/godot/visuals/assets/tree_grass_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_grass_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_grass_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_0.png",
+      "destination": "apps/godot/visuals/assets/tree_snow_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_snow_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_1.png",
+      "destination": "apps/godot/visuals/assets/tree_snow_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_snow_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_2.png",
+      "destination": "apps/godot/visuals/assets/tree_snow_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_snow_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_snow_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_0.png",
+      "destination": "apps/godot/visuals/assets/tree_steppe_0.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_0.png.import",
+      "destination": "apps/godot/visuals/assets/tree_steppe_0.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_1.png",
+      "destination": "apps/godot/visuals/assets/tree_steppe_1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_1.png.import",
+      "destination": "apps/godot/visuals/assets/tree_steppe_1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_2.png",
+      "destination": "apps/godot/visuals/assets/tree_steppe_2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/tree_steppe_2.png.import",
+      "destination": "apps/godot/visuals/assets/tree_steppe_2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/visual_manifest.gd",
+      "destination": "apps/godot/visuals/assets/visual_manifest.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/visual_manifest.gd.uid",
+      "destination": "apps/godot/visuals/assets/visual_manifest.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/visuals.json",
+      "destination": "apps/godot/visuals/assets/visuals.json",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ale.svg",
+      "destination": "apps/godot/visuals/assets/white_ale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ale.svg.import",
+      "destination": "apps/godot/visuals/assets/white_ale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_axe.svg",
+      "destination": "apps/godot/visuals/assets/white_axe.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_axe.svg.import",
+      "destination": "apps/godot/visuals/assets/white_axe.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_habit.svg",
+      "destination": "apps/godot/visuals/assets/white_b_habit.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_habit.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_habit.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_mail.svg",
+      "destination": "apps/godot/visuals/assets/white_b_mail.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_mail.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_mail.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_padded.svg",
+      "destination": "apps/godot/visuals/assets/white_b_padded.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_padded.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_padded.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_plate.svg",
+      "destination": "apps/godot/visuals/assets/white_b_plate.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_plate.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_plate.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_scale.svg",
+      "destination": "apps/godot/visuals/assets/white_b_scale.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_b_scale.svg.import",
+      "destination": "apps/godot/visuals/assets/white_b_scale.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_back.svg",
+      "destination": "apps/godot/visuals/assets/white_back.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_back.svg.import",
+      "destination": "apps/godot/visuals/assets/white_back.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bag.svg",
+      "destination": "apps/godot/visuals/assets/white_bag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bag.svg.import",
+      "destination": "apps/godot/visuals/assets/white_bag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_body.svg",
+      "destination": "apps/godot/visuals/assets/white_body.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_body.svg.import",
+      "destination": "apps/godot/visuals/assets/white_body.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_book.svg",
+      "destination": "apps/godot/visuals/assets/white_book.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_book.svg.import",
+      "destination": "apps/godot/visuals/assets/white_book.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bottle.svg",
+      "destination": "apps/godot/visuals/assets/white_bottle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bottle.svg.import",
+      "destination": "apps/godot/visuals/assets/white_bottle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bow.svg",
+      "destination": "apps/godot/visuals/assets/white_bow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_bow.svg.import",
+      "destination": "apps/godot/visuals/assets/white_bow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_charge.svg",
+      "destination": "apps/godot/visuals/assets/white_charge.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_charge.svg.import",
+      "destination": "apps/godot/visuals/assets/white_charge.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_club.svg",
+      "destination": "apps/godot/visuals/assets/white_club.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_club.svg.import",
+      "destination": "apps/godot/visuals/assets/white_club.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_coin.svg",
+      "destination": "apps/godot/visuals/assets/white_coin.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_coin.svg.import",
+      "destination": "apps/godot/visuals/assets/white_coin.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_flag.svg",
+      "destination": "apps/godot/visuals/assets/white_flag.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_flag.svg.import",
+      "destination": "apps/godot/visuals/assets/white_flag.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_follow.svg",
+      "destination": "apps/godot/visuals/assets/white_follow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_follow.svg.import",
+      "destination": "apps/godot/visuals/assets/white_follow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_food.svg",
+      "destination": "apps/godot/visuals/assets/white_food.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_food.svg.import",
+      "destination": "apps/godot/visuals/assets/white_food.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_gear.svg",
+      "destination": "apps/godot/visuals/assets/white_gear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_gear.svg.import",
+      "destination": "apps/godot/visuals/assets/white_gear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_grain.svg",
+      "destination": "apps/godot/visuals/assets/white_grain.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_grain.svg.import",
+      "destination": "apps/godot/visuals/assets/white_grain.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_cap.svg",
+      "destination": "apps/godot/visuals/assets/white_h_cap.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_cap.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_cap.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_great.svg",
+      "destination": "apps/godot/visuals/assets/white_h_great.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_great.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_great.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_hood.svg",
+      "destination": "apps/godot/visuals/assets/white_h_hood.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_hood.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_hood.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_kettle.svg",
+      "destination": "apps/godot/visuals/assets/white_h_kettle.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_kettle.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_kettle.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_nasal.svg",
+      "destination": "apps/godot/visuals/assets/white_h_nasal.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_nasal.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_nasal.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turban.svg",
+      "destination": "apps/godot/visuals/assets/white_h_turban.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turban.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_turban.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turbanm.svg",
+      "destination": "apps/godot/visuals/assets/white_h_turbanm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_h_turbanm.svg.import",
+      "destination": "apps/godot/visuals/assets/white_h_turbanm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_halberd.svg",
+      "destination": "apps/godot/visuals/assets/white_halberd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_halberd.svg.import",
+      "destination": "apps/godot/visuals/assets/white_halberd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hammer.svg",
+      "destination": "apps/godot/visuals/assets/white_hammer.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hammer.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hammer.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hands.svg",
+      "destination": "apps/godot/visuals/assets/white_hands.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hands.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hands.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_heart.svg",
+      "destination": "apps/godot/visuals/assets/white_heart.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_heart.svg.import",
+      "destination": "apps/godot/visuals/assets/white_heart.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_helm.svg",
+      "destination": "apps/godot/visuals/assets/white_helm.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_helm.svg.import",
+      "destination": "apps/godot/visuals/assets/white_helm.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hide.svg",
+      "destination": "apps/godot/visuals/assets/white_hide.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hide.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hide.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hold.svg",
+      "destination": "apps/godot/visuals/assets/white_hold.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hold.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hold.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_horse.svg",
+      "destination": "apps/godot/visuals/assets/white_horse.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_horse.svg.import",
+      "destination": "apps/godot/visuals/assets/white_horse.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hourglass.svg",
+      "destination": "apps/godot/visuals/assets/white_hourglass.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_hourglass.svg.import",
+      "destination": "apps/godot/visuals/assets/white_hourglass.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ingot.svg",
+      "destination": "apps/godot/visuals/assets/white_ingot.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_ingot.svg.import",
+      "destination": "apps/godot/visuals/assets/white_ingot.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jar.svg",
+      "destination": "apps/godot/visuals/assets/white_jar.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jar.svg.import",
+      "destination": "apps/godot/visuals/assets/white_jar.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jav.svg",
+      "destination": "apps/godot/visuals/assets/white_jav.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_jav.svg.import",
+      "destination": "apps/godot/visuals/assets/white_jav.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_legs.svg",
+      "destination": "apps/godot/visuals/assets/white_legs.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_legs.svg.import",
+      "destination": "apps/godot/visuals/assets/white_legs.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_mace.svg",
+      "destination": "apps/godot/visuals/assets/white_mace.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_mace.svg.import",
+      "destination": "apps/godot/visuals/assets/white_mace.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_men.svg",
+      "destination": "apps/godot/visuals/assets/white_men.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_men.svg.import",
+      "destination": "apps/godot/visuals/assets/white_men.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pause.svg",
+      "destination": "apps/godot/visuals/assets/white_pause.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pause.svg.import",
+      "destination": "apps/godot/visuals/assets/white_pause.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pelt.svg",
+      "destination": "apps/godot/visuals/assets/white_pelt.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pelt.svg.import",
+      "destination": "apps/godot/visuals/assets/white_pelt.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pike.svg",
+      "destination": "apps/godot/visuals/assets/white_pike.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_pike.svg.import",
+      "destination": "apps/godot/visuals/assets/white_pike.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_play.svg",
+      "destination": "apps/godot/visuals/assets/white_play.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_play.svg.import",
+      "destination": "apps/godot/visuals/assets/white_play.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_retreat.svg",
+      "destination": "apps/godot/visuals/assets/white_retreat.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_retreat.svg.import",
+      "destination": "apps/godot/visuals/assets/white_retreat.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_roll.svg",
+      "destination": "apps/godot/visuals/assets/white_roll.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_roll.svg.import",
+      "destination": "apps/godot/visuals/assets/white_roll.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sabre.svg",
+      "destination": "apps/godot/visuals/assets/white_sabre.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sabre.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sabre.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sack.svg",
+      "destination": "apps/godot/visuals/assets/white_sack.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sack.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sack.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_round.svg",
+      "destination": "apps/godot/visuals/assets/white_sh_round.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_round.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sh_round.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_small.svg",
+      "destination": "apps/godot/visuals/assets/white_sh_small.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sh_small.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sh_small.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_shield.svg",
+      "destination": "apps/godot/visuals/assets/white_shield.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_shield.svg.import",
+      "destination": "apps/godot/visuals/assets/white_shield.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_skull.svg",
+      "destination": "apps/godot/visuals/assets/white_skull.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_skull.svg.import",
+      "destination": "apps/godot/visuals/assets/white_skull.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_snd.svg",
+      "destination": "apps/godot/visuals/assets/white_snd.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_snd.svg.import",
+      "destination": "apps/godot/visuals/assets/white_snd.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_spear.svg",
+      "destination": "apps/godot/visuals/assets/white_spear.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_spear.svg.import",
+      "destination": "apps/godot/visuals/assets/white_spear.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sword.svg",
+      "destination": "apps/godot/visuals/assets/white_sword.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_sword.svg.import",
+      "destination": "apps/godot/visuals/assets/white_sword.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_tent.svg",
+      "destination": "apps/godot/visuals/assets/white_tent.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_tent.svg.import",
+      "destination": "apps/godot/visuals/assets/white_tent.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_twohand.svg",
+      "destination": "apps/godot/visuals/assets/white_twohand.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_twohand.svg.import",
+      "destination": "apps/godot/visuals/assets/white_twohand.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_xbow.svg",
+      "destination": "apps/godot/visuals/assets/white_xbow.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_xbow.svg.import",
+      "destination": "apps/godot/visuals/assets/white_xbow.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_zoom.svg",
+      "destination": "apps/godot/visuals/assets/white_zoom.svg",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/white_zoom.svg.import",
+      "destination": "apps/godot/visuals/assets/white_zoom.svg.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn.png",
+      "destination": "apps/godot/visuals/assets/wpn.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn.png.import",
+      "destination": "apps/godot/visuals/assets/wpn.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v1.png",
+      "destination": "apps/godot/visuals/assets/wpn_v1.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v1.png.import",
+      "destination": "apps/godot/visuals/assets/wpn_v1.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v2.png",
+      "destination": "apps/godot/visuals/assets/wpn_v2.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v2.png.import",
+      "destination": "apps/godot/visuals/assets/wpn_v2.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v3.png",
+      "destination": "apps/godot/visuals/assets/wpn_v3.png",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/assets/wpn_v3.png.import",
+      "destination": "apps/godot/visuals/assets/wpn_v3.png.import",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/banner_art.gd",
+      "destination": "apps/godot/visuals/banner_art.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/banner_art.gd.uid",
+      "destination": "apps/godot/visuals/banner_art.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/game_theme.gd",
+      "destination": "apps/godot/visuals/game_theme.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/game_theme.gd.uid",
+      "destination": "apps/godot/visuals/game_theme.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/game_theme.tres",
+      "destination": "apps/godot/visuals/game_theme.tres",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/menu_shade.gdshader",
+      "destination": "apps/godot/visuals/menu_shade.gdshader",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/menu_shade.gdshader.uid",
+      "destination": "apps/godot/visuals/menu_shade.gdshader.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/original_art.gd",
+      "destination": "apps/godot/visuals/original_art.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/original_art.gd.uid",
+      "destination": "apps/godot/visuals/original_art.gd.uid",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/shape_brush.gd",
+      "destination": "apps/godot/visuals/shape_brush.gd",
+      "introduced_revision": "8a97999"
+    },
+    {
+      "source": "ui/shape_brush.gd.uid",
+      "destination": "apps/godot/visuals/shape_brush.gd.uid",
+      "introduced_revision": "8a97999"
     }
   ]
 }

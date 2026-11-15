@@ -26,6 +26,12 @@ func _initialize() -> void:
 		impacts.blood_enabled = tick % 2 == 0
 		impacts.advance(1.0 / 60.0, events)
 		var frame := observed.snapshot(true)
+		# New HUD/atlas queries must also remain detached and RNG-neutral.
+		var identities := observed.unit_appearance_ids()
+		identities.clear()
+		for group in 4:
+			var orders := observed.selected_orders(group)
+			orders.clear()
 		assert(frame.tick == tick + 1)
 		assert(reference._rng.state == observed._rng.state)
 	assert(reference.snapshot() == observed.snapshot())

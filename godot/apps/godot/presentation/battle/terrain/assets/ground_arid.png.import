@@ -3,7 +3,7 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b3e5qwlf16vne"
-path="res://.godot/imported/ground_arid.png-7d18b78ce8b02b1133cf06a59d59d4e2.ctex"
+path="res://.godot/imported/ground_arid.png-3ac6e1c3c664e8c9d5c16455a954e76d.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://apps/godot/presentation/battle/terrain/assets/ground_arid.png"
-dest_files=["res://.godot/imported/ground_arid.png-7d18b78ce8b02b1133cf06a59d59d4e2.ctex"]
+dest_files=["res://.godot/imported/ground_arid.png-3ac6e1c3c664e8c9d5c16455a954e76d.ctex"]
 
 [params]
 

@@ -5,11 +5,12 @@ const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const Preferences = preload("res://apps/godot/composition/presentation_preferences.gd")
-const GameSkin = preload("res://ui/game_theme.gd")
-const Art = preload("res://ui/original_art.gd")
+const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
+const Art = preload("res://apps/godot/visuals/original_art.gd")
 const Modal = preload("res://apps/godot/presentation/campaign/modal_window.gd")
 const CULTURES := ["nord", "emp", "khan", "kin", "dom", "pact", "emi"]
 signal campaign_requested
+signal demo_requested(siege: bool)
 
 var _factions := FactionCatalog.new()
 var _name: LineEdit
@@ -40,7 +41,7 @@ func _ready() -> void:
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shade.color = Color(0, 0, 0, 0.58)
 	var shade_material := ShaderMaterial.new()
-	shade_material.shader = preload("res://ui/menu_shade.gdshader")
+	shade_material.shader = preload("res://apps/godot/visuals/menu_shade.gdshader")
 	shade.material = shade_material
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(shade)
@@ -148,8 +149,8 @@ func _create() -> void:
 func _quick() -> void:
 	var d = _new_dialog("Быстрый бой", "Полевое сражение · командуй отрядом и сражайся сам")
 	d.note("Пехота, лучники и конница. Q — держать, E — за мной, R — атака, F — отход.")
-	_button(d.body, "Начать сражение", func(): get_tree().change_scene_to_file("res://apps/godot/composition/main.tscn"), true)
-	_button(d.body, "Штурм крепости", func(): get_tree().change_scene_to_file("res://apps/godot/composition/siege_demo.tscn"))
+	_button(d.body, "Начать сражение", func(): demo_requested.emit(false), true)
+	_button(d.body, "Штурм крепости", func(): demo_requested.emit(true))
 
 func _help() -> void:
 	var d = _new_dialog("Как играть", "Железный Стяг")
