@@ -21,3 +21,8 @@
 Проверки: новый crowd-тест, native differential (поле/осада), движение,
 полный indexed/exhaustive бой; Windows release-smoke и архитектурный gate.
 Прежние fingerprints обычных полевого и осадного сценариев сохранены.
+
+Короткий release contact 1000×1000, 60/180 ticks, два повтора на P-ядрах:
+tick p95 23,715/23,737 мс, snapshot p95 3,293/3,368 мс. Методика sampling v2
+уже прогревает снимки. Отчёт: `../benchmarks/coincident-sampling-v2-pcore.json`.
+Это диагностические CPU-прогоны; пороги 6/1 мс и графическая приёмка не закрыты.
