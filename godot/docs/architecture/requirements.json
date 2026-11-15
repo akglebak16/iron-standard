@@ -10,7 +10,7 @@
     {"id":"BATTLE-FIXED-TIME","stage":1,"status":"implemented","checks":["tests/integration/test_fixed_simulation.gd","tests/unit/battle/presentation/test_battle_controls.gd"]},
     {"id":"BATTLE-COMMANDS-EVENTS","stage":1,"status":"implemented","checks":["tests/integration/test_fixed_simulation.gd","tests/unit/battle/application/test_combat_events.gd"]},
     {"id":"BATTLE-SOA-HANDLES","stage":2,"status":"pending","checks":[],"remaining":"Authoritative packed active storage, generation handles, removal and result archive."},
-    {"id":"BATTLE-SPATIAL-REUSE","stage":2,"status":"pending","checks":["tests/unit/battle/rules/test_spatial_index.gd","tests/unit/battle/rules/test_spatial_full_battle.gd"],"remaining":"Persistent unit/static grids and reusable query/work buffers."},
+    {"id":"BATTLE-SPATIAL-REUSE","stage":2,"status":"implemented","checks":["tests/integration/test_spatial_workspace.gd","tests/integration/test_projectile_broadphase.gd","tests/unit/battle/rules/test_spatial_index.gd","tests/unit/battle/rules/test_spatial_full_battle.gd"]},
     {"id":"BATTLE-PROJECTILES","stage":3,"status":"implemented","checks":["tests/integration/test_projectile_broadphase.gd"]},
     {"id":"BATTLE-AI-NAVIGATION","stage":3,"status":"pending","checks":["tests/unit/battle/rules/test_ai_attack_timing.gd"],"remaining":"Staggered AI schedules and formation A* with geometry invalidation."},
     {"id":"VIEW-COMPACT-SNAPSHOT","stage":4,"status":"pending","checks":["tests/integration/test_render_snapshot.gd","tools/architecture.test.cjs"],"remaining":"Production uses packed dynamic columns, immutable appearance and culling before materialization; finish static geometry separation and meet snapshot p95 <=1 ms."},

@@ -111,16 +111,13 @@ static func _resolve_unit_collisions(battle: State, index: SpatialIndex, keep_in
 static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index: kept current for callers that reuse it, else null
 	var units := battle.units
 	var n := units.size()
-	var pos := PackedVector2Array()
-	var rad := PackedFloat64Array()
-	var mass := PackedFloat64Array()
-	var side := PackedInt32Array()
-	var live := PackedByteArray()
-	pos.resize(n)
-	rad.resize(n)
-	mass.resize(n)
-	side.resize(n)
-	live.resize(n)
+	var workspace := battle.contacts
+	workspace.resize(n)
+	var pos := workspace.positions
+	var rad := workspace.radii
+	var mass := workspace.masses
+	var side := workspace.sides
+	var live := workspace.live
 	var max_radius := 0.0
 	for i in n:
 		var u: Unit = units[i]
@@ -131,17 +128,11 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 		live[i] = 0 if u.dead or u.gone else 1
 		max_radius = maxf(max_radius, u.collision_radius)
 	if battle.collision_grid == null:
-		battle.collision_grid = CollisionGrid.new(pos, battle.arena_size)
+		battle.collision_grid = CollisionGrid.new(pos, battle.arena_size, live)
 	else:
-		battle.collision_grid.reset(pos, battle.arena_size)
+		battle.collision_grid.reset(pos, battle.arena_size, live)
 	var grid := battle.collision_grid
 	var plain_field := battle.wall == null
-	var trunk_count := battle.trunks.size()
-	var trunk_pos := PackedVector2Array()
-	var trunk_rad := PackedFloat64Array()
-	for trunk in battle.trunks:
-		trunk_pos.append(trunk.position)
-		trunk_rad.append(trunk.trunk_radius)
 	var slack2 := COLLISION_SLACK * COLLISION_SLACK
 	for i in n:
 		if live[i] == 0:
@@ -183,14 +174,7 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 		var a: Unit = units[i]
 		if plain_field:
 			# _finish_unit without a wall, on the packed value: trunks, then the field clamp.
-			for t in trunk_count:
-				var reach: float = ra + trunk_rad[t]
-				var offset: Vector2 = pa - trunk_pos[t]
-				var distance_squared := offset.length_squared()
-				if distance_squared >= reach * reach:
-					continue
-				var normal := Vector2.RIGHT if distance_squared == 0.0 else offset / sqrt(distance_squared)
-				pa = trunk_pos[t] + normal * reach
+			pa = battle.static_obstacles.constrain(pa, ra)
 			if not a.fleeing:
 				pa.x = clampf(pa.x, Config.FIELD_LEFT_RIGHT_MARGIN, battle.arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
 			pa.y = clampf(pa.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
@@ -215,15 +199,7 @@ static func _finish_unit(a: Unit, battle: State) -> void:
 	a.position.y = clampf(a.position.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
 
 static func _resolve_trunk_collisions(unit: Unit, battle: State) -> void:
-	for trunk in battle.trunks:
-		var reach: float = unit.collision_radius + trunk.trunk_radius
-		var offset: Vector2 = unit.position - trunk.position
-		var distance_squared := offset.length_squared()
-		if distance_squared >= reach * reach:
-			continue
-		# A unit exactly on the center needs a stable outward direction.
-		var normal := Vector2.RIGHT if distance_squared == 0.0 else offset / sqrt(distance_squared)
-		unit.position = trunk.position + normal * reach
+	unit.position = battle.static_obstacles.constrain(unit.position, unit.collision_radius)
 
 static func _separate(a: Unit, b: Unit) -> bool:
 	if b.dead or b.gone:

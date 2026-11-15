@@ -70,10 +70,11 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 		battle.projectiles.remove_at(i)
 		var victim: Unit = null
 		var closest := INF
-		var candidates: Array[int] = []
+		var candidates := battle.projectile_candidates
 		if index != null:
-			candidates = index.nearby(shot.impact + Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT), hit_radius, 0)
+			index.nearby_into(shot.impact + Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT), hit_radius, 0, candidates)
 		if index == null:
+			candidates.clear()
 			for unit_index in battle.units.size(): candidates.append(unit_index)
 		for unit_index in candidates:
 			var unit: Unit = battle.units[unit_index]

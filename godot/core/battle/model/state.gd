@@ -12,6 +12,8 @@ const Equipment = preload("res://core/equipment/config.gd")
 const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
 const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
 const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
+const ContactWorkspace = preload("res://runtime/spatial/contact_workspace.gd")
+const StaticObstacleIndex = preload("res://runtime/spatial/static_obstacle_index.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
@@ -28,6 +30,9 @@ var movement_index: SpatialIndex
 var projectile_index: SpatialIndex
 var collision_grid: CollisionGrid
 var collision_candidates: Array[int] = []
+var projectile_candidates: Array[int] = []
+var contacts := ContactWorkspace.new()
+var static_obstacles := StaticObstacleIndex.new()
 var arena_size := Config.ARENA_SIZE
 var groups: Array = []
 var projectiles: Array = []
@@ -47,6 +52,12 @@ var _events: Array[Dictionary] = []
 func set_plants(layout: Array[Plant]) -> void:
 	plants = layout
 	trunks.assign(plants.filter(func(plant: Plant): return plant.trunk_radius > 0.0))
+	var positions := PackedVector2Array()
+	var radii := PackedFloat64Array()
+	for trunk in trunks:
+		positions.append(trunk.position)
+		radii.append(trunk.trunk_radius)
+	static_obstacles.rebuild(positions, radii)
 
 func record_notice(kind: Event.Kind, details: Dictionary = {}) -> void:
 	var notice := {"kind": kind}

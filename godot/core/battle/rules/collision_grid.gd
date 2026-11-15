@@ -10,10 +10,10 @@ var _w := 0
 var _h := 0
 var _allocated: Array[int] = []
 
-func _init(pos: PackedVector2Array, arena: Vector2) -> void:
-	reset(pos, arena)
+func _init(pos: PackedVector2Array, arena: Vector2, live: PackedByteArray = PackedByteArray()) -> void:
+	reset(pos, arena, live)
 
-func reset(pos: PackedVector2Array, arena: Vector2) -> void:
+func reset(pos: PackedVector2Array, arena: Vector2, live: PackedByteArray = PackedByteArray()) -> void:
 	var width := ceili((arena.x + PAD * 2.0) / CELL) + 1
 	var height := ceili((arena.y + PAD * 2.0) / CELL) + 1
 	if width != _w or height != _h:
@@ -27,6 +27,9 @@ func reset(pos: PackedVector2Array, arena: Vector2) -> void:
 			_cells[cell].clear()
 	_at.resize(pos.size())
 	for i in pos.size():
+		if not live.is_empty() and live[i] == 0:
+			_at[i] = -1
+			continue
 		var c := _cell(pos[i])
 		_at[i] = c
 		_put(i, c)
@@ -36,8 +39,9 @@ func move(i: int, p: Vector2) -> void:
 	var old := _at[i]
 	if c == old:
 		return
-	var bucket: Array = _cells[old]
-	bucket.remove_at(bucket.find(i))
+	if old >= 0:
+		var bucket: Array = _cells[old]
+		bucket.remove_at(bucket.find(i))
 	_put(i, c)
 	_at[i] = c
 

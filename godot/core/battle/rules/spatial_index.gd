@@ -9,6 +9,10 @@ const Unit = preload("res://core/battle/model/unit.gd")
 var _units: Array[Unit]
 var _cells: Array[Dictionary] = [{}, {}] # coarse, per side: Vector2i -> Array[int]
 var _locations: Array[Vector2i] = []
+var _target_best: Array = [-1, INF]
+var _far_cells: Array[Vector2i] = []
+var _far_gaps := PackedFloat64Array()
+var _spare_buckets: Array[Array] = []
 
 func _init(units: Array[Unit], arena: Vector2 = Config.ARENA_SIZE) -> void:
 	_units = units
@@ -33,22 +37,28 @@ func update(index: int) -> void:
 	old_bucket.erase(index)
 	if old_bucket.is_empty():
 		_cells[unit.side].erase(previous)
+		_spare_buckets.append(old_bucket)
 	_locations[index] = cell
 	_add(index, cell)
 
 func nearby(position: Vector2, radius: float, first_index: int) -> Array[int]:
 	var found: Array[int] = []
+	nearby_into(position, radius, first_index, found)
+	return found
+
+func nearby_into(position: Vector2, radius: float, first_index: int, found: Array[int]) -> void:
+	found.clear()
 	var lower := _cell(position - Vector2.ONE * radius)
 	var upper := _cell(position + Vector2.ONE * radius)
 	for x in range(lower.x, upper.x + 1):
 		for y in range(lower.y, upper.y + 1):
 			var key := Vector2i(x, y)
 			for side in 2:
-				for index in _cells[side].get(key, []):
+				if not _cells[side].has(key): continue
+				for index in _cells[side][key]:
 					if index >= first_index:
 						found.append(index)
 	found.sort() # Preserve the old pair order, including overlapping stacks.
-	return found
 
 func nearest_enemy(unit: Unit) -> Unit:
 	var other_side := 1 - unit.side
@@ -81,7 +91,9 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 	var min_k := Config.CAVALRY_ARCHER_TARGET_MULTIPLIER if melee_cavalry else 1.0
 	var home := _cell(unit.position)
 	var size := Config.SPATIAL_CELL_SIZE
-	var state := [-1, INF] # best index, best weighted distance
+	var state := _target_best # One synchronous query at a time in this context.
+	state[0] = -1
+	state[1] = INF
 	if previous != null and not previous.dead and not previous.gone:
 		var d := unit.position.distance_to(previous.position)
 		if previous.fleeing:
@@ -89,7 +101,8 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 		if melee_cavalry and previous.attack_range > 0.0 and not previous.mounted:
 			d *= Config.CAVALRY_ARCHER_TARGET_MULTIPLIER
 		d *= Config.CURRENT_TARGET_MULTIPLIER
-		state = [previous.battle_index, d]
+		state[0] = previous.battle_index
+		state[1] = d
 	# Rings of cells around the unit while the next ring could still hold something closer; a far enemy
 	# (armies still apart) falls back to one pruned pass over the occupied cells.
 	var ring := 0
@@ -107,8 +120,12 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 				_scan_cell(cells, home + Vector2i(ring, dy), unit, previous, melee_cavalry, min_k, state)
 		ring += 1
 	# Far targets: scan the closest occupied cell first so the bound prunes the rest.
-	var far: Array[Vector2i] = []
-	var gaps := PackedFloat64Array()
+	var far := _far_cells
+	var gaps := _far_gaps
+	if far.size() < cells.size():
+		far.resize(cells.size())
+		gaps.resize(cells.size())
+	var far_count := 0
 	var nearest_cell := -1
 	for cell: Vector2i in cells:
 		if absi(cell.x - home.x) <= RING_LIMIT and absi(cell.y - home.y) <= RING_LIMIT:
@@ -119,12 +136,13 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 		var gy := maxf(maxf(top - unit.position.y, unit.position.y - (top + size)), 0.0)
 		var gap := sqrt(gx * gx + gy * gy)
 		if nearest_cell < 0 or gap < gaps[nearest_cell]:
-			nearest_cell = far.size()
-		far.append(cell)
-		gaps.append(gap)
+			nearest_cell = far_count
+		far[far_count] = cell
+		gaps[far_count] = gap
+		far_count += 1
 	if nearest_cell >= 0:
 		_scan_cell(cells, far[nearest_cell], unit, previous, melee_cavalry, min_k, state)
-	for k in far.size():
+	for k in far_count:
 		if k != nearest_cell and gaps[k] * min_k <= float(state[1]) + 1e-6:
 			_scan_cell(cells, far[k], unit, previous, melee_cavalry, min_k, state)
 	return _units[state[0]] if state[0] >= 0 else null
@@ -163,7 +181,7 @@ func _scan_cell(cells: Dictionary, cell: Vector2i, unit: Unit, previous: Unit, m
 func _add(index: int, cell: Vector2i) -> void:
 	var side: int = _units[index].side
 	if not _cells[side].has(cell):
-		_cells[side][cell] = []
+		_cells[side][cell] = _spare_buckets.pop_back() if not _spare_buckets.is_empty() else []
 	_cells[side][cell].append(index)
 
 static func _cell(position: Vector2) -> Vector2i:

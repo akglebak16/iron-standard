@@ -1,0 +1,229 @@
+{
+  "revision": "2b09626d2adb7001c0db8283dc0c1931c0bd6148",
+  "dirty": true,
+  "build": {
+    "source": {
+      "revision": "2b09626d2adb7001c0db8283dc0c1931c0bd6148",
+      "source_sha256": "7a70fd95f3e19a089d6cc0e83318379e95e6a4d214becae56ca3aaea5f4b1745",
+      "dirty": true
+    },
+    "executable_sha256": "c44fc625ba84fd4fd4b16afc0bedc344a6af26b08004db402580e2cbd0854d7c",
+    "built_at": "2026-11-15T17:02:17.446Z",
+    "smoke_passed": true,
+    "stale_source": false
+  },
+  "execution_context": "host",
+  "measuredAt": "2026-11-15T17:06:51.831Z",
+  "reports": [
+    {
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "debug": false,
+      "engine": "4.7.2-stable (official)",
+      "events": {
+        "0": 523,
+        "1": 133,
+        "3": 26,
+        "7": 1,
+        "8": 1
+      },
+      "gpu_time": null,
+      "live_max": 2001,
+      "live_min": 1975,
+      "logical_processors": 16,
+      "measured_ticks": 180,
+      "memory_end_bytes": null,
+      "memory_start_bytes": null,
+      "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample.",
+      "ordinary_initial": [
+        1000,
+        1000
+      ],
+      "phase_profile": {
+        "ai_movement_combat": {
+          "count": 180,
+          "mean_ms": 13.8150444444444,
+          "p50_ms": 13.606,
+          "p95_ms": 16.097,
+          "p99_ms": 17.454
+        },
+        "commands_interpolation": {
+          "count": 180,
+          "mean_ms": 0.249861111111111,
+          "p50_ms": 0.232,
+          "p95_ms": 0.371,
+          "p99_ms": 0.46
+        },
+        "contacts": {
+          "count": 180,
+          "mean_ms": 14.4886722222222,
+          "p50_ms": 14.255,
+          "p95_ms": 16.699,
+          "p99_ms": 17.372
+        },
+        "hero": {
+          "count": 180,
+          "mean_ms": 0.0118722222222222,
+          "p50_ms": 0.012,
+          "p95_ms": 0.016,
+          "p99_ms": 0.02
+        },
+        "morale_result_events": {
+          "count": 180,
+          "mean_ms": 0.04395,
+          "p50_ms": 0.007,
+          "p95_ms": 0.008,
+          "p99_ms": 2.023
+        },
+        "movement_index": {
+          "count": 180,
+          "mean_ms": 0.527616666666667,
+          "p50_ms": 0.527,
+          "p95_ms": 0.585,
+          "p99_ms": 0.726
+        },
+        "projectiles": {
+          "count": 180,
+          "mean_ms": 0.00930555555555555,
+          "p50_ms": 0.009,
+          "p95_ms": 0.011,
+          "p99_ms": 0.013
+        },
+        "tactics_siege": {
+          "count": 180,
+          "mean_ms": 1.09632777777778,
+          "p50_ms": 1.082,
+          "p95_ms": 1.339,
+          "p99_ms": 1.452
+        }
+      },
+      "requested_per_side": 1000,
+      "requested_ticks": 180,
+      "scenario": "contact",
+      "seed": 4242,
+      "simulation": {
+        "count": 180,
+        "mean_ms": 30.24965,
+        "p50_ms": 29.888,
+        "p95_ms": 33.787,
+        "p99_ms": 35.815
+      },
+      "snapshot": {
+        "count": 180,
+        "mean_ms": 4.16672222222222,
+        "p50_ms": 4.063,
+        "p95_ms": 4.637,
+        "p99_ms": 5.482
+      },
+      "snapshot_format": "compact-columns",
+      "special_initial": 1,
+      "warmup_ticks": 60,
+      "weight": 1
+    },
+    {
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "debug": false,
+      "engine": "4.7.2-stable (official)",
+      "events": {
+        "0": 523,
+        "1": 133,
+        "3": 26,
+        "7": 1,
+        "8": 1
+      },
+      "gpu_time": null,
+      "live_max": 2001,
+      "live_min": 1975,
+      "logical_processors": 16,
+      "measured_ticks": 180,
+      "memory_end_bytes": null,
+      "memory_start_bytes": null,
+      "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample.",
+      "ordinary_initial": [
+        1000,
+        1000
+      ],
+      "phase_profile": {
+        "ai_movement_combat": {
+          "count": 180,
+          "mean_ms": 13.2666555555556,
+          "p50_ms": 13.091,
+          "p95_ms": 15.436,
+          "p99_ms": 16.756
+        },
+        "commands_interpolation": {
+          "count": 180,
+          "mean_ms": 0.259988888888889,
+          "p50_ms": 0.25,
+          "p95_ms": 0.321,
+          "p99_ms": 0.368
+        },
+        "contacts": {
+          "count": 180,
+          "mean_ms": 14.05185,
+          "p50_ms": 14.051,
+          "p95_ms": 15.887,
+          "p99_ms": 16.738
+        },
+        "hero": {
+          "count": 180,
+          "mean_ms": 0.0123833333333333,
+          "p50_ms": 0.012,
+          "p95_ms": 0.016,
+          "p99_ms": 0.018
+        },
+        "morale_result_events": {
+          "count": 180,
+          "mean_ms": 0.0399611111111111,
+          "p50_ms": 0.006,
+          "p95_ms": 0.008,
+          "p99_ms": 1.829
+        },
+        "movement_index": {
+          "count": 180,
+          "mean_ms": 0.503877777777778,
+          "p50_ms": 0.496,
+          "p95_ms": 0.58,
+          "p99_ms": 0.723
+        },
+        "projectiles": {
+          "count": 180,
+          "mean_ms": 0.00931666666666667,
+          "p50_ms": 0.009,
+          "p95_ms": 0.011,
+          "p99_ms": 0.013
+        },
+        "tactics_siege": {
+          "count": 180,
+          "mean_ms": 1.06465,
+          "p50_ms": 1.055,
+          "p95_ms": 1.221,
+          "p99_ms": 1.298
+        }
+      },
+      "requested_per_side": 1000,
+      "requested_ticks": 180,
+      "scenario": "contact",
+      "seed": 4242,
+      "simulation": {
+        "count": 180,
+        "mean_ms": 29.2153777777778,
+        "p50_ms": 29.048,
+        "p95_ms": 32.527,
+        "p99_ms": 33.418
+      },
+      "snapshot": {
+        "count": 180,
+        "mean_ms": 4.22305,
+        "p50_ms": 4.156,
+        "p95_ms": 4.662,
+        "p99_ms": 5.163
+      },
+      "snapshot_format": "compact-columns",
+      "special_initial": 1,
+      "warmup_ticks": 60,
+      "weight": 1
+    }
+  ],
+  "diagnostic_inherited_affinity": "0xfff",
+  "affinity_note": "Restricted only this launcher and its inherited child processes; not a default-scheduler acceptance run."
+}
