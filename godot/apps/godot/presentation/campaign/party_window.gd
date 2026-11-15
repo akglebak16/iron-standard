@@ -25,6 +25,8 @@ var _fcat_loaded := false
 var _confirm := ""
 var _pick := ""
 var state: RefCounted
+## HeroStats.preview(profile, gear, effects) -> Dictionary, set by composition.
+var stat_preview := Callable()
 
 func open_for(world_state: RefCounted, tab: String = "troops") -> void:
 	state = world_state
@@ -423,7 +425,7 @@ func _gear(p) -> void:
 		if not it.is_empty():
 			row(it.name, _stats(it), [{"text": "Снять" if _selected_gear in eq.values() else "Надеть", "call": _selected_action}])
 			if not _selected_gear in eq.values():
-				_comparison(GearComparison.compare(h, it, gear, state.perks))
+				_comparison(GearComparison.compare(h, it, gear, state.perks, stat_preview))
 		else:
 			var good: Dictionary = state.market.goods.get(_selected_gear, {})
 			row(good.get("n", _selected_gear), "Торговый товар · продай на рынке города")
@@ -495,7 +497,7 @@ func _gear_tile(id: String, count: int, action: Callable, location: String, empt
 		for c in state.player.comps:
 			if c.id == _who:
 				who = c
-		tile.tooltip_text += "\n\n" + GearComparison.text(GearComparison.compare(who, it, state.gear, state.perks))
+		tile.tooltip_text += "\n\n" + GearComparison.text(GearComparison.compare(who, it, state.gear, state.perks, stat_preview))
 	var tier: int = clampi(int(it.get("tier", 0)), 0, 3)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("#21170e")

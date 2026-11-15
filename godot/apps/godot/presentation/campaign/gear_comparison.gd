@@ -3,7 +3,6 @@ extends RefCounted
 ## applies the equip rules to the copy and compares the two HeroStats previews. UI text lives here (presentation).
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
-const HeroStats = preload("res://core/battle/data/hero_stats.gd")
 const PerkEffects = preload("res://core/characters/rules/perk_effects.gd")
 
 ## [key in HeroStats.preview, label, scale, lower_is_better]
@@ -11,8 +10,9 @@ const ROWS := [["damage", "Урон", 1.0, false], ["armor", "Броня", 1.0, 
 	["attack_interval_seconds", "Удар / перезарядка, с", 1.0, true], ["block", "Блок, %", 100.0, false]]
 
 ## {title, note, rows:[{name, old, next, delta, trend}]}; trend is 1 better, -1 worse, 0 same. `note` explains refusals.
-static func compare(profile: Dictionary, item: Dictionary, catalog, perks) -> Dictionary:
-	if item.is_empty() or not item.has("slot"):
+## `preview` is HeroStats.preview(profile, gear, effects), handed in by composition (presentation may not import core/battle).
+static func compare(profile: Dictionary, item: Dictionary, catalog, perks, preview: Callable) -> Dictionary:
+	if item.is_empty() or not item.has("slot") or not preview.is_valid():
 		return {}
 	var before := profile.duplicate(true)
 	var eq: Dictionary = HeroEquip.ensure(before)
@@ -27,8 +27,8 @@ static func compare(profile: Dictionary, item: Dictionary, catalog, perks) -> Di
 		before.sel = item.slot
 		after.sel = item.slot
 	var effects: Dictionary = PerkEffects.own(profile, perks)
-	var then := HeroStats.preview(before, HeroGear.resolve(before, catalog), effects)
-	var now := HeroStats.preview(after, HeroGear.resolve(after, catalog), effects)
+	var then := preview.call(before, HeroGear.resolve(before, catalog), effects)
+	var now := preview.call(after, HeroGear.resolve(after, catalog), effects)
 	var rows: Array = []
 	for def in ROWS:
 		var old := snappedf(float(then[def[0]]) * float(def[2]), 0.1)

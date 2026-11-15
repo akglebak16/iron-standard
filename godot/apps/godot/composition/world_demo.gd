@@ -14,6 +14,7 @@ const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounte
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
+const HeroStats = preload("res://core/battle/data/hero_stats.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 const SiegeWindow = preload("res://apps/godot/presentation/campaign/siege_window.gd")
 const PauseMenu = preload("res://apps/godot/composition/pause_menu.gd")
@@ -118,6 +119,7 @@ func _ready() -> void:
 	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; hud.show_notice("Ждём: %s. Клик по карте — в путь" % s.name))
 	_town.closed.connect(func(): state.clock.paused = false)
 	_party_window = PartyWindow.new()
+	_party_window.stat_preview = HeroStats.preview
 	add_child(_party_window)
 	_party_window.closed.connect(func(): state.clock.paused = false)
 	_party_window.quest_target.connect(func(x: float, y: float):
