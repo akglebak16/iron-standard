@@ -4,7 +4,7 @@ extends RefCounted
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 const VERSION := 1
-const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg"]
+const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire"]
 const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid"]
 
 static func to_dict(state: RefCounted) -> Dictionary:
@@ -27,7 +27,7 @@ static func to_dict(state: RefCounted) -> Dictionary:
 		"clock": {"day": state.clock.day, "hour": state.clock.hour, "speed": state.clock.speed},
 		"player": {"x": p.x, "y": p.y, "troops": p.troops, "culture": p.culture, "gold": p.gold, "food": p.food, "inv": p.inv,
 			"comps": p.comps, "quests": p.quests, "stats": p.stats, "hero": p.hero, "rel": p.rel},
-		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "next_party_id": state.roster._next_party_id}
+		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
 
 ## Rebuilds a world from saved data; returns null for an unknown format.
 static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
@@ -48,7 +48,7 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 	p.food = int(pd.food)
 	p.inv = _ints(pd.inv)
 	p.comps = pd.comps
-	p.quests = pd.quests
+	p.quests = _quests(pd.quests)
 	p.stats = _ints(pd.stats)
 	p.hero = _hero(pd.hero)
 	p.rel = pd.rel
@@ -60,6 +60,12 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 			if saved[k] != null or k == "camp":
 				s[k] = saved[k]
 		s.recruits = _stacks(s.recruits)
+		if s.get("board") is Array:
+			s.board = _quests(s.board)
+		if s.get("owner") != null:
+			s.owner = int(s.owner)
+		if s.get("talkT") != null:
+			s.talkT = int(s.talkT)
 		if s.get("gar") is Array:
 			s.gar = _stacks(s.gar)
 		if s.get("siege") is Dictionary:
@@ -89,6 +95,12 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 		party.pi = int(party.pi)
 		state.roster.parties.append(party)
 	state.roster._next_party_id = int(data.next_party_id)
+	state.quests.next_id = int(data.get("quest_id", state.quests.next_id))
+	state.companions.from_dict(data.get("companions", {}))
+	for c in p.comps:
+		for k in ["lvl", "xp", "pts", "pp", "seed", "str", "vit", "agi", "int", "cha"]:
+			if c.get(k) != null:
+				c[k] = int(c[k])
 	state.wars.wars.clear()
 	for k in data.get("wars", {}):
 		state.wars.wars[k] = {"since": int(data.wars[k].since)}
@@ -123,4 +135,16 @@ static func _hero(h: Dictionary) -> Dictionary:
 	for k in ["lvl", "xp", "pts", "pp", "str", "vit", "agi", "int", "cha", "armor", "weapon", "shield", "horse", "seed"]:
 		if out.has(k):
 			out[k] = int(out[k])
+	return out
+
+const QUEST_INT_KEYS := ["id", "from", "sid", "day", "dl", "n", "got", "reward"]
+
+static func _quests(list: Array) -> Array:
+	var out: Array = []
+	for q in list:
+		var c: Dictionary = q.duplicate(true)
+		for k in QUEST_INT_KEYS:
+			if c.get(k) != null:
+				c[k] = int(c[k])
+		out.append(c)
 	return out

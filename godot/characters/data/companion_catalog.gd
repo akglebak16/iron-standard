@@ -52,6 +52,9 @@ func replace_data(data: Variant) -> bool:
 	_definitions = definitions.duplicate(true)
 	return true
 
+func ids() -> Array:
+	return _definitions.keys()
+
 func size() -> int:
 	return _definitions.size()
 
