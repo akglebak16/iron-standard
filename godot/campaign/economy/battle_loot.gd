@@ -6,18 +6,8 @@ const Goods = preload("res://campaign/data/goods_catalog.gd")
 const Config = preload("res://campaign/config.gd")
 
 static func collect(party: Dictionary, encounter: Dictionary, effects: Dictionary, mounted_hero: bool, troops: Troops, gear: Gear, goods: Goods, rng: RandomNumberGenerator) -> Array[Dictionary]:
-	var total := 0
-	var tiers := 0
-	var had_mounted := false
-	for stack in encounter.troops:
-		var troop := troops.get_troop(stack.type)
-		if troop.is_empty():
-			return []
-		var count := int(stack.n)
-		total += count
-		tiers += int(troop.tier) * count
-		had_mounted = had_mounted or troop.mounted
-	if total <= 0:
+	var enemy := _summarize_enemy(encounter, troops)
+	if enemy.is_empty():
 		return []
 	var trade_goods := goods.definitions()
 	var items := gear.definitions()
@@ -27,22 +17,12 @@ static func collect(party: Dictionary, encounter: Dictionary, effects: Dictionar
 	var faction: String = encounter.get("faction", "")
 	var caravan: bool = encounter.get("trade_goods_only", false)
 	var local_goods := trade_ids.filter(func(id): return faction in trade_goods[id].make) if caravan else []
-	var top := clampi(roundi(float(tiers) / total), 0, Config.LOOT_MAX_TIER)
-	var weights := {}
-	var sum_weights := 0.0
-	for id in items:
-		var item: Dictionary = items[id]
-		if item.get("unique", 0) or item.tier > top or (item.slot == "horse" and not had_mounted):
-			continue
-		var preference := Config.LOOT_FACTION_PREFERENCE if faction in item.get("f", []) else 1.0
-		var weight := preference / (1.0 + float(item.tier))
-		weights[id] = weight
-		sum_weights += weight
+	var gear_odds := _gear_odds(items, enemy, faction)
 	var inventory: Dictionary = party.inv
 	var capacity := _capacity(party, effects, mounted_hero)
 	var weight := _weight(inventory, items, trade_goods)
 	var collected := {}
-	var rolls := clampi(roundi(total * Config.LOOT_ROLLS_PER_ENEMY), 1, Config.LOOT_MAX_ROLLS)
+	var rolls := clampi(roundi(enemy.total * Config.LOOT_ROLLS_PER_ENEMY), 1, Config.LOOT_MAX_ROLLS)
 	for roll in rolls:
 		var id: String
 		var count := 1
@@ -54,8 +34,8 @@ static func collect(party: Dictionary, encounter: Dictionary, effects: Dictionar
 			var budget := rng.randi_range(Config.LOOT_GOODS_VALUE.x, Config.LOOT_GOODS_VALUE.y)
 			count = clampi(roundi(float(budget) / float(item.p)), 1, Config.LOOT_MAX_GOODS)
 			unit_weight = item.w
-		elif not weights.is_empty():
-			id = _weighted_pick(weights, sum_weights, rng)
+		elif not gear_odds.weights.is_empty():
+			id = _weighted_pick(gear_odds.weights, gear_odds.sum, rng)
 			unit_weight = items[id].w
 		else:
 			continue
@@ -70,6 +50,39 @@ static func collect(party: Dictionary, encounter: Dictionary, effects: Dictionar
 	for id in collected:
 		drops.append({"id": id, "n": collected[id]})
 	return drops
+
+## Head count, total tier and whether cavalry was present; empty when the enemy is unknown or has no troops.
+static func _summarize_enemy(encounter: Dictionary, troops: Troops) -> Dictionary:
+	var total := 0
+	var tiers := 0
+	var had_mounted := false
+	for stack in encounter.troops:
+		var troop := troops.get_troop(stack.type)
+		if troop.is_empty():
+			return {}
+		var count := int(stack.n)
+		total += count
+		tiers += int(troop.tier) * count
+		had_mounted = had_mounted or troop.mounted
+	if total <= 0:
+		return {}
+	return {"total": total, "tiers": tiers, "mounted": had_mounted}
+
+## Chance of each piece of gear dropping: weaker tiers are likelier, the enemy faction's own gear is preferred,
+## unique items never drop, and horses only come from enemies that rode.
+static func _gear_odds(items: Dictionary, enemy: Dictionary, faction: String) -> Dictionary:
+	var top := clampi(roundi(float(enemy.tiers) / enemy.total), 0, Config.LOOT_MAX_TIER)
+	var weights := {}
+	var sum := 0.0
+	for id in items:
+		var item: Dictionary = items[id]
+		if item.get("unique", 0) or item.tier > top or (item.slot == "horse" and not enemy.mounted):
+			continue
+		var preference := Config.LOOT_FACTION_PREFERENCE if faction in item.get("f", []) else 1.0
+		var weight := preference / (1.0 + float(item.tier))
+		weights[id] = weight
+		sum += weight
+	return {"weights": weights, "sum": sum}
 
 static func _weighted_pick(weights: Dictionary, total: float, rng: RandomNumberGenerator) -> String:
 	var remaining := rng.randf() * total

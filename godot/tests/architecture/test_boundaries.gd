@@ -36,7 +36,8 @@ func _initialize() -> void:
 
 func _check_tree(path: String, forbidden: Array) -> void:
 	for filename in DirAccess.get_files_at(path):
-		if not filename.ends_with(".gd"):
+		# Scenes and resources are code too: a .tscn may not reach across a boundary either.
+		if not (filename.ends_with(".gd") or filename.ends_with(".tscn") or filename.ends_with(".tres")):
 			continue
 		_check_file(path + "/" + filename, forbidden)
 	for child in DirAccess.get_directories_at(path):

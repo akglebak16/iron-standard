@@ -6,21 +6,31 @@ const Unit = preload("res://battle/model/unit.gd")
 const Defense = preload("res://battle/model/siege_defense.gd")
 const Event = preload("res://battle/combat_event.gd")
 
+## One tick of the wall's defence: stones thrown at attacker crowds, oil poured at the gaps and fires burning.
 static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 	var defense: Defense = battle.siege_defense
 	if battle.wall == null or defense == null:
 		return
-	var wall := battle.wall
 	var skill_scale := 1.0 - battle.siege_skill * Config.SIEGE_DEFENSE_SKILL_SCALE
-	var defenders := 0
 	var attackers: Array[Unit] = []
+	var defenders := _muster(battle, attackers)
+	_step_stones(battle, defense, attackers, defenders, skill_scale, dt, rng)
+	_step_cauldrons(battle, defense, attackers, defenders, dt)
+	_step_fires(battle, defense, attackers, skill_scale, dt, rng)
+
+## Collects the attackers still fighting and returns how many defenders stand on the wall line.
+static func _muster(battle: State, attackers: Array[Unit]) -> int:
+	var defenders := 0
 	for unit: Unit in battle.units:
 		if not _ready(unit):
 			continue
-		if unit.side == 1 and unit.position.x > wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET:
+		if unit.side == 1 and unit.position.x > battle.wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET:
 			defenders += 1
 		elif unit.side == 0:
 			attackers.append(unit)
+	return defenders
+
+static func _step_stones(battle: State, defense: Defense, attackers: Array[Unit], defenders: int, skill_scale: float, dt: float, rng: RandomNumberGenerator) -> void:
 	defense.stone_cooldown -= dt
 	if defense.stones > 0 and defense.stone_cooldown <= 0.0 and defenders >= Config.SIEGE_STONE_MIN_DEFENDERS:
 		_throw_stone(battle, defense, attackers, defenders, rng)
@@ -31,6 +41,9 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 			continue
 		defense.stones_in_flight.remove_at(i)
 		_land_stone(battle, stone.impact, attackers, skill_scale, rng)
+
+static func _step_cauldrons(battle: State, defense: Defense, attackers: Array[Unit], defenders: int, dt: float) -> void:
+	var wall := battle.wall
 	for cauldron in defense.cauldrons:
 		cauldron.cooldown -= dt
 		if cauldron.charges <= 0 or cauldron.cooldown > 0.0 or defenders < Config.SIEGE_OIL_MIN_DEFENDERS:
@@ -53,6 +66,8 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 				unit.morale -= Config.SIEGE_OIL_MORALE_LOSS
 		battle.record_notice(Event.Kind.OIL_POURED, {"position": fire.center, "first": defense.announced < 2})
 		defense.announced = 2
+
+static func _step_fires(battle: State, defense: Defense, attackers: Array[Unit], skill_scale: float, dt: float, rng: RandomNumberGenerator) -> void:
 	for i in range(defense.fires.size() - 1, -1, -1):
 		var fire: Dictionary = defense.fires[i]
 		fire.time += dt
