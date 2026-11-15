@@ -24,6 +24,12 @@ const PALETTES := {
 const LOOK_FIELDS := ["helm", "armor", "weapon", "shield", "horse", "undead"]
 
 var _cache: Dictionary = {}
+var _troop_ids := {}
+var _variants := {}
+
+func configure_identities(ids: Dictionary, variants: Dictionary) -> void:
+	_troop_ids = ids.duplicate()
+	_variants = variants.duplicate()
 
 var _by_unit: Dictionary = {} # unit id -> cache entry; only the hero changes looks
 
@@ -36,7 +42,7 @@ func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 			if headless and not known.has("headless"):
 				known.headless = _body(unit.look, _palette(unit), unit.mounted, true)
 			return known
-	var original := OriginalArt.layers_for(unit)
+	var original := OriginalArt.layers_for(unit, _troop_ids.get(uid, ""), int(_variants.get(uid, 0)))
 	if not original.is_empty():
 		if cacheable:
 			_by_unit[uid] = original

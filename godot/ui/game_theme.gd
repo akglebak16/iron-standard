@@ -2,6 +2,7 @@ extends RefCounted
 ## The original style.css palette and fonts, shared by app, campaign and battle UI.
 const DISPLAY = preload("res://ui/assets/fonts/AlegreyaSC-Bold.ttf")
 const BODY = preload("res://ui/assets/fonts/AlegreyaSans-Medium.ttf")
+const BODY_BOLD = preload("res://ui/assets/fonts/AlegreyaSans-Bold.ttf")
 const INK := Color("#150f09")
 const BRASS := Color("#d1a84c")
 const PARCH := Color("#eadfc2")
@@ -72,6 +73,6 @@ static func title(label: Label, size := 30) -> void:
 static func primary(button: Button) -> void:
 	button.add_theme_stylebox_override("normal", box("primary", 12))
 
-static func icon(name: String) -> Texture2D:
-	var path := "res://ui/assets/icon_%s.svg" % name
+static func icon(name: String, palette := "icon") -> Texture2D:
+	var path := "res://ui/assets/%s_%s.svg" % [palette, name]
 	return load(path) if ResourceLoader.exists(path) else null

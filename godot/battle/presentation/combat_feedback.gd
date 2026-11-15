@@ -1,4 +1,5 @@
 extends RefCounted
+const GameSkin = preload("res://ui/game_theme.gd")
 const Demo = preload("res://battle/presentation/demo_config.gd")
 const Event = preload("res://battle/combat_event.gd")
 const Config = preload("res://battle/config.gd")
@@ -83,12 +84,12 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 					_log(FLED % event.target_name)
 			Event.Kind.HIT:
 				if event.target_hero or event.source_hero:
-					_label(event.position, str(event.amount), Demo.DAMAGE_RECEIVED_COLOR if event.target_hero else Demo.DAMAGE_DEALT_COLOR)
+					_label(event.position + Vector2(_rng.randf_range(-6, 6), -2), str(event.amount), Demo.DAMAGE_RECEIVED_COLOR if event.target_hero else Demo.DAMAGE_DEALT_COLOR)
 			Event.Kind.BLOCK:
 				if event.target_hero or (event.source_hero and event.attack == Event.Attack.MELEE):
 					_label(event.position, BLOCK_TEXT, Demo.BLOCK_COLOR)
 			Event.Kind.LAST_STAND:
-				_label(event.position, LAST_STAND_TEXT, Demo.LAST_STAND_COLOR)
+				_label(event.position + Vector2(0, -18), LAST_STAND_TEXT, Demo.LAST_STAND_COLOR)
 				_log(HERO_RECOVERED)
 			Event.Kind.WEAPON_SWAPPED:
 				_label(event.position + WEAPON_TEXT_OFFSET, event.weapon_name, WEAPON_TEXT_COLOR)
@@ -121,9 +122,12 @@ func has_effects() -> bool:
 func draw(canvas: CanvasItem) -> void:
 	for label in _labels:
 		var color: Color = label.color
-		color.a *= 1.0 - float(label.age) / float(label.lifetime)
+		color.a *= minf(1, (float(label.lifetime) - float(label.age)) * 2.5)
 		var position: Vector2 = label.position + Demo.FEEDBACK_OFFSET - Vector2(0, label.age * Demo.FEEDBACK_RISE_SPEED)
-		canvas.draw_string(ThemeDB.fallback_font, position, label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Demo.FEEDBACK_FONT_SIZE, color)
+		var width := GameSkin.BODY_BOLD.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Demo.FEEDBACK_FONT_SIZE).x
+		position.x -= width / 2
+		canvas.draw_string_outline(GameSkin.BODY_BOLD, position, label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Demo.FEEDBACK_FONT_SIZE, 3, Color(15 / 255.0, 10 / 255.0, 6 / 255.0, color.a * 0.85))
+		canvas.draw_string(GameSkin.BODY_BOLD, position, label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Demo.FEEDBACK_FONT_SIZE, color)
 
 func _label(position: Vector2, value: String, color: Color) -> void:
 	if _labels.size() < Demo.FEEDBACK_MAX_LABELS:

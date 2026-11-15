@@ -26,6 +26,7 @@ const PLAYBACK_SPEEDS := [1.0, 2.0, 0.5]
 const BUTTON_ORDER_AHEAD := 60.0
 
 signal battle_finished
+signal menu_requested
 signal audio_preferences_changed(effects: bool, music: bool)
 signal blood_preference_changed(enabled: bool)
 
@@ -53,12 +54,20 @@ var _paused := false
 var _speed_index := 0
 var _attack_pressed := false
 var attract_mode := false
+var _figure_identity_count := -1
+var _figure_seed := 0
 var _journal_label: Label
+var _journal_panel: Panel
+var _hud_orders: Dictionary = {}
+var _menu_open := false
+var _paused_before_menu := false
 
 func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true,
 		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
+	_figure_seed = terrain_seed
+	_figures.biome = biome
 	_dialogue.configure(session.companion_dialogue())
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
@@ -67,9 +76,9 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
 	_vegetation.configure(session.vegetation_layout(), biome, terrain_seed)
 	add_child(_terrain)
+	add_child(_bake)
 	if DisplayServer.get_name() != "headless":
 		_bake.configure(frame.arena_size)
-		add_child(_bake)
 		_impacts.on_mark = func(mark: Dictionary): _bake.paint(func(canvas): ImpactEffects.draw_mark(canvas, mark))
 		_figures.on_settled = func(unit: Dictionary, headless: bool): _bake.paint(func(canvas): _figures.draw_corpse(canvas, unit, headless))
 
@@ -91,14 +100,18 @@ func _ready() -> void:
 		set_process_unhandled_input(false)
 		return
 	status.hide()
-	var log_panel := PanelContainer.new()
+	var log_panel := Panel.new()
+	_journal_panel = log_panel
 	log_panel.position = Vector2(8, 8)
-	log_panel.custom_minimum_size.x = 310
+	log_panel.size = Vector2(330, 34)
+	log_panel.clip_contents = true
 	log_panel.add_theme_stylebox_override("panel", preload("res://ui/game_theme.gd").box("parchment", 10))
 	$Hud.add_child(log_panel)
 	_journal_label = Label.new()
-	_journal_label.custom_minimum_size.x = 290
-	_journal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_journal_label.position = Vector2(13, 6)
+	_journal_label.size = Vector2(304, 22)
+	_journal_label.clip_text = true
+	_journal_label.max_lines_visible = 1
 	_journal_label.add_theme_color_override("font_color", Color("#2a1d10"))
 	_journal_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	log_panel.add_child(_journal_label)
@@ -112,6 +125,7 @@ func _ready() -> void:
 	_controls.pause_pressed.connect(_toggle_pause)
 	_controls.speed_pressed.connect(_cycle_speed)
 	_controls.retreat_pressed.connect(_request_retreat)
+	_controls.menu_pressed.connect(menu_requested.emit)
 	_audio = CombatAudio.new()
 	_audio.enabled = _effects_enabled
 	add_child(_audio)
@@ -234,7 +248,7 @@ func _post_step(simulation_dt: float, events: Array[Dictionary], real_dt: float,
 		battle_finished.emit()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _session == null:
+	if _session == null or _menu_open:
 		return
 	if event is InputEventMouseButton:
 		_handle_battle_mouse(event)
@@ -262,6 +276,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_F: _to_session(_session.issue_order.bind(Config.ORDER_RETREAT, _frame.hero_position, _selection))
 		KEY_P: _toggle_pause()
 		KEY_T: _cycle_speed()
+		KEY_ESCAPE: menu_requested.emit()
 
 func _input(event: InputEvent) -> void:
 	# A press consumed by a Control must not become a held battlefield attack.
@@ -290,6 +305,22 @@ func _select_group(group: int) -> void:
 	_selection = group
 	_update_status()
 	queue_redraw()
+
+func set_menu_open(open: bool) -> void:
+	_finish_pending_step()
+	if open and not _menu_open:
+		_paused_before_menu = _paused
+		_paused = true
+	elif not open and _menu_open:
+		_paused = _paused_before_menu
+	_menu_open = open
+	_attack_pressed = false
+	_update_status()
+
+func apply_preferences(effects: bool, music: bool, blood: bool) -> void:
+	_set_audio_preferences(effects, music)
+	_impacts.blood_enabled = blood
+	_rebake()
 
 func _issue_hud_order(order: String) -> void:
 	var origin: Vector2 = _frame.hero_position
@@ -339,6 +370,13 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
 	# One detached read per simulation step, reused by HUD and drawing (taken on the worker when threaded).
 	_frame = frame if not frame.is_empty() else _session.snapshot()
+	if _figure_identity_count != _frame.units.size():
+		_figures.configure_identities(_session.unit_appearance_ids(), _figure_seed)
+		_controls.configure_portraits(_frame.units, _session.unit_appearance_ids())
+		_figure_identity_count = _frame.units.size()
+	# Read after the worker has completed, never from asynchronous input handlers.
+	for group in 4: _hud_orders[group] = _session.selected_orders(group)
+	_figures.observe_units(_frame.units)
 	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
 	if attract_mode:
 		camera.position = Vector2(_frame.arena_size) * 0.5
@@ -356,6 +394,11 @@ func _update_status() -> void:
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_controls.update_frame(_frame, _selection, _paused, PLAYBACK_SPEEDS[_speed_index], finished)
+	_controls.show_commands(_selection, _hud_orders.get(_selection, []))
+	if _journal_panel != null:
+		var viewport_width := get_viewport_rect().size.x
+		_journal_panel.size.x = viewport_width * 0.46 if viewport_width <= 760 else minf(330, viewport_width * (0.32 if viewport_width > 900 else 0.36))
+		_journal_label.size.x = _journal_panel.size.x - 26
 	status.text = Demo.HUD_TEXT % [label, _frame.ally_strength, _frame.enemy_strength, roundi(_frame.stamina), Demo.GROUP_NAMES[_selection], BattleControls.format_time(_frame.elapsed_seconds)]
 	var reserve: Array = _frame.get("reserve", [0, 0])
 	if reserve[0] > 0 or reserve[1] > 0:
@@ -383,7 +426,7 @@ func _draw() -> void:
 		var demo_units: Array[Dictionary] = []
 		for unit in _frame.units:
 			if not unit.hero and not unit.companion: demo_units.append(unit)
-		_figures.draw(self, demo_units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
+		_figures.draw(self, demo_units, visible, _impacts.headless_units(), _vegetation.entries, _selection, true)
 	else:
 		_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))

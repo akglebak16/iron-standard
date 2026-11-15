@@ -121,7 +121,7 @@ func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], sie
 	return journal
 
 func draw(canvas: CanvasItem) -> void:
-	var font := ThemeDB.fallback_font
+	var font := preload("res://ui/game_theme.gd").BODY_BOLD
 	for speaker: Dictionary in _speakers.values():
 		var unit: Dictionary = speaker.unit
 		if speaker.remaining <= 0.0 or unit.is_empty():

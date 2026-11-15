@@ -21,7 +21,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _label(text: String, x: float, y: float, color: Color, size: int) -> void:
-	var font := ThemeDB.fallback_font
+	var font := preload("res://ui/game_theme.gd").BODY_BOLD
 	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 	draw_string_outline(font, Vector2(x - w / 2.0, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 4, Color(0.05, 0.03, 0.02, 0.9))
 	draw_string(font, Vector2(x - w / 2.0, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)

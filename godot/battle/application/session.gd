@@ -185,6 +185,23 @@ func _side_alive(side: int) -> bool:
 			return true
 	return false
 
+## A detached presentation identity map; no visual random state enters simulation/snapshot hashes.
+func unit_appearance_ids() -> Dictionary:
+	var ids := {}
+	for unit: Unit in _state.units:
+		if not unit.hero and not unit.companion: ids[unit.id] = unit.troop_id
+	return ids
+
+## Read-only presentation query; does not change simulation snapshots or consume battle RNG.
+func selected_orders(selection: int) -> Array[String]:
+	var orders: Array[String] = []
+	for group in _state.groups[0]:
+		if selection != Config.ALL_GROUPS and group.kind != selection: continue
+		if group.active_units().is_empty(): continue
+		var order: String = Config.ORDER_RETREAT if group.backing else group.order
+		if not orders.has(order): orders.append(order)
+	return orders
+
 func snapshot() -> Dictionary:
 	# Detached values: presentation cannot mutate simulation through this query.
 	var units: Array[Dictionary] = []
