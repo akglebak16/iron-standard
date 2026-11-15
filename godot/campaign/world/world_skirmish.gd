@@ -33,7 +33,7 @@ func contact(a: Dictionary, b: Dictionary, auto_fight: Callable) -> void:
 		auto_fight.call(a, b)
 		return
 	var side := func(x: Dictionary, o: Dictionary) -> Array:
-		return roster.parties.filter(func(c): return c != o and not c.hide and c.kind != "camp" and not c.get("fight") and not c.get("lock", false) and c.fac == x.fac and Vector2(c.x - x.x, c.y - x.y).length() < 70.0 and not Rules.hostile(c, o) and c.kind != "caravan")
+		return roster.parties.filter(func(c): return c != o and not c.hide and c.kind != "camp" and not c.get("fight") and not c.get("lock", false) and c.fac == x.fac and Vector2(c.x - x.x, c.y - x.y).length() < 70.0 and not roster.hostile(c, o) and c.kind != "caravan")
 	var sa: Array = side.call(a, b)
 	var sb: Array = side.call(b, a)
 	if not a in sa:
@@ -79,8 +79,8 @@ func hour_tick() -> void:
 			var b := _side(sk, sk.B)
 			if a.is_empty() or b.is_empty():
 				break
-			var ha := a.any(func(q): return Rules.hostile(p, q))
-			var hb := b.any(func(q): return Rules.hostile(p, q))
+			var ha := a.any(func(q): return roster.hostile(p, q))
+			var hb := b.any(func(q): return roster.hostile(p, q))
 			if hb and not ha:
 				sk.A.append(p.id)
 				p.fight = sk.id

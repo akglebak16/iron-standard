@@ -110,6 +110,7 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.gear = gear_catalog
 	state.market.gear = gear_catalog.definitions()
 	state.roster = PartyRoster.new(state.map, seed_value)
+	state.roster.player = state.player
 	state.roster.populate()
 	state.wars = WorldWars.new(state.map, state.roster)
 	state.wars.start()
@@ -151,7 +152,6 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.skirmish.clans = state.clans
 	state.skirmish.undead = state.undead
 	state.ai.skirmish = state.skirmish
-	Rules.player_rel = state.player.rel
 	state.rel_watch()
 	return state
 
@@ -177,7 +177,6 @@ func advance(real_dt: float) -> int:
 	return clock.advance(real_dt, step, hour_tick)
 
 func step(dh: float) -> void:
-	Rules.player_rel = player.rel
 	if player.tid >= 0 and player.busy == "":
 		var tg: Dictionary = roster.party_by_id(player.tid)
 		if tg.is_empty() or tg.hide:
@@ -247,7 +246,6 @@ func hour_tick() -> void:
 	if clock.hour == 12:
 		clans.refill()
 	if clock.hour % 3 == 0:
-		Rules.player_rel = player.rel
 		siege.assaults_tick(player)
 	for line in siege.block_hour(player, clock.hour):
 		log_world(line)

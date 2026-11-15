@@ -34,7 +34,7 @@ func step(dh: float) -> void:
 			var b: Dictionary = list[j]
 			if _skip_fight(b) or not (b in roster.parties):
 				continue
-			if Vector2(a.x - b.x, a.y - b.y).length() < 15.0 and Rules.hostile(a, b):
+			if Vector2(a.x - b.x, a.y - b.y).length() < 15.0 and roster.hostile(a, b):
 				if skirmish != null:
 					skirmish.contact(a, b, auto_fight)
 				else:
@@ -105,7 +105,7 @@ func _think(p: Dictionary) -> bool:
 	var tb := 1e9
 	var threat = null
 	for o in roster.parties:
-		if o == p or o.hide or o.kind == "camp" or not Rules.hostile(p, o):
+		if o == p or o.hide or o.kind == "camp" or not roster.hostile(p, o):
 			continue
 		var d := _dist(o, p)
 		if d > 260.0:

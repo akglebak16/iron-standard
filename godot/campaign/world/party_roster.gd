@@ -22,6 +22,8 @@ const BANDIT_BIG := 0.25
 const VASSAL_TITLE := {"nord": "Хёвдинг", "emp": "Трибун", "khan": "Багатур", "kin": "Шевалье", "emi": "Сипахи"}
 
 var map: WorldMap
+var player: RefCounted
+var diplomatic_wars: Variant = null
 var rng := RandomNumberGenerator.new()
 var catalog := Catalog.new()
 var factions := FactionCatalog.new()
@@ -42,6 +44,10 @@ func _init(world_map: WorldMap, seed_value: int) -> void:
 	for f in Rules.REAL_FACTIONS + ["bandit", "undead"]:
 		for t in catalog.for_faction(f):
 			info[t.id] = {"tier": t.tier, "mounted": t.mounted, "pw": t.get("pw", 1.0)}
+
+func hostile(a: Dictionary, b: Dictionary) -> bool:
+	# Read from the owning player, even after save loading replaces the relation dictionary.
+	return Rules.hostile(a, b, diplomatic_wars, player.rel if player != null else {})
 
 func rnd(a: float, b: float) -> float:
 	return rng.randf_range(a, b)

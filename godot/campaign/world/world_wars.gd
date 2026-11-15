@@ -35,7 +35,7 @@ func start() -> void:
 		for b in Rules.WAR[a]:
 			if a != "bandit" and b != "bandit":
 				wars[Rules.war_key(a, b)] = {"since": 1}
-	Rules.wars = wars
+	roster.diplomatic_wars = wars
 
 func hold_of(f: String) -> Dictionary:
 	var t := 0

@@ -8,7 +8,7 @@ func _initialize() -> void:
 	assert(data.load_data())
 	var s := WorldState.create(5, data, "emp")
 	assert(s.wars.wars.size() >= 8, "default wars: %d" % s.wars.wars.size())
-	assert(Rules.at_war("emp", "nord") and not Rules.at_war("emp", "kin"))
+	assert(s.wars.at_war("emp", "nord") and not s.wars.at_war("emp", "kin"))
 	var emp_before: int = s.wars.hold_of("emp").all
 	var total_before := 0
 	for f in Rules.REAL_FACTIONS:

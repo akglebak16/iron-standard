@@ -39,11 +39,10 @@ func _initialize() -> void:
 	vs.day_tick()
 	assert(p.gold >= gold and Rules.troop_count(retinue.troops) > 4, "the retinue grows")
 	# retinue AI and hostility
-	assert(not Rules.hostile(retinue, {"kind": "caravan", "fac": "emp"}))
-	assert(Rules.hostile(retinue, {"kind": "bandit", "fac": "bandit"}))
+	assert(not s.roster.hostile(retinue, {"kind": "caravan", "fac": "emp"}))
+	assert(s.roster.hostile(retinue, {"kind": "bandit", "fac": "bandit"}))
 	p.rel["khan"] = -50
-	Rules.player_rel = p.rel
-	assert(Rules.hostile(retinue, {"kind": "lord", "fac": "khan"}))
+	assert(s.roster.hostile(retinue, {"kind": "lord", "fac": "khan"}))
 	for m in ["patrol", "follow", "guard"]:
 		vs.set_mode(cid, m)
 		vs.ai(retinue, 1.0)

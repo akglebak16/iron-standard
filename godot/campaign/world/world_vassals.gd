@@ -229,7 +229,7 @@ func ai(p: Dictionary, dh: float) -> void:
 		var tb := 1e9
 		var threat: Dictionary = {}
 		for o in roster.parties:
-			if o == p or o.hide or o.kind == "camp" or o.get("fight", false) or o.get("lock", false) or not Rules.hostile(p, o):
+			if o == p or o.hide or o.kind == "camp" or o.get("fight", false) or o.get("lock", false) or not roster.hostile(p, o):
 				continue
 			var d := Vector2(o.x - p.x, o.y - p.y).length()
 			if d > radius or (mode == "guard" and Vector2(o.x - s.x, o.y - s.y).length() > 230.0):
@@ -318,7 +318,7 @@ func helpers(enemy: Dictionary) -> Array:
 	for o in roster.parties:
 		if o.kind != "cvass" or o == enemy or o.hide or o.get("fight", false) or o.get("lock", false) or Rules.troop_count(o.troops) < 1:
 			continue
-		if not Rules.hostile(o, enemy):
+		if not roster.hostile(o, enemy):
 			continue
 		if minf(Vector2(o.x - enemy.x, o.y - enemy.y).length(), Vector2(o.x - player.x, o.y - player.y).length()) < HELP_RADIUS:
 			out.append(o)

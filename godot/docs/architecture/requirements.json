@@ -16,7 +16,7 @@
     {"id":"VIEW-COMPACT-SNAPSHOT","stage":4,"status":"pending","checks":[],"remaining":"Packed dynamic snapshots, separate immutable appearance, culling before materialization."},
     {"id":"VIEW-BATCHING-BUDGETS","stage":4,"status":"pending","checks":["battle/tests/presentation/test_combat_audio.gd","battle/tests/presentation/test_impact_effects.gd"],"remaining":"CanvasItem/MultiMesh comparison on identical frames and director contracts."},
     {"id":"MODE-LIFECYCLE","stage":5,"status":"pending","checks":["tests/integration/test_mode_lifecycle.gd","campaign/tests/world/test_world_dispose.gd"],"remaining":"Menu/campaign lifecycle implemented; move campaign/battle transition and resource ownership to coordinator."},
-    {"id":"CAMPAIGN-API-ISOLATION","stage":5,"status":"pending","checks":[],"remaining":"Commands/queries replace mutable UI access; isolate wars/relations and RNG between worlds."},
+    {"id":"CAMPAIGN-API-ISOLATION","stage":5,"status":"pending","checks":["tests/integration/test_campaign_isolation.gd"],"remaining":"Wars, relations and RNG are isolated; commands/queries must still replace mutable UI access."},
     {"id":"CAMPAIGN-RESULT-ONCE","stage":5,"status":"pending","checks":["tests/integration/app/test_encounter_aftermath.gd"],"remaining":"Preserve existing once-only behavior while relocating aftermath from app bridge to campaign application."},
     {"id":"CONTENT-REGISTRY","stage":6,"status":"pending","checks":[],"remaining":"Inject validated definitions, separate game/visual/animation/audio schemas."},
     {"id":"SAVE-V2","stage":6,"status":"pending","checks":["campaign/tests/world/test_world_save.gd"],"remaining":"Version migration, RNG and full clock state, IDs, atomic persistence and invalid input checks."},

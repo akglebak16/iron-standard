@@ -67,7 +67,7 @@ function analyze(files, manifest) {
     if (test(file)) continue;
     const module = owner(file);
     if (!module) add(file, 'unowned-file', file);
-    const pure = file.startsWith('core/') || file.startsWith('runtime/');
+    const pure = ['core/','runtime/',...(manifest.purePrefixes || [])].some(prefix => file.startsWith(prefix));
     const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
     if (pure) {
       for (const symbol of ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene']) {

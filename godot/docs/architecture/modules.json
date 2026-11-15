@@ -2,6 +2,7 @@
   "version": 1,
   "allowedRoots": ["battle", "campaign", "troops", "equipment", "characters", "core", "runtime", "apps", "adapters", "content", "tests", "docs", "tools"],
   "forbiddenPaths": ["app/", "battle/presentation/", "campaign/presentation/"],
+  "purePrefixes": ["battle/application/", "battle/model/", "battle/rules/", "campaign/world/", "campaign/rules/", "campaign/economy/"],
   "requiredDirectories": ["apps/godot/composition", "apps/godot/presentation/battle", "apps/godot/presentation/campaign", "battle", "campaign", "tests/architecture", "tests/performance", "docs/architecture"],
   "modules": [
     {"name":"battle-api","prefix":"core/battle/","allowed":["battle"],"public":["core/battle/api/"]},
