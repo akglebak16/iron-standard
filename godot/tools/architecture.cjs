@@ -3,7 +3,36 @@ const path = require('path');
 const cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const MANIFEST = 'docs/architecture/modules.json';
-const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene', 'Resource'];
+const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'ResourceSaver', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'DisplayServer', 'ProjectSettings', 'Engine', 'OS', 'Time', 'JavaScriptBridge', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene', 'Resource'];
+
+// A file entry grants exactly that file, not similarly named internal scripts.
+const covers = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
+function manifestIssues(manifest) {
+  const errors = [], names = new Set(), prefixes = [];
+  const safe = p => typeof p === 'string' && p.length > 0 && !p.startsWith('/') && !p.includes('\\') && !p.includes(':') && !p.split('/').some(s => s === '..' || s === '.');
+  for (const m of manifest.modules) {
+    if (!m.name || names.has(m.name)) errors.push(`Duplicate/missing module name: ${m.name}`);
+    names.add(m.name);
+    if (!m.owner || typeof m.owner !== 'string') errors.push(`Missing module owner: ${m.name}`);
+    if (!safe(m.prefix) || !m.prefix.endsWith('/')) errors.push(`Invalid module prefix: ${m.name}`);
+    else {
+      for (const p of prefixes) if (m.prefix.startsWith(p) || p.startsWith(m.prefix)) errors.push(`Overlapping module prefixes: ${p}, ${m.prefix}`);
+      prefixes.push(m.prefix);
+    }
+    for (const entry of m.public) if (!safe(entry) || !entry.startsWith(m.prefix)) errors.push(`Public entry outside module: ${m.name}: ${entry}`);
+    if (new Set(m.allowed).size !== m.allowed.length) errors.push(`Duplicate allowed dependency: ${m.name}`);
+  }
+  for (const m of manifest.modules) for (const name of m.allowed) if (!names.has(name) || name === m.name) errors.push(`Invalid allowed dependency: ${m.name} -> ${name}`);
+  return errors;
+}
+
+function contractChangeIssues(changed, contractChanged) {
+  if (!contractChanged) return [];
+  const errors = [];
+  if (!changed.some(p => /^docs\/architecture\/ADR-[^/]+\.md$/.test(p))) errors.push('Architecture contract change requires an updated ADR');
+  if (!changed.some(p => /^tools\/architecture\.test\.cjs$|^tests\/.+\.(gd|cjs)$/.test(p))) errors.push('Architecture contract change requires updated executable checks');
+  return errors;
+}
 
 // Tokenize strings/comments separately: imports in comments are not dependencies,
 // and identifiers inside strings are not executable calls. Both quote styles work.
@@ -43,18 +72,27 @@ function analyze(files, manifest) {
   const owner = p => manifest.modules.find(m => p.startsWith(m.prefix));
   const add = (file, rule, target) => issues.push({ file, rule, target, key: `${file}|${rule}|${target}` });
   for (const [file, source] of files) {
-    if (file.endsWith('.uid')) { uids.set(source.trim(), file.slice(0, -4)); continue; }
+    if (file.endsWith('.uid')) {
+      if (uids.has(source.trim())) add(file, 'duplicate-uid', source.trim());
+      uids.set(source.trim(), file.slice(0, -4)); continue;
+    }
     if (/\.(tscn|tres)$/.test(file)) {
       const resourceUid = source.match(/^\[(?:gd_scene|gd_resource)\b[^\]\n]*\buid="(uid:\/\/[^\"]+)"/);
-      if (resourceUid) uids.set(resourceUid[1], file);
+      if (resourceUid) {
+        if (uids.has(resourceUid[1])) add(file, 'duplicate-uid', resourceUid[1]);
+        uids.set(resourceUid[1], file);
+      }
     }
     const ts = tokens(source); parsed.set(file, ts);
     const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
     if (ts.some(t=>!t.string && PURE_FORBIDDEN.includes(t.value)) || /\b(?:static var|load\s*\()/.test(code) || /\bextends\s+(Node\w*|Control|Resource|CharacterBody\w*|RigidBody\w*|Sprite\w*|Canvas\w*|AudioStream\w*)\b/.test(code)) impure.add(file);
-    for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') classes.set(ts[i + 1].value, file);
+    for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') {
+      if (classes.has(ts[i + 1].value)) add(file, 'duplicate-class', ts[i + 1].value);
+      classes.set(ts[i + 1].value, file);
+    }
   }
   for (const [file, ts] of parsed) {
-    for (const prefix of manifest.forbiddenPaths || []) if (file.startsWith(prefix)) add(file, 'retired-path', prefix);
+    for (const prefix of manifest.forbiddenPaths || []) if (covers(file, prefix)) add(file, 'retired-path', prefix);
     const dependencies = new Set();
     for (const t of ts) {
       let dependency;
@@ -106,7 +144,7 @@ function analyze(files, manifest) {
       if (pure && /^(apps|adapters)\//.test(dependency)) add(file, 'dependency-direction', dependency);
       if (module && other && module.name !== other.name) {
         if (!module.allowed.includes(other.name)) add(file, 'module-dependency', dependency);
-        else if (!other.public.some(p => dependency.startsWith(p))) add(file, 'private-api', dependency);
+        else if (!other.public.some(p => covers(dependency, p))) add(file, 'private-api', dependency);
       }
     }
   }
@@ -164,6 +202,8 @@ function structureIssues(directories, manifest) {
 
 function check() {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, MANIFEST), 'utf8'));
+  const malformed = manifestIssues(manifest);
+  if (malformed.length) throw new Error(malformed.join('\n'));
   const files = collect(ROOT);
   const directories = new Set(fs.readdirSync(ROOT, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name));
   for (const dir of manifest.requiredDirectories) if (fs.existsSync(path.join(ROOT, dir))) directories.add(dir);
@@ -194,10 +234,17 @@ function check() {
     if (previous.status === 0) {
       const prior = new Set(JSON.parse(previous.stdout).exceptions.map(e => e.key));
       for (const key of exceptions.keys()) if (!prior.has(key)) errors.push(`Exception added against ${base}: ${key}`);
+      const blueprintPath = 'docs/architecture/BLUEPRINT.md';
+      const blueprint = cp.spawnSync('git', ['show', `${base}:godot/${blueprintPath}`], {encoding:'utf8', cwd:ROOT});
+      const contractChanged = JSON.stringify(JSON.parse(previous.stdout)) !== JSON.stringify(manifest)
+        || (blueprint.status === 0 && blueprint.stdout.replaceAll('\r\n','\n') !== fs.readFileSync(path.join(ROOT,blueprintPath),'utf8').replaceAll('\r\n','\n'));
+      const changed = cp.execFileSync('git', ['diff','--name-only',base,'--','godot'], {cwd:path.dirname(ROOT),encoding:'utf8'}).trim().split('\n');
+      const added = cp.execFileSync('git', ['ls-files','--others','--exclude-standard','--','godot'], {cwd:path.dirname(ROOT),encoding:'utf8'}).trim().split('\n');
+      errors.push(...contractChangeIssues([...changed,...added].map(p=>p.replace(/^godot\//,'')),contractChanged));
     } else if (manifest.exceptions.length) errors.push(`Cannot verify exceptions against ${base}`);
   }
   if (errors.length) throw new Error(errors.join('\n'));
   console.log(`Architecture passed: ${files.size} source/resources, ${exceptions.size} explicit migration exceptions`);
 }
 if (require.main === module) check();
-module.exports = { tokens, collect, analyze, structureIssues, check };
+module.exports = { tokens, collect, analyze, structureIssues, manifestIssues, contractChangeIssues, covers, check };

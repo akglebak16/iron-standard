@@ -17,60 +17,70 @@
   "modules": [
     {
       "name": "content-contracts",
+      "owner": "Validated definition contracts",
       "prefix": "core/content/",
       "allowed": [],
       "public": ["core/content/api/"]
     },
     {
       "name": "runtime",
+      "owner": "Pure scheduling and spatial infrastructure",
       "prefix": "runtime/",
       "allowed": [],
       "public": ["runtime/"]
     },
     {
       "name": "app",
+      "owner": "Godot composition, input and presentation",
       "prefix": "apps/godot/",
       "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime", "adapters", "content"],
       "public": ["apps/godot/composition/", "apps/godot/presentation/battle/scene.tscn"]
     },
     {
       "name": "adapters",
+      "owner": "Content I/O, persistence and engine integration",
       "prefix": "adapters/",
       "allowed": ["battle", "campaign", "troops", "equipment", "characters"],
       "public": ["adapters/content/", "adapters/godot/resources/", "adapters/persistence/"]
     },
     {
       "name": "content",
+      "owner": "Authored definitions and scenarios",
       "prefix": "content/",
       "allowed": ["adapters"],
       "public": ["content/scenarios/"]
     },
     {
       "name": "battle",
+      "owner": "Battle simulation and encounter contracts",
       "prefix": "core/battle/",
       "allowed": ["troops", "equipment", "characters", "runtime"],
       "public": ["core/battle/api/", "core/battle/application/", "core/battle/data/", "core/battle/config.gd", "core/battle/combat_event.gd"]
     },
     {
       "name": "campaign",
+      "owner": "World simulation, economy and campaign application",
       "prefix": "core/campaign/",
       "allowed": ["troops", "equipment", "characters", "content-contracts", "battle"],
       "public": ["core/campaign/"]
     },
     {
       "name": "troops",
+      "owner": "Troop definitions and generation rules",
       "prefix": "core/troops/",
       "allowed": ["content-contracts"],
       "public": ["core/troops/config.gd", "core/troops/data/", "core/troops/rules/"]
     },
     {
       "name": "equipment",
+      "owner": "Equipment definitions and combat projections",
       "prefix": "core/equipment/",
       "allowed": ["content-contracts"],
       "public": ["core/equipment/config.gd", "core/equipment/data/", "core/equipment/rules/"]
     },
     {
       "name": "characters",
+      "owner": "Hero and companion progression",
       "prefix": "core/characters/",
       "allowed": ["content-contracts"],
       "public": ["core/characters/config.gd", "core/characters/data/", "core/characters/rules/"]
