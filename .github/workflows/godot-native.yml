@@ -61,7 +61,7 @@ jobs:
           path: /tmp/native
       - name: Commit libraries
         run: |
-          cp /tmp/native/*/* godot/bin/
+          mkdir -p godot/bin && cp /tmp/native/*/* godot/bin/
           git add godot/bin
           if git diff --cached --quiet; then echo "libraries unchanged"; exit 0; fi
           git config user.name "github-actions[bot]"
