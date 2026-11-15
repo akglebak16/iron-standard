@@ -23,6 +23,13 @@ func resolve(party: Dictionary, opponent: Dictionary, mounted_hero: bool, troops
 	var result := _session.result()
 	if result.is_empty():
 		return {}
+	_session = null
+	return resolve_result(result, party, opponent, mounted_hero, troops, gear, goods, rng, companions, perks, world)
+
+## Same rules for a result that did not come from a played session (auto-resolved battle).
+static func resolve_result(result: Dictionary, party: Dictionary, opponent: Dictionary, mounted_hero: bool, troops: Troops, gear: Gear, goods: Goods, rng: RandomNumberGenerator, companions: CompanionCatalog, perks: PerkCatalog, world: Dictionary = {}) -> Dictionary:
+	if gear == null or goods == null or companions == null or perks == null or not party.get("hero") is Dictionary or result.is_empty():
+		return {}
 	var encounter := Rewards.from_opponent(opponent)
 	var effects := CompanionProfile.party_effects(party.hero, party.get("comps", []), companions, perks)
 	var aftermath := Aftermath.resolve(party, result, encounter, effects, troops, rng, companions, perks)
@@ -33,5 +40,4 @@ func resolve(party: Dictionary, opponent: Dictionary, mounted_hero: bool, troops
 	if result.win:
 		var reward_effects := CompanionProfile.party_effects(aftermath.party.hero, aftermath.party.get("comps", []), companions, perks)
 		aftermath.summary.drops = Loot.collect(aftermath.party, encounter, reward_effects, mounted_hero, troops, gear, goods, rng)
-	_session = null
 	return aftermath
