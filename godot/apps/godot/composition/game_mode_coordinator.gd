@@ -6,6 +6,9 @@ var _mode: Node
 var _transition_pending := false
 
 func _ready() -> void:
+	if "--view-benchmark" in OS.get_cmdline_user_args():
+		add_child(load("res://tests/performance/view_benchmark.gd").new())
+		return
 	if "--cpu-benchmark" in OS.get_cmdline_user_args():
 		load("res://tests/performance/battle_benchmark.gd").new().run(get_tree())
 		return

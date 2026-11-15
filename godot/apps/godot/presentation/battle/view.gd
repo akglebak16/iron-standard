@@ -80,7 +80,7 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
 	_vegetation.configure(session.vegetation_layout(), biome, terrain_seed)
 	add_child(_terrain)
-	add_child(_bake)
+	add_child(_bake) # Own the unconfigured node in headless diagnostics too.
 	if DisplayServer.get_name() != "headless":
 		_bake.configure(frame.arena_size)
 		_impacts.on_mark = func(mark: Dictionary): _bake.paint(func(canvas): ImpactEffects.draw_mark(canvas, mark))
