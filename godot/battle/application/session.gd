@@ -42,6 +42,11 @@ var _starting_ally_strength := 0.0
 var _companion_survival: float
 var _events: Array[Dictionary] = []
 var _companion_dialogue: Dictionary
+var _previous_positions := PackedVector2Array()
+
+## Fixed production tick; advance(dt) remains for the legacy differential fixtures.
+func step() -> void:
+	advance(1.0 / 60.0)
 
 func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0, companion_dialogue: Dictionary = {}) -> void:
 	assert(state != null and hero != null and rng != null)
@@ -78,6 +83,8 @@ func issue_order(order: String, point: Vector2, selection: int) -> bool:
 func advance(dt: float) -> void:
 	if _outcome in [Outcome.VICTORY, Outcome.DEFEAT] or not is_finite(dt) or dt <= 0.0:
 		return
+	_previous_positions.resize(_state.units.size())
+	for i in _state.units.size(): _previous_positions[i] = _state.units[i].position
 	for command in _orders:
 		if _state.give_order(command.order, command.point, command.selection):
 			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection, "point": command.point})
@@ -112,7 +119,7 @@ func advance(dt: float) -> void:
 	if _battle_over_at >= 0.0 and _elapsed_seconds - _battle_over_at > Config.BATTLE_END_DELAY_SECONDS:
 		_outcome = Outcome.VICTORY if _battle_won else Outcome.DEFEAT
 		_result = BattleResult.build(_state, _hero, _rng, _elapsed_seconds, _battle_won, _companion_survival)
-	_events = _state.take_events()
+	_events.append_array(_state.take_events())
 
 func result() -> Dictionary:
 	return _result.duplicate(true)
@@ -141,7 +148,7 @@ func vegetation_layout() -> Array[Dictionary]:
 		plants.append(plant.to_dictionary())
 	return plants
 
-## Transfers the most recent tick's events once. Advance replaces unread events.
+## Transfers all unconsumed events once, including every catch-up tick.
 func take_events() -> Array[Dictionary]:
 	var batch := _events
 	_events = []
@@ -271,6 +278,7 @@ func _unit_values(unit: Unit) -> Dictionary:
 			_templates[unit.id] = template
 	var values: Dictionary = template.duplicate()
 	values.position = unit.position
+	values.previous_position = _previous_positions[unit.battle_index] if unit.battle_index < _previous_positions.size() else unit.position
 	values.radius = unit.collision_radius
 	values.group_kind = unit.group_kind
 	values.leader = unit.leader

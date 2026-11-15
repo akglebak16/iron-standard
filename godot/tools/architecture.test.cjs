@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { analyze, tokens } = require('./architecture.cjs');
+const { analyze, tokens, structureIssues } = require('./architecture.cjs');
 const manifest = {modules:[
   {name:'a',prefix:'core/a/',allowed:['b'],public:['core/a/api/']},
   {name:'b',prefix:'core/b/',allowed:[],public:['core/b/api/']},
@@ -19,6 +19,9 @@ check({'core/a/x.gd':'static var world = {}'},'mutable-static');
 check({'apps/x.gd':'assert(catalog.load_data())'},'assert-side-effect');
 check({'core/a/x.gd':'extends Hidden', 'adapters/h.gd':'class_name Hidden\nextends RefCounted'},'dependency-direction');
 check({'core/a/x.gd':`const B=preload('res://core/a/b.gd')`, 'core/a/b.gd':`const A=preload('res://core/a/x.gd')`},'dependency-cycle');
+check({'core/a/x.gd':`const B=preload('uid://scene')`, 'apps/x.tscn':'[gd_scene format=3 uid="uid://scene"]'},'dependency-direction');
+assert(structureIssues(new Set(['core']), {requiredDirectories:['core','runtime'],allowedRoots:['core','runtime']}).some(e=>e.includes('Missing required')));
+assert(structureIssues(new Set(['core','rogue']), {requiredDirectories:['core'],allowedRoots:['core']}).some(e=>e.includes('Unknown root')));
 assert.equal(tokens('# FileAccess\nvar x = "FileAccess"').filter(t=>!t.string&&t.value==='FileAccess').length,0);
 assert.equal(analyze(new Map([['core/a/api/x.gd','extends RefCounted\n# Input.get_tree()']]),manifest).length,0);
 console.log('Architecture checker negative tests passed');

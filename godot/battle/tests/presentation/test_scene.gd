@@ -63,7 +63,7 @@ func _check() -> void:
 	var launch: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(launch.progress == 0.0 and not launch.has("source"))
 	launch.origin = Vector2.INF
-	view._physics_process(TICK)
+	_advance_view(view, TICK)
 	assert(view._feedback._labels.size() == 1)
 	assert(view._audio._last_played.has(SoundBank.Sound.BOW))
 	_check_weapon_hud(view)
@@ -88,16 +88,17 @@ func _check() -> void:
 	for unit in session._state.units:
 		if unit.side == 1:
 			session._state.kill(unit, session._hero)
-	view._physics_process(Config.MORALE_TICK_SECONDS)
+	_advance_view(view, TICK)
 	assert(view._figures.has_falling_units())
-	view._physics_process(Config.BATTLE_END_DELAY_SECONDS + TICK)
+	_advance_view(view, Config.MORALE_TICK_SECONDS - TICK)
+	_advance_view(view, Config.BATTLE_END_DELAY_SECONDS + TICK)
 	var text: String = view.get_node("Hud/Status").text
 	assert(text.contains("Победа") and text.contains("Трофеи:"))
 	assert(text.contains("Герой сразил:"))
 	assert(text.contains("Ансельм +") and scene._demo_party.comps[0].xp > 0)
 	assert(scene._demo_party.gold > 0 and scene._demo_party.hero.xp > 0)
 	assert(scene._demo_world.parties.is_empty())
-	view._physics_process(TICK)
+	_advance_view(view, TICK)
 	assert(view.get_node("Hud/Status").text == text)
 	assert(not view._figures.has_falling_units())
 	_check_defeat(packed, path)
@@ -146,7 +147,7 @@ func _check_weapon_hud(view) -> void:
 	key.pressed = true
 	Input.parse_input_event(key)
 	Input.flush_buffered_events()
-	view._physics_process(TICK)
+	_advance_view(view, TICK)
 	assert(view.status.text.contains("Оружие [X]: Длинный лук"))
 	assert(view._feedback._labels.any(func(label): return label.text == "Длинный лук"))
 	assert(view._audio._last_played.has(SoundBank.Sound.WEAPON_CLICK))
@@ -155,7 +156,7 @@ func _check_weapon_hud(view) -> void:
 	key.keycode = KEY_X
 	Input.parse_input_event(key)
 	Input.flush_buffered_events()
-	view._physics_process(TICK)
+	_advance_view(view, TICK)
 
 func _check_figure_cache(art) -> void:
 	var unit := {"side": 0, "faction": "nord", "hero": false, "companion": false, "mounted": false, "look": {"weapon": "sword"}}
@@ -183,8 +184,8 @@ func _check_defeat(packed: PackedScene, path: String) -> void:
 	assert(view._music._note_players.is_empty())
 	var session: Session = view._session
 	session._state.kill(session._hero)
-	view._physics_process(TICK)
-	view._physics_process(Config.BATTLE_END_DELAY_SECONDS + TICK)
+	_advance_view(view, TICK)
+	_advance_view(view, Config.BATTLE_END_DELAY_SECONDS + TICK)
 	assert(view.get_node("Hud/Status").text.contains("Герой очнулся у города Вентум"))
 	assert(scene._demo_party.position == Vector2(110, 134) and scene._demo_party.gold == 80)
 	assert(scene._demo_world.parties[0].state == "idle" and scene._demo_world.parties[0].cd == 10)
@@ -195,7 +196,7 @@ func _check_siege_dialogue(path: String) -> void:
 	root.add_child(scene)
 	var view = scene.get_node("Battle")
 	view.set_physics_process(false)
-	view.frame_driven = false
+	view.set_process(false)
 	var session: Session = view._session
 	var rng_state: int = session._rng.state
 	var frame := session.snapshot()
@@ -213,3 +214,11 @@ func _check_siege_dialogue(path: String) -> void:
 	assert(session._rng.state == rng_state and session.snapshot() == frame)
 	await process_frame
 	await process_frame
+
+# Exercise the production scheduler; long scenarios feed consecutive render frames.
+func _advance_view(view, seconds: float) -> void:
+	var remaining := seconds
+	while remaining > 1e-9:
+		var delta := minf(remaining, 1.0 / 60.0)
+		view._process(delta)
+		remaining -= delta

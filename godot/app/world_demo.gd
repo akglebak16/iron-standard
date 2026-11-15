@@ -28,6 +28,8 @@ const Rules = preload("res://campaign/world/party_rules.gd")
 const WorldPartiesLayer = preload("res://campaign/presentation/world_parties_layer.gd")
 const WorldHud = preload("res://campaign/presentation/world_hud.gd")
 
+signal title_requested
+
 var state: RefCounted
 var map_view: Node2D
 var _meeting: Dictionary = {}
@@ -122,7 +124,7 @@ func _ready() -> void:
 			_battle.apply_preferences(current.effects, current.music, _preferences.read_blood())
 			_battle.set_menu_open(false))
 	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
-	_menu.title_requested.connect(func(): get_tree().change_scene_to_file("res://app/main_menu.tscn"))
+	_menu.title_requested.connect(func(): title_requested.emit())
 	_siege = SiegeWindow.new()
 	add_child(_siege)
 	_siege.assault.connect(_on_assault)
@@ -148,6 +150,12 @@ func _ready() -> void:
 		camera.zoom = Vector2(0.9, 0.9)
 	loading.text = ""
 	_ready_to_play = true
+
+func _exit_tree() -> void:
+	_ready_to_play = false
+	if state != null:
+		state.dispose()
+		state = null
 
 func _on_map_click(at: Vector2) -> void:
 	if _meeting.size() > 0 or _town.visible or _party_window.visible or _siege.visible:

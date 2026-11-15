@@ -8,7 +8,8 @@ const GameSkin = preload("res://ui/game_theme.gd")
 const Art = preload("res://ui/original_art.gd")
 const Modal = preload("res://campaign/presentation/modal_window.gd")
 const CULTURES := ["nord", "emp", "khan", "kin", "dom", "pact", "emi"]
-const WORLD_SCENE := "res://app/world_demo.tscn"
+signal campaign_requested
+
 var _factions := FactionCatalog.new()
 var _name: LineEdit
 var _picked := "emp"
@@ -19,12 +20,6 @@ var _background: Node2D
 var _preferences := Preferences.new()
 
 func _ready() -> void:
-	if "--cpu-benchmark" in OS.get_cmdline_user_args():
-		load("res://tests/performance/battle_benchmark.gd").new().run(get_tree())
-		return
-	if "--release-smoke" in OS.get_cmdline_user_args() and not has_meta("release_smoke_child"):
-		add_child(load("res://tools/release_smoke.gd").new())
-		return
 	if not (_factions.load_data()):
 		push_error("Required content failed to load: app/main_menu.gd")
 		return
@@ -98,7 +93,7 @@ func _build_menu() -> void:
 		child.queue_free()
 	_button(_menu, "Новая игра", _create, true)
 	if SaveStore.exists():
-		_button(_menu, "Продолжить", func(): GameOptions.continue_game = true; get_tree().change_scene_to_file(WORLD_SCENE))
+		_button(_menu, "Продолжить", func(): GameOptions.continue_game = true; campaign_requested.emit())
 	_button(_menu, "Быстрый бой", _quick)
 	_button(_menu, "Как играть", _help)
 	_button(_menu, "Звук: %s" % ("вкл" if _preferences.read().effects else "выкл"), func():
@@ -173,4 +168,4 @@ func _start() -> void:
 	GameOptions.continue_game = false
 	GameOptions.culture = _picked
 	GameOptions.hero_name = _name.text.strip_edges() if not _name.text.strip_edges().is_empty() else "Безымянный"
-	get_tree().change_scene_to_file(WORLD_SCENE)
+	campaign_requested.emit()

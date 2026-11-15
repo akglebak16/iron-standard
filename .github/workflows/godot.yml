@@ -15,11 +15,21 @@ jobs:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: node godot/tools/architecture.test.cjs
-      - run: node godot/tools/architecture.cjs
+      - name: Архитектура и запрет новых исключений
+        env:
+          ARCH_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if ($env:ARCH_BASE -and $env:ARCH_BASE -ne ('0' * 40)) {
+            node godot/tools/architecture.cjs "--base=$env:ARCH_BASE"
+          } else {
+            node godot/tools/architecture.cjs
+          }
   content:
     name: godot-content
     runs-on: windows-2022

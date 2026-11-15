@@ -41,6 +41,10 @@ function analyze(files, manifest) {
   const add = (file, rule, target) => issues.push({ file, rule, target, key: `${file}|${rule}|${target}` });
   for (const [file, source] of files) {
     if (file.endsWith('.uid')) { uids.set(source.trim(), file.slice(0, -4)); continue; }
+    if (/\.(tscn|tres)$/.test(file)) {
+      const resourceUid = source.match(/^\[(?:gd_scene|gd_resource)\b[^\]\n]*\buid="(uid:\/\/[^\"]+)"/);
+      if (resourceUid) uids.set(resourceUid[1], file);
+    }
     const ts = tokens(source); parsed.set(file, ts);
     for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') classes.set(ts[i + 1].value, file);
   }
@@ -113,21 +117,45 @@ function analyze(files, manifest) {
   return [...new Map(issues.map(i => [i.key, i])).values()];
 }
 
+function structureIssues(directories, manifest) {
+  const errors = [];
+  for (const required of manifest.requiredDirectories || []) {
+    if (!directories.has(required)) errors.push(`Missing required directory: ${required}`);
+  }
+  for (const dir of directories) {
+    if (!dir.includes('/') && !dir.startsWith('.') && manifest.allowedRoots && !manifest.allowedRoots.includes(dir)) errors.push(`Unknown root directory: ${dir}`);
+  }
+  return errors;
+}
+
 function check() {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, MANIFEST), 'utf8'));
   const files = collect(ROOT);
-  for (const dir of manifest.requiredDirectories) if (!fs.existsSync(path.join(ROOT, dir))) throw new Error(`Missing required directory: ${dir}`);
+  const directories = new Set(fs.readdirSync(ROOT, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name));
+  for (const dir of manifest.requiredDirectories) if (fs.existsSync(path.join(ROOT, dir))) directories.add(dir);
   const issues = analyze(files, manifest);
   const exceptions = new Map(manifest.exceptions.map(e => [e.key, e]));
   for (const e of exceptions.values()) if (!e.reason || !Number.isInteger(e.removeByStage)) throw new Error(`Invalid exception: ${e.key}`);
   const active = new Set(issues.map(i => i.key));
-  const errors = issues.filter(i => !exceptions.has(i.key)).map(i => i.key);
+  const errors = [...structureIssues(directories, manifest), ...issues.filter(i => !exceptions.has(i.key)).map(i => i.key)];
   for (const key of exceptions.keys()) if (!active.has(key)) errors.push(`Remove resolved exception: ${key}`);
   const inventory = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/architecture/file-inventory.json'), 'utf8'));
   for (const file of inventory.files) if (!fs.existsSync(path.join(ROOT, file.destination))) errors.push(`Lost migration file: ${file.source} -> ${file.destination}`);
+  const requirements = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/architecture/requirements.json'), 'utf8')).requirements;
+  const requirementIds = new Set();
+  for (const requirement of requirements) {
+    if (requirementIds.has(requirement.id) || !/^[A-Z]+(?:-[A-Z0-9]+)+$/.test(requirement.id)) errors.push(`Invalid/duplicate requirement: ${requirement.id}`);
+    requirementIds.add(requirement.id);
+    if (!['pending','implemented'].includes(requirement.status) || !Number.isInteger(requirement.stage) || requirement.stage < 0 || requirement.stage > 7) errors.push(`Invalid requirement status/stage: ${requirement.id}`);
+    if (requirement.status === 'implemented' && !requirement.checks.length) errors.push(`Requirement lacks proof: ${requirement.id}`);
+    if (requirement.status === 'pending' && !requirement.remaining) errors.push(`Requirement lacks remaining work: ${requirement.id}`);
+    for (const check of requirement.checks) if (!fs.existsSync(path.join(ROOT, check))) errors.push(`Missing requirement check: ${requirement.id} -> ${check}`);
+    if (process.argv.includes('--acceptance') && requirement.status !== 'implemented') errors.push(`Unfinished requirement: ${requirement.id}: ${requirement.remaining}`);
+  }
   const baseArg = process.argv.find(a => a.startsWith('--base='));
-  if (baseArg) {
-    const base = baseArg.slice(7);
+  {
+    const base = baseArg?.slice(7) || 'HEAD';
+    if (!/^(?:HEAD|[a-f0-9]{7,40})$/i.test(base)) throw new Error('Architecture base must be HEAD or a commit SHA');
     const previous = cp.spawnSync('git', ['show', `${base}:godot/${MANIFEST}`], { encoding: 'utf8', cwd: ROOT });
     if (previous.status === 0) {
       const prior = new Set(JSON.parse(previous.stdout).exceptions.map(e => e.key));
@@ -138,4 +166,4 @@ function check() {
   console.log(`Architecture passed: ${files.size} source/resources, ${exceptions.size} explicit migration exceptions`);
 }
 if (require.main === module) check();
-module.exports = { tokens, collect, analyze, check };
+module.exports = { tokens, collect, analyze, structureIssues, check };

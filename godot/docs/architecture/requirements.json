@@ -1,0 +1,26 @@
+{
+  "blueprint": "docs/architecture/BLUEPRINT.md",
+  "requirements": [
+    {"id":"ARCH-STRUCTURE","stage":7,"status":"pending","checks":["tools/architecture.cjs","tools/architecture.test.cjs"],"remaining":"Move every production module to target roots and enforce public APIs and module cycles, not only file cycles."},
+    {"id":"ARCH-PURITY","stage":6,"status":"pending","checks":["tools/architecture.cjs"],"remaining":"Remove legacy catalog I/O, resource setup and mutable static campaign state from the entire dependency closure of core."},
+    {"id":"ARCH-RATCHET","stage":0,"status":"implemented","checks":["tools/architecture.cjs","tools/architecture.test.cjs"]},
+    {"id":"RELEASE-INIT","stage":0,"status":"implemented","checks":["tools/release.cjs","tools/release_smoke.gd"]},
+    {"id":"TEST-ISOLATION","stage":0,"status":"implemented","checks":["tools/test.cjs"]},
+    {"id":"BASELINE-2000","stage":0,"status":"pending","checks":["tools/benchmark.cjs","tests/performance/battle_benchmark.gd"],"remaining":"Full debug/release scenario matrix and reference hardware metadata; current report is a short diagnostic."},
+    {"id":"BATTLE-FIXED-TIME","stage":1,"status":"implemented","checks":["tests/integration/test_fixed_simulation.gd","battle/tests/presentation/test_battle_controls.gd"]},
+    {"id":"BATTLE-COMMANDS-EVENTS","stage":1,"status":"implemented","checks":["tests/integration/test_fixed_simulation.gd","battle/tests/application/test_combat_events.gd"]},
+    {"id":"BATTLE-SOA-HANDLES","stage":2,"status":"pending","checks":[],"remaining":"Authoritative packed active storage, generation handles, removal and result archive."},
+    {"id":"BATTLE-SPATIAL-REUSE","stage":2,"status":"pending","checks":["battle/tests/rules/test_spatial_index.gd","battle/tests/rules/test_spatial_full_battle.gd"],"remaining":"Persistent unit/static grids and reusable query/work buffers."},
+    {"id":"BATTLE-PROJECTILES","stage":3,"status":"implemented","checks":["tests/integration/test_projectile_broadphase.gd"]},
+    {"id":"BATTLE-AI-NAVIGATION","stage":3,"status":"pending","checks":["battle/tests/rules/test_ai_attack_timing.gd"],"remaining":"Staggered AI schedules and formation A* with geometry invalidation."},
+    {"id":"VIEW-COMPACT-SNAPSHOT","stage":4,"status":"pending","checks":[],"remaining":"Packed dynamic snapshots, separate immutable appearance, culling before materialization."},
+    {"id":"VIEW-BATCHING-BUDGETS","stage":4,"status":"pending","checks":["battle/tests/presentation/test_combat_audio.gd","battle/tests/presentation/test_impact_effects.gd"],"remaining":"CanvasItem/MultiMesh comparison on identical frames and director contracts."},
+    {"id":"MODE-LIFECYCLE","stage":5,"status":"pending","checks":["tests/integration/test_mode_lifecycle.gd","campaign/tests/world/test_world_dispose.gd"],"remaining":"Menu/campaign lifecycle implemented; move campaign/battle transition and resource ownership to coordinator."},
+    {"id":"CAMPAIGN-API-ISOLATION","stage":5,"status":"pending","checks":[],"remaining":"Commands/queries replace mutable UI access; isolate wars/relations and RNG between worlds."},
+    {"id":"CAMPAIGN-RESULT-ONCE","stage":5,"status":"pending","checks":["app/tests/test_encounter_aftermath.gd"],"remaining":"Preserve existing once-only behavior while relocating aftermath from app bridge to campaign application."},
+    {"id":"CONTENT-REGISTRY","stage":6,"status":"pending","checks":[],"remaining":"Inject validated definitions, separate game/visual/animation/audio schemas."},
+    {"id":"SAVE-V2","stage":6,"status":"pending","checks":["campaign/tests/world/test_world_save.gd"],"remaining":"Version migration, RNG and full clock state, IDs, atomic persistence and invalid input checks."},
+    {"id":"ACCEPTANCE-RELEASE-PERF","stage":7,"status":"pending","checks":["tools/benchmark.cjs"],"remaining":"60 seconds × five repeats of all scenarios; tick <=6 ms, snapshot <=1 ms, frame p95 <=16.67 ms/p99 <=25 ms, no clock lag, memory growth or >10% regression."},
+    {"id":"DELIVERY-REQUIRED-CHECKS","stage":7,"status":"pending","checks":[],"remaining":"Configure protected-branch required checks and reference Windows performance runner; workflow alone does not protect main."}
+  ]
+}

@@ -45,9 +45,19 @@ static func advance_unit(battle: State, unit: Unit, target: Unit, distance: floa
 	if unit.ai_mode != Config.AI_MODE_UNASSIGNED:
 		_advance_wind(battle, unit, dt, rng)
 
-static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
+static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGenerator, use_spatial: bool = true) -> void:
 	if dt <= 0.0:
 		return
+	# Build only when a projectile actually lands, after movement/contact corrections.
+	# Reusing the pre-movement target grid would miss units pushed across cell boundaries.
+	var index: SpatialIndex = null
+	var hit_radius := Config.PROJECTILE_HIT_PADDING
+	if use_spatial and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
+		for shot in battle.projectiles:
+			if shot.time + dt >= shot.duration:
+				index = SpatialIndex.new(battle.units, battle.arena_size)
+				for unit in battle.units: hit_radius = maxf(hit_radius, unit.collision_radius + Config.PROJECTILE_HIT_PADDING)
+				break
 	for i in range(battle.projectiles.size() - 1, -1, -1):
 		var shot: Dictionary = battle.projectiles[i]
 		shot.time += dt
@@ -56,7 +66,13 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 		battle.projectiles.remove_at(i)
 		var victim: Unit = null
 		var closest := INF
-		for unit: Unit in battle.units:
+		var candidates: Array[int] = []
+		if index != null:
+			candidates = index.nearby(shot.impact + Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT), hit_radius, 0)
+		if index == null:
+			for unit_index in battle.units.size(): candidates.append(unit_index)
+		for unit_index in candidates:
+			var unit: Unit = battle.units[unit_index]
 			if unit.side == shot.side or unit.dead or unit.gone:
 				continue
 			var distance: float = (unit.position - Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT)).distance_to(shot.impact)

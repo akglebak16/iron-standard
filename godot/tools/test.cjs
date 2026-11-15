@@ -7,7 +7,11 @@ const root = path.resolve(__dirname, '..');
 // Tests must never read or overwrite the player's saves/preferences.
 const userData = fs.mkdtempSync(path.join(require('os').tmpdir(), 'iron-standard-tests-'));
 const env = { ...process.env, APPDATA: userData, XDG_DATA_HOME: userData };
-const slowTests = new Set(['campaign/tests/world/test_world_wars.gd']);
+const timeouts = {
+  'campaign/tests/world/test_world_wars.gd': 120000,
+  // Four 900-tick battles compare indexed and exhaustive targeting/contact loops.
+  'battle/tests/rules/test_spatial_full_battle.gd': 60000,
+};
 const scriptErrors = /SCRIPT ERROR|Parse Error|Compile Error|Failed to load script|Assertion failed/i;
 function findTests(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -26,7 +30,7 @@ const tests = findTests(root).sort();
 if (!tests.length) throw new Error('No Godot tests found');
 for (const test of tests) {
   const relative = path.relative(root, test).replaceAll('\\', '/');
-  const result = spawnSync(engine, ['--headless', '--path', root, '--script', `res://${relative}`], { encoding: 'utf8', env, timeout: slowTests.has(relative) ? 120000 : 30000 });
+  const result = spawnSync(engine, ['--headless', '--path', root, '--script', `res://${relative}`], { encoding: 'utf8', env, timeout: timeouts[relative] || 30000 });
   const output = `${result.stdout || ''}\n${result.stderr || ''}`;
   if (result.error || result.status !== 0 || scriptErrors.test(output) || !/tests passed/i.test(output)) {
     process.stderr.write(output);

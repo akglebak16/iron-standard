@@ -4,7 +4,8 @@ const Config = preload("res://battle/config.gd")
 const Event = preload("res://battle/combat_event.gd")
 const Demo = preload("res://battle/presentation/demo_config.gd")
 const Session = preload("res://battle/application/session.gd")
-const HeroInput = preload("res://battle/application/hero_input.gd")
+const Simulation = preload("res://core/battle/api/battle_simulation.gd")
+const FixedClock = preload("res://runtime/scheduling/fixed_step_clock.gd")
 const ProjectileView = preload("res://battle/presentation/projectile_view.gd")
 const CombatFeedback = preload("res://battle/presentation/combat_feedback.gd")
 const ImpactEffects = preload("res://battle/presentation/impact_effects.gd")
@@ -35,6 +36,8 @@ signal blood_preference_changed(enabled: bool)
 @onready var _navigation: NavigationHud = $Hud/Navigation
 @onready var _controls: BattleControls = $Hud/Controls
 var _session: Session
+var _simulation: Simulation
+var _clock := FixedClock.new()
 var _frame: Dictionary = {}
 var _selection := Config.ALL_GROUPS
 var _feedback := CombatFeedback.new()
@@ -68,6 +71,7 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_session = session
 	_figure_seed = terrain_seed
 	_figures.biome = biome
+	_simulation = Simulation.new(session)
 	_dialogue.configure(session.companion_dialogue())
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
@@ -83,10 +87,6 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 		_figures.on_settled = func(unit: Dictionary, headless: bool): _bake.paint(func(canvas): _figures.draw_corpse(canvas, unit, headless))
 
 func get_battle_snapshot() -> Dictionary:
-	if _task >= 0:
-		WorkerThreadPool.wait_for_task_completion(_task)
-		_post_step(_task_dt, _task_events, 0.0, _task_frame)
-		_task = -1
 	return _session.snapshot() if _session != null else {}
 
 func show_result_summary(summary: String) -> void:
@@ -134,79 +134,24 @@ func _ready() -> void:
 	add_child(_music)
 	_refresh(0.0, [])
 	set_physics_process(false)
-	# Headless runs (tests, tools) stay single-threaded so scripts may touch the session between frames.
-	threaded = OS.get_processor_count() > 1 and OS.get_name() != "Web" and DisplayServer.get_name() != "headless"
-
-## Live battles step once per rendered frame with dt capped like the browser (battleUpdate: min(dt, 1/30)), so a heavy
-## fight slows down instead of piling up catch-up ticks. Where threads are available the step runs on a worker
-## while the previous frame is drawn. Tests turn frame_driven off and call _physics_process themselves.
-const MAX_FRAME_STEP := 1.0 / 30.0
-var frame_driven := true
-var threaded := false
-var _task := -1
-var _task_dt := 0.0
-var _task_events: Array[Dictionary] = []
-var _task_frame: Dictionary = {}
-var _pending: Array[Callable] = []
 
 func _process(real_dt: float) -> void:
-	if not frame_driven or _session == null:
-		return
-	if _task >= 0:
-		_finish_task(real_dt)
-	var simulation_dt := _pre_step(minf(real_dt, MAX_FRAME_STEP), real_dt)
-	if simulation_dt <= 0.0:
-		return
-	if threaded:
-		_task_dt = simulation_dt
-		_task = WorkerThreadPool.add_task(_worker_step, true, "battle step")
-	else:
-		_session.advance(simulation_dt)
-		_post_step(simulation_dt, _session.take_events(), real_dt)
+	if _session == null: return
+	var simulation_seconds := _pre_step(real_dt, real_dt)
+	if simulation_seconds <= 0.0: return
+	var count := _clock.advance(simulation_seconds, _simulation.step)
+	if count > 0:
+		_post_step(count * FixedClock.STEP_SECONDS, _simulation.take_events(), real_dt)
+	queue_redraw()
 
-func _physics_process(dt: float) -> void:
-	_finish_pending_step()
-	var simulation_dt := _pre_step(dt, dt)
-	if simulation_dt > 0.0:
-		_session.advance(simulation_dt)
-		_post_step(simulation_dt, _session.take_events(), dt)
-
-func _worker_step() -> void:
-	_session.advance(_task_dt)
-	_task_events = _session.take_events()
-	_task_frame = _session.snapshot()
-
-func _finish_task(real_dt: float) -> void:
-	WorkerThreadPool.wait_for_task_completion(_task)
-	_task = -1
-	_post_step(_task_dt, _task_events, real_dt, _task_frame)
-	_task_events = []
-	_task_frame = {}
-
-## Session calls from input handlers wait until the worker is done with the session.
-func _to_session(call: Callable) -> void:
-	if _task >= 0:
-		_pending.append(call)
-	else:
-		call.call()
-
-## Rare player actions with an immediate answer just wait for the running step.
-func _finish_pending_step() -> void:
-	if _task >= 0:
-		WorkerThreadPool.wait_for_task_completion(_task)
-		_post_step(_task_dt, _task_events, 0.0, _task_frame)
-		_task = -1
+func _order(order: String, point: Vector2) -> void:
+	_simulation.submit([{"kind": "order", "order": order, "point": point, "selection": _selection}])
 
 func _exit_tree() -> void:
-	if _task >= 0:
-		WorkerThreadPool.wait_for_task_completion(_task)
-		_task = -1
+	if _simulation != null: _simulation.dispose()
 
 ## Effects of a finished battle, music, pause and hero input. Returns the simulation step to run, or 0.
 func _pre_step(dt: float, real_dt: float) -> float:
-	for call in _pending:
-		call.call()
-	_pending.clear()
 	if _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
 		if _feedback.has_effects() or _impacts.has_particles() or _figures.has_falling_units() or _dialogue.has_bubbles() or _order_marker.is_visible() or camera.is_shaking():
 			_feedback.advance(dt, [])
@@ -224,14 +169,15 @@ func _pre_step(dt: float, real_dt: float) -> float:
 		return 0.0
 	var simulation_dt: float = dt * PLAYBACK_SPEEDS[_speed_index]
 	if _frame.outcome == Session.Outcome.RUNNING and not attract_mode:
-		var input := HeroInput.new()
-		input.move = Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
-		input.face = (_pointer_world_position() - Vector2(_frame.hero_position)).angle()
-		input.sprint = Input.is_key_pressed(KEY_SHIFT)
-		input.block = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
-		input.attack = _attack_pressed and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
-		input.swap = Input.is_key_pressed(KEY_X)
-		_session.set_hero_input(input)
+		_simulation.submit([{
+			"kind": "hero_input",
+			"move": Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))),
+			"face": (_pointer_world_position() - Vector2(_frame.hero_position)).angle(),
+			"sprint": Input.is_key_pressed(KEY_SHIFT),
+			"block": Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT),
+			"attack": _attack_pressed and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT),
+			"swap": Input.is_key_pressed(KEY_X),
+		}])
 	return simulation_dt
 
 func _post_step(simulation_dt: float, events: Array[Dictionary], real_dt: float, frame: Dictionary = {}) -> void:
@@ -270,10 +216,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_2: _select_group(Config.GROUP_ARCHERS)
 		KEY_3: _select_group(Config.GROUP_CAVALRY)
 		KEY_4: _select_group(Config.ALL_GROUPS)
-		KEY_Q: _to_session(_session.issue_order.bind(Config.ORDER_HOLD, _pointer_world_position(), _selection))
-		KEY_E: _to_session(_session.issue_order.bind(Config.ORDER_FOLLOW, _frame.hero_position, _selection))
-		KEY_R: _to_session(_session.issue_order.bind(Config.ORDER_CHARGE, _frame.hero_position, _selection))
-		KEY_F: _to_session(_session.issue_order.bind(Config.ORDER_RETREAT, _frame.hero_position, _selection))
+		KEY_Q: _order(Config.ORDER_HOLD, _pointer_world_position())
+		KEY_E: _order(Config.ORDER_FOLLOW, _frame.hero_position)
+		KEY_R: _order(Config.ORDER_CHARGE, _frame.hero_position)
+		KEY_F: _order(Config.ORDER_RETREAT, _frame.hero_position)
 		KEY_P: _toggle_pause()
 		KEY_T: _cycle_speed()
 		KEY_ESCAPE: menu_requested.emit()
@@ -326,11 +272,10 @@ func _issue_hud_order(order: String) -> void:
 	var origin: Vector2 = _frame.hero_position
 	var enemy: Vector2 = _frame.enemy_center
 	var direction := origin.direction_to(enemy) if enemy.is_finite() and enemy != origin else Vector2.RIGHT
-	_to_session(_session.issue_order.bind(order, origin + direction * BUTTON_ORDER_AHEAD, _selection))
+	_order(order, origin + direction * BUTTON_ORDER_AHEAD)
 
 func _select_weapon(slot: String) -> void:
-	_finish_pending_step()
-	_session.request_weapon_slot(slot)
+	_simulation.submit([{"kind": "weapon", "slot": slot}])
 	_update_status()
 
 func _toggle_pause() -> void:
@@ -344,8 +289,7 @@ func _cycle_speed() -> void:
 		_update_status()
 
 func _request_retreat() -> void:
-	_finish_pending_step()
-	if _session.request_retreat():
+	if not _frame.decided and _simulation.submit([{"kind": "retreat"}]):
 		_paused = false
 		_update_status()
 
@@ -368,7 +312,7 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 	audio_preferences_changed.emit(effects, music)
 
 func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
-	# One detached read per simulation step, reused by HUD and drawing (taken on the worker when threaded).
+	# One detached read per completed batch of ticks, reused by HUD and drawing.
 	_frame = frame if not frame.is_empty() else _session.snapshot()
 	if _figure_identity_count != _frame.units.size():
 		_figures.configure_identities(_session.unit_appearance_ids(), _figure_seed)
@@ -426,9 +370,9 @@ func _draw() -> void:
 		var demo_units: Array[Dictionary] = []
 		for unit in _frame.units:
 			if not unit.hero and not unit.companion: demo_units.append(unit)
-		_figures.draw(self, demo_units, visible, _impacts.headless_units(), _vegetation.entries, _selection, true)
+		_figures.draw(self, demo_units, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), true)
 	else:
-		_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
+		_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha())
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)

@@ -87,7 +87,8 @@ func run(tree: SceneTree) -> void:
 		"special_initial": 1, "weight": 1, "warmup_ticks": warmup, "requested_ticks": ticks,
 		"measured_ticks": simulation.size(), "live_min": live_min, "live_max": live_max,
 		"simulation": stats(simulation), "snapshot": stats(snapshots), "events": events,
-		"memory_start_bytes": memory_start, "memory_end_bytes": OS.get_static_memory_usage(),
+		"memory_start_bytes": memory_start if memory_start > 0 else null,
+		"memory_end_bytes": OS.get_static_memory_usage() if OS.get_static_memory_usage() > 0 else null,
 		"gpu_time": null, "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample."}
 	var encoded := JSON.stringify(report)
 	print(encoded)

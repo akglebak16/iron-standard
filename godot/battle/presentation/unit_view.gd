@@ -98,7 +98,7 @@ func has_falling_units() -> bool:
 	return false
 
 func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary,
-		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS, demo_mode := false) -> void:
+		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS, interpolation: float = 1.0, demo_mode := false) -> void:
 	var living: Array[Dictionary] = []
 	var falling: Array[Dictionary] = []
 	for unit in frame:
@@ -108,7 +108,9 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 			if not unit.hero and not unit.companion and not _baked.has(unit.id):
 				falling.append(unit)
 		else:
-			living.append(unit)
+			var visual: Dictionary = unit.duplicate()
+			visual.position = Vector2(unit.get("previous_position", unit.position)).lerp(unit.position, interpolation)
+			living.append(visual)
 	# Depth order by y with a native sort of packed keys (y in 1/16 px, then the list position).
 	var keys := PackedInt64Array()
 	keys.resize(living.size())
