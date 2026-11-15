@@ -10,8 +10,36 @@ concurrency:
   group: godot-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  # В PR гоняем только то, что задела правка. В main и по кнопке — всё, как раньше.
+  changes:
+    name: godot-changes
+    runs-on: ubuntu-latest
+    outputs:
+      godot: ${{ steps.f.outputs.godot }}
+      content: ${{ steps.f.outputs.content }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: f
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "godot=true" >> "$GITHUB_OUTPUT"; echo "content=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "$BASE" HEAD)
+          check() { if echo "$files" | grep -qE "$1"; then echo true; else echo false; fi; }
+          # godot: любая правка Godot или его workflow, кроме чистой документации
+          files=$(echo "$files" | grep -vE '^godot/docs/.*\.md$' || true)
+          echo "godot=$(check '^(godot/|\.github/workflows/godot\.yml$)')" >> "$GITHUB_OUTPUT"
+          # content: каталоги, экспортёры и всё, что они сверяют
+          echo "content=$(check '^(godot/(content|tools)/|godot/core/[a-z]+/data/|\.github/workflows/godot\.yml$|src/)')" >> "$GITHUB_OUTPUT"
   architecture:
     name: godot-architecture
+    needs: changes
+    if: needs.changes.outputs.godot == 'true'
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +61,8 @@ jobs:
           }
   content:
     name: godot-content
+    needs: changes
+    if: needs.changes.outputs.content == 'true'
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -46,10 +76,14 @@ jobs:
       - run: node godot/tools/campaign/export_goods.cjs --check
   windows:
     name: godot-tests-and-release
+    needs: changes
+    if: needs.changes.outputs.godot == 'true'
     runs-on: windows-2022
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -69,7 +103,12 @@ jobs:
           "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
       - name: Пакетное ядро контактов (закреплённые SHA256)
         run: pwsh -File godot/tools/native_bootstrap.ps1
-      - run: node godot/tools/test.cjs "$env:GODOT"
+      - name: Godot-тесты (в PR только затронутые правкой)
+        shell: pwsh
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if ($env:BASE) { node godot/tools/test.cjs "$env:GODOT" "--changed=$env:BASE" } else { node godot/tools/test.cjs "$env:GODOT" }
       - run: node godot/tools/release.cjs "$env:GODOT"
       - uses: actions/upload-artifact@v4
         if: always()
