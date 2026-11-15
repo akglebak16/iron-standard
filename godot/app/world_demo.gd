@@ -8,10 +8,12 @@ const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 const MapView = preload("res://campaign/presentation/world_map_view.gd")
 const WorldCamera = preload("res://campaign/presentation/world_camera.gd")
 const PartyLayer = preload("res://campaign/presentation/party_layer.gd")
+const WorldPartiesLayer = preload("res://campaign/presentation/world_parties_layer.gd")
 const WorldHud = preload("res://campaign/presentation/world_hud.gd")
 
 var state: RefCounted
 var map_view: Node2D
+var _meeting: Dictionary = {}
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
@@ -41,6 +43,9 @@ func _ready() -> void:
 	map_view.build_from(state.map)
 	var factions := FactionCatalog.new()
 	factions.load_data()
+	var others := WorldPartiesLayer.new()
+	map_view.add_child(others)
+	others.build(state.roster, state.player)
 	var party_layer := PartyLayer.new()
 	map_view.add_child(party_layer)
 	party_layer.build(state.player, factions.get_faction("player"))
@@ -54,6 +59,7 @@ func _ready() -> void:
 	add_child(hud)
 	hud.speed_changed.connect(func(s: int): state.clock.speed = s; state.clock.paused = false)
 	hud.pause_toggled.connect(func(): state.clock.paused = not state.clock.paused)
+	state.party_met.connect(_on_party_met)
 	if focus.size() == 3:
 		camera.detached = true
 		camera.position = Vector2(focus[0], focus[1])
@@ -64,6 +70,14 @@ func _ready() -> void:
 	loading.text = ""
 	_ready_to_play = true
 
+func _on_party_met(party: Dictionary, _forced: bool) -> void:
+	_meeting = party
+	state.clock.paused = true
+	var n := 0
+	for s in party.troops:
+		n += int(s.n)
+	hud.show_notice("Встреча: %s (%d бойцов). Enter — разойтись" % [party.name, n])
+
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
 	hud.show_tip(state.settlement_near(world_pos.x, world_pos.y, 46.0), screen_pos)
 
@@ -71,6 +85,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _ready_to_play or not (event is InputEventKey) or not event.pressed or event.echo:
 		return
 	match (event as InputEventKey).keycode:
+		KEY_ENTER, KEY_KP_ENTER:
+			if not _meeting.is_empty():  # the battle hand-off arrives with the encounter slice
+				_meeting.cd = 6.0
+				_meeting = {}
+				state.player.busy = ""
+				state.clock.paused = false
+				hud.show_notice("")
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
 		KEY_1, KEY_2, KEY_3:
