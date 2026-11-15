@@ -207,44 +207,13 @@ func snapshot() -> Dictionary:
 					ally_strength += unit.weight
 					if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
 						group_strength[unit.group_kind] += unit.weight
-		units.append({
-			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
-			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
-			"group_kind": unit.group_kind, "leader": unit.leader,
-			"companion_name": unit.name if unit.companion else "",
-			"health_fraction": clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0,
-			"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted, "fleeing": unit.fleeing,
-			"facing": unit.facing, "speed": unit.velocity.length(), "blocking": unit.blocking,
-			"windup": unit.attack_windup if unit.hero else unit.ai_windup,
-			"look": unit.appearance.duplicate(true),
-		})
-	var camera_target: Vector2 = _hero.position
-	if _hero.dead:
-		if focus_count[0] > 0 and focus_count[1] > 0:
-			camera_target = (focus_sum[0] / focus_count[0] + focus_sum[1] / focus_count[1]) / 2.0
-		elif focus_count[0] > 0:
-			camera_target = focus_sum[0] / focus_count[0]
-		elif focus_count[1] > 0:
-			camera_target = focus_sum[1] / focus_count[1]
-		else:
-			camera_target = Vector2.INF
-	var shots: Array[Dictionary] = []
-	for shot in _state.projectiles:
-		shots.append({"origin": shot.origin, "impact": shot.impact, "progress": clampf(shot.time / shot.duration, 0.0, 1.0), "throwing": shot.throwing, "crossbow": shot.crossbow})
-	var walls: Array[Rect2] = []
-	var wall_defense := {}
-	if _state.wall != null:
-		walls = _state.wall.segments()
-	if _state.siege_defense != null:
-		wall_defense = {"wall_x": _state.wall.x, "stones_left": _state.siege_defense.stones,
-			"stones": _state.siege_defense.stones_in_flight.map(func(s): return {"origin": s.origin, "impact": s.impact, "progress": clampf(s.time / s.duration, 0.0, 1.0)}),
-			"fires": _state.siege_defense.fires.map(func(f): return {"center": f.center, "half_size": f.half_size, "time": f.time, "duration": f.duration, "pour_from": f.pour_from}),
-			"cauldrons": _state.siege_defense.cauldrons.map(func(c): return {"gap": c.gap, "charged": c.charges > 0})}
+		units.append(_unit_values(unit))
+	var camera_target := _camera_target(focus_sum, focus_count)
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
 	var ready_groups: Array[int] = []
 	for weight in group_strength:
 		ready_groups.append(roundi(weight))
-	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": shots, "walls": walls, "wall_defense": wall_defense,
+	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(),
 		"enemy_center": enemy_center, "reserve": [_state.reserve[0].size(), _state.reserve[1].size()], "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
 		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
 		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,
@@ -252,3 +221,48 @@ func snapshot() -> Dictionary:
 		"hero_status": {"name": str(_hero_profile.get("name", "")), "hp": _hero.hp, "max_hp": _hero.max_hp,
 			"armor": _hero.armor, "block": _hero.block_chance, "slot": _hero.hero_weapon.get("slot", ""),
 			"weapon_names": _weapon_names.duplicate()}}
+
+func _unit_values(unit: Unit) -> Dictionary:
+	return {
+		"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
+		"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
+		"group_kind": unit.group_kind, "leader": unit.leader,
+		"companion_name": unit.name if unit.companion else "",
+		"health_fraction": clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0,
+		"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted, "fleeing": unit.fleeing,
+		"facing": unit.facing, "speed": unit.velocity.length(), "blocking": unit.blocking,
+		"windup": unit.attack_windup if unit.hero else unit.ai_windup,
+		"look": unit.appearance.duplicate(true),
+	}
+
+## Follows the hero; once the hero is down the camera shows the middle of the fighting.
+func _camera_target(focus_sum: Array, focus_count: Array) -> Vector2:
+	if not _hero.dead:
+		return _hero.position
+	if focus_count[0] > 0 and focus_count[1] > 0:
+		return (focus_sum[0] / focus_count[0] + focus_sum[1] / focus_count[1]) / 2.0
+	if focus_count[0] > 0:
+		return focus_sum[0] / focus_count[0]
+	if focus_count[1] > 0:
+		return focus_sum[1] / focus_count[1]
+	return Vector2.INF
+
+func _shot_values() -> Array[Dictionary]:
+	var shots: Array[Dictionary] = []
+	for shot in _state.projectiles:
+		shots.append({"origin": shot.origin, "impact": shot.impact, "progress": clampf(shot.time / shot.duration, 0.0, 1.0), "throwing": shot.throwing, "crossbow": shot.crossbow})
+	return shots
+
+func _wall_rects() -> Array[Rect2]:
+	var walls: Array[Rect2] = []
+	if _state.wall != null:
+		walls = _state.wall.segments()
+	return walls
+
+func _wall_defense_values() -> Dictionary:
+	if _state.siege_defense == null:
+		return {}
+	return {"wall_x": _state.wall.x, "stones_left": _state.siege_defense.stones,
+		"stones": _state.siege_defense.stones_in_flight.map(func(s): return {"origin": s.origin, "impact": s.impact, "progress": clampf(s.time / s.duration, 0.0, 1.0)}),
+		"fires": _state.siege_defense.fires.map(func(f): return {"center": f.center, "half_size": f.half_size, "time": f.time, "duration": f.duration, "pour_from": f.pour_from}),
+		"cauldrons": _state.siege_defense.cauldrons.map(func(c): return {"gap": c.gap, "charged": c.charges > 0})}
