@@ -4,13 +4,15 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const root = path.join(__dirname, '..', '..', '..');
 const code = ['01_core.js', '05_world.js'].map(f => fs.readFileSync(path.join(root, 'src', f), 'utf8')).join('\n');
 const tail = `
-;globalThis.__api = { genWorld, genSettlements, genRoads, getG: () => G, FAC_V, SNAMES2, CAMPN2, DEFAULT_MAPV, setMapSize, getWT: () => WT, setG: g => { G = g; }, EU_SHAPES, EU_RIDGES, EU_REG, EU_RIVERS, EU, GC, size: () => [WW, WH, GW, GH] };`;
+;globalThis.__api = { genWorld, genSettlements, genRoads, getG: () => G, FAC_V, SNAMES2, CAMPN2, DEFAULT_MAPV, setMapSize, getWT: () => WT, setG: g => { G = g; }, FACTIONS, EU_SHAPES, EU_RIDGES, EU_REG, EU_RIVERS, EU, GC, size: () => [WW, WH, GW, GH] };`;
 const ctx = { console, Math, Float32Array, Int32Array, Uint8Array, Map, Set, document: { querySelector: () => null }, window: {}, localStorage: {} };
 vm.createContext(ctx);
 vm.runInContext(code + tail, ctx, { filename: 'world.js' });
 const A = ctx.__api;
 const outData = path.join(root, 'godot', 'campaign', 'data', 'europe.json');
 fs.writeFileSync(outData, JSON.stringify({ eu: A.EU, shapes: A.EU_SHAPES, ridges: A.EU_RIDGES, regions: A.EU_REG, rivers: A.EU_RIVERS, factions: A.FAC_V[A.DEFAULT_MAPV], town_names: A.SNAMES2, camp_names: A.CAMPN2 }));
+const facs = {}; for (const [id, f] of Object.entries(A.FACTIONS)) facs[id] = { name: f.name, gen: f.gen, c1: f.c1, c2: f.c2, emblem: f.emblem, title: f.title, biome: f.biome || 'grass' };
+fs.writeFileSync(path.join(root, 'godot', 'campaign', 'data', 'factions.json'), JSON.stringify(facs));
 const fix = { seeds: [] };
 for (const seed of [1, 12345, 777777]) {
   A.setG({ seed, mapv: A.DEFAULT_MAPV, rv: 1, nid: 1, settles: [], roads: [] }); A.setMapSize(A.DEFAULT_MAPV);
