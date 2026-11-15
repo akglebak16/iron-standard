@@ -58,7 +58,8 @@ async function main() {
 const native = spawnSync(process.execPath,[path.join(root,'tools/native_build.cjs')],{encoding:'utf8',windowsHide:true});
 if(native.error || native.status!==0) throw new Error(`Native build failed: ${native.stderr || native.error}`);
 // Assets (audio, images) are loaded through the import cache, which a clean checkout does not have yet.
-const imported = await run(['--headless', '--path', root, '--import'], 120000);
+// A clean checkout imports every atlas (850+ images); on the CI runner this takes close to two minutes.
+const imported = await run(['--headless', '--path', root, '--import'], 300000);
 if (imported.error || imported.status !== 0 || scriptErrors.test(`${imported.stdout}\n${imported.stderr}`)) {
   process.stderr.write(`${imported.stdout || ''}\n${imported.stderr || ''}`);
   throw new Error(`Godot asset import failed${imported.error ? ` (${imported.error.message})` : ''}`);
