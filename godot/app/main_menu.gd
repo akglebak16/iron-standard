@@ -1,6 +1,7 @@
 extends Control
 ## Start screen: hero name, culture, new game (the menu and culture choice in src/06_ui.js and src/07_main.js).
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const SaveStore = preload("res://app/save_store.gd")
 const GameOptions = preload("res://app/game_options.gd")
 const CULTURES := ["nord", "emp", "khan", "kin", "dom", "pact", "emi"]
 const WORLD_SCENE := "res://app/world_demo.tscn"
@@ -53,6 +54,13 @@ func _ready() -> void:
 		b.pressed.connect(func(): _pick(id))
 		col.add_child(b)
 		_buttons[id] = b
+	if SaveStore.exists():
+		var cont := Button.new()
+		cont.text = "Продолжить сохранённую игру"
+		cont.pressed.connect(func():
+			GameOptions.continue_game = true
+			get_tree().change_scene_to_file(WORLD_SCENE))
+		col.add_child(cont)
 	var start := Button.new()
 	start.text = "Начать игру"
 	start.add_theme_font_size_override("font_size", 20)
@@ -65,6 +73,7 @@ func _pick(id: String) -> void:
 		_buttons[k].button_pressed = k == id
 
 func _start() -> void:
+	GameOptions.continue_game = false
 	GameOptions.culture = _picked
 	GameOptions.hero_name = _name.text.strip_edges() if not _name.text.strip_edges().is_empty() else "Безымянный"
 	get_tree().change_scene_to_file(WORLD_SCENE)

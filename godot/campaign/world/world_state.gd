@@ -8,6 +8,8 @@ const PartyRoster = preload("res://campaign/world/party_roster.gd")
 const PartyAI = preload("res://campaign/world/party_ai.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const PartyEconomy = preload("res://campaign/economy/party_economy.gd")
+const Market = preload("res://campaign/economy/market.gd")
+const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
 const PerkEffects = preload("res://characters/rules/perk_effects.gd")
 
@@ -27,16 +29,19 @@ var map: RefCounted
 var clock := WorldClock.new()
 var player := PlayerParty.new()
 var culture := "emp"
+var seed_value := 0
 var home_id := 0
 var hours_passed := 0
 var roster: PartyRoster
 var perks := PerkCatalog.new()
+var market: Market
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
 
 static func create(seed_value: int, data: EuropeData, player_culture := "emp") -> RefCounted:
 	var state := new()
 	state.culture = player_culture
+	state.seed_value = seed_value
 	state.map = WorldMap.create(seed_value, data)
 	state._place_player(seed_value)
 	state.player.culture = player_culture
@@ -45,6 +50,10 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	for t in START_TROOPS[player_culture]:
 		state.player.troops.append({"type": t[0], "n": t[1]})
 	assert(state.perks.load_data())
+	var goods := GoodsCatalog.new()
+	assert(goods.load_data())
+	state.market = Market.new(goods, RandomNumberGenerator.new())
+	state.market.rng.seed = seed_value + 191
 	state.roster = PartyRoster.new(state.map, seed_value)
 	state.roster.populate()
 	state.ai = PartyAI.new(state.roster, state.player)
