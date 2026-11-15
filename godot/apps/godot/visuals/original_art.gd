@@ -3,6 +3,9 @@ const AssetPaths = preload("res://apps/godot/visuals/asset_paths.gd")
 ## Original Canvas layers shared by the battle and the campaign portraits.
 const MANIFEST = preload("res://apps/godot/visuals/assets/visual_manifest.gd").DATA
 const BANNERS = preload("res://apps/godot/visuals/assets/banner_definitions.gd").DATA
+## Hero and companion faces, helms by banner and neck stumps (export_visuals.cjs --faces-only).
+const FACES = preload("res://apps/godot/visuals/assets/face_manifest.gd").DATA
+const FaceVariant = preload("res://apps/godot/visuals/face_variant.gd")
 const SHEETS = {
 	"body": [preload("res://apps/godot/visuals/assets/body.png"), preload("res://apps/godot/visuals/assets/body_v1.png"), preload("res://apps/godot/visuals/assets/body_v2.png"), preload("res://apps/godot/visuals/assets/body_v3.png")],
 	"weapon": [preload("res://apps/godot/visuals/assets/wpn.png"), preload("res://apps/godot/visuals/assets/wpn_v1.png"), preload("res://apps/godot/visuals/assets/wpn_v2.png"), preload("res://apps/godot/visuals/assets/wpn_v3.png")],
@@ -16,6 +19,7 @@ const SHEETS = {
 static var _cache := {}
 static var _looks := {}
 static var _component_pages := {}
+static var _face_pages := {}
 static var _banner_sheets := {}
 static var _player_banner := 0
 
@@ -27,6 +31,7 @@ static func select_player_banner(index: int) -> void:
 	_cache.clear()
 	_looks.clear()
 	_component_pages.clear()
+	_face_pages.clear()
 	_banner_sheets.clear()
 
 static func _banner_image(source: Image, key: String) -> Image:
@@ -64,6 +69,31 @@ static func _stamp(image: Image, key: String, offset: Vector2i) -> void:
 	var r: Array = component.rect
 	image.blend_rect(_component_pages[page], Rect2i(r[0], r[1], r[2], r[3]), offset * 2)
 
+static func _stamp_face(image: Image, key: String, offset: Vector2i) -> bool:
+	if not FACES.frames.has(key):
+		return false
+	var frame: Dictionary = FACES.frames[key]
+	var page: int = frame.page
+	if not _face_pages.has(page):
+		var texture: Texture2D = load(AssetPaths.path("faces_%d" % page))
+		_face_pages[page] = texture.get_image()
+	var r: Array = frame.rect
+	image.blend_rect(_face_pages[page], Rect2i(r[0], r[1], r[2], r[3]), offset * 2)
+	return true
+
+## Face, beard and scar from the hero's seed, then his helm painted in the chosen banner colours
+## (drawHead and drawHelm in src/02_art.js; a bald head without a helm shows no hair).
+static func _stamp_own_head(image: Image, helm: String, face: Dictionary, offset: Vector2i) -> bool:
+	var key := "face|%s|%s|%d|%d|%d" % [face.skin, face.hair, face.beard, face.stache, 1 if face.scar else 0]
+	if not _stamp_face(image, key, offset):
+		return false
+	if helm == "none":
+		if not face.bald:
+			_stamp_face(image, "helm|%d|none|%s" % [_player_banner, face.hair], offset)
+	elif not _stamp_face(image, "helm|%d|%s" % [_player_banner, helm], offset):
+		_stamp_face(image, "helm|0|%s" % helm, offset)
+	return true
+
 static func compose(look: Dictionary, faction := "player") -> Dictionary:
 	var mounted: bool = look.get("horse") != null and look.get("horse") != ""
 	var size := Vector2i(240, 244) if mounted else Vector2i(152, 176)
@@ -89,8 +119,11 @@ static func compose(look: Dictionary, faction := "player") -> Dictionary:
 	_stamp(corpse, "torso" + prefix + String(look.get("armor", "tunic")), rider)
 	if look.get("weapon") in ["bow", "xbow"]: _stamp(headless, "quiver", rider)
 	_stamp(headless, "torso" + prefix + String(look.get("armor", "tunic")), rider)
-	_stamp(headless, "stump", rider)
-	_stamp(head, "head" + prefix + String(look.get("helm", "none")) + "|" + String(look.get("undead", "")), rider)
+	var face := FaceVariant.of_look(look) if faction == "player" and String(look.get("undead", "")) == "" else {}
+	if face.is_empty() or not _stamp_face(headless, "stump|" + String(face.skin), rider):
+		_stamp(headless, "stump", rider)
+	if face.is_empty() or not _stamp_own_head(head, String(look.get("helm", "none")), face, rider):
+		_stamp(head, "head" + prefix + String(look.get("helm", "none")) + "|" + String(look.get("undead", "")), rider)
 	body.blend_rect(head, Rect2i(Vector2i.ZERO, size), Vector2i.ZERO)
 	corpse.blend_rect(head, Rect2i(Vector2i.ZERO, size), Vector2i.ZERO)
 	if look.get("shield") != null:
