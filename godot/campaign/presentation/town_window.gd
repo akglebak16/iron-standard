@@ -1,6 +1,7 @@
 extends "res://campaign/presentation/modal_window.gd"
 ## A settlement: recruits, market (food, hero gear) and waiting (renderTown in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
+const Market = preload("res://campaign/economy/market.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const SettlementLayer = preload("res://campaign/presentation/settlement_layer.gd")
@@ -21,8 +22,7 @@ func _ready() -> void:
 func open_for(world_state: RefCounted, s: Dictionary) -> void:
 	state = world_state
 	settlement = s
-	var tabs := [["recruit", "Рекруты"], ["market", "Рынок"]]
-	set_tabs(tabs, "recruit")
+	set_tabs([["recruit", "Рекруты"]], "recruit")
 	open_window()
 
 func render() -> void:
@@ -33,10 +33,12 @@ func render() -> void:
 	var mine: bool = settlement.fac == "player"
 	title_label.text = settlement.name
 	sub_label.text = "%s · %s   ·   золото %d" % [SettlementLayer.KIND_NAMES.get(settlement.kind, ""), _factions.get_faction(settlement.fac).get("name", ""), p.gold]
-	set_tabs([["recruit", "Рекруты"], ["market", "Рынок"]], current_tab if current_tab != "" else "recruit")
+	set_tabs([["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]], current_tab if current_tab != "" else "recruit")
 	clear_body()
 	if current_tab == "market":
 		_market(p, fx)
+	elif current_tab == "goods":
+		_goods(p, fx)
 	else:
 		_recruits(p, fx)
 
@@ -70,3 +72,29 @@ func _market(p, fx: Dictionary) -> void:
 			row(Economy.GEAR_LABEL[key], "лучшее уже у тебя")
 		else:
 			row("%s: %s" % [Economy.GEAR_LABEL[key], item.name], "%d зол." % item.price, [{"text": "Купить", "disabled": p.gold < int(item.price), "call": func(): Economy.buy_gear(p, key, _legacy, _gear)}])
+
+func _goods(p, fx: Dictionary) -> void:
+	var market = state.market
+	if not market.has_market(settlement):
+		note("Здесь не торгуют.")
+		return
+	var m: Dictionary = market.market_of(settlement, state.clock.day)
+	var men: int = Economy.troop_count(p.troops)
+	note("Обоз: %s из %d. Деньги торговца: %d." % [str(market.cargo_weight(p.inv)), market.cargo_cap(p, fx, men), m.gold])
+	for id in market.goods:
+		var g: Dictionary = market.goods[id]
+		var buy_p: int = market.buy_price(p.rel, fx, settlement, m, id)
+		var sell_p: int = market.sell_price(p.rel, fx, settlement, m, id)
+		var level: String = market.price_level(settlement, m, id)
+		var tag := "  (дёшево)" if level == "low" else ("  (дорого)" if level == "high" else "")
+		var have := int(p.inv.get(id, 0))
+		row("%s%s" % [g.n, tag], "у торговца %d · купить %d · продать %d · у тебя %d" % [m.stock.get(id, 0), buy_p, sell_p, have], [
+			{"text": "+1", "disabled": int(m.stock.get(id, 0)) < 1 or p.gold < buy_p, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men))},
+			{"text": "+10", "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 10, men))},
+			{"text": "−1", "disabled": have < 1, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))},
+			{"text": "все", "disabled": have < 1, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, have))},
+		])
+
+func _trade(result: Dictionary) -> void:
+	if result.n == 0 and result.why != "":
+		sub_label.text = Market.WHY[result.why]

@@ -24,6 +24,9 @@ func _initialize() -> void:
 	town.current_tab = "market"
 	town.render()
 	assert(town.body.get_child_count() > 5, "market lists food and gear")
+	town.current_tab = "goods"
+	town.render()
+	assert(town.body.get_child_count() > 10, "goods tab lists goods")
 	for tab in ["troops", "hero", "journal"]:
 		party.open_for(state, tab)
 		party.current_tab = tab

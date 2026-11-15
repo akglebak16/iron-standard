@@ -3,3 +3,4 @@ extends RefCounted
 static var seed_value := 0       # 0 = random
 static var culture := "emp"
 static var hero_name := "Безымянный"
+static var continue_game := false

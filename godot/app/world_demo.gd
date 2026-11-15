@@ -10,6 +10,7 @@ const WorldCamera = preload("res://campaign/presentation/world_camera.gd")
 const PartyLayer = preload("res://campaign/presentation/party_layer.gd")
 const EncounterDialog = preload("res://campaign/presentation/encounter_dialog.gd")
 const GameOptions = preload("res://app/game_options.gd")
+const SaveStore = preload("res://app/save_store.gd")
 const TownWindow = preload("res://campaign/presentation/town_window.gd")
 const PartyWindow = preload("res://campaign/presentation/party_window.gd")
 const Bridge = preload("res://app/world_battle_bridge.gd")
@@ -57,8 +58,11 @@ func _ready() -> void:
 				focus.append(float(part))
 	var data := EuropeData.new()
 	assert(data.load_data())
-	state = WorldState.create(seed_value, data, GameOptions.culture)
-	state.player.hero.name = GameOptions.hero_name
+	if GameOptions.continue_game:
+		state = SaveStore.load_state(data)
+	if state == null:
+		state = WorldState.create(seed_value, data, GameOptions.culture)
+		state.player.hero.name = GameOptions.hero_name
 	map_view = MapView.new()
 	add_child(map_view)
 	map_view.build_from(state.map)
@@ -249,6 +253,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_P, KEY_H, KEY_J:
 			state.clock.paused = true
 			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal"}[(event as InputEventKey).keycode])
+		KEY_F5:
+			hud.show_notice("Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
 		KEY_ESCAPE:
 			_party_window.close_window()
 			_town.close_window()
