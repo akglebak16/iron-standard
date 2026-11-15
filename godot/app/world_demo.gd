@@ -9,6 +9,9 @@ const MapView = preload("res://campaign/presentation/world_map_view.gd")
 const WorldCamera = preload("res://campaign/presentation/world_camera.gd")
 const PartyLayer = preload("res://campaign/presentation/party_layer.gd")
 const EncounterDialog = preload("res://campaign/presentation/encounter_dialog.gd")
+const GameOptions = preload("res://app/game_options.gd")
+const TownWindow = preload("res://campaign/presentation/town_window.gd")
+const PartyWindow = preload("res://campaign/presentation/party_window.gd")
 const Bridge = preload("res://app/world_battle_bridge.gd")
 const Aftermath = preload("res://app/encounter_aftermath.gd")
 const AftermathText = preload("res://app/aftermath_text.gd")
@@ -24,6 +27,8 @@ var state: RefCounted
 var map_view: Node2D
 var _meeting: Dictionary = {}
 var _dialog: CanvasLayer
+var _town: CanvasLayer
+var _party_window: CanvasLayer
 var _bridge: RefCounted
 var _battle: Node2D
 var _preferences := PresentationPreferences.new()
@@ -42,7 +47,7 @@ func _ready() -> void:
 	layer.add_child(loading)
 	add_child(layer)
 	await get_tree().process_frame
-	var seed_value := 12345
+	var seed_value := GameOptions.seed_value if GameOptions.seed_value != 0 else randi_range(1, 999999999)
 	var focus := PackedFloat64Array()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--seed="):
@@ -52,7 +57,8 @@ func _ready() -> void:
 				focus.append(float(part))
 	var data := EuropeData.new()
 	assert(data.load_data())
-	state = WorldState.create(seed_value, data)
+	state = WorldState.create(seed_value, data, GameOptions.culture)
+	state.player.hero.name = GameOptions.hero_name
 	map_view = MapView.new()
 	add_child(map_view)
 	map_view.build_from(state.map)
@@ -68,12 +74,22 @@ func _ready() -> void:
 	add_child(camera)
 	camera.make_current()
 	camera.fit_all()
-	camera.map_clicked.connect(func(p: Vector2): state.player.path_to(state.map.paths, p.x, p.y))
+	camera.map_clicked.connect(_on_map_click)
 	camera.map_hovered.connect(_on_hover)
 	hud = WorldHud.new()
 	add_child(hud)
 	hud.speed_changed.connect(func(s: int): state.clock.speed = s; state.clock.paused = false)
 	hud.pause_toggled.connect(func(): state.clock.paused = not state.clock.paused)
+	_town = TownWindow.new()
+	add_child(_town)
+	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; hud.show_notice("Ждём: %s. Клик по карте — в путь" % s.name))
+	_town.closed.connect(func(): state.clock.paused = false)
+	_party_window = PartyWindow.new()
+	add_child(_party_window)
+	_party_window.closed.connect(func(): state.clock.paused = false)
+	hud.panel_requested.connect(func(tab: String): state.clock.paused = true; _party_window.open_for(state, tab))
+	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s))
+	state.log_added.connect(func(text: String): hud.show_notice(text))
 	_bridge = Bridge.new()
 	_dialog = EncounterDialog.new()
 	add_child(_dialog)
@@ -89,6 +105,21 @@ func _ready() -> void:
 		camera.zoom = Vector2(0.9, 0.9)
 	loading.text = ""
 	_ready_to_play = true
+
+func _on_map_click(at: Vector2) -> void:
+	if _meeting.size() > 0 or _town.visible or _party_window.visible:
+		return
+	var target: Dictionary = state.settlement_near(at.x, at.y, 46.0)
+	var p = state.player
+	if not target.is_empty() and target.kind != "camp":
+		p.enter_id = target.id
+		if Vector2(target.x - p.x, target.y - p.y).length() < 50.0:
+			state.enter(target)
+			return
+		p.path_to(state.map.paths, target.x, target.y)
+	else:
+		p.enter_id = -1
+		p.path_to(state.map.paths, at.x, at.y)
 
 func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	_meeting = party
@@ -215,6 +246,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				_return_to_map()
 			else:
 				hud.show_notice("")
+		KEY_P, KEY_H, KEY_J:
+			state.clock.paused = true
+			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal"}[(event as InputEventKey).keycode])
+		KEY_ESCAPE:
+			_party_window.close_window()
+			_town.close_window()
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
 		KEY_1, KEY_2, KEY_3:

@@ -5,6 +5,7 @@ const Generation = preload("res://troops/rules/generation.gd")
 const Catalog = preload("res://troops/data/catalog.gd")
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 const WorldMap = preload("res://campaign/world/world_map.gd")
+const SettlementRecruits = preload("res://campaign/rules/settlement_recruits.gd")
 
 const LORD_MIN := 130
 const LORD_MAX := 190
@@ -118,6 +119,8 @@ func populate() -> void:
 	for s in map.settles:
 		if s.kind == "camp":
 			respawn_camp(s)
+		else:
+			SettlementRecruits.refresh(s, catalog, rng)
 	for f in Rules.REAL_FACTIONS:
 		var hs := map.settles.filter(func(s): return s.fac == f)
 		if hs.is_empty():
@@ -148,6 +151,7 @@ func hour_tick(hour: int) -> void:
 		s.rt += 1
 		if s.rt >= 72:
 			s.rt = 0
+			SettlementRecruits.refresh(s, catalog, rng)
 	if hour % 6 == 0:
 		_spawn_bandits_and_caravans()
 	if hour == 6:

@@ -15,7 +15,20 @@ func _initialize() -> void:
 	root.add_child((load("res://app/world_demo.tscn") as PackedScene).instantiate())
 func _process(_d: float) -> bool:
 	_n += 1
-	if _meet != "" and _n == 30:
+	if _meet.begins_with("ui_") and _n == 30:
+		var d = root.get_child(root.get_child_count() - 1)
+		match _meet:
+			"ui_town":
+				d._town.open_for(d.state, d.state.settlement_near(d.state.player.x, d.state.player.y, 80.0))
+			"ui_market":
+				d._town.open_for(d.state, d.state.settlement_near(d.state.player.x, d.state.player.y, 80.0))
+				d._town.current_tab = "market"
+				d._town.render()
+			"ui_hero":
+				d._party_window.open_for(d.state, "hero")
+			"ui_troops":
+				d._party_window.open_for(d.state, "troops")
+	elif _meet != "" and not _meet.begins_with("ui_") and _n == 30:
 		var demo = root.get_child(root.get_child_count() - 1)
 		var st = demo.state
 		var b = st.roster.make_party("bandit", "bandit", "Шайка", st.player.x + 4, st.player.y, [{"type": "b1", "n": 6}, {"type": "b2", "n": 2}])
