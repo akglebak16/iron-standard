@@ -1,0 +1,410 @@
+{
+  "before_revision": "343b4bc",
+  "upstream_revision": "8a979999d9867d039837470e951d4fef77bca524",
+  "after": {
+    "complete": true,
+    "source": {
+      "revision": "af5fb02a84ab55b79903d46dee0d1181deb3520f",
+      "source_sha256": "11dc984a5fd7546aa66d1805c3e9c72bb08268adf76dcce4a920638c6a807841",
+      "dirty": false
+    },
+    "build": {
+      "source": {
+        "revision": "af5fb02a84ab55b79903d46dee0d1181deb3520f",
+        "source_sha256": "11dc984a5fd7546aa66d1805c3e9c72bb08268adf76dcce4a920638c6a807841",
+        "dirty": false
+      },
+      "dependencies": {
+        "iron_contacts.windows.x86_64.dll": "f5a60d120307becb960a2b0c10c5695b86183a2705af85eeb41081920f5f5bf9"
+      },
+      "executable_sha256": "4e8806420c4a6b69730e92f24a0e5c884b139df542cc5dfeac5409d5bdc5148d",
+      "built_at": "2026-11-15T21:08:06.335Z",
+      "smoke_passed": true,
+      "stale_source": false
+    },
+    "options": {
+      "n": 1000,
+      "frames": 600,
+      "repeat": 1,
+      "audio": "on",
+      "mode": "both"
+    },
+    "results": [
+      {
+        "backend": "toolchain",
+        "iteration": 1,
+        "report": {
+          "backlog_seconds": 0.183333333333333,
+          "camera_route": false,
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": true,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 7429.99444444444,
+          "dropped_seconds": 36.4833333333334,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 540,
+            "mean_ms": 141.441625925926,
+            "p50_ms": 146.663,
+            "p95_ms": 172.719,
+            "p99_ms": 194.896
+          },
+          "live": [
+            584,
+            403
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 76.378753,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_steps": 2396,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "render_cpu": {
+            "count": 540,
+            "mean_ms": 15.6967722222222,
+            "p50_ms": 16.415,
+            "p95_ms": 19.19,
+            "p99_ms": 19.855
+          },
+          "render_gpu": {
+            "count": 540,
+            "mean_ms": 13.21955,
+            "p50_ms": 13.688,
+            "p95_ms": 17.406,
+            "p99_ms": 19.491
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 2160,
+          "simulation_ticks_total": 2396,
+          "sound": true,
+          "special_initial": 1,
+          "video_memory_bytes": 1128795843,
+          "video_memory_samples": [
+            1126238541,
+            1128918723,
+            1129076875,
+            1129011539,
+            1128795843
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 1,
+        "report": {
+          "backlog_seconds": 0.180183666666667,
+          "camera_route": false,
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 5025.4037037037,
+          "dropped_seconds": 25.0146119999999,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 540,
+            "mean_ms": 108.720166666667,
+            "p50_ms": 108.493,
+            "p95_ms": 135.789,
+            "p99_ms": 141.469
+          },
+          "live": [
+            521,
+            419
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 58.709201,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_steps": 2396,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "render_cpu": {
+            "count": 540,
+            "mean_ms": 10.8808092592593,
+            "p50_ms": 11.141,
+            "p95_ms": 13.912,
+            "p99_ms": 14.333
+          },
+          "render_gpu": {
+            "count": 540,
+            "mean_ms": 9.16532777777778,
+            "p50_ms": 8.984,
+            "p95_ms": 13.864,
+            "p99_ms": 16.571
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 2160,
+          "simulation_ticks_total": 2396,
+          "sound": true,
+          "special_initial": 1,
+          "video_memory_bytes": 1128529955,
+          "video_memory_samples": [
+            1125989925,
+            1128704315,
+            1128693107,
+            1128607779,
+            1128529955
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      },
+      {
+        "backend": "toolchain",
+        "iteration": 1,
+        "report": {
+          "camera_route": false,
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": true,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 590.038888888889,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 540,
+            "mean_ms": 6.69239074074074,
+            "p50_ms": 4.753,
+            "p95_ms": 8.537,
+            "p99_ms": 15.359
+          },
+          "map_cache": true,
+          "map_cache_active": true,
+          "max_fps": 0,
+          "measurement_seconds": 3.614155,
+          "mode": "campaign",
+          "parties": 101,
+          "render_cpu": {
+            "count": 540,
+            "mean_ms": 1.74842037037037,
+            "p50_ms": 1.64,
+            "p95_ms": 2.439,
+            "p99_ms": 2.855
+          },
+          "render_gpu": {
+            "count": 540,
+            "mean_ms": 1.20086851851852,
+            "p50_ms": 0.415,
+            "p95_ms": 4.039,
+            "p99_ms": 4.272
+          },
+          "seed": 4242,
+          "video_memory_bytes": 1700008037,
+          "video_memory_samples": [
+            1699743337,
+            1699720273,
+            1699781341,
+            1699733829,
+            1700008037
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "vsync": 0,
+          "warmup_frames": 60,
+          "world_clock_paused": false,
+          "world_clock_speed": 1,
+          "world_day": 1,
+          "world_hour": 12
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 1,
+        "report": {
+          "camera_route": false,
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 606.783333333333,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 540,
+            "mean_ms": 8.53767222222222,
+            "p50_ms": 6.863,
+            "p95_ms": 11.779,
+            "p99_ms": 18.292
+          },
+          "map_cache": true,
+          "map_cache_active": true,
+          "max_fps": 0,
+          "measurement_seconds": 4.610622,
+          "mode": "campaign",
+          "parties": 101,
+          "render_cpu": {
+            "count": 540,
+            "mean_ms": 1.70222407407407,
+            "p50_ms": 1.669,
+            "p95_ms": 2.013,
+            "p99_ms": 2.313
+          },
+          "render_gpu": {
+            "count": 540,
+            "mean_ms": 0.809140740740741,
+            "p50_ms": 0.623,
+            "p95_ms": 1.684,
+            "p99_ms": 2.929
+          },
+          "seed": 4242,
+          "video_memory_bytes": 1682971993,
+          "video_memory_samples": [
+            1682701801,
+            1682701801,
+            1682701801,
+            1682971993,
+            1682971993
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "vsync": 0,
+          "warmup_frames": 60,
+          "world_clock_paused": false,
+          "world_clock_speed": 1,
+          "world_day": 1,
+          "world_hour": 14
+        }
+      }
+    ]
+  },
+  "before_battle": {
+    "toolchain": {
+      "backlog_seconds": 0.183333333333333,
+      "camera_route": false,
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "debug": true,
+      "diagnostics_only": true,
+      "display": "Windows",
+      "draw_calls_mean": 5603.55555555556,
+      "dropped_seconds": 32.816195,
+      "engine": "4.7.2-stable (official)",
+      "frame": {
+        "count": 540,
+        "mean_ms": 135.612627777778,
+        "p50_ms": 140.159,
+        "p95_ms": 177.227,
+        "p99_ms": 206.642
+      },
+      "live": [
+        503,
+        440
+      ],
+      "max_fps": 0,
+      "measurement_seconds": 73.231075,
+      "mode": "battle",
+      "music": false,
+      "native_failures": 0,
+      "native_steps": 2396,
+      "ordinary_initial": [
+        1000,
+        1000
+      ],
+      "render_cpu": {
+        "count": 540,
+        "mean_ms": 13.2477166666667,
+        "p50_ms": 11.335,
+        "p95_ms": 19.426,
+        "p99_ms": 20.793
+      },
+      "render_gpu": {
+        "count": 540,
+        "mean_ms": 11.0685462962963,
+        "p50_ms": 9.39,
+        "p95_ms": 17.888,
+        "p99_ms": 21.814
+      },
+      "seed": 4242,
+      "simulation_ticks_measured": 2160,
+      "simulation_ticks_total": 2396,
+      "sound": true,
+      "special_initial": 1,
+      "video_memory_bytes": 64207947.0,
+      "video_memory_samples": [
+        62351323.0,
+        64461491.0,
+        64431667.0,
+        64333787.0,
+        64207947.0
+      ],
+      "viewport": "(1920.0, 1080.0)",
+      "vsync": 0,
+      "warmup_frames": 60
+    },
+    "release": {
+      "backlog_seconds": 0.183333333333333,
+      "camera_route": false,
+      "cpu": "Intel(R) Core(TM) i5-14400F",
+      "debug": false,
+      "diagnostics_only": true,
+      "display": "Windows",
+      "draw_calls_mean": 4244.14074074074,
+      "dropped_seconds": 25.5941110000001,
+      "engine": "4.7.2-stable (official)",
+      "frame": {
+        "count": 540,
+        "mean_ms": 110.85812962963,
+        "p50_ms": 110.384,
+        "p95_ms": 144.598,
+        "p99_ms": 170.627
+      },
+      "live": [
+        521,
+        419
+      ],
+      "max_fps": 0,
+      "measurement_seconds": 59.863667,
+      "mode": "battle",
+      "music": true,
+      "native_failures": 0,
+      "native_steps": 2396,
+      "ordinary_initial": [
+        1000,
+        1000
+      ],
+      "render_cpu": {
+        "count": 540,
+        "mean_ms": 9.76013518518518,
+        "p50_ms": 9.829,
+        "p95_ms": 13.016,
+        "p99_ms": 14.364
+      },
+      "render_gpu": {
+        "count": 540,
+        "mean_ms": 7.89885,
+        "p50_ms": 7.784,
+        "p95_ms": 11.607,
+        "p99_ms": 12.745
+      },
+      "seed": 4242,
+      "simulation_ticks_measured": 2160,
+      "simulation_ticks_total": 2396,
+      "sound": true,
+      "special_initial": 1,
+      "video_memory_bytes": 64018243.0,
+      "video_memory_samples": [
+        60391155.0,
+        62223755.0,
+        62428571.0,
+        64214683.0,
+        64018243.0
+      ],
+      "viewport": "(1920.0, 1080.0)",
+      "vsync": 0,
+      "warmup_frames": 60
+    }
+  },
+  "limitations": [
+    "One run per configuration, not acceptance or an approved baseline.",
+    "Live keyboard/mouse input is not recorded by this diagnostic; before-toolchain reports music=false despite --audio=on. Exclude it from strict A/B conclusions.",
+    "Release before/after both report audio/music=true, 2396 simulation ticks, final live counts [521,419]."
+  ]
+}
