@@ -294,7 +294,7 @@ func _quest_summary(quests: Array, bonus: float) -> void:
 	for q in quests:
 		total += roundi(float(q.reward) * (1.0 + bonus))
 	var near: int = int(quests[0].dl) - int(state.clock.day) if not quests.is_empty() else 0
-	var done := state.journal.filter(func(e): return String(e.text).begins_with("Задание выполнено")).size()
+	var done: int = state.journal.filter(func(e): return String(e.text).begins_with("Задание выполнено")).size()
 	var tiles := [
 		["book", "%d/%d" % [quests.size(), QUEST_LIMIT], "Активных заданий", "журнал полон" if quests.size() >= QUEST_LIMIT else "можно взять ещё %d" % (QUEST_LIMIT - quests.size())],
 		["coin", str(total), "Сумма наград", "золотом"],
