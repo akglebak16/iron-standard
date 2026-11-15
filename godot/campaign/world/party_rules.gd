@@ -41,7 +41,17 @@ static func remove_troops(list: Array, type: String, n: int) -> void:
 				list.remove_at(i)
 			return
 
+## Wars declared in the running world ("a|b" -> {since}); null until the diplomacy module starts (then WAR above applies).
+static var wars: Variant = null
+
+static func war_key(a: String, b: String) -> String:
+	return a + "|" + b if a < b else b + "|" + a
+
 static func at_war(a: String, b: String) -> bool:
+	if a == "bandit" or b == "bandit":
+		return WAR.has(a) and b in WAR[a]
+	if wars != null:
+		return wars.has(war_key(a, b))
 	return WAR.has(a) and b in WAR[a]
 
 ## Whether two map parties fight each other when they meet (hostile() without caravan-vassals and undead).

@@ -93,6 +93,7 @@ func _ready() -> void:
 	_party_window.closed.connect(func(): state.clock.paused = false)
 	hud.panel_requested.connect(func(tab: String): state.clock.paused = true; _party_window.open_for(state, tab))
 	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s))
+	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
 	state.log_added.connect(func(text: String): hud.show_notice(text))
 	_bridge = Bridge.new()
 	_dialog = EncounterDialog.new()

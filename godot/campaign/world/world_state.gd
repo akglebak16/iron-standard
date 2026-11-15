@@ -8,6 +8,7 @@ const PartyRoster = preload("res://campaign/world/party_roster.gd")
 const PartyAI = preload("res://campaign/world/party_ai.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const PartyEconomy = preload("res://campaign/economy/party_economy.gd")
+const WorldWars = preload("res://campaign/world/world_wars.gd")
 const Market = preload("res://campaign/economy/market.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
@@ -23,6 +24,7 @@ const START_TROOPS := {
 
 signal party_met(party: Dictionary, forced: bool)
 signal log_added(text: String)
+signal settlement_changed(settlement: Dictionary)
 signal settlement_entered(settlement: Dictionary)
 
 var map: RefCounted
@@ -35,6 +37,7 @@ var hours_passed := 0
 var roster: PartyRoster
 var perks := PerkCatalog.new()
 var market: Market
+var wars: WorldWars
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
 
@@ -56,6 +59,10 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.market.rng.seed = seed_value + 191
 	state.roster = PartyRoster.new(state.map, seed_value)
 	state.roster.populate()
+	state.wars = WorldWars.new(state.map, state.roster)
+	state.wars.start()
+	state.wars.announced.connect(state.log_world)
+	state.wars.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai = PartyAI.new(state.roster, state.player)
 	return state
 
@@ -116,6 +123,9 @@ func _meetings() -> void:
 func hour_tick() -> void:
 	hours_passed += 1
 	roster.hour_tick(clock.hour)
+	wars.day = clock.day
+	wars.hour = clock.hour
+	wars.war_hour()
 	if clock.hour == 0:
 		_day_tick()
 
@@ -129,6 +139,7 @@ func log_world(text: String) -> void:
 	log_added.emit(text)
 
 func _day_tick() -> void:
+	wars.war_day()
 	if player.away or player.busy == "battle":
 		return
 	var wage := func(type: String) -> float: return float(roster.catalog.get_troop(type).wage)

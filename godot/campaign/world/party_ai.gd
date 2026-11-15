@@ -114,6 +114,10 @@ func _think(p: Dictionary) -> bool:
 					tb = d
 			elif sp > me * 1.25 and d < 180.0:
 				threat = player
+	if p.get("army", false):
+		threat = null
+		if tgt != null and tb > 90.0:
+			tgt = null
 	if threat != null and tgt == null and p.fac != "undead":
 		var a := atan2(p.y - threat.y, p.x - threat.x)
 		roster.path_to(p, clampf(p.x + cos(a) * 220.0, 60.0, WW - 60.0), clampf(p.y + sin(a) * 220.0, 60.0, WH - 60.0))
@@ -131,7 +135,7 @@ func _think(p: Dictionary) -> bool:
 		p.tid = null
 		p.tpl = false
 		p.path = []
-	if p.state == "idle" and p.pi >= p.path.size():
+	if p.state == "idle" and p.pi >= p.path.size() and not p.get("army", false):
 		_idle(p)
 	return false
 
@@ -190,6 +194,12 @@ func _arrived(p: Dictionary) -> void:
 	if p.state == "travel":
 		var s := roster.map.settlement_by_id(p.sid) if p.sid != null else {}
 		if s.is_empty() or Vector2(s.x - p.x, s.y - p.y).length() >= 40.0:
+			return
+		if p.get("army", false):
+			p.state = "idle"
+			p.path = []
+			p.pi = 0
+			p.arrived = true
 			return
 		if p.kind == "caravan":
 			if s.fac != "bandit":

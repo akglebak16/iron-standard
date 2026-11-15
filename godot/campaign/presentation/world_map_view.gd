@@ -15,6 +15,7 @@ signal ready_to_show
 
 var map: RefCounted
 var terrain: Node2D
+var _settlement_layer: Node2D
 
 func build(seed_value: int) -> void:
 	var data := EuropeData.new()
@@ -49,3 +50,9 @@ func build_from(world_map: RefCounted) -> void:
 	var settlements := SettlementLayer.new()
 	add_child(settlements)
 	settlements.build(map.settles)
+	_settlement_layer = settlements
+
+## Owners changed (a capture): redraw banners and sprites.
+func refresh_settlements() -> void:
+	if _settlement_layer != null:
+		_settlement_layer.queue_redraw()
