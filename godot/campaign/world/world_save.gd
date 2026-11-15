@@ -1,13 +1,22 @@
 extends RefCounted
-## Turns the running world into plain JSON-safe data and back. The map itself is regenerated from the seed;
-## only what changes during play is stored (saveGame/loadGame in src/07_main.js).
+## Versioned values-only checkpoint envelope; accepts the original JSON v1 format.
+## Static terrain is regenerated from the seed; mutable state retains its exact types.
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
-const VERSION := 1
+const Checkpoint = preload("res://campaign/world/world_checkpoint.gd")
+const VERSION := 2
+const MAX_PAYLOAD_BYTES := 16 * 1024 * 1024
 const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0", "vass", "blk"]
 const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner", "relief", "fight"]
 
 static func to_dict(state: RefCounted) -> Dictionary:
+	var values := Checkpoint.capture(state)
+	if not Checkpoint.valid(values): return {}
+	var payload := Marshalls.raw_to_base64(var_to_bytes(values))
+	return {"version": VERSION, "encoding": "godot-variant-values-v1", "payload": payload, "sha256": payload.sha256_text()}
+
+## Retained only as the v1 migration fixture/export contract.
+static func to_v1_dict(state: RefCounted) -> Dictionary:
 	var p = state.player
 	var settles := {}
 	for s in state.map.settles:
@@ -23,7 +32,7 @@ static func to_dict(state: RefCounted) -> Dictionary:
 			path.append([v.x, v.y])
 		c.path = path
 		parties.append(c)
-	return {"version": VERSION, "seed": state.seed_value, "culture": state.culture,
+	return {"version": 1, "seed": state.seed_value, "culture": state.culture,
 		"clock": {"day": state.clock.day, "hour": state.clock.hour, "speed": state.clock.speed},
 		"player": {"x": p.x, "y": p.y, "troops": p.troops, "culture": p.culture, "gold": p.gold, "food": p.food, "inv": p.inv,
 			"comps": p.comps, "quests": p.quests, "stats": p.stats, "hero": p.hero, "rel": p.rel,
@@ -32,9 +41,116 @@ static func to_dict(state: RefCounted) -> Dictionary:
 
 ## Rebuilds a world from saved data; returns null for an unknown format.
 static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
-	if int(data.get("version", 0)) != VERSION:
-		return null
+	if data.get("version") == 1:
+		if not _valid_v1_header(data): return null
+		return _from_v1(data.duplicate(true), europe)
+	if data.get("version") != VERSION or data.get("encoding") != "godot-variant-values-v1": return null
+	if not data.get("payload") is String or not data.get("sha256") is String: return null
+	if data.payload.length() > MAX_PAYLOAD_BYTES * 4 / 3 + 4 or data.payload.sha256_text() != data.sha256: return null
+	var bytes := Marshalls.base64_to_raw(data.payload)
+	if bytes.is_empty() or bytes.size() > MAX_PAYLOAD_BYTES or Marshalls.raw_to_base64(bytes) != data.payload: return null
+	# This API does not deserialize Objects; never use bytes_to_var_with_objects here.
+	var values = bytes_to_var(bytes)
+	if not values is Dictionary: return null
+	return Checkpoint.restore(values, europe)
+
+static func _valid_v1_header(data: Dictionary) -> bool:
+	if not Checkpoint._plain(data) or not Checkpoint._number(data.get("seed")) or not WorldState.START_TROOPS.has(data.get("culture")): return false
+	for field in ["clock", "player", "settles"]:
+		if not data.get(field) is Dictionary: return false
+	for field in ["parties", "journal"]:
+		if not data.get(field) is Array: return false
+	for field in ["day", "hour", "speed"]:
+		if not Checkpoint._number(data.clock.get(field)): return false
+	if data.clock.day < 1 or data.clock.hour < 0 or data.clock.hour >= 24 or int(data.clock.speed) not in [1, 2, 4] or data.clock.speed != int(data.clock.speed): return false
+	if not Checkpoint._number(data.get("next_party_id")): return false
+	for field in ["x", "y", "gold", "food"]:
+		if not Checkpoint._number(data.player.get(field)): return false
+	if not WorldState.START_TROOPS.has(data.player.get("culture")): return false
+	for field in ["inv", "stats", "hero", "rel"]:
+		if not data.player.get(field) is Dictionary: return false
+	for field in ["troops", "comps", "quests"]:
+		if not data.player.get(field) is Array: return false
+	if not _v1_stacks(data.player.troops) or not _rows(data.player.comps) or not _rows(data.player.quests): return false
+	if not _rows(data.player.get("vass", [])): return false
+	for vassal in data.player.get("vass", []):
+		if not vassal.get("c") is Dictionary or not Checkpoint._number(vassal.get("sid")): return false
+	var summons = data.player.get("summons")
+	if summons != null and (not summons is Dictionary or not _numbers(summons, ["tid", "until"])): return false
+	var ids := {}
+	for party in data.parties:
+		if not party is Dictionary or not _numbers(party, ["id", "x", "y", "pi", "wait", "hold", "cd", "ai", "rp", "fx", "gold"]): return false
+		if ids.has(int(party.id)) or party.id != int(party.id): return false
+		ids[int(party.id)] = true
+		if int(data.next_party_id) <= int(party.id): return false
+		for field in ["kind", "fac", "name", "state"]:
+			if not party.get(field) is String: return false
+		if not party.get("hide") is bool or not _v1_stacks(party.get("troops")) or not party.get("path") is Array: return false
+		for point in party.path:
+			if not point is Array or point.size() != 2 or not Checkpoint._number(point[0]) or not Checkpoint._number(point[1]): return false
+	for saved in data.settles.values():
+		if not saved is Dictionary: return false
+		for field in ["recruits", "gar"]:
+			if saved.get(field) != null and not _v1_stacks(saved[field]): return false
+		if saved.get("board") != null and not _rows(saved.board): return false
+		for field in ["market", "siege", "blk"]:
+			if saved.get(field) != null and not saved[field] is Dictionary: return false
+		if saved.get("market") != null:
+			if not _numbers(saved.market, ["day", "gold"]) or not _number_map(saved.market.get("stock")): return false
+		if saved.get("siege") != null:
+			if not _numbers(saved.siege, ["t0", "g0"]): return false
+			if saved.siege.has("rel") and not _number_array(saved.siege.rel): return false
+	for field in ["wars", "campaigns", "clans", "companions", "skirmish", "crisis"]:
+		if not data.get(field, {}) is Dictionary: return false
+	for war in data.get("wars", {}).values():
+		if not war is Dictionary or not _numbers(war, ["since"]): return false
+	for campaign in data.get("campaigns", {}).values():
+		if not campaign is Dictionary or not _numbers(campaign, ["tid", "gid"]) or not _number_array(campaign.get("army")): return false
+	var clans: Dictionary = data.get("clans", {})
+	if not _rows(clans.get("clans", [])) or not clans.get("rulers", {}) is Dictionary or not _number_map(clans.get("switched", {})): return false
+	for ruler in clans.get("rulers", {}).values():
+		if not ruler is Dictionary: return false
+	var companions: Dictionary = data.get("companions", {})
+	if not _number_map(companions.get("pos", {})) or not companions.get("saved", {}) is Dictionary: return false
+	for profile in companions.get("saved", {}).values():
+		if not profile is Dictionary: return false
+	var fights = data.get("skirmish", {}).get("fights", [])
+	if not _rows(fights): return false
+	for fight in fights:
+		if not _numbers(fight, ["id", "t0", "a0", "b0"]) or not _number_array(fight.get("A")) or not _number_array(fight.get("B")): return false
+	var crisis: Dictionary = data.get("crisis", {})
+	if not crisis.is_empty() and (not _numbers(crisis, ["day"]) or not _number_array(crisis.get("src")) or not _number_map(crisis.get("left"))): return false
+	return true
+
+static func _rows(value: Variant) -> bool:
+	if not value is Array: return false
+	for row in value:
+		if not row is Dictionary: return false
+	return true
+
+static func _numbers(value: Dictionary, fields: Array) -> bool:
+	for field in fields:
+		if not Checkpoint._number(value.get(field)): return false
+	return true
+
+static func _number_array(value: Variant) -> bool:
+	if not value is Array: return false
+	for item in value:
+		if not Checkpoint._number(item): return false
+	return true
+
+static func _number_map(value: Variant) -> bool:
+	return value is Dictionary and _number_array(value.values())
+
+static func _v1_stacks(value: Variant) -> bool:
+	if not _rows(value): return false
+	for stack in value:
+		if not stack.get("type") is String or not Checkpoint._number(stack.get("n")) or stack.n < 0 or stack.n != int(stack.n): return false
+	return true
+
+static func _from_v1(data: Dictionary, europe: EuropeData) -> RefCounted:
 	var state := WorldState.create(int(data.seed), europe, String(data.culture))
+	if state == null: return null
 	state.clock.day = int(data.clock.day)
 	state.clock.hour = int(data.clock.hour)
 	state.clock.speed = int(data.clock.speed)
@@ -77,8 +193,8 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 		if saved == null:
 			continue
 		for k in SETTLEMENT_FIELDS:
-			if saved[k] != null or k == "camp":
-				s[k] = saved[k]
+			if saved.get(k) != null or k == "camp":
+				s[k] = saved.get(k)
 		s.recruits = _stacks(s.recruits)
 		if s.get("board") is Array:
 			s.board = _quests(s.board)

@@ -74,6 +74,14 @@ func _ready() -> void:
 		return
 	if GameOptions.continue_game:
 		state = SaveStore.load_state(data)
+		if state == null:
+			loading.text = "Не удалось загрузить сохранение. Файлы сохранений оставлены без изменений."
+			var back := Button.new()
+			back.text = "Вернуться в меню"
+			back.position = Vector2(24, 64)
+			back.pressed.connect(func(): title_requested.emit())
+			layer.add_child(back)
+			return
 	if state == null:
 		state = WorldState.create(seed_value, data, GameOptions.culture)
 		state.player.hero.name = GameOptions.hero_name

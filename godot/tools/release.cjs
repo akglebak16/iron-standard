@@ -1,12 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const cp = require('child_process');
 const engine = process.argv[2] || 'godot';
 const root = path.resolve(__dirname, '..');
 const out = path.resolve(root, '../dist/godot/migration-release');
 fs.mkdirSync(out, { recursive: true });
-const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'iron-release-'));
+const profile = fs.mkdtempSync(path.join(out, 'user-data-'));
 const env = {...process.env, APPDATA: profile, XDG_DATA_HOME: profile};
 function run(exe, args, name, timeout = 120000) {
   const result = cp.spawnSync(exe, args, {encoding:'utf8', timeout, env});

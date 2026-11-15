@@ -19,7 +19,7 @@
     {"id":"CAMPAIGN-API-ISOLATION","stage":5,"status":"pending","checks":["tests/integration/test_campaign_isolation.gd"],"remaining":"Wars, relations and RNG are isolated; commands/queries must still replace mutable UI access."},
     {"id":"CAMPAIGN-RESULT-ONCE","stage":5,"status":"pending","checks":["tests/integration/app/test_encounter_aftermath.gd"],"remaining":"Preserve existing once-only behavior while relocating aftermath from app bridge to campaign application."},
     {"id":"CONTENT-REGISTRY","stage":6,"status":"pending","checks":[],"remaining":"Inject validated definitions, separate game/visual/animation/audio schemas."},
-    {"id":"SAVE-V2","stage":6,"status":"pending","checks":["campaign/tests/world/test_world_save.gd"],"remaining":"Version migration, RNG and full clock state, IDs, atomic persistence and invalid input checks."},
+    {"id":"SAVE-V2","stage":6,"status":"pending","checks":["campaign/tests/world/test_world_save.gd","tests/integration/test_save_v2.gd","tools/release_smoke.gd"],"remaining":"v2 data, RNG, clocks, v1 migration and atomic generations implemented; restore pending campaign interaction context, finish nested input schema and relocate persistence ports."},
     {"id":"ACCEPTANCE-RELEASE-PERF","stage":7,"status":"pending","checks":["tools/benchmark.cjs"],"remaining":"60 seconds × five repeats of all scenarios; tick <=6 ms, snapshot <=1 ms, frame p95 <=16.67 ms/p99 <=25 ms, no clock lag, memory growth or >10% regression."},
     {"id":"DELIVERY-REQUIRED-CHECKS","stage":7,"status":"pending","checks":[],"remaining":"Configure protected-branch required checks and reference Windows performance runner; workflow alone does not protect main."}
   ]

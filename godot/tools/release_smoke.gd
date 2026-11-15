@@ -4,6 +4,7 @@ const Europe = preload("res://campaign/data/europe_data.gd")
 const World = preload("res://campaign/world/world_state.gd")
 const Factory = preload("res://battle/application/factory.gd")
 const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
+const SaveStore = preload("res://apps/godot/composition/save_store.gd")
 
 func _ready() -> void:
 	var data := Europe.new()
@@ -14,6 +15,15 @@ func _ready() -> void:
 	if world == null or world.roster.parties.is_empty() or world.player.troops.is_empty():
 		fail("Campaign initialization")
 		return
+	if not SaveStore.save(world, "user://release-smoke-save.json"):
+		fail("Checkpoint publication")
+		return
+	var restored = SaveStore.load_state(data, "user://release-smoke-save.json")
+	if restored == null or restored.roster.rng.state != world.roster.rng.state:
+		fail("Checkpoint restoration")
+		return
+	restored.dispose()
+	restored = null
 	var menu = load("res://apps/godot/composition/main_menu.tscn").instantiate()
 	menu.set_meta("release_smoke_child", true)
 	get_tree().root.add_child.call_deferred(menu)
