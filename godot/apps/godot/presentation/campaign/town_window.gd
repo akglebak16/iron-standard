@@ -5,6 +5,8 @@ const Economy = preload("res://core/campaign/economy/party_economy.gd")
 const Market = preload("res://core/campaign/economy/market.gd")
 const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
+const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
+const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const PartyWindowText = preload("res://apps/godot/presentation/campaign/companion_text.gd")
@@ -15,6 +17,8 @@ var settlement: Dictionary = {}
 var _gear := GearCatalog.new()
 var _factions := FactionCatalog.new()
 var _legacy := {}
+## Item whose card is open on the market (tradeDock).
+var _trade_pick := ""
 
 func _ready() -> void:
 	super()
@@ -229,6 +233,11 @@ func _goods(p, fx: Dictionary) -> void:
 
 func _gear_trade(p, fx: Dictionary, m: Dictionary, men: int) -> void:
 	var market = state.market
+	if _trade_pick != "" and market.is_gear(_trade_pick):
+		var picked: Dictionary = market.gear[_trade_pick]
+		var eq: Dictionary = HeroEquip.ensure(p.hero)
+		var worn: Dictionary = market.gear.get(String(eq.get(picked.slot)), {}) if eq.get(picked.slot) != null else {}
+		item_card(ItemCard.describe(picked, worn, true), [{"text": "Закрыть", "call": func(): _trade_pick = ""}])
 	heading("Снаряжение у торговца")
 	var any := false
 	for id in m.stock:
@@ -238,7 +247,7 @@ func _gear_trade(p, fx: Dictionary, m: Dictionary, men: int) -> void:
 		var it: Dictionary = market.gear[id]
 		var price: int = market.buy_price(p.rel, fx, settlement, m, id)
 		row("%s · %s" % [it.name, _tier(it)], "%s · вес %s · купить %d" % [_slot(it), str(it.get("w", 0)), price],
-			[{"text": "Купить", "disabled": p.gold < price, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men))}])
+			[{"text": "Подробнее", "call": func(): _trade_pick = id}, {"text": "Купить", "disabled": p.gold < price, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men))}])
 	if not any:
 		note("Сегодня оружейник пуст.")
 	heading("Снаряжение в обозе")
@@ -250,7 +259,7 @@ func _gear_trade(p, fx: Dictionary, m: Dictionary, men: int) -> void:
 		var it: Dictionary = market.gear[id]
 		var price: int = market.sell_price(p.rel, fx, settlement, m, id)
 		row("%s ×%d · %s" % [it.name, p.inv[id], _tier(it)], "%s · продать %d" % [_slot(it), price],
-			[{"text": "Продать", "disabled": m.gold < price, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))}])
+			[{"text": "Подробнее", "call": func(): _trade_pick = id}, {"text": "Продать", "disabled": m.gold < price, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))}])
 	if not mine:
 		note("Трофеев в обозе нет. Надетое не продаётся: сначала сними его.")
 

@@ -5,6 +5,7 @@ const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
+const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
 
 func _initialize() -> void:
 	var gear := GearCatalog.new()
@@ -42,6 +43,16 @@ func _initialize() -> void:
 	pw.render()
 	var shown := pw.body.find_child("ItemCard", true, false)
 	assert(shown != null and shown.find_children("PierceBar", "", true, false).size() >= 1)
+	# the market opens the same card for an item on sale (tradeDock)
+	var tw := TownWindow.new()
+	root.add_child(tw)
+	await process_frame
+	var town: Dictionary = s.map.settles.filter(func(t): return t.kind == "town" and t.fac == "emp")[0]
+	tw.open_for(s, town)
+	tw.current_tab = "goods"
+	tw._trade_pick = "sword_knight"
+	tw.render()
+	assert(tw.body.find_child("ItemCard", true, false) != null, "The market shows the item card")
 	s.dispose()
 	print("Item card tests passed")
 	quit(0)

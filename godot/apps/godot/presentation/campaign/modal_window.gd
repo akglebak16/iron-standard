@@ -166,6 +166,72 @@ func row(text: String, detail: String, buttons: Array = [], portrait := "") -> v
 		actions.add_child(b)
 	body.add_child(card)
 
+## The item card (itemDock): name in its tier colour, what it is, figures with ▲/▼ against the worn item,
+## traits, armour piercing bars and the damage type note, then the action buttons.
+func item_card(card: Dictionary, buttons: Array) -> void:
+	var box := VBoxContainer.new()
+	box.name = "ItemCard"
+	box.add_theme_constant_override("separation", 3)
+	body.add_child(box)
+	var title := Label.new()
+	title.text = card.title
+	GameSkin.title(title, 19)
+	title.add_theme_color_override("font_color", card.color)
+	box.add_child(title)
+	var subtitle := Label.new()
+	subtitle.text = card.subtitle
+	subtitle.add_theme_color_override("font_color", GameSkin.MUTED)
+	box.add_child(subtitle)
+	var grid := GridContainer.new()
+	grid.name = "ItemStats"
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 14)
+	box.add_child(grid)
+	for stat in card.stats:
+		var label := Label.new()
+		label.text = stat.label
+		label.add_theme_color_override("font_color", GameSkin.MUTED)
+		grid.add_child(label)
+		var value := Label.new()
+		value.text = stat.value
+		grid.add_child(value)
+		var change := Label.new()
+		change.text = stat.delta.get("text", "")
+		if not stat.delta.is_empty():
+			change.add_theme_color_override("font_color", Color("#8fc24f") if stat.delta.trend > 0 else Color("#e0705a"))
+		grid.add_child(change)
+	if not card.traits.is_empty():
+		var traits := Label.new()
+		traits.name = "ItemTraits"
+		traits.text = " · ".join(PackedStringArray(card.traits))
+		traits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		traits.add_theme_color_override("font_color", GameSkin.BRASS)
+		box.add_child(traits)
+	for bar in card.pierce:
+		var line := HBoxContainer.new()
+		line.name = "PierceBar"
+		box.add_child(line)
+		var label := Label.new()
+		label.text = "%s %s" % [bar.label, bar.value]
+		label.custom_minimum_size.x = 170
+		line.add_child(label)
+		var meter := ProgressBar.new()
+		meter.max_value = 1.0
+		meter.step = 0.01
+		meter.value = bar.fill
+		meter.show_percentage = false
+		meter.custom_minimum_size = Vector2(120, 8)
+		meter.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		line.add_child(meter)
+	if card.note != "":
+		var note_label := Label.new()
+		note_label.text = card.note
+		note_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note_label.add_theme_color_override("font_color", GameSkin.MUTED)
+		box.add_child(note_label)
+	if not buttons.is_empty():
+		row("", "", buttons)
+
 ## Subclasses draw their current tab here.
 func render() -> void:
 	pass
