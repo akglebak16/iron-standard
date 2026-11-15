@@ -8,6 +8,7 @@ const QuickSetup = preload("res://apps/godot/composition/quick_battle_setup.gd")
 var _mode: Node
 var _transition_pending := false
 
+var _last_quick := {}
 func _ready() -> void:
 	if "--view-benchmark" in OS.get_cmdline_user_args():
 		add_child(load("res://tests/performance/view_benchmark.gd").new())
@@ -57,6 +58,7 @@ func _request_demo(siege: bool) -> void:
 
 func _request_quick(options: Dictionary) -> void:
 	if _transition_pending: return
+	_last_quick = options.duplicate()
 	var setup := QuickSetup.build(options)
 	if setup == null: return
 	_transition_pending = true
@@ -66,4 +68,5 @@ func _show_demo(siege: bool, setup: Resource = null) -> void:
 	var demo := (SiegeDemo if siege else FieldDemo).instantiate()
 	if setup != null: demo.battle_setup = setup
 	demo.title_requested.connect(_request_menu)
+	demo.again_requested.connect(func(): _request_quick(_last_quick) if setup != null else _request_demo(siege))
 	_replace(demo)

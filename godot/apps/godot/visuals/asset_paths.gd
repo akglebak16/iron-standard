@@ -196,6 +196,7 @@ const PATHS = {
 	"crest_player": "res://apps/godot/visuals/assets/crest_player.png",
 	"crest_undead": "res://apps/godot/visuals/assets/crest_undead.png",
 	"danger": "res://apps/godot/visuals/assets/danger.png",
+	"faces_0": "res://apps/godot/visuals/assets/faces_0.png",
 	"flash": "res://apps/godot/visuals/assets/flash.png",
 	"flash_v1": "res://apps/godot/visuals/assets/flash_v1.png",
 	"flash_v2": "res://apps/godot/visuals/assets/flash_v2.png",

@@ -51,6 +51,10 @@ var _audio: CombatAudio
 var _music: BattleMusic
 var _effects_enabled := true
 var _music_enabled := true
+## The title screen plays map music over its demo battle (musicTick(dt, 'world') in MODE title).
+var _music_suppressed := false
+## Campaign hero level for the HUD; composition sets it, a quick battle leaves 0.
+var hero_level := 0
 var _result_summary := ""
 var _terrain := TerrainView.new()
 var _vegetation := VegetationView.new()
@@ -90,6 +94,10 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 
 func get_battle_snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
+
+## The finished battle result (for the report window).
+func battle_result() -> Dictionary:
+	return _session.result() if _session != null else {}
 
 func show_result_summary(summary: String) -> void:
 	_result_summary = summary
@@ -266,6 +274,10 @@ func set_menu_open(open: bool) -> void:
 	_attack_pressed = false
 	_update_status()
 
+func suppress_music() -> void:
+	_music_suppressed = true
+	_music.enabled = false
+
 func apply_preferences(effects: bool, music: bool, blood: bool) -> void:
 	_set_audio_preferences(effects, music)
 	_impacts.blood_enabled = blood
@@ -310,7 +322,7 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 	_effects_enabled = effects
 	_music_enabled = music
 	_audio.enabled = effects
-	_music.enabled = music
+	_music.enabled = music and not _music_suppressed
 	_update_status()
 	audio_preferences_changed.emit(effects, music)
 
@@ -342,6 +354,7 @@ func _update_status() -> void:
 		Session.Outcome.VICTORY: label = Demo.VICTORY
 		Session.Outcome.DEFEAT: label = Demo.DEFEAT
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
+	_controls.hero_level = hero_level
 	_controls.update_frame(_frame, _selection, _paused, PLAYBACK_SPEEDS[_speed_index], finished)
 	_controls.show_commands(_selection, _hud_orders.get(_selection, []))
 	if _journal_panel != null:

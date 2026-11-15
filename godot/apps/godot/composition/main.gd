@@ -11,6 +11,7 @@ const Setup = preload("res://adapters/godot/resources/battle_setup_resource.gd")
 const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
 const EncounterAftermath = preload("res://core/campaign/application/encounter_aftermath.gd")
 const AftermathText = preload("res://apps/godot/composition/aftermath_text.gd")
+const ResultWindow = preload("res://apps/godot/composition/battle_result_window.gd")
 const GoodsCatalog = preload("res://core/campaign/data/goods_catalog.gd")
 const CompanionProfile = preload("res://core/characters/rules/companion_profile.gd")
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
@@ -19,6 +20,8 @@ const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const REWARD_SEED_OFFSET := 1
 signal title_requested
+## «Ещё бой» on the report of a quick or demo battle.
+signal again_requested
 @export var demo_world: Dictionary = {}
 @export var demo_party_position := Vector2.ZERO
 @export var battle_setup: Setup = preload("res://content/scenarios/demo_battle.tres")
@@ -104,3 +107,14 @@ func _show_aftermath(view: Node2D, bridge: EncounterAftermath, opponent: Diction
 	_demo_party = resolved.party
 	_demo_world = resolved.world
 	view.show_result_summary(AftermathText.build(resolved, gear, goods))
+	if bool(view.get("attract_mode")):
+		return
+	view.set_menu_open(true)
+	var report := ResultWindow.new()
+	report.name = "BattleResult"
+	add_child(report)
+	report.action_chosen.connect(func(action: String):
+		if action == "again": again_requested.emit()
+		else: title_requested.emit())
+	report.show_report(bool(resolved.summary.win), ResultWindow.duration(float(view.battle_result().get("time", 0.0))),
+		ResultWindow.quick_rows(view.battle_result()), [], [["В меню", "menu"], ["Ещё бой", "again"]])
