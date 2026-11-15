@@ -18,6 +18,9 @@ static func run(tree: SceneTree, capture_dir: String = "") -> String:
 		error = await _check(tree, world, capture_dir)
 	world.queue_free()
 	await tree.process_frame
+	# Audio stop/free commands are consumed by the mixer, not by process_frame.
+	# Fast headless runs can otherwise quit before the final playback is released.
+	await tree.create_timer(0.1).timeout
 	tree.root.size = original_size
 	return error
 
