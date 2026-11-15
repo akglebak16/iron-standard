@@ -62,8 +62,8 @@ func _initialize() -> void:
 	s.log_world("a", WorldState.JOURNAL_GOOD)
 	s.log_world("b")
 	pw.render()
-	assert(pw.body.find_children("ChronicleEvent", "Label", true, false).size() == 2)
-	assert(pw.body.find_child("ChronicleDay_%d" % s.clock.day, true, false) != null)
+	var day_box := pw.body.find_child("ChronicleDay_%d" % s.clock.day, true, false)
+	assert(day_box != null and day_box.get_child_count() == 2, "both entries of the day are listed")
 	s.player.inv[two] = 1
 	pw.open_for(s, "gear")
 	pw._selected_gear = two
