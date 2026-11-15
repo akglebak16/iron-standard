@@ -23,6 +23,7 @@ var _gold: Label
 var _food: Label
 var _men: Label
 var _factions := FactionCatalog.new()
+var _hungry_shown: Variant = null
 
 func _ready() -> void:
 	layer = 5
@@ -147,7 +148,10 @@ func refresh(state: RefCounted, near_settlement: Dictionary) -> void:
 	_stats.text = "Золото %d   Порции %d (%d дн.)   Бойцов %d/%d" % [p.gold, portions, ceili(portions / maxf(1.0, ceilf(men / 6.0))), men, Economy.size_cap(p.hero, fx)]
 	_gold.text = str(p.gold)
 	_food.text = "%d · %d дн." % [portions, ceili(portions / maxf(1.0, ceilf(men / 6.0)))]
-	_food.add_theme_color_override("font_color", Color("#ff8d79") if portions < 12 else GameSkin.PARCH)
+	var hungry := portions < 12
+	if hungry != _hungry_shown:  # a theme override relays out the bar, so only on change
+		_hungry_shown = hungry
+		_food.add_theme_color_override("font_color", Color("#ff8d79") if hungry else GameSkin.PARCH)
 	_men.text = "%d / %d" % [men, Economy.size_cap(p.hero, fx)]
 	var lines := PackedStringArray()
 	for i in range(maxi(0, state.journal.size() - 4), state.journal.size()):

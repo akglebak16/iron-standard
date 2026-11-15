@@ -27,6 +27,8 @@ const AutoBattle = preload("res://campaign/world/auto_battle.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 const WorldPartiesLayer = preload("res://campaign/presentation/world_parties_layer.gd")
 const WorldHud = preload("res://campaign/presentation/world_hud.gd")
+## A slow frame must not ask the world for more steps than it can run, or each frame gets slower than the last.
+const MAX_FRAME_SECONDS := 0.1
 
 var state: RefCounted
 var map_view: Node2D
@@ -466,7 +468,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
-	state.advance(delta)
+	state.advance(minf(delta, MAX_FRAME_SECONDS))
 	if not camera.detached:
 		camera.position = Vector2(state.player.x, state.player.y)
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))

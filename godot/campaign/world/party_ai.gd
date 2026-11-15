@@ -25,6 +25,8 @@ func step(dh: float) -> void:
 	for p in roster.parties.duplicate():
 		if p in roster.parties:
 			ai_party(p, dh)
+	# `x in roster.parties` compares dictionaries by content and walks the whole list, so it must stay out of the
+	# inner loop: there it made every step cubic in the number of parties and froze the map.
 	var list := roster.parties.duplicate()
 	for i in list.size():
 		var a: Dictionary = list[i]
@@ -32,14 +34,17 @@ func step(dh: float) -> void:
 			continue
 		for j in range(i + 1, list.size()):
 			var b: Dictionary = list[j]
-			if _skip_fight(b) or not (b in roster.parties):
+			if _skip_fight(b):
 				continue
-			if Vector2(a.x - b.x, a.y - b.y).length() < 15.0 and Rules.hostile(a, b):
-				if skirmish != null:
-					skirmish.contact(a, b, auto_fight)
-				else:
-					auto_fight(a, b)
-				break
+			var dx: float = a.x - b.x
+			var dy: float = a.y - b.y
+			if dx * dx + dy * dy >= 225.0 or not Rules.hostile(a, b) or not (b in roster.parties):
+				continue
+			if skirmish != null:
+				skirmish.contact(a, b, auto_fight)
+			else:
+				auto_fight(a, b)
+			break
 
 func _skip_fight(p: Dictionary) -> bool:
 	return p.hide or p.kind == "camp" or p.get("lock", false) or p.get("fight", false)

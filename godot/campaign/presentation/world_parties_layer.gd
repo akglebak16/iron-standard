@@ -42,7 +42,8 @@ func _draw_party(p: Dictionary) -> void:
 	var troop := ""
 	var tier := -1
 	for stack in p.troops:
-		var info: Dictionary = roster.catalog.get_troop(stack.type)
+		# roster.info is the ready tier table; catalog.get_troop() deep-copies a definition on every call.
+		var info: Dictionary = roster.info[stack.type] if roster.info.has(stack.type) else roster.catalog.get_troop(stack.type)
 		if int(info.tier) > tier:
 			tier = int(info.tier)
 			troop = stack.type
