@@ -37,6 +37,8 @@ func render() -> void:
 	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]]
 	if settlement.kind == "town":
 		tabs.append(["tavern", "Таверна"])
+	if settlement.kind == "town" and settlement.fac in ["nord", "emp", "khan", "kin", "emi", "dom", "pact"]:
+		tabs.append(["oath", "Служба"])
 	if mine:
 		tabs.append(["hold", "Владение"])
 	elif settlement.kind == "town":
@@ -45,6 +47,8 @@ func render() -> void:
 	clear_body()
 	if current_tab == "hold" and mine:
 		_hold(p, fx)
+	elif current_tab == "oath":
+		_oath(p)
 	elif current_tab == "tavern":
 		_tavern(p)
 	elif current_tab == "quests":
@@ -105,6 +109,37 @@ func _quests(p) -> void:
 		heading("Твои задания")
 		for item in p.quests:
 			row(q.text(item), "До дня %d · награда %d" % [item.dl, item.reward])
+
+func _oath(p) -> void:
+	var clans = state.clans
+	var f: String = settlement.fac
+	note("Фракция: %s. Отношения: %d. %s" % [_factions.get_faction(f).name, roundi(float(p.rel.get(f, 0))), ("Ты служишь: %s." % _factions.get_faction(p.liege).name) if p.liege != "" else "Ты вольный наёмник."])
+	if p.liege == f:
+		var rl: Dictionary = clans.ruler_of(f)
+		heading("Ты вассал %s" % _factions.get_faction(f).gen)
+		if not rl.is_empty():
+			note("Сюзерен: %s." % rl.name)
+		note("Жалованье: %d золота в день. Враги сюзерена — твои враги. Когда он созывает войска, будь рядом с осаждаемым городом: это награда и шанс получить лен. Неявок: %d из 3." % [clans.pay(), p.strikes])
+		if p.summons is Dictionary:
+			note("Зов: %s%s." % [state.map.settlement_by_id(p.summons.tid).get("name", "?"), " (ты участвовал)" if p.summons.joined else ", срок до дня %d" % ceili(p.summons.until / 24.0)])
+		row("Оставить службу", "Отношения с фракцией ухудшатся.", [{"text": "Уйти", "call": func(): clans.leave()}])
+	elif p.liege == "":
+		var why: String = clans.oath_why(f)
+		heading("Принести присягу")
+		note("Нужен %d уровень героя и отношения от %d. Сюзерен платит жалованье и награждает за походы, но враги фракции станут твоими." % [clans.OATH_LVL, clans.OATH_REL])
+		row("Присягнуть", why, [{"text": "Присягнуть", "disabled": why != "", "call": func(): _say(clans.swear(f))}])
+	else:
+		note("Сначала оставь службу у %s." % _factions.get_faction(p.liege).gen)
+	heading("Мир")
+	for x in state.wars.factions_alive():
+		var foes: Array = []
+		for k in state.wars.wars:
+			var parts: PackedStringArray = k.split("|")
+			if x in parts:
+				foes.append(_factions.get_faction(parts[1] if parts[0] == x else parts[0]).name)
+		var rl: Dictionary = clans.ruler_of(x)
+		var head: String = rl.name if not rl.is_empty() else ("междуцарствие" if clans.kingless(x) else "")
+		row("%s · владений %d" % [_factions.get_faction(x).name, state.wars.hold_of(x).all], "%s%sвоюет с: %s · родов %d" % [head, " · " if head != "" else "", ", ".join(foes) if not foes.is_empty() else "мир", clans.of_faction(x).size()])
 
 func _say(why: String) -> void:
 	if why != "":

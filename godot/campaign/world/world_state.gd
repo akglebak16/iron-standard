@@ -12,6 +12,7 @@ const WorldWars = preload("res://campaign/world/world_wars.gd")
 const WorldSiege = preload("res://campaign/world/world_siege.gd")
 const WorldQuests = preload("res://campaign/world/world_quests.gd")
 const WorldUndead = preload("res://campaign/world/world_undead.gd")
+const WorldClans = preload("res://campaign/world/world_clans.gd")
 const WorldCompanions = preload("res://campaign/world/world_companions.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
@@ -48,6 +49,7 @@ var wars: WorldWars
 var siege: WorldSiege
 var quests: WorldQuests
 var undead: WorldUndead
+var clans: WorldClans
 var companions: WorldCompanions
 var companion_catalog := CompanionCatalog.new()
 var journal: Array = []  # [{day, text}]
@@ -82,6 +84,14 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.undead.announced.connect(state.log_world)
 	state.undead.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai.undead = state.undead
+	state.clans = WorldClans.new(state.roster, state.wars, state.player)
+	state.clans.init()
+	state.clans.ruler_day()
+	state.clans.announced.connect(state.log_world)
+	state.clans.message.connect(state.log_world)
+	state.wars.clans = state.clans
+	state.ai.clans = state.clans
+	state.roster.clans_on = true
 	assert(state.companion_catalog.load_data())
 	state.quests = WorldQuests.new(state.map, state.market.goods, state.roster.catalog, state.wars, state.roster.rng)
 	state.quests.message.connect(state.log_world)
@@ -176,6 +186,8 @@ func hour_tick() -> void:
 	wars.war_hour()
 	undead.day = clock.day
 	undead.hour_tick()
+	if clock.hour == 12:
+		clans.refill()
 	if not player.away and player.busy != "battle":
 		quests.scout_tick(player)
 		var heal := (0.035 if player.inside else (0.006 if player.has_route() else 0.014)) * (1.0 + (float(player.hero.get("int", 1)) - 1.0) * 0.04 + float(player_effects().get("heal", 0.0)))
@@ -195,6 +207,7 @@ func log_world(text: String) -> void:
 
 func _day_tick() -> void:
 	wars.war_day()
+	clans.day_tick()
 	undead.day_tick()
 	quests.gen_boards(clock.day)
 	companions.day(player, clock.day)

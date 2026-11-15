@@ -25,6 +25,7 @@ var map: WorldMap
 var rng := RandomNumberGenerator.new()
 var catalog := Catalog.new()
 var factions := FactionCatalog.new()
+var clans_on := false  # houses refill lords themselves (WorldClans.refill)
 var info := {}  # troop id -> {tier, mounted, pw}
 var parties: Array = []
 var _next_party_id := 1000000  # party ids stay clear of settlement ids
@@ -160,7 +161,7 @@ func hour_tick(hour: int) -> void:
 			var hs := map.settles.filter(func(s): return s.fac == f and s.kind != "camp")
 			if n < VASSALS_PER_FACTION and not hs.is_empty():
 				spawn_vassal(f, pick(hs), rint(VAS_NEW_MIN, VAS_NEW_MAX))
-	if hour == 12:
+	if hour == 12 and not clans_on:
 		for f in Rules.REAL_FACTIONS:
 			var n := parties.filter(func(p): return p.kind == "lord" and p.fac == f).size()
 			var hs := map.settles.filter(func(s): return s.fac == f and s.kind != "village")

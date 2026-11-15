@@ -167,11 +167,26 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 		actions = [{"id": "flee", "text": "Бежать"}, {"id": "auto", "text": "Рассчитать бой"}, {"id": "fight", "text": "В бой!", "primary": true}]
 	else:
 		actions = [{"id": "greet", "text": "Разойтись с миром", "primary": true}, {"id": "attack", "text": "Напасть"}]
+	if party.kind == "lord" and not state.clans.clan_of(party).is_empty():
+		var house: Dictionary = state.clans.clan_of(party)
+		sub += " · %s" % house.name
+		actions.push_front({"id": "parley", "text": "Переговоры с родом"})
 	_dialog.open(title, sub, AutoBattle.relative_power(state.player.troops, party.troops, state.roster.info), rows, actions)
 
 func _on_encounter_choice(action: String) -> void:
 	var p := _meeting
 	match action:
+		"parley":
+			_open_parley(p)
+		"parley_back":
+			_on_party_met(p, false)
+		"lure":
+			var r: Dictionary = state.clans.lure_try(p)
+			hud.show_notice(r.txt)
+			if r.ok or not Rules.hostile_to_player(p, state.player.rel):
+				_end_meeting(3.0)
+			else:
+				_on_party_met(p, false)
 		"greet":
 			_end_meeting(3.0)
 		"attack":
@@ -191,6 +206,22 @@ func _on_encounter_choice(action: String) -> void:
 			_finish_auto(p)
 		"fight":
 			_start_battle(p)
+
+func _open_parley(p: Dictionary) -> void:
+	var clans = state.clans
+	var c: Dictionary = clans.clan_of(p)
+	var t: Dictionary = clans.TRAITS[c.trait]
+	var why: String = clans.lure_why(p)
+	var loy := int(c.loy)
+	var rows: Array = [{"name": "%s род: %s" % [t.n, t.d], "n": clans.members(c).size()},
+		{"name": "Верность: %s" % ("крепкая" if loy > 75 else ("обычная" if loy > 50 else ("шаткая" if loy > 30 else "на исходе"))), "n": clans.force(c)}]
+	var actions: Array = [{"id": "parley_back", "text": "Назад"}]
+	var sub: String = why
+	if why == "":
+		var ch: float = clans.lure_chance(c)
+		sub = "Весь род перейдёт к твоему сюзерену. Задаток %d, при отказе пропадёт половина. Шансы: %s" % [clans.lure_cost(c), "хорошие" if ch > 0.55 else ("средние" if ch > 0.3 else "низкие")]
+		actions.append({"id": "lure", "text": "Предложить %d" % clans.lure_cost(c), "primary": true})
+	_dialog.open(c.name, sub, ["", Color.WHITE], rows, actions)
 
 func _end_meeting(cooldown: float) -> void:
 	_siege_hold = false
