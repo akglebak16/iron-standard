@@ -11,12 +11,16 @@ const RoadLayer = preload("res://apps/godot/presentation/campaign/road_layer.gd"
 const RiverLayer = preload("res://apps/godot/presentation/campaign/river_layer.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
 const VIGNETTE := preload("res://apps/godot/presentation/campaign/vignette.gdshader")
+const StaticCache = preload("res://apps/godot/presentation/campaign/static_map_cache.gd")
 
 signal ready_to_show
 
 var map: RefCounted
 var terrain: Node2D
 var _settlement_layer: Node2D
+## Diagnostic reference only; the normal game always caches immutable artwork.
+var cache_static_artwork := true
+var _static_cache: Node2D
 
 func build(seed_value: int) -> void:
 	var data := EuropeData.new()
@@ -27,21 +31,27 @@ func build(seed_value: int) -> void:
 
 func build_from(world_map: RefCounted) -> void:
 	map = world_map
+	var artwork: Node2D = self
+	if cache_static_artwork and DisplayServer.get_name() != "headless":
+		_static_cache = StaticCache.new()
+		add_child(_static_cache)
+		_static_cache.configure(Vector2i(Generator.WW, Generator.WH))
+		artwork = _static_cache.artwork
 	terrain = TerrainLayer.new()
-	add_child(terrain)
-	terrain.painted.connect(func(): ready_to_show.emit())
+	artwork.add_child(terrain)
+	terrain.painted.connect(_finish_static_artwork)
 	terrain.build(map.terrain)
 	var farms := FarmLayer.new()
-	add_child(farms)
+	artwork.add_child(farms)
 	farms.build(map.terrain, map.paths.road, map.settles)
 	var relief := ReliefLayer.new()
-	add_child(relief)
+	artwork.add_child(relief)
 	relief.build(map.terrain)
 	var roads := RoadLayer.new()
-	add_child(roads)
+	artwork.add_child(roads)
 	roads.build(map.terrain, map.roads, map.settles)
 	var rivers := RiverLayer.new()
-	add_child(rivers)
+	artwork.add_child(rivers)
 	rivers.build(map.terrain)
 	var vignette := ColorRect.new()
 	vignette.size = Vector2(Generator.WW, Generator.WH)
@@ -49,11 +59,17 @@ func build_from(world_map: RefCounted) -> void:
 	var material := ShaderMaterial.new()
 	material.shader = VIGNETTE
 	vignette.material = material
-	add_child(vignette)
+	artwork.add_child(vignette)
 	var settlements := SettlementLayer.new()
 	add_child(settlements)
 	settlements.build(map.settles)
 	_settlement_layer = settlements
+
+func _finish_static_artwork() -> void:
+	if _static_cache != null:
+		await _static_cache.bake()
+		terrain = null
+	ready_to_show.emit()
 
 ## Owners changed (a capture): redraw banners and sprites.
 func refresh_settlements() -> void:

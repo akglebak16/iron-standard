@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { analyze, tokens, structureIssues, manifestIssues, contractChangeIssues, ignoredSourceIssues, covers } = require('./architecture.cjs');
+const { analyze, tokens, structureIssues, manifestIssues, contractChangeIssues, ignoredSourceIssues, documentationIssues, covers } = require('./architecture.cjs');
 const manifest = {modules:[
   {name:'a',prefix:'core/a/',allowed:['b'],public:['core/a/api/']},
   {name:'b',prefix:'core/b/',allowed:[],public:['core/b/api/']},
@@ -75,4 +75,11 @@ assert(ignoredSourceIssues(['core/troops/data/catalog.gd'])[0].includes('ignored
 for(const source of ['var target_index = 4','unit.set("target_index", 4)']) {
  assert(analyze(new Map([['core/a/x.gd',source]]),{...manifest,retiredSymbols:[{prefix:'core/a/',names:['target_index']}]}).some(i=>i.rule==='retired-symbol'));
 }
+const docs = ['docs/README.md','docs/architecture/BLUEPRINT.md','docs/architecture/MIGRATION.md','docs/architecture/DEVELOPMENT.md'];
+const docFixture = new Map(docs.map(f=>[f,'content']));
+for (const entry of ['../AGENTS.md','../CLAUDE.md']) docFixture.set(entry,docs.map(f=>`godot/${f}`).join('\n'));
+assert.deepEqual(documentationIssues(docFixture),[]);
+assert(documentationIssues(new Map([...docFixture,['ARCHITECTURE.md','obsolete rules']])).some(e=>e.includes('Retired')));
+assert(documentationIssues(new Map([...docFixture].filter(([f])=>!f.endsWith('BLUEPRINT.md')))).some(e=>e.includes('Missing canonical')));
+assert(documentationIssues(new Map([...docFixture,['../CLAUDE.md','See old rules']])).some(e=>e.includes('CLAUDE.md must refer')));
 console.log('Architecture checker negative tests passed');

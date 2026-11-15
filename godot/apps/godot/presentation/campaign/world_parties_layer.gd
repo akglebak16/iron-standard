@@ -6,6 +6,7 @@ const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 const OriginalArt = preload("res://ui/original_art.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
+const DRAW_MARGIN := 64.0 # banner, hostile ring and shadow extend beyond the party centre
 
 var roster: RefCounted
 var player: RefCounted
@@ -19,16 +20,18 @@ func build(party_roster: RefCounted, player_party: RefCounted) -> void:
 		return
 
 func _process(_delta: float) -> void:
-	queue_redraw()
+	if is_visible_in_tree(): queue_redraw()
 
 func _draw() -> void:
 	if roster == null:
 		return
-	var parties: Array = roster.parties.duplicate()
+	var visible_area: Rect2 = (get_global_transform_with_canvas().affine_inverse() * get_viewport_rect()).grow(DRAW_MARGIN)
+	var parties: Array = []
+	for party in roster.parties:
+		if not party.hide and party.kind != "camp" and visible_area.has_point(Vector2(party.x, party.y)):
+			parties.append(party)
 	parties.sort_custom(func(a, b): return a.y < b.y)  # lower parties are drawn on top
 	for p in parties:
-		if p.hide or p.kind == "camp":
-			continue
 		_draw_party(p)
 
 func _draw_party(p: Dictionary) -> void:

@@ -3,23 +3,23 @@
   "files": [
     {
       "source": "ARCHITECTURE.md",
-      "destination": "ARCHITECTURE.md"
+      "destination": "docs/architecture/DEVELOPMENT.md"
     },
     {
       "source": "ASSETS.md",
-      "destination": "ASSETS.md"
+      "destination": "docs/ASSETS.md"
     },
     {
       "source": "DEPENDENCIES.md",
-      "destination": "DEPENDENCIES.md"
+      "destination": "docs/DEPENDENCIES.md"
     },
     {
       "source": "MIGRATION_CHECKLIST.md",
-      "destination": "MIGRATION_CHECKLIST.md"
+      "destination": "docs/modules/PARITY_CHECKLIST.md"
     },
     {
       "source": "README.md",
-      "destination": "README.md"
+      "destination": "docs/README.md"
     },
     {
       "source": "app/aftermath_text.gd",
@@ -179,7 +179,7 @@
     },
     {
       "source": "battle/POST_PARITY_PLAN.md",
-      "destination": "docs/modules/battle/POST_PARITY_PLAN.md"
+      "destination": "docs/benchmarks/battle-asset-history.md"
     },
     {
       "source": "battle/application/factory.gd",

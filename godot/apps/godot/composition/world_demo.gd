@@ -52,6 +52,7 @@ var _waiting_return := false
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
+var cache_static_artwork := true
 
 func _ready() -> void:
 	var loading := Label.new()
@@ -88,6 +89,7 @@ func _ready() -> void:
 		state = WorldState.create(seed_value, data, GameOptions.culture, ContentLoader.registry())
 		state.player.hero.name = GameOptions.hero_name
 	map_view = MapView.new()
+	map_view.cache_static_artwork = cache_static_artwork
 	add_child(map_view)
 	map_view.build_from(state.map)
 	var factions := FactionCatalog.new()

@@ -12,6 +12,17 @@ const NATIVE_VALUE_HEADERS = new Set(['algorithm','array','cmath','cstddef','cst
 // A file entry grants exactly that file, not similarly named internal scripts.
 const covers = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
 const ignoredSourceIssues = paths => paths.filter(Boolean).map(file => `Source/inventory file is ignored by Git: ${file}`);
+const REQUIRED_DOCS = ['docs/README.md','docs/architecture/BLUEPRINT.md','docs/architecture/MIGRATION.md','docs/architecture/DEVELOPMENT.md'];
+const RETIRED_DOCS = ['ARCHITECTURE.md','MIGRATION_CHECKLIST.md','ASSETS.md','DEPENDENCIES.md','README.md','docs/modules/battle/POST_PARITY_PLAN.md'];
+function documentationIssues(files) {
+  const errors = [];
+  for (const file of REQUIRED_DOCS) if (!files.has(file)) errors.push(`Missing canonical Godot documentation: ${file}`);
+  for (const file of RETIRED_DOCS) if (files.has(file)) errors.push(`Retired Godot documentation returned: ${file}`);
+  for (const file of ['../AGENTS.md','../CLAUDE.md']) {
+    for (const doc of REQUIRED_DOCS) if (!(files.get(file) || '').includes(`godot/${doc}`)) errors.push(`${file} must refer to godot/${doc}`);
+  }
+  return errors;
+}
 function manifestIssues(manifest) {
   const errors = [], names = new Set(), prefixes = [];
   const safe = p => typeof p === 'string' && p.length > 0 && !p.startsWith('/') && !p.includes('\\') && !p.includes(':') && !p.split('/').some(s => s === '..' || s === '.');
@@ -262,6 +273,8 @@ function check() {
   for (const e of exceptions.values()) if (!e.reason || !Number.isInteger(e.removeByStage)) throw new Error(`Invalid exception: ${e.key}`);
   const active = new Set(issues.map(i => i.key));
   const errors = [...structureIssues(directories, manifest), ...issues.filter(i => !exceptions.has(i.key)).map(i => i.key)];
+  const docFiles = new Map([...REQUIRED_DOCS,...RETIRED_DOCS,'../AGENTS.md','../CLAUDE.md'].filter(f=>fs.existsSync(path.join(ROOT,f))).map(f=>[f,fs.readFileSync(path.join(ROOT,f),'utf8')]));
+  errors.push(...documentationIssues(docFiles));
   for (const key of exceptions.keys()) if (!active.has(key)) errors.push(`Remove resolved exception: ${key}`);
   const inventory = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/architecture/file-inventory.json'), 'utf8'));
   for (const file of inventory.files) if (!fs.existsSync(path.join(ROOT, file.destination))) errors.push(`Lost migration file: ${file.source} -> ${file.destination}`);
@@ -301,4 +314,4 @@ function check() {
   console.log(`Architecture passed: ${files.size} source/resources, ${exceptions.size} explicit migration exceptions`);
 }
 if (require.main === module) check();
-module.exports = { tokens, collect, analyze, structureIssues, manifestIssues, contractChangeIssues, ignoredSourceIssues, covers, check };
+module.exports = { tokens, collect, analyze, structureIssues, manifestIssues, contractChangeIssues, ignoredSourceIssues, documentationIssues, covers, check };

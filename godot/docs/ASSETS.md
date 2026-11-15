@@ -18,7 +18,7 @@
 | `ui/assets/fonts/AlegreyaSC-Bold.ttf` | [Google Fonts / Alegreya SC](https://github.com/google/fonts/tree/main/ofl/alegreyasc) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSC-OFL.txt` включена |
 | `ui/assets/fonts/AlegreyaSans-Medium.ttf`, `AlegreyaSans-Bold.ttf` | [Google Fonts / Alegreya Sans](https://github.com/google/fonts/tree/main/ofl/alegreyasans) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSans-OFL.txt` включена |
 
-- Звук кладём в `<модуль>/presentation/audio/assets/`, картинки и сцены — рядом с кодом владельца (`terrain/wall/`). Общего каталога ассетов нет, пока второй потребитель не появился.
+- Звук кладём в `apps/godot/presentation/<режим>/audio/assets/`, картинки и сцены — рядом с кодом владельца (`terrain/wall/`). Общего каталога ассетов нет, пока второй потребитель не появился.
 - Файл `*.import` коммитим вместе с ассетом, кэш `.godot/` — нет. `node godot/tools/test.cjs` перед тестами сам запускает импорт.
 - Если ассет сделан скриптом, скрипт лежит в `tools/battle/`, а результат всё равно можно править руками.
 - Скриншоты и эталоны для сравнения (`tools/baseline/`) скрыты от импорта файлом `.gdignore`.
