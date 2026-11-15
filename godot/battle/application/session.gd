@@ -222,18 +222,52 @@ func snapshot() -> Dictionary:
 			"armor": _hero.armor, "block": _hero.block_chance, "slot": _hero.hero_weapon.get("slot", ""),
 			"weapon_names": _weapon_names.duplicate()}}
 
+## Appearance copies are cached: only the hero changes looks (weapon swap), and a deep copy of every unit's look
+## every frame was a large part of a mass battle's frame time.
+var _looks := {}
+
+func _look(unit: Unit) -> Dictionary:
+	if unit.hero:
+		return unit.appearance.duplicate(true)
+	var cached = _looks.get(unit.id)
+	if cached == null:
+		cached = unit.appearance.duplicate(true)
+		_looks[unit.id] = cached
+	return cached.duplicate() # a shallow copy keeps every snapshot detached
+
+var _templates := {}
+
+## A fresh dictionary per unit and frame (snapshots stay detached), copied from a per-unit template of the
+## fields that never change, which is much cheaper than building all of them every frame.
 func _unit_values(unit: Unit) -> Dictionary:
-	return {
-		"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
-		"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
-		"group_kind": unit.group_kind, "leader": unit.leader,
-		"companion_name": unit.name if unit.companion else "",
-		"health_fraction": clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0,
-		"dead": unit.dead, "gone": unit.gone, "mounted": unit.mounted, "fleeing": unit.fleeing,
-		"facing": unit.facing, "speed": unit.velocity.length(), "blocking": unit.blocking,
-		"windup": unit.attack_windup if unit.hero else unit.ai_windup,
-		"look": unit.appearance.duplicate(true),
-	}
+	var template = _templates.get(unit.id)
+	if template == null or unit.hero:
+		template = {
+			"id": unit.id, "position": unit.position, "radius": unit.collision_radius,
+			"side": unit.side, "faction": unit.faction, "hero": unit.hero, "companion": unit.companion,
+			"group_kind": unit.group_kind, "leader": unit.leader,
+			"companion_name": unit.name if unit.companion else "",
+			"health_fraction": 0.0, "dead": false, "gone": false, "mounted": unit.mounted, "fleeing": false,
+			"facing": 0.0, "speed": 0.0, "blocking": false, "windup": 0.0, "look": {},
+		}
+		if not unit.hero:
+			_templates[unit.id] = template
+	var values: Dictionary = template.duplicate()
+	values.position = unit.position
+	values.radius = unit.collision_radius
+	values.group_kind = unit.group_kind
+	values.leader = unit.leader
+	values.mounted = unit.mounted
+	values.health_fraction = clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0
+	values.dead = unit.dead
+	values.gone = unit.gone
+	values.fleeing = unit.fleeing
+	values.facing = unit.facing
+	values.speed = unit.velocity.length()
+	values.blocking = unit.blocking
+	values.windup = unit.attack_windup if unit.hero else unit.ai_windup
+	values.look = _look(unit)
+	return values
 
 ## Follows the hero; once the hero is down the camera shows the middle of the fighting.
 func _camera_target(focus_sum: Array, focus_count: Array) -> Vector2:

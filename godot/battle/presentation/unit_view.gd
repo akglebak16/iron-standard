@@ -26,6 +26,7 @@ const FALL_SINK := 12.0
 const CORPSE_TINT := Color(0.66, 0.61, 0.57, 0.89)
 const SHADOW := Color(0.12, 0.09, 0.06, 0.29)
 const FLEEING_OPACITY := 0.75
+const THRUST_KINDS := {"spear": true, "halberd": true, "lance": true, "bow": true, "xbow": true, "throw": true}
 
 var _art := Art.new()
 var _markers := UnitMarkers.new()
@@ -33,6 +34,9 @@ var _time := 0.0
 var _falls: Dictionary = {}
 var _flashes: Dictionary = {}
 var _attacks: Dictionary = {}
+## Set by the view: a corpse that has finished falling is painted once into the ground bake.
+var on_settled := Callable()
+var _baked: Dictionary = {} # unit id -> [unit, headless]
 
 func advance(dt: float, events: Array[Dictionary]) -> void:
 	_time += dt
@@ -55,6 +59,13 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				if not event.target_hero and not event.target_companion:
 					_falls[event.target_id] = _time
 
+func baked_corpses() -> Array:
+	return _baked.values()
+
+## Paints a settled corpse (used by the ground bake).
+func draw_corpse(canvas: CanvasItem, unit: Dictionary, headless: bool) -> void:
+	_draw_unit(canvas, unit, true, headless)
+
 func has_falling_units() -> bool:
 	for started in _falls.values():
 		if _time - started < FALL_SECONDS:
@@ -68,11 +79,25 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 		if unit.gone or not visible.has_point(unit.position):
 			continue
 		if unit.dead:
-			if not unit.hero and not unit.companion:
-				_draw_unit(canvas, unit, true, headless_units.has(unit.id))
+			if not unit.hero and not unit.companion and not _baked.has(unit.id):
+				var headless: bool = headless_units.has(unit.id)
+				_draw_unit(canvas, unit, true, headless)
+				if on_settled.is_valid() and _time - float(_falls.get(unit.id, _time - FALL_SECONDS)) >= FALL_SECONDS:
+					_baked[unit.id] = [unit, headless]
+					on_settled.call(unit, headless)
 		else:
 			living.append(unit)
-	living.sort_custom(func(a: Dictionary, b: Dictionary): return a.position.y < b.position.y)
+	# Depth order by y with a native sort of packed keys (y in 1/16 px, then the list position).
+	var keys := PackedInt64Array()
+	keys.resize(living.size())
+	for i in living.size():
+		keys[i] = (int(floorf(living[i].position.y * 16.0)) + 1048576) * 65536 + i
+	keys.sort()
+	var ordered: Array[Dictionary] = []
+	ordered.resize(living.size())
+	for i in keys.size():
+		ordered[i] = living[keys[i] % 65536]
+	living = ordered
 	var plant_index := 0
 	for unit in living:
 		while plant_index < vegetation.size() and vegetation[plant_index].position.y < unit.position.y:
@@ -127,7 +152,7 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 				motion = SWING_ANGLE * clampf((float(_attacks[unit.id]) - _time) / ATTACK_SPRING_SECONDS, 0.0, 1.0)
 			if unit.blocking:
 				motion = BLOCK_ANGLE
-			if appearance.weapon_kind in ["spear", "halberd", "lance", "bow", "xbow", "throw"]:
+			if THRUST_KINDS.has(appearance.weapon_kind):
 				offset.x += absf(motion) * WEAPON_THRUST
 			else:
 				weapon_rotation = motion

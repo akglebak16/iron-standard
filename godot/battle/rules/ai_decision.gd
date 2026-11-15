@@ -5,7 +5,11 @@ const Unit = preload("res://battle/model/unit.gd")
 const Group = preload("res://battle/model/group.gd")
 
 static func plan(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2) -> Dictionary:
-	var slot := group.slot_position(unit, arena_size)
+	plan_into(unit, group, enemy, arena_size, group.slot_position(unit, arena_size))
+	return {"mode": unit.ai_mode, "destination": unit.plan_destination, "face": unit.plan_face, "speed_scale": unit.plan_speed, "target_distance": unit.plan_distance}
+
+## Same decision without allocating: the result goes to unit.ai_mode and unit.plan_*.
+static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2, slot: Vector2) -> void:
 	var slot_distance := unit.position.distance_to(slot)
 	var distance := unit.position.distance_to(enemy.position) if enemy != null else INF
 	var reach := unit.collision_radius + (enemy.collision_radius if enemy != null else 0.0) + unit.melee_reach
@@ -54,4 +58,8 @@ static func plan(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2) -> 
 		if destination.x < margin or destination.x > arena_size.x - margin or destination.y < margin or destination.y > arena_size.y - margin:
 			destination = arena_size * 0.5
 		speed_scale = Config.AI_SKIRMISH_SPEED_MULTIPLIER
-	return {"mode": mode, "destination": destination, "face": face, "speed_scale": speed_scale, "target_distance": distance}
+	unit.ai_mode = mode
+	unit.plan_destination = destination
+	unit.plan_face = face
+	unit.plan_speed = speed_scale
+	unit.plan_distance = distance

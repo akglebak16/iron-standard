@@ -24,8 +24,10 @@ static func current(battle: State, unit: Unit) -> Unit:
 	var target: Unit = battle.units[unit.target_index]
 	return target if target.side != unit.side and not target.dead and not target.gone else null
 
-static func choose(battle: State, unit: Unit) -> Unit:
+static func choose(battle: State, unit: Unit, index: SpatialIndex = null) -> Unit:
 	var previous: Unit = current(battle, unit)
+	if index != null:
+		return index.best_target(unit, previous)
 	var best: Unit = null
 	var best_distance := INF
 	var melee_cavalry := unit.mounted and unit.attack_range <= 0.0
@@ -44,11 +46,11 @@ static func choose(battle: State, unit: Unit) -> Unit:
 			best = enemy
 	return best
 
-static func refresh(battle: State, unit: Unit, dt: float, rng: RandomNumberGenerator) -> Unit:
+static func refresh(battle: State, unit: Unit, dt: float, rng: RandomNumberGenerator, index: SpatialIndex = null) -> Unit:
 	unit.target_timer -= dt
 	var target := current(battle, unit)
 	if unit.target_timer <= 0.0 or unit.target_index >= 0 and target == null:
 		unit.target_timer = Config.RETARGET_MIN_SECONDS + rng.randf() * Config.RETARGET_RANDOM_SECONDS
-		target = choose(battle, unit)
+		target = choose(battle, unit, index)
 		unit.target_index = target.battle_index if target != null else -1
 	return target
