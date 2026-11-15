@@ -19,6 +19,7 @@ const BLOOD_COLORS := {
 }
 const STONE_SPARK_OFFSET := Vector2(0, -6)
 const STONE_DUST_PUFFS := 4
+const GATE_DUST_PUFFS := 10
 const STONE_PEBBLES := 4
 const STONE_CRATER_RADII := Vector2(17, 9)
 const STONE_CRATER_COLOR := Color(40 / 255.0, 30 / 255.0, 20 / 255.0, 0.45)
@@ -182,6 +183,11 @@ func advance(dt: float, events: Array[Dictionary]) -> Array[Dictionary]:
 				_remember({"position": event.position, "rubble": pebbles})
 			Event.Kind.PROJECTILE_MISSED:
 				_remember({"position": event.position, "trajectory": event.trajectory, "throwing": event.throwing})
+			Event.Kind.GATE_BROKEN:
+				# gateBreak: ten puffs of dust across the fallen gate.
+				var half: float = (event.gap.y - event.gap.x) * 0.5
+				for i in GATE_DUST_PUFFS:
+					_emit(Particle.DUST, event.position + Vector2(_rng.randf_range(-24, 24), _rng.randf_range(-half, half)), DUST_COLOR)
 	return labels
 
 func has_particles() -> bool:

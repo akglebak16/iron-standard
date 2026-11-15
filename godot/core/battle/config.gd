@@ -6,7 +6,26 @@ const ARENA_SIZE := Vector2(2600, 1700)
 const DEFAULT_BIOME := "grass"
 const SIEGE_WALL_RIGHT_OFFSET := 980.0
 const SIEGE_WALL_HALF_WIDTH := 22.0
-const SIEGE_GAP_OFFSETS := [Vector2(-80, 80), Vector2(-520, -425), Vector2(425, 520)] # Order breaks equal-distance ties.
+# siegeSetup in src/03_battle.js: a town has a main gate and two side gates, a castle one heavy gate; [top, bottom, hp]
+# from the arena middle. Gates are shut and must be battered down. Order breaks equal-distance ties.
+const SIEGE_TOWN_GATES := [Vector3(-75, 75, 900), Vector3(-520, -440, 420), Vector3(440, 520, 420)]
+const SIEGE_CASTLE_GATES := [Vector3(-70, 70, 1400)]
+const SIEGE_CASTLE_WALL_HALF_WIDTH := 32.0
+const SIEGE_GATE_MIN_HP := 120.0
+const SIEGE_GATE_DAMAGE_WEAKENING := 0.7 # Battered walls: gates keep 30% of their strength.
+const SIEGE_GATE_SKILL_WEAKENING := 0.4 # Companion siegecraft at its cap takes 40% more.
+const SIEGE_GATE_BASH_SHARE := 0.35 # Share of a fighter's damage per second that goes into the gate.
+const SIEGE_GATE_BASH_REACH := 14.0
+const SIEGE_GATE_HIT_FLASH := 0.3
+const SIEGE_GATE_SORTIE_SECONDS := 45.0 # The garrison opens the main gate and comes out to fight.
+const SIEGE_GATE_SORTIE_MIN_INFANTRY := 10
+const SIEGE_BREACH_MIN_DAMAGE := 0.3 # A badly battered wall has an open breach.
+const SIEGE_BREACH_BASE_WIDTH := 60.0
+const SIEGE_BREACH_DAMAGE_WIDTH := 80.0
+const SIEGE_BREACH_OFFSET := 230.0
+const SIEGE_BREACH_SEED_OFFSET := 3
+const SIEGE_ROUTE_ID_SPREAD := 23 # (id * 37) % 23 spreads attackers between equally close gaps.
+const SIEGE_ROUTE_ID_FACTOR := 37
 const SIEGE_WALL_RADIUS_PADDING := 0.8
 const SIEGE_GAP_RADIUS_PADDING := 0.75
 const SIEGE_INFANTRY_OFFSET := 80.0
@@ -14,7 +33,6 @@ const SIEGE_ARCHER_OFFSET := 52.0
 const SIEGE_CAVALRY_RIGHT_OFFSET := 380.0
 const SIEGE_DEFENDER_MORALE := 28.0
 const SIEGE_SKILL_MAX := 0.9
-const SIEGE_DAMAGE_GATE_WIDENING := 60.0 # Each side of the central breach at fully battered walls.
 # src/03c_siegedef.js: stones and boiling oil from the wall.
 const SIEGE_DEFAULT_STONES := 10
 const SIEGE_DEFAULT_OIL := 2

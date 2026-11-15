@@ -30,7 +30,7 @@ static var use_wall_scenes := true
 static var use_original_ground := true
 var _size := Vector2.ZERO
 
-func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: String) -> void:
+func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: String, gate_gaps: Array = []) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var palette: Array = PALETTES.get(biome, PALETTES[Config.DEFAULT_BIOME])
@@ -55,7 +55,7 @@ func configure(size: Vector2, walls: Array[Rect2], seed_value: int, biome: Strin
 	z_index = BACKGROUND_ORDER
 	if not walls.is_empty():
 		var wall: WallView = WallSceneView.new() if use_wall_scenes else WallView.new()
-		wall.configure(walls, seed_value)
+		wall.configure(walls, seed_value, gate_gaps)
 		add_child(wall)
 
 func _draw() -> void:

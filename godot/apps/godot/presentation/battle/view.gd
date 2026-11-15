@@ -83,7 +83,8 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_music_enabled = music_enabled
 	_impacts.blood_enabled = blood_enabled
 	var frame := _simulation.render_snapshot()
-	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
+	var gate_gaps: Array = frame.get("wall_defense", {}).get("gates", []).map(func(g): return g.gap)
+	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome, gate_gaps)
 	_vegetation.configure(session.vegetation_layout(), biome, terrain_seed)
 	add_child(_terrain)
 	add_child(_bake) # Own the unconfigured node in headless diagnostics too.

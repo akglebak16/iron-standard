@@ -11,6 +11,7 @@ const MANUAL_ZOOM_RANGE := Vector2(0.55, 2.0)
 const ZOOM_IN_FACTOR := 1.1
 const ZOOM_OUT_FACTOR := 0.91
 const HIT_SHAKE_SECONDS := 0.18
+const GATE_SHAKE_SECONDS := 0.45 # gateBreak: B.shake = 0.45
 const HIT_SHAKE_SCREEN_PIXELS := 3.0
 
 var _arena_size := Vector2.ZERO
@@ -35,6 +36,8 @@ func advance_shake(dt: float, events: Array[Dictionary]) -> void:
 	for event in events:
 		if event.kind == Event.Kind.HIT and event.target_hero:
 			_shake_remaining = HIT_SHAKE_SECONDS
+		elif event.kind == Event.Kind.GATE_BROKEN:
+			_shake_remaining = maxf(_shake_remaining, GATE_SHAKE_SECONDS)
 	if _shake_remaining > 0.0:
 		var amplitude := HIT_SHAKE_SCREEN_PIXELS / zoom.x
 		offset = Vector2(_shake_rng.randf_range(-amplitude, amplitude), _shake_rng.randf_range(-amplitude, amplitude))
