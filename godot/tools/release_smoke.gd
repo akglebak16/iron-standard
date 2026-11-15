@@ -7,6 +7,7 @@ const World = preload("res://core/campaign/world/world_state.gd")
 const Factory = preload("res://core/battle/application/factory.gd")
 const Bridge = preload("res://core/campaign/application/battle_encounter.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
+const CameraTransition = preload("res://tests/integration/app/camera_transition_check.gd")
 
 func _ready() -> void:
 	var data := Europe.new()
@@ -60,6 +61,10 @@ func _ready() -> void:
 	session = null
 	bridge = null
 	await get_tree().process_frame
+	var camera_error := await CameraTransition.run(get_tree())
+	if not camera_error.is_empty():
+		fail(camera_error)
+		return
 	print("Release smoke passed; debug=%s" % OS.is_debug_build())
 	get_tree().quit(0)
 

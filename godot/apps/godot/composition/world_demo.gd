@@ -406,6 +406,7 @@ func _return_to_map() -> void:
 func _set_world_visible(on: bool) -> void:
 	map_view.visible = on
 	hud.visible = on
+	camera.enabled = on
 	camera.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 
 func _open_panel(tab: String) -> void:

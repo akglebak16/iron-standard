@@ -116,6 +116,8 @@ func _ready() -> void:
 	_journal_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	log_panel.add_child(_journal_label)
 	var initial := _simulation.render_snapshot()
+	# A campaign camera may already own this viewport when the battle is added.
+	camera.make_current()
 	camera.configure(initial.arena_size, initial.hero_position)
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_navigation.configure(_terrain.material)
