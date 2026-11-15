@@ -31,9 +31,11 @@ func show_report(win: bool, subtitle: String, rows: Array, notes: Array, actions
 func render() -> void:
 	sub_label.text = _subtitle
 	clear_body()
+	var table := VBoxContainer.new()
+	table.name = "ResultRows"
+	body.add_child(table)
 	for r in _rows:
 		var line := HBoxContainer.new()
-		line.name = "ResultRow"
 		var key := Label.new()
 		key.text = String(r[0])
 		key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -47,7 +49,7 @@ func render() -> void:
 		if tone != 0:
 			value.add_theme_color_override("font_color", Color("#8fc24f") if tone > 0 else Color("#e0705a"))
 		line.add_child(value)
-		body.add_child(line)
+		table.add_child(line)
 	for text in _notes:
 		note(String(text))
 	var buttons := HBoxContainer.new()

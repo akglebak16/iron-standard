@@ -64,7 +64,7 @@ func _initialize() -> void:
 	window.action_chosen.connect(func(a: String): chosen.append(a))
 	window.show_report(true, "Расчётный бой", rows, ["Чёрный курган разрушен."], [["В меню", "menu"], ["Ещё бой", "again"]])
 	assert(window.visible and window.title_label.text == "Победа")
-	assert(window.body.find_children("ResultRow", "", true, false).size() == rows.size())
+	assert(window.body.find_child("ResultRows", true, false).get_child_count() == rows.size())
 	var again := window.body.find_child("Action_again", true, false) as Button
 	assert(again != null)
 	again.pressed.emit()
