@@ -27,6 +27,11 @@ func _ready() -> void:
 		add_child(voice)
 		_voices.append(voice)
 
+func _exit_tree() -> void:
+	for voice in _voices:
+		voice.stop()
+		voice.stream = null
+
 func advance(dt: float, events: Array[Dictionary], listener: Vector2) -> void:
 	_clock += dt
 	if not enabled:

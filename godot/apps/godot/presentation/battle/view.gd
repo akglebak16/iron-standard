@@ -76,7 +76,7 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
 	_impacts.blood_enabled = blood_enabled
-	var frame := session.snapshot()
+	var frame := _simulation.render_snapshot()
 	_terrain.configure(frame.arena_size, frame.walls, terrain_seed, biome)
 	_vegetation.configure(session.vegetation_layout(), biome, terrain_seed)
 	add_child(_terrain)
@@ -115,7 +115,7 @@ func _ready() -> void:
 	_journal_label.add_theme_color_override("font_color", Color("#2a1d10"))
 	_journal_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
 	log_panel.add_child(_journal_label)
-	var initial := _session.snapshot()
+	var initial := _simulation.render_snapshot()
 	camera.configure(initial.arena_size, initial.hero_position)
 	get_viewport().size_changed.connect(_on_viewport_resized)
 	_navigation.configure(_terrain.material)
@@ -313,20 +313,20 @@ func _set_audio_preferences(effects: bool, music: bool) -> void:
 
 func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame: Dictionary = {}) -> void:
 	# One detached read per completed batch of ticks, reused by HUD and drawing.
-	_frame = frame if not frame.is_empty() else _session.snapshot()
-	if _figure_identity_count != _frame.units.size():
+	_frame = frame if not frame.is_empty() else _simulation.render_snapshot()
+	if _figure_identity_count != _frame.render.size():
+		var portrait_units: Array[Dictionary] = []
+		for index in _frame.render.size(): portrait_units.append(_frame.render.unit_at(index))
 		_figures.configure_identities(_session.unit_appearance_ids(), _figure_seed)
-		_controls.configure_portraits(_frame.units, _session.unit_appearance_ids())
-		_figure_identity_count = _frame.units.size()
-	# Read after the worker has completed, never from asynchronous input handlers.
+		_controls.configure_portraits(portrait_units, _session.unit_appearance_ids())
+		_figure_identity_count = _frame.render.size()
 	for group in 4: _hud_orders[group] = _session.selected_orders(group)
-	_figures.observe_units(_frame.units)
 	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
 	if attract_mode:
 		camera.position = Vector2(_frame.arena_size) * 0.5
 	_navigation.update_frame(_frame, dt)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
-	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished))
+	_feedback.add_dialogue(_dialogue.advance_compact(dt, _frame.render, events, not _frame.walls.is_empty(), finished))
 	_update_status()
 	queue_redraw()
 
@@ -366,13 +366,7 @@ func _draw() -> void:
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
-	if attract_mode:
-		var demo_units: Array[Dictionary] = []
-		for unit in _frame.units:
-			if not unit.hero and not unit.companion: demo_units.append(unit)
-		_figures.draw(self, demo_units, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), true)
-	else:
-		_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha())
+	_figures.draw_compact(self, _frame.render, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), attract_mode)
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)

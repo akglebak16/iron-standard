@@ -15,6 +15,7 @@ const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroStats = preload("res://battle/data/hero_stats.gd")
 const BattleResult = preload("res://battle/rules/result.gd")
 const Event = preload("res://battle/combat_event.gd")
+const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
 const Reinforcements = preload("res://battle/data/reinforcements.gd")
 const WEAPON_SLOT_MELEE := HeroGear.MELEE
 const WEAPON_SLOT_RANGED := HeroGear.RANGED
@@ -209,7 +210,7 @@ func selected_orders(selection: int) -> Array[String]:
 		if not orders.has(order): orders.append(order)
 	return orders
 
-func snapshot() -> Dictionary:
+func snapshot(compact: bool = false) -> Dictionary:
 	# Detached values: presentation cannot mutate simulation through this query.
 	var units: Array[Dictionary] = []
 	var counts := [0, 0]
@@ -231,13 +232,13 @@ func snapshot() -> Dictionary:
 					ally_strength += unit.weight
 					if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
 						group_strength[unit.group_kind] += unit.weight
-		units.append(_unit_values(unit))
+		if not compact: units.append(_unit_values(unit))
 	var camera_target := _camera_target(focus_sum, focus_count)
 	var enemy_center: Vector2 = focus_sum[1] / focus_count[1] if focus_count[1] else Vector2.INF
 	var ready_groups: Array[int] = []
 	for weight in group_strength:
 		ready_groups.append(roundi(weight))
-	return {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(),
+	var frame := {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(),
 		"enemy_center": enemy_center, "reserve": [_state.reserve[0].size(), _state.reserve[1].size()], "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
 		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
 		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,
@@ -245,6 +246,40 @@ func snapshot() -> Dictionary:
 		"hero_status": {"name": str(_hero_profile.get("name", "")), "hp": _hero.hp, "max_hp": _hero.max_hp,
 			"armor": _hero.armor, "block": _hero.block_chance, "slot": _hero.hero_weapon.get("slot", ""),
 			"weapon_names": _weapon_names.duplicate()}}
+	if compact:
+		frame.erase("units")
+		frame.render = _render_snapshot()
+	return frame
+
+var _render_definitions := {}
+
+func _render_snapshot() -> RenderSnapshot:
+	var frame := RenderSnapshot.new()
+	# Dead ordinary soldiers leave the render stream. Their DOWN event owns corpse data.
+	for unit: Unit in _state.units:
+		if unit.gone or (unit.dead and not unit.hero and not unit.companion): continue
+		var definition: Dictionary = _render_definitions.get(unit.id, {})
+		if definition.is_empty() or unit.hero:
+			definition = {"id": unit.id, "side": unit.side, "faction": unit.faction,
+				"hero": unit.hero, "companion": unit.companion,
+				"companion_name": unit.name if unit.companion else "", "look": unit.appearance.duplicate(true)}
+			RenderSnapshot.freeze(definition)
+			if not unit.hero: _render_definitions[unit.id] = definition
+		frame._render_definitions.append(definition)
+		frame._render_positions.append(unit.position)
+		frame._render_previous.append(_previous_positions[unit.battle_index] if unit.battle_index < _previous_positions.size() else unit.position)
+		frame._render_sides.append(unit.side)
+		frame._render_groups.append(unit.group_kind)
+		frame._render_flags.append(int(unit.dead) * RenderSnapshot.DEAD | int(unit.gone) * RenderSnapshot.GONE
+			| int(unit.hero) * RenderSnapshot.HERO | int(unit.companion) * RenderSnapshot.COMPANION
+			| int(unit.mounted) * RenderSnapshot.MOUNTED | int(unit.fleeing) * RenderSnapshot.FLEEING
+			| int(unit.blocking) * RenderSnapshot.BLOCKING | int(unit.leader) * RenderSnapshot.LEADER)
+		frame._render_dynamic.append(unit.collision_radius)
+		frame._render_dynamic.append(clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0)
+		frame._render_dynamic.append(unit.facing)
+		frame._render_dynamic.append(unit.velocity.length())
+		frame._render_dynamic.append(unit.attack_windup if unit.hero else unit.ai_windup)
+	return frame
 
 ## Appearance copies are cached: only the hero changes looks (weapon swap), and a deep copy of every unit's look
 ## every frame was a large part of a mass battle's frame time.

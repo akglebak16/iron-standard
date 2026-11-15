@@ -3,6 +3,7 @@ const Motion = preload("res://apps/godot/presentation/battle/unit_motion.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const Event = preload("res://battle/combat_event.gd")
 const Config = preload("res://battle/config.gd")
+const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
 const UnitMarkers = preload("res://apps/godot/presentation/battle/unit_markers.gd")
 const VIEW_MARGIN := 50.0
 const PHASE_STEP := 0.618
@@ -47,6 +48,7 @@ func configure_identities(ids: Dictionary, seed_value := 0, reference_variant :=
 ## Set by the view: a corpse that has finished falling is painted once into the ground bake.
 var on_settled := Callable()
 var _baked: Dictionary = {} # unit id -> [unit, headless]
+var _corpses: Dictionary = {} # Owned death-event values, no simulation references.
 
 func advance(dt: float, events: Array[Dictionary]) -> void:
 	_time += dt
@@ -70,6 +72,8 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 					_falls[event.target_id] = _time
 					_fall_positions[event.target_id] = event.position
 					_fall_rotations[event.target_id] = _visual_rng.randf_range(1.2, 1.9) * (-1.0 if _visual_rng.randf() < 0.5 else 1.0)
+					if event.has("target_visual"):
+						_corpses[event.target_id] = event.target_visual.duplicate(true)
 
 ## JS starts bump at windup, not at impact. Observe detached snapshots without changing simulation.
 func observe_units(units: Array[Dictionary]) -> void:
@@ -97,8 +101,23 @@ func has_falling_units() -> bool:
 			return true
 	return false
 
-func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary,
+func draw_compact(canvas: CanvasItem, frame: RenderSnapshot, visible: Rect2, headless_units: Dictionary,
 		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS, interpolation: float = 1.0, demo_mode := false) -> void:
+	var figures: Array[Dictionary] = []
+	var positions := frame.positions()
+	var previous := frame.previous_positions()
+	for i in positions.size():
+		# Cull using the interpolated position before creating dictionaries or resolving art.
+		if visible.has_point(previous[i].lerp(positions[i], interpolation)):
+			var unit := frame.unit_at(i, interpolation)
+			if not demo_mode or (not unit.hero and not unit.companion): figures.append(unit)
+	for corpse: Dictionary in _corpses.values():
+		if visible.has_point(corpse.position): figures.append(corpse)
+	observe_units(figures)
+	draw(canvas, figures, visible, headless_units, vegetation, selection, 1.0, true, demo_mode)
+
+func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless_units: Dictionary,
+		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS, interpolation: float = 1.0, prepared: bool = false, demo_mode := false) -> void:
 	var living: Array[Dictionary] = []
 	var falling: Array[Dictionary] = []
 	for unit in frame:
@@ -108,8 +127,9 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 			if not unit.hero and not unit.companion and not _baked.has(unit.id):
 				falling.append(unit)
 		else:
-			var visual: Dictionary = unit.duplicate()
-			visual.position = Vector2(unit.get("previous_position", unit.position)).lerp(unit.position, interpolation)
+			var visual: Dictionary = unit if prepared else unit.duplicate()
+			if not prepared:
+				visual.position = Vector2(unit.get("previous_position", unit.position)).lerp(unit.position, interpolation)
 			living.append(visual)
 	# Depth order by y with a native sort of packed keys (y in 1/16 px, then the list position).
 	var keys := PackedInt64Array()
@@ -143,6 +163,8 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 		if on_settled.is_valid() and _time - float(_falls.get(unit.id, _time - FALL_SECONDS)) >= FALL_SECONDS:
 			_baked[unit.id] = [unit, headless]
 			on_settled.call(unit, headless)
+			_corpses.erase(unit.id)
+			_falls.erase(unit.id)
 
 func _draw_polish(canvas: CanvasItem, unit: Dictionary) -> void:
 	var phase: float = _phases.get(unit.id, float(unit.id) * PHASE_STEP)

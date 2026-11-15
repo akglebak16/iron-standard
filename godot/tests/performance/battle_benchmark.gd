@@ -9,6 +9,7 @@ var warmup := 120
 var scenario := "contact"
 var seed_value := 4242
 var output := ""
+var legacy_snapshot := false
 var _tree: SceneTree
 
 func run(tree: SceneTree) -> void:
@@ -20,6 +21,7 @@ func run(tree: SceneTree) -> void:
 		elif arg.begins_with("--scenario="): scenario = arg.trim_prefix("--scenario=")
 		elif arg.begins_with("--seed="): seed_value = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--out="): output = arg.trim_prefix("--out=")
+		elif arg == "--legacy-snapshot": legacy_snapshot = true
 	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege"]:
 		fail("Invalid benchmark parameters")
 		return
@@ -72,7 +74,7 @@ func run(tree: SceneTree) -> void:
 		session.advance(1.0 / 60.0)
 		simulation.append(Time.get_ticks_usec() - start)
 		start = Time.get_ticks_usec()
-		var frame: Dictionary = session.snapshot()
+		var frame: Dictionary = session.snapshot(not legacy_snapshot)
 		snapshots.append(Time.get_ticks_usec() - start)
 		var live: int = frame.counts[0] + frame.counts[1]
 		live_min = mini(live_min, live)
@@ -87,6 +89,7 @@ func run(tree: SceneTree) -> void:
 		"special_initial": 1, "weight": 1, "warmup_ticks": warmup, "requested_ticks": ticks,
 		"measured_ticks": simulation.size(), "live_min": live_min, "live_max": live_max,
 		"simulation": stats(simulation), "snapshot": stats(snapshots), "events": events,
+		"snapshot_format": "legacy-dictionaries" if legacy_snapshot else "compact-columns",
 		"memory_start_bytes": memory_start if memory_start > 0 else null,
 		"memory_end_bytes": OS.get_static_memory_usage() if OS.get_static_memory_usage() > 0 else null,
 		"gpu_time": null, "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample."}

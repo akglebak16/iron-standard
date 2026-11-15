@@ -78,6 +78,9 @@ func record_event(kind: Event.Kind, target: Unit, source: Unit = null, attack: E
 		event.target_visual = {
 			"look": target.appearance.duplicate(true), "side": target.side, "faction": target.faction,
 			"mounted": target.mounted, "facing": target.facing, "hero": target.hero, "companion": target.companion,
+			"id": target.id, "position": target.position, "radius": target.collision_radius,
+			"dead": true, "gone": false, "speed": 0.0, "windup": -1.0, "blocking": false,
+			"fleeing": false, "leader": target.leader, "group_kind": target.group_kind, "health_fraction": 0.0,
 		}
 	_events.append(event)
 

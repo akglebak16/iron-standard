@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "reservedMembers": [{"prefix":"_render_","writers":["battle/application/render_snapshot.gd","battle/application/session.gd"]}],
   "allowedRoots": ["battle", "campaign", "troops", "equipment", "characters", "core", "runtime", "apps", "adapters", "content", "tests", "docs", "tools"],
   "forbiddenPaths": ["app/", "battle/presentation/", "campaign/presentation/"],
   "purePrefixes": ["battle/application/", "battle/model/", "battle/rules/", "campaign/world/", "campaign/rules/", "campaign/economy/"],

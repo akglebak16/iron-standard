@@ -43,6 +43,9 @@ func step() -> void:
 func snapshot() -> Dictionary:
 	return _session.snapshot() if _session != null else {}
 
+func render_snapshot() -> Dictionary:
+	return _session.snapshot(true) if _session != null else {}
+
 func take_events() -> Array[Dictionary]:
 	return _session.take_events() if _session != null else []
 

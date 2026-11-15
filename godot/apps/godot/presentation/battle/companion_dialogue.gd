@@ -1,5 +1,6 @@
 extends RefCounted
 const Event = preload("res://battle/combat_event.gd")
+const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
 const Banter = preload("res://apps/godot/presentation/battle/banter_lines.gd")
 
 const START := "start"
@@ -79,7 +80,15 @@ func has_bubbles() -> bool:
 			return true
 	return false
 
-func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], siege: bool, finished: bool = false) -> PackedStringArray:
+func advance_compact(dt: float, frame: RenderSnapshot, events: Array[Dictionary], siege: bool, finished: bool = false) -> PackedStringArray:
+	if _speakers.is_empty(): return PackedStringArray()
+	var units: Array[Dictionary] = []
+	var flags := frame.flags()
+	for i in flags.size():
+		if flags[i] & RenderSnapshot.COMPANION: units.append(frame.unit_at(i))
+	return advance(dt, units, events, siege, finished, frame)
+
+func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], siege: bool, finished: bool = false, compact: RenderSnapshot = null) -> PackedStringArray:
 	var journal := PackedStringArray()
 	if _speakers.is_empty():
 		return journal
@@ -94,7 +103,8 @@ func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], sie
 					_say(_speakers[event.target_id], HURT)
 			Event.Kind.DOWN:
 				if _speakers.has(event.source_id) and event.source_alive:
-					var kind := KILL_UNDEAD if _has_undead_appearance(units, event.target_id) and _rng.randf() < UNDEAD_KILL_CHANCE else KILL
+					var undead: bool = not str(event.target_visual.look.get("undead", "")).is_empty() if event.has("target_visual") else _has_undead_appearance(units, event.target_id)
+					var kind := KILL_UNDEAD if undead and _rng.randf() < UNDEAD_KILL_CHANCE else KILL
 					_say(_speakers[event.source_id], kind)
 				if _speakers.has(event.target_id):
 					var speaker: Dictionary = _speakers[event.target_id]
@@ -116,7 +126,7 @@ func advance(dt: float, units: Array[Dictionary], events: Array[Dictionary], sie
 		speaker.taunt -= dt
 		if speaker.taunt <= 0.0:
 			speaker.taunt = _rng.randf_range(TAUNT_INTERVAL.x, TAUNT_INTERVAL.y)
-			if _enemy_near(unit, units):
+			if _enemy_near_compact(unit, compact) if compact != null else _enemy_near(unit, units):
 				_say(speaker, TAUNT)
 	return journal
 
@@ -235,4 +245,13 @@ static func _enemy_near(unit: Dictionary, units: Array[Dictionary]) -> bool:
 		if other.side != unit.side and not other.dead and not other.gone and not other.fleeing:
 			if Vector2(unit.position).distance_squared_to(other.position) < TAUNT_DISTANCE * TAUNT_DISTANCE:
 				return true
+	return false
+
+static func _enemy_near_compact(unit: Dictionary, frame: RenderSnapshot) -> bool:
+	var positions := frame.positions()
+	var flags := frame.flags()
+	var sides := frame.sides()
+	for i in positions.size():
+		if sides[i] != unit.side and not flags[i] & (RenderSnapshot.DEAD | RenderSnapshot.GONE | RenderSnapshot.FLEEING):
+			if Vector2(unit.position).distance_squared_to(positions[i]) < TAUNT_DISTANCE * TAUNT_DISTANCE: return true
 	return false

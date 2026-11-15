@@ -1,5 +1,6 @@
 extends Control
 const GameSkin = preload("res://ui/game_theme.gd")
+const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
 
 const MAP_SIZE := Vector2(190, 125)
 const SMALL_MAP_SIZE := Vector2(120, 80)
@@ -83,19 +84,29 @@ func _draw_minimap(camera_rect: Rect2) -> void:
 	var scale := _map.size / Vector2(_frame.arena_size)
 	for wall: Rect2 in _frame.walls:
 		draw_rect(Rect2(_map.position + wall.position * scale, wall.size * scale), MAP_WALL)
-	for unit: Dictionary in _frame.units:
-		if unit.dead or unit.gone:
-			continue
-		var point := _map.position + Vector2(unit.position) * scale
-		if not _map.has_point(point):
-			continue
-		var dot := MAP_HERO_DOT if unit.hero else (MAP_MOUNT_DOT if unit.mounted else MAP_FOOT_DOT)
-		var color := MAP_ENEMY if unit.side != 0 else (Color.WHITE if unit.hero else MAP_ALLY)
-		draw_rect(Rect2(point - Vector2.ONE * dot * 0.5, Vector2.ONE * dot).intersection(_map), color)
+	if _frame.has("render"):
+		var render: RenderSnapshot = _frame.render
+		var positions := render.positions()
+		var flags := render.flags()
+		var sides := render.sides()
+		for i in positions.size():
+			if flags[i] & (RenderSnapshot.DEAD | RenderSnapshot.GONE): continue
+			_draw_dot(positions[i], sides[i], bool(flags[i] & RenderSnapshot.HERO), bool(flags[i] & RenderSnapshot.MOUNTED), scale)
+	else:
+		for unit: Dictionary in _frame.units:
+			if not unit.dead and not unit.gone:
+				_draw_dot(unit.position, unit.side, unit.hero, unit.mounted, scale)
 	var outline := map_camera_rect(camera_rect, _map, _frame.arena_size)
 	if outline.has_area():
 		draw_rect(outline, MAP_CAMERA, false, 1.0)
 	draw_rect(_map, MAP_BORDER, false, 1.0)
+
+func _draw_dot(position: Vector2, side: int, hero: bool, mounted: bool, scale: Vector2) -> void:
+	var point := _map.position + position * scale
+	if not _map.has_point(point): return
+	var dot := MAP_HERO_DOT if hero else (MAP_MOUNT_DOT if mounted else MAP_FOOT_DOT)
+	var color := MAP_ENEMY if side != 0 else (Color.WHITE if hero else MAP_ALLY)
+	draw_rect(Rect2(point - Vector2.ONE * dot * 0.5, Vector2.ONE * dot).intersection(_map), color)
 
 func _draw_enemy_arrow(enemy_screen: Vector2) -> void:
 	var placement := arrow_layout(enemy_screen, size)

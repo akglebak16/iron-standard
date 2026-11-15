@@ -25,6 +25,7 @@ var _init_msec := 0
 var _last_usec := 0
 var _frame_usec: Array[int] = []
 var _report: Array[String] = []
+var _finishing := false
 
 func _initialize() -> void:
 	_init_msec = Time.get_ticks_msec()
@@ -47,6 +48,7 @@ func _initialize() -> void:
 	root.add_child(packed.instantiate())
 
 func _process(_delta: float) -> bool:
+	if _finishing: return false
 	_frame += 1
 	var now := Time.get_ticks_usec()
 	if _frame == 1:
@@ -60,8 +62,19 @@ func _process(_delta: float) -> bool:
 		_capture()
 	if _frame >= CAPTURE_FRAMES.back():
 		_finish()
-		return true
+		_finishing = true
+		_stop_capture.call_deferred()
 	return false
+
+func _stop_capture() -> void:
+	for child in root.get_children(): child.queue_free()
+	# Release playback/viewport queues while the engine is still running.
+	await process_frame
+	await process_frame
+	# The Dummy audio driver mixes on its own wall-clock thread; --fixed-fps can
+	# execute two rendered frames before that thread has consumed stop requests.
+	OS.delay_msec(100)
+	quit(0)
 
 func _send_scripted_input() -> void:
 	for step in ZOOM_OUT_STEPS:

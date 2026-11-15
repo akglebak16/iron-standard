@@ -47,6 +47,14 @@ func _ready() -> void:
 	if enabled:
 		_prepare()
 
+func _exit_tree() -> void:
+	for player in _note_players + _drum_players:
+		player.stop()
+		player.stream = null
+	if _theme_player:
+		_theme_player.stop()
+		_theme_player.stream = null
+
 func advance(dt: float) -> void:
 	if not enabled or dt <= 0.0:
 		return

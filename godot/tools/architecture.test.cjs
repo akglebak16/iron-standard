@@ -28,4 +28,7 @@ assert(structureIssues(new Set(['core']), {requiredDirectories:['core','runtime'
 assert(structureIssues(new Set(['core','rogue']), {requiredDirectories:['core'],allowedRoots:['core']}).some(e=>e.includes('Unknown root')));
 assert.equal(tokens('# FileAccess\nvar x = "FileAccess"').filter(t=>!t.string&&t.value==='FileAccess').length,0);
 assert.equal(analyze(new Map([['core/a/api/x.gd','extends RefCounted\n# Input.get_tree()']]),manifest).length,0);
+for (const source of ['var p = frame._render_positions', 'frame.get("_render_positions")[0] = Vector2.ZERO']) {
+  assert(analyze(new Map([['apps/x.gd',source]]), {...manifest,reservedMembers:[{prefix:'_render_',writers:['core/a/api/writer.gd']}]}).some(i=>i.rule==='private-storage'));
+}
 console.log('Architecture checker negative tests passed');

@@ -65,6 +65,12 @@ function analyze(files, manifest) {
     }
     graph.set(file, dependencies);
     if (test(file)) continue;
+    for (const contract of manifest.reservedMembers || []) {
+      if (contract.writers.includes(file)) continue;
+      // Covers direct access and literal get/set/index access. This is a reserved
+      // member namespace, not a claim of whole-program dynamic type inference.
+      for (const token of ts) if (token.value.startsWith(contract.prefix)) add(file, 'private-storage', token.value);
+    }
     const module = owner(file);
     if (!module) add(file, 'unowned-file', file);
     const pure = ['core/','runtime/',...(manifest.purePrefixes || [])].some(prefix => file.startsWith(prefix));
