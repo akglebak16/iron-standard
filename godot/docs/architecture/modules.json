@@ -40,8 +40,8 @@
       "name": "adapters",
       "owner": "Content I/O, persistence and engine integration",
       "prefix": "adapters/",
-      "allowed": ["battle", "campaign", "troops", "equipment", "characters"],
-      "public": ["adapters/content/", "adapters/godot/resources/", "adapters/persistence/"]
+      "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime"],
+      "public": ["adapters/content/", "adapters/godot/resources/", "adapters/godot/native/contacts.gd", "adapters/persistence/"]
     },
     {
       "name": "content",

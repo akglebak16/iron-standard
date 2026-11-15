@@ -18,6 +18,16 @@ check({'apps/x.tscn':'[ext_resource path="res://core/b/private.gd"]', 'core/b/pr
 check({'core/a/x.gd':`const B = preload('uid://abcd')`, 'core/b/private.gd':'extends RefCounted', 'core/b/private.gd.uid':'uid://abcd'},'private-api');
 check({'core/a/x.gd':'extends Sprite2D'},'pure-core');
 check({'core/a/x.gd':'var main = Engine.get_main_loop()'},'pure-core');
+check({'core/a/x.gd':'var main = ClassDB.instantiate("Node")'},'pure-core');
+check({'core/a/x.gd':'var main = ClassDB.instantiate("HiddenKernel")','adapters/hidden.cpp':'GDCLASS(HiddenKernel, RefCounted)'},'dependency-direction');
+check({'apps/x.gd':'var main = ClassDB.instantiate("HiddenKernel")','core/b/private.cpp':'GDCLASS(HiddenKernel, RefCounted)'},'module-dependency');
+check({'core/a/native.cpp':'#include <godot_cpp/variant/vector2.hpp>'},'native-purity');
+check({'core/a/native.cpp':'#include <fstream>'},'native-purity');
+check({'core/a/native.cpp':'static int world = 0;'},'mutable-static');
+check({'core/a/native.cpp':'#include "../../b/private.hpp"','core/b/private.hpp':'#include <vector>'},'missing-reference');
+check({'core/a/native.cpp':'#include "../b/private.hpp"','core/b/private.hpp':'#include <vector>'},'private-api');
+check({'core/a/native.cpp':'#include "../../adapters/hidden.hpp"','adapters/hidden.hpp':'#include <godot_cpp/classes/node.hpp>'},'transitive-impurity');
+assert.equal(analyze(new Map([['core/a/native.cpp','#include <vector>\n// godot::Node is forbidden, but this is a comment\nstatic int compute(int x) { return x; }']]),manifest).length,0);
 check({'core/a/x.gd':'var t = Time.get_ticks_usec()'},'pure-core');
 check({'core/a/x.gd':'OS.execute("helper", [])'},'pure-core');
 check({'core/a/x.gd':'static var world = {}'},'mutable-static');

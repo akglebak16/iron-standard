@@ -32,6 +32,15 @@ var collision_grid: CollisionGrid
 var collision_candidates: Array[int] = []
 var projectile_candidates: Array[int] = []
 var contacts := ContactWorkspace.new()
+## Optional batch port injected by composition. The reference solver needs no engine adapter.
+var contact_solver := Callable()
+var native_contact_steps := 0
+var native_contact_failures := 0
+var _contact_geometry: Dictionary = {}
+var _contact_revision := -1
+var _contact_wall: SiegeWall
+var _contact_arena := Vector2.ZERO
+var _contact_wall_shape := Vector2.INF
 var static_obstacles := StaticObstacleIndex.new()
 var arena_size := Config.ARENA_SIZE
 var groups: Array = []
@@ -48,6 +57,30 @@ var reserve_caps := [0, 0]
 var reserve_lost := [0, 0]
 var active_counts := [0, 0] # Combat-ready units at the latest morale check.
 var _events: Array[Dictionary] = []
+
+func contact_geometry() -> Dictionary:
+	var wall_shape := Vector2(wall.x, wall.half_width) if wall != null else Vector2.INF
+	if _contact_revision == static_obstacles.revision and _contact_wall == wall and _contact_wall_shape == wall_shape and _contact_arena == arena_size and not _contact_geometry.is_empty():
+		return _contact_geometry
+	var positions := PackedVector2Array()
+	var radii := PackedFloat64Array()
+	for trunk in trunks:
+		positions.append(trunk.position)
+		radii.append(trunk.trunk_radius)
+	_contact_geometry = {
+		"parameters": PackedFloat64Array([arena_size.x, arena_size.y, CollisionGrid.PAD, CollisionGrid.CELL,
+			Config.CONTACT_QUERY_SLACK, Config.MIN_COLLISION_DISTANCE, Config.FRIEND_COLLISION_PUSH, Config.ENEMY_COLLISION_PUSH,
+			Config.FIELD_LEFT_RIGHT_MARGIN, Config.FIELD_TOP_MARGIN, Config.FIELD_BOTTOM_MARGIN,
+			wall.x if wall != null else INF, wall.half_width if wall != null else 0.0,
+			Config.SIEGE_WALL_RADIUS_PADDING, Config.SIEGE_GAP_RADIUS_PADDING]),
+		"positions": positions, "radii": radii,
+		"gaps": PackedVector2Array(wall.gaps()) if wall != null else PackedVector2Array(),
+	}
+	_contact_revision = static_obstacles.revision
+	_contact_wall = wall
+	_contact_wall_shape = wall_shape
+	_contact_arena = arena_size
+	return _contact_geometry
 
 func set_plants(layout: Array[Plant]) -> void:
 	plants = layout

@@ -1,5 +1,6 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## Informational: frame cost of a mass battle with its view (simulation + snapshot + drawing).
 ##   godot --path godot --script res://tools/battle/view_bench.gd [-- --n=300 --frames=240]
 const Factory = preload("res://core/battle/application/factory.gd")
@@ -43,7 +44,12 @@ func _initialize() -> void:
 	var cavalry := _size - infantry - archers
 	setup.player_army.assign([{"type": "n1", "n": infantry}, {"type": "n2a", "n": archers}, {"type": "n2s", "n": cavalry}])
 	setup.enemy_army.assign([{"type": "e1", "n": infantry}, {"type": "e2a", "n": archers}, {"type": "e2s", "n": cavalry}])
-	var session = Factory.create(setup, c, g, p, k)
+	var solver := Contacts.create()
+	if not solver.is_valid():
+		push_error("Native backend unavailable")
+		quit(1)
+		return
+	var session = Factory.create(setup, c, g, p, k, solver)
 	var actual := [0, 0]
 	for unit in session._state.units:
 		if not unit.hero and not unit.companion:

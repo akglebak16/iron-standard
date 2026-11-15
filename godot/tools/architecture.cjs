@@ -3,7 +3,9 @@ const path = require('path');
 const cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const MANIFEST = 'docs/architecture/modules.json';
-const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'ResourceSaver', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'DisplayServer', 'ProjectSettings', 'Engine', 'OS', 'Time', 'JavaScriptBridge', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene', 'Resource'];
+const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'ResourceSaver', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'DisplayServer', 'ProjectSettings', 'ClassDB', 'GDExtensionManager', 'Engine', 'OS', 'Time', 'JavaScriptBridge', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene', 'Resource'];
+const NATIVE_SUFFIX = /\.(cpp|hpp|h)$/;
+const NATIVE_VALUE_HEADERS = new Set(['algorithm','array','cmath','cstddef','cstdint','cstring','limits','numeric','tuple','type_traits','utility','vector']);
 
 // A file entry grants exactly that file, not similarly named internal scripts.
 const covers = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
@@ -56,7 +58,7 @@ function collect(root) {
       if (e.name.startsWith('.')) continue;
       const full = path.join(dir, e.name);
       if (e.isDirectory()) walk(full);
-      else if (/\.(gd|tscn|tres|uid)$/.test(e.name)) files.set(path.relative(root, full).replaceAll('\\', '/'), fs.readFileSync(full, 'utf8'));
+      else if (/\.(gd|tscn|tres|uid|cpp|hpp|h|gdextension)$/.test(e.name)) files.set(path.relative(root, full).replaceAll('\\', '/'), fs.readFileSync(full, 'utf8'));
     }
   }
   walk(root);
@@ -67,6 +69,7 @@ function analyze(files, manifest) {
   const issues = [];
   const graph = new Map(), classes = new Map(), uids = new Map();
   const parsed = new Map();
+  const nativeIncludes = new Map();
   const impure = new Set();
   const isPure = file => ['core/','runtime/',...(manifest.purePrefixes || [])].some(prefix => file.startsWith(prefix));
   const test = p => p.startsWith('tests/') || p.includes('/tests/') || p.startsWith('tools/') || p.includes('/tools/');
@@ -84,7 +87,23 @@ function analyze(files, manifest) {
         uids.set(resourceUid[1], file);
       }
     }
-    const ts = tokens(source); parsed.set(file, ts);
+    let codeSource = source;
+    if (NATIVE_SUFFIX.test(file)) {
+      codeSource = source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,'');
+      const imports = [...codeSource.matchAll(/^\s*#\s*include\s*(["<])([^">]+)[">]/gm)].map(m=>({local:m[1]==='"',path:m[2]}));
+      nativeIncludes.set(file,imports);
+      for (const match of codeSource.matchAll(/\bGDCLASS\s*\(\s*(\w+)\s*,/g)) {
+        if (classes.has(match[1])) add(file,'duplicate-class',match[1]);
+        classes.set(match[1],file);
+      }
+      if (imports.some(i=>!i.local && !NATIVE_VALUE_HEADERS.has(i.path)) || /\bgodot\s*::|\bnamespace\s+godot\b/.test(codeSource)) impure.add(file);
+      if (isPure(file) && !test(file)) {
+        for (const i of imports) if (!i.local && !NATIVE_VALUE_HEADERS.has(i.path)) add(file,'native-purity',i.path);
+        if (/\bgodot\s*::|\bnamespace\s+godot\b/.test(codeSource)) add(file,'native-purity','godot namespace');
+        if (/\bstatic\s+(?!const\b|constexpr\b)[^;{}()]*[;={]/.test(codeSource)) add(file,'mutable-static','native state');
+      }
+    }
+    const ts = tokens(codeSource); parsed.set(file, ts);
     const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
     if (ts.some(t=>!t.string && PURE_FORBIDDEN.includes(t.value)) || /\b(?:static var|load\s*\()/.test(code) || /\bextends\s+(Node\w*|Control|Resource|CharacterBody\w*|RigidBody\w*|Sprite\w*|Canvas\w*|AudioStream\w*)\b/.test(code)) impure.add(file);
     for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') {
@@ -95,13 +114,20 @@ function analyze(files, manifest) {
   for (const [file, ts] of parsed) {
     for (const prefix of manifest.forbiddenPaths || []) if (covers(file, prefix)) add(file, 'retired-path', prefix);
     const dependencies = new Set();
+    for (const imported of nativeIncludes.get(file) || []) {
+      if (!imported.local) continue;
+      const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(file),imported.path));
+      if (!files.has(dependency)) add(file,'missing-reference',dependency);
+      else dependencies.add(dependency);
+    }
     for (const t of ts) {
       let dependency;
       if (t.string && t.value.startsWith('res://')) dependency = path.posix.normalize(t.value.slice(6));
       else if (t.string && t.value.startsWith('uid://')) dependency = uids.get(t.value);
       else if (!t.string && classes.has(t.value)) dependency = classes.get(t.value);
+      else if (t.string && classes.has(t.value) && NATIVE_SUFFIX.test(classes.get(t.value))) dependency = classes.get(t.value);
       else if (t.string && /^(\.\.?\/).+\.(gd|tscn|tres)$/.test(t.value)) dependency = path.posix.normalize(path.posix.join(path.posix.dirname(file), t.value));
-      if (dependency && dependency !== file && /\.(gd|tscn|tres)$/.test(dependency)) {
+      if (dependency && dependency !== file && /\.(gd|tscn|tres|cpp|hpp|h)$/.test(dependency)) {
         if (!files.has(dependency)) add(file, 'missing-reference', dependency);
         else dependencies.add(dependency);
       }

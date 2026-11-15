@@ -18,7 +18,7 @@ const CompanionBuilder = preload("res://core/battle/data/companion_builder.gd")
 const SiegeSetup = preload("res://core/battle/data/siege_setup.gd")
 const VegetationSetup = preload("res://core/battle/data/vegetation_setup.gd")
 
-static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null) -> Session:
+static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null, contact_solver := Callable()) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite():
 		return null
 	var troop: Dictionary = catalog.get_troop(setup.hero_troop)
@@ -27,6 +27,7 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	var rng := RandomNumberGenerator.new()
 	rng.seed = setup.seed
 	var state := State.new()
+	state.contact_solver = contact_solver
 	state.setup_groups()
 	var player_cap := setup.unit_cap(setup.player_faction, setup.player_unit_cap)
 	var enemy_cap := setup.unit_cap(setup.enemy_faction, setup.enemy_unit_cap)

@@ -14,6 +14,18 @@ fs.writeFileSync(exe+'.build.json',JSON.stringify({source:{revision:'a'.repeat(4
 assert.equal(readBuild(exe,before).stale_source,false);
 assert.throws(()=>readBuild(exe,after),/Source changed/);
 assert.equal(readBuild(exe,after,true).stale_source,true);
+const library = path.join(root,'contacts.dll'); fs.writeFileSync(library,'native code');
+const manifest = JSON.parse(fs.readFileSync(exe+'.build.json','utf8'));
+manifest.dependencies = {'contacts.dll':hashFile(library)};
+fs.writeFileSync(exe+'.build.json',JSON.stringify(manifest));
+assert.equal(readBuild(exe,before).stale_source,false);
+fs.writeFileSync(library,'changed native code');
+assert.throws(()=>readBuild(exe,before),/dependency does not match/);
+fs.unlinkSync(library);
+assert.throws(()=>readBuild(exe,before),/dependency does not match/);
+manifest.dependencies = {'../outside.dll':'a'.repeat(64)};
+fs.writeFileSync(exe+'.build.json',JSON.stringify(manifest));
+assert.throws(()=>readBuild(exe,before),/Invalid release dependency/);
 fs.writeFileSync(exe,'different executable');
 assert.throws(()=>readBuild(exe,before),/does not match/);
 console.log('Build identity tests passed');

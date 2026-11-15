@@ -9,6 +9,7 @@ fs.mkdirSync(path.join(root, '.godot'), { recursive: true });
 const userData = fs.mkdtempSync(path.join(root, '.godot', 'test-userdata-'));
 const env = { ...process.env, APPDATA: userData, XDG_DATA_HOME: userData };
 const timeouts = {
+  'tests/integration/test_native_contacts.gd': 120000,
   'tests/unit/campaign/world/test_world_wars.gd': 120000,
   // Four 900-tick battles compare indexed and exhaustive targeting/contact loops.
   'tests/unit/battle/rules/test_spatial_full_battle.gd': 60000,
@@ -42,6 +43,8 @@ function run(args, timeout) {
 }
 
 async function main() {
+const native = spawnSync(process.execPath,[path.join(root,'tools/native_build.cjs')],{encoding:'utf8',windowsHide:true});
+if(native.error || native.status!==0) throw new Error(`Native build failed: ${native.stderr || native.error}`);
 // Assets (audio, images) are loaded through the import cache, which a clean checkout does not have yet.
 const imported = await run(['--headless', '--path', root, '--import'], 120000);
 if (imported.error || imported.status !== 0 || scriptErrors.test(`${imported.stdout}\n${imported.stderr}`)) {

@@ -1,4 +1,5 @@
 extends Node2D
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Composition root: the only place that connects storage, scenario and view.
 const Catalog = preload("res://core/troops/data/catalog.gd")
@@ -42,7 +43,7 @@ func _ready() -> void:
 	if not ContentLoader.populate(goods):
 		push_error("Cannot load trade goods catalog")
 		return
-	var session = Factory.create(battle_setup.to_setup(), catalog, gear_catalog, perk_catalog, companion_catalog)
+	var session = Factory.create(battle_setup.to_setup(), catalog, gear_catalog, perk_catalog, companion_catalog, Contacts.create())
 	if session == null:
 		push_error("Invalid battle setup")
 		return

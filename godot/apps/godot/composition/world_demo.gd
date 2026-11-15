@@ -1,4 +1,5 @@
 extends Node
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## World map demo: generates Europe for a seed, puts the party in its home town. Click to walk, wheel to zoom,
 ## drag or WASD to look around (C — back to the party), Space — pause, 1/2/3 — speed.
@@ -358,7 +359,7 @@ func _start_battle(p: Dictionary) -> void:
 	_battle_ticket = _bridge.begin(state, p)
 	var setup: BattleSetup = _bridge.battle_setup(_battle_ticket)
 	if setup == null: return
-	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions)
+	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions, Contacts.create())
 	if session == null:
 		_bridge.cancel(_battle_ticket)
 		push_error("Cannot start the battle")

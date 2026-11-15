@@ -1,5 +1,6 @@
 extends Node
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## Explicit checks: assert expressions do not run in exported release builds.
 const Europe = preload("res://core/campaign/data/europe_data.gd")
 const World = preload("res://core/campaign/world/world_state.gd")
@@ -35,13 +36,20 @@ func _ready() -> void:
 	var bridge := Bridge.new(ContentLoader.registry(), RandomNumberGenerator.new())
 	var opponent: Dictionary = world.roster.parties[0]
 	var setup = bridge.make_setup(world, opponent)
-	var session = Factory.create(setup, bridge.troops, bridge.gear, bridge.perks, bridge.companions)
+	var solver := Contacts.create()
+	if not solver.is_valid():
+		fail("Native contact adapter unavailable")
+		return
+	var session = Factory.create(setup, bridge.troops, bridge.gear, bridge.perks, bridge.companions, solver)
 	if session == null:
 		fail("Battle initialization")
 		return
 	for i in 60: session.advance(1.0 / 60.0)
 	if session.snapshot().tick != 60:
 		fail("Battle did not advance")
+		return
+	if session._state.native_contact_failures != 0:
+		fail("Native contact adapter rejected valid battle")
 		return
 	world.dispose()
 	world = null

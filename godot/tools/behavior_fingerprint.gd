@@ -1,5 +1,6 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## Behaviour fingerprint: runs the demo battles on a fixed seed and prints hashes of the whole snapshot and result.
 ## Run it before and after a refactoring that must not change behaviour; the printed lines must be identical:
 ##   godot --headless --path godot --script res://tools/behavior_fingerprint.gd
@@ -18,7 +19,12 @@ func _initialize() -> void:
 	var p := PerkCatalog.new(); ContentLoader.populate(p)
 	var k := CompanionCatalog.new(); ContentLoader.populate(k)
 	for path in ["res://content/scenarios/demo_battle.tres", "res://content/scenarios/demo_siege.tres"]:
-		var s = Factory.create(load(path).to_setup(), c, g, p, k)
+		var solver := Contacts.create() if "--native" in OS.get_cmdline_user_args() else Callable()
+		if "--native" in OS.get_cmdline_user_args() and not solver.is_valid():
+			push_error("Native backend unavailable")
+			quit(1)
+			return
+		var s = Factory.create(load(path).to_setup(), c, g, p, k, solver)
 		s.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 		var trace := 0
 		for i in SNAPSHOT_TICKS:

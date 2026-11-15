@@ -1,5 +1,6 @@
 extends RefCounted
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## CPU baseline. Count and weight checks execute in release too; --ticks is simulation time, not frame count.
 const Factory = preload("res://core/battle/application/factory.gd")
 const Catalog = preload("res://core/troops/data/catalog.gd")
@@ -12,6 +13,7 @@ var seed_value := 4242
 var output := ""
 var legacy_snapshot := false
 var profile_phases := false
+var contact_backend := "native"
 var _tree: SceneTree
 
 func run(tree: SceneTree) -> void:
@@ -25,6 +27,7 @@ func run(tree: SceneTree) -> void:
 		elif arg.begins_with("--out="): output = arg.trim_prefix("--out=")
 		elif arg == "--legacy-snapshot": legacy_snapshot = true
 		elif arg == "--profile-phases": profile_phases = true
+		elif arg.begins_with("--contacts="): contact_backend = arg.trim_prefix("--contacts=")
 	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege"]:
 		fail("Invalid benchmark parameters")
 		return
@@ -44,7 +47,14 @@ func run(tree: SceneTree) -> void:
 	elif scenario == "cavalry": types = ["n2s", "e2s"]
 	setup.player_army.assign([{"type": types[0], "n": size}])
 	setup.enemy_army.assign([{"type": types[1], "n": size}])
-	var session = Factory.create(setup, catalog)
+	if contact_backend not in ["native", "gdscript"]:
+		fail("Unknown contact backend")
+		return
+	var solver := Contacts.create() if contact_backend == "native" else Callable()
+	if contact_backend == "native" and not solver.is_valid():
+		fail("Native contact backend unavailable")
+		return
+	var session = Factory.create(setup, catalog, null, null, null, solver)
 	if session == null:
 		fail("Cannot create benchmark battle")
 		return
@@ -93,6 +103,9 @@ func run(tree: SceneTree) -> void:
 			events[key] = int(events.get(key, 0)) + 1
 		if frame.outcome in [session.Outcome.VICTORY, session.Outcome.DEFEAT]: break
 	var phase_stats := {}
+	if contact_backend == "native" and (session._state.native_contact_steps == 0 or session._state.native_contact_failures != 0):
+		fail("Native contact fallback occurred")
+		return
 	for phase in phases: phase_stats[phase] = stats(phases[phase])
 	var report := {"engine": Engine.get_version_info().string, "debug": OS.is_debug_build(),
 		"cpu": OS.get_processor_name(), "logical_processors": OS.get_processor_count(),
@@ -102,6 +115,8 @@ func run(tree: SceneTree) -> void:
 		"simulation": stats(simulation), "snapshot": stats(snapshots), "events": events,
 		"snapshot_format": "legacy-dictionaries" if legacy_snapshot else "compact-columns",
 		"phase_profile": phase_stats,
+		"contact_backend": contact_backend, "native_contact_steps": session._state.native_contact_steps,
+		"native_contact_failures": session._state.native_contact_failures,
 		"memory_start_bytes": memory_start if memory_start > 0 else null,
 		"memory_end_bytes": OS.get_static_memory_usage() if OS.get_static_memory_usage() > 0 else null,
 		"gpu_time": null, "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample."}

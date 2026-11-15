@@ -6,6 +6,12 @@ description: Собрать игру в index.html, прогнать смоук-
 `node godot/tools/architecture.cjs`, пять экспортёров каталогов с `--check`,
 `node godot/tools/test.cjs <Godot-console.exe>` и `node godot/tools/release.cjs <Godot-console.exe>`.
 Runner изолирует `user://`; не запускай тесты сохранений на данных игрока.
+Перед первым запуском в чистой Windows-копии: `pwsh -File godot/tools/native_bootstrap.ps1`.
+Архивы проверяются по SHA256; compiler/Python/godot-cpp остаются в dist.
+Runner сам собирает native DLL; не добавляй бинарники или dist в Git.
+После изменения native-кода обязательны test_native_contacts и release-smoke.
+Benchmark сверяет SHA exe, DLL и исходников; для сравнения backend используй
+`--contacts=gdscript` / `--contacts=native` на одной release-сборке.
 Локальные браузерные проверки для этой работы оставлены GitHub по решению владельца.
 Список ниже применяется к браузерной версии.
 

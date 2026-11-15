@@ -67,6 +67,8 @@ jobs:
           New-Item -ItemType Directory -Force $target | Out-Null
           Copy-Item "$env:RUNNER_TEMP/templates/templates/*" $target -Recurse
           "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
+      - name: Пакетное ядро контактов (закреплённые SHA256)
+        run: pwsh -File godot/tools/native_bootstrap.ps1
       - run: node godot/tools/test.cjs "$env:GODOT"
       - run: node godot/tools/release.cjs "$env:GODOT"
       - uses: actions/upload-artifact@v4

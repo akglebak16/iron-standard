@@ -24,6 +24,11 @@ function sourceIdentity(root) {
 function readBuild(exe, currentHash, allowStale = false) {
   const build = JSON.parse(fs.readFileSync(exe + '.build.json','utf8'));
   if (build.executable_sha256 !== hashFile(exe)) throw new Error('Release executable does not match its build manifest');
+  for (const [relative, expected] of Object.entries(build.dependencies || {})) {
+    const file = path.resolve(path.dirname(exe),relative);
+    if (path.relative(path.dirname(exe),file).startsWith('..') || path.isAbsolute(relative)) throw new Error('Invalid release dependency path');
+    if (!fs.existsSync(file) || hashFile(file) !== expected) throw new Error(`Release dependency does not match its build manifest: ${relative}`);
+  }
   if (!/^[a-f0-9]{40}$/i.test(build.source?.revision || '') || !/^[a-f0-9]{64}$/i.test(build.source?.source_sha256 || '')) throw new Error('Invalid build source identity');
   const stale = build.source.source_sha256 !== currentHash;
   if (stale && !allowStale) throw new Error('Source changed since export; rebuild or explicitly use --allow-stale-build for comparison');

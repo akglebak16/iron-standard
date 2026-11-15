@@ -10,7 +10,7 @@ const AiDecision = preload("res://core/battle/rules/ai_decision.gd")
 const CombatStep = preload("res://core/battle/rules/combat_step.gd")
 const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
 
-const COLLISION_SLACK := 10.0
+const COLLISION_SLACK := Config.CONTACT_QUERY_SLACK
 
 static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 	assert(rng != null, "A simulation tick requires the battle RNG")
@@ -127,6 +127,20 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 		side[i] = u.side
 		live[i] = 0 if u.dead or u.gone else 1
 		max_radius = maxf(max_radius, u.collision_radius)
+	if battle.contact_solver.is_valid():
+		for i in n:
+			workspace.velocities[i] = units[i].velocity
+			workspace.fleeing[i] = 1 if units[i].fleeing else 0
+		var solved: Array = battle.contact_solver.call(workspace, battle.contact_geometry())
+		if solved.size() == 2 and solved[0] is PackedVector2Array and solved[1] is PackedVector2Array and solved[0].size() == n and solved[1].size() == n:
+			for i in n:
+				if live[i] == 0: continue
+				units[i].position = solved[0][i]
+				units[i].velocity = solved[1][i]
+				if index != null: index.update(i)
+			battle.native_contact_steps += 1
+			return
+		battle.native_contact_failures += 1
 	if battle.collision_grid == null:
 		battle.collision_grid = CollisionGrid.new(pos, battle.arena_size, live)
 	else:
