@@ -1,6 +1,7 @@
 extends SceneTree
 const TerrainView = preload("res://battle/presentation/terrain/terrain_view.gd")
 const WallView = preload("res://battle/presentation/terrain/wall_view.gd")
+const WallSceneView = preload("res://battle/presentation/terrain/wall_scene_view.gd")
 const SiegeWall = preload("res://battle/model/siege_wall.gd")
 const VegetationView = preload("res://battle/presentation/terrain/vegetation_view.gd")
 const Config = preload("res://battle/config.gd")
@@ -9,6 +10,7 @@ const TEST_SEED := 4017
 func _initialize() -> void:
 	_check_biomes()
 	_check_openings()
+	_check_scene_wall()
 	_check_vegetation()
 	print("Terrain view tests passed")
 	quit(0)
@@ -55,6 +57,26 @@ func _check_openings() -> void:
 	view.configure([], TEST_SEED)
 	assert(view._openings.is_empty() and view._rubble.is_empty())
 	view.free()
+
+func _check_scene_wall() -> void:
+	var model := SiegeWall.new(Config.ARENA_SIZE)
+	var view := WallSceneView.new()
+	view.configure(model.segments(), TEST_SEED)
+	# 4 segments, 2 towers per opening, 2 gate leaves for the one wide opening.
+	assert(view._segments.size() == 4 and view._openings.size() == 3)
+	assert(view.get_child_count() == 4 + view._openings.size() * 2 + 2)
+	var first := view.get_child(0)
+	assert(first.position == view._segments[0].position)
+	assert(first.get_node("Stone").size == view._segments[0].size)
+	assert(first.get_node("Merlons").size.y == floorf(view._segments[0].size.y / 22.0) * 22.0)
+	var rubble := view._rubble.duplicate(true)
+	view.configure(model.segments(), TEST_SEED)
+	assert(view.get_child_count() == 4 + view._openings.size() * 2 + 2 and view._rubble == rubble)
+	view.configure([], TEST_SEED)
+	assert(view.get_child_count() == 0)
+	view.free()
+	# The scene wall is the default; the code-drawn wall stays available for comparison.
+	assert(TerrainView.use_wall_scenes)
 
 func _ground(biome: String, seed_value: int = TEST_SEED) -> ShaderMaterial:
 	var terrain := TerrainView.new()

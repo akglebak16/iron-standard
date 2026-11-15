@@ -43,5 +43,26 @@ func _initialize() -> void:
 	assert(absi(note.data.decode_s16(sample + 3 * offset)) > 20)
 	var drum := Music._make_drum()
 	assert(drum.get_length() > 2.5 and drum.data.decode_s16(10) != 0)
+	await _check_theme_asset()
 	print("Combat audio tests passed")
 	quit(0)
+
+func _check_theme_asset() -> void:
+	var theme := load(Music.THEME_PATH) as AudioStreamOggVorbis
+	assert(theme != null and theme.get_length() > 30.0)
+	var music := Music.new()
+	root.add_child(music)
+	await process_frame
+	assert(music._theme_player != null and music._theme_player.playing and music._note_players.is_empty())
+	music.advance(5.0)
+	assert(music._note_players.is_empty())
+	music.enabled = false
+	assert(music._theme_player.stream_paused)
+	music.free()
+	Music.use_theme_asset = false
+	var procedural := Music.new()
+	root.add_child(procedural)
+	await process_frame
+	assert(procedural._theme_player == null and procedural._note_players.size() == Music.NOTE_VOICES)
+	procedural.free()
+	Music.use_theme_asset = true
