@@ -37,5 +37,6 @@ func _initialize() -> void:
 	index.synchronize()
 	assert(index.nearby(Vector2(1200,800),1,0) == [1])
 	assert(index.nearby(Vector2(70,80),1,0).is_empty())
+	assert(state.centroid(1) == b.position and state.centroid(0) == c.position)
 	print("Motion store tests passed")
 	quit(0)

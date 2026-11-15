@@ -185,7 +185,7 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 	var foe := centroid(1)
 	var changed := false
 	for group in groups[0]:
-		if selection != Config.ALL_GROUPS and group.kind != selection or group.active_units().is_empty():
+		if selection != Config.ALL_GROUPS and group.kind != selection or not group.has_active_units():
 			continue
 		changed = true
 		if order == Config.ORDER_HOLD:
@@ -215,9 +215,10 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 func centroid(side: int) -> Vector2:
 	var count := 0
 	var total := Vector2.ZERO
+	var positions := motion.positions
 	for unit: Unit in active_units:
 		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:
-			total += unit.position
+			total += positions[unit.battle_index]
 			count += 1
 	return total / count if count else Vector2.INF
 
@@ -316,8 +317,10 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 			var heal: float = float(source.perk_effects.get("killHeal", 0.0))
 			if heal > 0.0:
 				source.hp = minf(source.max_hp, source.hp + source.max_hp * heal)
+	var positions := motion.positions
+	var target_position := target.position
 	for unit: Unit in active_units:
-		if unit.dead or unit.gone or unit.position.distance_to(target.position) > Config.DEATH_MORALE_RADIUS:
+		if unit.dead or unit.gone or positions[unit.battle_index].distance_to(target_position) > Config.DEATH_MORALE_RADIUS:
 			continue
 		if unit.side == target.side:
 			unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
@@ -325,7 +328,7 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 			unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
 	if target.companion:
 		for unit: Unit in active_units:
-			if unit.side == target.side and unit.position.distance_to(target.position) < Config.DEATH_MORALE_RADIUS:
+			if unit.side == target.side and positions[unit.battle_index].distance_to(target_position) < Config.DEATH_MORALE_RADIUS:
 				unit.morale -= Config.COMPANION_DOWN_MORALE_LOSS
 	if target.hero and target.side == 0 and not target.companion:
 		if not groups.is_empty():

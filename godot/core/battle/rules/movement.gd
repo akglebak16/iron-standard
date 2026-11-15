@@ -69,7 +69,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 				destination = enemy.position
 		if battle.wall != null:
 			destination = battle.wall.route(unit, destination)
-		_steer(unit, destination, unit.speed * velocity_scale, dt)
+		velocities[unit_index] = _steer(unit, positions[unit_index], velocities[unit_index], destination, unit.speed * velocity_scale, dt)
 		if unit.fleeing:
 			unit.facing = unit.velocity.angle()
 			if unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING:
@@ -85,17 +85,17 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 	battle.profiler.mark("contacts")
 	return index
 
-static func _steer(unit: Unit, destination: Vector2, speed: float, dt: float) -> void:
-	var delta: Vector2 = destination - unit.position
+static func _steer(unit: Unit, position: Vector2, velocity: Vector2, destination: Vector2, speed: float, dt: float) -> Vector2:
+	var delta: Vector2 = destination - position
 	var distance := delta.length()
 	var desired := Vector2.ZERO
 	if distance > Config.ARRIVAL_DISTANCE and speed > 0.0:
 		desired = delta / distance * minf(speed, distance * Config.ARRIVAL_BRAKE)
 	var rate := Config.HORSE_STEERING_RATE if unit.mounted else Config.FOOT_STEERING_RATE
-	var next_velocity := unit.velocity.lerp(desired, minf(1.0, rate * dt))
-	unit.velocity = next_velocity
+	var next_velocity := velocity.lerp(desired, minf(1.0, rate * dt))
 	if next_velocity.length_squared() > 0.0:
 		unit.facing = next_velocity.angle()
+	return next_velocity
 
 static func _resolve_unit_collisions(battle: State, index: SpatialIndex, keep_index := true) -> void:
 	if index != null:

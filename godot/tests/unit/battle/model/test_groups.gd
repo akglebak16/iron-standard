@@ -33,6 +33,7 @@ func _initialize() -> void:
 	assert(not battle.groups[0][2].backing)
 	assert(battle.groups[0][2].order == "follow")
 	_check_initial_type_order()
+	_check_group_queries()
 	print("Group tests passed")
 	quit(0)
 
@@ -56,3 +57,25 @@ func _check_initial_type_order() -> void:
 		var unit: Unit = battle.units[expected_ids[i]]
 		assert(unit.slot_offset.is_equal_approx(expected_offsets[i]))
 		assert(unit.position.is_equal_approx(battle.groups[0][0].slot_position(unit, battle.arena_size)))
+
+func _check_group_queries() -> void:
+	var battle := BattleState.new()
+	battle.setup_groups()
+	var group = battle.groups[0][0]
+	assert(not group.has_active_units() and group.centroid() == group.center)
+	var unit := Unit.new(0,0,Vector2(700,800),100,0,1)
+	battle.add_grouped_unit(unit,0)
+	assert(group.has_active_units() and group.centroid() == unit.position)
+	for flag in ["fleeing", "gone", "dead", "hero"]:
+		unit.set(flag, true)
+		assert(not group.has_active_units() and group.centroid() == group.center)
+		unit.set(flag, false)
+	# Cache invalidation: turn, move the center, change the slot, then return to an old angle.
+	for angle in [0.3, PI, -0.7, 0.3]:
+		group.direction = angle
+		group.center += Vector2(7,11)
+		unit.slot_offset += Vector2(13,-17)
+		var expected: Vector2 = group.center + Vector2(-sin(angle),cos(angle)) * unit.slot_offset.x + Vector2(cos(angle),sin(angle)) * unit.slot_offset.y
+		expected = expected.clamp(Vector2.ONE * Config.SLOT_EDGE, battle.arena_size - Vector2.ONE * Config.SLOT_EDGE)
+		assert(group.slot_position(unit,battle.arena_size) == expected)
+		assert(group.slot_position(unit,battle.arena_size) == expected)

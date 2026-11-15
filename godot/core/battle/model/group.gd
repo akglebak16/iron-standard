@@ -11,6 +11,9 @@ var backing: bool = false
 var tactic_state: String = Config.AI_TACTIC_WAIT
 var waypoint: Vector2 = Vector2.ZERO
 var units: Array[Unit] = []
+var _slot_direction := INF
+var _slot_lateral := Vector2.DOWN
+var _slot_forward := Vector2.RIGHT
 
 func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void:
 	side = group_side
@@ -20,6 +23,11 @@ func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void
 
 func active_units() -> Array[Unit]:
 	return units.filter(func(u: Unit): return not u.dead and not u.gone and not u.fleeing and not u.hero)
+
+func has_active_units() -> bool:
+	for unit in units:
+		if not unit.dead and not unit.gone and not unit.fleeing and not unit.hero: return true
+	return false
 
 func layout(initial: bool = false) -> void:
 	var active := active_units()
@@ -57,15 +65,21 @@ func layout(initial: bool = false) -> void:
 		active[i].slot_offset = Vector2((column - (row_width - 1) / 2.0) * spacing, -row * spacing * Config.FORMATION_ROW_DEPTH)
 
 func slot_position(unit: Unit, arena_size: Vector2) -> Vector2:
+	if direction != _slot_direction:
+		_slot_direction = direction
+		var sine := sin(direction)
+		var cosine := cos(direction)
+		_slot_lateral = Vector2(-sine, cosine)
+		_slot_forward = Vector2(cosine, sine)
 	var offset: Vector2 = unit.slot_offset
-	var pos := center + Vector2(-sin(direction), cos(direction)) * offset.x + Vector2(cos(direction), sin(direction)) * offset.y
+	var pos := center + _slot_lateral * offset.x + _slot_forward * offset.y
 	return pos.clamp(Vector2.ONE * Config.SLOT_EDGE, arena_size - Vector2.ONE * Config.SLOT_EDGE)
 
 func centroid() -> Vector2:
-	var active := active_units()
-	if active.is_empty():
-		return center
 	var total := Vector2.ZERO
-	for unit: Unit in active:
+	var count := 0
+	for unit: Unit in units:
+		if unit.dead or unit.gone or unit.fleeing or unit.hero: continue
 		total += unit.position
-	return total / active.size()
+		count += 1
+	return total / count if count else center

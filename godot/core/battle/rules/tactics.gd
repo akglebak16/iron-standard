@@ -15,7 +15,7 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 	var infantry: Group = groups[Config.GROUP_INFANTRY]
 	var archers: Group = groups[Config.GROUP_ARCHERS]
 	var cavalry: Group = groups[Config.GROUP_CAVALRY]
-	var has_infantry := not infantry.active_units().is_empty()
+	var has_infantry := infantry.has_active_units()
 	if infantry.order != Config.ORDER_CHARGE:
 		var nearest := _nearest_foe_distance(battle, infantry.center, 1 - side)
 		if nearest < Config.AI_INFANTRY_CHARGE_DISTANCE or elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS:
@@ -32,7 +32,7 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 			_advance(archers, foe, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED, dt)
 		else:
 			archers.direction = (foe - archers.center).angle()
-	if cavalry.active_units().is_empty() or cavalry.order == Config.ORDER_CHARGE:
+	if not cavalry.has_active_units() or cavalry.order == Config.ORDER_CHARGE:
 		return
 	if cavalry.tactic_state == Config.AI_TACTIC_WAIT:
 		if elapsed > Config.AI_CAVALRY_FLANK_DELAY_SECONDS:
@@ -65,7 +65,7 @@ static func siege_step(battle: State, elapsed: float) -> void:
 	if cavalry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS):
 		cavalry.order = Config.ORDER_CHARGE
 		battle.record_notice(Event.Kind.GARRISON_CAVALRY)
-	if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE or infantry.active_units().is_empty():
+	if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE or not infantry.has_active_units():
 		archers.order = Config.ORDER_CHARGE
 	if near_wall and not battle.siege_alerted:
 		battle.siege_alerted = true

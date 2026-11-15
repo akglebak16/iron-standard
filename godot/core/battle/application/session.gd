@@ -86,7 +86,9 @@ func advance(dt: float) -> void:
 		return
 	_state.profiler.begin()
 	_previous_positions.resize(_state.units.size())
-	for unit: Unit in _state.render_units(): _previous_positions[unit.history_index] = unit.position
+	var positions := _state.motion.positions
+	for unit: Unit in _state.render_units():
+		_previous_positions[unit.history_index] = positions[unit.battle_index] if unit.battle_index >= 0 else unit.position
 	for command in _orders:
 		if _state.give_order(command.order, command.point, command.selection):
 			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection, "point": command.point})
