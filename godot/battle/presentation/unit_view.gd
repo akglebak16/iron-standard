@@ -115,11 +115,13 @@ static func _draw_plant(canvas: CanvasItem, plant: Dictionary, visible: Rect2) -
 
 func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bool = false) -> void:
 	var appearance := _art.layers(unit, headless)
+	var anchor: Vector2 = appearance.get("anchor", Art.ANCHOR)
+	var weapon_pivot: Vector2 = appearance.get("pivot", Art.PIVOT)
 	var position: Vector2 = unit.position
 	var direction := -1.0 if cos(unit.facing) < 0.0 else 1.0
 	var phase: float = unit.id * PHASE_STEP
 	var rotation := 0.0
-	var scale := Vector2(direction, 1.0) * Art.SPRITE_SCALE
+	var scale := Vector2(direction, 1.0) * float(appearance.get("scale", Art.SPRITE_SCALE))
 	var tint := Color.WHITE
 	if fallen:
 		var progress := clampf((_time - float(_falls.get(unit.id, _time - FALL_SECONDS))) / FALL_SECONDS, 0.0, 1.0)
@@ -140,9 +142,9 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 	canvas.draw_set_transform(position, rotation, scale)
 	var body: Texture2D = appearance.headless if headless else appearance.body
 	if body != null:
-		canvas.draw_texture(body, -Art.ANCHOR, tint)
+		canvas.draw_texture(body, -anchor, tint)
 	if appearance.weapon != null:
-		var offset := MOUNT_WEAPON_OFFSET if unit.mounted else Vector2.ZERO
+		var offset := MOUNT_WEAPON_OFFSET if unit.mounted and not appearance.has("anchor") else Vector2.ZERO
 		var weapon_rotation := 0.0
 		if not fallen:
 			var motion := 0.0
@@ -156,7 +158,7 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 				offset.x += absf(motion) * WEAPON_THRUST
 			else:
 				weapon_rotation = motion
-		var pivot := (Art.PIVOT - Art.ANCHOR + offset) * scale
+		var pivot := (weapon_pivot - anchor + offset) * scale
 		canvas.draw_set_transform(position + pivot.rotated(rotation), rotation + direction * weapon_rotation, scale)
-		canvas.draw_texture(appearance.weapon, -Art.PIVOT, tint)
+		canvas.draw_texture(appearance.weapon, -weapon_pivot, tint)
 	canvas.draw_set_transform(Vector2.ZERO)

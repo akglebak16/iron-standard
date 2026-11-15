@@ -50,6 +50,11 @@ func has_active() -> bool:
 
 static func head_offset(unit: Dictionary) -> Vector2:
 	var direction := -1.0 if cos(float(unit.facing)) < 0.0 else 1.0
+	var geometry := Art.OriginalArt.layers_for(unit)
+	if geometry.has("head_center"):
+		var offset: Vector2 = geometry.head_center - geometry.anchor
+		offset.x *= direction
+		return offset * float(geometry.scale)
 	var offset := Art.HEAD_CENTER - Art.ANCHOR
 	offset.x *= direction
 	if unit.mounted:
@@ -72,6 +77,9 @@ func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int 
 		match kind:
 			Part.HEAD:
 				part.texture = _art.detached_head(unit)
+				var geometry := _art.layers(unit)
+				part.anchor = geometry.get("head_center", Art.HEAD_CENTER)
+				part.scale = geometry.get("scale", Art.SPRITE_SCALE)
 				part.mirrored = cos(float(unit.facing)) < 0.0
 			Part.ARM:
 				part.bony = event.impact_style == Event.ImpactStyle.DUST
@@ -129,9 +137,9 @@ static func _draw(canvas: CanvasItem, part: Dictionary) -> void:
 	match part.kind:
 		Part.HEAD:
 			var direction := -1.0 if part.mirrored else 1.0
-			canvas.draw_set_transform(position, part.angle, Vector2(direction, 1.0) * Art.SPRITE_SCALE)
+			canvas.draw_set_transform(position, part.angle, Vector2(direction, 1.0) * float(part.get("scale", Art.SPRITE_SCALE)))
 			if part.texture != null:
-				canvas.draw_texture(part.texture, -Art.HEAD_CENTER)
+				canvas.draw_texture(part.texture, -Vector2(part.get("anchor", Art.HEAD_CENTER)))
 		Part.ARM:
 			if part.bony:
 				_draw_bone(canvas, ARM_HALF_LENGTH)

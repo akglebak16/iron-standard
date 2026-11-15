@@ -52,6 +52,8 @@ var _order_marker := OrderMarker.new()
 var _paused := false
 var _speed_index := 0
 var _attack_pressed := false
+var attract_mode := false
+var _journal_label: Label
 
 func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true,
 		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME) -> void:
@@ -88,6 +90,18 @@ func _ready() -> void:
 		set_physics_process(false)
 		set_process_unhandled_input(false)
 		return
+	status.hide()
+	var log_panel := PanelContainer.new()
+	log_panel.position = Vector2(8, 8)
+	log_panel.custom_minimum_size.x = 310
+	log_panel.add_theme_stylebox_override("panel", preload("res://ui/game_theme.gd").box("parchment", 10))
+	$Hud.add_child(log_panel)
+	_journal_label = Label.new()
+	_journal_label.custom_minimum_size.x = 290
+	_journal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_journal_label.add_theme_color_override("font_color", Color("#2a1d10"))
+	_journal_label.add_theme_color_override("font_shadow_color", Color.TRANSPARENT)
+	log_panel.add_child(_journal_label)
 	var initial := _session.snapshot()
 	camera.configure(initial.arena_size, initial.hero_position)
 	get_viewport().size_changed.connect(_on_viewport_resized)
@@ -195,7 +209,7 @@ func _pre_step(dt: float, real_dt: float) -> float:
 	if _paused:
 		return 0.0
 	var simulation_dt: float = dt * PLAYBACK_SPEEDS[_speed_index]
-	if _frame.outcome == Session.Outcome.RUNNING:
+	if _frame.outcome == Session.Outcome.RUNNING and not attract_mode:
 		var input := HeroInput.new()
 		input.move = Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
 		input.face = (_pointer_world_position() - Vector2(_frame.hero_position)).angle()
@@ -326,6 +340,8 @@ func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame
 	# One detached read per simulation step, reused by HUD and drawing (taken on the worker when threaded).
 	_frame = frame if not frame.is_empty() else _session.snapshot()
 	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
+	if attract_mode:
+		camera.position = Vector2(_frame.arena_size) * 0.5
 	_navigation.update_frame(_frame, dt)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_feedback.add_dialogue(_dialogue.advance(dt, _frame.units, events, not _frame.walls.is_empty(), finished))
@@ -353,6 +369,8 @@ func _update_status() -> void:
 	if not journal.is_empty():
 		status.text += "\n" + journal
 	status.text += _result_summary
+	if _journal_label != null:
+		_journal_label.text = (journal if not journal.is_empty() else "Бой начался.\nWASD · мышь · Q / E / R / F") + _result_summary
 
 func _draw() -> void:
 	if _frame.is_empty():
@@ -361,10 +379,16 @@ func _draw() -> void:
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
-	_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
+	if attract_mode:
+		var demo_units: Array[Dictionary] = []
+		for unit in _frame.units:
+			if not unit.hero and not unit.companion: demo_units.append(unit)
+		_figures.draw(self, demo_units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
+	else:
+		_figures.draw(self, _frame.units, visible, _impacts.headless_units(), _vegetation.entries, _selection)
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
 	_impacts.draw_particles(self)
 	_feedback.draw(self)
-	_dialogue.draw(self)
+	if not attract_mode: _dialogue.draw(self)

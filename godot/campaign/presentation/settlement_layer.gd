@@ -1,6 +1,7 @@
 extends Node2D
 ## Settlements on the map: sprites from a sheet drawn once, owner banners and name labels (like drawWorld in src/07_main.js).
 const SettlementArt = preload("res://campaign/presentation/settlement_art.gd")
+const OriginalArt = preload("res://ui/original_art.gd")
 const EmblemArt = preload("res://campaign/presentation/emblem_art.gd")
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 
@@ -59,18 +60,22 @@ func _draw() -> void:
 			tint = Color(0.55, 0.62, 0.5)
 		elif int(s.get("burnt", 0)) > 0 or float(s.get("dmg", 0.0)) > 0.3:
 			tint = Color(0.6, 0.5, 0.45)
-		draw_texture_rect_region(tex, dest, src, tint)
+		var original := OriginalArt.settlement(s.kind, culture, s.fac)
+		if original != null:
+			draw_texture_rect(original, dest, false, tint)
+		else:
+			draw_texture_rect_region(tex, dest, src, tint)
 		if int(s.get("burnt", 0)) > 0 or int(s.get("fire", 0)) > 0:
 			for i in 3:
 				draw_circle(Vector2(s.x + (i - 1) * 9.0 * k, s.y - 30.0 * k - i * 6.0), (7.0 + i * 3.0) * k, Color(0.3, 0.28, 0.26, 0.45))
-		if s.kind != "camp":
+		if s.kind != "camp" and original == null:
 			var bx: float = 14.0 if s.kind == "castle" else 20.0
 			var by: float = -62.0 if s.kind == "town" else -66.0 if s.kind == "castle" else -28.0
 			EmblemArt.draw_banner(self, s.x + bx * k, s.y + by * k, _factions.get_faction(s.fac), 13.0 * k)
 	_draw_labels()
 
 func _draw_labels() -> void:
-	var font := ThemeDB.fallback_font
+	var font := preload("res://ui/game_theme.gd").BODY
 	var entries: Array = []
 	for s in _settles:
 		var size := 13 if s.kind == "village" else 16

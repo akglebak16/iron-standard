@@ -34,6 +34,8 @@ func render() -> void:
 	var fx: Dictionary = state.player_effects()
 	var mine: bool = settlement.fac == "player"
 	title_label.text = settlement.name
+	close_button.text = "Покинуть " + {"town": "город", "castle": "замок", "village": "деревню", "camp": "лагерь"}.get(settlement.kind, "поселение")
+	set_crest(settlement.fac)
 	sub_label.text = "%s · %s   ·   золото %d" % [SettlementLayer.KIND_NAMES.get(settlement.kind, ""), _factions.get_faction(settlement.fac).get("name", ""), p.gold]
 	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]]
 	if settlement.kind == "town":
@@ -75,7 +77,7 @@ func _recruits(p, fx: Dictionary) -> void:
 		row("%s ×%d" % [troop.name, r.n], "ур. %d · %d зол. за бойца" % [troop.tier, cost], [
 			{"text": "Нанять", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 1, fx)},
 			{"text": "×5", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 5, fx)},
-		])
+		], r.type)
 	heading("Ожидание")
 	note("Время идёт как обычно, а отряд стоит у стен. Любой клик по карте — в путь.")
 	row("Подождать здесь", "", [{"text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])

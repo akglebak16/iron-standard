@@ -86,7 +86,7 @@ func _ready() -> void:
 	_marks.build(state)
 	var party_layer := PartyLayer.new()
 	map_view.add_child(party_layer)
-	party_layer.build(state.player, factions.get_faction("player"))
+	party_layer.build(state.player, factions.get_faction("player"), state.gear)
 	camera = WorldCamera.new()
 	add_child(camera)
 	camera.make_current()

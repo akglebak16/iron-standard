@@ -2,10 +2,18 @@ extends "res://campaign/presentation/modal_window.gd"
 ## Party, hero and journal windows (openPanel in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
 const CompanionText = preload("res://campaign/presentation/companion_text.gd")
-const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["gear", "Снаряжение"], ["quests", "Задания"], ["factions", "Государства"], ["journal", "Журнал"]]
+const TABS := [["troops", "Отряд"], ["hero", "Герой"], ["gear", "Обоз"], ["quests", "Задания"], ["factions", "Фракции"], ["comps", "Спутники"], ["journal", "Журнал"]]
+const HeroGear = preload("res://equipment/rules/hero_gear.gd")
 const HeroEquip = preload("res://equipment/rules/hero_equip.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
+var _selected_gear := ""
+var _selected_action := Callable()
+var _last_tile := ""
+var _last_tap := 0
+var _bag_filter := "all"
+var _slot_filter := ""
+var _selected_owner := ""
 var _faction := ""
 signal quest_target(x: float, y: float)
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
@@ -24,6 +32,7 @@ func open_for(world_state: RefCounted, tab: String = "troops") -> void:
 func render() -> void:
 	if state == null:
 		return
+	set_width(1040 if current_tab in ["hero", "gear", "factions"] else WIDTH)
 	var p = state.player
 	var fx: Dictionary = state.player_effects()
 	title_label.text = p.hero.name
@@ -60,19 +69,123 @@ func _troops(p, fx: Dictionary) -> void:
 			buttons.append({"text": "→ %s (%d)" % [up.name, cost], "disabled": p.gold < cost, "call": func(): Economy.upgrade(p, troop, up_id, fx)})
 		if Economy.troop_count(p.troops) > 1:
 			buttons.append({"text": "Распустить", "call": func(): Economy.remove_troops(p.troops, s.type, 1)})
-		row("%s ×%d" % [troop.name, s.n], "ур. %d · жалованье %d" % [troop.tier, troop.wage], buttons)
+		row("%s ×%d" % [troop.name, s.n], "ур. %d · жалованье %d" % [troop.tier, troop.wage], buttons, s.type)
 
 func _hero(p) -> void:
 	var h: Dictionary = p.hero
-	note("Опыт: %d / %d" % [h.xp, 100 + int(h.lvl) * 80])
-	heading("Характеристики (очков: %d)" % h.pts)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 18)
+	body.add_child(top)
+	var resolved := HeroGear.resolve(h, state.gear)
+	var picture := TextureRect.new()
+	picture.texture = OriginalArt.compose(resolved.look).portrait
+	picture.custom_minimum_size = Vector2(105, 125)
+	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	top.add_child(picture)
+	var stats := VBoxContainer.new()
+	stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(stats)
+	var name_label := Label.new()
+	name_label.text = "%s · Уровень %d" % [h.name, h.lvl]
+	GameSkin.title(name_label, 28)
+	stats.add_child(name_label)
+	var xp := ProgressBar.new()
+	xp.max_value = 100 + int(h.lvl) * 80
+	xp.value = h.xp
+	xp.custom_minimum_size.y = 12
+	xp.show_percentage = false
+	stats.add_child(xp)
+	var values := Label.new()
+	values.text = "Опыт %d / %d · Броня %s\nБойцов %d / %d" % [h.xp, int(xp.max_value), str(resolved.armor), Economy.troop_count(p.troops), Economy.size_cap(h, state.player_effects())]
+	stats.add_child(values)
+	var points := VBoxContainer.new()
+	top.add_child(points)
+	for text in ["Очки атрибутов: %d" % h.pts, "Очки перков: %d" % h.pp]:
+		var label := Label.new()
+		label.text = text
+		GameSkin.title(label, 18)
+		points.add_child(label)
+	var cargo := Button.new()
+	cargo.text = "Открыть обоз"
+	cargo.pressed.connect(func(): current_tab = "gear"; render())
+	points.add_child(cargo)
+	note("Все перки доступны сразу. У каждого три уровня; следующий требует более высокого значения атрибута и стоит одно очко перков.")
 	for key in Economy.ATTRS:
-		row("%s: %d" % [Economy.ATTRS[key][0], h.get(key, 1)], Economy.ATTRS[key][1], [{"text": "+1", "disabled": int(h.pts) < 1, "call": func(): Economy.spend_attribute(h, key)}])
-	heading("Перки (очков: %d)" % h.pp)
-	for perk in state.perks.list():
-		var rank := Economy.perk_rank(h, perk.id)
-		var why := Economy.perk_why(h, perk)
-		row("%s  %s" % [perk.n, "●".repeat(rank) + "○".repeat(3 - rank)], why if not why.is_empty() else "можно улучшить", [{"text": "Взять", "disabled": not why.is_empty(), "call": func(): Economy.buy_perk(h, perk)}])
+		var group := HBoxContainer.new()
+		group.add_theme_constant_override("separation", 10)
+		body.add_child(group)
+		var attr := PanelContainer.new()
+		attr.custom_minimum_size.x = 166
+		attr.add_theme_stylebox_override("panel", GameSkin.box("plank", 10))
+		group.add_child(attr)
+		var attr_col := VBoxContainer.new()
+		attr.add_child(attr_col)
+		var title := Label.new()
+		title.text = "%s   %d" % [Economy.ATTRS[key][0], h.get(key, 1)]
+		GameSkin.title(title, 20)
+		attr_col.add_child(title)
+		var detail := Label.new()
+		detail.text = Economy.ATTRS[key][1]
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail.custom_minimum_size.x = 140
+		detail.add_theme_font_size_override("font_size", 13)
+		attr_col.add_child(detail)
+		var plus := Button.new()
+		plus.text = "+"
+		plus.disabled = int(h.pts) < 1
+		plus.pressed.connect(func(): Economy.spend_attribute(h, key); render())
+		attr_col.add_child(plus)
+		var perks := GridContainer.new()
+		perks.columns = 4 if get_viewport().get_visible_rect().size.x >= 1000 else 2
+		perks.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		group.add_child(perks)
+		for perk in state.perks.list():
+			if perk.a == key:
+				perks.add_child(_perk_card(h, perk))
+
+func _perk_card(h: Dictionary, perk: Dictionary) -> Button:
+	var rank := Economy.perk_rank(h, perk.id)
+	var why := Economy.perk_why(h, perk)
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(160, 150)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.disabled = not why.is_empty()
+	button.tooltip_text = "%s\nТребуется %s: %s" % [perk.n, Economy.ATTRS[perk.a][0], str(perk.req)]
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color("#33260f") if rank == 3 else Color("#2c1f14")
+	box.border_color = GameSkin.BRASS if rank > 0 else (Color("#9bd25b") if why.is_empty() else Color("#ffffff2e"))
+	box.set_border_width_all(2)
+	box.set_corner_radius_all(4)
+	box.set_content_margin_all(9)
+	for state_name in ["normal", "disabled"]:
+		button.add_theme_stylebox_override(state_name, box)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 9)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(margin)
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(col)
+	for i in 4:
+		var label := Label.new()
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		match i:
+			0: label.text = "◆".repeat(rank) + "◇".repeat(3 - rank) + "   " + " · ".join(perk.req.map(func(v): return str(v)))
+			1: label.text = perk.n
+			2:
+				label.text = OriginalArt.MANIFEST.perks.get(perk.id, "")
+				label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			3: label.text = "Максимум" if rank >= 3 else ("Изучить · 1 очко" if why.is_empty() else why)
+		label.add_theme_font_size_override("font_size", 12 if i != 1 else 17)
+		label.add_theme_color_override("font_color", GameSkin.BRASS if i in [0, 1] and rank > 0 else GameSkin.PARCH)
+		if i == 1: label.add_theme_font_override("font", GameSkin.DISPLAY)
+		col.add_child(label)
+	button.pressed.connect(func(): Economy.buy_perk(h, perk); render())
+	return button
 
 func _journal() -> void:
 	if state.journal.is_empty():
@@ -153,36 +266,199 @@ func _gear(p) -> void:
 			h = c
 	if h == p.hero:
 		_who = ""
+	if _selected_owner != _who:
+		_selected_owner = _who
+		_selected_gear = ""
+		_selected_action = Callable()
+		_slot_filter = ""
 	var whos: Array = [{"text": "Герой", "disabled": _who == "", "call": func(): _who = ""}]
 	for c in p.comps:
 		whos.append({"text": c.name.split(" ")[0], "disabled": _who == c.id, "call": func(): _who = c.id})
 	row("Кого одеваем", "", whos)
 	var eq: Dictionary = HeroEquip.ensure(h)
-	heading("Надето")
-	for slot in SLOT_NAMES:
+	var inventory := HBoxContainer.new()
+	inventory.add_theme_constant_override("separation", 18)
+	body.add_child(inventory)
+	var equipment := VBoxContainer.new()
+	equipment.custom_minimum_size.x = 368
+	inventory.add_child(equipment)
+	var backpack := VBoxContainer.new()
+	backpack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inventory.add_child(backpack)
+	var doll := HBoxContainer.new()
+	doll.add_theme_constant_override("separation", 8)
+	equipment.add_child(doll)
+	var left := VBoxContainer.new()
+	doll.add_child(left)
+	var resolved := HeroGear.resolve(h, gear)
+	var figure := OriginalArt.compose(resolved.look)
+	var center := VBoxContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	doll.add_child(center)
+	var name_label := Label.new()
+	name_label.text = h.name
+	GameSkin.title(name_label, 20)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.clip_text = true
+	var image := TextureRect.new()
+	image.name = "EquipmentFigure"
+	image.texture = figure.portrait
+	image.custom_minimum_size = Vector2(150, 260)
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	center.add_child(image)
+	center.add_child(name_label)
+	var right := VBoxContainer.new()
+	doll.add_child(right)
+	for i in SLOT_NAMES.size():
+		var slot: String = SLOT_NAMES.keys()[i]
 		var id: Variant = eq.get(slot)
-		var it: Dictionary = gear.get_item(String(id)) if id != null else {}
-		var buttons: Array = []
-		if not it.is_empty():
-			buttons.append({"text": "Снять", "call": func(): HeroEquip.unequip(p.inv, h, slot)})
-		row("%s: %s" % [SLOT_NAMES[slot], it.get("name", "—")], _stats(it), buttons)
+		var parent: VBoxContainer = left if i < 4 else right
+		var action := func(): HeroEquip.unequip(p.inv, h, slot)
+		var tile := _gear_tile(String(id) if id != null else "", 1, action, slot, id == null)
+		tile.name = "Equipped_" + slot
+		tile.custom_minimum_size = Vector2(72, 72)
+		parent.add_child(tile)
 	if eq.get("ranged") != null:
-		row("В руках в начале боя: %s" % ("стрелковое" if h.get("sel") == "ranged" else "ближнее"), "", [
+		row("В руках в начале боя", "", [
 			{"text": "Ближнее", "disabled": h.get("sel") != "ranged", "call": func(): HeroEquip.wield(h, "melee")},
 			{"text": "Стрелковое", "disabled": h.get("sel") == "ranged", "call": func(): HeroEquip.wield(h, "ranged")}])
-	heading("Обоз: %s из %d" % [str(state.market.cargo_weight(p.inv)), state.market.cargo_cap(p, state.player_effects(), Economy.troop_count(p.troops))])
-	var any := false
-	var ids: Array = p.inv.keys().filter(func(k): return state.market.is_gear(k))
-	ids.sort_custom(func(a, b): return SLOT_NAMES.keys().find(gear.get_item(a).slot) < SLOT_NAMES.keys().find(gear.get_item(b).slot))
-	for id in ids:
-		any = true
+	var stats := GridContainer.new()
+	stats.columns = 3
+	equipment.add_child(stats)
+	for stat in [["Броня", str(resolved.armor)], ["Урон оружия", str(resolved.weapon.get("dmg", 0))], ["Блок", "%d%%" % roundi(float(resolved.block) * 100)], ["Удар", str(resolved.weapon.get("spd", 1)) + " с"], ["Длина", str(30 + int(resolved.weapon.get("reach", 0)))], ["Урон по типу", {"cut": "Режущий", "pierce": "Колотый", "blunt": "Дробящий"}.get(resolved.weapon.get("dt", ""), "—")]]:
+		var label := Label.new()
+		label.text = "%s\n%s" % stat
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.custom_minimum_size.x = 116
+		stats.add_child(label)
+	var bag_header := HBoxContainer.new()
+	backpack.add_child(bag_header)
+	var bag_title := Label.new()
+	bag_title.text = "Рюкзак"
+	GameSkin.title(bag_title, 21)
+	bag_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bag_header.add_child(bag_title)
+	for def in [["all", "Все"], ["weapons", "Оружие"], ["armor", "Броня"], ["goods", "Товары"]]:
+		var button := Button.new()
+		button.text = def[1]
+		button.add_theme_font_size_override("font_size", 12)
+		button.toggle_mode = true
+		button.button_pressed = _bag_filter == def[0]
+		button.pressed.connect(func(): _bag_filter = def[0]; _slot_filter = ""; render())
+		bag_header.add_child(button)
+	var cargo := Label.new()
+	var weight: float = state.market.cargo_weight(p.inv)
+	var capacity: int = state.market.cargo_cap(p, state.player_effects(), Economy.troop_count(p.troops))
+	cargo.text = "Обоз                                              %s / %d" % [str(weight), capacity]
+	backpack.add_child(cargo)
+	var cargo_bar := ProgressBar.new()
+	cargo_bar.max_value = capacity
+	cargo_bar.value = weight
+	cargo_bar.show_percentage = false
+	cargo_bar.custom_minimum_size.y = 9
+	backpack.add_child(cargo_bar)
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.add_theme_constant_override("h_separation", 7)
+	grid.add_theme_constant_override("v_separation", 7)
+	backpack.add_child(grid)
+	var ids: Array = p.inv.keys().filter(func(k): return int(p.inv[k]) > 0)
+	ids = ids.filter(func(id):
 		var it: Dictionary = gear.get_item(id)
-		row("%s ×%d" % [it.name, p.inv[id]], "%s · %s" % [SLOT_NAMES.get(it.slot, ""), _stats(it)], [{"text": "Надеть", "call": func():
-			var r: Dictionary = HeroEquip.equip(p.inv, h, id, gear)
-			if r.note != "":
-				sub_label.text = r.note}])
-	if not any:
-		note("Трофеев нет. Снаряжение покупают у торговцев в городах и снимают с врагов.")
+		if _slot_filter != "": return it.get("slot", "") == _slot_filter
+		if _bag_filter == "weapons": return it.get("slot", "") in ["melee", "ranged", "shield"]
+		if _bag_filter == "armor": return it.get("slot", "") in ["head", "body", "hands", "legs", "horse"]
+		if _bag_filter == "goods": return it.is_empty()
+		return true)
+	ids.sort()
+	for id in ids:
+		var item_id: String = id
+		var action := func():
+			if state.market.is_gear(item_id):
+				var r: Dictionary = HeroEquip.equip(p.inv, h, item_id, gear)
+				if r.note != "": sub_label.text = r.note
+		var cargo_tile := _gear_tile(item_id, int(p.inv[item_id]), action, "cargo")
+		cargo_tile.name = "Cargo_" + item_id
+		grid.add_child(cargo_tile)
+	for i in maxi(0, 24 - ids.size()):
+		var empty := PanelContainer.new()
+		empty.custom_minimum_size = Vector2(64, 64)
+		var shade := StyleBoxFlat.new()
+		shade.bg_color = Color("#0000002a")
+		shade.border_color = Color("#ffffff0d")
+		shade.set_border_width_all(2)
+		empty.add_theme_stylebox_override("panel", shade)
+		grid.add_child(empty)
+	var hint := Label.new()
+	hint.text = "Провизия: %d порций. Двойной щелчок по вещи — надеть, по слоту — снять. В бою X меняет оружие." % Economy.provisions(p)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_color_override("font_color", GameSkin.MUTED)
+	backpack.add_child(hint)
+	if _selected_gear != "":
+		var it: Dictionary = gear.get_item(_selected_gear)
+		if not it.is_empty():
+			row(it.name, _stats(it), [{"text": "Снять" if _selected_gear in eq.values() else "Надеть", "call": _selected_action}])
+		else:
+			var good: Dictionary = state.market.goods.get(_selected_gear, {})
+			row(good.get("n", _selected_gear), "Торговый товар · продай на рынке города")
+	else:
+		note("Выбери предмет, чтобы узнать о нём больше. Двойной щелчок — надеть или снять.")
+
+func _gear_tile(id: String, count: int, action: Callable, location: String, empty := false) -> Button:
+	var tile := Button.new()
+	tile.custom_minimum_size = Vector2(64, 64)
+	tile.expand_icon = true
+	tile.add_theme_constant_override("icon_max_width", 42)
+	tile.add_theme_font_size_override("font_size", 13)
+	tile.clip_text = true
+	if empty:
+		tile.text = SLOT_NAMES.get(location, "—")
+		tile.modulate.a = 0.5
+		tile.icon = GameSkin.icon({"head": "helm", "body": "body", "hands": "hands", "legs": "legs", "melee": "sword", "ranged": "bow", "shield": "shield", "horse": "horse"}.get(location, "bag"))
+		tile.pressed.connect(func(): _slot_filter = location; render())
+		return tile
+	tile.icon = OriginalArt.item_icon(id)
+	tile.text = ""
+	if location == "cargo":
+		var amount := Label.new()
+		amount.name = "Quantity"
+		amount.text = str(count)
+		amount.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		amount.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		amount.offset_left = -26
+		amount.offset_right = -5
+		amount.offset_top = 2
+		amount.offset_bottom = 18
+		amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		amount.add_theme_font_size_override("font_size", 12)
+		amount.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tile.add_child(amount)
+	var it: Dictionary = state.gear.get_item(id)
+	tile.tooltip_text = it.get("name", id) + ("\n" + _stats(it) if not it.is_empty() else "")
+	var tier: int = clampi(int(it.get("tier", 0)), 0, 3)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#21170e")
+	style.border_color = [Color("#a89f8a"), Color("#8fc24f"), Color("#5fa0e6"), Color("#e5902a")][tier]
+	style.set_border_width_all(2)
+	style.set_content_margin_all(5)
+	if id == _selected_gear:
+		style.border_color = GameSkin.BRASS
+		style.bg_color = Color("#59401f")
+	tile.add_theme_stylebox_override("normal", style)
+	tile.pressed.connect(func():
+		var now := Time.get_ticks_msec()
+		var key := location + "|" + id
+		if key == _last_tile and now - _last_tap < 420:
+			action.call()
+			_last_tile = ""
+		else:
+			_last_tile = key
+			_last_tap = now
+		_selected_gear = id
+		_selected_action = action
+		render())
+	return tile
 
 static func _stats(it: Dictionary) -> String:
 	if it.is_empty():

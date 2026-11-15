@@ -4,5 +4,14 @@ config_version=5
 config/name="Железный Стяг"
 run/main_scene="res://app/main_menu.tscn"
 
+[display]
+window/size/viewport_width=1366
+window/size/viewport_height=768
+window/size/window_width_override=1366
+window/size/window_height_override=768
+
+[gui]
+theme/custom="res://ui/game_theme.tres"
+
 [rendering]
 renderer/rendering_method="gl_compatibility"

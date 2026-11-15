@@ -2,6 +2,7 @@ extends Node2D
 ## Lords, vassals, bandits and caravans on the world map: a figure in faction colours with a small banner (drawWorld in src/07_main.js).
 const EmblemArt = preload("res://campaign/presentation/emblem_art.gd")
 const Brush = preload("res://campaign/presentation/map_brush.gd")
+const OriginalArt = preload("res://ui/original_art.gd")
 const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
 
@@ -36,11 +37,20 @@ func _draw_party(p: Dictionary) -> void:
 	if Rules.hostile_to_player(p, player.rel):
 		draw_arc(at + Vector2(0, 1), 22.0 * scale, 0.0, TAU, 24, Color(0.85, 0.2, 0.15, 0.85), 1.8, true)
 	if p.kind == "caravan":
-		Brush.fill_stroke(self, Brush.ellipse(at.x, at.y - 6, 11, 7, 12), Color("#8a6a3c"), 1.4)
-		Brush.fill_stroke(self, Brush.ellipse(at.x - 9, at.y - 4, 4, 4, 8), Color("#4a3a22"), 1.2)
+		draw_texture_rect(preload("res://ui/assets/caravan.png"), Rect2(at - Vector2(27.5, 28), Vector2(55, 35)), false)
 		return
-	var body := Color(look.get("c1", "#555555"))
-	Brush.fill_stroke(self, Brush.ellipse(at.x, at.y - 8 * scale, 8 * scale, 10 * scale, 14), body, 1.6)
-	Brush.fill_stroke(self, Brush.ellipse(at.x, at.y - 20 * scale, 5 * scale, 5 * scale, 12), Color("#d6b48a"), 1.4)
+	var troop := ""
+	var tier := -1
+	for stack in p.troops:
+		var info: Dictionary = roster.catalog.get_troop(stack.type)
+		if int(info.tier) > tier:
+			tier = int(info.tier)
+			troop = stack.type
+	var sprite := OriginalArt.sprite(troop, p.fac)
+	if sprite != null:
+		var key: String = troop + "|" + p.fac
+		if not OriginalArt.MANIFEST.troops.has(key): key = troop + "|player"
+		var anchor: Array = OriginalArt.MANIFEST.troops[key].anchor
+		draw_texture_rect(sprite, Rect2(at - Vector2(anchor[0], anchor[1]) * 0.68, sprite.get_size() * 0.34), false)
 	if p.kind != "bandit":
 		EmblemArt.draw_banner(self, at.x + 13 * scale, at.y + 2, look, 9.0 * scale)
