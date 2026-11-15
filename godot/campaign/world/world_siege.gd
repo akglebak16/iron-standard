@@ -106,6 +106,7 @@ func talk(p, s: Dictionary, gold: bool) -> Variant:
 	return false
 
 func surrender(p, s: Dictionary) -> void:
+	s.erase("blk")
 	var was: String = s.fac
 	capture(p, s)
 	if was in Rules.REAL_FACTIONS:
@@ -154,6 +155,46 @@ func spare(p, s: Dictionary) -> String:
 	if cf in Rules.REAL_FACTIONS:
 		p.rel[cf] = minf(100.0, float(p.rel.get(cf, 0)) + 6.0)
 	return "Ты пощадил жителей %s. Они подносят дары: +%d золота." % [s.name, gift]
+
+# ---------- the player's blockade: hunger, then surrender (sgBlockStart, sgBlockHour, sgSurrender) ----------
+
+signal surrendered(settlement: Dictionary, text: String)
+
+func block_start(p, s: Dictionary) -> String:
+	s.blk = {"t0": now_h(), "g0": maxi(1, Rules.troop_count(wars.garrison_of(s))), "away": 0}
+	return "Ты взял %s в блокаду. Держи отряд рядом, пока в городе не кончится еда." % s.name
+
+## Hourly. Returns log lines for the player.
+func block_hour(p, hour: int) -> Array:
+	var out: Array = []
+	for s in roster.map.settles:
+		if not s.has("blk") or s.blk == null:
+			if s.get("food") != null and float(s.food) < food_max(s) and s.get("siege") == null and hour == 0:
+				s.food = minf(food_max(s), float(s.food) + 1.0)
+			continue
+		if s.fac == "player" or not (s.fac in Rules.REAL_FACTIONS and float(p.rel.get(s.fac, 0)) < -20.0):
+			s.erase("blk")
+			continue
+		if Vector2(p.x - s.x, p.y - s.y).length() > 170.0 or p.busy == "battle":
+			s.blk.away = int(s.blk.away) + 1
+			if s.blk.away > 12:
+				s.erase("blk")
+				out.append("Блокада %s снята: ты ушёл от стен." % s.name)
+			continue
+		s.blk.away = 0
+		var g := wars.garrison_of(s)
+		s.food = maxf(0.0, food_of(s) - (1.0 + Rules.troop_count(g) / 80.0) / 24.0)
+		if float(s.food) > 0.0:
+			continue
+		if not s.blk.get("starve", false):
+			s.blk.starve = true
+			out.append("В %s кончилась еда: гарнизон голодает. Самое время потребовать сдачи." % s.name)
+		for t in g.duplicate():
+			Rules.remove_troops(g, t.type, floori(t.n * 0.02 + rng.randf())) # random rounding, like sgCut
+		if Rules.troop_count(g) < int(s.blk.g0) * 0.35:
+			surrender(p, s)
+			surrendered.emit(s, "%s сдался без боя (голод). Город твой, жители целы." % s.name)
+	return out
 
 # ---------- hostile lords storm the player's holdings (assaultsTick, every 3 hours) ----------
 

@@ -15,6 +15,7 @@ var player: RefCounted  # PlayerParty: x, y, troops, rel, busy, inside, away
 var undead: RefCounted = null  # WorldUndead, optional
 var clans: RefCounted = null   # WorldClans, optional: rulers survive lost fights
 var vassals: RefCounted = null  # WorldVassals, optional: the player's retinues
+var skirmish: RefCounted = null # WorldSkirmish, optional: fights lasting hours, rallying neighbours
 
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
@@ -34,7 +35,10 @@ func step(dh: float) -> void:
 			if _skip_fight(b) or not (b in roster.parties):
 				continue
 			if Vector2(a.x - b.x, a.y - b.y).length() < 15.0 and Rules.hostile(a, b):
-				auto_fight(a, b)
+				if skirmish != null:
+					skirmish.contact(a, b, auto_fight)
+				else:
+					auto_fight(a, b)
 				break
 
 func _skip_fight(p: Dictionary) -> bool:
@@ -96,7 +100,7 @@ func _rest_inside(p: Dictionary, dh: float) -> void:
 
 ## Decides between hunting, fleeing and idling. Returns true when the party picked a new goal this tick.
 func _think(p: Dictionary) -> bool:
-	var me := roster.strength_of(p)
+	var me: float = roster.strength_of(p) + (skirmish.ally_strength(p) if skirmish != null else 0.0)
 	var tgt = null
 	var tb := 1e9
 	var threat = null
@@ -138,6 +142,8 @@ func _think(p: Dictionary) -> bool:
 		p.tpl = tgt.has("pl")
 		p.state = "hunt"
 		roster.path_to(p, tgt.x, tgt.y)
+		if skirmish != null and not tgt.has("pl") and not p.get("army", false):
+			skirmish.rally(p, tgt)
 		return true
 	if p.state == "hunt" or p.state == "flee":
 		p.state = "idle"

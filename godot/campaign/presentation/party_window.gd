@@ -2,10 +2,16 @@ extends "res://campaign/presentation/modal_window.gd"
 ## Party, hero and journal windows (openPanel in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
 const CompanionText = preload("res://campaign/presentation/companion_text.gd")
-const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["gear", "Снаряжение"], ["quests", "Задания"], ["journal", "Журнал"]]
+const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["gear", "Снаряжение"], ["quests", "Задания"], ["factions", "Государства"], ["journal", "Журнал"]]
 const HeroEquip = preload("res://equipment/rules/hero_equip.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
+var _faction := ""
+signal quest_target(x: float, y: float)
+const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const Rules = preload("res://campaign/world/party_rules.gd")
+var _fcat := FactionCatalog.new()
+var _fcat_loaded := false
 var _confirm := ""
 var _pick := ""
 var state: RefCounted
@@ -35,6 +41,8 @@ func render() -> void:
 			_quests(p)
 		"gear":
 			_gear(p)
+		"factions":
+			_factions_tab(p)
 		_:
 			_troops(p, fx)
 
@@ -131,7 +139,11 @@ func _quests(p) -> void:
 		note("Заданий нет. Их дают на досках в городах.")
 	for q in p.quests:
 		var left: int = int(q.dl) - int(state.clock.day)
-		row(state.quests.text(q), "%s · награда %d" % ["срок вышел" if left < 0 else ("последний день" if left == 0 else "осталось дней: %d" % left), q.reward])
+		var target: Dictionary = state.map.settlement_by_id(q.from if q.type == "scout" and q.get("seen", false) else q.sid)
+		var buttons: Array = []
+		if not target.is_empty() and q.type != "purge":
+			buttons.append({"text": "На карте", "call": func(): quest_target.emit(target.x, target.y); close_window()})
+		row(state.quests.text(q), "%s · награда %d" % ["срок вышел" if left < 0 else ("последний день" if left == 0 else "осталось дней: %d" % left), q.reward], buttons)
 
 func _gear(p) -> void:
 	var gear = state.gear
@@ -184,3 +196,80 @@ static func _stats(it: Dictionary) -> String:
 		parts.append("двуручное")
 	parts.append("цена %d" % int(it.get("price", 0)))
 	return " · ".join(parts)
+
+## States: power, ruler, nobles, holdings, wars (journalFactionsBody in src/06g_jfactions.js).
+func _factions_tab(p) -> void:
+	if not _fcat_loaded:
+		_fcat_loaded = _fcat.load_data()
+	var wars = state.wars
+	var clans = state.clans
+	var alive: Array = wars.factions_alive()
+	var power := {}
+	var top := 1.0
+	for f in Rules.REAL_FACTIONS:
+		power[f] = wars.power(f) if f in alive else 0.0
+		top = maxf(top, power[f])
+	var order: Array = alive.duplicate()
+	order.sort_custom(func(a, b): return power[a] > power[b])
+	for f in Rules.REAL_FACTIONS:
+		if not f in alive:
+			order.append(f)
+	if _faction == "" or not _faction in Rules.REAL_FACTIONS:
+		_faction = p.liege if p.liege != "" and p.liege in alive else (order[0] if not order.is_empty() else "emp")
+	var picks: Array = []
+	for f in order:
+		picks.append({"text": String(_fcat.get_faction(f).name).split(" ")[0], "disabled": f == _faction, "call": func(): _faction = f})
+	row("Государство", "", picks)
+	var f := _faction
+	var look := _fcat.get_faction(f)
+	heading(look.name)
+	if not f in alive:
+		note("Государство пало: земель не осталось.")
+		return
+	var ruler: Dictionary = clans.ruler_of(f)
+	if not ruler.is_empty():
+		note("Правитель: %s · %s" % [ruler.name, clans.ruler_trait(f)[0]])
+	elif clans.kingless(f):
+		note("Междуцарствие: роды выбирают нового правителя, походов нет.")
+	var rank: int = order.find(f) + 1
+	var nobles: Array = state.roster.parties.filter(func(q): return q.fac == f and Rules.is_noble(q))
+	var lords := nobles.filter(func(q): return q.kind == "lord").size()
+	var men := 0
+	for q in nobles:
+		men += Economy.troop_count(q.troops)
+	var h: Dictionary = wars.hold_of(f)
+	row("Сила: %d-е место из %d" % [rank, alive.size()], "%d · %s" % [roundi(power[f]), "сильнейшая" if rank == 1 else "%d%% от первой" % roundi(power[f] / top * 100.0)])
+	row("Знать: %d лордов, %d вассалов, %d родов" % [lords, nobles.size() - lords, clans.of_faction(f).size()], "бойцов в отрядах знати: %d" % men)
+	row("Владения: %d" % h.all, "%d гор. · %d зам. · %d дер." % [h.t, h.c, h.v])
+	row("Отношение к тебе: %s (%d)" % [_rel_name(float(p.rel.get(f, 0))), roundi(float(p.rel.get(f, 0)))], "ты служишь им" if p.liege == f else "")
+	heading("Войны")
+	var any := false
+	for o in alive:
+		if o == f or not wars.at_war(f, o):
+			continue
+		any = true
+		var w: Variant = wars.wars.get(Rules.war_key(f, o))
+		var since := ("с %d-го дня" % int(w.since)) if w != null else "давняя вражда"
+		var share := roundi(power[f] / maxf(1.0, power[f] + power[o]) * 100.0)
+		var sieges: Array = []
+		for q in state.map.settles:
+			if q.get("siege") is Dictionary and ((q.siege.f == f and q.fac == o) or (q.siege.f == o and q.fac == f)):
+				sieges.append(q.name)
+		row(_fcat.get_faction(o).name, "%s · соотношение сил %d на %d%s" % [since, share, 100 - share, (" · осады: " + ", ".join(sieges)) if not sieges.is_empty() else ""])
+	if not any:
+		note("Ни с кем не воюет.")
+	heading("Роды")
+	for c in clans.of_faction(f):
+		var loy := int(c.loy)
+		row("%s%s" % [c.name, " · правящий" if c.rule else ""], "%s род · верность %s · лордов %d" % [clans.TRAITS[c.trait].n, "крепкая" if loy > 75 else ("обычная" if loy > 50 else ("шаткая" if loy > 30 else "на исходе")), clans.members(c).size()])
+
+static func _rel_name(v: float) -> String:
+	if v < -20.0:
+		return "Враждебные"
+	if v < -5.0:
+		return "Недружелюбные"
+	if v < 20.0:
+		return "Нейтральные"
+	if v < 50.0:
+		return "Дружелюбные"
+	return "Союзные"
