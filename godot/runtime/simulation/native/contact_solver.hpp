@@ -138,7 +138,7 @@ public:
                     double radius = ra + radii[j];
                     if (std::abs(difference.x) >= radius || std::abs(difference.y) >= radius || double(difference.squared()) >= radius * radius) continue;
                     double distance = std::max(double(difference.length()), config.minimum_distance);
-                    Vec2 normal = difference / distance;
+                    Vec2 normal = difference.x == 0 && difference.y == 0 ? Vec2{1, 0} : difference / distance;
                     double overlap = (radius - distance) * (sides[i] == sides[j] ? config.friend_push : config.enemy_push);
                     double mb = masses[j], total = ma + mb;
                     pa = pa - normal * overlap * mb / total;

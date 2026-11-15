@@ -171,7 +171,8 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 				if absf(difference.x) >= radius or absf(difference.y) >= radius or difference.length_squared() >= radius * radius:
 					continue
 				var distance := maxf(difference.length(), Config.MIN_COLLISION_DISTANCE)
-				var normal := difference / distance
+				# A zero vector has no direction; a deterministic axis breaks an exact stack.
+				var normal := Vector2.RIGHT if difference == Vector2.ZERO else difference / distance
 				var strength := Config.FRIEND_COLLISION_PUSH if sa == side[j] else Config.ENEMY_COLLISION_PUSH
 				var overlap := (radius - distance) * strength
 				var mb: float = mass[j]
@@ -223,7 +224,7 @@ static func _separate(a: Unit, b: Unit) -> bool:
 	if absf(difference.x) >= radius or absf(difference.y) >= radius or difference.length_squared() >= radius * radius:
 		return false
 	var distance := maxf(difference.length(), Config.MIN_COLLISION_DISTANCE)
-	var normal := difference / distance
+	var normal := Vector2.RIGHT if difference == Vector2.ZERO else difference / distance
 	var strength := Config.FRIEND_COLLISION_PUSH if a.side == b.side else Config.ENEMY_COLLISION_PUSH
 	var overlap := (radius - distance) * strength
 	var total_mass: float = a.mass + b.mass
