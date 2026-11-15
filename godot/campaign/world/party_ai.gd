@@ -12,6 +12,8 @@ const WH := 3400.0
 var roster: Roster
 var player: RefCounted  # PlayerParty: x, y, troops, rel, busy, inside, away
 
+var undead: RefCounted = null  # WorldUndead, optional
+
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
 	player = p
@@ -140,11 +142,19 @@ func _think(p: Dictionary) -> bool:
 	return false
 
 func _idle(p: Dictionary) -> void:
+	if p.fac == "undead":
+		p.wait -= 1.2
+		if p.wait <= 0.0 and undead != null:
+			undead.idle(p)
+		return
 	match p.kind:
 		"lord":
 			p.wait -= 1.2
 			if p.wait <= 0.0:
 				var targets := roster.map.settles.filter(func(s): return s.fac == p.fac and s.kind != "camp")
+				var ruins: Array = undead.ruins_for(p.fac) if undead != null else []
+				if not ruins.is_empty() and roster.rng.randf() < 0.5:
+					targets = ruins
 				if targets.is_empty():
 					p.wait = 5.0
 				else:
@@ -200,6 +210,16 @@ func _arrived(p: Dictionary) -> void:
 			p.path = []
 			p.pi = 0
 			p.arrived = true
+			return
+		if p.fac == "undead" and undead != null:
+			undead.arrive(p, s)
+			return
+		if s.fac == "undead" and Rules.is_noble(p) and undead != null and not undead.noble_retake(p, s):
+			p.state = "idle"
+			p.path = []
+			p.wait = float(roster.rint(3, 8))
+			if Rules.troop_count(p.troops) < 10:
+				roster.remove(p)
 			return
 		if p.kind == "caravan":
 			if s.fac != "bandit":
@@ -269,6 +289,8 @@ func auto_fight(a: Dictionary, b: Dictionary) -> void:
 	var l: Dictionary = b if w == a else a
 	var ratio := minf(sa, sb) / maxf(sa, sb)
 	var wl := minf(0.85, ratio * 0.85)
+	if w.fac == "undead" and undead != null:
+		undead.raise(w, Rules.troop_count(l.troops) * undead.RAISE)
 	for s in w.troops.duplicate():
 		var dead := 0
 		for i in int(s.n):

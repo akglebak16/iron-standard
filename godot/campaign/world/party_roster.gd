@@ -172,7 +172,7 @@ func _spawn_bandits_and_caravans() -> void:
 	var bands := parties.filter(func(p): return p.kind == "bandit").size()
 	var big := parties.filter(func(p): return p.kind == "bandit" and p.get("big", false)).size()
 	var cars := parties.filter(func(p): return p.kind == "caravan").size()
-	var camps := map.settles.filter(func(s): return s.kind == "camp" and s.camp != null)
+	var camps := map.settles.filter(func(s): return s.kind == "camp" and s.camp != null and not s.get("barrow", false))
 	var cap := roundi(10.0 * BANDIT_N)
 	if bands - big < cap and not camps.is_empty() and rng.randf() < 0.5 * BANDIT_N:
 		var c: Dictionary = pick(camps)

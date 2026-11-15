@@ -123,8 +123,18 @@ func _ready() -> void:
 func _on_map_click(at: Vector2) -> void:
 	if _meeting.size() > 0 or _town.visible or _party_window.visible or _siege.visible:
 		return
-	var target: Dictionary = state.settlement_near(at.x, at.y, 46.0)
 	var p = state.player
+	p.tid = -1
+	var prey: Dictionary = state.party_near(at.x, at.y, 34.0)
+	if not prey.is_empty():
+		state.chase(prey)
+		return
+	var target: Dictionary = state.settlement_near(at.x, at.y, 46.0)
+	if not target.is_empty() and target.kind == "camp":
+		var why: String = state.chase(target)
+		if why != "":
+			hud.show_notice(why)
+		return
 	if not target.is_empty() and target.kind != "camp":
 		p.enter_id = target.id
 		if Vector2(target.x - p.x, target.y - p.y).length() < 50.0:
@@ -138,7 +148,7 @@ func _on_map_click(at: Vector2) -> void:
 func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	_meeting = party
 	state.clock.paused = true
-	var hostile := Rules.hostile_to_player(party, state.player.rel)
+	var hostile := Rules.hostile_to_player(party, state.player.rel) or party.kind == "camp"
 	var rows: Array = []
 	var sorted: Array = party.troops.duplicate()
 	sorted.sort_custom(func(a, b): return state.roster.info[a.type].tier > state.roster.info[b.type].tier)
@@ -146,7 +156,7 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 		rows.append({"name": _bridge.troops.get_troop(t.type).name, "n": int(t.n)})
 	var title: String = party.name
 	if party.kind == "camp":
-		title = "Логово разбойников"
+		title = "Чёрный курган" if party.fac == "undead" else "Логово разбойников"
 	elif party.kind == "caravan":
 		title = "Караван"
 	elif party.kind == "bandit":

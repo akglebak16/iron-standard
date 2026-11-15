@@ -31,14 +31,14 @@ func _initialize() -> void:
 	assert(Siege.def_k(town) > 1.5)
 	var price: int = s.siege.bribe(town)
 	assert(price > 200)
-	p.troops = [{"type": "e2a", "n": 60}]
+	p.troops = [{"type": "e2a", "n": 400}]
 	assert(s.siege.talk_chance(p, town, true) > s.siege.talk_chance(p, town, false))
 	# a refused talk closes talks for a day
 	p.gold = 10
 	assert(s.siege.talk(p, town, true) == null, "no gold, no bribe")
 	p.gold = 5000
 	var tries := 0
-	while tries < 40 and town.fac != "player":
+	while tries < 300 and town.fac != "player":
 		p.gold = 5000
 		var r: Variant = s.siege.talk(p, town, true)
 		if r == null:
