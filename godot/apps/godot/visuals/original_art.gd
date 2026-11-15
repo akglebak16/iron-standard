@@ -2,6 +2,7 @@ extends RefCounted
 const AssetPaths = preload("res://apps/godot/visuals/asset_paths.gd")
 ## Original Canvas layers shared by the battle and the campaign portraits.
 const MANIFEST = preload("res://apps/godot/visuals/assets/visual_manifest.gd").DATA
+const BANNERS = preload("res://apps/godot/visuals/assets/banner_definitions.gd").DATA
 const SHEETS = {
 	"body": [preload("res://apps/godot/visuals/assets/body.png"), preload("res://apps/godot/visuals/assets/body_v1.png"), preload("res://apps/godot/visuals/assets/body_v2.png"), preload("res://apps/godot/visuals/assets/body_v3.png")],
 	"weapon": [preload("res://apps/godot/visuals/assets/wpn.png"), preload("res://apps/godot/visuals/assets/wpn_v1.png"), preload("res://apps/godot/visuals/assets/wpn_v2.png"), preload("res://apps/godot/visuals/assets/wpn_v3.png")],
@@ -15,9 +16,42 @@ const SHEETS = {
 static var _cache := {}
 static var _looks := {}
 static var _component_pages := {}
+static var _banner_sheets := {}
+static var _player_banner := 0
+
+## Appearance preference only. Call at mode preparation, before constructing the new views.
+static func select_player_banner(index: int) -> void:
+	index = clampi(index, 0, BANNERS.size() - 1)
+	if index == _player_banner: return
+	_player_banner = index
+	_cache.clear()
+	_looks.clear()
+	_component_pages.clear()
+	_banner_sheets.clear()
+
+static func _banner_image(source: Image, key: String) -> Image:
+	if _player_banner == 0: return source
+	var path := AssetPaths.path("banner_%d_%s" % [_player_banner, key])
+	if path.is_empty(): return source
+	var replacement := (load(path) as Texture2D).get_image()
+	var image := Image.new()
+	image.copy_from(source)
+	image.blit_rect_mask(replacement, replacement, Rect2i(Vector2i.ZERO, replacement.get_size()), Vector2i.ZERO)
+	image.fix_alpha_edges()
+	return image
+
+static func _banner_sheet(source: Texture2D, key: String) -> Texture2D:
+	if _player_banner == 0: return source
+	if not _banner_sheets.has(key):
+		_banner_sheets[key] = ImageTexture.create_from_image(_banner_image(source.get_image(), key))
+	return _banner_sheets[key]
 
 static func palette(faction: String) -> Dictionary:
-	return MANIFEST.palettes.get(faction, MANIFEST.palettes.player).duplicate()
+	var result: Dictionary = MANIFEST.palettes.get(faction, MANIFEST.palettes.player).duplicate()
+	if faction == "player":
+		result.c1 = BANNERS[_player_banner].c1
+		result.c2 = BANNERS[_player_banner].c2
+	return result
 
 static func _stamp(image: Image, key: String, offset: Vector2i) -> void:
 	if not MANIFEST.components.has(key):
@@ -26,7 +60,7 @@ static func _stamp(image: Image, key: String, offset: Vector2i) -> void:
 	var page: int = component.page
 	if not _component_pages.has(page):
 		var texture: Texture2D = load(AssetPaths.path("components_%d" % page))
-		_component_pages[page] = texture.get_image()
+		_component_pages[page] = _banner_image(texture.get_image(), "components_%d" % page)
 	var r: Array = component.rect
 	image.blend_rect(_component_pages[page], Rect2i(r[0], r[1], r[2], r[3]), offset * 2)
 
@@ -147,6 +181,7 @@ static func settlement(kind: String, culture: String, faction: String) -> Textur
 		var r: Array = MANIFEST.settlements[key]
 		var atlas := AtlasTexture.new()
 		atlas.atlas = preload("res://apps/godot/visuals/assets/settlements.png")
+		if faction == "player": atlas.atlas = _banner_sheet(atlas.atlas, "settlements")
 		atlas.filter_clip = true
 		atlas.region = Rect2(r[0], r[1], r[2], r[3])
 		_cache[key] = atlas
@@ -168,12 +203,16 @@ static func sprite(troop: String, faction := "player", part := "portrait", varia
 		var rect: Array = MANIFEST.troops[key].rect
 		var atlas := AtlasTexture.new()
 		atlas.atlas = SHEETS[part][clampi(variant, 0, 3)]
+		if key.ends_with("|player") and part != "flash":
+			atlas.atlas = _banner_sheet(atlas.atlas, "%s_v%d" % ["wpn" if part == "weapon" else part, clampi(variant, 0, 3)])
+		atlas.filter_clip = true
 		atlas.region = Rect2(rect[0], rect[1], rect[2], rect[3])
 		_cache[cache_key] = atlas
 	return _cache[cache_key]
 
 static func crest(faction: String) -> Texture2D:
-	var path := AssetPaths.path("crest_%s" % faction)
+	var key := "banner_%d_crest" % _player_banner if faction == "player" and _player_banner > 0 else "crest_%s" % faction
+	var path := AssetPaths.path(key)
 	return load(path) if not path.is_empty() and ResourceLoader.exists(path) else null
 
 static func portrait_control(troop: String, faction := "player", height := 68.0) -> TextureRect:

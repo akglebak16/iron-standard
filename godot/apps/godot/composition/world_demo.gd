@@ -89,6 +89,10 @@ func _ready() -> void:
 	if state == null:
 		state = WorldState.create(seed_value, data, GameOptions.culture, ContentLoader.registry())
 		state.player.hero.name = GameOptions.hero_name
+		state.player.hero.banner = GameOptions.banner
+	var saved_banner = state.player.hero.get("banner", 0)
+	GameOptions.banner = clampi(int(saved_banner) if saved_banner is int or saved_banner is float else 0, 0, preload("res://apps/godot/visuals/original_art.gd").BANNERS.size() - 1)
+	preload("res://apps/godot/visuals/original_art.gd").select_player_banner(GameOptions.banner)
 	map_view = MapView.new()
 	map_view.cache_static_artwork = cache_static_artwork
 	add_child(map_view)
@@ -103,7 +107,7 @@ func _ready() -> void:
 	_marks.build(state)
 	var party_layer := PartyLayer.new()
 	map_view.add_child(party_layer)
-	party_layer.build(state.player, factions.get_faction("player"), state.gear)
+	party_layer.build(state.player, preload("res://apps/godot/visuals/original_art.gd").palette("player"), state.gear)
 	camera = WorldCamera.new()
 	add_child(camera)
 	camera.make_current()

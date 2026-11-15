@@ -11,12 +11,14 @@ const root = path.resolve(__dirname, '../..');
   for (const [name, cls, width, height] of [
     ['plank', 'plank', 108, 96], ['button', 'btn', 108, 50], ['primary', 'btn pri', 108, 50],
     ['danger', 'btn danger', 108, 50], ['order', 'ord', 78, 66], ['tile', 'tile', 76, 76],
-    ['square', 'sq plank thin', 52, 52], ['group', 'grp', 84, 72], ['group_on', 'grp on', 84, 72]
+    ['square', 'sq plank thin', 52, 52], ['group', 'grp', 84, 72], ['group_on', 'grp on', 84, 72],
+    ['modal_header', 'whead', 108, 84], ['modal_footer', 'wfoot', 108, 70]
   ]) {
     await page.setContent(`<style>${css}\nhtml,body{background:transparent!important}#asset{position:absolute;inset:0 auto auto 0;width:${width}px;height:${height}px;padding:0;margin:0;min-width:0;box-sizing:border-box}</style><div id="asset" class="${cls}"></div>`);
     await page.locator('#asset').screenshot({ path: path.join(root, 'godot/apps/godot/visuals/assets', name + '.png'), omitBackground: true });
   }
   for (const [name, html, selector] of [
+    ['input', '<input type="text" style="width:108px;height:54px">', 'input'],
     ['timer', '<div id="btimer"></div>', '#btimer'],
     ...['st', 'mo', 'ar', 'hp'].map(kind => ['bar_' + kind, `<div class="bar ${kind}" style="width:124px;--p:100%"><i></i></div>`, '.bar i'])
   ]) {

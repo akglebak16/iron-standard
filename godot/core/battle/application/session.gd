@@ -212,6 +212,11 @@ func unit_appearance_ids() -> Dictionary:
 	return ids
 
 ## Read-only presentation query; does not change simulation snapshots or consume battle RNG.
+func hero_swing_state() -> Dictionary:
+	return {"position": _hero.position, "dead": _hero.dead, "remaining": _hero.swing_timer,
+		"facing": _hero.swing_facing, "reach": _hero.melee_reach, "mounted": _hero.mounted}
+
+## Read-only presentation query; does not change simulation snapshots or consume battle RNG.
 func selected_orders(selection: int) -> Array[String]:
 	var orders: Array[String] = []
 	for group in _state.groups[0]:

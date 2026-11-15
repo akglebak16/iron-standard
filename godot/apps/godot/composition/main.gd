@@ -15,6 +15,8 @@ const GoodsCatalog = preload("res://core/campaign/data/goods_catalog.gd")
 const CompanionProfile = preload("res://core/characters/rules/companion_profile.gd")
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const PresentationPreferences = preload("res://apps/godot/composition/presentation_preferences.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
+const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const REWARD_SEED_OFFSET := 1
 signal title_requested
 @export var demo_world: Dictionary = {}
@@ -25,6 +27,7 @@ var _demo_world: Dictionary
 var presentation_preferences := PresentationPreferences.new()
 
 func _ready() -> void:
+	OriginalArt.select_player_banner(GameOptions.banner)
 	var catalog := Catalog.new()
 	if not ContentLoader.populate(catalog):
 		push_error("Cannot load battle catalog")

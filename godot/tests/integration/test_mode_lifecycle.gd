@@ -27,6 +27,14 @@ func _check() -> void:
 		for frame in 3: await process_frame
 		assert(game.get_child_count() == 1 and game._mode.has_signal("demo_requested"))
 		assert(session_ref.get_ref() == null)
+	game._mode.quick_battle_requested.emit({"me":"khan", "foe":"bandit", "size":50})
+	game._mode.quick_battle_requested.emit({"me":"emp", "foe":"nord", "size":200})
+	for frame in 3: await process_frame
+	assert(game.get_child_count() == 1 and game._mode.has_node("Battle"))
+	assert(game._mode.battle_setup.quick and game._mode.battle_setup.enemy_faction == "bandit")
+	assert(game._mode.battle_setup.hero_profile.eq.horse == "horse_riding")
+	game._mode.title_requested.emit()
+	for frame in 3: await process_frame
 	for iteration in 2:
 		game._mode.campaign_requested.emit()
 		# Duplicate requests within the same frame must not create a second context.

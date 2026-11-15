@@ -47,9 +47,13 @@ static func build() -> Theme:
 	t.set_color("font_color", "Label", PARCH)
 	t.set_color("font_shadow_color", "Label", Color("#00000099"))
 	t.set_constant("shadow_offset_y", "Label", 1)
-	t.set_font("font", "LineEdit", BODY)
-	t.set_stylebox("normal", "LineEdit", box("button", 10))
-	t.set_stylebox("focus", "LineEdit", box("primary", 10))
+	t.set_font("font", "LineEdit", css_font(DISPLAY, 22, 30))
+	t.set_font_size("font_size", "LineEdit", 22)
+	var input_box := box("input", 12)
+	input_box.content_margin_left = 14
+	input_box.content_margin_right = 14
+	t.set_stylebox("normal", "LineEdit", input_box)
+	t.set_stylebox("focus", "LineEdit", input_box)
 	t.set_color("font_color", "LineEdit", PARCH)
 	t.set_color("caret_color", "LineEdit", BRASS)
 	t.set_color("font_color", "RichTextLabel", PARCH)
@@ -64,6 +68,16 @@ static func build() -> Theme:
 	t.set_stylebox("panel", "TooltipPanel", box("plank", 9))
 	t.set_color("font_color", "TooltipLabel", PARCH)
 	return t
+
+## CSS line boxes can be shorter than the font's default ascent/descent. Preserve glyph size.
+static func css_font(base: Font, size: int, line_height: float, letter_spacing := 0.0) -> FontVariation:
+	var font := FontVariation.new()
+	font.base_font = base
+	var change := roundi(line_height - base.get_height(size))
+	font.spacing_top = floori(change / 2.0)
+	font.spacing_bottom = change - font.spacing_top
+	font.spacing_glyph = roundi(letter_spacing)
+	return font
 
 static func title(label: Label, size := 30) -> void:
 	label.add_theme_font_override("font", DISPLAY)
