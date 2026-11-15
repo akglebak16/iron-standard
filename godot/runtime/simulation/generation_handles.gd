@@ -61,6 +61,20 @@ func relocate(handle: int, destination: int) -> bool:
 	_indices[slot] = destination
 	return true
 
+## Drop released dense rows in stable order in one pass. Generations never change.
+## The owning store performs the same stable compaction before publishing a query.
+func compact_dense() -> int:
+	var write := 0
+	for read in _slots.size():
+		var slot := _slots[read]
+		if slot < 0: continue
+		_slots[write] = slot
+		_indices[slot] = write
+		write += 1
+	_slots.resize(write)
+	assert(write == _active, "Handle table must contain every active identity once")
+	return write
+
 func _grow(index: int) -> void:
 	var previous := _slots.size()
 	if index < previous: return

@@ -261,14 +261,14 @@ func compact_inactive(tick: int) -> int:
 			unit.retired_tick = tick
 			continue
 		if write != read:
-			var moved := handles.relocate(unit.unit_handle, write)
-			assert(moved, "Active handle must follow compaction")
 			motion.copy_row(read, write)
 			active_units[write] = unit
 			unit.battle_index = write
 		write += 1
 	pending_retirements = 0
 	if write == before: return 0
+	var compacted := handles.compact_dense()
+	assert(compacted == write, "Active rows and handles must compact in the same stable order")
 	active_units.resize(write)
 	motion.resize(write)
 	_visible_units.assign(_visible_units.filter(func(u: Unit): return not u.gone and (not u.dead or u.hero or u.companion)))

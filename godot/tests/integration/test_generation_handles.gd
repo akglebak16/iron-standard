@@ -32,6 +32,7 @@ func _initialize() -> void:
 	var other_handle := other.allocate(0)
 	assert(pool.resolve(first) == -1 and other.resolve(other_handle) == 0)
 	_check_attack_after_reuse()
+	_check_batch_compaction()
 	print("Generation handles tests passed")
 	quit(0)
 
@@ -63,3 +64,26 @@ func _check_attack_after_reuse() -> void:
 	assert(selected == replacement and attacker.target_handle == replacement.unit_handle)
 	state.mark_gone(replacement)
 	assert(state.unit_for(replacement.unit_handle) == null)
+
+func _check_batch_compaction() -> void:
+	var pool := Handles.new()
+	assert(pool.compact_dense() == 0)
+	var identities := PackedInt64Array()
+	for i in 2000: identities.append(pool.allocate(i))
+	for i in 2000:
+		if i % 3 != 1: assert(pool.release(identities[i]))
+	assert(pool.compact_dense() == 667 and pool.size() == 667)
+	var dense := 0
+	for i in 2000:
+		if i % 3 == 1:
+			assert(pool.resolve(identities[i]) == dense and pool.handle_at(dense) == identities[i])
+			dense += 1
+		else: assert(pool.resolve(identities[i]) == -1)
+	assert(pool.handle_at(667) == 0 and pool.handle_at(1999) == 0)
+	var new_handle := pool.allocate(667)
+	assert(new_handle != 0 and pool.resolve(new_handle) == 667)
+	assert(pool.compact_dense() == 668 and pool.resolve(new_handle) == 667)
+	for handle in identities:
+		if pool.resolve(handle) >= 0: assert(pool.release(handle))
+	assert(pool.compact_dense() == 1 and pool.resolve(new_handle) == 0)
+	assert(pool.release(new_handle) and pool.compact_dense() == 0)
