@@ -116,20 +116,20 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.wars = WorldWars.new(state.map, state.roster)
 	state.wars.start()
 	state.siege = WorldSiege.new(state.wars, state.roster, state.roster.rng)
-	state.wars.announced.connect(state.log_world)
+	state.wars.announced.connect(func(t): state.log_world(t, JOURNAL_INFO))
 	state.wars.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai = PartyAI.new(state.roster, state.player)
 	state.undead = WorldUndead.new(state.roster, state.wars)
 	state.undead.init()
-	state.undead.announced.connect(state.log_world)
+	state.undead.announced.connect(func(t): state.log_world(t, JOURNAL_BAD))
 	state.undead.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai.undead = state.undead
 	state.clans = WorldClans.new(state.roster, state.wars, state.player)
 	state.clans.siege = state.siege
 	state.clans.init()
 	state.clans.ruler_day()
-	state.clans.announced.connect(state.log_world)
-	state.clans.message.connect(state.log_world)
+	state.clans.announced.connect(func(t): state.log_world(t, JOURNAL_INFO))
+	state.clans.message.connect(func(t): state.log_world(t, JOURNAL_INFO))
 	state.wars.clans = state.clans
 	state.ai.clans = state.clans
 	state.roster.clans_on = true
@@ -141,12 +141,12 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.companions.message.connect(state.log_world)
 	state.companions.ensure(state.player)
 	state.vassals = WorldVassals.new(state.roster, state.siege, state.companions, state.player)
-	state.vassals.message.connect(state.log_world)
+	state.vassals.message.connect(func(t): state.log_world(t, JOURNAL_INFO))
 	state.siege.vassals = state.vassals
 	state.ai.vassals = state.vassals
-	state.siege.lost.connect(func(s, t): state.log_world(t); state.settlement_changed.emit(s))
-	state.siege.held.connect(func(_s, t): state.log_world(t))
-	state.siege.surrendered.connect(func(s, t): state.log_world(t); state.settlement_changed.emit(s))
+	state.siege.lost.connect(func(s, t): state.log_world(t, JOURNAL_BAD); state.settlement_changed.emit(s))
+	state.siege.held.connect(func(_s, t): state.log_world(t, JOURNAL_GOOD))
+	state.siege.surrendered.connect(func(s, t): state.log_world(t, JOURNAL_INFO); state.settlement_changed.emit(s))
 	state.skirmish = WorldSkirmish.new(state.roster)
 	state.skirmish.clans = state.clans
 	state.skirmish.undead = state.undead
@@ -210,7 +210,7 @@ func enter(s: Dictionary) -> void:
 	player.stop()
 	if WorldSiege.hostile(s, player.rel):
 		if s.kind == "village":
-			log_world("%s: жители заперлись, эта фракция враждебна тебе." % s.name)
+			log_world("%s: жители заперлись, эта фракция враждебна тебе." % s.name, JOURNAL_BAD)
 		else:
 			siege_requested.emit(s)
 		return
@@ -269,7 +269,7 @@ func rel_watch() -> void:
 			continue
 		_hostile[f] = h
 		var gen: String = roster.factions.get_faction(f).get("gen", f)
-		log_world(("Ты теперь враг %s: их лорды нападут, ворота их городов закрыты." if h else "Ты больше не враг %s.") % gen)
+		log_world(("Ты теперь враг %s: их лорды нападут, ворота их городов закрыты." if h else "Ты больше не враг %s.") % gen, JOURNAL_BAD if h else JOURNAL_GOOD)
 
 ## The player declares war to besiege a town of a state he is at peace with (declareWar).
 func declare_war(f: String) -> void:
@@ -281,8 +281,14 @@ func declare_war(f: String) -> void:
 func player_effects() -> Dictionary:
 	return CompanionProfile.party_effects(player.hero, player.comps, companion_catalog, perks)
 
-func log_world(text: String) -> void:
-	journal.push_front({"day": clock.day, "text": text})
+## Journal entry kinds (logW kind in src/05_world.js): neutral, bad, info, good.
+const JOURNAL_NEUTRAL := 0
+const JOURNAL_BAD := 1
+const JOURNAL_INFO := 2
+const JOURNAL_GOOD := 3
+
+func log_world(text: String, kind: int = JOURNAL_NEUTRAL) -> void:
+	journal.push_front({"day": clock.day, "text": text, "kind": kind})
 	if journal.size() > 60:
 		journal.pop_back()
 	log_added.emit(text)
