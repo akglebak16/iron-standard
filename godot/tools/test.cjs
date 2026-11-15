@@ -26,7 +26,9 @@ if (imported.error || imported.status !== 0 || scriptErrors.test(`${imported.std
   process.stderr.write(`${imported.stdout || ''}\n${imported.stderr || ''}`);
   throw new Error(`Godot asset import failed${imported.error ? ` (${imported.error.message})` : ''}`);
 }
-const tests = findTests(root).sort();
+const filterArg = process.argv.find(a => a.startsWith('--filter='));
+const filter = filterArg ? new RegExp(filterArg.slice(9)) : null;
+const tests = findTests(root).sort().filter(file => !filter || filter.test(path.relative(root, file).replaceAll('\\', '/')));
 if (!tests.length) throw new Error('No Godot tests found');
 for (const test of tests) {
   const relative = path.relative(root, test).replaceAll('\\', '/');
@@ -38,4 +40,4 @@ for (const test of tests) {
   }
   console.log(`${relative} OK`);
 }
-console.log(`${tests.length} Godot test files passed. Isolated data: ${userData}`);
+console.log(`${tests.length} Godot test files passed${filter ? ` (selected by ${filter}; not the full suite)` : ''}. Isolated data: ${userData}`);

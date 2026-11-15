@@ -12,9 +12,6 @@ const CollisionGrid = preload("res://battle/rules/collision_grid.gd")
 
 const COLLISION_SLACK := 10.0
 
-## Off only in differential tests: the plain loops are the reference the index must match exactly.
-static var use_index := true
-
 static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 	assert(rng != null, "A simulation tick requires the battle RNG")
 	_step(battle, dt, rng)
@@ -26,7 +23,13 @@ static func step_formation_only(battle: State, dt: float) -> SpatialIndex:
 static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_index := false) -> SpatialIndex:
 	if dt <= 0.0:
 		return null
-	var index: SpatialIndex = SpatialIndex.new(battle.units, battle.arena_size) if use_index and battle.units.size() >= Config.SPATIAL_MIN_UNITS else null
+	var index: SpatialIndex = null
+	if battle.use_spatial_index and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
+		if battle.movement_index == null:
+			battle.movement_index = SpatialIndex.new(battle.units, battle.arena_size)
+		else:
+			battle.movement_index.synchronize()
+		index = battle.movement_index
 	for unit_index in battle.units.size():
 		var unit: Unit = battle.units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
@@ -124,7 +127,11 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 		side[i] = u.side
 		live[i] = 0 if u.dead or u.gone else 1
 		max_radius = maxf(max_radius, u.collision_radius)
-	var grid := CollisionGrid.new(pos, battle.arena_size)
+	if battle.collision_grid == null:
+		battle.collision_grid = CollisionGrid.new(pos, battle.arena_size)
+	else:
+		battle.collision_grid.reset(pos, battle.arena_size)
+	var grid := battle.collision_grid
 	var plain_field := battle.wall == null
 	var trunk_count := battle.trunks.size()
 	var trunk_pos := PackedVector2Array()
@@ -143,7 +150,8 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 		var next_index := i + 1
 		while next_index < n:
 			var origin := pa
-			var candidates := grid.query(origin, ra + max_radius + COLLISION_SLACK, next_index)
+			var candidates := battle.collision_candidates
+			grid.query_into(origin, ra + max_radius + COLLISION_SLACK, next_index, candidates)
 			var moved_far := false
 			for j in candidates:
 				next_index = j + 1

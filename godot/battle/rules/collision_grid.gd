@@ -8,11 +8,23 @@ var _cells: Array = []
 var _at := PackedInt32Array()
 var _w := 0
 var _h := 0
+var _allocated: Array[int] = []
 
 func _init(pos: PackedVector2Array, arena: Vector2) -> void:
-	_w = ceili((arena.x + PAD * 2.0) / CELL) + 1
-	_h = ceili((arena.y + PAD * 2.0) / CELL) + 1
-	_cells.resize(_w * _h) # cells stay null until used: allocating thousands of empty arrays per tick costs more than the pass
+	reset(pos, arena)
+
+func reset(pos: PackedVector2Array, arena: Vector2) -> void:
+	var width := ceili((arena.x + PAD * 2.0) / CELL) + 1
+	var height := ceili((arena.y + PAD * 2.0) / CELL) + 1
+	if width != _w or height != _h:
+		_cells.clear()
+		_allocated.clear()
+		_w = width
+		_h = height
+		_cells.resize(_w * _h)
+	else:
+		for cell in _allocated:
+			_cells[cell].clear()
 	_at.resize(pos.size())
 	for i in pos.size():
 		var c := _cell(pos[i])
@@ -31,7 +43,13 @@ func move(i: int, p: Vector2) -> void:
 
 ## Indices >= first in the cells touching the square around p, in index order.
 func query(p: Vector2, r: float, first: int) -> PackedInt32Array:
-	var found := PackedInt32Array()
+	var found: Array[int] = []
+	query_into(p, r, first, found)
+	return PackedInt32Array(found)
+
+## The caller owns the scratch array. No per-unit result allocation in production.
+func query_into(p: Vector2, r: float, first: int, found: Array[int]) -> void:
+	found.clear()
 	var x0 := clampi(floori((p.x - r + PAD) / CELL), 0, _w - 1)
 	var x1 := clampi(floori((p.x + r + PAD) / CELL), 0, _w - 1)
 	var y0 := clampi(floori((p.y - r + PAD) / CELL), 0, _h - 1)
@@ -47,12 +65,12 @@ func query(p: Vector2, r: float, first: int) -> PackedInt32Array:
 					found.append(i)
 	if found.size() > 1:
 		found.sort()
-	return found
 
 func _put(i: int, c: int) -> void:
 	var bucket = _cells[c]
 	if bucket == null:
 		_cells[c] = [i]
+		_allocated.append(c)
 	else:
 		bucket.append(i)
 

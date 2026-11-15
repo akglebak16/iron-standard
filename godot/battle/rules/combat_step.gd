@@ -55,7 +55,11 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 	if use_spatial and battle.units.size() >= Config.SPATIAL_MIN_UNITS:
 		for shot in battle.projectiles:
 			if shot.time + dt >= shot.duration:
-				index = SpatialIndex.new(battle.units, battle.arena_size)
+				if battle.projectile_index == null:
+					battle.projectile_index = SpatialIndex.new(battle.units, battle.arena_size)
+				else:
+					battle.projectile_index.synchronize()
+				index = battle.projectile_index
 				for unit in battle.units: hit_radius = maxf(hit_radius, unit.collision_radius + Config.PROJECTILE_HIT_PADDING)
 				break
 	for i in range(battle.projectiles.size() - 1, -1, -1):

@@ -7,7 +7,6 @@ const Movement = preload("res://battle/rules/movement.gd")
 const TICKS := 900
 
 func _run(catalog: Catalog, indexed: bool, mixed: bool) -> Array:
-	Movement.use_index = indexed
 	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
 	setup.companion_profiles.clear()
 	setup.hero_profile.clear()
@@ -19,6 +18,7 @@ func _run(catalog: Catalog, indexed: bool, mixed: bool) -> Array:
 		setup.player_army.assign([{"type": "e1", "n": 45}, {"type": "e2a", "n": 25}])
 		setup.enemy_army.assign([{"type": "z1", "n": 50}, {"type": "s1a", "n": 20}])
 	var session = Factory.create(setup, catalog)
+	session._state.use_spatial_index = indexed
 	session.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 	for i in TICKS:
 		session.advance(1.0 / 60.0)
@@ -39,6 +39,5 @@ func _initialize() -> void:
 		assert(dead > 5, "the armies must actually fight in the compared window")
 		for i in fast.size():
 			assert(fast[i] == plain[i], "unit %d differs (mixed=%s): %s vs %s" % [i, mixed, str(fast[i]), str(plain[i])])
-	Movement.use_index = true
 	print("Spatial full battle tests passed")
 	quit(0)

@@ -12,8 +12,14 @@ var _locations: Array[Vector2i] = []
 
 func _init(units: Array[Unit], arena: Vector2 = Config.ARENA_SIZE) -> void:
 	_units = units
-	for index in units.size():
-		var cell := _cell(units[index].position)
+	synchronize()
+
+## Refresh after movement and append reinforcements without rebuilding buckets.
+func synchronize() -> void:
+	for index in _locations.size():
+		update(index)
+	for index in range(_locations.size(), _units.size()):
+		var cell := _cell(_units[index].position)
 		_locations.append(cell)
 		_add(index, cell)
 
