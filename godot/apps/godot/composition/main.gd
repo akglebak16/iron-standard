@@ -6,7 +6,7 @@ const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const Factory = preload("res://battle/application/factory.gd")
-const Setup = preload("res://battle/data/battle_setup.gd")
+const Setup = preload("res://adapters/godot/resources/battle_setup_resource.gd")
 const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
 const EncounterAftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
 const AftermathText = preload("res://apps/godot/composition/aftermath_text.gd")
@@ -17,7 +17,7 @@ const PresentationPreferences = preload("res://apps/godot/composition/presentati
 const REWARD_SEED_OFFSET := 1
 @export var demo_world: Dictionary = {}
 @export var demo_party_position := Vector2.ZERO
-@export var battle_setup: Setup = preload("res://battle/data/demo_battle.tres")
+@export var battle_setup: Setup = preload("res://content/scenarios/demo_battle.tres")
 var _demo_party: Dictionary
 var _demo_world: Dictionary
 var presentation_preferences := PresentationPreferences.new()
@@ -42,7 +42,7 @@ func _ready() -> void:
 	if not ContentLoader.populate(goods):
 		push_error("Cannot load trade goods catalog")
 		return
-	var session = Factory.create(battle_setup, catalog, gear_catalog, perk_catalog, companion_catalog)
+	var session = Factory.create(battle_setup.to_setup(), catalog, gear_catalog, perk_catalog, companion_catalog)
 	if session == null:
 		push_error("Invalid battle setup")
 		return

@@ -8,7 +8,7 @@ const Snapshot = preload("res://battle/application/render_snapshot.gd")
 func _initialize() -> void:
 	var catalog := Catalog.new()
 	assert(ContentLoader.populate(catalog))
-	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()
 	var session := Factory.create(setup, catalog)

@@ -12,6 +12,8 @@ function check(sources, rule) {
 }
 check({'core/a/x.gd':`const B = preload('res://core/b/private.gd')`, 'core/b/private.gd':'extends RefCounted'},'private-api');
 check({'core/a/x.gd':`const B = preload('res://core/a/helper.gd')`, 'core/a/helper.gd':`const IO = preload('res://adapters/io.gd')`, 'adapters/io.gd':'extends RefCounted'},'transitive-direction');
+check({'core/a/x.gd':`const B = preload('res://core/a/helper.gd')`, 'core/a/helper.gd':`const IO = preload('res://legacy/io.gd')`, 'legacy/io.gd':'extends RefCounted\nvar file = FileAccess.open("data", 1)'},'transitive-impurity');
+check({'core/a/x.gd':'var object = Resource.new()'},'pure-core');
 check({'apps/x.tscn':'[ext_resource path="res://core/b/private.gd"]', 'core/b/private.gd':'extends RefCounted'},'module-dependency');
 check({'core/a/x.gd':`const B = preload('uid://abcd')`, 'core/b/private.gd':'extends RefCounted', 'core/b/private.gd.uid':'uid://abcd'},'private-api');
 check({'core/a/x.gd':'extends Sprite2D'},'pure-core');

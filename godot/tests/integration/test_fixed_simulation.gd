@@ -9,7 +9,7 @@ const Event = preload("res://battle/combat_event.gd")
 func run_at(fps: int) -> Dictionary:
 	var catalog := Catalog.new()
 	assert(ContentLoader.populate(catalog))
-	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()
 	var simulation := Simulation.new(Factory.create(setup, catalog))

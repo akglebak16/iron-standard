@@ -17,8 +17,8 @@ func _initialize() -> void:
 	var g := GearCatalog.new(); ContentLoader.populate(g)
 	var p := PerkCatalog.new(); ContentLoader.populate(p)
 	var k := CompanionCatalog.new(); ContentLoader.populate(k)
-	for path in ["res://battle/data/demo_battle.tres", "res://battle/data/demo_siege.tres"]:
-		var s = Factory.create(load(path), c, g, p, k)
+	for path in ["res://content/scenarios/demo_battle.tres", "res://content/scenarios/demo_siege.tres"]:
+		var s = Factory.create(load(path).to_setup(), c, g, p, k)
 		s.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 		var trace := 0
 		for i in SNAPSHOT_TICKS:

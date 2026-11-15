@@ -2,7 +2,7 @@
   "blueprint": "docs/architecture/BLUEPRINT.md",
   "requirements": [
     {"id":"ARCH-STRUCTURE","stage":7,"status":"pending","checks":["tools/architecture.cjs","tools/architecture.test.cjs"],"remaining":"Move every production module to target roots and enforce public APIs and module cycles, not only file cycles."},
-    {"id":"ARCH-PURITY","stage":6,"status":"pending","checks":["tools/architecture.cjs"],"remaining":"Catalog I/O and mutable static campaign state removed; separate Resource authoring setup and finish core dependency closure enforcement."},
+    {"id":"ARCH-PURITY","stage":6,"status":"implemented","checks":["tools/architecture.cjs","tools/architecture.test.cjs","tests/integration/test_setup_boundary.gd","tests/integration/test_content_registry.gd"]},
     {"id":"ARCH-RATCHET","stage":0,"status":"implemented","checks":["tools/architecture.cjs","tools/architecture.test.cjs"]},
     {"id":"RELEASE-INIT","stage":0,"status":"implemented","checks":["tools/release.cjs","tools/release_smoke.gd"]},
     {"id":"TEST-ISOLATION","stage":0,"status":"implemented","checks":["tools/test.cjs"]},

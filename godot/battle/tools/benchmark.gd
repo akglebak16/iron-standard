@@ -19,7 +19,7 @@ func _initialize() -> void:
 		push_error("Required content failed to load: battle/tools/benchmark.gd")
 		return
 	for army_size in [24, Config.SOLO_UNIT_CAP]:
-		var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+		var setup: Setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 		setup.companion_profiles.clear()
 		setup.hero_profile.clear()
 		setup.player_army = [{"type": "n1", "n": army_size}]

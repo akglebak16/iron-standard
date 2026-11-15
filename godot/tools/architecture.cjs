@@ -3,6 +3,7 @@ const path = require('path');
 const cp = require('child_process');
 const ROOT = path.resolve(__dirname, '..');
 const MANIFEST = 'docs/architecture/modules.json';
+const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene', 'Resource'];
 
 // Tokenize strings/comments separately: imports in comments are not dependencies,
 // and identifiers inside strings are not executable calls. Both quote styles work.
@@ -36,6 +37,8 @@ function analyze(files, manifest) {
   const issues = [];
   const graph = new Map(), classes = new Map(), uids = new Map();
   const parsed = new Map();
+  const impure = new Set();
+  const isPure = file => ['core/','runtime/',...(manifest.purePrefixes || [])].some(prefix => file.startsWith(prefix));
   const test = p => p.startsWith('tests/') || p.includes('/tests/') || p.startsWith('tools/') || p.includes('/tools/');
   const owner = p => manifest.modules.find(m => p.startsWith(m.prefix));
   const add = (file, rule, target) => issues.push({ file, rule, target, key: `${file}|${rule}|${target}` });
@@ -46,6 +49,8 @@ function analyze(files, manifest) {
       if (resourceUid) uids.set(resourceUid[1], file);
     }
     const ts = tokens(source); parsed.set(file, ts);
+    const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
+    if (ts.some(t=>!t.string && PURE_FORBIDDEN.includes(t.value)) || /\b(?:static var|load\s*\()/.test(code) || /\bextends\s+(Node\w*|Control|Resource|CharacterBody\w*|RigidBody\w*|Sprite\w*|Canvas\w*|AudioStream\w*)\b/.test(code)) impure.add(file);
     for (let i = 0; i < ts.length - 1; i++) if (!ts[i].string && ts[i].value === 'class_name') classes.set(ts[i + 1].value, file);
   }
   for (const [file, ts] of parsed) {
@@ -73,10 +78,10 @@ function analyze(files, manifest) {
     }
     const module = owner(file);
     if (!module) add(file, 'unowned-file', file);
-    const pure = ['core/','runtime/',...(manifest.purePrefixes || [])].some(prefix => file.startsWith(prefix));
+    const pure = isPure(file);
     const code = ts.filter(t => !t.string).map(t => t.value).join(' ');
     if (pure) {
-      for (const symbol of ['FileAccess', 'DirAccess', 'ResourceLoader', 'Input', 'SceneTree', 'RenderingServer', 'AudioServer', 'get_tree', 'Node', 'Node2D', 'Node3D', 'Control', 'CanvasItem', 'Sprite2D', 'CharacterBody2D', 'NavigationAgent2D', 'AnimationPlayer', 'PackedScene']) {
+      for (const symbol of PURE_FORBIDDEN) {
         if (ts.some(t => !t.string && t.value === symbol)) add(file, 'pure-core', symbol);
       }
       if (/\bextends\s+(Node\w*|Control|Resource|CharacterBody\w*|RigidBody\w*|Sprite\w*|Canvas\w*|AudioStream\w*)\b/.test(code)) add(file, 'pure-core', 'engine-object');
@@ -107,11 +112,12 @@ function analyze(files, manifest) {
   }
   // Transitive engine access must not be concealed in another core helper.
   for (const [file] of graph) {
-    if (!/^(core|runtime)\//.test(file)) continue;
+    if (!isPure(file) || test(file)) continue;
     const seen = new Set([file]), stack = [...graph.get(file)];
     while (stack.length) {
       const next = stack.pop(); if (seen.has(next)) continue; seen.add(next);
       if (/^(apps|adapters)\//.test(next)) add(file, 'transitive-direction', next);
+      if (impure.has(next)) add(file, 'transitive-impurity', next);
       stack.push(...(graph.get(next) || []));
     }
   }

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://battle/data/battle_setup.gd" id="1"]
+[ext_resource type="Script" path="res://adapters/godot/resources/battle_setup_resource.gd" id="1"]
 
 [resource]
 script = ExtResource("1")

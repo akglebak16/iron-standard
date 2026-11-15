@@ -23,6 +23,7 @@ const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
 const AftermathText = preload("res://apps/godot/composition/aftermath_text.gd")
 const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
 const BattleFactory = preload("res://battle/application/factory.gd")
+const BattleSetup = preload("res://battle/data/battle_setup.gd")
 const PresentationPreferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const AutoBattle = preload("res://campaign/world/auto_battle.gd")
 const Rules = preload("res://campaign/world/party_rules.gd")
@@ -383,7 +384,7 @@ func _finish_auto(p: Dictionary) -> void:
 func _start_battle(p: Dictionary) -> void:
 	state.skirmish.merge(p, state.skirmish.helpers(state.player, p))
 	_allies = Bridge.snapshot(state.vassals.helpers(p))
-	var setup: Resource = _bridge.make_setup(state, p, _allies)
+	var setup: BattleSetup = _bridge.make_setup(state, p, _allies)
 	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions)
 	if session == null:
 		push_error("Cannot start the battle")

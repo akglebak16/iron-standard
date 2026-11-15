@@ -8,7 +8,7 @@ const Movement = preload("res://battle/rules/movement.gd")
 const TICKS := 900
 
 func _run(catalog: Catalog, indexed: bool, mixed: bool) -> Array:
-	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.companion_profiles.clear()
 	setup.hero_profile.clear()
 	setup.seed = 4242

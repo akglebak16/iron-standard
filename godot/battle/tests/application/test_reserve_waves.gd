@@ -124,7 +124,7 @@ func _check_result_counts_reserve() -> void:
 	assert(result.enemyTotal == 20)
 
 func _check_quick_battle_and_living_armies() -> void:
-	var setup: Setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup: Setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.player_army = [{"type": "n1", "n": 400}]
 	setup.enemy_army = [{"type": "e1", "n": 400}]
 	setup.companion_profiles = []

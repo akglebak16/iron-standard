@@ -247,11 +247,11 @@
     },
     {
       "source": "battle/data/demo_battle.tres",
-      "destination": "battle/data/demo_battle.tres"
+      "destination": "content/scenarios/demo_battle.tres"
     },
     {
       "source": "battle/data/demo_siege.tres",
-      "destination": "battle/data/demo_siege.tres"
+      "destination": "content/scenarios/demo_siege.tres"
     },
     {
       "source": "battle/data/hero_stats.gd",

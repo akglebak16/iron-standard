@@ -34,7 +34,7 @@ func _initialize() -> void:
 		push_error("Benchmark content failed to load")
 		quit(1)
 		return
-	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.companion_profiles.clear()
 	setup.player_unit_cap = _size
 	setup.enemy_unit_cap = _size

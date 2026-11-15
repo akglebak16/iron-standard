@@ -8,7 +8,7 @@ const Impacts = preload("res://apps/godot/presentation/battle/impact_effects.gd"
 func _initialize() -> void:
 	var catalog := Catalog.new()
 	assert(ContentLoader.populate(catalog))
-	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()
 	var reference := Factory.create(setup, catalog)

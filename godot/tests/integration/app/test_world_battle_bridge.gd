@@ -15,7 +15,7 @@ func _initialize() -> void:
 	bridge.rng.seed = 11
 	# a played battle can be built from world parties
 	var weak: Dictionary = state.roster.make_party("bandit", "bandit", "Шайка", state.player.x + 5, state.player.y, [{"type": "b1", "n": 3}])
-	var setup: Resource = bridge.make_setup(state, weak)
+	var setup = bridge.make_setup(state, weak)
 	assert(setup.player_faction == "emp" and setup.enemy_faction == "bandit")
 	assert(Factory.create(setup, bridge.troops, bridge.gear, bridge.perks, bridge.companions) != null, "battle session builds from a world meeting")
 	# a won calculated battle removes the opponent and pays the hero

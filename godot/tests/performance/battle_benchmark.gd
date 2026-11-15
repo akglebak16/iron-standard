@@ -32,7 +32,7 @@ func run(tree: SceneTree) -> void:
 	if not ContentLoader.populate(catalog):
 		fail("Catalog failed to load")
 		return
-	var setup = load("res://battle/data/demo_battle.tres").duplicate(true)
+	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.seed = seed_value
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()
