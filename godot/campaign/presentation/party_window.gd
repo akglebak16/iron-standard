@@ -2,7 +2,10 @@ extends "res://campaign/presentation/modal_window.gd"
 ## Party, hero and journal windows (openPanel in src/06_ui.js).
 const Economy = preload("res://campaign/economy/party_economy.gd")
 const CompanionText = preload("res://campaign/presentation/companion_text.gd")
-const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["quests", "Задания"], ["journal", "Журнал"]]
+const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["gear", "Снаряжение"], ["quests", "Задания"], ["journal", "Журнал"]]
+const HeroEquip = preload("res://equipment/rules/hero_equip.gd")
+const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
+var _who := ""
 var _confirm := ""
 var _pick := ""
 var state: RefCounted
@@ -30,6 +33,8 @@ func render() -> void:
 			_comps(p)
 		"quests":
 			_quests(p)
+		"gear":
+			_gear(p)
 		_:
 			_troops(p, fx)
 
@@ -127,3 +132,55 @@ func _quests(p) -> void:
 	for q in p.quests:
 		var left: int = int(q.dl) - int(state.clock.day)
 		row(state.quests.text(q), "%s · награда %d" % ["срок вышел" if left < 0 else ("последний день" if left == 0 else "осталось дней: %d" % left), q.reward])
+
+func _gear(p) -> void:
+	var gear = state.gear
+	var h: Dictionary = p.hero
+	for c in p.comps:
+		if c.id == _who:
+			h = c
+	if h == p.hero:
+		_who = ""
+	var whos: Array = [{"text": "Герой", "disabled": _who == "", "call": func(): _who = ""}]
+	for c in p.comps:
+		whos.append({"text": c.name.split(" ")[0], "disabled": _who == c.id, "call": func(): _who = c.id})
+	row("Кого одеваем", "", whos)
+	var eq: Dictionary = HeroEquip.ensure(h)
+	heading("Надето")
+	for slot in SLOT_NAMES:
+		var id: Variant = eq.get(slot)
+		var it: Dictionary = gear.get_item(String(id)) if id != null else {}
+		var buttons: Array = []
+		if not it.is_empty():
+			buttons.append({"text": "Снять", "call": func(): HeroEquip.unequip(p.inv, h, slot)})
+		row("%s: %s" % [SLOT_NAMES[slot], it.get("name", "—")], _stats(it), buttons)
+	if eq.get("ranged") != null:
+		row("В руках в начале боя: %s" % ("стрелковое" if h.get("sel") == "ranged" else "ближнее"), "", [
+			{"text": "Ближнее", "disabled": h.get("sel") != "ranged", "call": func(): HeroEquip.wield(h, "melee")},
+			{"text": "Стрелковое", "disabled": h.get("sel") == "ranged", "call": func(): HeroEquip.wield(h, "ranged")}])
+	heading("Обоз: %s из %d" % [str(state.market.cargo_weight(p.inv)), state.market.cargo_cap(p, state.player_effects(), Economy.troop_count(p.troops))])
+	var any := false
+	var ids: Array = p.inv.keys().filter(func(k): return state.market.is_gear(k))
+	ids.sort_custom(func(a, b): return SLOT_NAMES.keys().find(gear.get_item(a).slot) < SLOT_NAMES.keys().find(gear.get_item(b).slot))
+	for id in ids:
+		any = true
+		var it: Dictionary = gear.get_item(id)
+		row("%s ×%d" % [it.name, p.inv[id]], "%s · %s" % [SLOT_NAMES.get(it.slot, ""), _stats(it)], [{"text": "Надеть", "call": func():
+			var r: Dictionary = HeroEquip.equip(p.inv, h, id, gear)
+			if r.note != "":
+				sub_label.text = r.note}])
+	if not any:
+		note("Трофеев нет. Снаряжение покупают у торговцев в городах и снимают с врагов.")
+
+static func _stats(it: Dictionary) -> String:
+	if it.is_empty():
+		return ""
+	var parts: Array = []
+	if it.has("dmg"):
+		parts.append("урон %d" % roundi(float(it.dmg)))
+	if it.has("v"):
+		parts.append(("защита %s" % str(it.v)) if it.slot != "shield" else ("блок %s" % str(it.v)))
+	if it.has("hands") and int(it.hands) == 2:
+		parts.append("двуручное")
+	parts.append("цена %d" % int(it.get("price", 0)))
+	return " · ".join(parts)

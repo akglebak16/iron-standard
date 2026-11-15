@@ -16,6 +16,7 @@ const WorldClans = preload("res://campaign/world/world_clans.gd")
 const WorldVassals = preload("res://campaign/world/world_vassals.gd")
 const WorldCompanions = preload("res://campaign/world/world_companions.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
+const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
 const Market = preload("res://campaign/economy/market.gd")
 const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
@@ -54,6 +55,7 @@ var clans: WorldClans
 var vassals: WorldVassals
 var companions: WorldCompanions
 var companion_catalog := CompanionCatalog.new()
+var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
 
@@ -73,6 +75,10 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	assert(goods.load_data())
 	state.market = Market.new(goods, RandomNumberGenerator.new())
 	state.market.rng.seed = seed_value + 191
+	var gear_catalog := GearCatalog.new()
+	assert(gear_catalog.load_data())
+	state.gear = gear_catalog
+	state.market.gear = gear_catalog.definitions()
 	state.roster = PartyRoster.new(state.map, seed_value)
 	state.roster.populate()
 	state.wars = WorldWars.new(state.map, state.roster)

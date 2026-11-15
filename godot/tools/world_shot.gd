@@ -28,6 +28,21 @@ func _process(_d: float) -> bool:
 				d._party_window.open_for(d.state, "hero")
 			"ui_troops":
 				d._party_window.open_for(d.state, "troops")
+			"ui_gear":
+				d._party_window.open_for(d.state, "gear")
+			"ui_menu":
+				d._open_panel("menu")
+			"ui_tavern", "ui_goods", "ui_oath", "ui_quests":
+				d._town.open_for(d.state, d.state.settlement_near(d.state.player.x, d.state.player.y, 80.0))
+				d._town.current_tab = _meet.substr(3)
+				d._town.render()
+			"ui_siege":
+				var t: Dictionary = {}
+				for s in d.state.map.settles:
+					if s.kind == "castle" and s.fac != d.state.player.culture:
+						t = s
+						break
+				d._siege.open_for(d.state, t)
 	elif _meet != "" and not _meet.begins_with("ui_") and _n == 30:
 		var demo = root.get_child(root.get_child_count() - 1)
 		var st = demo.state

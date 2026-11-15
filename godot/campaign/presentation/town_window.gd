@@ -173,13 +173,7 @@ func _market(p, fx: Dictionary) -> void:
 	note("В запасе %d порций. Отряду нужна порция на шестерых бойцов в день." % Economy.provisions(p))
 	for offer in Economy.FOOD_OFFERS:
 		row("%d порций" % offer[0], "%d зол." % offer[1], [{"text": "Купить", "disabled": p.gold < offer[1], "call": func(): Economy.buy_food(p, offer[0], offer[1])}])
-	heading("Снаряжение героя")
-	for key in Economy.GEAR_LABEL:
-		var item := Economy.gear_next(p.hero, key, _legacy, _gear)
-		if item.is_empty():
-			row(Economy.GEAR_LABEL[key], "лучшее уже у тебя")
-		else:
-			row("%s: %s" % [Economy.GEAR_LABEL[key], item.name], "%d зол." % item.price, [{"text": "Купить", "disabled": p.gold < int(item.price), "call": func(): Economy.buy_gear(p, key, _legacy, _gear)}])
+	note("Оружие, доспехи и коней продают на вкладке «Товары», надевают в окне отряда (вкладка «Снаряжение»).")
 
 func _goods(p, fx: Dictionary) -> void:
 	var market = state.market
@@ -189,6 +183,8 @@ func _goods(p, fx: Dictionary) -> void:
 	var m: Dictionary = market.market_of(settlement, state.clock.day)
 	var men: int = Economy.troop_count(p.troops)
 	note("Обоз: %s из %d. Деньги торговца: %d." % [str(market.cargo_weight(p.inv)), market.cargo_cap(p, fx, men), m.gold])
+	_gear_trade(p, fx, m, men)
+	heading("Товары")
 	for id in market.goods:
 		var g: Dictionary = market.goods[id]
 		var buy_p: int = market.buy_price(p.rel, fx, settlement, m, id)
@@ -202,6 +198,42 @@ func _goods(p, fx: Dictionary) -> void:
 			{"text": "−1", "disabled": have < 1, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))},
 			{"text": "все", "disabled": have < 1, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, have))},
 		])
+
+func _gear_trade(p, fx: Dictionary, m: Dictionary, men: int) -> void:
+	var market = state.market
+	heading("Снаряжение у торговца")
+	var any := false
+	for id in m.stock:
+		if not market.is_gear(id) or int(m.stock[id]) < 1:
+			continue
+		any = true
+		var it: Dictionary = market.gear[id]
+		var price: int = market.buy_price(p.rel, fx, settlement, m, id)
+		row("%s · %s" % [it.name, _tier(it)], "%s · вес %s · купить %d" % [_slot(it), str(it.get("w", 0)), price],
+			[{"text": "Купить", "disabled": p.gold < price, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men))}])
+	if not any:
+		note("Сегодня оружейник пуст.")
+	heading("Снаряжение в обозе")
+	var mine := false
+	for id in p.inv.keys():
+		if not market.is_gear(id):
+			continue
+		mine = true
+		var it: Dictionary = market.gear[id]
+		var price: int = market.sell_price(p.rel, fx, settlement, m, id)
+		row("%s ×%d · %s" % [it.name, p.inv[id], _tier(it)], "%s · продать %d" % [_slot(it), price],
+			[{"text": "Продать", "disabled": m.gold < price, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))}])
+	if not mine:
+		note("Трофеев в обозе нет. Надетое не продаётся: сначала сними его.")
+
+const TIERS := ["простое", "добротное", "редкое", "мастерское"]
+const SLOT_NAMES := {"head": "шлем", "body": "доспех", "hands": "перчатки", "legs": "поножи", "melee": "оружие", "ranged": "стрелковое", "shield": "щит", "horse": "конь"}
+
+static func _tier(it: Dictionary) -> String:
+	return TIERS[mini(3, int(it.get("tier", 0)))]
+
+static func _slot(it: Dictionary) -> String:
+	return SLOT_NAMES.get(it.get("slot", ""), "")
 
 func _trade(result: Dictionary) -> void:
 	if result.n == 0 and result.why != "":
