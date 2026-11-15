@@ -33,6 +33,7 @@ var _town: CanvasLayer
 var _siege: CanvasLayer
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
+var _allies: Array = []
 var _party_window: CanvasLayer
 var _bridge: RefCounted
 var _battle: Node2D
@@ -148,6 +149,9 @@ func _on_map_click(at: Vector2) -> void:
 func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	_meeting = party
 	state.clock.paused = true
+	if party.kind == "cvass":
+		_vassal_talk(party)
+		return
 	var hostile := Rules.hostile_to_player(party, state.player.rel) or party.kind == "camp"
 	var rows: Array = []
 	var sorted: Array = party.troops.duplicate()
@@ -175,6 +179,17 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 
 func _on_encounter_choice(action: String) -> void:
 	var p := _meeting
+	if action.begins_with("cv_"):
+		var v: Dictionary = state.vassals.of_id(String(p.get("cid", "")))
+		if action == "cv_give":
+			state.vassals.give(v.cid, 200)
+		elif action != "cv_ok":
+			state.vassals.set_mode(v.cid, action.substr(3))
+		if action == "cv_ok":
+			_end_meeting(3.0)
+		else:
+			_vassal_talk(p)
+		return
 	match action:
 		"parley":
 			_open_parley(p)
@@ -206,6 +221,25 @@ func _on_encounter_choice(action: String) -> void:
 			_finish_auto(p)
 		"fight":
 			_start_battle(p)
+
+func _vassal_talk(p: Dictionary) -> void:
+	var vs = state.vassals
+	var v: Dictionary = vs.of_id(String(p.get("cid", "")))
+	if v.is_empty():
+		_end_meeting(3.0)
+		return
+	var s: Dictionary = state.map.settlement_by_id(v.sid)
+	var rows: Array = []
+	for t in p.troops:
+		rows.append({"name": _bridge.troops.get_troop(t.type).name, "n": int(t.n)})
+	var actions: Array = []
+	for m in vs.MODES:
+		actions.append({"id": "cv_" + m, "text": vs.MODES[m][0], "primary": v.get("mode", "guard") == m})
+	if state.player.gold >= 200:
+		actions.append({"id": "cv_give", "text": "Дать 200 золота"})
+	actions.append({"id": "cv_ok", "text": "Хорошо"})
+	_dialog.open(v.c.name, "Твой вассал · надел %s · %d из %d бойцов · казна %d · подать тебе %d в день" % [s.get("name", "—"), Rules.troop_count(p.troops), vs.cap(v), roundi(float(v.gold)), int(v.get("trib", 0))],
+		["Приказ: " + vs.MODES[v.get("mode", "guard")][0], Color("#e0c060")], rows, actions)
 
 func _open_parley(p: Dictionary) -> void:
 	var clans = state.clans
@@ -242,7 +276,10 @@ func _apply_resolved(p: Dictionary, resolved: Dictionary) -> void:
 	if p.kind == "siege":
 		town = state.map.settlement_by_id(p.sid)
 		was = town.fac
-	_bridge.apply(state, p, resolved)
+	_bridge.apply(state, p, resolved, _allies)
+	if not _allies.is_empty():
+		state.log_world("Дружины вассалов бились рядом с тобой.")
+	_allies = []
 	if p.kind == "siege":
 		_bridge.apply_siege(state, town, resolved)
 		state.settlement_changed.emit(town)
@@ -269,8 +306,9 @@ func _opponent(p: Dictionary) -> Dictionary:
 	return _bridge.opponent_dict(p, {})
 
 func _finish_auto(p: Dictionary) -> void:
-	var result: Dictionary = _bridge.auto_result(state, p)
-	var party: Dictionary = _bridge.party_dict(state)
+	_allies = Bridge.snapshot(state.vassals.helpers(p))
+	var result: Dictionary = _bridge.auto_result(state, p, _allies)
+	var party: Dictionary = _bridge.party_dict(state, _allies)
 	var opponent := _opponent(p)
 	var world := _world_for(opponent)
 	var resolved := Aftermath.resolve_result(result, party, opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
@@ -289,7 +327,8 @@ func _finish_auto(p: Dictionary) -> void:
 		_offer_loot(town, true)
 
 func _start_battle(p: Dictionary) -> void:
-	var setup: Resource = _bridge.make_setup(state, p)
+	_allies = Bridge.snapshot(state.vassals.helpers(p))
+	var setup: Resource = _bridge.make_setup(state, p, _allies)
 	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions)
 	if session == null:
 		push_error("Cannot start the battle")
@@ -305,7 +344,7 @@ func _start_battle(p: Dictionary) -> void:
 	var bridge := Aftermath.new(session)
 	view.battle_finished.connect(func():
 		var world := _world_for(opponent)
-		var resolved := bridge.resolve(_bridge.party_dict(state), opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
+		var resolved := bridge.resolve(_bridge.party_dict(state, _allies), opponent, _bridge.is_hero_mounted(state), _bridge.troops, _bridge.gear, _bridge.goods, _bridge.rng, _bridge.companions, _bridge.perks, world)
 		if resolved.is_empty():
 			return
 		_apply_resolved(p, resolved)

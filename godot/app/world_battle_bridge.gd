@@ -33,13 +33,27 @@ func hero_troop(culture: String) -> String:
 			return t.id
 	return troops.for_faction(culture)[0].id
 
-func make_setup(state: RefCounted, opponent: Dictionary) -> Setup:
+## Allied retinues joining a fight: [{"party": map party, "troops": snapshot}] (cvBattleStart).
+static func snapshot(allies: Array) -> Array:
+	var out: Array = []
+	for h in allies:
+		out.append({"party": h, "troops": h.troops.duplicate(true)})
+	return out
+
+static func merged(own: Array, allies: Array) -> Array:
+	var out: Array = own.duplicate(true)
+	for a in allies:
+		for t in a.troops:
+			Rules.add_troops(out, t.type, int(t.n))
+	return out
+
+func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> Setup:
 	var s := Setup.new()
 	s.seed = rng.randi_range(1, 1000000000)
 	s.biome = state.map.terrain.biome_name(state.player.x, state.player.y)
 	s.player_faction = state.player.culture
 	s.enemy_faction = opponent.fac
-	s.player_army.assign(state.player.troops.duplicate(true))
+	s.player_army.assign(merged(state.player.troops, allies))
 	s.enemy_army.assign(opponent.troops.duplicate(true))
 	s.hero_troop = hero_troop(state.player.culture)
 	s.hero_profile = state.player.hero.duplicate(true)
@@ -52,9 +66,9 @@ func make_setup(state: RefCounted, opponent: Dictionary) -> Setup:
 		s.wall_defense = opponent.get("wall_defense", {}).duplicate()
 	return s
 
-func party_dict(state: RefCounted) -> Dictionary:
+func party_dict(state: RefCounted, allies: Array = []) -> Dictionary:
 	var p: RefCounted = state.player
-	return {"id": 0, "troops": p.troops.duplicate(true), "hero": p.hero.duplicate(true), "gold": p.gold, "comps": p.comps.duplicate(true),
+	return {"id": 0, "troops": merged(p.troops, allies), "hero": p.hero.duplicate(true), "gold": p.gold, "comps": p.comps.duplicate(true),
 		"inv": p.inv.duplicate(true), "rel": p.rel.duplicate(true), "quests": p.quests.duplicate(true), "stats": p.stats.duplicate(true),
 		"culture": p.culture, "position": Vector2(p.x, p.y)}
 
@@ -64,11 +78,11 @@ func opponent_dict(party: Dictionary, camp_settlement: Dictionary) -> Dictionary
 		o["camp"] = party.home
 	return o
 
-func auto_result(state: RefCounted, opponent: Dictionary) -> Dictionary:
+func auto_result(state: RefCounted, opponent: Dictionary, allies: Array = []) -> Dictionary:
 	var mult := 1.0
 	if opponent.get("kind") == "siege":
 		mult = Siege.def_k(state.map.settlement_by_id(opponent.sid))
-	var res := AutoBattle.resolve(state.player.troops, state.player.hero, opponent.troops, state.roster.info, rng, float(state.player_effects().get("surv", 0.0)), mult, WorldCompanions.strength(state.player))
+	var res := AutoBattle.resolve(merged(state.player.troops, allies), state.player.hero, opponent.troops, state.roster.info, rng, float(state.player_effects().get("surv", 0.0)), mult, WorldCompanions.strength(state.player))
 	res["comps"] = state.companions.auto_outcomes(state.player, res.win)
 	return res
 
@@ -105,10 +119,10 @@ func is_hero_mounted(state: RefCounted) -> bool:
 	return bool(HeroGear.resolve(state.player.hero, gear).get("mounted", false))
 
 ## Applies a finished battle (played or calculated) to the world. `aftermath` is what EncounterAftermath returned.
-func apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary) -> void:
+func apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary, allies: Array = []) -> void:
 	var p: RefCounted = state.player
 	var party: Dictionary = aftermath.party
-	p.troops = party.troops
+	p.troops = _split(state, p.troops, party.troops, allies)
 	p.hero = party.hero
 	p.gold = party.gold
 	p.inv = party.get("inv", p.inv)
@@ -149,3 +163,54 @@ func _find(list: Array, id) -> Dictionary:
 		if p.get("id") == id:
 			return p
 	return {}
+
+## Survivors of a shared fight are split back by each side's share of every troop type (cvBattleEnd).
+func _split(state: RefCounted, own_before: Array, after: Array, allies: Array) -> Array:
+	if allies.is_empty():
+		return after
+	var mine: Array = []
+	for t in after:
+		var total := 0
+		var own := 0
+		for s in own_before:
+			if s.type == t.type:
+				own += int(s.n)
+		total += own
+		var shares: Array = []
+		for a in allies:
+			var n := 0
+			for s in a.troops:
+				if s.type == t.type:
+					n += int(s.n)
+			shares.append(n)
+			total += n
+		var left := int(t.n)
+		for i in allies.size():
+			var h: Dictionary = allies[i].party
+			var keep := floori(float(t.n) * shares[i] / maxf(1.0, total))
+			var had := 0
+			for s in h.troops:
+				if s.type == t.type:
+					had = int(s.n)
+			if had > keep:
+				Rules.remove_troops(h.troops, t.type, had - keep)
+			left -= keep
+		if left > 0:
+			mine.append({"type": t.type, "n": left})
+	for a in allies:
+		var h: Dictionary = a.party
+		for s in a.troops:
+			var still := false
+			for t in after:
+				if t.type == s.type:
+					still = true
+			if not still:
+				Rules.remove_troops(h.troops, s.type, int(s.n))
+		if Rules.troop_count(h.troops) < 1:
+			state.roster.remove(h)
+		else:
+			h.cd = maxf(float(h.cd), 2.0)
+			h.state = "idle"
+			h.path = []
+			h.pi = 0
+	return mine

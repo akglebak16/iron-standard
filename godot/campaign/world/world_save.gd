@@ -4,8 +4,8 @@ extends RefCounted
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 const VERSION := 1
-const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0"]
-const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan"]
+const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0", "vass"]
+const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner"]
 
 static func to_dict(state: RefCounted) -> Dictionary:
 	var p = state.player
@@ -27,7 +27,7 @@ static func to_dict(state: RefCounted) -> Dictionary:
 		"clock": {"day": state.clock.day, "hour": state.clock.hour, "speed": state.clock.speed},
 		"player": {"x": p.x, "y": p.y, "troops": p.troops, "culture": p.culture, "gold": p.gold, "food": p.food, "inv": p.inv,
 			"comps": p.comps, "quests": p.quests, "stats": p.stats, "hero": p.hero, "rel": p.rel,
-			"liege": p.liege, "oath_day": p.oath_day, "strikes": p.strikes, "summons": p.summons, "lure_day": p.lure_day},
+			"liege": p.liege, "oath_day": p.oath_day, "strikes": p.strikes, "summons": p.summons, "lure_day": p.lure_day, "vass": p.vass},
 		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "crisis": state.undead.crisis, "clans": state.clans.to_dict(), "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
 
 ## Rebuilds a world from saved data; returns null for an unknown format.
@@ -57,6 +57,17 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 	p.oath_day = int(pd.get("oath_day", 0))
 	p.strikes = int(pd.get("strikes", 0))
 	p.lure_day = int(pd.get("lure_day", -99))
+	p.vass = []
+	for v in pd.get("vass", []):
+		var x: Dictionary = v.duplicate(true)
+		x.sid = int(x.sid)
+		x.rest = int(x.get("rest", 0))
+		if x.get("pid") != null:
+			x.pid = int(x.pid)
+		for k in ["lvl", "xp", "pts", "pp", "seed", "str", "vit", "agi", "int", "cha"]:
+			if x.c.get(k) != null:
+				x.c[k] = int(x.c[k])
+		p.vass.append(x)
 	p.summons = pd.get("summons")
 	if p.summons is Dictionary:
 		p.summons.tid = int(p.summons.tid)

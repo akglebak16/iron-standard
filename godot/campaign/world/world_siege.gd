@@ -155,6 +155,47 @@ func spare(p, s: Dictionary) -> String:
 		p.rel[cf] = minf(100.0, float(p.rel.get(cf, 0)) + 6.0)
 	return "Ты пощадил жителей %s. Они подносят дары: +%d золота." % [s.name, gift]
 
+# ---------- hostile lords storm the player's holdings (assaultsTick, every 3 hours) ----------
+
+var vassals: RefCounted = null  # WorldVassals: retinues help defend their fiefs
+signal lost(settlement: Dictionary, text: String)
+signal held(settlement: Dictionary, text: String)
+
+func assaults_tick(p) -> void:
+	for s in roster.map.settles:
+		if s.fac != "player":
+			continue
+		var lord: Dictionary = {}
+		for q in roster.parties:
+			if q.kind == "lord" and not q.hide and not q.get("lock", false) and q.fac in Rules.REAL_FACTIONS and float(p.rel.get(q.fac, 0)) < -20.0 and Vector2(q.x - s.x, q.y - s.y).length() < 70.0:
+				lord = q
+				break
+		if lord.is_empty():
+			continue
+		var g := wars.garrison_of(s)
+		var vd: Dictionary = vassals.defence_of(s) if vassals != null else {}
+		var att: float = roster.strength_of(lord) * rng.randf_range(0.8, 1.2)
+		var def: float = (Rules.strength(g, roster.info) + 4.0 + (roster.strength_of(vd) if not vd.is_empty() else 0.0)) * 1.6 * rng.randf_range(0.8, 1.2)
+		var r := minf(att, def) / maxf(att, def)
+		if not vd.is_empty():
+			vassals.defence_hit(vd, r, att <= def)
+		if att > def:
+			for t in lord.troops.duplicate():
+				Rules.remove_troops(lord.troops, t.type, roundi(int(t.n) * r * 0.5))
+			s.fac = lord.fac
+			s.owner = null
+			s.gar = roster.gen_troops(lord.fac, 20, 0.5)
+			lord.hide = true
+			lord.home = s.id
+			lord.wait = float(roster.rint(10, 30))
+			SettlementRecruits.refresh(s, roster.catalog, rng)
+			lost.emit(s, "%s взял штурмом %s. Владение потеряно." % [lord.name, s.name])
+		else:
+			for t in g.duplicate():
+				Rules.remove_troops(g, t.type, roundi(int(t.n) * r * 0.45))
+			roster.remove(lord)
+			held.emit(s, "Гарнизон %s отбил штурм: %s разбит." % [s.name, lord.name])
+
 # ---------- holdings ----------
 
 func villages_near(s: Dictionary) -> int:
@@ -179,7 +220,7 @@ func upkeep(s: Dictionary) -> int:
 func holdings() -> Array:
 	var out: Array = []
 	for s in roster.map.settles:
-		if s.fac == "player" and s.get("owner", -1) == PLAYER_ID:
+		if s.fac == "player" and s.get("owner", -1) == PLAYER_ID and not s.has("vass"):
 			out.append(s)
 	return out
 

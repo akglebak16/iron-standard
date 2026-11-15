@@ -4,6 +4,7 @@ const Economy = preload("res://campaign/economy/party_economy.gd")
 const CompanionText = preload("res://campaign/presentation/companion_text.gd")
 const TABS := [["troops", "Отряд"], ["comps", "Спутники"], ["hero", "Герой"], ["quests", "Задания"], ["journal", "Журнал"]]
 var _confirm := ""
+var _pick := ""
 var state: RefCounted
 
 func open_for(world_state: RefCounted, tab: String = "troops") -> void:
@@ -79,7 +80,46 @@ func _comps(p) -> void:
 			btn = {"text": "Точно отпустить?", "call": func(): comps.fire(p, c.id); _confirm = ""}
 		else:
 			btn = {"text": "Отпустить", "call": func(): _confirm = c.id}
-		row("%s · %s · ур. %d%s" % [c.name, d.role, c.lvl, "" if ok else " · ранен"], "здоровье %d%% · опыт %d\n%s: %s" % [roundi(float(c.hp) * 100.0), int(c.get("xp", 0)), d.skn, CompanionText.skill_text(d, c)], [btn])
+		var grant := {"text": "Выбери надел ↓" if _pick == c.id else "Дать надел", "call": func(): _pick = "" if _pick == c.id else c.id}
+		row("%s · %s · ур. %d%s" % [c.name, d.role, c.lvl, "" if ok else " · ранен"], "здоровье %d%% · опыт %d\n%s: %s" % [roundi(float(c.hp) * 100.0), int(c.get("xp", 0)), d.skn, CompanionText.skill_text(d, c)], [grant, btn])
+		if _pick == c.id:
+			_fief_pick(c)
+	_vassals(p)
+
+func _fief_pick(c: Dictionary) -> void:
+	var vs = state.vassals
+	var free: Array = vs.fiefs().filter(func(s): return not s.has("vass"))
+	if state.player.vass.size() >= vs.MAX:
+		note("Вассалов уже %d: больше не прокормить." % vs.MAX)
+	elif free.is_empty():
+		note("Надел — твой город или замок без вассала. Сначала возьми его: захвати или получи от сюзерена.")
+	else:
+		note("Вассал отдаёт тебе 30% чистого дохода надела, остальное тратит на гарнизон и свою дружину. Выбери надел:")
+		for s in free:
+			row("%s (%s)" % [s.name, "город" if s.kind == "town" else "замок"], "доход %d в день, гарнизон %d" % [vs.net_income(s), Economy.troop_count(state.wars.garrison_of(s))],
+				[{"text": "Отдать", "call": func(): sub_label.text = vs.grant(c.id, s.id); _pick = ""}])
+
+func _vassals(p) -> void:
+	var vs = state.vassals
+	if p.vass.is_empty():
+		return
+	heading("Вассалы")
+	note("Вассал живёт на наделе и содержит его гарнизон, платит тебе подать и сам нанимает дружину. Дружина бьёт врагов у надела и помогает отбить штурм.")
+	for v in p.vass.duplicate():
+		var s: Dictionary = state.map.settlement_by_id(v.sid)
+		var party: Dictionary = vs.party_of(v)
+		var detail := "Надел: %s · подать %d в день · казна %d\n" % [s.get("name", "—"), int(v.get("trib", 0)), roundi(float(v.gold))]
+		detail += ("Дружина: %d из %d бойцов" % [Economy.troop_count(party.troops), vs.cap(v)]) if not party.is_empty() else ("Дружина разбита, соберёт новую через %d дн." % maxi(1, int(v.rest)))
+		detail += "\nПриказ: %s — %s" % vs.MODES[v.get("mode", "guard")]
+		var buttons: Array = []
+		for m in vs.MODES:
+			buttons.append({"text": vs.MODES[m][0], "disabled": v.get("mode", "guard") == m, "call": func(): vs.set_mode(v.cid, m)})
+		buttons.append({"text": "+200", "disabled": p.gold < 200, "call": func(): vs.give(v.cid, 200)})
+		if _confirm == "v" + v.cid:
+			buttons.append({"text": "Точно забрать?", "call": func(): vs.revoke(v.cid); _confirm = ""})
+		else:
+			buttons.append({"text": "Забрать надел", "call": func(): _confirm = "v" + v.cid})
+		row("%s · вассал · ур. %d" % [v.c.name, v.c.lvl], detail, buttons)
 
 func _quests(p) -> void:
 	if p.quests.is_empty():
