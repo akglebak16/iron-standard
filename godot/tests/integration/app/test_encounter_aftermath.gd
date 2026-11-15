@@ -1,17 +1,17 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
-const Factory = preload("res://battle/application/factory.gd")
-const Setup = preload("res://battle/data/battle_setup.gd")
-const Config = preload("res://battle/config.gd")
-const Troops = preload("res://troops/data/catalog.gd")
-const Gear = preload("res://equipment/data/gear_catalog.gd")
-const Goods = preload("res://campaign/data/goods_catalog.gd")
-const Siege = preload("res://campaign/rules/siege_aftermath.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const Setup = preload("res://core/battle/data/battle_setup.gd")
+const Config = preload("res://core/battle/config.gd")
+const Troops = preload("res://core/troops/data/catalog.gd")
+const Gear = preload("res://core/equipment/data/gear_catalog.gd")
+const Goods = preload("res://core/campaign/data/goods_catalog.gd")
+const Siege = preload("res://core/campaign/rules/siege_aftermath.gd")
 const TICK := 1.0 / 60.0
 
-const Companions = preload("res://characters/data/companion_catalog.gd")
-const Perks = preload("res://characters/data/perk_catalog.gd")
+const Companions = preload("res://core/characters/data/companion_catalog.gd")
+const Perks = preload("res://core/characters/data/perk_catalog.gd")
 
 func _initialize() -> void:
 	var companions := Companions.new()

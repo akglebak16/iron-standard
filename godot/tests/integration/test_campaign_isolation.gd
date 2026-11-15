@@ -1,8 +1,8 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-const World = preload("res://campaign/world/world_state.gd")
-const Europe = preload("res://campaign/data/europe_data.gd")
-const Rules = preload("res://campaign/world/party_rules.gd")
+const World = preload("res://core/campaign/world/world_state.gd")
+const Europe = preload("res://core/campaign/data/europe_data.gd")
+const Rules = preload("res://core/campaign/world/party_rules.gd")
 
 func _initialize() -> void:
 	var europe := Europe.new()

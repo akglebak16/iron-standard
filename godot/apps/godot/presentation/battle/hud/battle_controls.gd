@@ -2,9 +2,9 @@ extends PanelContainer
 ## Native controls sized from style.css + polish.css, including responsive breakpoints.
 const GameSkin = preload("res://ui/game_theme.gd")
 const OriginalArt = preload("res://ui/original_art.gd")
-const Config = preload("res://battle/config.gd")
+const Config = preload("res://core/battle/config.gd")
 const Demo = preload("res://apps/godot/presentation/battle/demo_config.gd")
-const Session = preload("res://battle/application/session.gd")
+const Session = preload("res://core/battle/application/session.gd")
 const ORDERS := [Config.ORDER_HOLD, Config.ORDER_FOLLOW, Config.ORDER_CHARGE, Config.ORDER_RETREAT]
 const ORDER_LABELS := ["Держать", "За мной", "В атаку", "Отойти"]
 const ORDER_STATES := {"hold":"Держат", "follow":"За тобой", "charge":"В атаке", "back":"Отходят"}

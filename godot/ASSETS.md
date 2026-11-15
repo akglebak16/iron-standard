@@ -4,8 +4,8 @@
 
 | Файл | Что это | Источник | Лицензия | Автор указывать | Коммерческий релиз |
 | --- | --- | --- | --- | --- | --- |
-| `apps/godot/presentation/battle/audio/assets/battle_theme.ogg` | Зацикленная музыка боя, 53 с | Собственная работа, рендерится `battle/tools/render_battle_theme.py` | CC0 | не нужно | да |
-| `apps/godot/presentation/battle/terrain/wall/assets/wall_*.png` | Текстуры осадной стены: камень, зубцы, башня, створка ворот | Собственная работа, рендерится `battle/tools/render_wall_textures.py` | CC0 | не нужно | да |
+| `apps/godot/presentation/battle/audio/assets/battle_theme.ogg` | Зацикленная музыка боя, 53 с | Собственная работа, рендерится `tools/battle/render_battle_theme.py` | CC0 | не нужно | да |
+| `apps/godot/presentation/battle/terrain/wall/assets/wall_*.png` | Текстуры осадной стены: камень, зубцы, башня, створка ворот | Собственная работа, рендерится `tools/battle/render_wall_textures.py` | CC0 | не нужно | да |
 
 ## Как добавлять
 
@@ -20,5 +20,5 @@
 
 - Звук кладём в `<модуль>/presentation/audio/assets/`, картинки и сцены — рядом с кодом владельца (`terrain/wall/`). Общего каталога ассетов нет, пока второй потребитель не появился.
 - Файл `*.import` коммитим вместе с ассетом, кэш `.godot/` — нет. `node godot/tools/test.cjs` перед тестами сам запускает импорт.
-- Если ассет сделан скриптом, скрипт лежит в `battle/tools/`, а результат всё равно можно править руками.
+- Если ассет сделан скриптом, скрипт лежит в `tools/battle/`, а результат всё равно можно править руками.
 - Скриншоты и эталоны для сравнения (`tools/baseline/`) скрыты от импорта файлом `.gdignore`.

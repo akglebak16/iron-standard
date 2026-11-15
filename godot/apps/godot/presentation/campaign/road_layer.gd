@@ -1,6 +1,6 @@
 extends Node2D
 ## Roads: roadCurve/curvePath/drawRoads from src/05b_worldart.js. The polyline is smoothed and bent by noise so it winds like a real road.
-const Generator = preload("res://campaign/world/terrain_generator.gd")
+const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 
 var _runs_small: Array = []

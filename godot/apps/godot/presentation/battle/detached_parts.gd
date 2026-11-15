@@ -1,7 +1,7 @@
 extends RefCounted
 
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
-const Event = preload("res://battle/combat_event.gd")
+const Event = preload("res://core/battle/combat_event.gd")
 enum Part { HEAD, ARM, BONE, FRAGMENT }
 
 const MAX_ACTIVE := 70

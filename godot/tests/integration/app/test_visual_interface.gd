@@ -1,7 +1,7 @@
 extends SceneTree
 ## The new equipment UI must preserve real inventory actions, including its two-click gesture.
-const WorldState = preload("res://campaign/world/world_state.gd")
-const EuropeData = preload("res://campaign/data/europe_data.gd")
+const WorldState = preload("res://core/campaign/world/world_state.gd")
+const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 const Art = preload("res://ui/original_art.gd")
 

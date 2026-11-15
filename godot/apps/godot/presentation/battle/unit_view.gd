@@ -1,9 +1,9 @@
 extends RefCounted
 const Motion = preload("res://apps/godot/presentation/battle/unit_motion.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
-const Event = preload("res://battle/combat_event.gd")
-const Config = preload("res://battle/config.gd")
-const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
+const Event = preload("res://core/battle/combat_event.gd")
+const Config = preload("res://core/battle/config.gd")
+const RenderSnapshot = preload("res://core/battle/application/render_snapshot.gd")
 const UnitMarkers = preload("res://apps/godot/presentation/battle/unit_markers.gd")
 const VIEW_MARGIN := 50.0
 const PHASE_STEP := 0.618

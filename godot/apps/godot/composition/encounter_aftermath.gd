@@ -1,16 +1,16 @@
 extends RefCounted
 ## Consumes a finished battle once and returns detached campaign data to its owner.
-const Session = preload("res://battle/application/session.gd")
-const Troops = preload("res://troops/data/catalog.gd")
-const Gear = preload("res://equipment/data/gear_catalog.gd")
-const Goods = preload("res://campaign/data/goods_catalog.gd")
-const Rewards = preload("res://campaign/data/encounter_rewards.gd")
-const Aftermath = preload("res://campaign/rules/battle_aftermath.gd")
-const Loot = preload("res://campaign/economy/battle_loot.gd")
-const EncounterWorld = preload("res://campaign/rules/encounter_world.gd")
-const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
-const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
-const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
+const Session = preload("res://core/battle/application/session.gd")
+const Troops = preload("res://core/troops/data/catalog.gd")
+const Gear = preload("res://core/equipment/data/gear_catalog.gd")
+const Goods = preload("res://core/campaign/data/goods_catalog.gd")
+const Rewards = preload("res://core/campaign/data/encounter_rewards.gd")
+const Aftermath = preload("res://core/campaign/rules/battle_aftermath.gd")
+const Loot = preload("res://core/campaign/economy/battle_loot.gd")
+const EncounterWorld = preload("res://core/campaign/rules/encounter_world.gd")
+const CompanionCatalog = preload("res://core/characters/data/companion_catalog.gd")
+const PerkCatalog = preload("res://core/characters/data/perk_catalog.gd")
+const CompanionProfile = preload("res://core/characters/rules/companion_profile.gd")
 
 var _session: Session
 

@@ -1,6 +1,6 @@
 # ADR-005: BattleSetup как чистые значения
 
-`battle/data/battle_setup.gd` теперь RefCounted с 17 полями встречи. Редакторская
+`core/battle/data/battle_setup.gd` теперь RefCounted с 17 полями встречи. Редакторская
 обёртка Resource находится в `adapters/godot/resources/battle_setup_resource.gd`,
 готовые сценарии — в `content/scenarios`. Composition root преобразует Resource
 через `to_setup()` до вызова фабрики; словари и массивы копируются глубоко.

@@ -1,8 +1,8 @@
 extends SceneTree
-const State = preload("res://battle/model/state.gd")
-const Unit = preload("res://battle/model/unit.gd")
-const Combat = preload("res://battle/rules/combat.gd")
-const Step = preload("res://battle/rules/combat_step.gd")
+const State = preload("res://core/battle/model/state.gd")
+const Unit = preload("res://core/battle/model/unit.gd")
+const Combat = preload("res://core/battle/rules/combat.gd")
+const Step = preload("res://core/battle/rules/combat_step.gd")
 
 func resolve(indexed: bool) -> Array:
 	var state := State.new()

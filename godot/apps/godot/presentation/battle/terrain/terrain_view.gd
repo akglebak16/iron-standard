@@ -3,7 +3,7 @@ extends Node2D
 const GroundShader = preload("res://apps/godot/presentation/battle/terrain/ground.gdshader")
 const WallView = preload("res://apps/godot/presentation/battle/terrain/wall_view.gd")
 const WallSceneView = preload("res://apps/godot/presentation/battle/terrain/wall_scene_view.gd")
-const Config = preload("res://battle/config.gd")
+const Config = preload("res://core/battle/config.gd")
 const SNOW_BIOME := "snow"
 const DRY_BIOMES := ["steppe", "arid"]
 const PALETTES := {

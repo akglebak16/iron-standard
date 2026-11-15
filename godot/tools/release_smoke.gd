@@ -1,11 +1,11 @@
 extends Node
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Explicit checks: assert expressions do not run in exported release builds.
-const Europe = preload("res://campaign/data/europe_data.gd")
-const World = preload("res://campaign/world/world_state.gd")
-const Factory = preload("res://battle/application/factory.gd")
+const Europe = preload("res://core/campaign/data/europe_data.gd")
+const World = preload("res://core/campaign/world/world_state.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
 const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
-const SaveStore = preload("res://apps/godot/composition/save_store.gd")
+const SaveStore = preload("res://adapters/persistence/save_store.gd")
 
 func _ready() -> void:
 	var data := Europe.new()

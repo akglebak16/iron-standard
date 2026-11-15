@@ -4,7 +4,7 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
 const OriginalArt = preload("res://ui/original_art.gd")
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
 const KINDS := ["town", "castle", "village", "camp"]
 const SHEET_SCALE := 2.0

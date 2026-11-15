@@ -1,9 +1,9 @@
 extends Node2D
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The world map as a node: ground texture, fields, relief icons, roads, rivers, bridges, settlements.
-const WorldMap = preload("res://campaign/world/world_map.gd")
-const EuropeData = preload("res://campaign/data/europe_data.gd")
-const Generator = preload("res://campaign/world/terrain_generator.gd")
+const WorldMap = preload("res://core/campaign/world/world_map.gd")
+const EuropeData = preload("res://core/campaign/data/europe_data.gd")
+const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const TerrainLayer = preload("res://apps/godot/presentation/campaign/terrain_layer.gd")
 const FarmLayer = preload("res://apps/godot/presentation/campaign/farm_layer.gd")
 const ReliefLayer = preload("res://apps/godot/presentation/campaign/relief_layer.gd")

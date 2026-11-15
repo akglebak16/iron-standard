@@ -1,9 +1,9 @@
 extends RefCounted
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## CPU baseline. Count and weight checks execute in release too; --ticks is simulation time, not frame count.
-const Factory = preload("res://battle/application/factory.gd")
-const Catalog = preload("res://troops/data/catalog.gd")
-const Config = preload("res://battle/config.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const Catalog = preload("res://core/troops/data/catalog.gd")
+const Config = preload("res://core/battle/config.gd")
 var size := 1000
 var ticks := 3600
 var warmup := 120

@@ -1,16 +1,16 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-const WorldState = preload("res://campaign/world/world_state.gd")
-const WorldSave = preload("res://campaign/world/world_save.gd")
-const EuropeData = preload("res://campaign/data/europe_data.gd")
-const HeroEquip = preload("res://equipment/rules/hero_equip.gd")
-const HeroGear = preload("res://equipment/rules/hero_gear.gd")
+const WorldState = preload("res://core/campaign/world/world_state.gd")
+const WorldSave = preload("res://core/campaign/world/world_save.gd")
+const EuropeData = preload("res://core/campaign/data/europe_data.gd")
+const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
+const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
 const PauseMenu = preload("res://apps/godot/composition/pause_menu.gd")
 const Preferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const WorldTips = preload("res://apps/godot/presentation/campaign/world_tips.gd")
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()

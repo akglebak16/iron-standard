@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Config = preload("res://battle/config.gd")
+const Config = preload("res://core/battle/config.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const BannerArt = preload("res://ui/banner_art.gd")
 const HERO_RING := Color("#ffd86a")

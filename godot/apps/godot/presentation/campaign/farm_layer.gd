@@ -1,7 +1,7 @@
 extends Node2D
 ## Fields and farms around settlements (drawFarms in src/05b_worldart.js): decoration only, same random sequence.
-const Generator = preload("res://campaign/world/terrain_generator.gd")
-const WorldNoise = preload("res://campaign/world/noise.gd")
+const Generator = preload("res://core/campaign/world/terrain_generator.gd")
+const WorldNoise = preload("res://core/campaign/world/noise.gd")
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 

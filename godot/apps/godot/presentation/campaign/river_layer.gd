@@ -1,6 +1,6 @@
 extends Node2D
 ## Rivers and bridges, like drawRivers()/drawBridges() in src/05b_worldart.js.
-const Generator = preload("res://campaign/world/terrain_generator.gd")
+const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 
 var _world: Generator

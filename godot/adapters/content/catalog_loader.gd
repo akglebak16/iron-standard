@@ -1,16 +1,16 @@
 extends RefCounted
 ## File boundary. Domain catalogs only validate supplied values; paths live here.
-const Troops = preload("res://troops/data/catalog.gd")
-const Gear = preload("res://equipment/data/gear_catalog.gd")
-const Perks = preload("res://characters/data/perk_catalog.gd")
-const Companions = preload("res://characters/data/companion_catalog.gd")
-const Goods = preload("res://campaign/data/goods_catalog.gd")
-const Factions = preload("res://campaign/data/faction_catalog.gd")
+const Troops = preload("res://core/troops/data/catalog.gd")
+const Gear = preload("res://core/equipment/data/gear_catalog.gd")
+const Perks = preload("res://core/characters/data/perk_catalog.gd")
+const Companions = preload("res://core/characters/data/companion_catalog.gd")
+const Goods = preload("res://core/campaign/data/goods_catalog.gd")
+const Factions = preload("res://core/campaign/data/faction_catalog.gd")
 const PATHS := {
-	"troops": "res://troops/data/troops.json", "gear": "res://equipment/data/items.json",
-	"perks": "res://characters/data/perks.json", "companions": "res://characters/data/companions.json",
-	"goods": "res://campaign/data/goods.json", "factions": "res://campaign/data/factions.json",
-	"europe": "res://campaign/data/europe.json",
+	"troops": "res://content/gameplay/troops/troops.json", "gear": "res://content/gameplay/equipment/items.json",
+	"perks": "res://content/gameplay/characters/perks.json", "companions": "res://content/gameplay/characters/companions.json",
+	"goods": "res://content/gameplay/campaign/goods.json", "factions": "res://content/gameplay/campaign/factions.json",
+	"europe": "res://content/gameplay/campaign/europe.json",
 }
 
 static func populate(catalog: RefCounted) -> bool:

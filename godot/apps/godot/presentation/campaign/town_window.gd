@@ -1,12 +1,12 @@
 extends "res://apps/godot/presentation/campaign/modal_window.gd"
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## A settlement: recruits, market (food, hero gear) and waiting (renderTown in src/06_ui.js).
-const Economy = preload("res://campaign/economy/party_economy.gd")
-const Market = preload("res://campaign/economy/market.gd")
-const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
-const HeroGear = preload("res://equipment/rules/hero_gear.gd")
+const Economy = preload("res://core/campaign/economy/party_economy.gd")
+const Market = preload("res://core/campaign/economy/market.gd")
+const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
+const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const PartyWindowText = preload("res://apps/godot/presentation/campaign/companion_text.gd")
 
 signal wait_requested(settlement: Dictionary)

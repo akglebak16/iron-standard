@@ -1,9 +1,9 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-const Factory = preload("res://battle/application/factory.gd")
-const Catalog = preload("res://troops/data/catalog.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const Catalog = preload("res://core/troops/data/catalog.gd")
 const UnitView = preload("res://apps/godot/presentation/battle/unit_view.gd")
-const Snapshot = preload("res://battle/application/render_snapshot.gd")
+const Snapshot = preload("res://core/battle/application/render_snapshot.gd")
 
 func _initialize() -> void:
 	var catalog := Catalog.new()

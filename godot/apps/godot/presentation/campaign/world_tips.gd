@@ -1,8 +1,8 @@
 extends RefCounted
 ## Text of the map tooltip for a party or a settlement under the mouse (worldTip in src/07_main.js).
-const Rules = preload("res://campaign/world/party_rules.gd")
-const WorldSiege = preload("res://campaign/world/world_siege.gd")
-const AutoBattle = preload("res://campaign/world/auto_battle.gd")
+const Rules = preload("res://core/campaign/world/party_rules.gd")
+const WorldSiege = preload("res://core/campaign/world/world_siege.gd")
+const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
 
 static func rel_name(v: float) -> String:

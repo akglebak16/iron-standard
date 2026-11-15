@@ -1,8 +1,8 @@
 extends RefCounted
 const GameSkin = preload("res://ui/game_theme.gd")
 const Demo = preload("res://apps/godot/presentation/battle/demo_config.gd")
-const Event = preload("res://battle/combat_event.gd")
-const Config = preload("res://battle/config.gd")
+const Event = preload("res://core/battle/combat_event.gd")
+const Config = preload("res://core/battle/config.gd")
 
 const BLOCK_TEXT := "Блок"
 const LAST_STAND_TEXT := "Не сдаюсь!"

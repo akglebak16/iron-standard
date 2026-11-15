@@ -4,7 +4,7 @@ extends Node2D
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 const OriginalArt = preload("res://ui/original_art.gd")
-const HeroGear = preload("res://equipment/rules/hero_gear.gd")
+const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 var gear_catalog: RefCounted
 var _appearance_key := ""
 var _figure: Dictionary = {}

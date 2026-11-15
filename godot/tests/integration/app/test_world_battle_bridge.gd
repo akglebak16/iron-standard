@@ -2,10 +2,10 @@ extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Bridge = preload("res://apps/godot/composition/world_battle_bridge.gd")
 const Aftermath = preload("res://apps/godot/composition/encounter_aftermath.gd")
-const Factory = preload("res://battle/application/factory.gd")
-const WorldState = preload("res://campaign/world/world_state.gd")
-const EuropeData = preload("res://campaign/data/europe_data.gd")
-const Rules = preload("res://campaign/world/party_rules.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const WorldState = preload("res://core/campaign/world/world_state.gd")
+const EuropeData = preload("res://core/campaign/data/europe_data.gd")
+const Rules = preload("res://core/campaign/world/party_rules.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()

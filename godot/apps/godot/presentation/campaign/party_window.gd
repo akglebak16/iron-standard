@@ -1,11 +1,11 @@
 extends "res://apps/godot/presentation/campaign/modal_window.gd"
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Party, hero and journal windows (openPanel in src/06_ui.js).
-const Economy = preload("res://campaign/economy/party_economy.gd")
+const Economy = preload("res://core/campaign/economy/party_economy.gd")
 const CompanionText = preload("res://apps/godot/presentation/campaign/companion_text.gd")
 const TABS := [["troops", "Отряд"], ["hero", "Герой"], ["gear", "Обоз"], ["quests", "Задания"], ["factions", "Фракции"], ["comps", "Спутники"], ["journal", "Журнал"]]
-const HeroGear = preload("res://equipment/rules/hero_gear.gd")
-const HeroEquip = preload("res://equipment/rules/hero_equip.gd")
+const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
+const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
 var _selected_gear := ""
@@ -17,8 +17,8 @@ var _slot_filter := ""
 var _selected_owner := ""
 var _faction := ""
 signal quest_target(x: float, y: float)
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
-const Rules = preload("res://campaign/world/party_rules.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
+const Rules = preload("res://core/campaign/world/party_rules.gd")
 var _fcat := FactionCatalog.new()
 var _fcat_loaded := false
 var _confirm := ""

@@ -1,7 +1,7 @@
 extends Node
-const Event = preload("res://battle/combat_event.gd")
+const Event = preload("res://core/battle/combat_event.gd")
 const Bank = preload("res://apps/godot/presentation/battle/audio/sound_bank.gd")
-const Config = preload("res://battle/config.gd")
+const Config = preload("res://core/battle/config.gd")
 
 const NEAR_GAIN := 1.15
 const ATTENUATION_DISTANCE := 900.0

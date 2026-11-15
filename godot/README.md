@@ -4,11 +4,11 @@
 
 Проект открывает главное меню, откуда доступны кампания и демонстрационные бои. Работают приказы, атаки, конный натиск, мораль, бегство и расчёт результата. Статус механик кампании описан в `MIGRATION_CHECKLIST.md`, графики и интерфейса — в `VISUAL_PARITY.md`.
 
-Расположение кода и правила для разработчиков описаны в `ARCHITECTURE.md`. `troops/` владеет определениями войск, `equipment/` — предметами, слотами и типами урона, `characters/` — перками и их эффектами, `battle/` — состоянием встречи, боевыми правилами и сценой. Тесты лежат рядом со своим модулем. Подробный статус переноса — в `MIGRATION_CHECKLIST.md`, сводка боя — в `battle/PARITY.md`, кандидаты на дополнительные библиотеки — в `DEPENDENCIES.md`.
+Расположение кода и правила для разработчиков описаны в `ARCHITECTURE.md`. `core/troops/` владеет определениями войск, `core/equipment/` — предметами, слотами и типами урона, `core/characters/` — перками и их эффектами, `core/battle/` — состоянием встречи, боевыми правилами и сценой. Тесты лежат рядом со своим модулем. Подробный статус переноса — в `MIGRATION_CHECKLIST.md`, сводка боя — в `docs/modules/battle/PARITY.md`, кандидаты на дополнительные библиотеки — в `DEPENDENCIES.md`.
 
-Баланс встречи хранится в `battle/config.gd`: размеры поля, построение, приказы, мораль, лимиты армий. Настройки запускаемой встречи лежат отдельно в `content/scenarios/demo_battle.tres` (можно редактировать в Inspector); поле `enemy_leader_name` назначает лидера сильнейшему врагу. Временные цвета и подписи — в `apps/godot/presentation/battle/demo_config.gd`. Параметры войск — в `troops/data/troops.json`, предметов — в `equipment/data/items.json`, перков — в `characters/data/perks.json`. Меняйте значения там, сохраняя поля и идентификаторы. Каталоги проверяют обязательные поля и допустимые параметры. Названия в JSON пока взяты из русской версии; при переносе интерфейса они получат ключи локализации.
+Баланс встречи хранится в `core/battle/config.gd`: размеры поля, построение, приказы, мораль, лимиты армий. Настройки запускаемой встречи лежат отдельно в `content/scenarios/demo_battle.tres` (можно редактировать в Inspector); поле `enemy_leader_name` назначает лидера сильнейшему врагу. Временные цвета и подписи — в `apps/godot/presentation/battle/demo_config.gd`. Параметры войск — в `content/gameplay/troops/troops.json`, предметов — в `content/gameplay/equipment/items.json`, перков — в `content/gameplay/characters/perks.json`. Меняйте значения там, сохраняя поля и идентификаторы. Каталоги проверяют обязательные поля и допустимые параметры. Названия в JSON пока взяты из русской версии; при переносе интерфейса они получат ключи локализации.
 
-`node godot/troops/tools/export_troops.cjs --check`, `node godot/equipment/tools/export_gear.cjs --check` и `node godot/characters/tools/export_perks.cjs --check` сверяют каталоги с исходным прототипом. Проверка ожидаемо покажет разницу после намеренной правки баланса в Godot.
+`node godot/tools/troops/export_troops.cjs --check`, `node godot/tools/equipment/export_gear.cjs --check` и `node godot/tools/characters/export_perks.cjs --check` сверяют каталоги с исходным прототипом. Проверка ожидаемо покажет разницу после намеренной правки баланса в Godot.
 
 Версия движка: Godot 4.7.2. Откройте эту папку в редакторе Godot.
 
@@ -26,15 +26,15 @@
 
 Проверка всех тестов Godot из корня репозитория: `node godot/tools/test.cjs <путь-к-godot.exe>`. Скрипт считает ошибки компиляции и зависание провалом теста, даже если Godot вернул код 0.
 
-В демонстрационном бою Ансельм, Ингрид и Тулуй отмечены золотыми кольцами и выполняют приказы пехоты, стрелков и конницы соответственно. Состав задаётся `companion_profiles` в `demo_battle.tres`. Достаточно указать `id`, а сохранённые уровень, здоровье и экипировка могут переопределять стартовые данные из `characters/data/companions.json`. Каталог сверяется командой `node godot/characters/tools/export_companions.cjs --check`.
+В демонстрационном бою Ансельм, Ингрид и Тулуй отмечены золотыми кольцами и выполняют приказы пехоты, стрелков и конницы соответственно. Состав задаётся `companion_profiles` в `demo_battle.tres`. Достаточно указать `id`, а сохранённые уровень, здоровье и экипировка могут переопределять стартовые данные из `content/gameplay/characters/companions.json`. Каталог сверяется командой `node godot/tools/characters/export_companions.cjs --check`.
 
-После боя демо показывает погибших, раненых, изменение золота, опыт героя и спутников и трофеи. При разгроме всего отряда оно сообщает, у какого города очнулся герой. Правила кампании обновляют отряд, обоз и противника в памяти демосценария. Полноценная карта и сохранения пока в работе. Каталог товаров сверяется командой `node godot/campaign/tools/export_goods.cjs --check`.
+После боя демо показывает погибших, раненых, изменение золота, опыт героя и спутников и трофеи. При разгроме всего отряда оно сообщает, у какого города очнулся герой. Правила кампании обновляют отряд, обоз и противника в памяти демосценария. Полноценная карта и сохранения пока в работе. Каталог товаров сверяется командой `node godot/tools/campaign/export_goods.cjs --check`.
 
 Примеры запуска отдельной проверки:
 
 ```text
-godot --headless --path godot --script res://battle/tests/rules/test_damage.gd
-godot --headless --path godot --script res://battle/tests/presentation/test_scene.gd
+godot --headless --path godot --script res://tests/unit/battle/rules/test_damage.gd
+godot --headless --path godot --script res://tests/unit/battle/presentation/test_scene.gd
 ```
 
-Измерение CPU без графики: `godot --headless --path godot --script res://battle/tools/benchmark.gd`. Текущий предел производительности большой армии и правила оптимизации записаны в `ARCHITECTURE.md`.
+Измерение CPU без графики: `godot --headless --path godot --script res://tools/battle/benchmark.gd`. Текущий предел производительности большой армии и правила оптимизации записаны в `ARCHITECTURE.md`.

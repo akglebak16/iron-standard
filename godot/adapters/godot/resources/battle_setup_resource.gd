@@ -1,7 +1,7 @@
 extends Resource
-const ValueSetup = preload("res://battle/data/battle_setup.gd")
+const ValueSetup = preload("res://core/battle/data/battle_setup.gd")
 ## Authoring data only. A factory creates new mutable runtime objects for each battle.
-const Config = preload("res://battle/config.gd")
+const Config = preload("res://core/battle/config.gd")
 # Browser compatibility default for armies without an explicit scenario budget.
 const FACTION_UNIT_CAPS := {"undead": 600}
 const DEFAULT_UNIT_CAP_OVERRIDE := 0

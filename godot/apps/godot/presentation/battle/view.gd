@@ -1,9 +1,9 @@
 extends Node2D
 ## Input/rendering adapter. Simulation is injected before entering the tree.
-const Config = preload("res://battle/config.gd")
-const Event = preload("res://battle/combat_event.gd")
+const Config = preload("res://core/battle/config.gd")
+const Event = preload("res://core/battle/combat_event.gd")
 const Demo = preload("res://apps/godot/presentation/battle/demo_config.gd")
-const Session = preload("res://battle/application/session.gd")
+const Session = preload("res://core/battle/application/session.gd")
 const Simulation = preload("res://core/battle/api/battle_simulation.gd")
 const FixedClock = preload("res://runtime/scheduling/fixed_step_clock.gd")
 const ProjectileView = preload("res://apps/godot/presentation/battle/projectile_view.gd")

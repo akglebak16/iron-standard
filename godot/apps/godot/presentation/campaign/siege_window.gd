@@ -2,11 +2,11 @@ extends "res://apps/godot/presentation/campaign/modal_window.gd"
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## The siege of a hostile town or castle: defenders, talks and the choice between calculating and storming (openSiege,
 ## openTalk and the sack/spare choice in src/06_ui.js and src/06i_siege.js).
-const Siege = preload("res://campaign/world/world_siege.gd")
-const Rules = preload("res://campaign/world/party_rules.gd")
-const AutoBattle = preload("res://campaign/world/auto_battle.gd")
+const Siege = preload("res://core/campaign/world/world_siege.gd")
+const Rules = preload("res://core/campaign/world/party_rules.gd")
+const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
 signal assault(settlement: Dictionary, calculate: bool)
 signal captured(settlement: Dictionary)

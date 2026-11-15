@@ -1,6 +1,6 @@
 extends RefCounted
-const Event = preload("res://battle/combat_event.gd")
-const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
+const Event = preload("res://core/battle/combat_event.gd")
+const RenderSnapshot = preload("res://core/battle/application/render_snapshot.gd")
 const Banter = preload("res://apps/godot/presentation/battle/banter_lines.gd")
 
 const START := "start"

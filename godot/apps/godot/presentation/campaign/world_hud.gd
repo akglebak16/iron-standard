@@ -1,8 +1,8 @@
 extends CanvasLayer
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## World HUD: date and speed controls, night tint, settlement tooltip, "near a settlement" label.
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
-const Economy = preload("res://campaign/economy/party_economy.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
+const Economy = preload("res://core/campaign/economy/party_economy.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
 
 const GameSkin = preload("res://ui/game_theme.gd")

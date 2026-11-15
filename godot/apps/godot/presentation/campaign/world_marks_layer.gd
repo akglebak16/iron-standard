@@ -2,7 +2,7 @@ extends Node2D
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## War and quest marks over the world map (drawWar, sgDraw in src/06e_war.js and src/06i_siege.js, drawJqMark in
 ## src/06f_jquests.js): siege rings, fights lasting hours, fires and smoke, blockades, the quest target pointer.
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
 var state: RefCounted
 var _factions := FactionCatalog.new()

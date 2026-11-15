@@ -1,7 +1,7 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-const WorldState = preload("res://campaign/world/world_state.gd")
-const EuropeData = preload("res://campaign/data/europe_data.gd")
+const WorldState = preload("res://core/campaign/world/world_state.gd")
+const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
 const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
 const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")

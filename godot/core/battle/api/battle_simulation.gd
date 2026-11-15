@@ -1,8 +1,8 @@
 extends RefCounted
 ## Public fixed-tick boundary. The legacy backend is private to this temporary adapter.
 ## Commands own their data; caller-provided IDs are validated by the backend.
-const Session = preload("res://battle/application/session.gd")
-const HeroInput = preload("res://battle/application/hero_input.gd")
+const Session = preload("res://core/battle/application/session.gd")
+const HeroInput = preload("res://core/battle/application/hero_input.gd")
 var _session: Session
 var _commands: Array[Dictionary] = []
 

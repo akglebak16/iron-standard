@@ -1,7 +1,7 @@
 extends RefCounted
 
-const Event = preload("res://battle/combat_event.gd")
-const Config = preload("res://battle/config.gd")
+const Event = preload("res://core/battle/combat_event.gd")
+const Config = preload("res://core/battle/config.gd")
 const LIFETIME := 4.0
 const FADE_SECONDS := 1.0
 const COLOR := Color("#f1d27a")

@@ -1,22 +1,21 @@
 {
   "version": 1,
-  "reservedMembers": [{"prefix":"_render_","writers":["battle/application/render_snapshot.gd","battle/application/session.gd"]}],
-  "allowedRoots": ["battle", "campaign", "troops", "equipment", "characters", "core", "runtime", "apps", "adapters", "content", "tests", "docs", "tools"],
-  "forbiddenPaths": ["app/", "battle/presentation/", "campaign/presentation/"],
-  "purePrefixes": ["battle/", "campaign/", "troops/", "equipment/", "characters/"],
-  "requiredDirectories": ["apps/godot/composition", "apps/godot/presentation/battle", "apps/godot/presentation/campaign", "battle", "campaign", "core/battle/api", "core/content/api", "runtime/scheduling", "adapters/content", "adapters/godot/resources", "content/scenarios", "tests/architecture", "tests/performance", "docs/architecture"],
+  "reservedMembers": [{"prefix":"_render_","writers":["core/battle/application/render_snapshot.gd","core/battle/application/session.gd"]}],
+  "allowedRoots": ["core", "runtime", "apps", "adapters", "content", "tests", "docs", "tools"],
+  "forbiddenPaths": ["app/", "battle/", "campaign/", "troops/", "equipment/", "characters/", "core/battle/presentation/", "core/campaign/presentation/", "apps/godot/composition/save_store.gd"],
+  "purePrefixes": [],
+  "requiredDirectories": ["apps/godot/composition", "apps/godot/presentation/battle", "apps/godot/presentation/campaign", "core/battle", "core/campaign", "core/troops", "core/equipment", "core/characters", "core/battle/api", "core/content/api", "runtime/scheduling", "adapters/content", "adapters/godot/resources", "adapters/persistence", "content/scenarios", "content/gameplay", "tests/unit", "tests/integration", "tests/architecture", "tests/performance", "docs/architecture"],
   "modules": [
     {"name":"content-contracts","prefix":"core/content/","allowed":[],"public":["core/content/api/"]},
-    {"name":"battle-api","prefix":"core/battle/","allowed":["battle"],"public":["core/battle/api/"]},
     {"name":"runtime","prefix":"runtime/","allowed":[],"public":["runtime/"]},
-    {"name":"app","prefix":"apps/godot/","allowed":["battle","campaign","troops","equipment","characters","battle-api","runtime","adapters","content"],"public":["apps/godot/composition/","apps/godot/presentation/battle/scene.tscn"]},
-    {"name":"adapters","prefix":"adapters/","allowed":["battle","campaign","troops","equipment","characters"],"public":["adapters/content/","adapters/godot/resources/"]},
+    {"name":"app","prefix":"apps/godot/","allowed":["battle","campaign","troops","equipment","characters","runtime","adapters","content"],"public":["apps/godot/composition/","apps/godot/presentation/battle/scene.tscn"]},
+    {"name":"adapters","prefix":"adapters/","allowed":["battle","campaign","troops","equipment","characters"],"public":["adapters/content/","adapters/godot/resources/","adapters/persistence/"]},
     {"name":"content","prefix":"content/","allowed":["adapters"],"public":["content/scenarios/"]},
-    {"name":"battle","prefix":"battle/","allowed":["troops","equipment","characters","runtime"],"public":["battle/application/","battle/data/","battle/config.gd","battle/combat_event.gd"]},
-    {"name":"campaign","prefix":"campaign/","allowed":["troops","equipment","characters","content-contracts"],"public":["campaign/"]},
-    {"name":"troops","prefix":"troops/","allowed":["content-contracts"],"public":["troops/config.gd","troops/data/","troops/rules/"]},
-    {"name":"equipment","prefix":"equipment/","allowed":["content-contracts"],"public":["equipment/config.gd","equipment/data/","equipment/rules/"]},
-    {"name":"characters","prefix":"characters/","allowed":["content-contracts"],"public":["characters/config.gd","characters/data/","characters/rules/"]}
+    {"name":"battle","prefix":"core/battle/","allowed":["troops","equipment","characters","runtime"],"public":["core/battle/api/","core/battle/application/","core/battle/data/","core/battle/config.gd","core/battle/combat_event.gd"]},
+    {"name":"campaign","prefix":"core/campaign/","allowed":["troops","equipment","characters","content-contracts"],"public":["core/campaign/"]},
+    {"name":"troops","prefix":"core/troops/","allowed":["content-contracts"],"public":["core/troops/config.gd","core/troops/data/","core/troops/rules/"]},
+    {"name":"equipment","prefix":"core/equipment/","allowed":["content-contracts"],"public":["core/equipment/config.gd","core/equipment/data/","core/equipment/rules/"]},
+    {"name":"characters","prefix":"core/characters/","allowed":["content-contracts"],"public":["core/characters/config.gd","core/characters/data/","core/characters/rules/"]}
   ],
   "exceptions": []
 }

@@ -1,6 +1,6 @@
 extends Camera2D
 
-const Event = preload("res://battle/combat_event.gd")
+const Event = preload("res://core/battle/combat_event.gd")
 const INITIAL_LEAD := Vector2(200, 0)
 const FOLLOW_RATE := 5.0
 const POINTER_LEAD_RATIO := 0.22

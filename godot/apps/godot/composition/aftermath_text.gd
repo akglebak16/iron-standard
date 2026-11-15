@@ -1,7 +1,7 @@
 extends RefCounted
 ## Human-readable battle outcome shared by the demo and the world map.
-const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
-const GoodsCatalog = preload("res://campaign/data/goods_catalog.gd")
+const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
+const GoodsCatalog = preload("res://core/campaign/data/goods_catalog.gd")
 const DEMO_REWARD_TEXT := "\nПогибло: %d · Ранено: %d · Золото: %+d · Опыт: +%d · Трофеи: %s"
 const NO_DROPS := "—"
 const COMPANION_XP_TEXT := "%s +%d опыта"

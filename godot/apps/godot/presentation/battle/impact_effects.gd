@@ -1,5 +1,5 @@
 extends RefCounted
-const Event = preload("res://battle/combat_event.gd")
+const Event = preload("res://core/battle/combat_event.gd")
 const Parts = preload("res://apps/godot/presentation/battle/detached_parts.gd")
 
 enum Particle { BLOOD, SPARK, DUST }

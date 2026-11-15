@@ -1,10 +1,10 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-const World = preload("res://campaign/world/world_state.gd")
-const Save = preload("res://campaign/world/world_save.gd")
-const Checkpoint = preload("res://campaign/world/world_checkpoint.gd")
-const Store = preload("res://apps/godot/composition/save_store.gd")
-const Europe = preload("res://campaign/data/europe_data.gd")
+const World = preload("res://core/campaign/world/world_state.gd")
+const Save = preload("res://core/campaign/world/world_save.gd")
+const Checkpoint = preload("res://core/campaign/world/world_checkpoint.gd")
+const Store = preload("res://adapters/persistence/save_store.gd")
+const Europe = preload("res://core/campaign/data/europe_data.gd")
 
 func _initialize() -> void:
 	var europe := Europe.new()

@@ -1,8 +1,8 @@
 extends Control
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Start screen: hero name, culture, new game (the menu and culture choice in src/06_ui.js and src/07_main.js).
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
-const SaveStore = preload("res://apps/godot/composition/save_store.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
+const SaveStore = preload("res://adapters/persistence/save_store.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const Preferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const GameSkin = preload("res://ui/game_theme.gd")

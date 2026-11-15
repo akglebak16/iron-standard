@@ -22,7 +22,7 @@ const ECHO_TAPS := 6
 const MUSIC_GAIN := 0.5
 const NOTE_VOICES := 8
 const DRUM_VOICES := 7
-## Authored looping track; rendered by battle/tools/render_battle_theme.py (original work, CC0).
+## Authored looping track; rendered by tools/battle/render_battle_theme.py (original work, CC0).
 const THEME_PATH := "res://apps/godot/presentation/battle/audio/assets/battle_theme.ogg"
 
 static var _notes: Array[AudioStreamWAV] = []

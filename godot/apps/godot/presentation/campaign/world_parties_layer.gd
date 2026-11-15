@@ -4,8 +4,8 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 const OriginalArt = preload("res://ui/original_art.gd")
-const FactionCatalog = preload("res://campaign/data/faction_catalog.gd")
-const Rules = preload("res://campaign/world/party_rules.gd")
+const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
+const Rules = preload("res://core/campaign/world/party_rules.gd")
 
 var roster: RefCounted
 var player: RefCounted

@@ -1,6 +1,6 @@
 extends Control
 const GameSkin = preload("res://ui/game_theme.gd")
-const RenderSnapshot = preload("res://battle/application/render_snapshot.gd")
+const RenderSnapshot = preload("res://core/battle/application/render_snapshot.gd")
 
 const MAP_SIZE := Vector2(190, 125)
 const SMALL_MAP_SIZE := Vector2(120, 80)

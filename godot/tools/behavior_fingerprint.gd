@@ -3,12 +3,12 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Behaviour fingerprint: runs the demo battles on a fixed seed and prints hashes of the whole snapshot and result.
 ## Run it before and after a refactoring that must not change behaviour; the printed lines must be identical:
 ##   godot --headless --path godot --script res://tools/behavior_fingerprint.gd
-const Factory = preload("res://battle/application/factory.gd")
-const Catalog = preload("res://troops/data/catalog.gd")
-const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
-const PerkCatalog = preload("res://characters/data/perk_catalog.gd")
-const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
-const Config = preload("res://battle/config.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const Catalog = preload("res://core/troops/data/catalog.gd")
+const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
+const PerkCatalog = preload("res://core/characters/data/perk_catalog.gd")
+const CompanionCatalog = preload("res://core/characters/data/companion_catalog.gd")
+const Config = preload("res://core/battle/config.gd")
 const SNAPSHOT_TICKS := 1200
 const SAMPLE_EVERY := 120
 const TICK_SECONDS := 1.0 / 60.0

@@ -38,11 +38,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node godot/troops/tools/export_troops.cjs --check
-      - run: node godot/equipment/tools/export_gear.cjs --check
-      - run: node godot/characters/tools/export_perks.cjs --check
-      - run: node godot/characters/tools/export_companions.cjs --check
-      - run: node godot/campaign/tools/export_goods.cjs --check
+      - run: node godot/tools/troops/export_troops.cjs --check
+      - run: node godot/tools/equipment/export_gear.cjs --check
+      - run: node godot/tools/characters/export_perks.cjs --check
+      - run: node godot/tools/characters/export_companions.cjs --check
+      - run: node godot/tools/campaign/export_goods.cjs --check
   windows:
     name: godot-tests-and-release
     runs-on: windows-2022

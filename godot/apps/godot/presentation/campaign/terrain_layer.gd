@@ -1,7 +1,7 @@
 extends Node2D
 ## Ground of the world map. Two GPU passes render the whole continent once into a texture
 ## (see terrain_pass1/2.gdshader); afterwards the map is just a sprite.
-const Generator = preload("res://campaign/world/terrain_generator.gd")
+const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const PASS1 := preload("res://apps/godot/presentation/campaign/terrain_pass1.gdshader")
 const PASS2 := preload("res://apps/godot/presentation/campaign/terrain_pass2.gdshader")
 

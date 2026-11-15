@@ -1,0 +1,2024 @@
+{
+  "revision": "7a975dbb5564157faa4ffa473dec0826a926c9e5",
+  "files": [
+    {
+      "source": "battle/PARITY.md",
+      "destination": "docs/modules/battle/PARITY.md",
+      "before": "fa4d71c9024659c109d6519654b1766c50c279dbf141df239ba0582d175e909f",
+      "after": "fa4d71c9024659c109d6519654b1766c50c279dbf141df239ba0582d175e909f"
+    },
+    {
+      "source": "battle/POST_PARITY_PLAN.md",
+      "destination": "docs/modules/battle/POST_PARITY_PLAN.md",
+      "before": "d063cc742e0d495796c9801661a4ca7d5e098f995c4a325ecdcc78b4c96ef7c8",
+      "after": "ff0270fa5498366f21d4176f2c4f3ed1812763719cf8f905a4bdccfff0d0d448"
+    },
+    {
+      "source": "battle/application/factory.gd",
+      "destination": "core/battle/application/factory.gd",
+      "before": "56326c7a73f344a7648e1d6ebbae8acdcd1b194ccea3f0660c391a540af181b2",
+      "after": "d5a037cf2ecb93846d6cb07c79f8cf2f83c4c2b6ce9c3758f052daa75ba13630"
+    },
+    {
+      "source": "battle/application/factory.gd.uid",
+      "destination": "core/battle/application/factory.gd.uid",
+      "before": "35ea115f2a5421d81dad92c3d9bb1b5ffc4399c3d8518bf468d40fd0a4a55b1a",
+      "after": "35ea115f2a5421d81dad92c3d9bb1b5ffc4399c3d8518bf468d40fd0a4a55b1a"
+    },
+    {
+      "source": "battle/application/hero_input.gd",
+      "destination": "core/battle/application/hero_input.gd",
+      "before": "90b5b4ab0d01d0e8345d1a485122baedcd60919d88ef54a8f5df0864c7bb5930",
+      "after": "90b5b4ab0d01d0e8345d1a485122baedcd60919d88ef54a8f5df0864c7bb5930"
+    },
+    {
+      "source": "battle/application/hero_input.gd.uid",
+      "destination": "core/battle/application/hero_input.gd.uid",
+      "before": "2b91020b84a4e5cdf8e8514ce2fb3b0c5dd6d05789597800e5c32b1e36bd243a",
+      "after": "2b91020b84a4e5cdf8e8514ce2fb3b0c5dd6d05789597800e5c32b1e36bd243a"
+    },
+    {
+      "source": "battle/application/render_snapshot.gd",
+      "destination": "core/battle/application/render_snapshot.gd",
+      "before": "d6e397e99984cec5da8f9bef245773a58bac5f5bcce0447977c88897397e83e1",
+      "after": "d6e397e99984cec5da8f9bef245773a58bac5f5bcce0447977c88897397e83e1"
+    },
+    {
+      "source": "battle/application/render_snapshot.gd.uid",
+      "destination": "core/battle/application/render_snapshot.gd.uid",
+      "before": "a9734843779e6f0c96004fec5b453d3457937778693d3bb3b9aaa727c90881e1",
+      "after": "a9734843779e6f0c96004fec5b453d3457937778693d3bb3b9aaa727c90881e1"
+    },
+    {
+      "source": "battle/application/session.gd",
+      "destination": "core/battle/application/session.gd",
+      "before": "d29cf12c7c3c4db80fe7d348461ca2fa1d81acf84c4d675f7a8101216ea1d454",
+      "after": "212778de9a8bfb8d4325ea348735411ad9f822dfcef1dbf6205aaa903421ef2c"
+    },
+    {
+      "source": "battle/application/session.gd.uid",
+      "destination": "core/battle/application/session.gd.uid",
+      "before": "e6a193f9a6476ef7dc4c56210f90d471312f64b6b3c748690773c52b48e86807",
+      "after": "e6a193f9a6476ef7dc4c56210f90d471312f64b6b3c748690773c52b48e86807"
+    },
+    {
+      "source": "battle/combat_event.gd",
+      "destination": "core/battle/combat_event.gd",
+      "before": "948ab0177a366e274e197d8e15700f26497e1da14226aaa3a1ee7649ba1a6a3e",
+      "after": "948ab0177a366e274e197d8e15700f26497e1da14226aaa3a1ee7649ba1a6a3e"
+    },
+    {
+      "source": "battle/combat_event.gd.uid",
+      "destination": "core/battle/combat_event.gd.uid",
+      "before": "b0427e324b45e0c4c921a721ce61ccdc0fb04ed616fad9f779d94439f43230d4",
+      "after": "b0427e324b45e0c4c921a721ce61ccdc0fb04ed616fad9f779d94439f43230d4"
+    },
+    {
+      "source": "battle/config.gd",
+      "destination": "core/battle/config.gd",
+      "before": "abf6de0f7d7296c06ab215c163a6f46a53be0b061559c8e4d2ee4e3cba16a698",
+      "after": "dff02219b661d9901ec3430035a072b78005e9818fd52aa4624d9ed79981d7e4"
+    },
+    {
+      "source": "battle/config.gd.uid",
+      "destination": "core/battle/config.gd.uid",
+      "before": "e171b31d792ddad8a67cc33a467df7316484445749769d07f89b9fcfd72441af",
+      "after": "e171b31d792ddad8a67cc33a467df7316484445749769d07f89b9fcfd72441af"
+    },
+    {
+      "source": "battle/data/army_builder.gd",
+      "destination": "core/battle/data/army_builder.gd",
+      "before": "110cfd998588f4e036c2da63a7e0403a0c96c650c5edf0f23d9bb6092d84c7c2",
+      "after": "17f094c713e94dc4ed6b4cf8adb8f2cc012eac41954dff500beb66d49b2c43aa"
+    },
+    {
+      "source": "battle/data/army_builder.gd.uid",
+      "destination": "core/battle/data/army_builder.gd.uid",
+      "before": "e00a1c770138d9d00eb2051122aaba80b949eb180c3101ce6208403b730609b8",
+      "after": "e00a1c770138d9d00eb2051122aaba80b949eb180c3101ce6208403b730609b8"
+    },
+    {
+      "source": "battle/data/battle_setup.gd",
+      "destination": "core/battle/data/battle_setup.gd",
+      "before": "e85b16372133515cc38274af58cfddda383346566d75e38c20ff1291fd7e9710",
+      "after": "f9f8c53a1100ea022d06136f18804496fdd18dcad90f20ffab960972b167ac57"
+    },
+    {
+      "source": "battle/data/battle_setup.gd.uid",
+      "destination": "core/battle/data/battle_setup.gd.uid",
+      "before": "665b9559045fbae21b3a31264cad48cd99d2c56b325c5082edfc1676f9e586d9",
+      "after": "665b9559045fbae21b3a31264cad48cd99d2c56b325c5082edfc1676f9e586d9"
+    },
+    {
+      "source": "battle/data/companion_builder.gd",
+      "destination": "core/battle/data/companion_builder.gd",
+      "before": "c43ea3b46e35e7e531059a57a2a1deefeaab76b275e99ad2015b28a2afd028c0",
+      "after": "239f047a722b5186a8ebf1ebfa7c50b527926f113c4749bfd51dcfef5728c1c3"
+    },
+    {
+      "source": "battle/data/companion_builder.gd.uid",
+      "destination": "core/battle/data/companion_builder.gd.uid",
+      "before": "69a48d8da9e0a608d46b279b32ca77a1ccb519c8c241bd425029477a6b062b5b",
+      "after": "69a48d8da9e0a608d46b279b32ca77a1ccb519c8c241bd425029477a6b062b5b"
+    },
+    {
+      "source": "battle/data/hero_stats.gd",
+      "destination": "core/battle/data/hero_stats.gd",
+      "before": "10555b4ecab7188fb3b65ab7ca281f9cdaa23fb5247c7e062cfde686972ac325",
+      "after": "c204d8274a34d956c0ba40b143d327dab2ca2f57276e68d753b6c1c8cdbfddf7"
+    },
+    {
+      "source": "battle/data/hero_stats.gd.uid",
+      "destination": "core/battle/data/hero_stats.gd.uid",
+      "before": "2a0deda49b2a7d628b86f9fd601c1f261e54e0184584b70764764182736b86f5",
+      "after": "2a0deda49b2a7d628b86f9fd601c1f261e54e0184584b70764764182736b86f5"
+    },
+    {
+      "source": "battle/data/reinforcements.gd",
+      "destination": "core/battle/data/reinforcements.gd",
+      "before": "ceb9881c73645e3a878bce29d2634e1daa5b6463ff8b90c7480cc21dffc44931",
+      "after": "fec16ec8f45a56fba943f414b5e3b86a1da772c0e891229a76b9571a336ad270"
+    },
+    {
+      "source": "battle/data/reinforcements.gd.uid",
+      "destination": "core/battle/data/reinforcements.gd.uid",
+      "before": "48a5b980cc18801ae6b2c1b31a793fe8629fdd08e98896d9fb15d974b270c2c4",
+      "after": "48a5b980cc18801ae6b2c1b31a793fe8629fdd08e98896d9fb15d974b270c2c4"
+    },
+    {
+      "source": "battle/data/siege_setup.gd",
+      "destination": "core/battle/data/siege_setup.gd",
+      "before": "da97aa94f408092023aad20ecab79b1e4c377715518ffc48ea9f3788ae0f77df",
+      "after": "574b26b0392b655e0389b9d7a86000615ce770510ea132e99dc1f1a1a438c809"
+    },
+    {
+      "source": "battle/data/siege_setup.gd.uid",
+      "destination": "core/battle/data/siege_setup.gd.uid",
+      "before": "c0c86568bc6ca8f9d374661e1a9b85702fa601fd0b0e060ab9a3b8846b40908b",
+      "after": "c0c86568bc6ca8f9d374661e1a9b85702fa601fd0b0e060ab9a3b8846b40908b"
+    },
+    {
+      "source": "battle/data/vegetation_setup.gd",
+      "destination": "core/battle/data/vegetation_setup.gd",
+      "before": "c6920f83d813a78902310d3d3d46777ef2d0a71b9541370a35eb7d7c3b601b05",
+      "after": "e81da6d3ed2b878c8d4d8c096eec353010ef4c8d5024224ae8e441f735e59251"
+    },
+    {
+      "source": "battle/data/vegetation_setup.gd.uid",
+      "destination": "core/battle/data/vegetation_setup.gd.uid",
+      "before": "36c06be2fe275d213c9a3a38ba882066f2e05d5cc329f130556d66dc23ebc689",
+      "after": "36c06be2fe275d213c9a3a38ba882066f2e05d5cc329f130556d66dc23ebc689"
+    },
+    {
+      "source": "battle/model/group.gd",
+      "destination": "core/battle/model/group.gd",
+      "before": "311c6a1c6b822c5621941ad95daf9b2976858c1f829a251d261c18a7666f4259",
+      "after": "33b63357a507fa4a469ab2f09a29e8af964f2e1d6c3c9e72c998b9bb8d8b5f35"
+    },
+    {
+      "source": "battle/model/group.gd.uid",
+      "destination": "core/battle/model/group.gd.uid",
+      "before": "40e93681e9ed159f361d185026aa8f9587c2f4f0419359463a99ec82e9d4db56",
+      "after": "40e93681e9ed159f361d185026aa8f9587c2f4f0419359463a99ec82e9d4db56"
+    },
+    {
+      "source": "battle/model/plant.gd",
+      "destination": "core/battle/model/plant.gd",
+      "before": "a34d2eee565aff1d4a8a99ffc1f00c51d6fa50c1a50057a6abd8ce1a61b250b1",
+      "after": "a34d2eee565aff1d4a8a99ffc1f00c51d6fa50c1a50057a6abd8ce1a61b250b1"
+    },
+    {
+      "source": "battle/model/plant.gd.uid",
+      "destination": "core/battle/model/plant.gd.uid",
+      "before": "43fdf34ea1e99c27a4484d1115525105eddc4b1de5e2e2cb10f781f1f09fb1c8",
+      "after": "43fdf34ea1e99c27a4484d1115525105eddc4b1de5e2e2cb10f781f1f09fb1c8"
+    },
+    {
+      "source": "battle/model/siege_defense.gd",
+      "destination": "core/battle/model/siege_defense.gd",
+      "before": "f07b2711f0a9eef1b915f51be46746b28da4f2f033b5c9adb945055af50a92b4",
+      "after": "596a528742c91511805d32067128092f6d9818bb219ee9e64cea47eca7db813b"
+    },
+    {
+      "source": "battle/model/siege_defense.gd.uid",
+      "destination": "core/battle/model/siege_defense.gd.uid",
+      "before": "5552d238444586f53ef28a1a3c475df34559ef17c2e8d0395c8f932bff68189e",
+      "after": "5552d238444586f53ef28a1a3c475df34559ef17c2e8d0395c8f932bff68189e"
+    },
+    {
+      "source": "battle/model/siege_wall.gd",
+      "destination": "core/battle/model/siege_wall.gd",
+      "before": "0f5476560c3f90bdfd94470285c5ab4a73a83970636dee9d9ae1afc2d453940c",
+      "after": "660bf177b31520d735b5595788438a2e224a24c0ed14093298888be3c9653e0d"
+    },
+    {
+      "source": "battle/model/siege_wall.gd.uid",
+      "destination": "core/battle/model/siege_wall.gd.uid",
+      "before": "0fee6bb052d668b65fdcdac0fa12b562406b2238f2ac5c79d85e0c5a91325e42",
+      "after": "0fee6bb052d668b65fdcdac0fa12b562406b2238f2ac5c79d85e0c5a91325e42"
+    },
+    {
+      "source": "battle/model/state.gd",
+      "destination": "core/battle/model/state.gd",
+      "before": "e1d159c3faec2698bdc5671a1f33b8c7dfba1e0c6cf9a66c4e10b41749876925",
+      "after": "9a309bfa21635161b0f03bc69a015b6d34de4a36205ea5a70d02217f508a96a4"
+    },
+    {
+      "source": "battle/model/state.gd.uid",
+      "destination": "core/battle/model/state.gd.uid",
+      "before": "b99383ba09fb0a87f50d5add6d90d18a9e1feb10f77fd94f1b183004218d75e8",
+      "after": "b99383ba09fb0a87f50d5add6d90d18a9e1feb10f77fd94f1b183004218d75e8"
+    },
+    {
+      "source": "battle/model/unit.gd",
+      "destination": "core/battle/model/unit.gd",
+      "before": "4d06765ab531bb7b7147ac4c4eaf18656928e0c5af9cda7d599483bf9a084ef8",
+      "after": "f1da4021b46617edf677e28102569386a013dea34421f3d96426c82b583710d8"
+    },
+    {
+      "source": "battle/model/unit.gd.uid",
+      "destination": "core/battle/model/unit.gd.uid",
+      "before": "35492462dc5de2138e928643bece51137eaccf876cb3feba74160db8756bd7b0",
+      "after": "35492462dc5de2138e928643bece51137eaccf876cb3feba74160db8756bd7b0"
+    },
+    {
+      "source": "battle/rules/ai_decision.gd",
+      "destination": "core/battle/rules/ai_decision.gd",
+      "before": "df43e257a9c7c256005c5c842d40713f35788db7b75b08e9340fa557568952a5",
+      "after": "d7154b87e6ebc6cdc4cb6895fd380be4a8a82c111b195aa6eec85e3bafc362ba"
+    },
+    {
+      "source": "battle/rules/ai_decision.gd.uid",
+      "destination": "core/battle/rules/ai_decision.gd.uid",
+      "before": "3ec3b9721cb99262c26c03d1264c6647ddd81c858dba767a98fc129e5c5940d5",
+      "after": "3ec3b9721cb99262c26c03d1264c6647ddd81c858dba767a98fc129e5c5940d5"
+    },
+    {
+      "source": "battle/rules/block.gd",
+      "destination": "core/battle/rules/block.gd",
+      "before": "66ab038e5e9aee806796b689f95f074bc0e39c668f14ac527009c6012b26ef9f",
+      "after": "0232ff6166f8b34504d80a5cdee2ea126458412405e69ade3f9a189fff4baf0d"
+    },
+    {
+      "source": "battle/rules/block.gd.uid",
+      "destination": "core/battle/rules/block.gd.uid",
+      "before": "2ed5bb6212d19b2aee0965d4c5d178cdfb8dbe97d1d113328125d8d29b214dec",
+      "after": "2ed5bb6212d19b2aee0965d4c5d178cdfb8dbe97d1d113328125d8d29b214dec"
+    },
+    {
+      "source": "battle/rules/charge.gd",
+      "destination": "core/battle/rules/charge.gd",
+      "before": "8d41c67993639f3830c11d6b3aefb733a5d97b5b0510ed430e22ae14e9a4ddf5",
+      "after": "b0743b3d9c47435b391911c72a4640d1f99d66858a552ba11800518dac2ac47a"
+    },
+    {
+      "source": "battle/rules/charge.gd.uid",
+      "destination": "core/battle/rules/charge.gd.uid",
+      "before": "0933d13fe8bbd2914ffc748c416020242723212f0abfe233c7d8e1efd59a86f9",
+      "after": "0933d13fe8bbd2914ffc748c416020242723212f0abfe233c7d8e1efd59a86f9"
+    },
+    {
+      "source": "battle/rules/collision_grid.gd",
+      "destination": "core/battle/rules/collision_grid.gd",
+      "before": "66ca93dc49de5d5662d8a6ec80130f6528ec364c66e4ceb817ade7c2e238d684",
+      "after": "66ca93dc49de5d5662d8a6ec80130f6528ec364c66e4ceb817ade7c2e238d684"
+    },
+    {
+      "source": "battle/rules/collision_grid.gd.uid",
+      "destination": "core/battle/rules/collision_grid.gd.uid",
+      "before": "38272801b7bcb41e59944c295551666352975a79cd9d3eb6b555e46553174433",
+      "after": "38272801b7bcb41e59944c295551666352975a79cd9d3eb6b555e46553174433"
+    },
+    {
+      "source": "battle/rules/combat.gd",
+      "destination": "core/battle/rules/combat.gd",
+      "before": "0fa200a3a7005f237b4ae06c74ad67061b0c7223c1985301935e918c3abc2cae",
+      "after": "b97186eac7d5ce2332898e1013f07d6dbfa34c31eea50abb64d757ef7e92fad9"
+    },
+    {
+      "source": "battle/rules/combat.gd.uid",
+      "destination": "core/battle/rules/combat.gd.uid",
+      "before": "b47c7ed43c08aa6a073deab89078d32580285234d41866494a352768bc3d39a4",
+      "after": "b47c7ed43c08aa6a073deab89078d32580285234d41866494a352768bc3d39a4"
+    },
+    {
+      "source": "battle/rules/combat_step.gd",
+      "destination": "core/battle/rules/combat_step.gd",
+      "before": "e1ccd821959063ac35030d80c3f551355043f7ee3f97ec48b2ad14d980d639c6",
+      "after": "b813e723be806c2d5b9080ee5fcad7a004c27b19ae998887c1871e80f6f88a4c"
+    },
+    {
+      "source": "battle/rules/combat_step.gd.uid",
+      "destination": "core/battle/rules/combat_step.gd.uid",
+      "before": "dd1338057a28583341061e3b7be42966339be4db27f30f9b03bc650f7211005d",
+      "after": "dd1338057a28583341061e3b7be42966339be4db27f30f9b03bc650f7211005d"
+    },
+    {
+      "source": "battle/rules/damage.gd",
+      "destination": "core/battle/rules/damage.gd",
+      "before": "4c2a7a30378e0db255adaceb6f9f0c4195f224b0978a38e1e101a1082779f736",
+      "after": "9081fc47b6ca90263629067952eeebf66375027ddb6c338c93a05f08140a3af3"
+    },
+    {
+      "source": "battle/rules/damage.gd.uid",
+      "destination": "core/battle/rules/damage.gd.uid",
+      "before": "f5fbf8583bab495551891ee0aafc728f047b6f1a9b1bce307c1c287980dc7ad4",
+      "after": "f5fbf8583bab495551891ee0aafc728f047b6f1a9b1bce307c1c287980dc7ad4"
+    },
+    {
+      "source": "battle/rules/hero_control.gd",
+      "destination": "core/battle/rules/hero_control.gd",
+      "before": "7bf0dacfffb33486543bfae8b0a2a28de67431b51f6d23d7becf22bf009764ae",
+      "after": "ec354070c9c41d08beef26efdcf7ad6a1d8999d2a88ca3138f1663b6819ddf1e"
+    },
+    {
+      "source": "battle/rules/hero_control.gd.uid",
+      "destination": "core/battle/rules/hero_control.gd.uid",
+      "before": "cb3af30d37ecde2c0449ebec5e128c8cf83a516d03fe8128852fa5624f077c57",
+      "after": "cb3af30d37ecde2c0449ebec5e128c8cf83a516d03fe8128852fa5624f077c57"
+    },
+    {
+      "source": "battle/rules/morale.gd",
+      "destination": "core/battle/rules/morale.gd",
+      "before": "2399673a524d6336319db0758d5d48d916678758b6dfc4e8b14154eb23de7f3c",
+      "after": "9bb68d66c13ad0f8828ed771ef66191c29f8db4b752041af0528fee5aaf04661"
+    },
+    {
+      "source": "battle/rules/morale.gd.uid",
+      "destination": "core/battle/rules/morale.gd.uid",
+      "before": "33538224ed1f6813930df55aab1bfc7384b8306a5634653916b6b77cf517af55",
+      "after": "33538224ed1f6813930df55aab1bfc7384b8306a5634653916b6b77cf517af55"
+    },
+    {
+      "source": "battle/rules/movement.gd",
+      "destination": "core/battle/rules/movement.gd",
+      "before": "69622f9af6c7a8fe89c042e9b62e615885f56aa4a453d03135e3f49bb3c3c392",
+      "after": "971d22ac543af87b504ddc78cdf0dca1d751d3341318758913d1fe5bc4163985"
+    },
+    {
+      "source": "battle/rules/movement.gd.uid",
+      "destination": "core/battle/rules/movement.gd.uid",
+      "before": "a8bb8d44da69ba50376c199160912034e8233e2508d1d57ea75f15583c091212",
+      "after": "a8bb8d44da69ba50376c199160912034e8233e2508d1d57ea75f15583c091212"
+    },
+    {
+      "source": "battle/rules/result.gd",
+      "destination": "core/battle/rules/result.gd",
+      "before": "67f82774eb4ea66930c870161cfbc1198d5bd1cee307aebb706b790f42497053",
+      "after": "34b02505adea7f5b27f9f3989cc4c542c3eac516a10ad841f335eacf56fa0c16"
+    },
+    {
+      "source": "battle/rules/result.gd.uid",
+      "destination": "core/battle/rules/result.gd.uid",
+      "before": "425aafcd2283c9b050cf369d4c02438ad8f07c0cc94621d67cbec9102bb61076",
+      "after": "425aafcd2283c9b050cf369d4c02438ad8f07c0cc94621d67cbec9102bb61076"
+    },
+    {
+      "source": "battle/rules/siege_defense.gd",
+      "destination": "core/battle/rules/siege_defense.gd",
+      "before": "79c15b450b2e7950c1ce023e627591a7199298e4ec549d57f21f4dbcb4dbcf66",
+      "after": "24792e6fbe476c400c8528dc1d9f4b28bb2f3dcc607fe8c0bc1a2bc1b98a0a83"
+    },
+    {
+      "source": "battle/rules/siege_defense.gd.uid",
+      "destination": "core/battle/rules/siege_defense.gd.uid",
+      "before": "56ec4f89d400931e29da6b1a7ffcce5947d49941a871c8f73d9dd6d60db9eae3",
+      "after": "56ec4f89d400931e29da6b1a7ffcce5947d49941a871c8f73d9dd6d60db9eae3"
+    },
+    {
+      "source": "battle/rules/spatial_index.gd",
+      "destination": "core/battle/rules/spatial_index.gd",
+      "before": "8408f5a5c6b7fdc74b9f2b74760638eb819c5dce01c612fb94be3109a74e221e",
+      "after": "593c4ad7fc36b087b75b01bba4a667169903ad5ed9c3fb9db69e76020ce9abfd"
+    },
+    {
+      "source": "battle/rules/spatial_index.gd.uid",
+      "destination": "core/battle/rules/spatial_index.gd.uid",
+      "before": "32651a69f7f34eeac2993bfa555b1495378507d1ffd404e82e134e2a9b89d08b",
+      "after": "32651a69f7f34eeac2993bfa555b1495378507d1ffd404e82e134e2a9b89d08b"
+    },
+    {
+      "source": "battle/rules/tactics.gd",
+      "destination": "core/battle/rules/tactics.gd",
+      "before": "46a19d578e0059883bd6da7c7a500f8e4326a266fc5e13005a1b794503feb293",
+      "after": "0c7fcb7f1765a141e85d7ddf92bff3fa7539770cae0ba95394e89ef70d9ab63d"
+    },
+    {
+      "source": "battle/rules/tactics.gd.uid",
+      "destination": "core/battle/rules/tactics.gd.uid",
+      "before": "0c475535fc9da019d2806e3b647fbbc8fdf255a24cc7d0ed145a629c2cbf0c58",
+      "after": "0c475535fc9da019d2806e3b647fbbc8fdf255a24cc7d0ed145a629c2cbf0c58"
+    },
+    {
+      "source": "battle/rules/targeting.gd",
+      "destination": "core/battle/rules/targeting.gd",
+      "before": "483fac735912fb1e275badd1db1b04567b03fb3d92003c1b558ccb130845f542",
+      "after": "40d90436c2b59fa4379cb6581476878618ef635b47e7d8173079502e966ee7c6"
+    },
+    {
+      "source": "battle/rules/targeting.gd.uid",
+      "destination": "core/battle/rules/targeting.gd.uid",
+      "before": "53977ae68edeac4fb235eec53ddccc5e7fc02229d690695c9dea16ced7b4b7c6",
+      "after": "53977ae68edeac4fb235eec53ddccc5e7fc02229d690695c9dea16ced7b4b7c6"
+    },
+    {
+      "source": "battle/tests/application/test_combat_events.gd",
+      "destination": "tests/unit/battle/application/test_combat_events.gd",
+      "before": "c043fd78985d03daaa83005b8d973405b5d73fe19262f5c3df2c8da155d03913",
+      "after": "79a92ccc6b14f4500117f51180e6ebb11cc740916aba11d8140502a247b8a9db"
+    },
+    {
+      "source": "battle/tests/application/test_combat_events.gd.uid",
+      "destination": "tests/unit/battle/application/test_combat_events.gd.uid",
+      "before": "6e249f64eccbcfba37acee83b671814af9b872a378576048670b43ff7a4d64cc",
+      "after": "6e249f64eccbcfba37acee83b671814af9b872a378576048670b43ff7a4d64cc"
+    },
+    {
+      "source": "battle/tests/application/test_companion_factory.gd",
+      "destination": "tests/unit/battle/application/test_companion_factory.gd",
+      "before": "c60ce0245db66ecfdf81eab6f48bea1f362fdb46797b2b939cf8f06c81c05413",
+      "after": "aed651233891fd3559694992f84bde4ce4e1d29352c6c4d70cd67697543d2951"
+    },
+    {
+      "source": "battle/tests/application/test_companion_factory.gd.uid",
+      "destination": "tests/unit/battle/application/test_companion_factory.gd.uid",
+      "before": "0d43c47830cc4dff8fe52701eea15be98521ce50d18062e3507ef192c9a0bd7c",
+      "after": "0d43c47830cc4dff8fe52701eea15be98521ce50d18062e3507ef192c9a0bd7c"
+    },
+    {
+      "source": "battle/tests/application/test_hero_factory.gd",
+      "destination": "tests/unit/battle/application/test_hero_factory.gd",
+      "before": "9c4086a3cab60ed54355712932036bd35a34ed4adb5ad1bd351bda9a329dea96",
+      "after": "7aef7b40e7af3fd0089f1e596ced8cc8c3c3895140df06d91333b83f35d3b64b"
+    },
+    {
+      "source": "battle/tests/application/test_hero_factory.gd.uid",
+      "destination": "tests/unit/battle/application/test_hero_factory.gd.uid",
+      "before": "84f03ec86ae1b7d494a31d452de602e5d0b7f3eed19554ab19056e3dba81f353",
+      "after": "84f03ec86ae1b7d494a31d452de602e5d0b7f3eed19554ab19056e3dba81f353"
+    },
+    {
+      "source": "battle/tests/application/test_reserve_waves.gd",
+      "destination": "tests/unit/battle/application/test_reserve_waves.gd",
+      "before": "c36503f30c1e1c9bf13e610fc3f3528a8eb5b4f08cf75f2ca6a9c26d3468bc72",
+      "after": "b0588d7221243e2812477bdfe3ad5618a4c758957e8145cb1bc46b1d5f0acf8a"
+    },
+    {
+      "source": "battle/tests/application/test_reserve_waves.gd.uid",
+      "destination": "tests/unit/battle/application/test_reserve_waves.gd.uid",
+      "before": "ad072e9e978a20223c05a8e731b5baac56705339b6a11c983a6d8ee4056466fc",
+      "after": "ad072e9e978a20223c05a8e731b5baac56705339b6a11c983a6d8ee4056466fc"
+    },
+    {
+      "source": "battle/tests/application/test_session.gd",
+      "destination": "tests/unit/battle/application/test_session.gd",
+      "before": "b15e07f26a2ec80c0bec384380e43eee607e73b4b23efa6e625c71d06bdf313f",
+      "after": "b44474182a2e4b53ba0dfb890f0bd096854921648a0468ee092ab8d55db21565"
+    },
+    {
+      "source": "battle/tests/application/test_session.gd.uid",
+      "destination": "tests/unit/battle/application/test_session.gd.uid",
+      "before": "33349d7834ecce8a7baaaec9a248c9a785c5196ff3052e525aefa4bff6934233",
+      "after": "33349d7834ecce8a7baaaec9a248c9a785c5196ff3052e525aefa4bff6934233"
+    },
+    {
+      "source": "battle/tests/application/test_siege_setup.gd",
+      "destination": "tests/unit/battle/application/test_siege_setup.gd",
+      "before": "bff59c61e9ff7f1f954e820b445f07b27d47ebfb9657e99635eaf7db272456d8",
+      "after": "e8bddfd26d44655ac7f913d254fe974c4cc5cf8d0292cb80d7e432f937199cdf"
+    },
+    {
+      "source": "battle/tests/application/test_siege_setup.gd.uid",
+      "destination": "tests/unit/battle/application/test_siege_setup.gd.uid",
+      "before": "3c824d4a6e88086f3c36057725ecc265f486e79841b7db46ed965150df69e0f3",
+      "after": "3c824d4a6e88086f3c36057725ecc265f486e79841b7db46ed965150df69e0f3"
+    },
+    {
+      "source": "battle/tests/application/test_vegetation.gd",
+      "destination": "tests/unit/battle/application/test_vegetation.gd",
+      "before": "14ec4f6371e1f9a03b03340310e84be290f948ed720d821a53953003c2994a3b",
+      "after": "df821b4d7a6a484299e17947899b65f71d25f5cfedd78b904a385c91c7e96a77"
+    },
+    {
+      "source": "battle/tests/application/test_vegetation.gd.uid",
+      "destination": "tests/unit/battle/application/test_vegetation.gd.uid",
+      "before": "b75f3774f8def06cf15c8569110def6278e1b4c2b50240e0a0b69a140f221c4a",
+      "after": "b75f3774f8def06cf15c8569110def6278e1b4c2b50240e0a0b69a140f221c4a"
+    },
+    {
+      "source": "battle/tests/data/test_catalog_spawn.gd",
+      "destination": "tests/unit/battle/data/test_catalog_spawn.gd",
+      "before": "0ef25bdcf15423e4dc8fd86c4f663290d8a2b27796fef33d7988e58552218a6e",
+      "after": "233f65f40eedf6d1470930d04a7ead93766c42d97bb9b8bcc53993ecd7225907"
+    },
+    {
+      "source": "battle/tests/data/test_catalog_spawn.gd.uid",
+      "destination": "tests/unit/battle/data/test_catalog_spawn.gd.uid",
+      "before": "24250cfe6ff4bb698f612a5cc8de6301f6762b0f9dc4b44de74748946e80512f",
+      "after": "24250cfe6ff4bb698f612a5cc8de6301f6762b0f9dc4b44de74748946e80512f"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_combat_step.gd",
+      "destination": "tests/unit/battle/fixtures/legacy_combat_step.gd",
+      "before": "d858826036c8d2df2f7ed629267b44be63933272698d0466b1d5d637dc021ea8",
+      "after": "c6959b42bed3602517b18fe9a2c160ca3a45fbacff81e1d144f4befc82cfbac1"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_combat_step.gd.uid",
+      "destination": "tests/unit/battle/fixtures/legacy_combat_step.gd.uid",
+      "before": "59a98227be3efa100cd4462c4216c990d924e7cb6b4d2bbcb8e7703c5d110c5e",
+      "after": "59a98227be3efa100cd4462c4216c990d924e7cb6b4d2bbcb8e7703c5d110c5e"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_movement.gd",
+      "destination": "tests/unit/battle/fixtures/legacy_movement.gd",
+      "before": "919b5bc1037ff3730a874a3a616adfdc2e46ea102ebc0e7c05730987731f2c75",
+      "after": "38980bfc9ead8bc683a9289bc9c7d568c08bffc2fc7f9bd94506f7196a6c28d7"
+    },
+    {
+      "source": "battle/tests/fixtures/legacy_movement.gd.uid",
+      "destination": "tests/unit/battle/fixtures/legacy_movement.gd.uid",
+      "before": "efd86eeb623d0b955df2770710f6ce652aa9cff26e284233ef79d3a54c9c209e",
+      "after": "efd86eeb623d0b955df2770710f6ce652aa9cff26e284233ef79d3a54c9c209e"
+    },
+    {
+      "source": "battle/tests/model/test_battle_state.gd",
+      "destination": "tests/unit/battle/model/test_battle_state.gd",
+      "before": "7fd631ac5444163db20d365eacaaf1673636d11682beb8413c20e57dc1770fa4",
+      "after": "eb48ecf380c3efe91106b7d28681e707527772d083c44f53d045ccd3b3f09052"
+    },
+    {
+      "source": "battle/tests/model/test_battle_state.gd.uid",
+      "destination": "tests/unit/battle/model/test_battle_state.gd.uid",
+      "before": "be949a949d3f5cef6fc7210eec4d4a946675264255ddde315486c6fa54ea2b14",
+      "after": "be949a949d3f5cef6fc7210eec4d4a946675264255ddde315486c6fa54ea2b14"
+    },
+    {
+      "source": "battle/tests/model/test_groups.gd",
+      "destination": "tests/unit/battle/model/test_groups.gd",
+      "before": "309a57ba4c4f75b6fc4ae5cc4ffde21508b6ebe248af003f60d04b1393bf744c",
+      "after": "a645deb75c52fa4f138bc1aec24d42bc25709a9f094313a05e4f4ba907289914"
+    },
+    {
+      "source": "battle/tests/model/test_groups.gd.uid",
+      "destination": "tests/unit/battle/model/test_groups.gd.uid",
+      "before": "8f890901ce91fca5ff765f9cae4e969ba69e2aaf2c734de28a2fd563aec984ad",
+      "after": "8f890901ce91fca5ff765f9cae4e969ba69e2aaf2c734de28a2fd563aec984ad"
+    },
+    {
+      "source": "battle/tests/presentation/test_banter.gd",
+      "destination": "tests/unit/battle/presentation/test_banter.gd",
+      "before": "9aa4cee3e6ecd8513128155ae54fdeb6951da59782d00185f8d7fce8e574763a",
+      "after": "de73ecf0ec06009ae482888de7d503885c455865d04292d0149535822bfeb483"
+    },
+    {
+      "source": "battle/tests/presentation/test_banter.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_banter.gd.uid",
+      "before": "307bb78686699b906ea8b29aed3665c774342ff87c994f7e4500dd8f297d6dab",
+      "after": "307bb78686699b906ea8b29aed3665c774342ff87c994f7e4500dd8f297d6dab"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_camera.gd",
+      "destination": "tests/unit/battle/presentation/test_battle_camera.gd",
+      "before": "b0d17193656442484aa4383aabaaa743e7ce3ccf06d62f5f51a4ff4876bc9040",
+      "after": "85c0c2d9e1e41df8ddd165ca4413c7fdb6578a5da9061574c2914b37041c0625"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_camera.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_battle_camera.gd.uid",
+      "before": "fcd465888c8b29735cd95c9bc43ba5c00bbbbcd075dee70f2c73c52e82315189",
+      "after": "fcd465888c8b29735cd95c9bc43ba5c00bbbbcd075dee70f2c73c52e82315189"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_controls.gd",
+      "destination": "tests/unit/battle/presentation/test_battle_controls.gd",
+      "before": "0c819d53700591919f3185f2b79b8b012ed845b17f6181ac77edc969fa45d58d",
+      "after": "e6fe191ba348829874041b74b067259e18d951f455705f7f560258deef6cb22f"
+    },
+    {
+      "source": "battle/tests/presentation/test_battle_controls.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_battle_controls.gd.uid",
+      "before": "506f0df0a130d042bf2e95ead28ed2fd3ffc4f2f885e00f9200a5acfd17ae430",
+      "after": "506f0df0a130d042bf2e95ead28ed2fd3ffc4f2f885e00f9200a5acfd17ae430"
+    },
+    {
+      "source": "battle/tests/presentation/test_combat_audio.gd",
+      "destination": "tests/unit/battle/presentation/test_combat_audio.gd",
+      "before": "5d9a11791ce01869305768aa1ac5110c01bb15ce39748eb712a62b03c1e7953a",
+      "after": "a46560abba01433011788b09c3b362fa9dade927e959f5d22409137d4355ee84"
+    },
+    {
+      "source": "battle/tests/presentation/test_combat_audio.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_combat_audio.gd.uid",
+      "before": "9ab7eaee91fbcb10c795cf33eb525ae7f6a42d7d1b7f90af4c7ed1d4c1047a3e",
+      "after": "9ab7eaee91fbcb10c795cf33eb525ae7f6a42d7d1b7f90af4c7ed1d4c1047a3e"
+    },
+    {
+      "source": "battle/tests/presentation/test_companion_dialogue.gd",
+      "destination": "tests/unit/battle/presentation/test_companion_dialogue.gd",
+      "before": "ea344818940b8e4b92dc7fccd82adeba9fa12c21c56cf919a5abbff93805d5db",
+      "after": "eb5f9c5db2b9906ee7b5f4c18255340e6a56ffa673bed47b26d988716d65702a"
+    },
+    {
+      "source": "battle/tests/presentation/test_companion_dialogue.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_companion_dialogue.gd.uid",
+      "before": "1af8b07baf7a2e288c6fde955320931e18944dfb436bec2798bc96c185764c6c",
+      "after": "1af8b07baf7a2e288c6fde955320931e18944dfb436bec2798bc96c185764c6c"
+    },
+    {
+      "source": "battle/tests/presentation/test_detached_parts.gd",
+      "destination": "tests/unit/battle/presentation/test_detached_parts.gd",
+      "before": "997246f86cf86119cb7cda3cfa98b324dc9b340f0357eaf6f41be2765f21814c",
+      "after": "cb7eef22ca488d18980c0bec4a265cb9ed17604117fd61381031202ed9b17482"
+    },
+    {
+      "source": "battle/tests/presentation/test_detached_parts.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_detached_parts.gd.uid",
+      "before": "3840c61e96a9795036261a4564aded4c75696775a8a6c6a1ada91de4ab14e34c",
+      "after": "3840c61e96a9795036261a4564aded4c75696775a8a6c6a1ada91de4ab14e34c"
+    },
+    {
+      "source": "battle/tests/presentation/test_impact_effects.gd",
+      "destination": "tests/unit/battle/presentation/test_impact_effects.gd",
+      "before": "f41b73d8abcda6684fe75c3aac9f2859d61828692b4056ac4d004b67241fe821",
+      "after": "18a47606de7af297c698b3fa6983a19992a9abd15475de3ddd657aa15f458d9d"
+    },
+    {
+      "source": "battle/tests/presentation/test_impact_effects.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_impact_effects.gd.uid",
+      "before": "ada3167be02b2ec20bae358d635224825209c45ca77d20a57311fd250a3dbbc2",
+      "after": "ada3167be02b2ec20bae358d635224825209c45ca77d20a57311fd250a3dbbc2"
+    },
+    {
+      "source": "battle/tests/presentation/test_navigation_hud.gd",
+      "destination": "tests/unit/battle/presentation/test_navigation_hud.gd",
+      "before": "3f943e45ed4c32b5db301e5f1b83b7096f70a313e8db8933d7681a55a6b5b5ea",
+      "after": "39454ff910cf95a3aa8b02b4ccc3284629c4e28dd4efe357bfeba9abcc246a0a"
+    },
+    {
+      "source": "battle/tests/presentation/test_navigation_hud.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_navigation_hud.gd.uid",
+      "before": "41e611718f38122355ce867d324a7fb0e0121a515114d278a4a1f48403273faf",
+      "after": "41e611718f38122355ce867d324a7fb0e0121a515114d278a4a1f48403273faf"
+    },
+    {
+      "source": "battle/tests/presentation/test_scene.gd",
+      "destination": "tests/unit/battle/presentation/test_scene.gd",
+      "before": "a4fe6200ee5cc988c0d9fb2821f8f2b94de55bec883bd0a3860a56ef4ed080bb",
+      "after": "6797864ad8c9c0666795d59dad7d6e40465e31d17827d85b35774e053d7da1e0"
+    },
+    {
+      "source": "battle/tests/presentation/test_scene.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_scene.gd.uid",
+      "before": "b82720e4534e18b5c9d308a5187bbcad119a50821931384e501988efa511166c",
+      "after": "b82720e4534e18b5c9d308a5187bbcad119a50821931384e501988efa511166c"
+    },
+    {
+      "source": "battle/tests/presentation/test_terrain_view.gd",
+      "destination": "tests/unit/battle/presentation/test_terrain_view.gd",
+      "before": "1aa06ee0588c42fb341eb584f7c8623c71a4e78e62d1004d53d5641f5d83f329",
+      "after": "f51d5a56fa740b37adbef466ccefc551651706cde8c526dcae1c2760c9f28d7b"
+    },
+    {
+      "source": "battle/tests/presentation/test_terrain_view.gd.uid",
+      "destination": "tests/unit/battle/presentation/test_terrain_view.gd.uid",
+      "before": "12849ac5c7d676d47d5bf97b69e42ea83d129c4f09b95f300451bf49993a9470",
+      "after": "12849ac5c7d676d47d5bf97b69e42ea83d129c4f09b95f300451bf49993a9470"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_attack_timing.gd",
+      "destination": "tests/unit/battle/rules/test_ai_attack_timing.gd",
+      "before": "1bb026a44d7e2357c60fc00504e6b78f921213e26e86935544bbff88a3286ddb",
+      "after": "adb664ce080141d2f41fcd753e6500b2c21ded8105ff1e429578fe36fb75dda2"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_attack_timing.gd.uid",
+      "destination": "tests/unit/battle/rules/test_ai_attack_timing.gd.uid",
+      "before": "154d73b0996313b7b02952be46e0e8f581cfd51c7e452ccdd0e9e5f442da9bf7",
+      "after": "154d73b0996313b7b02952be46e0e8f581cfd51c7e452ccdd0e9e5f442da9bf7"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_decision.gd",
+      "destination": "tests/unit/battle/rules/test_ai_decision.gd",
+      "before": "415167a06a4f8c5817254ef77876f2ea365c7643170dae8b4d1d0065e76fa242",
+      "after": "c614216a6fed753fa7d0e01b5eb9d73d91ab981f779be501e120cdd99f2745f6"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_decision.gd.uid",
+      "destination": "tests/unit/battle/rules/test_ai_decision.gd.uid",
+      "before": "e1f3d8bf29fef5e7aed92bfe5ec7455c42c6ba50fe68cc1168c5b7ae66f122d0",
+      "after": "e1f3d8bf29fef5e7aed92bfe5ec7455c42c6ba50fe68cc1168c5b7ae66f122d0"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_tick_order.gd",
+      "destination": "tests/unit/battle/rules/test_ai_tick_order.gd",
+      "before": "69ba8bd0274a79df71b8f33547d7a95096faec89224680a3e05e4bbac328ae80",
+      "after": "8fc6308725293da7b645b6ed11a661edbb6d1501bcb694b5be4756237d6ff0f2"
+    },
+    {
+      "source": "battle/tests/rules/test_ai_tick_order.gd.uid",
+      "destination": "tests/unit/battle/rules/test_ai_tick_order.gd.uid",
+      "before": "5077dccd91edb1eaf93c486f619555c97d9671326d5a823f19279f97d4007d54",
+      "after": "5077dccd91edb1eaf93c486f619555c97d9671326d5a823f19279f97d4007d54"
+    },
+    {
+      "source": "battle/tests/rules/test_block.gd",
+      "destination": "tests/unit/battle/rules/test_block.gd",
+      "before": "fe6ddc4dfed6d1a302fe1843b0f57cbe59012db3448a30f6ae6571fb40658c9b",
+      "after": "cd4dc845b7e5a755e0c3386fec44df426c0abd1cf92683189b54e28078cc9af5"
+    },
+    {
+      "source": "battle/tests/rules/test_block.gd.uid",
+      "destination": "tests/unit/battle/rules/test_block.gd.uid",
+      "before": "b8f419302202dd438e29da84a6a3416ba00c020b289ebcfdee23438b334e91d7",
+      "after": "b8f419302202dd438e29da84a6a3416ba00c020b289ebcfdee23438b334e91d7"
+    },
+    {
+      "source": "battle/tests/rules/test_charge.gd",
+      "destination": "tests/unit/battle/rules/test_charge.gd",
+      "before": "2ea17df47b4d903fdeb77a2586923310e41636bc6e1fe60199eadabcb8ebd659",
+      "after": "1c9ae1e0a4cf2ec39c1564ec95799b873ecea5a447d2679bd3a7bc4fc74a2aa7"
+    },
+    {
+      "source": "battle/tests/rules/test_charge.gd.uid",
+      "destination": "tests/unit/battle/rules/test_charge.gd.uid",
+      "before": "0f65c8fa4797c623170a3c0457562e79b34c995d8bba159f81902cff2ec33ec1",
+      "after": "0f65c8fa4797c623170a3c0457562e79b34c995d8bba159f81902cff2ec33ec1"
+    },
+    {
+      "source": "battle/tests/rules/test_combat.gd",
+      "destination": "tests/unit/battle/rules/test_combat.gd",
+      "before": "5689710975b5d87f4b9c3836f97575ed8b7d19e1fb2d7f7adbf8dc5aaf982925",
+      "after": "09fa063f65ae1b9e584a4b190c4325e88e1b3d1c1852d785007bca5852ec74f9"
+    },
+    {
+      "source": "battle/tests/rules/test_combat.gd.uid",
+      "destination": "tests/unit/battle/rules/test_combat.gd.uid",
+      "before": "e90c935d909287474a0989a06690b60249e349b46444d059fca97347f74d8063",
+      "after": "e90c935d909287474a0989a06690b60249e349b46444d059fca97347f74d8063"
+    },
+    {
+      "source": "battle/tests/rules/test_damage.gd",
+      "destination": "tests/unit/battle/rules/test_damage.gd",
+      "before": "adc7663d32c5c78d9eaf45bc9071d7ba1410c5383a2c69ca7ef8cff1a4ac4f5b",
+      "after": "28eb9b36b03875d3fb877faee93dc6a9d4306ee8f884cf61bc9f4db0862bdbc2"
+    },
+    {
+      "source": "battle/tests/rules/test_damage.gd.uid",
+      "destination": "tests/unit/battle/rules/test_damage.gd.uid",
+      "before": "35106524bd92c33f57d1a4aaa8efc349cd425db2a86b555891d5551f9ca8861d",
+      "after": "35106524bd92c33f57d1a4aaa8efc349cd425db2a86b555891d5551f9ca8861d"
+    },
+    {
+      "source": "battle/tests/rules/test_equipment_combat.gd",
+      "destination": "tests/unit/battle/rules/test_equipment_combat.gd",
+      "before": "5376db6d48fbec05e23c1ec218749b74cc732a4e1d97368de0bebc4de7557bc4",
+      "after": "b0ef53bcda12a037b8dfa3376597e26fb99ffc60ee67806a3397072ced085538"
+    },
+    {
+      "source": "battle/tests/rules/test_equipment_combat.gd.uid",
+      "destination": "tests/unit/battle/rules/test_equipment_combat.gd.uid",
+      "before": "9cf8084c7972c92a46c0f03ff301d72826ab9090798b8e9ca6be4ef02cbfa449",
+      "after": "9cf8084c7972c92a46c0f03ff301d72826ab9090798b8e9ca6be4ef02cbfa449"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_charge.gd",
+      "destination": "tests/unit/battle/rules/test_hero_charge.gd",
+      "before": "29ee2c7a08f86b166eca7249cfdfc39cd02f3ef1a3478f6dfdc487177967d033",
+      "after": "2f7a67a165451aac4f607ff320ff2450c0e41d0a6d72bdca87cf7de1cc4b3d61"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_charge.gd.uid",
+      "destination": "tests/unit/battle/rules/test_hero_charge.gd.uid",
+      "before": "a563c7685fee0f735958eb00088d188f4f1d98ecc54af8a2a55aa1a45f9f9566",
+      "after": "a563c7685fee0f735958eb00088d188f4f1d98ecc54af8a2a55aa1a45f9f9566"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_control.gd",
+      "destination": "tests/unit/battle/rules/test_hero_control.gd",
+      "before": "4a5cc5f8efcb678c87e61288b0fef036bdd6a1d0d85f2d09ada4406f07f4d467",
+      "after": "a828de2341ff7d77ee5723020b2422f802847711b1facb5ed036142a8177e711"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_control.gd.uid",
+      "destination": "tests/unit/battle/rules/test_hero_control.gd.uid",
+      "before": "aa4606af143b752c114381d3bb9ebd57b5eb60800cc175a8a8ac01c7e3ebcb9b",
+      "after": "aa4606af143b752c114381d3bb9ebd57b5eb60800cc175a8a8ac01c7e3ebcb9b"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_strike.gd",
+      "destination": "tests/unit/battle/rules/test_hero_strike.gd",
+      "before": "d996c6c83537d3b84ec7eec29711f88c9a06883b87c2ca3f0d59a0a627f97408",
+      "after": "ba7503fac135ae965066d84d0fa46a588a7f5cc60d257d687dcf4cab3431fd05"
+    },
+    {
+      "source": "battle/tests/rules/test_hero_strike.gd.uid",
+      "destination": "tests/unit/battle/rules/test_hero_strike.gd.uid",
+      "before": "9368051c7a79993a15998c4a82431e8a44a996f4a0b3cc66c809861c83210620",
+      "after": "9368051c7a79993a15998c4a82431e8a44a996f4a0b3cc66c809861c83210620"
+    },
+    {
+      "source": "battle/tests/rules/test_morale.gd",
+      "destination": "tests/unit/battle/rules/test_morale.gd",
+      "before": "941c635b899f0d9c72fd10d8dcfe0ea02d90066e9af23f0b06ed9953002ce771",
+      "after": "7516d33f705a9093b63a92cfe5f80ed43368816b857dcbb990399c1f3b7a89e8"
+    },
+    {
+      "source": "battle/tests/rules/test_morale.gd.uid",
+      "destination": "tests/unit/battle/rules/test_morale.gd.uid",
+      "before": "cdbe3d4e18d3b3f1a68171fb65c859aa54e988fe8c05118f325338cc942734e0",
+      "after": "cdbe3d4e18d3b3f1a68171fb65c859aa54e988fe8c05118f325338cc942734e0"
+    },
+    {
+      "source": "battle/tests/rules/test_movement.gd",
+      "destination": "tests/unit/battle/rules/test_movement.gd",
+      "before": "5f9b7ccc0f67b78de032da496913c9ed69fbdfac3cc7b7924505a6fae853e620",
+      "after": "95be93f5348dbf569f6fe1e43a8c41c7d23bd6b3185953bd6c39b36ba36cca02"
+    },
+    {
+      "source": "battle/tests/rules/test_movement.gd.uid",
+      "destination": "tests/unit/battle/rules/test_movement.gd.uid",
+      "before": "9c4df5035ee6d84984b0981e9052e2a5a402837b59aa39e35a5b831bcbb24098",
+      "after": "9c4df5035ee6d84984b0981e9052e2a5a402837b59aa39e35a5b831bcbb24098"
+    },
+    {
+      "source": "battle/tests/rules/test_projectile.gd",
+      "destination": "tests/unit/battle/rules/test_projectile.gd",
+      "before": "0d90881d55587199a08d34af0ec9f33105d7854fa7a7056113143ad4f879d862",
+      "after": "a408c4e55f780be797b75e343e131c40267deb194ac192968ce6ab4d08cfabe5"
+    },
+    {
+      "source": "battle/tests/rules/test_projectile.gd.uid",
+      "destination": "tests/unit/battle/rules/test_projectile.gd.uid",
+      "before": "799c7873804150b05878a50a5d406438031bf5d16681eb4bfa806bf92b5820c1",
+      "after": "799c7873804150b05878a50a5d406438031bf5d16681eb4bfa806bf92b5820c1"
+    },
+    {
+      "source": "battle/tests/rules/test_result.gd",
+      "destination": "tests/unit/battle/rules/test_result.gd",
+      "before": "96d4b3018de4b33ceb368fc49ea9a9e01204f3782f4aa850152db194a636895c",
+      "after": "6e8636dc7e20eaeb6580c99bdd53466945c1240dd091af161b595efb08521fbf"
+    },
+    {
+      "source": "battle/tests/rules/test_result.gd.uid",
+      "destination": "tests/unit/battle/rules/test_result.gd.uid",
+      "before": "bb268510054bbfb68822d1d888bfbf4d2f0137e26cb3586f091d21245eb54023",
+      "after": "bb268510054bbfb68822d1d888bfbf4d2f0137e26cb3586f091d21245eb54023"
+    },
+    {
+      "source": "battle/tests/rules/test_siege.gd",
+      "destination": "tests/unit/battle/rules/test_siege.gd",
+      "before": "a9d4979bb59756f04c302cc2d75e420b9033827bb76dba9f7337fd1f4b0be54a",
+      "after": "b825249f288857de060bd021c6260b1cb00b3ceaff9beaf8c66c0e185e5b4b7a"
+    },
+    {
+      "source": "battle/tests/rules/test_siege.gd.uid",
+      "destination": "tests/unit/battle/rules/test_siege.gd.uid",
+      "before": "fd8a1589e59cceb6d2f9760aeac04c44a948ddacf8daf7fd7310d37aaed0248f",
+      "after": "fd8a1589e59cceb6d2f9760aeac04c44a948ddacf8daf7fd7310d37aaed0248f"
+    },
+    {
+      "source": "battle/tests/rules/test_siege_defense.gd",
+      "destination": "tests/unit/battle/rules/test_siege_defense.gd",
+      "before": "9513779c5c34e3530b668e451bb2468f3462d057d91f1d110e01a8b1a203dc6f",
+      "after": "636a8031a6f40c4cd42acb4f3b49b864e44d4e68f525c4532d6e2b5e6199c4fa"
+    },
+    {
+      "source": "battle/tests/rules/test_siege_defense.gd.uid",
+      "destination": "tests/unit/battle/rules/test_siege_defense.gd.uid",
+      "before": "c8474c4804c3579410a1ac4047d20c0b08be4b59b6876c0c8ada422ac37680ac",
+      "after": "c8474c4804c3579410a1ac4047d20c0b08be4b59b6876c0c8ada422ac37680ac"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_full_battle.gd",
+      "destination": "tests/unit/battle/rules/test_spatial_full_battle.gd",
+      "before": "31e57c6855b6805a0156315e32369a0693445c1385115d8bd6d9a5ec5b4a8d86",
+      "after": "f636fdd8d41db452e0a267e8fe72c811de6fefb56bed7a5e2a0c66bb62ecf5b1"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_full_battle.gd.uid",
+      "destination": "tests/unit/battle/rules/test_spatial_full_battle.gd.uid",
+      "before": "fa27bab47a94c980de745a73c7ade7093476233c71d4996b355983a8f9dabfb6",
+      "after": "fa27bab47a94c980de745a73c7ade7093476233c71d4996b355983a8f9dabfb6"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_index.gd",
+      "destination": "tests/unit/battle/rules/test_spatial_index.gd",
+      "before": "5627bc20e3389ea0288477c18e19caea0eb8f078debd73cb396e128d62b48a2f",
+      "after": "6f127bd30432fda2d8db9a143b4a9b96b11d835b30d947a576a04573a0bfad17"
+    },
+    {
+      "source": "battle/tests/rules/test_spatial_index.gd.uid",
+      "destination": "tests/unit/battle/rules/test_spatial_index.gd.uid",
+      "before": "14f58cb6ec9610494a7d14947c4f5cdc5ee8db993c0933daf92d663b4f5dced7",
+      "after": "14f58cb6ec9610494a7d14947c4f5cdc5ee8db993c0933daf92d663b4f5dced7"
+    },
+    {
+      "source": "battle/tests/rules/test_tactics.gd",
+      "destination": "tests/unit/battle/rules/test_tactics.gd",
+      "before": "229bef6d8c090d58413b7a660882cee27b4002947dbb0bc098c67f8affb3b82c",
+      "after": "692baeb2874b48794f4211757f4e2c7c107ce005d4aff408e23b65c969108d5f"
+    },
+    {
+      "source": "battle/tests/rules/test_tactics.gd.uid",
+      "destination": "tests/unit/battle/rules/test_tactics.gd.uid",
+      "before": "59b361a080a8167365e53b752fe8b5f44706ef7753cd9f2c46f25fa316c18184",
+      "after": "59b361a080a8167365e53b752fe8b5f44706ef7753cd9f2c46f25fa316c18184"
+    },
+    {
+      "source": "battle/tools/benchmark.gd",
+      "destination": "tools/battle/benchmark.gd",
+      "before": "2e57d44bd68a9053fdbbd38e6c1cd42fdc3032cfeb66dc0628f4c6d61aa593cb",
+      "after": "3b6fd05db98c8f1fa3168eda9f4737bf8150dced3e5522e60f25be5c0092bf00"
+    },
+    {
+      "source": "battle/tools/benchmark.gd.uid",
+      "destination": "tools/battle/benchmark.gd.uid",
+      "before": "c087bf1585769c805a9edc14866c3a691e3ff3917a79b3c0f61e591a08099ed9",
+      "after": "c087bf1585769c805a9edc14866c3a691e3ff3917a79b3c0f61e591a08099ed9"
+    },
+    {
+      "source": "battle/tools/render_battle_theme.py",
+      "destination": "tools/battle/render_battle_theme.py",
+      "before": "376f7ee80cf2695accd34f8b868fe78feb2da163b8dd944a80516a39d69d0bc3",
+      "after": "376f7ee80cf2695accd34f8b868fe78feb2da163b8dd944a80516a39d69d0bc3"
+    },
+    {
+      "source": "battle/tools/render_wall_textures.py",
+      "destination": "tools/battle/render_wall_textures.py",
+      "before": "6bcb2b14e68d0dc5b4fa38b75ec6d6b956ad8a2712b320fa0f1787b241a9ee9f",
+      "after": "6bcb2b14e68d0dc5b4fa38b75ec6d6b956ad8a2712b320fa0f1787b241a9ee9f"
+    },
+    {
+      "source": "battle/tools/view_bench.gd",
+      "destination": "tools/battle/view_bench.gd",
+      "before": "bb716cfadff306a54a3d92af48c58b7edc33e17e37615666709f8eeb40b7f899",
+      "after": "0ae07c6c979d3f10ebce0483d35d6fcf2eca1df1fc8a2d09ec34cfbb1ec5b3fa"
+    },
+    {
+      "source": "battle/tools/view_bench.gd.uid",
+      "destination": "tools/battle/view_bench.gd.uid",
+      "before": "81b45c8044d5aff35572037deb54d18b56bdd8364bb6f07679069709022f9e22",
+      "after": "81b45c8044d5aff35572037deb54d18b56bdd8364bb6f07679069709022f9e22"
+    },
+    {
+      "source": "campaign/config.gd",
+      "destination": "core/campaign/config.gd",
+      "before": "66d0d18e48a9a309517e0758f8ac2de553e21e74751d2c32cdb991214447bc0e",
+      "after": "66d0d18e48a9a309517e0758f8ac2de553e21e74751d2c32cdb991214447bc0e"
+    },
+    {
+      "source": "campaign/config.gd.uid",
+      "destination": "core/campaign/config.gd.uid",
+      "before": "4bc7c48c13b045e97f8ab5b67a1bcce2d9755b8f1a1dfee13a87154dbf41255c",
+      "after": "4bc7c48c13b045e97f8ab5b67a1bcce2d9755b8f1a1dfee13a87154dbf41255c"
+    },
+    {
+      "source": "campaign/data/encounter_rewards.gd",
+      "destination": "core/campaign/data/encounter_rewards.gd",
+      "before": "7794c4e59e0ce5eaad7af3a50d6e454b53a97c6672761a86cd883a4931e0e787",
+      "after": "91cb00d6c4ebb1f6a6ead11be9443bbd521bf35a64852fafcce32cd2904dce79"
+    },
+    {
+      "source": "campaign/data/encounter_rewards.gd.uid",
+      "destination": "core/campaign/data/encounter_rewards.gd.uid",
+      "before": "8061984e34034e2d8fbd324cae417da52a81c2c651632824575a12c7a6e2ec67",
+      "after": "8061984e34034e2d8fbd324cae417da52a81c2c651632824575a12c7a6e2ec67"
+    },
+    {
+      "source": "campaign/data/europe.json",
+      "destination": "content/gameplay/campaign/europe.json",
+      "before": "263cde424d7bdcbd022c72b86b940691a0862203edbabc5b3624a49e0067a401",
+      "after": "263cde424d7bdcbd022c72b86b940691a0862203edbabc5b3624a49e0067a401"
+    },
+    {
+      "source": "campaign/data/europe_data.gd",
+      "destination": "core/campaign/data/europe_data.gd",
+      "before": "dfdc857ddd9bd7a64c0626d050a45aa54ca15b80fa2dea7f38d13189d98157e9",
+      "after": "724897c6af16ccc9e5f493310e8e8c2bfb0898c3eeaa4456145978c5c2fbd76e"
+    },
+    {
+      "source": "campaign/data/europe_data.gd.uid",
+      "destination": "core/campaign/data/europe_data.gd.uid",
+      "before": "c0caadcee3e452cea45ccfe212167dac42fc454b9a74ef2128c30de679e92030",
+      "after": "c0caadcee3e452cea45ccfe212167dac42fc454b9a74ef2128c30de679e92030"
+    },
+    {
+      "source": "campaign/data/faction_catalog.gd",
+      "destination": "core/campaign/data/faction_catalog.gd",
+      "before": "58317fdec8c701b72a7af4beadbed2a7ffb6e9dcc94acdd008bf8abcad2b9448",
+      "after": "4e2337d6680404508f1e04509242bc323373e86f17f64039a3ee4d085696e575"
+    },
+    {
+      "source": "campaign/data/faction_catalog.gd.uid",
+      "destination": "core/campaign/data/faction_catalog.gd.uid",
+      "before": "ce54ed06b773e9845d7626d20c3bb0676f6e7d6b8dc0a966f402104efa00610b",
+      "after": "ce54ed06b773e9845d7626d20c3bb0676f6e7d6b8dc0a966f402104efa00610b"
+    },
+    {
+      "source": "campaign/data/factions.json",
+      "destination": "content/gameplay/campaign/factions.json",
+      "before": "f336c219f42ef2fe420e1bf388c94809089627b1c813f2f519c53e93fefbc2e7",
+      "after": "f336c219f42ef2fe420e1bf388c94809089627b1c813f2f519c53e93fefbc2e7"
+    },
+    {
+      "source": "campaign/data/goods.json",
+      "destination": "content/gameplay/campaign/goods.json",
+      "before": "8d1b9a5e82a94ea92733b468f3a9765da4c7825e094c97bdaa4916fe7bb1a50d",
+      "after": "8d1b9a5e82a94ea92733b468f3a9765da4c7825e094c97bdaa4916fe7bb1a50d"
+    },
+    {
+      "source": "campaign/data/goods_catalog.gd",
+      "destination": "core/campaign/data/goods_catalog.gd",
+      "before": "a30e54a09f2b2e909272b34b5ac2dd73f847c6fe24fc7a2a8754032f7c8cd981",
+      "after": "a30e54a09f2b2e909272b34b5ac2dd73f847c6fe24fc7a2a8754032f7c8cd981"
+    },
+    {
+      "source": "campaign/data/goods_catalog.gd.uid",
+      "destination": "core/campaign/data/goods_catalog.gd.uid",
+      "before": "5b570845fc9c0049a4d5ed72595d00065b699c2b460c32bdf769377263099530",
+      "after": "5b570845fc9c0049a4d5ed72595d00065b699c2b460c32bdf769377263099530"
+    },
+    {
+      "source": "campaign/economy/battle_loot.gd",
+      "destination": "core/campaign/economy/battle_loot.gd",
+      "before": "85e936408984691bbb9fa6d9bd9619577bc142e9eff77fe06029dc3c45b3e020",
+      "after": "ca71f5029fdb6849409dfe2b80bf708322f5113d705d009b051c44c44fe286c5"
+    },
+    {
+      "source": "campaign/economy/battle_loot.gd.uid",
+      "destination": "core/campaign/economy/battle_loot.gd.uid",
+      "before": "3927d9cb9caf27d8e90121799e500874c72ade56ee6c7ace8482ff054ade7399",
+      "after": "3927d9cb9caf27d8e90121799e500874c72ade56ee6c7ace8482ff054ade7399"
+    },
+    {
+      "source": "campaign/economy/market.gd",
+      "destination": "core/campaign/economy/market.gd",
+      "before": "9736083d0e851a08591519a7e7bab9813ce53eef9e1aac2d4d96d0e70cdec099",
+      "after": "40ca52edc76128f723e7de68d5c93bd3c27b9cd460f508a042692d11057f45b3"
+    },
+    {
+      "source": "campaign/economy/market.gd.uid",
+      "destination": "core/campaign/economy/market.gd.uid",
+      "before": "db3e9e3987b1d5f26997c43599e9c88797af8c649b56d3ef8845fb2adb38ed08",
+      "after": "db3e9e3987b1d5f26997c43599e9c88797af8c649b56d3ef8845fb2adb38ed08"
+    },
+    {
+      "source": "campaign/economy/party_economy.gd",
+      "destination": "core/campaign/economy/party_economy.gd",
+      "before": "a36a0f621f2e135ef2ae41bb4b6d5bdd31e501218889cfafdae94fcbca92f5dc",
+      "after": "bd665c07fcaeb25afe4c2a7851ade0f14b5170d407d845d4648103fac64b7307"
+    },
+    {
+      "source": "campaign/economy/party_economy.gd.uid",
+      "destination": "core/campaign/economy/party_economy.gd.uid",
+      "before": "2782053d40e769e8cf18562f9ffa1d30bd9a0276c484135335bb773a4eb5b0f5",
+      "after": "2782053d40e769e8cf18562f9ffa1d30bd9a0276c484135335bb773a4eb5b0f5"
+    },
+    {
+      "source": "campaign/rules/battle_aftermath.gd",
+      "destination": "core/campaign/rules/battle_aftermath.gd",
+      "before": "ffcb3523ebb33c07e9ca3cf7b62f4d9cd26443901163ca657822874684b9516d",
+      "after": "b02ebad817da642b2c3a986deb75192de7bc7b36b2c164b0a211847ea68ef2f0"
+    },
+    {
+      "source": "campaign/rules/battle_aftermath.gd.uid",
+      "destination": "core/campaign/rules/battle_aftermath.gd.uid",
+      "before": "3ba8c8fcd1949ffd01c76113fa6f617c41968476ced20125fd80514e1dcaa575",
+      "after": "3ba8c8fcd1949ffd01c76113fa6f617c41968476ced20125fd80514e1dcaa575"
+    },
+    {
+      "source": "campaign/rules/battle_quests.gd",
+      "destination": "core/campaign/rules/battle_quests.gd",
+      "before": "2fc493e0f380f715f73184d8f102cfae94a05be2c8ece948374a0d4668e1f4f1",
+      "after": "a70e058d9cc7fd9ed312bb472339785a414e8fb9aa4d04861aaad9db69f4740f"
+    },
+    {
+      "source": "campaign/rules/battle_quests.gd.uid",
+      "destination": "core/campaign/rules/battle_quests.gd.uid",
+      "before": "428047be4beb79fa845fc26d8a43a602d3680382a8abe2c1e957a8d7b0b11901",
+      "after": "428047be4beb79fa845fc26d8a43a602d3680382a8abe2c1e957a8d7b0b11901"
+    },
+    {
+      "source": "campaign/rules/encounter_world.gd",
+      "destination": "core/campaign/rules/encounter_world.gd",
+      "before": "582ef14f73a89d6149e20f0f49104ab425432253519df516a636eac3ffeb2862",
+      "after": "538744c7dcb203cae3d6e4a58c849a5c9b22576c674e3d9f69c78156c59d3240"
+    },
+    {
+      "source": "campaign/rules/encounter_world.gd.uid",
+      "destination": "core/campaign/rules/encounter_world.gd.uid",
+      "before": "031dde5008a05f05b51e0e2dcdc4810ce93f0511c5152708e65c65a68e71e1dc",
+      "after": "031dde5008a05f05b51e0e2dcdc4810ce93f0511c5152708e65c65a68e71e1dc"
+    },
+    {
+      "source": "campaign/rules/relations.gd",
+      "destination": "core/campaign/rules/relations.gd",
+      "before": "b98f4ffd2e32b3b6f3aac20a6f1c8c0075e82d6fad5667119e61bb63764e25d3",
+      "after": "da9a332d13e4ced6e0cabd88f0a0e90f4ca3b2bdfc94efa08217b0304fc25cd4"
+    },
+    {
+      "source": "campaign/rules/relations.gd.uid",
+      "destination": "core/campaign/rules/relations.gd.uid",
+      "before": "313ad4af646bfb2ea529d4f428a9d6fd7ccf088a12fafa4d0524f6528ad5f4af",
+      "after": "313ad4af646bfb2ea529d4f428a9d6fd7ccf088a12fafa4d0524f6528ad5f4af"
+    },
+    {
+      "source": "campaign/rules/settlement_recruits.gd",
+      "destination": "core/campaign/rules/settlement_recruits.gd",
+      "before": "0323bc04a8485c7a176ccaf1978c684f154db69f0cb2d6c12bf59e6e10359e61",
+      "after": "83cbf3b3105e09327d5de897f0d1e83acb8bcd7c99db32eaf3d2852c34e1c410"
+    },
+    {
+      "source": "campaign/rules/settlement_recruits.gd.uid",
+      "destination": "core/campaign/rules/settlement_recruits.gd.uid",
+      "before": "e9a64d088220740975856d47f6fd28eedda5bbf5b9fbc9a5d8b118b52149ceb4",
+      "after": "e9a64d088220740975856d47f6fd28eedda5bbf5b9fbc9a5d8b118b52149ceb4"
+    },
+    {
+      "source": "campaign/rules/siege_aftermath.gd",
+      "destination": "core/campaign/rules/siege_aftermath.gd",
+      "before": "e4feb369e11adf587bf2e9c464242ab3ca1ed86f07a59570c068e3d294eaea02",
+      "after": "825a8b5a39c2f50ae1102b966e747208fc230bba5b2e4a0c06e8e9ad95fd0bf4"
+    },
+    {
+      "source": "campaign/rules/siege_aftermath.gd.uid",
+      "destination": "core/campaign/rules/siege_aftermath.gd.uid",
+      "before": "634bec1c9955a938e5abe57d643bf647301908997acc0faa0a9ea4868416c107",
+      "after": "634bec1c9955a938e5abe57d643bf647301908997acc0faa0a9ea4868416c107"
+    },
+    {
+      "source": "campaign/tests/economy/test_battle_loot.gd",
+      "destination": "tests/unit/campaign/economy/test_battle_loot.gd",
+      "before": "9102b9002238331d6c847cfd5a68945bcab5f0903f3f7452e11ab81bbe7ee0bd",
+      "after": "f5495a107843de2dfbafd48fd0b0beae587fda3096cac9200d7b97a413516dbb"
+    },
+    {
+      "source": "campaign/tests/economy/test_battle_loot.gd.uid",
+      "destination": "tests/unit/campaign/economy/test_battle_loot.gd.uid",
+      "before": "cbb29b869ba1a1ac3ca615362d4d7d7103ac68c54209ac87fc84a2f1223a045d",
+      "after": "cbb29b869ba1a1ac3ca615362d4d7d7103ac68c54209ac87fc84a2f1223a045d"
+    },
+    {
+      "source": "campaign/tests/economy/test_market.gd",
+      "destination": "tests/unit/campaign/economy/test_market.gd",
+      "before": "ef1ae99134bf6ce06602a4e6ca52fbe4fbd65ee2720d707cf1b362e518aa3e88",
+      "after": "41adf269f5103f338be78198cb9f02efcb2361f76ba25399f4965b6c1adbd471"
+    },
+    {
+      "source": "campaign/tests/economy/test_market.gd.uid",
+      "destination": "tests/unit/campaign/economy/test_market.gd.uid",
+      "before": "4dcae9419bcfe559ff56ef6872d502098e585eefcffd7f470c34264bb33c45ed",
+      "after": "4dcae9419bcfe559ff56ef6872d502098e585eefcffd7f470c34264bb33c45ed"
+    },
+    {
+      "source": "campaign/tests/fixtures/world_parity.json",
+      "destination": "tests/unit/campaign/fixtures/world_parity.json",
+      "before": "aebfc135b1033308f1ddbfeaffda47bde2f5374f009f6f520f9c28c617dd73ea",
+      "after": "aebfc135b1033308f1ddbfeaffda47bde2f5374f009f6f520f9c28c617dd73ea"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_aftermath.gd",
+      "destination": "tests/unit/campaign/rules/test_battle_aftermath.gd",
+      "before": "dc0e6a8765dac7284663f06019da9b48a16a7ee99d5ed5778411e2011f6ef436",
+      "after": "cb858db82cd93037b83490194aff54f5cdf546734cfa9b61e10d347d350dfb5e"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_aftermath.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_battle_aftermath.gd.uid",
+      "before": "906de9c7d7b52b2be5e4389ff3181be97d5403d24b052e10ffac7472940e19d2",
+      "after": "906de9c7d7b52b2be5e4389ff3181be97d5403d24b052e10ffac7472940e19d2"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_quests.gd",
+      "destination": "tests/unit/campaign/rules/test_battle_quests.gd",
+      "before": "14ead01cc4d8009d646273c8d59dc71a987a01b7fdd57482ead5f7b19c77c644",
+      "after": "59d9411025eda41fcdfc861d8f15ac75b05a647864c0bf0c791767d3d884fd3e"
+    },
+    {
+      "source": "campaign/tests/rules/test_battle_quests.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_battle_quests.gd.uid",
+      "before": "129f9bca3fa6ebe2ba5739b3924688ebf7841ca71b8c79235ee57d45fd81580c",
+      "after": "129f9bca3fa6ebe2ba5739b3924688ebf7841ca71b8c79235ee57d45fd81580c"
+    },
+    {
+      "source": "campaign/tests/rules/test_encounter_world.gd",
+      "destination": "tests/unit/campaign/rules/test_encounter_world.gd",
+      "before": "94c636f0ecf6e006dae939c97540cbb279b0114e06baac6e3462813b4ff0283a",
+      "after": "e4347003ba0d43a22555b2b8426df9a6ef81fb03fb18c88f248465a6c0844f01"
+    },
+    {
+      "source": "campaign/tests/rules/test_encounter_world.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_encounter_world.gd.uid",
+      "before": "360797377b1df176aaed1b6ec7f3be738f67a0773c51a0e0d7eaa9a37211ae48",
+      "after": "360797377b1df176aaed1b6ec7f3be738f67a0773c51a0e0d7eaa9a37211ae48"
+    },
+    {
+      "source": "campaign/tests/rules/test_siege_aftermath.gd",
+      "destination": "tests/unit/campaign/rules/test_siege_aftermath.gd",
+      "before": "757d1fddd3c259218b089e5a8f4cdb23e2e2c8939eb6c3e811300bdae5f46230",
+      "after": "93cea299f2868baf14e2f0d40e0528b34d8d7b9ca68d838a318140ddc6c94c71"
+    },
+    {
+      "source": "campaign/tests/rules/test_siege_aftermath.gd.uid",
+      "destination": "tests/unit/campaign/rules/test_siege_aftermath.gd.uid",
+      "before": "03def78db02678040dc25dcbb076e1c26830e19f5908e73acb99b8c1459dbdc3",
+      "after": "03def78db02678040dc25dcbb076e1c26830e19f5908e73acb99b8c1459dbdc3"
+    },
+    {
+      "source": "campaign/tests/world/test_auto_battle.gd",
+      "destination": "tests/unit/campaign/world/test_auto_battle.gd",
+      "before": "657497b4d529def718c277564c8861cc00fd8da4770e071e1f70f0df21b9f525",
+      "after": "241a086e66048e9db216df974f501056197745f505bd45446912a0da60e3766c"
+    },
+    {
+      "source": "campaign/tests/world/test_auto_battle.gd.uid",
+      "destination": "tests/unit/campaign/world/test_auto_battle.gd.uid",
+      "before": "ee2e838e7c1667fe3e926a24839938ae84ad8e36d5eb3d5e3a3a23c4b7132602",
+      "after": "ee2e838e7c1667fe3e926a24839938ae84ad8e36d5eb3d5e3a3a23c4b7132602"
+    },
+    {
+      "source": "campaign/tests/world/test_party_ai.gd",
+      "destination": "tests/unit/campaign/world/test_party_ai.gd",
+      "before": "8ea2029ea195e84019dfdb9128bddaf041ac4c713b0eb504761318fe7de58ab1",
+      "after": "56b70118b21552ccc7dff8733bc91d873bab55ec77b82626aaf30bee3aa27b7f"
+    },
+    {
+      "source": "campaign/tests/world/test_party_ai.gd.uid",
+      "destination": "tests/unit/campaign/world/test_party_ai.gd.uid",
+      "before": "b1a82cf21612de19980802be8140f1bc7936c2c11ee91748405348c03ce0bb2c",
+      "after": "b1a82cf21612de19980802be8140f1bc7936c2c11ee91748405348c03ce0bb2c"
+    },
+    {
+      "source": "campaign/tests/world/test_party_economy.gd",
+      "destination": "tests/unit/campaign/world/test_party_economy.gd",
+      "before": "39e3ef89f0b59b629ee7ffdf63050d42ad8978d2a31d84fe684eb30415bd3c3f",
+      "after": "3ebd7c28cb8ded1eb0c40ead37a7513712326811946815e5ff8acf6ecdebf7e9"
+    },
+    {
+      "source": "campaign/tests/world/test_party_economy.gd.uid",
+      "destination": "tests/unit/campaign/world/test_party_economy.gd.uid",
+      "before": "1534a55573d2cd1b8e734a3d1e071ce14ebcb3b68a70527ba0c47ffefdf575ac",
+      "after": "1534a55573d2cd1b8e734a3d1e071ce14ebcb3b68a70527ba0c47ffefdf575ac"
+    },
+    {
+      "source": "campaign/tests/world/test_terrain_parity.gd",
+      "destination": "tests/unit/campaign/world/test_terrain_parity.gd",
+      "before": "5907948bf1897ef5b83c8abaa719c3a2f011c1d44cbdd2eecbe4367f6d342583",
+      "after": "9641452734ca7017a8f208d7ec6803ea24748494e4c7d94015a845b6e6773b82"
+    },
+    {
+      "source": "campaign/tests/world/test_terrain_parity.gd.uid",
+      "destination": "tests/unit/campaign/world/test_terrain_parity.gd.uid",
+      "before": "49f5010605d29f288be72557b1f1bff493347a8311fe10187afc3569b8099d00",
+      "after": "49f5010605d29f288be72557b1f1bff493347a8311fe10187afc3569b8099d00"
+    },
+    {
+      "source": "campaign/tests/world/test_world_clans.gd",
+      "destination": "tests/unit/campaign/world/test_world_clans.gd",
+      "before": "f1b50b76f78fa5b2ed7707ad33745aa016bd77201ee9d197edd4542109dce71d",
+      "after": "5619387e7e78909cdd9b947dca8135bce180d85aeff567a8a4bd234cee0524a2"
+    },
+    {
+      "source": "campaign/tests/world/test_world_clans.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_clans.gd.uid",
+      "before": "9b598749c522d4c4b29bf339b2c75f91733d30381c8705e27815e8bd576def83",
+      "after": "9b598749c522d4c4b29bf339b2c75f91733d30381c8705e27815e8bd576def83"
+    },
+    {
+      "source": "campaign/tests/world/test_world_dispose.gd",
+      "destination": "tests/unit/campaign/world/test_world_dispose.gd",
+      "before": "ebe803492d7b83393c495b816e684ed3b13e51a2e810a3beb8023aab339f15fb",
+      "after": "9fa3bf01bd080328cedd5727c950cf6cea5e3830d6da6da8b370a34d17e00bf9"
+    },
+    {
+      "source": "campaign/tests/world/test_world_dispose.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_dispose.gd.uid",
+      "before": "7d322cce57fd2e02f17329a38baf8b738155824add510ca53c100130cb1138f9",
+      "after": "7d322cce57fd2e02f17329a38baf8b738155824add510ca53c100130cb1138f9"
+    },
+    {
+      "source": "campaign/tests/world/test_world_map_parity.gd",
+      "destination": "tests/unit/campaign/world/test_world_map_parity.gd",
+      "before": "fa80e6cf6f30f184ebe8812c49cbff918da675885efd418edbc1ae862a670c3e",
+      "after": "4e0095a3a45b3d9e59127a417924c07ffcfff1b88cec8456e7668df93d9861af"
+    },
+    {
+      "source": "campaign/tests/world/test_world_map_parity.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_map_parity.gd.uid",
+      "before": "958a44264f112e9d38cb6035aaa565affee53eea5a263b10f8a9a91c9c16690e",
+      "after": "958a44264f112e9d38cb6035aaa565affee53eea5a263b10f8a9a91c9c16690e"
+    },
+    {
+      "source": "campaign/tests/world/test_world_quests.gd",
+      "destination": "tests/unit/campaign/world/test_world_quests.gd",
+      "before": "d45063eafbf14090af5a914aa8dc69d679c62e11bd9151d51db8d1ac55a9b1a2",
+      "after": "90c1937df56ce5ecf08771952233c62c59fba0baa8e4894ad90bc82845549b46"
+    },
+    {
+      "source": "campaign/tests/world/test_world_quests.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_quests.gd.uid",
+      "before": "5218fc23409036f2c8a75b3f8ff35b037c80313139114c98274a1e4972dcbe50",
+      "after": "5218fc23409036f2c8a75b3f8ff35b037c80313139114c98274a1e4972dcbe50"
+    },
+    {
+      "source": "campaign/tests/world/test_world_save.gd",
+      "destination": "tests/unit/campaign/world/test_world_save.gd",
+      "before": "b8fe6dfeb5e9f85371d728abd7cbd5b1446c8d183ec9eadd666750c97fe9c49b",
+      "after": "1e5a57d4bf066a46d200e30d70dc9b4c612760575a02486e3868b109e06dfb1f"
+    },
+    {
+      "source": "campaign/tests/world/test_world_save.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_save.gd.uid",
+      "before": "1df36988306740b706695edede88a64e59f0f6aa3838d255a8319cdeb48affa8",
+      "after": "1df36988306740b706695edede88a64e59f0f6aa3838d255a8319cdeb48affa8"
+    },
+    {
+      "source": "campaign/tests/world/test_world_siege.gd",
+      "destination": "tests/unit/campaign/world/test_world_siege.gd",
+      "before": "c48e8d5d15a64dcfc12762fdd92529e9e25087440c351966151d28fd081c1b5e",
+      "after": "caf5091a922303547308c873c5ffae471d09c760459a53393e6588beef589a5c"
+    },
+    {
+      "source": "campaign/tests/world/test_world_siege.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_siege.gd.uid",
+      "before": "182cdbb8e19d2961e4e9c1a782a860080dd6f6b1ef563b4a6ef21572ba5b9172",
+      "after": "182cdbb8e19d2961e4e9c1a782a860080dd6f6b1ef563b4a6ef21572ba5b9172"
+    },
+    {
+      "source": "campaign/tests/world/test_world_state.gd",
+      "destination": "tests/unit/campaign/world/test_world_state.gd",
+      "before": "d438ea2a59b8ed920da65627179f2a314e00fd623cd58e2cd943bbc060c16e85",
+      "after": "3ac7bc9589a07f020abd0bdfa14dd251c8970dbf2dbe7228dcd3e31ac321274a"
+    },
+    {
+      "source": "campaign/tests/world/test_world_state.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_state.gd.uid",
+      "before": "12abecf161f3c9de451cf6ed8488e6402307dd00f8f2674e08ae6bc20737e43c",
+      "after": "12abecf161f3c9de451cf6ed8488e6402307dd00f8f2674e08ae6bc20737e43c"
+    },
+    {
+      "source": "campaign/tests/world/test_world_undead.gd",
+      "destination": "tests/unit/campaign/world/test_world_undead.gd",
+      "before": "beb0df26d201b67013326cfb9e6b781d35ff6fd4f80e25733709d789f9239656",
+      "after": "0c8a6ee90be03d98de4470cf13b0d3e6cb4357e76a1e3f45fa64b417950aa385"
+    },
+    {
+      "source": "campaign/tests/world/test_world_undead.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_undead.gd.uid",
+      "before": "ff13d96f32263a77e6c77126f4c5e24d4612702f42b87dbdc4c8b3332b0d3964",
+      "after": "ff13d96f32263a77e6c77126f4c5e24d4612702f42b87dbdc4c8b3332b0d3964"
+    },
+    {
+      "source": "campaign/tests/world/test_world_vassals.gd",
+      "destination": "tests/unit/campaign/world/test_world_vassals.gd",
+      "before": "38f694eefeadcd4b644ca856a532d66426800c9de2361426891043326e296b0c",
+      "after": "3ab6fadfa56e7fc93d3ca57ee220754b852feec7323fe91e3d39c2512918f5f4"
+    },
+    {
+      "source": "campaign/tests/world/test_world_vassals.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_vassals.gd.uid",
+      "before": "cbb9d72977f929bd7176cf32ecd41930648caf799e9de5f0c0ca2872b20e1515",
+      "after": "cbb9d72977f929bd7176cf32ecd41930648caf799e9de5f0c0ca2872b20e1515"
+    },
+    {
+      "source": "campaign/tests/world/test_world_war_extras.gd",
+      "destination": "tests/unit/campaign/world/test_world_war_extras.gd",
+      "before": "201bc5ef2ee5eeeba99d33d7cea37224b46f6dcfd8477c94746aceaeb7d08f92",
+      "after": "44da379189d96770a709e18d8ca6e4cf249a5762b411ac6965936108bd1964d6"
+    },
+    {
+      "source": "campaign/tests/world/test_world_war_extras.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_war_extras.gd.uid",
+      "before": "05fee219d0a74a5f90e7d6084ac0960400871f9ad8061a8050d8873748161fcb",
+      "after": "05fee219d0a74a5f90e7d6084ac0960400871f9ad8061a8050d8873748161fcb"
+    },
+    {
+      "source": "campaign/tests/world/test_world_wars.gd",
+      "destination": "tests/unit/campaign/world/test_world_wars.gd",
+      "before": "bd70f205577506e124da707479591f461ebc3cd1e4a51c1e57a577f37fab526a",
+      "after": "f3300baaf5986a199ae3930b27865046937f9b6474eb89d94e8e6d7e1ced4b93"
+    },
+    {
+      "source": "campaign/tests/world/test_world_wars.gd.uid",
+      "destination": "tests/unit/campaign/world/test_world_wars.gd.uid",
+      "before": "d714fc80b8a546f109d93f7c2515a80180c5daeed9119945740fad20a97bb879",
+      "after": "d714fc80b8a546f109d93f7c2515a80180c5daeed9119945740fad20a97bb879"
+    },
+    {
+      "source": "campaign/tools/export_goods.cjs",
+      "destination": "tools/campaign/export_goods.cjs",
+      "before": "e29df464074408b0d952b13f12553984781d629c685b8f37264e2445adc789c2",
+      "after": "7b945b246ddcb25e81b09fe49bf50186c0f8e473f8ef2fb7b37a30f8a855a364"
+    },
+    {
+      "source": "campaign/tools/export_world.cjs",
+      "destination": "tools/campaign/export_world.cjs",
+      "before": "167420feaac9aa1e23144df2a5e826d2793052ca560082d143b9a36e3b8224d3",
+      "after": "5753bdd96c8587bba8bf33e399d4c5547d27777e67ed44a8ed3dade03b16772b"
+    },
+    {
+      "source": "campaign/world/auto_battle.gd",
+      "destination": "core/campaign/world/auto_battle.gd",
+      "before": "f9af9bcd189ff1b7b128975ce9f8bd21fba8cb80ec1c2666eeaf4c2661234b5f",
+      "after": "5fb5a01b0191707b984ba0049733be01804be5233748a4463bd49e8a66be0da2"
+    },
+    {
+      "source": "campaign/world/auto_battle.gd.uid",
+      "destination": "core/campaign/world/auto_battle.gd.uid",
+      "before": "f7e764afa7743ea7fa39af8356fe43edc241b62dcd77d5c70963e7f8837e7a73",
+      "after": "f7e764afa7743ea7fa39af8356fe43edc241b62dcd77d5c70963e7f8837e7a73"
+    },
+    {
+      "source": "campaign/world/heap.gd",
+      "destination": "core/campaign/world/heap.gd",
+      "before": "d23d713b164ff6adf6af27348a66234f83f60d893b9fe850fe11b706e7430d32",
+      "after": "d23d713b164ff6adf6af27348a66234f83f60d893b9fe850fe11b706e7430d32"
+    },
+    {
+      "source": "campaign/world/heap.gd.uid",
+      "destination": "core/campaign/world/heap.gd.uid",
+      "before": "b156de9c54475c43a934cf0fc30128a0e70071b16691f31ec6ec3f5c4c04336e",
+      "after": "b156de9c54475c43a934cf0fc30128a0e70071b16691f31ec6ec3f5c4c04336e"
+    },
+    {
+      "source": "campaign/world/noise.gd",
+      "destination": "core/campaign/world/noise.gd",
+      "before": "eab6f183fb5cbcba35f9284728c80840e888810bcd476f78ec03ecb7e67c34bf",
+      "after": "eab6f183fb5cbcba35f9284728c80840e888810bcd476f78ec03ecb7e67c34bf"
+    },
+    {
+      "source": "campaign/world/noise.gd.uid",
+      "destination": "core/campaign/world/noise.gd.uid",
+      "before": "17f439003b5819f84f03d64404e7bdf9a6a82a3d438d0d0864a5541612cc3ed8",
+      "after": "17f439003b5819f84f03d64404e7bdf9a6a82a3d438d0d0864a5541612cc3ed8"
+    },
+    {
+      "source": "campaign/world/party_ai.gd",
+      "destination": "core/campaign/world/party_ai.gd",
+      "before": "456989ffde85f129bbbde398ea714214d16d7e3a777f6a6774d004c97087ebea",
+      "after": "522d06345603a0a05a5e6e547f90795f835b2e71e9c0d8a2ec599974c879a86a"
+    },
+    {
+      "source": "campaign/world/party_ai.gd.uid",
+      "destination": "core/campaign/world/party_ai.gd.uid",
+      "before": "6145c866e72301301e141797b277f39917e5b580291ed7854558328b00984ad5",
+      "after": "6145c866e72301301e141797b277f39917e5b580291ed7854558328b00984ad5"
+    },
+    {
+      "source": "campaign/world/party_roster.gd",
+      "destination": "core/campaign/world/party_roster.gd",
+      "before": "5fd6f9a432f503218721581508bf5f4306855aaf19da4f8b54ad129ed9e61b05",
+      "after": "fbbce3df448398b557ebf7f1fee70c16e51d56ca43384b14079c5f2de20f1e65"
+    },
+    {
+      "source": "campaign/world/party_roster.gd.uid",
+      "destination": "core/campaign/world/party_roster.gd.uid",
+      "before": "dfeeafdf896c684cab756650eed293649bd7c1675421515ca25ee4a721f634f6",
+      "after": "dfeeafdf896c684cab756650eed293649bd7c1675421515ca25ee4a721f634f6"
+    },
+    {
+      "source": "campaign/world/party_rules.gd",
+      "destination": "core/campaign/world/party_rules.gd",
+      "before": "dac5a5be5601e9825d548297df0430820d8e60778ac6e4c4df881f9e1b332e78",
+      "after": "dac5a5be5601e9825d548297df0430820d8e60778ac6e4c4df881f9e1b332e78"
+    },
+    {
+      "source": "campaign/world/party_rules.gd.uid",
+      "destination": "core/campaign/world/party_rules.gd.uid",
+      "before": "deb847410215964e363bf7bd9d4a1a57496447b665e527a1495327100854eeae",
+      "after": "deb847410215964e363bf7bd9d4a1a57496447b665e527a1495327100854eeae"
+    },
+    {
+      "source": "campaign/world/pathfinder.gd",
+      "destination": "core/campaign/world/pathfinder.gd",
+      "before": "670f3d3867c704657d4db653b8462120e516d9aeff51eccc212238c43da60075",
+      "after": "145a7f86505b7352c298c5a051c64d06470d3564f79df52fe09c05c858ee3690"
+    },
+    {
+      "source": "campaign/world/pathfinder.gd.uid",
+      "destination": "core/campaign/world/pathfinder.gd.uid",
+      "before": "67348a30c84dbaa4a6acdfc65e913166f3342f213dc46e072cf0f0c544e22210",
+      "after": "67348a30c84dbaa4a6acdfc65e913166f3342f213dc46e072cf0f0c544e22210"
+    },
+    {
+      "source": "campaign/world/player_party.gd",
+      "destination": "core/campaign/world/player_party.gd",
+      "before": "e9a6434d278ebc1db70f3ff6793ec44be8180a69cc46548a4dc5566e6ac4b051",
+      "after": "ea7066ac548876c2c17a58cf6d0c96dfa8a5d4bcb4c424484e0354a0a34596b1"
+    },
+    {
+      "source": "campaign/world/player_party.gd.uid",
+      "destination": "core/campaign/world/player_party.gd.uid",
+      "before": "b1ee140d326f568dba45d6fc4ae29b677ecc7d9516463bcdd433b6870f1fe7f2",
+      "after": "b1ee140d326f568dba45d6fc4ae29b677ecc7d9516463bcdd433b6870f1fe7f2"
+    },
+    {
+      "source": "campaign/world/road_generator.gd",
+      "destination": "core/campaign/world/road_generator.gd",
+      "before": "f198228427124653d922f63cf5b3ce70b29b50c79406e5601da9b11127ac923a",
+      "after": "15f10ef274fa4d9d0b44025daf5ef8ece9be36acc6c37a338f487109945077f3"
+    },
+    {
+      "source": "campaign/world/road_generator.gd.uid",
+      "destination": "core/campaign/world/road_generator.gd.uid",
+      "before": "1c1994bcb20caf0948115eda800601d39981ca361cd3428531667fd0237edb81",
+      "after": "1c1994bcb20caf0948115eda800601d39981ca361cd3428531667fd0237edb81"
+    },
+    {
+      "source": "campaign/world/settlement_generator.gd",
+      "destination": "core/campaign/world/settlement_generator.gd",
+      "before": "7062d9bcea416387511cfd12a89d5fd25c5625833156b1e8185dc8d759e9b2bd",
+      "after": "0804e6decf6b983c36379e7b685d179a03887ffb1b7906190f30d46581be0360"
+    },
+    {
+      "source": "campaign/world/settlement_generator.gd.uid",
+      "destination": "core/campaign/world/settlement_generator.gd.uid",
+      "before": "fc7513220170c12db28b0fc6a3f21b9668d98bdb9f4363c726d41abcd471583f",
+      "after": "fc7513220170c12db28b0fc6a3f21b9668d98bdb9f4363c726d41abcd471583f"
+    },
+    {
+      "source": "campaign/world/terrain_generator.gd",
+      "destination": "core/campaign/world/terrain_generator.gd",
+      "before": "aaa429e9bd78b39df21935eaf04eeea3c42cf4c4d441cea91aa159c9954e6107",
+      "after": "b7d9a299fc3d6fe2d7d560c3fdf301784f952399c38245b93b89468d6c7fb6a4"
+    },
+    {
+      "source": "campaign/world/terrain_generator.gd.uid",
+      "destination": "core/campaign/world/terrain_generator.gd.uid",
+      "before": "45ffa9f3584197f734ac0de4610d0715b60e0a1ac15d09ca49dac102395e3c3e",
+      "after": "45ffa9f3584197f734ac0de4610d0715b60e0a1ac15d09ca49dac102395e3c3e"
+    },
+    {
+      "source": "campaign/world/world_checkpoint.gd",
+      "destination": "core/campaign/world/world_checkpoint.gd",
+      "before": "4b9d7ddded132c6ae776ed3fa2665aa33da3fedca21eaf6396b4ddbcf99402eb",
+      "after": "6c543b71506f9151dad863fa872962b5bc318168aaa76edd43ff557e126de762"
+    },
+    {
+      "source": "campaign/world/world_checkpoint.gd.uid",
+      "destination": "core/campaign/world/world_checkpoint.gd.uid",
+      "before": "ceaa24fbf4b2ce53a1f7ff225eb4b3603222dc91bc01a5ba73fff2942b1bf1d7",
+      "after": "ceaa24fbf4b2ce53a1f7ff225eb4b3603222dc91bc01a5ba73fff2942b1bf1d7"
+    },
+    {
+      "source": "campaign/world/world_clans.gd",
+      "destination": "core/campaign/world/world_clans.gd",
+      "before": "81e92f13ae3d2b6f66392e244419bc561f071807a595b462b7c17ed17a3748a3",
+      "after": "c10a7258088a3af85223f2015abac5304b0ad7047f80e5998b08c06e084db0d9"
+    },
+    {
+      "source": "campaign/world/world_clans.gd.uid",
+      "destination": "core/campaign/world/world_clans.gd.uid",
+      "before": "28f76c12da5dbd20941161d341e7d2ee2d7e64bde750fdac0a0b4bba4484ef01",
+      "after": "28f76c12da5dbd20941161d341e7d2ee2d7e64bde750fdac0a0b4bba4484ef01"
+    },
+    {
+      "source": "campaign/world/world_clock.gd",
+      "destination": "core/campaign/world/world_clock.gd",
+      "before": "90ce3e7a828419f5e1bb9ca18ad6ad7d4e53037cbc02b9f6cd595b4d3f72a0ee",
+      "after": "90ce3e7a828419f5e1bb9ca18ad6ad7d4e53037cbc02b9f6cd595b4d3f72a0ee"
+    },
+    {
+      "source": "campaign/world/world_clock.gd.uid",
+      "destination": "core/campaign/world/world_clock.gd.uid",
+      "before": "2062ea766a910be8b3c06fc755c20e91c06a1ad7ed65bec3933de9c6352e90ee",
+      "after": "2062ea766a910be8b3c06fc755c20e91c06a1ad7ed65bec3933de9c6352e90ee"
+    },
+    {
+      "source": "campaign/world/world_companions.gd",
+      "destination": "core/campaign/world/world_companions.gd",
+      "before": "cd0c55d5a0dc426fc84781f180a4d648c2af50ab64cccbcf6ffe8576d7d279b3",
+      "after": "3efe358d554f57b9b959fa982a29d627f07736375f0da66d0b9522d3b94b0109"
+    },
+    {
+      "source": "campaign/world/world_companions.gd.uid",
+      "destination": "core/campaign/world/world_companions.gd.uid",
+      "before": "38af1f20e8a87879209a8f408582f40872d9727d7407d603de6f22f70a2b0d3d",
+      "after": "38af1f20e8a87879209a8f408582f40872d9727d7407d603de6f22f70a2b0d3d"
+    },
+    {
+      "source": "campaign/world/world_map.gd",
+      "destination": "core/campaign/world/world_map.gd",
+      "before": "f958479f6d758fcd38bc88f2d018157977947b4660990704b18475b4d3eaa140",
+      "after": "ae9a0daa0a8118dab99580a70f681b9f94f7e78869c75e1d89a584d8a1ae97e5"
+    },
+    {
+      "source": "campaign/world/world_map.gd.uid",
+      "destination": "core/campaign/world/world_map.gd.uid",
+      "before": "3f505f4dab37247d0e6c84205a739dae9c4d222d0d140595c078b5a692cfde02",
+      "after": "3f505f4dab37247d0e6c84205a739dae9c4d222d0d140595c078b5a692cfde02"
+    },
+    {
+      "source": "campaign/world/world_quests.gd",
+      "destination": "core/campaign/world/world_quests.gd",
+      "before": "c6aea42a93d6c0ac83608383ae158e0c0206e3daa658f573fbf3d4fc0b630a2a",
+      "after": "38a9e6ea1f65ebcaf71f3fffb212f70965b5c8e669c3abec2fea1322fc2f10ea"
+    },
+    {
+      "source": "campaign/world/world_quests.gd.uid",
+      "destination": "core/campaign/world/world_quests.gd.uid",
+      "before": "3bb978ecd0355d0ac5fb7815e4125e75ea8154759a0cd34107a3e0797e1e074c",
+      "after": "3bb978ecd0355d0ac5fb7815e4125e75ea8154759a0cd34107a3e0797e1e074c"
+    },
+    {
+      "source": "campaign/world/world_save.gd",
+      "destination": "core/campaign/world/world_save.gd",
+      "before": "7bbc5aa5c50b9feaaec3ed636ce47354216d1df473c74aef6578ad4b9d9623f0",
+      "after": "521950a99992b2dc51e5342d42dea1b9119665c72a45001afd053f7e4ff5b481"
+    },
+    {
+      "source": "campaign/world/world_save.gd.uid",
+      "destination": "core/campaign/world/world_save.gd.uid",
+      "before": "ee68f1964679d3db7182741cc1284e6e71fb915484c0279159d948e04c980822",
+      "after": "ee68f1964679d3db7182741cc1284e6e71fb915484c0279159d948e04c980822"
+    },
+    {
+      "source": "campaign/world/world_siege.gd",
+      "destination": "core/campaign/world/world_siege.gd",
+      "before": "2e9d77d36f851e34ad9d94cd348e501fbcf1667286dfab3a62e15063d36cf98b",
+      "after": "bb431a279129d300f083fb0f72b3841501800b6df4001f762ef3ea6a582522cb"
+    },
+    {
+      "source": "campaign/world/world_siege.gd.uid",
+      "destination": "core/campaign/world/world_siege.gd.uid",
+      "before": "a9374bd9da59a86fd48c87a2e45f779d0fc699455195de12da8683386aee58b9",
+      "after": "a9374bd9da59a86fd48c87a2e45f779d0fc699455195de12da8683386aee58b9"
+    },
+    {
+      "source": "campaign/world/world_skirmish.gd",
+      "destination": "core/campaign/world/world_skirmish.gd",
+      "before": "d851354577bd8a6dcf1838647e8d3d5cc2f569fd0a4388accddc1813e98cbbc8",
+      "after": "e305370d0314daa128590ea522322741d671f1b13fe1ac5b181558ac1866ef7c"
+    },
+    {
+      "source": "campaign/world/world_skirmish.gd.uid",
+      "destination": "core/campaign/world/world_skirmish.gd.uid",
+      "before": "cd4355b1c7e7af46c2a0c400f1d4219dec304908f783d07def50acdd87de6ecc",
+      "after": "cd4355b1c7e7af46c2a0c400f1d4219dec304908f783d07def50acdd87de6ecc"
+    },
+    {
+      "source": "campaign/world/world_state.gd",
+      "destination": "core/campaign/world/world_state.gd",
+      "before": "58e3b862934195d065ae7316bfbe13dd90c53ac9d3fcc85731c04c2e55fa66e5",
+      "after": "34bef5fc9949ee7631ce46cf8c4fdd0a04f236ba355f1e2bfa47cbe823b3fbf3"
+    },
+    {
+      "source": "campaign/world/world_state.gd.uid",
+      "destination": "core/campaign/world/world_state.gd.uid",
+      "before": "8b42fcf5464369bf9a1a6627291a2deec103d2416467bcf5eaf0cc780c82b45e",
+      "after": "8b42fcf5464369bf9a1a6627291a2deec103d2416467bcf5eaf0cc780c82b45e"
+    },
+    {
+      "source": "campaign/world/world_undead.gd",
+      "destination": "core/campaign/world/world_undead.gd",
+      "before": "2ba1a05e54b026397a4626ad777c620ab859d454af89fd7f5fa4961b15e86a90",
+      "after": "10337fe90309c67f4b7c9cc547e46a2fa18dcc9cfb3a96d7c6588453a1bb17d2"
+    },
+    {
+      "source": "campaign/world/world_undead.gd.uid",
+      "destination": "core/campaign/world/world_undead.gd.uid",
+      "before": "5c6334b1ec74e421f5d9f0f9175c8df81561647c8c46a19f3720949a40f3b445",
+      "after": "5c6334b1ec74e421f5d9f0f9175c8df81561647c8c46a19f3720949a40f3b445"
+    },
+    {
+      "source": "campaign/world/world_vassals.gd",
+      "destination": "core/campaign/world/world_vassals.gd",
+      "before": "9866202c9962856c1e336573de3125b2915b4cbdd7d17791f3651cfde62407d7",
+      "after": "951c203a3d88d603145442f45b92f27b6b3c04f69e878b2d7a26eccef3074628"
+    },
+    {
+      "source": "campaign/world/world_vassals.gd.uid",
+      "destination": "core/campaign/world/world_vassals.gd.uid",
+      "before": "0e58e0129aeea58c2a5cc07a2b6ccf2b8216fb98487999a5b32d94361fe88c55",
+      "after": "0e58e0129aeea58c2a5cc07a2b6ccf2b8216fb98487999a5b32d94361fe88c55"
+    },
+    {
+      "source": "campaign/world/world_wars.gd",
+      "destination": "core/campaign/world/world_wars.gd",
+      "before": "92ddefe6e7e2b9799e82390af7d25c242fe55c6975e36241b0633d08303bc3eb",
+      "after": "36aa00d5d5b12ebf452ccfceb497eb997f9a7664e8536e1b7d3cb9a6de2d0477"
+    },
+    {
+      "source": "campaign/world/world_wars.gd.uid",
+      "destination": "core/campaign/world/world_wars.gd.uid",
+      "before": "ff77a1e1b2e9aa181dcf6e3b6d4f5adda24ee22ade65edb1b93ee2470229811d",
+      "after": "ff77a1e1b2e9aa181dcf6e3b6d4f5adda24ee22ade65edb1b93ee2470229811d"
+    },
+    {
+      "source": "characters/config.gd",
+      "destination": "core/characters/config.gd",
+      "before": "49cde5e6c55b5cef8e8b3430d5e29fec424c8f47378afece72f8269955999cc8",
+      "after": "49cde5e6c55b5cef8e8b3430d5e29fec424c8f47378afece72f8269955999cc8"
+    },
+    {
+      "source": "characters/config.gd.uid",
+      "destination": "core/characters/config.gd.uid",
+      "before": "eb79e15eff4637c5393b60bac9b6b6491d1d14533ec48cb23703f62b91f306df",
+      "after": "eb79e15eff4637c5393b60bac9b6b6491d1d14533ec48cb23703f62b91f306df"
+    },
+    {
+      "source": "characters/data/companion_catalog.gd",
+      "destination": "core/characters/data/companion_catalog.gd",
+      "before": "685ac9ef5be5510b0a84d859927932c6e11f184f439c2c086021e346458dd04f",
+      "after": "a4d7a7f34f184c197f417d2bc3473e0c0ccc5521d19d2f8254ab3f9fd03fa0d6"
+    },
+    {
+      "source": "characters/data/companion_catalog.gd.uid",
+      "destination": "core/characters/data/companion_catalog.gd.uid",
+      "before": "3c53a5909596037c333eb100bf6a1dac738d081ebe5301e6529e098304ec0c49",
+      "after": "3c53a5909596037c333eb100bf6a1dac738d081ebe5301e6529e098304ec0c49"
+    },
+    {
+      "source": "characters/data/companions.json",
+      "destination": "content/gameplay/characters/companions.json",
+      "before": "f8235ceac5930d2a012aa5051d47254641f322cfcdd35316fa18b1e306c86bdb",
+      "after": "f8235ceac5930d2a012aa5051d47254641f322cfcdd35316fa18b1e306c86bdb"
+    },
+    {
+      "source": "characters/data/perk_catalog.gd",
+      "destination": "core/characters/data/perk_catalog.gd",
+      "before": "f4334905a6e6f22a3bbba3d0489275d74405e70c7303a85e57e6988cf4d86f4f",
+      "after": "14c0440e8ca0a30af344b29f3eeda1b67f41251c6eef1b657230f16ad917b859"
+    },
+    {
+      "source": "characters/data/perk_catalog.gd.uid",
+      "destination": "core/characters/data/perk_catalog.gd.uid",
+      "before": "690fdc4e51a0ab600e1172998780d9fd04572b956501c6cc822c8f3c37b1ca82",
+      "after": "690fdc4e51a0ab600e1172998780d9fd04572b956501c6cc822c8f3c37b1ca82"
+    },
+    {
+      "source": "characters/data/perks.json",
+      "destination": "content/gameplay/characters/perks.json",
+      "before": "39123c4fded0e648b7501cfedbe516e4f79ad32f8cebf11c1ad41253ccf3d638",
+      "after": "39123c4fded0e648b7501cfedbe516e4f79ad32f8cebf11c1ad41253ccf3d638"
+    },
+    {
+      "source": "characters/rules/companion_profile.gd",
+      "destination": "core/characters/rules/companion_profile.gd",
+      "before": "78923fa8d2e5b8b62ae26f56ad80ee9c98c120273bc4c98ca9ac7037bb75a456",
+      "after": "f639b69067968aefb991f1e5c8a607d1b33fd62006817b60df388de431caf1a9"
+    },
+    {
+      "source": "characters/rules/companion_profile.gd.uid",
+      "destination": "core/characters/rules/companion_profile.gd.uid",
+      "before": "541ed1a29c6f686304e0a84ac7eee6d2122988098e62ba9b45ad831187c68f4f",
+      "after": "541ed1a29c6f686304e0a84ac7eee6d2122988098e62ba9b45ad831187c68f4f"
+    },
+    {
+      "source": "characters/rules/perk_effects.gd",
+      "destination": "core/characters/rules/perk_effects.gd",
+      "before": "fb7ebaad88131a7d02ba7aa6f61963152673ecbe5f7329a0f495d4e34653efa3",
+      "after": "645d282ca208c5e260e82702ea824497a02b22c7d48dd4ee0399801beb01d0ea"
+    },
+    {
+      "source": "characters/rules/perk_effects.gd.uid",
+      "destination": "core/characters/rules/perk_effects.gd.uid",
+      "before": "e5751969d2eb92fba869640109b6c265190996fcc2c9c29ee4cc83ddb4382f4e",
+      "after": "e5751969d2eb92fba869640109b6c265190996fcc2c9c29ee4cc83ddb4382f4e"
+    },
+    {
+      "source": "characters/rules/progression.gd",
+      "destination": "core/characters/rules/progression.gd",
+      "before": "e581ecd7254a6d82c9a934559cb314d7a2de9325744fc7338c2f15ce07db5f79",
+      "after": "e581ecd7254a6d82c9a934559cb314d7a2de9325744fc7338c2f15ce07db5f79"
+    },
+    {
+      "source": "characters/rules/progression.gd.uid",
+      "destination": "core/characters/rules/progression.gd.uid",
+      "before": "e1112dd99e295eaf40c20240cf2b10cb3993de3c5777dfd3acafe04d024144ac",
+      "after": "e1112dd99e295eaf40c20240cf2b10cb3993de3c5777dfd3acafe04d024144ac"
+    },
+    {
+      "source": "characters/tests/data/test_perk_catalog.gd",
+      "destination": "tests/unit/characters/data/test_perk_catalog.gd",
+      "before": "c8df7a6d6f597e10ca8bcbbe83ee72fae529d993344ba41a4952518dc3654693",
+      "after": "b9a062a6f61046f782f11bd92f9bdf47d8a7c8d54962ccf1a8b5b14370a77a3f"
+    },
+    {
+      "source": "characters/tests/data/test_perk_catalog.gd.uid",
+      "destination": "tests/unit/characters/data/test_perk_catalog.gd.uid",
+      "before": "51d61109cade758650e6928358797a1dae60b4a0615a156f5044c03bdd9e1ad2",
+      "after": "51d61109cade758650e6928358797a1dae60b4a0615a156f5044c03bdd9e1ad2"
+    },
+    {
+      "source": "characters/tests/rules/test_companion_profile.gd",
+      "destination": "tests/unit/characters/rules/test_companion_profile.gd",
+      "before": "39fe95c3f200ef9c24d08123533a14f973186927b0a8d4b03d0523d41ff88825",
+      "after": "af0fc5c4c2a9df5b9da8f9e725a1c807b9387294450c4a8c9aefc10b21bee3f3"
+    },
+    {
+      "source": "characters/tests/rules/test_companion_profile.gd.uid",
+      "destination": "tests/unit/characters/rules/test_companion_profile.gd.uid",
+      "before": "de3e16c494d3a6c9db077a24547c1c98ec687b1f484b92b301b27444650f0b7d",
+      "after": "de3e16c494d3a6c9db077a24547c1c98ec687b1f484b92b301b27444650f0b7d"
+    },
+    {
+      "source": "characters/tests/rules/test_perk_effects.gd",
+      "destination": "tests/unit/characters/rules/test_perk_effects.gd",
+      "before": "86f968525060ccd1355cc8f93111ba24b382a00a9c394dde7c7359f4dc91f685",
+      "after": "5a88d7f454653f3a6ce6bd24318cd22f8d87bfee8aa704dd48827881fc9a4560"
+    },
+    {
+      "source": "characters/tests/rules/test_perk_effects.gd.uid",
+      "destination": "tests/unit/characters/rules/test_perk_effects.gd.uid",
+      "before": "71a4b6b75d7cc932dcb3c580c9b011c932c997b7013951d464ced60decc66d4b",
+      "after": "71a4b6b75d7cc932dcb3c580c9b011c932c997b7013951d464ced60decc66d4b"
+    },
+    {
+      "source": "characters/tools/export_companions.cjs",
+      "destination": "tools/characters/export_companions.cjs",
+      "before": "0d2859680e6af3bebaa1c537b678cb1298e680e4ba3b9e37cc42857766d71703",
+      "after": "4480f4f8c8c6bec7af9e31dcb356760896dd2a53e4e623e4d8aaa74c89bfd652"
+    },
+    {
+      "source": "characters/tools/export_perks.cjs",
+      "destination": "tools/characters/export_perks.cjs",
+      "before": "16fcd5d9fd090609186ae868b767139de21b28bb4e611a05f717c002374c2f51",
+      "after": "22a30476cb96a27c0a8d0d2ae9816f0aaccec5dbd185bd2932b50f7267f9f881"
+    },
+    {
+      "source": "equipment/config.gd",
+      "destination": "core/equipment/config.gd",
+      "before": "b9932b784c0f30c8ebcbebed69035e8c48c653d8736d1da885783dbc61424ba2",
+      "after": "b9932b784c0f30c8ebcbebed69035e8c48c653d8736d1da885783dbc61424ba2"
+    },
+    {
+      "source": "equipment/config.gd.uid",
+      "destination": "core/equipment/config.gd.uid",
+      "before": "2dd3e9c54cd159eae7bc68f189f4f7ec755942208f640345c6a657b4dbe87a3f",
+      "after": "2dd3e9c54cd159eae7bc68f189f4f7ec755942208f640345c6a657b4dbe87a3f"
+    },
+    {
+      "source": "equipment/data/gear_catalog.gd",
+      "destination": "core/equipment/data/gear_catalog.gd",
+      "before": "722ec21c40016c35d727daaaff41d7d2b5c5cae8e57c13ab4cec8d652dd07c5a",
+      "after": "e9b1a550460f9c66e05b8b038127f0dbd9b385855e5ab1b100cb688dfd6bfa6e"
+    },
+    {
+      "source": "equipment/data/gear_catalog.gd.uid",
+      "destination": "core/equipment/data/gear_catalog.gd.uid",
+      "before": "18c1edcb66987748d8afd1db2ff560b4875eb36259fa992666fecc6ab3f34585",
+      "after": "18c1edcb66987748d8afd1db2ff560b4875eb36259fa992666fecc6ab3f34585"
+    },
+    {
+      "source": "equipment/data/items.json",
+      "destination": "content/gameplay/equipment/items.json",
+      "before": "9ca022464e7d6d53d987ace10c800f1eee5cdc8fe5525e3844039e3cc8d95c2e",
+      "after": "9ca022464e7d6d53d987ace10c800f1eee5cdc8fe5525e3844039e3cc8d95c2e"
+    },
+    {
+      "source": "equipment/rules/damage_type.gd",
+      "destination": "core/equipment/rules/damage_type.gd",
+      "before": "835e569e12faf6d1e21599a3219ac56f3c381cadcbb40a0d0c78b7220a364a65",
+      "after": "c14ed569a565681bc4a9d6e1a95b7a56f97cd9ece606624d29b6212d85e4f82f"
+    },
+    {
+      "source": "equipment/rules/damage_type.gd.uid",
+      "destination": "core/equipment/rules/damage_type.gd.uid",
+      "before": "fa24e74afd2ddba268a63cec04893c7c2ff1645f62476e241d2f245198fbf3d5",
+      "after": "fa24e74afd2ddba268a63cec04893c7c2ff1645f62476e241d2f245198fbf3d5"
+    },
+    {
+      "source": "equipment/rules/hero_equip.gd",
+      "destination": "core/equipment/rules/hero_equip.gd",
+      "before": "0f24f35c9eff1de66a8f40b5f87e61373b9135bd09d6836779b008fe93a5458b",
+      "after": "6163a63ec79d7f7086259add6cc0161ec447a6896c8bc524e6aa85caa44991e8"
+    },
+    {
+      "source": "equipment/rules/hero_equip.gd.uid",
+      "destination": "core/equipment/rules/hero_equip.gd.uid",
+      "before": "585546569febeba2cd2a3f05f6bc2e6e3e74c82db329b82720862df2b4729f86",
+      "after": "585546569febeba2cd2a3f05f6bc2e6e3e74c82db329b82720862df2b4729f86"
+    },
+    {
+      "source": "equipment/rules/hero_gear.gd",
+      "destination": "core/equipment/rules/hero_gear.gd",
+      "before": "fa3e604cba72da24603763fa862d053db5e7212c0365a5f537a7e6207e0933ae",
+      "after": "d215e14b1139f1a835873c8bf93cf186b0cc03d6500f30bc2d0da238a0316048"
+    },
+    {
+      "source": "equipment/rules/hero_gear.gd.uid",
+      "destination": "core/equipment/rules/hero_gear.gd.uid",
+      "before": "f36dbf6ff84ecde71f380c2d02a6d3adaf69faac901e8fc290bf79600828d0bd",
+      "after": "f36dbf6ff84ecde71f380c2d02a6d3adaf69faac901e8fc290bf79600828d0bd"
+    },
+    {
+      "source": "equipment/tests/data/test_gear_catalog.gd",
+      "destination": "tests/unit/equipment/data/test_gear_catalog.gd",
+      "before": "788d4932b7aedd8aacd8199030ded95a983b18e29cc0a0a8e5652aa87916f9de",
+      "after": "82cf0a62b9362d9ed265a6a0f20c9784a66536f3b6224b4e177c7ba79ae4d8a0"
+    },
+    {
+      "source": "equipment/tests/data/test_gear_catalog.gd.uid",
+      "destination": "tests/unit/equipment/data/test_gear_catalog.gd.uid",
+      "before": "088fac7831ef3e459cf367baa2bf385773a837510fa287a4b12cf01946c1d450",
+      "after": "088fac7831ef3e459cf367baa2bf385773a837510fa287a4b12cf01946c1d450"
+    },
+    {
+      "source": "equipment/tests/rules/test_damage_type.gd",
+      "destination": "tests/unit/equipment/rules/test_damage_type.gd",
+      "before": "5ad045b808d9f6c99851985a7c082bb82997f3428d38a94259689e8f9751df78",
+      "after": "c5cde8daad51fd2ec9bf8bcb1a905fa3d5305e5633e9b5c0d0902dabf19fda31"
+    },
+    {
+      "source": "equipment/tests/rules/test_damage_type.gd.uid",
+      "destination": "tests/unit/equipment/rules/test_damage_type.gd.uid",
+      "before": "d9ae74289f55058ed8579455a22ffff8aa99e365f0a3c602987e919a26d0b6fe",
+      "after": "d9ae74289f55058ed8579455a22ffff8aa99e365f0a3c602987e919a26d0b6fe"
+    },
+    {
+      "source": "equipment/tests/rules/test_hero_gear.gd",
+      "destination": "tests/unit/equipment/rules/test_hero_gear.gd",
+      "before": "bcd99184a2b4a39cfb88d36f76e3e38330d6ce4abcc8f2040e102c32c43e8244",
+      "after": "4942a59889efa8af78cc405b2019b9892276e68428caa04e6727d6e87c62b20e"
+    },
+    {
+      "source": "equipment/tests/rules/test_hero_gear.gd.uid",
+      "destination": "tests/unit/equipment/rules/test_hero_gear.gd.uid",
+      "before": "7e4a7cc7536c8d76bd3e879295bca30f6682794357f046bafb34b1836f1c19d3",
+      "after": "7e4a7cc7536c8d76bd3e879295bca30f6682794357f046bafb34b1836f1c19d3"
+    },
+    {
+      "source": "equipment/tools/export_gear.cjs",
+      "destination": "tools/equipment/export_gear.cjs",
+      "before": "c1d42bb00ec543edaabd1fb512f9254b4bbfac45755b212c03ae52370f532180",
+      "after": "96973babb8017560baa90c825d29a68069cccbb34c5ae3a4c09b723104280d50"
+    },
+    {
+      "source": "troops/config.gd",
+      "destination": "core/troops/config.gd",
+      "before": "3746304161870d3293d589faeb76d66f97cf2f57d428f719a16cb4fe248fdbb5",
+      "after": "3746304161870d3293d589faeb76d66f97cf2f57d428f719a16cb4fe248fdbb5"
+    },
+    {
+      "source": "troops/config.gd.uid",
+      "destination": "core/troops/config.gd.uid",
+      "before": "f2a0072cabd3181dbe3b3b195e7f26e9d5fb96ab61deb08895f79d756f7bcb6b",
+      "after": "f2a0072cabd3181dbe3b3b195e7f26e9d5fb96ab61deb08895f79d756f7bcb6b"
+    },
+    {
+      "source": "troops/data/catalog.gd",
+      "destination": "core/troops/data/catalog.gd",
+      "before": "0850fed06d67c11125d5986d9ca29da52006fa4c1726a8fe972ce6a3d2f951ba",
+      "after": "eb016c34107d891e9cc6c4525716dc526141766ef3f9f0b2d36b4df899a10789"
+    },
+    {
+      "source": "troops/data/catalog.gd.uid",
+      "destination": "core/troops/data/catalog.gd.uid",
+      "before": "27368c3d557c25a02ac37fec863ebdbb3bf8102b196c82349dbe8539ed137cd3",
+      "after": "27368c3d557c25a02ac37fec863ebdbb3bf8102b196c82349dbe8539ed137cd3"
+    },
+    {
+      "source": "troops/data/troops.json",
+      "destination": "content/gameplay/troops/troops.json",
+      "before": "193e0be7b0e7227729e85cae2c50b1696caad161917a79789e80c5a21353a52a",
+      "after": "193e0be7b0e7227729e85cae2c50b1696caad161917a79789e80c5a21353a52a"
+    },
+    {
+      "source": "troops/rules/generation.gd",
+      "destination": "core/troops/rules/generation.gd",
+      "before": "c314a956edefcb5b430cceef0599ccf7f6586bf96629d142d07e7405e5e853db",
+      "after": "b58a473baff241e2d9626ba3fb63a040e14a07cfd6f91620eba4a113d3784858"
+    },
+    {
+      "source": "troops/rules/generation.gd.uid",
+      "destination": "core/troops/rules/generation.gd.uid",
+      "before": "220c819eb13403d1f0d891e52b028e14f40e661cc3b81aab98fd600879834391",
+      "after": "220c819eb13403d1f0d891e52b028e14f40e661cc3b81aab98fd600879834391"
+    },
+    {
+      "source": "troops/tests/data/test_catalog_validation.gd",
+      "destination": "tests/unit/troops/data/test_catalog_validation.gd",
+      "before": "f636b8a2e1e7ddb735e8e03c81722763cfabffa3504b23552321d9962dd47ba7",
+      "after": "cf86527583234d99d0a0c9a405b40bafc6d42a8d5839827b2d86541c1f885caf"
+    },
+    {
+      "source": "troops/tests/data/test_catalog_validation.gd.uid",
+      "destination": "tests/unit/troops/data/test_catalog_validation.gd.uid",
+      "before": "d8ff556f8bd58c77cb127de91e84ba38000f314f72e104f74ea506a2ba629199",
+      "after": "d8ff556f8bd58c77cb127de91e84ba38000f314f72e104f74ea506a2ba629199"
+    },
+    {
+      "source": "troops/tools/export_troops.cjs",
+      "destination": "tools/troops/export_troops.cjs",
+      "before": "855279ab698c6d7b0be049ca86a01b798c736c35942f44aa9ba8a8226ec843d4",
+      "after": "e82c6299bcf07d46ac73bd69486b8107bfe09ea8d66b9de00c1f6230b8e8a8cf"
+    },
+    {
+      "source": "apps/godot/composition/save_store.gd",
+      "destination": "adapters/persistence/save_store.gd",
+      "before": "36a4bbafa99cd4b45dbf0a863488969446dfc98262a69ad60d83343bf5f1639b",
+      "after": "bb80bb02487eacabba9fd858a4cca3966575cdbf2105c0240872442f937c0b93"
+    },
+    {
+      "source": "apps/godot/composition/save_store.gd.uid",
+      "destination": "adapters/persistence/save_store.gd.uid",
+      "before": "2cf7d9dd8dd47dcddced075afb307cc60d4d5f1534f3cd278655a2b64c876c5b",
+      "after": "2cf7d9dd8dd47dcddced075afb307cc60d4d5f1534f3cd278655a2b64c876c5b"
+    }
+  ],
+  "pathAdjustmentNotes": [
+    "tools/campaign/export_world.cjs: split path.join segments updated for content and fixture destinations"
+  ]
+}

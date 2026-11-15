@@ -1,8 +1,8 @@
 extends Node2D
 ## Relief icons (trees, hills, mountains, bushes) and faint water glints on top of the ground texture.
 ## Placement follows paintTerrain() in src/05b_worldart.js with the same random sequence.
-const Generator = preload("res://campaign/world/terrain_generator.gd")
-const WorldNoise = preload("res://campaign/world/noise.gd")
+const Generator = preload("res://core/campaign/world/terrain_generator.gd")
+const WorldNoise = preload("res://core/campaign/world/noise.gd")
 const IconSheet = preload("res://apps/godot/presentation/campaign/icon_sheet.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 

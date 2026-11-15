@@ -1,5 +1,5 @@
 extends SceneTree
-const Setup = preload("res://battle/data/battle_setup.gd")
+const Setup = preload("res://core/battle/data/battle_setup.gd")
 
 func _initialize() -> void:
 	var authored = load("res://content/scenarios/demo_battle.tres").duplicate(true)

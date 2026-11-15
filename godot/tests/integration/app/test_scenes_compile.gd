@@ -12,7 +12,7 @@ func _initialize() -> void:
 				var value: Variant = state.get_node_property_value(i, j)
 				if value is GDScript:
 					assert((value as GDScript).can_instantiate(), "script does not compile in " + path + ": " + (value as GDScript).resource_path)
-	for dir_path in ["res://apps/godot/composition", "res://apps/godot/presentation/campaign", "res://campaign/world"]:
+	for dir_path in ["res://apps/godot/composition", "res://apps/godot/presentation/campaign", "res://core/campaign/world"]:
 		var dir := DirAccess.open(dir_path)
 		for f in dir.get_files():
 			if f.ends_with(".gd"):
