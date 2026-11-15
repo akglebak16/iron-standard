@@ -4,8 +4,12 @@ const Unit = preload("res://core/battle/model/unit.gd")
 const Movement = preload("res://core/battle/rules/movement.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Config = preload("res://core/battle/config.gd")
+const Legacy = preload("res://tests/unit/battle/fixtures/legacy_movement.gd")
 
 func _initialize() -> void:
+	var historical := _stack(2, false)
+	Legacy._resolve_unit_collisions(historical)
+	assert(historical.active_units[0].position == historical.active_units[1].position, "historical reference remains unchanged by default")
 	for enemy in [false, true]:
 		var expected := PackedVector2Array()
 		for backend in ["plain", "packed", "native"]:

@@ -1,4 +1,5 @@
 ## Frozen pre-index movement for differential tests. Do not optimize this reference.
+## ADR-016 adds one opt-in correction for exact coincident contacts; the default remains historical.
 extends RefCounted
 const Config = preload("res://core/battle/config.gd")
 const State = preload("res://core/battle/model/state.gd")
@@ -6,7 +7,7 @@ const Unit = preload("res://core/battle/model/unit.gd")
 const Group = preload("res://core/battle/model/group.gd")
 const Targeting = preload("res://core/battle/rules/targeting.gd")
 
-static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0) -> void:
+static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: float = 0.0, separate_coincident: bool = false) -> void:
 	if dt <= 0.0:
 		return
 	var foe := battle.centroid(1)
@@ -38,7 +39,7 @@ static func step(battle: State, dt: float, hero_position: Vector2, hero_facing: 
 		if not unit.fleeing:
 			unit.position.x = clampf(unit.position.x, Config.FIELD_LEFT_RIGHT_MARGIN, battle.arena_size.x - Config.FIELD_LEFT_RIGHT_MARGIN)
 		unit.position.y = clampf(unit.position.y, Config.FIELD_TOP_MARGIN, battle.arena_size.y - Config.FIELD_BOTTOM_MARGIN)
-	_resolve_unit_collisions(battle)
+	_resolve_unit_collisions(battle, separate_coincident)
 
 static func _steer(unit: Unit, destination: Vector2, speed: float, dt: float) -> void:
 	var delta: Vector2 = destination - unit.position
@@ -51,7 +52,7 @@ static func _steer(unit: Unit, destination: Vector2, speed: float, dt: float) ->
 	if unit.velocity.length_squared() > 0.0:
 		unit.facing = unit.velocity.angle()
 
-static func _resolve_unit_collisions(battle: State) -> void:
+static func _resolve_unit_collisions(battle: State, separate_coincident: bool = false) -> void:
 	for i in battle.units.size():
 		var a: Unit = battle.units[i]
 		if a.dead or a.gone:
@@ -65,7 +66,7 @@ static func _resolve_unit_collisions(battle: State) -> void:
 			if absf(difference.x) >= radius or absf(difference.y) >= radius or difference.length_squared() >= radius * radius:
 				continue
 			var distance := maxf(difference.length(), Config.MIN_COLLISION_DISTANCE)
-			var normal := difference / distance
+			var normal := Vector2.RIGHT if separate_coincident and difference == Vector2.ZERO else difference / distance
 			var strength := Config.FRIEND_COLLISION_PUSH if a.side == b.side else Config.ENEMY_COLLISION_PUSH
 			var overlap := (radius - distance) * strength
 			var total_mass: float = a.mass + b.mass

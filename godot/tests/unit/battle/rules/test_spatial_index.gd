@@ -15,11 +15,12 @@ const TEST_DT := 1.0 / 30.0
 func _initialize() -> void:
 	for seed in [7, 17, 41]:
 		for dense in [false, true]:
-			_check_battle(seed, dense)
+			for coincident in [false, true]:
+				_check_battle(seed, dense, coincident)
 	print("Spatial index differential tests passed")
 	quit(0)
 
-func _check_battle(seed: int, dense: bool) -> void:
+func _check_battle(seed: int, dense: bool, coincident: bool) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	var fast := State.new()
@@ -31,7 +32,7 @@ func _check_battle(seed: int, dense: bool) -> void:
 		var center := Vector2(1100, 850) if dense else (Vector2(500, 850) if side == 0 else Vector2(2100, 850))
 		var spread := 100.0 if dense else 300.0
 		var position := center + Vector2(rng.randf_range(-spread, spread), rng.randf_range(-spread, spread))
-		if i % 13 == 0:
+		if coincident and i % 13 == 0:
 			position = center # Exact overlaps and tie candidates.
 		for state in [fast, reference]:
 			var unit := Unit.new(i, side, position, 20 if i % 11 == 0 else 100, 0, 1)
@@ -57,7 +58,9 @@ func _check_battle(seed: int, dense: bool) -> void:
 			var expected: Unit = Targeting.nearest_enemy(fast, unit)
 			assert(index.nearest_enemy(unit) == expected)
 		var updated_index = Movement.step_formation_only(fast, TEST_DT)
-		LegacyMovement.step(reference, TEST_DT, Vector2(780, 850))
+		# Ordinary inputs still compare with the historical solver. Exact stacks opt in
+		# to ADR-016's single normal correction; every differential assertion remains.
+		LegacyMovement.step(reference, TEST_DT, Vector2(780, 850), 0.0, coincident)
 		CombatStep.step(fast, TEST_DT, fast_rng, updated_index)
 		LegacyCombatStep.step(reference, TEST_DT, reference_rng)
 		assert(fast_rng.state == reference_rng.state)
