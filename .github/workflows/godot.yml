@@ -2,6 +2,8 @@ name: Godot — архитектура и Windows
 on:
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'  # раз в сутки полный набор тестов
   push:
     branches: [main, 'codex/godot-blueprint-migration']
 permissions:
@@ -10,7 +12,7 @@ concurrency:
   group: godot-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  # В PR гоняем только то, что задела правка. В main и по кнопке — всё, как раньше.
+  # В PR и при пуше в main гоняем только тесты, до которых доходят изменённые файлы. Полный набор — раз в сутки и по кнопке.
   changes:
     name: godot-changes
     runs-on: ubuntu-latest
@@ -49,6 +51,7 @@ jobs:
         with:
           node-version: 22
       - run: node godot/tools/architecture.test.cjs
+      - run: node godot/tools/test_selection.test.cjs
       - run: node godot/tools/build_identity.test.cjs
       - name: Архитектура и запрет новых исключений
         env:
@@ -103,12 +106,12 @@ jobs:
           "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
       - name: Пакетное ядро контактов (закреплённые SHA256)
         run: pwsh -File godot/tools/native_bootstrap.ps1
-      - name: Godot-тесты (в PR только затронутые правкой)
+      - name: Godot-тесты (в PR и main только затронутые правкой; ночью и по кнопке все)
         shell: pwsh
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
+          BASE: ${{ github.event.pull_request.base.sha || (github.event_name == 'push' && github.event.before) || '' }}
         run: |
-          if ($env:BASE) { node godot/tools/test.cjs "$env:GODOT" "--changed=$env:BASE" } else { node godot/tools/test.cjs "$env:GODOT" }
+          if ($env:BASE -and $env:BASE -notmatch '^0+$') { node godot/tools/test.cjs "$env:GODOT" "--changed=$env:BASE" } else { node godot/tools/test.cjs "$env:GODOT" }
       - run: node godot/tools/release.cjs "$env:GODOT"
       - uses: actions/upload-artifact@v4
         if: always()
