@@ -11,6 +11,7 @@ const PartyEconomy = preload("res://campaign/economy/party_economy.gd")
 const WorldWars = preload("res://campaign/world/world_wars.gd")
 const WorldSiege = preload("res://campaign/world/world_siege.gd")
 const WorldQuests = preload("res://campaign/world/world_quests.gd")
+const WorldUndead = preload("res://campaign/world/world_undead.gd")
 const WorldCompanions = preload("res://campaign/world/world_companions.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
@@ -46,6 +47,7 @@ var market: Market
 var wars: WorldWars
 var siege: WorldSiege
 var quests: WorldQuests
+var undead: WorldUndead
 var companions: WorldCompanions
 var companion_catalog := CompanionCatalog.new()
 var journal: Array = []  # [{day, text}]
@@ -75,6 +77,11 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.wars.announced.connect(state.log_world)
 	state.wars.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai = PartyAI.new(state.roster, state.player)
+	state.undead = WorldUndead.new(state.roster, state.wars)
+	state.undead.init()
+	state.undead.announced.connect(state.log_world)
+	state.undead.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
+	state.ai.undead = state.undead
 	assert(state.companion_catalog.load_data())
 	state.quests = WorldQuests.new(state.map, state.market.goods, state.roster.catalog, state.wars, state.roster.rng)
 	state.quests.message.connect(state.log_world)
@@ -106,6 +113,22 @@ func advance(real_dt: float) -> int:
 	return clock.advance(real_dt, step, hour_tick)
 
 func step(dh: float) -> void:
+	if player.tid >= 0 and player.busy == "":
+		var tg: Dictionary = roster.party_by_id(player.tid)
+		if tg.is_empty() or tg.hide:
+			player.tid = -1
+			player.stop()
+		elif Vector2(tg.x - player.x, tg.y - player.y).length() < 24.0:
+			player.tid = -1
+			player.stop()
+			player.busy = "enc"
+			party_met.emit(tg, false)
+			return
+		else:
+			player.rp -= dh
+			if player.rp <= 0.0:
+				player.rp = 0.6
+				player.path_to(map.paths, tg.x, tg.y)
 	if player.has_route():
 		var finished := player.move_along(map.paths, dh)
 		if finished:
@@ -151,6 +174,8 @@ func hour_tick() -> void:
 	wars.day = clock.day
 	wars.hour = clock.hour
 	wars.war_hour()
+	undead.day = clock.day
+	undead.hour_tick()
 	if not player.away and player.busy != "battle":
 		quests.scout_tick(player)
 		var heal := (0.035 if player.inside else (0.006 if player.has_route() else 0.014)) * (1.0 + (float(player.hero.get("int", 1)) - 1.0) * 0.04 + float(player_effects().get("heal", 0.0)))
@@ -170,6 +195,7 @@ func log_world(text: String) -> void:
 
 func _day_tick() -> void:
 	wars.war_day()
+	undead.day_tick()
 	quests.gen_boards(clock.day)
 	companions.day(player, clock.day)
 	var held := siege.holdings_day(player, float(player_effects().get("wage", 0.0)))
@@ -189,6 +215,33 @@ func _day_tick() -> void:
 	for line in PartyEconomy.day_tick(player, wage, fx, roster.rng, name):
 		log_world(line)
 	quests.deadline_day(player, clock.day)
+
+## Party near a map point the player can chase (worldClick).
+func party_near(x: float, y: float, radius: float) -> Dictionary:
+	var best: Dictionary = {}
+	var bd := radius
+	for p in roster.parties:
+		if p.hide or p.kind == "camp":
+			continue
+		var d := Vector2(p.x - x, p.y - y).length()
+		if d < bd:
+			bd = d
+			best = p
+	return best
+
+## Sets the chase target: a party, or the garrison of a lair. Returns "" or a reason.
+func chase(target: Dictionary) -> String:
+	player.enter_id = -1
+	if target.has("troops"):
+		player.tid = target.id
+	elif target.get("kind") == "camp":
+		if target.get("camp") == null or roster.party_by_id(target.camp).is_empty():
+			return "Логово пусто"
+		player.tid = int(target.camp)
+	var tg: Dictionary = roster.party_by_id(player.tid)
+	player.rp = 0.6
+	player.path_to(map.paths, tg.x, tg.y)
+	return ""
 
 func settlement_near(x: float, y: float, radius: float) -> Dictionary:
 	var best: Dictionary = {}

@@ -130,12 +130,16 @@ func apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary) -> vo
 		for k in ["troops", "cd", "state", "path", "lock"]:
 			opponent[k] = updated[k] if updated.has(k) else opponent.get(k)
 		opponent.pi = 0
+		if opponent.get("fac") == "undead" and state.undead != null:
+			state.undead.raise(opponent, int(aftermath.summary.get("lost", 0)) * state.undead.RAISE)
 
 func _remove_opponent(state: RefCounted, opponent: Dictionary) -> void:
 	state.roster.remove(opponent)
 	if opponent.kind == "camp":
 		var s: Dictionary = state.map.settlement_by_id(opponent.home)
 		if not s.is_empty():
+			if s.get("barrow", false) and state.undead != null:
+				state.undead.barrow_destroyed(state.player, s)
 			s.camp = null
 			s.cleared = true
 			s.respawn = Config.CAMP_RESPAWN_HOURS

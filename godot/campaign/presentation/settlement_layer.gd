@@ -52,7 +52,17 @@ func _draw() -> void:
 		var k := scale_of(s.kind)
 		var src := Rect2(Vector2(col * size.x, row * size.y) * SHEET_SCALE, size * SHEET_SCALE)
 		var dest := Rect2(Vector2(s.x, s.y) - SettlementArt.ANCHOR * k, size * k)
-		draw_texture_rect_region(tex, dest, src, Color(1, 1, 1, 0.5) if s.get("cleared", false) and s.kind == "camp" else Color.WHITE)
+		var tint := Color.WHITE
+		if s.get("cleared", false) and s.kind == "camp":
+			tint = Color(1, 1, 1, 0.5)
+		elif s.fac == "undead":
+			tint = Color(0.55, 0.62, 0.5)
+		elif int(s.get("burnt", 0)) > 0 or float(s.get("dmg", 0.0)) > 0.3:
+			tint = Color(0.6, 0.5, 0.45)
+		draw_texture_rect_region(tex, dest, src, tint)
+		if int(s.get("burnt", 0)) > 0 or int(s.get("fire", 0)) > 0:
+			for i in 3:
+				draw_circle(Vector2(s.x + (i - 1) * 9.0 * k, s.y - 30.0 * k - i * 6.0), (7.0 + i * 3.0) * k, Color(0.3, 0.28, 0.26, 0.45))
 		if s.kind != "camp":
 			var bx: float = 14.0 if s.kind == "castle" else 20.0
 			var by: float = -62.0 if s.kind == "town" else -66.0 if s.kind == "castle" else -28.0
@@ -64,7 +74,7 @@ func _draw_labels() -> void:
 	var entries: Array = []
 	for s in _settles:
 		var size := 13 if s.kind == "village" else 16
-		var color := Color("#ff7a66") if s.kind == "camp" else Color("#f0e6c8")
+		var color := Color("#ff7a66") if s.kind == "camp" else (Color("#a9b98e") if s.fac == "undead" else Color("#f0e6c8"))
 		entries.append({"text": s.name, "x": s.x, "y": s.y + 22.0, "color": color, "size": size})
 	entries.sort_custom(func(a, b): return a.size > b.size)
 	var boxes: Array[Rect2] = []
