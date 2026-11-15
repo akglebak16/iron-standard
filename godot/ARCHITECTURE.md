@@ -251,7 +251,7 @@ GDScript-правила остаются эталоном. `NativeSwitch.on` (и
 
 Обращение к `Dictionary` из C++ идёт через интерфейс движка и стоит около микросекунды: в горячих местах ядро читает упакованные массивы и поля `BattleUnit`, а не словари.
 
-Сборка: `cmake -S godot/native -B build -DGODOT_CPP_DIR=<godot-cpp> -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release`, библиотека попадает в `godot/bin/`. Workflow `.github/workflows/godot-native.yml` собирает все три платформы на каждое изменение `godot/native/`; их артефакты (`gh run download <id>`) коммитятся в `godot/bin/` тем же PR.
+Сборка: `cmake -S godot/native -B build -DGODOT_CPP_DIR=<godot-cpp> -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release`, библиотека попадает в `godot/bin/`. Workflow `.github/workflows/godot-native.yml` собирает все три платформы на каждое изменение `godot/native/`; на ветке задачи он сам коммитит готовые библиотеки в `godot/bin/` (навык `shareness/skills/godot-native`).
 
 
 Сценарий измерения воспроизводим: `godot --headless --path godot --script res://battle/tools/benchmark.gd`. Время не является pass/fail-тестом на разных машинах. Перед оптимизацией сохраняем профиль и корректность; после — повторяем ту же нагрузку и отдельно проверяем плотную схватку, стрелы и бегство.

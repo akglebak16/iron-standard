@@ -1,5 +1,5 @@
 # Builds the native battle core (godot/native, a GDExtension) for Windows, Linux and macOS.
-# The binaries are committed to godot/bin/ by whoever changes godot/native: download the artifacts of this run
+# On a branch push the job "commit" puts the fresh binaries into godot/bin/ on that branch; by hand: download the artifacts
 # (gh run download <run id> -D /tmp/native) and copy the files into godot/bin/ (see godot/ARCHITECTURE.md).
 name: Godot native core
 on:
@@ -47,3 +47,24 @@ jobs:
             godot/bin/*.dll
             godot/bin/*.dylib
           if-no-files-found: error
+  # On a branch push the fresh libraries are committed back to that branch (godot/bin/), so a PR carries them.
+  commit:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/native
+      - name: Commit libraries
+        run: |
+          cp /tmp/native/*/* godot/bin/
+          git add godot/bin
+          if git diff --cached --quiet; then echo "libraries unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Godot: библиотеки нативного ядра (сборка CI)"
+          git push

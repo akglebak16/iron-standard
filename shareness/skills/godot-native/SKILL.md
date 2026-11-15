@@ -19,6 +19,6 @@ description: Пересобрать нативное ядро боя Godot-ве�
 - Новые поля бойца, которые читает ядро, — свойства `BattleUnit` (`battle_unit.h/.cpp`), а не словари.
 
 ## Библиотеки в репозиторий
-1. Запушь ветку: workflow «Godot native core» соберёт три платформы.
-2. `gh run list --workflow godot-native.yml --branch <ветка>` → `gh run download <id> -D /tmp/native`.
-3. Скопируй `libbattle_core.*` из всех артефактов в `godot/bin/` и закоммить в тот же PR.
+1. Запушь ветку с изменением `godot/native/`: workflow «Godot native core» соберёт три платформы и сам закоммитит `libbattle_core.*` в `godot/bin/` той же ветки (коммит от github-actions).
+2. Перед следующим пушем сделай `git pull --rebase`, чтобы забрать этот коммит.
+3. Вручную (если нужно): `gh run download <id> -D /tmp/native` и скопировать файлы в `godot/bin/`.
