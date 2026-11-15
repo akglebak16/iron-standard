@@ -14,6 +14,7 @@ const WorldQuests = preload("res://campaign/world/world_quests.gd")
 const WorldUndead = preload("res://campaign/world/world_undead.gd")
 const WorldClans = preload("res://campaign/world/world_clans.gd")
 const WorldVassals = preload("res://campaign/world/world_vassals.gd")
+const WorldSkirmish = preload("res://campaign/world/world_skirmish.gd")
 const WorldCompanions = preload("res://campaign/world/world_companions.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const GearCatalog = preload("res://equipment/data/gear_catalog.gd")
@@ -53,6 +54,7 @@ var quests: WorldQuests
 var undead: WorldUndead
 var clans: WorldClans
 var vassals: WorldVassals
+var skirmish: WorldSkirmish
 var companions: WorldCompanions
 var companion_catalog := CompanionCatalog.new()
 var gear: GearCatalog
@@ -114,6 +116,11 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.ai.vassals = state.vassals
 	state.siege.lost.connect(func(s, t): state.log_world(t); state.settlement_changed.emit(s))
 	state.siege.held.connect(func(_s, t): state.log_world(t))
+	state.siege.surrendered.connect(func(s, t): state.log_world(t); state.settlement_changed.emit(s))
+	state.skirmish = WorldSkirmish.new(state.roster)
+	state.skirmish.clans = state.clans
+	state.skirmish.undead = state.undead
+	state.ai.skirmish = state.skirmish
 	Rules.player_rel = state.player.rel
 	return state
 
@@ -203,11 +210,15 @@ func hour_tick() -> void:
 	wars.war_hour()
 	undead.day = clock.day
 	undead.hour_tick()
+	skirmish.hour_now = wars.now_h()
+	skirmish.hour_tick()
 	if clock.hour == 12:
 		clans.refill()
 	if clock.hour % 3 == 0:
 		Rules.player_rel = player.rel
 		siege.assaults_tick(player)
+	for line in siege.block_hour(player, clock.hour):
+		log_world(line)
 	if not player.away and player.busy != "battle":
 		quests.scout_tick(player)
 		var heal := (0.035 if player.inside else (0.006 if player.has_route() else 0.014)) * (1.0 + (float(player.hero.get("int", 1)) - 1.0) * 0.04 + float(player_effects().get("heal", 0.0)))

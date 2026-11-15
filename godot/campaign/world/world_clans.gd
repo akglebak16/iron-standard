@@ -121,6 +121,15 @@ func on_capture(s: Dictionary, old: String, by: String) -> void:
 		call.joined = true
 		vassal_reward(s)
 
+## A fallen state's houses go over to the conqueror (facFall).
+func on_fall(old: String, by: String) -> void:
+	for c in of_faction(old):
+		defect(c, by, true)
+	rulers.erase(old)
+	if player.liege == old:
+		player.liege = ""
+		message.emit("Твой сюзерен пал. Ты свободен от присяги.")
+
 func on_campaign(f: String, target: Dictionary) -> void:
 	if player.liege == f:
 		player.summons = {"tid": target.id, "until": wars.now_h() + 96, "joined": false}

@@ -174,6 +174,7 @@ func _lords_of(f: String) -> Array:
 	return roster.parties.filter(func(p): return Rules.is_noble(p) and p.fac == f and not p.get("lock", false) and not p.get("ruler", false))
 
 func war_hour() -> void:
+	_sg_hour()
 	if hour % 2 == 0:
 		for f in factions_alive():
 			_campaign(f)
@@ -343,6 +344,9 @@ func _siege_tick(s: Dictionary) -> void:
 	for p in att.duplicate():
 		if Rules.troop_count(p.troops) < 6:
 			roster.remove(p)
+	att = att.filter(func(p): return p in roster.parties)
+	if _sg_tick(s, sg, att, a_str, k):
+		return
 	var left := Rules.troop_count(g)
 	if left <= maxf(7.0, sg.g0 * 0.16) and dur >= 12:
 		_capture(s, sg.f, att)
@@ -406,6 +410,7 @@ func _capture(s: Dictionary, f: String, att: Array) -> void:
 			settlement_changed.emit(v)
 	_say("%s берёт %s %s (бывший %s)." % [_name(f), "замок" if kind == "castle" else "город", s.name, roster.factions.get_faction(old).get("gen", old)])
 	settlement_changed.emit(s)
+	_sack_ai(s)
 	if clans != null:
 		clans.on_capture(s, old, f)
 	if not alive(old):
@@ -413,6 +418,8 @@ func _capture(s: Dictionary, f: String, att: Array) -> void:
 
 func _fall(old: String, by: String) -> void:
 	_say("Государство «%s» пало." % _name(old))
+	if clans != null:
+		clans.on_fall(old, by) # houses of the fallen state go over first, so their lords survive
 	for v in map.settles:
 		if v.fac == old:
 			v["cult"] = String(v.get("cult", v.fac))
@@ -426,6 +433,136 @@ func _fall(old: String, by: String) -> void:
 		if old in k.split("|"):
 			wars.erase(k)
 
+
 func start_time(d: int, h: int) -> void:
 	day = d
 	hour = h
+
+
+# ---------- siege extras (src/05i_siege.js): sorties, relief, fires, hunger, wall repair, sacking ----------
+
+const SG_DMG_H := 24 * 10 # hours for walls to be repaired completely
+
+func _cut(list: Array, rate: float) -> void:
+	# random rounding: small stacks melt too (sgCut)
+	for t in list.duplicate():
+		Rules.remove_troops(list, t.type, floori(t.n * rate + roster.rng.randf()))
+
+## Every 2 hours of a siege. True when the siege ended (relief broke the besiegers).
+func _sg_tick(s: Dictionary, sg: Dictionary, att: Array, a_str: float, k: float) -> bool:
+	var dur := now_h() - int(sg.t0)
+	var g := garrison_of(s)
+	s.dmg = minf(1.0, float(s.get("dmg", 0.0)) + 0.008 + 0.014 * clampf(k, 0.0, 2.0))
+	if not int(s.get("fire", 0)) > 0 and roster.rng.randf() < 0.04 + 0.05 * clampf(k, 0.0, 2.0):
+		s.fire = roster.rint(30, 70)
+		_say("В %s %s начался пожар." % ["замке" if s.kind == "castle" else "городе", s.name])
+	if dur > 60:
+		for p in att:
+			_cut(p.troops, 0.02)
+		if not sg.get("hun", false):
+			sg.hun = true
+			_say("Осаждающие %s голодают и дезертируют." % s.name)
+	_sortie(s, sg, att, a_str, g, dur)
+	return _relief(s, sg, att, a_str, dur)
+
+func _sortie(s: Dictionary, sg: Dictionary, att: Array, a_str: float, g: Array, dur: int) -> void:
+	if dur < 6 or Rules.troop_count(g) < 10 or roster.rng.randf() > 0.12:
+		return
+	var gs := Rules.strength(g, roster.info) + 4.0
+	var ratio := gs * 1.3 / maxf(1.0, a_str)
+	var ok := roster.rng.randf() < clampf(0.2 + 0.5 * ratio, 0.2, 0.8)
+	sg.sally = int(sg.get("sally", 0)) + 1
+	if ok:
+		for p in att:
+			_cut(p.troops, roster.rnd(0.05, 0.1))
+		_cut(g, roster.rnd(0.02, 0.04))
+		_say("Гарнизон %s ночной вылазкой ударил по осаждающим: у них потери." % s.name)
+	else:
+		_cut(g, roster.rnd(0.06, 0.1))
+		for p in att:
+			_cut(p.troops, roster.rnd(0.01, 0.02))
+		_say("Вылазка гарнизона %s отбита, защитники понесли потери." % s.name)
+
+func _free_relief(p: Dictionary) -> void:
+	p.army = false
+	p.erase("relief")
+	p.arrived = false
+	p.state = "idle"
+	p.path = []
+	p.pi = 0
+	p.wait = float(roster.rint(2, 6))
+
+func _relief(s: Dictionary, sg: Dictionary, att: Array, a_str: float, dur: int) -> bool:
+	var rel: Array = []
+	for id in sg.get("rel", []):
+		var p := roster.party_by_id(int(id))
+		if not p.is_empty() and p.get("relief") == s.id:
+			rel.append(p)
+	if rel.is_empty() and dur >= 10 and int(sg.get("relN", 0)) < 2 and now_h() - int(sg.get("relAt", -99)) > 24:
+		var cands: Array = roster.parties.filter(func(p): return p.kind == "lord" and p.fac == s.fac and not p.hide and not p.get("army", false) and not p.get("fight", false) and p.get("relief") == null and Rules.troop_count(p.troops) >= 18 * MK and Vector2(p.x - s.x, p.y - s.y).length() < 480.0)
+		cands.sort_custom(func(a, b): return Vector2(a.x - s.x, a.y - s.y).length() < Vector2(b.x - s.x, b.y - s.y).length())
+		cands = cands.slice(0, 3)
+		if not cands.is_empty():
+			sg.relN = int(sg.get("relN", 0)) + 1
+			sg.relAt = now_h()
+			sg.rel = cands.map(func(p): return p.id)
+			for p in cands:
+				p.relief = s.id
+				p.army = true
+				_go(p, s)
+			_say("К осаждённому городу %s спешит подмога: %s." % [s.name, ", ".join(cands.map(func(p): return p.name))])
+	if rel.is_empty():
+		return false
+	var near := rel.filter(func(p): return Vector2(p.x - s.x, p.y - s.y).length() < 130.0)
+	if near.size() < maxi(1, ceili(rel.size() * 0.6)) and now_h() - int(sg.get("relAt", 0)) < 40:
+		return false
+	if near.is_empty():
+		for p in rel:
+			_free_relief(p)
+		return false
+	var r := 0.3 * Rules.strength(garrison_of(s), roster.info)
+	for p in near:
+		r += roster.strength_of(p)
+	var win := r * roster.rnd(0.8, 1.2) > a_str * roster.rnd(0.8, 1.2)
+	if win:
+		for p in att:
+			_cut(p.troops, roster.rnd(0.35, 0.55))
+		for p in near:
+			_cut(p.troops, roster.rnd(0.1, 0.2))
+		for p in rel:
+			_free_relief(p)
+		s.siege = null
+		_say("Подмога разбила осаждающих: осада %s снята." % s.name)
+		settlement_changed.emit(s)
+		return true
+	for p in near:
+		_cut(p.troops, roster.rnd(0.4, 0.6))
+	for p in att:
+		_cut(p.troops, roster.rnd(0.1, 0.18))
+	for p in rel:
+		_free_relief(p)
+	_say("Подмога осаждённому %s разбита." % s.name)
+	return false
+
+## Hourly: fires burn out, walls are repaired, relief lords go home when their siege is over.
+func _sg_hour() -> void:
+	for s in map.settles:
+		if int(s.get("fire", 0)) > 0:
+			s.fire = int(s.fire) - 1
+		if s.get("siege") == null and float(s.get("dmg", 0.0)) > 0.0:
+			s.dmg = maxf(0.0, float(s.dmg) - 1.0 / SG_DMG_H)
+	for p in roster.parties:
+		if p.get("relief") != null:
+			var s := map.settlement_by_id(int(p.relief))
+			if s.is_empty() or s.get("siege") == null:
+				_free_relief(p)
+				p.wait = float(roster.rint(1, 4))
+
+## Lords who took a town sometimes plunder it (sgSackAI).
+func _sack_ai(s: Dictionary) -> void:
+	if roster.rng.randf() > 0.5:
+		return
+	s.dmg = maxf(float(s.get("dmg", 0.0)), 0.5)
+	s.fire = maxi(int(s.get("fire", 0)), roster.rint(24, 60))
+	s.recruits = []
+	_say("%s %s разграблен." % ["Замок" if s.kind == "castle" else "Город", s.name])

@@ -65,7 +65,13 @@ func _main(siege_party: Dictionary) -> void:
 	heading("Что делаем")
 	row("Отойти от стен", "", [{"text": "Отойти", "call": func(): close_window()}])
 	if settlement.fac in Rules.REAL_FACTIONS:
-		row("Переговоры и выкуп", "", [{"text": "Говорить", "call": func(): mode = "talk"; message = ""}])
+		var food: float = state.siege.food_of(settlement)
+		var food_text := "кончилась" if food <= 0.0 else ("на исходе (около %d дн.)" % ceili(food) if food < 3.0 else "около %d дн." % ceili(food))
+		row("Переговоры и выкуп", "Запасы еды в городе: %s." % food_text, [{"text": "Говорить", "call": func(): mode = "talk"; message = ""}])
+		if not settlement.has("blk"):
+			row("Блокада", "Стой у стен, пока в городе не кончится еда: голодный гарнизон сдаётся.", [{"text": "Блокада", "call": func(): state.log_world(state.siege.block_start(state.player, settlement)); close_window()}])
+		else:
+			note("Город в блокаде.")
 	row("Рассчитать штурм", "Без боя на поле: исход решают силы и случай.", [{"text": "Рассчитать", "call": func(): assault.emit(settlement, true); close_window()}])
 	row("Штурм", "Ты ведёшь людей в бой у стен.", [{"text": "На штурм!", "call": func(): assault.emit(settlement, false); close_window()}])
 

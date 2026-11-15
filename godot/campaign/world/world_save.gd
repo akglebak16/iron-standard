@@ -4,8 +4,8 @@ extends RefCounted
 const WorldState = preload("res://campaign/world/world_state.gd")
 const EuropeData = preload("res://campaign/data/europe_data.gd")
 const VERSION := 1
-const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0", "vass"]
-const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner"]
+const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0", "vass", "blk"]
+const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner", "relief", "fight"]
 
 static func to_dict(state: RefCounted) -> Dictionary:
 	var p = state.player
@@ -28,7 +28,7 @@ static func to_dict(state: RefCounted) -> Dictionary:
 		"player": {"x": p.x, "y": p.y, "troops": p.troops, "culture": p.culture, "gold": p.gold, "food": p.food, "inv": p.inv,
 			"comps": p.comps, "quests": p.quests, "stats": p.stats, "hero": p.hero, "rel": p.rel,
 			"liege": p.liege, "oath_day": p.oath_day, "strikes": p.strikes, "summons": p.summons, "lure_day": p.lure_day, "vass": p.vass},
-		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "crisis": state.undead.crisis, "clans": state.clans.to_dict(), "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
+		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "crisis": state.undead.crisis, "clans": state.clans.to_dict(), "skirmish": state.skirmish.to_dict(), "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
 
 ## Rebuilds a world from saved data; returns null for an unknown format.
 static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
@@ -95,6 +95,16 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 		if s.get("siege") is Dictionary:
 			s.siege.t0 = int(s.siege.t0)
 			s.siege.g0 = int(s.siege.g0)
+			for key in ["relN", "relAt", "sally"]:
+				if s.siege.has(key):
+					s.siege[key] = int(s.siege[key])
+			if s.siege.has("rel"):
+				s.siege.rel = s.siege.rel.map(func(x): return int(x))
+		if s.get("blk") is Dictionary:
+			for key in ["t0", "g0", "away"]:
+				s.blk[key] = int(s.blk.get(key, 0))
+		if s.get("fire") != null:
+			s.fire = int(s.fire)
 		for key in ["rt", "respawn", "hv", "pros"]:
 			s[key] = int(s[key])
 		if s.camp != null:
@@ -122,6 +132,7 @@ static func from_dict(data: Dictionary, europe: EuropeData) -> RefCounted:
 	state.quests.next_id = int(data.get("quest_id", state.quests.next_id))
 	state.companions.from_dict(data.get("companions", {}))
 	state.clans.from_dict(data.get("clans", {}))
+	state.skirmish.from_dict(data.get("skirmish", {}))
 	var crisis: Dictionary = data.get("crisis", {})
 	if not crisis.is_empty():
 		crisis.day = int(crisis.day)

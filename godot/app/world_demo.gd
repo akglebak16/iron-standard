@@ -16,6 +16,7 @@ const PartyWindow = preload("res://campaign/presentation/party_window.gd")
 const SiegeWindow = preload("res://campaign/presentation/siege_window.gd")
 const PauseMenu = preload("res://app/pause_menu.gd")
 const WorldTips = preload("res://campaign/presentation/world_tips.gd")
+const WorldMarksLayer = preload("res://campaign/presentation/world_marks_layer.gd")
 const Bridge = preload("res://app/world_battle_bridge.gd")
 const Aftermath = preload("res://app/encounter_aftermath.gd")
 const AftermathText = preload("res://app/aftermath_text.gd")
@@ -34,6 +35,7 @@ var _dialog: CanvasLayer
 var _town: CanvasLayer
 var _siege: CanvasLayer
 var _menu: CanvasLayer
+var _marks: Node2D
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
 var _allies: Array = []
@@ -79,6 +81,9 @@ func _ready() -> void:
 	var others := WorldPartiesLayer.new()
 	map_view.add_child(others)
 	others.build(state.roster, state.player)
+	_marks = WorldMarksLayer.new()
+	map_view.add_child(_marks)
+	_marks.build(state)
 	var party_layer := PartyLayer.new()
 	map_view.add_child(party_layer)
 	party_layer.build(state.player, factions.get_faction("player"))
@@ -99,6 +104,10 @@ func _ready() -> void:
 	_party_window = PartyWindow.new()
 	add_child(_party_window)
 	_party_window.closed.connect(func(): state.clock.paused = false)
+	_party_window.quest_target.connect(func(x: float, y: float):
+		_marks.show_quest_target(x, y)
+		camera.detached = true
+		camera.position = Vector2(x, y))
 	hud.panel_requested.connect(_open_panel)
 	_menu = PauseMenu.new()
 	add_child(_menu)
@@ -174,6 +183,13 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	elif party.kind == "bandit":
 		title = "Крупная банда" if party.get("big", false) else "Разбойники"
 	var sub: String = "%s · %d бойцов" % [_factions.get_faction(party.fac).get("name", party.fac), Rules.troop_count(party.troops)]
+	if hostile:
+		var help: Array = state.skirmish.helpers(state.player, party)
+		if not help.is_empty():
+			var extra := 0
+			for h in help:
+				extra += Rules.troop_count(h.troops)
+			sub += " · на помощь идут ещё %d" % extra
 	var actions: Array = []
 	if hostile:
 		actions = [{"id": "flee", "text": "Бежать"}, {"id": "auto", "text": "Рассчитать бой"}, {"id": "fight", "text": "В бой!", "primary": true}]
@@ -285,6 +301,7 @@ func _apply_resolved(p: Dictionary, resolved: Dictionary) -> void:
 		town = state.map.settlement_by_id(p.sid)
 		was = town.fac
 	_bridge.apply(state, p, resolved, _allies)
+	state.skirmish.split(p)
 	if not _allies.is_empty():
 		state.log_world("Дружины вассалов бились рядом с тобой.")
 	_allies = []
@@ -314,6 +331,7 @@ func _opponent(p: Dictionary) -> Dictionary:
 	return _bridge.opponent_dict(p, {})
 
 func _finish_auto(p: Dictionary) -> void:
+	state.skirmish.merge(p, state.skirmish.helpers(state.player, p))
 	_allies = Bridge.snapshot(state.vassals.helpers(p))
 	var result: Dictionary = _bridge.auto_result(state, p, _allies)
 	var party: Dictionary = _bridge.party_dict(state, _allies)
@@ -335,6 +353,7 @@ func _finish_auto(p: Dictionary) -> void:
 		_offer_loot(town, true)
 
 func _start_battle(p: Dictionary) -> void:
+	state.skirmish.merge(p, state.skirmish.helpers(state.player, p))
 	_allies = Bridge.snapshot(state.vassals.helpers(p))
 	var setup: Resource = _bridge.make_setup(state, p, _allies)
 	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions)
