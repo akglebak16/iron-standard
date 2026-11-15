@@ -29,6 +29,7 @@ var oath_day := 0
 var strikes := 0
 var summons: Variant = null  # {tid, until, joined}: the liege summons the player to a campaign
 var lure_day := -99
+var vass: Array = []  # companions holding fiefs (WorldVassals)
 
 func has_route() -> bool:
 	return pi < path.size()

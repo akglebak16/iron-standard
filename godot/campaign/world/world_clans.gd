@@ -37,6 +37,7 @@ var clans: Array = []      # {id, fac, name, trait, loy, home, cd, vac, rule, bo
 var switched: Dictionary = {}  # faction -> day of its last voluntary defection
 var rulers: Dictionary = {}    # faction -> {trait, dead, until, name}
 var next_id := 1
+var siege: RefCounted = null  # WorldSiege: the liege may grant a fief
 
 func _init(party_roster: Roster, world_wars: WorldWars, player_party: RefCounted) -> void:
 	roster = party_roster
@@ -390,6 +391,9 @@ func vassal_reward(s: Dictionary) -> void:
 	player.gold += g
 	player.rel[player.liege] = minf(100.0, float(player.rel.get(player.liege, 0)) + 6.0)
 	message.emit("Ты участвовал во взятии %s: награда %d золота." % [s.name, g])
+	if siege != null and (s.kind == "village" or roster.rng.randf() < 0.4):
+		siege.capture(player, s)
+		message.emit("Сюзерен жалует тебе %s в лен." % s.name)
 
 # ---------- luring a house (only a vassal can) ----------
 

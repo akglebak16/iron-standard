@@ -14,6 +14,7 @@ var player: RefCounted  # PlayerParty: x, y, troops, rel, busy, inside, away
 
 var undead: RefCounted = null  # WorldUndead, optional
 var clans: RefCounted = null   # WorldClans, optional: rulers survive lost fights
+var vassals: RefCounted = null  # WorldVassals, optional: the player's retinues
 
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
@@ -47,6 +48,11 @@ func _player_prey() -> bool:
 
 func ai_party(p: Dictionary, dh: float) -> void:
 	if p.kind == "camp":
+		return
+	if p.kind == "cvass":
+		p.cd -= dh
+		if vassals != null and not p.get("fight", false):
+			vassals.ai(p, dh)
 		return
 	p.cd -= dh
 	if p.get("lock", false) or p.get("fight", false):
@@ -154,8 +160,11 @@ func _idle(p: Dictionary) -> void:
 			if p.wait <= 0.0:
 				var targets := roster.map.settles.filter(func(s): return s.fac == p.fac and s.kind != "camp")
 				var ruins: Array = undead.ruins_for(p.fac) if undead != null else []
+				var prey: Array = roster.map.settles.filter(func(s): return s.fac == "player" and float(player.rel.get(p.fac, 0)) < -20.0)
 				if not ruins.is_empty() and roster.rng.randf() < 0.5:
 					targets = ruins
+				elif not prey.is_empty() and roster.rng.randf() < 0.3:
+					targets = prey
 				if targets.is_empty():
 					p.wait = 5.0
 				else:

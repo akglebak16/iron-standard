@@ -55,7 +55,17 @@ static func at_war(a: String, b: String) -> bool:
 	return WAR.has(a) and b in WAR[a]
 
 ## Whether two map parties fight each other when they meet (hostile() without caravan-vassals and undead).
+## The player's relations, for his vassals' retinues (set by WorldState).
+static var player_rel: Dictionary = {}
+
 static func hostile(a: Dictionary, b: Dictionary) -> bool:
+	if a.kind == "cvass" or b.kind == "cvass":
+		var o: Dictionary = b if a.kind == "cvass" else a
+		if o.fac == "player" or o.kind == "caravan":
+			return false
+		if o.fac == "undead" or o.kind == "bandit":
+			return true
+		return o.fac in REAL_FACTIONS and float(player_rel.get(o.fac, 0)) < -20.0
 	if (a.fac == "undead") != (b.fac == "undead"):
 		return true
 	if a.fac == "undead":

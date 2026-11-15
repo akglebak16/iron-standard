@@ -13,6 +13,7 @@ const WorldSiege = preload("res://campaign/world/world_siege.gd")
 const WorldQuests = preload("res://campaign/world/world_quests.gd")
 const WorldUndead = preload("res://campaign/world/world_undead.gd")
 const WorldClans = preload("res://campaign/world/world_clans.gd")
+const WorldVassals = preload("res://campaign/world/world_vassals.gd")
 const WorldCompanions = preload("res://campaign/world/world_companions.gd")
 const CompanionCatalog = preload("res://characters/data/companion_catalog.gd")
 const CompanionProfile = preload("res://characters/rules/companion_profile.gd")
@@ -50,6 +51,7 @@ var siege: WorldSiege
 var quests: WorldQuests
 var undead: WorldUndead
 var clans: WorldClans
+var vassals: WorldVassals
 var companions: WorldCompanions
 var companion_catalog := CompanionCatalog.new()
 var journal: Array = []  # [{day, text}]
@@ -85,6 +87,7 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.undead.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai.undead = state.undead
 	state.clans = WorldClans.new(state.roster, state.wars, state.player)
+	state.clans.siege = state.siege
 	state.clans.init()
 	state.clans.ruler_day()
 	state.clans.announced.connect(state.log_world)
@@ -99,6 +102,13 @@ static func create(seed_value: int, data: EuropeData, player_culture := "emp") -
 	state.companions = WorldCompanions.new(state.map, state.companion_catalog, state.roster.rng)
 	state.companions.message.connect(state.log_world)
 	state.companions.ensure(state.player)
+	state.vassals = WorldVassals.new(state.roster, state.siege, state.companions, state.player)
+	state.vassals.message.connect(state.log_world)
+	state.siege.vassals = state.vassals
+	state.ai.vassals = state.vassals
+	state.siege.lost.connect(func(s, t): state.log_world(t); state.settlement_changed.emit(s))
+	state.siege.held.connect(func(_s, t): state.log_world(t))
+	Rules.player_rel = state.player.rel
 	return state
 
 func _place_player(seed_value: int) -> void:
@@ -123,6 +133,7 @@ func advance(real_dt: float) -> int:
 	return clock.advance(real_dt, step, hour_tick)
 
 func step(dh: float) -> void:
+	Rules.player_rel = player.rel
 	if player.tid >= 0 and player.busy == "":
 		var tg: Dictionary = roster.party_by_id(player.tid)
 		if tg.is_empty() or tg.hide:
@@ -188,6 +199,9 @@ func hour_tick() -> void:
 	undead.hour_tick()
 	if clock.hour == 12:
 		clans.refill()
+	if clock.hour % 3 == 0:
+		Rules.player_rel = player.rel
+		siege.assaults_tick(player)
 	if not player.away and player.busy != "battle":
 		quests.scout_tick(player)
 		var heal := (0.035 if player.inside else (0.006 if player.has_route() else 0.014)) * (1.0 + (float(player.hero.get("int", 1)) - 1.0) * 0.04 + float(player_effects().get("heal", 0.0)))
@@ -211,6 +225,8 @@ func _day_tick() -> void:
 	undead.day_tick()
 	quests.gen_boards(clock.day)
 	companions.day(player, clock.day)
+	if not player.away:
+		vassals.day_tick()
 	var held := siege.holdings_day(player, float(player_effects().get("wage", 0.0)))
 	if held != "":
 		log_world(held)

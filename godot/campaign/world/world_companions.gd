@@ -40,6 +40,9 @@ static func hired(p, id: String) -> bool:
 	for c in p.comps:
 		if c.id == id:
 			return true
+	for v in p.get("vass") if p.get("vass") != null else []:
+		if v.cid == id:
+			return true
 	return false
 
 func fixed_town(d: Dictionary) -> Dictionary:
