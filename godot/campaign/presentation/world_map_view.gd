@@ -19,7 +19,10 @@ var terrain: Node2D
 func build(seed_value: int) -> void:
 	var data := EuropeData.new()
 	assert(data.load_data())
-	map = WorldMap.create(seed_value, data)
+	build_from(WorldMap.create(seed_value, data))
+
+func build_from(world_map: RefCounted) -> void:
+	map = world_map
 	terrain = TerrainLayer.new()
 	add_child(terrain)
 	terrain.painted.connect(func(): ready_to_show.emit())
