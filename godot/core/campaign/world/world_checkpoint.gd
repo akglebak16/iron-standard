@@ -63,6 +63,7 @@ static func valid(data: Variant) -> bool:
 		for key in ["x", "y", "wait", "hold", "cd", "ai", "rp", "fx", "gold"]:
 			if not _number(party.get(key)): return false
 		if not party.get("hide") is bool or not _route(party.get("path"), party.get("pi")) or not _stacks(party.get("troops")): return false
+		if not _goal(party): return false
 	if data.roster._next_party_id <= largest_id: return false
 	ids.clear()
 	largest_id = -1
@@ -111,6 +112,14 @@ static func _plain(value: Variant, depth: int = 0) -> bool:
 				if typeof(key) not in [TYPE_STRING, TYPE_STRING_NAME, TYPE_INT] or not _plain(value[key], depth + 1): return false
 			return true
 	return false
+
+## AI goal of a party (party_goals.gd), absent in saves made before stage 2a: such a party has no goal yet.
+static func _goal(party: Dictionary) -> bool:
+	if party.has("goal") and not party.goal is String: return false
+	if party.has("gid") and party.gid != null and not party.gid is int: return false
+	for key in ["ga", "gs"]:
+		if party.has(key) and not _number(party[key]): return false
+	return true
 
 static func _number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(float(value))

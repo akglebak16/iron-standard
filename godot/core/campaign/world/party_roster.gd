@@ -90,7 +90,9 @@ func gen_troops(fac: String, n: int, quality: float) -> Array:
 func make_party(kind: String, fac: String, name: String, x: float, y: float, troops: Array, extra := {}) -> Dictionary:
 	var p := {"id": _next_party_id, "kind": kind, "fac": fac, "name": name, "x": x, "y": y, "troops": troops,
 		"path": [], "pi": 0, "tid": null, "sid": null, "home": null, "state": "idle", "wait": 0.0,
-		"hide": false, "gold": 0, "hold": 0, "cd": 0.0, "ai": 0.0, "rp": 0.0, "fx": 1.0}
+		"hide": false, "gold": 0, "hold": 0, "cd": 0.0, "ai": 0.0, "rp": 0.0, "fx": 1.0,
+		# goal of the AI (party_goals.gd): kind ("" = none), target id, hours held, score when taken; old saves lack them
+		"goal": "", "gid": null, "ga": 0.0, "gs": 0.0}
 	_next_party_id += 1
 	p.merge(extra, true)
 	parties.append(p)

@@ -7,7 +7,7 @@ const Checkpoint = preload("res://core/campaign/world/world_checkpoint.gd")
 const VERSION := 2
 const MAX_PAYLOAD_BYTES := 16 * 1024 * 1024
 const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0", "vass", "blk"]
-const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner", "relief", "fight"]
+const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner", "relief", "fight", "gid"]
 
 static func to_dict(state: RefCounted) -> Dictionary:
 	var values := Checkpoint.capture(state)
