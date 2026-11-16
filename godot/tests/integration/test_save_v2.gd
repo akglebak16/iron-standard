@@ -48,6 +48,7 @@ func _initialize() -> void:
 			q.erase(k)
 	var pre_migrated := Save.from_dict(JSON.parse_string(JSON.stringify(pre_goals)), europe, ContentLoader.registry())
 	assert(pre_migrated != null and pre_migrated.roster.parties.all(func(q): return not q.has("goal")))
+	pre_migrated.waiting = true  # the world only runs while the party travels or waits (WorldState.advance)
 	for i in 40:
 		pre_migrated.advance(0.137)
 	assert(pre_migrated.roster.parties.any(func(q): return q.get("goal", "") != ""), "old parties get new goals")
