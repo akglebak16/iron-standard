@@ -4,7 +4,7 @@ extends SceneTree
 ## is reported for comparison between profiles, the release budget is measured separately.
 ##
 ##   godot --headless --path godot --script res://tests/performance/battle_arena.gd -- \
-##     --scenarios=mixed,infantry_cavalry,archers,siege,kite --sizes=100,500,1000 --runs=8 --seed=4242 \
+##     --scenarios=mixed,infantry_cavalry,archers,siege,kite,spears --sizes=100,500,1000 --runs=8 --seed=4242 \
 ##     --profiles=reference,reference --max-seconds=240 --backend=native --mirror --out=arena.json
 ##
 ## Profiles are BattleSetup AI profiles (ADR-022): the first plays side 0, the second side 1; --mirror adds a
