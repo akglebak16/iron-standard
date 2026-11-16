@@ -143,7 +143,7 @@ static func _line_aim(battle: State, group: Group, side: int, sample: Sample) ->
 	var best := Vector2.INF
 	var best_distance := INF
 	for foe: Group in battle.groups[1 - side]:
-		var squad := sample_group(battle, foe, false)
+		var squad := sample_group(battle, foe, false, true)
 		if squad.ready < Config.AI_SQUAD_MIN_UNITS:
 			continue
 		var at := Sample.cluster(squad.points, middle)
@@ -166,9 +166,16 @@ static func _march(group: Group, sample: Sample, aim: Vector2) -> void:
 ## Spearmen of a holding infantry group cover the own archers when enemy riders close in on them.
 static func _screen(battle: State, group: Group, side: int) -> void:
 	group.screen = Vector2.INF
-	var archers := sample_group(battle, battle.groups[side][Config.GROUP_ARCHERS], false)
-	var riders := sample_group(battle, battle.groups[1 - side][Config.GROUP_CAVALRY], false)
-	if archers.ready == 0 or riders.riders == 0:
+	# Cheapest checks first: most decisions end here without sampling (no archers, no riders, no infantry).
+	var archer_group: Group = battle.groups[side][Config.GROUP_ARCHERS]
+	var rider_group: Group = battle.groups[1 - side][Config.GROUP_CAVALRY]
+	if group.units.is_empty() or archer_group.units.is_empty() or rider_group.units.is_empty():
+		return
+	var archers := sample_group(battle, archer_group, false)
+	if archers.ready == 0:
+		return
+	var riders := sample_group(battle, rider_group, false)
+	if riders.riders == 0:
 		return
 	var archer_center := archers.mean_position()
 	var rider_center := riders.mean_position()
@@ -188,7 +195,7 @@ static func _cavalry(battle: State, group: Group) -> void:
 		group.rally = false
 		group.contact_seconds = 0.0
 		return
-	var sample := sample_group(battle, group)
+	var sample := sample_group(battle, group, true, false, group.rally)
 	if sample.ready == 0:
 		group.rally = false
 		return
@@ -227,7 +234,8 @@ static func _clear_of_wall(battle: State, a: Vector2, b: Vector2) -> bool:
 	return absf(a.x - x) >= reach and absf(b.x - x) >= reach and (a.x < x) == (b.x < x)
 
 ## `targets` false: positions, offsets and riders only, without looking up targets (other squads, the screen).
-static func sample_group(battle: State, group: Group, targets := true) -> Sample:
+## `points` keeps every sampled position (the aim at another squad), `slots` sums the distances to the slots (a rally).
+static func sample_group(battle: State, group: Group, targets := true, points := false, slots := false) -> Sample:
 	var sample := Sample.new()
 	var motion = battle.motion
 	var flags: PackedInt64Array = motion.integer_fields
@@ -239,7 +247,6 @@ static func sample_group(battle: State, group: Group, targets := true) -> Sample
 	var fields = motion.I
 	var count := group.units.size()
 	var stride := maxi(1, ceili(float(count) / Config.AI_SQUAD_SAMPLE_LIMIT))
-	var rally_check := group.kind == Config.GROUP_CAVALRY
 	for index in range(0, count, stride):
 		var row: int = group.units[index].battle_index
 		if row < 0 or flags[fields.DEAD * capacity + row] or flags[fields.GONE * capacity + row] or flags[fields.FLEEING * capacity + row] or flags[fields.HERO * capacity + row]:
@@ -247,10 +254,11 @@ static func sample_group(battle: State, group: Group, targets := true) -> Sample
 		var at := positions[row]
 		var offset := vectors[motion.V.SLOT_OFFSET * capacity + row]
 		sample.ready += 1
-		sample.points.append(at)
+		if points:
+			sample.points.append(at)
 		sample.position_sum += at
 		sample.offset_sum += offset
-		if rally_check:
+		if slots:
 			sample.slot_distance_sum += at.distance_to(group.formation_point(offset, group.center, battle.arena_size))
 		var melee_rider := reals[motion.R.ATTACK_RANGE * capacity + row] <= 0.0 and flags[fields.MOUNTED * capacity + row] != 0
 		if melee_rider:
