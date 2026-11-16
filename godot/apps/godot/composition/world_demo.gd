@@ -15,7 +15,8 @@ const WorldCamera = preload("res://apps/godot/presentation/campaign/world_camera
 const PartyLayer = preload("res://apps/godot/presentation/campaign/party_layer.gd")
 const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounter_dialog.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
-const SaveStore = preload("res://adapters/persistence/save_store.gd")
+const SaveSlots = preload("res://adapters/persistence/save_slots.gd")
+const SaveSlotsWindow = preload("res://apps/godot/composition/save_slots_window.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
 const UiSounds = preload("res://apps/godot/presentation/campaign/ui_sounds.gd")
 const ResultWindow = preload("res://apps/godot/composition/battle_result_window.gd")
@@ -42,6 +43,8 @@ const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")
 const LoadingView = preload("res://apps/godot/presentation/campaign/campaign_loading_view.gd")
 
 signal title_requested
+## Start the campaign scene again (loading another save from the pause menu).
+signal campaign_requested
 
 var state: RefCounted
 var map_view: Node2D
@@ -54,6 +57,7 @@ var _result: CanvasLayer
 var _auto_report := false
 var _siege: CanvasLayer
 var _menu: CanvasLayer
+var _slots: CanvasLayer
 var _marks: Node2D
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
@@ -106,9 +110,10 @@ func _ready() -> void:
 		loading.show_error("Не удалось открыть данные кампании.")
 		return
 	if GameOptions.continue_game:
-		state = SaveStore.load_state(data)
+		var loaded := SaveSlots.load_slot(data, GameOptions.load_slot)
+		state = loaded.state
 		if state == null:
-			loading.show_error("Не удалось загрузить сохранение. Файлы сохранений оставлены без изменений.")
+			loading.show_error(loaded.error)
 			return
 	if state == null:
 		var registry := ContentLoader.registry()
@@ -198,7 +203,13 @@ func _ready() -> void:
 			var current := _preferences.read()
 			_battle.apply_preferences(current.effects, current.music, _preferences.read_blood())
 			_battle.set_menu_open(false))
-	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
+	_slots = SaveSlotsWindow.new()
+	_slots.name = "SaveSlots"
+	add_child(_slots)
+	_slots.closed.connect(func(): state.clock.paused = false)
+	_slots.load_chosen.connect(_load_slot)
+	_menu.save_requested.connect(func(): _open_slots(true))
+	_menu.load_requested.connect(func(): _open_slots(false))
 	_menu.title_requested.connect(func(): _autosave.save(state, _battle != null); title_requested.emit())
 	_result = ResultWindow.new()
 	_result.name = "BattleResult"
@@ -558,6 +569,20 @@ func _set_world_visible(on: bool) -> void:
 	camera.enabled = on
 	camera.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 
+## The save/load screen replaces the pause menu; the map stays paused while it is open.
+func _open_slots(saving: bool) -> void:
+	if _battle != null:
+		return
+	_menu.close_window()
+	state.clock.paused = true
+	if saving: _slots.open_save(state)
+	else: _slots.open_load(true)
+
+func _load_slot(id: String) -> void:
+	GameOptions.continue_game = true
+	GameOptions.load_slot = id
+	campaign_requested.emit()
+
 func _open_panel(tab: String) -> void:
 	if tab == "menu":
 		state.clock.paused = true
@@ -568,7 +593,7 @@ func _open_panel(tab: String) -> void:
 	_party_window.open_for(state, tab)
 
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
-	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible:
+	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible or _slots.visible:
 		hud.show_tip({}, screen_pos)
 		return
 	var p: Dictionary = state.party_near(world_pos.x, world_pos.y, 30.0)
@@ -593,7 +618,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			state.clock.paused = true
 			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal", KEY_K: "factions"}[(event as InputEventKey).keycode])
 		KEY_F5:
-			hud.show_notice("Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
+			hud.show_notice("Быстрое сохранение" if SaveSlots.save(state, SaveSlots.QUICK) else "Не удалось сохранить")
 		KEY_ESCAPE:
 			if _menu.visible:
 				_menu.close_window()

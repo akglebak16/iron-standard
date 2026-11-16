@@ -44,6 +44,7 @@ func _show_campaign() -> void:
 	var campaign := Campaign.instantiate()
 	campaign.profile_startup = _profile_campaign_start
 	campaign.title_requested.connect(_request_menu)
+	campaign.campaign_requested.connect(_request_campaign)
 	_replace(campaign)
 
 func _request_campaign() -> void:
