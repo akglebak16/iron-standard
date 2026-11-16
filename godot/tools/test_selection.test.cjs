@@ -35,7 +35,9 @@ assert.deepStrictEqual(pick(['docs/README.md', 'core/troops/rules/troop.gd.uid']
 assert.strictEqual(pick(['project.godot']), 'FULL');
 assert.deepStrictEqual(pick(['tools/anything.cjs']), ['tests/architecture/test_boundaries.gd'], 'Node scripts have their own checks');
 assert.strictEqual(pick(['tools/native_build.cjs']), 'FULL', 'The native kernel changes every battle');
-assert.strictEqual(pick(['tools/anything.gd']), 'FULL');
+// Godot-скрипт в tools/, на который не ссылается ни один тест, запускает только проверку границ
+assert.deepStrictEqual(pick(['tools/anything.gd']), ['tests/architecture/test_boundaries.gd'], 'Tool scripts go through the graph');
+assert.strictEqual(pick(['tools/native_bootstrap.ps1']), 'FULL', 'Native toolchain changes every battle');
 // превью и эталонные кадры в tools/ не трогают игру: полный набор из-за картинки не нужен
 assert.deepStrictEqual(pick(['tools/previews/birthday.png', 'tools/baseline/main_0300.png', 'tools/baseline/README.md']), ['tests/architecture/test_boundaries.gd']);
 assert.strictEqual(pick(['apps/godot/composition/theme.gd']), 'FULL');
