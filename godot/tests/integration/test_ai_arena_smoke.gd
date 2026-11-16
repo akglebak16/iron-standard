@@ -23,7 +23,7 @@ func _initialize() -> void:
 	_test_repeatable(catalog, options)
 	_test_mirror(catalog, options)
 	assert(Arena.validate({"scenarios": ["zz"], "sizes": [SIZE], "runs": 1, "max_seconds": 1.0, "profiles": ["", ""], "backend": "native"}) != "")
-	print("AI arena smoke passed")
+	print("AI arena smoke tests passed")
 	quit(0)
 
 func _check_cell(cell: Dictionary) -> void:
@@ -44,7 +44,7 @@ func _check_cell(cell: Dictionary) -> void:
 		assert(cell.summary.has("kite"))
 	else:
 		assert(run.profiles == [Config.AI_PROFILE_REFERENCE, Config.AI_PROFILE_REFERENCE])
-		assert(run.losses[0] + run.losses[1] > 0.0, "AI against AI fights in %s" % cell.scenario)
+		assert(run.never_engaged[0] < 1.0 and run.never_engaged[1] < 1.0, "AI against AI fights in %s" % cell.scenario)
 
 func _metrics(run: Dictionary) -> String:
 	var copy := run.duplicate(true)

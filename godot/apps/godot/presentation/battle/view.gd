@@ -23,6 +23,7 @@ const BattleCamera = preload("res://apps/godot/presentation/battle/battle_camera
 const BattleControls = preload("res://apps/godot/presentation/battle/hud/battle_controls.gd")
 const SiegeDefenseView = preload("res://apps/godot/presentation/battle/siege_defense_view.gd")
 const GroundBake = preload("res://apps/godot/presentation/battle/ground_bake.gd")
+const AiDebugOverlay = preload("res://apps/godot/presentation/battle/hud/ai_debug_overlay.gd")
 const STONE_SHAKE_DISTANCE := 170.0
 const STONE_SHAKE_SECONDS := 0.22
 const PLAYBACK_SPEEDS := [1.0, 2.0, 0.5]
@@ -60,6 +61,7 @@ var _result_summary := ""
 var _terrain := TerrainView.new()
 var _vegetation := VegetationView.new()
 var _order_marker := OrderMarker.new()
+var _ai_overlay := AiDebugOverlay.new()
 var _paused := false
 var _speed_index := 0
 var _attack_pressed := false
@@ -268,6 +270,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_E: _order(Config.ORDER_FOLLOW, _frame.hero_position)
 		KEY_R: _order(Config.ORDER_CHARGE, _frame.hero_position)
 		KEY_F: _order(Config.ORDER_RETREAT, _frame.hero_position)
+		KEY_F3: # AiDebugOverlay.TOGGLE_KEY
+			_ai_overlay.toggle(_simulation, $Hud)
+			queue_redraw()
 		KEY_P: _toggle_pause()
 		KEY_T: _cycle_speed()
 		KEY_ESCAPE: menu_requested.emit()
@@ -384,6 +389,7 @@ func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame
 	if attract_mode:
 		camera.position = Vector2(_frame.arena_size) * 0.5
 	_navigation.update_frame(_frame, dt)
+	if _ai_overlay.enabled: _ai_overlay.update(_simulation)
 	var finished: bool = _frame.outcome in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]
 	_feedback.add_dialogue(_dialogue.advance_compact(dt, _frame.render, events, not _frame.walls.is_empty(), finished))
 	_update_status()
@@ -438,6 +444,7 @@ func _draw() -> void:
 		ProjectileView.draw(self, shot)
 	var particles_started := Time.get_ticks_usec() if profile_frames else 0
 	_impacts.draw_particles(self)
+	_ai_overlay.draw_world(self)
 	var feedback_started := Time.get_ticks_usec() if profile_frames else 0
 	_feedback.draw(self)
 	if not attract_mode: _dialogue.draw(self)
