@@ -1,7 +1,8 @@
 extends SceneTree
 ## Operations of factions in a live world (world_wars.gd, DESIGN.md §5.3, stage 2b): the marshal leads the host, lords
 ## stay home by threatened settlements, relief of an own besieged settlement, retreat, and sieges of the player's
-## holdings instead of storms by lords passing by. Every check starts from a map cleared of parties.
+## holdings instead of storms by lords passing by. Every check starts from a map cleared of parties; one world is
+## built (4 s) and its settlements, wars, relations, campaigns and journal are reset between the checks.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -9,6 +10,10 @@ const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Config = preload("res://core/campaign/config.gd")
 
 var data := EuropeData.new()
+var _shared: RefCounted = null
+var _settles0: Array = []
+var _wars0 := {}
+var _rel0 := {}
 
 func _initialize() -> void:
 	assert(ContentLoader.populate(data))
@@ -17,13 +22,31 @@ func _initialize() -> void:
 	_check_relief()
 	_check_player_holding()
 	_check_empty_lands()
+	_shared.dispose()
 	print("World operations tests passed")
 	quit(0)
 
 func _world() -> RefCounted:
-	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
+	if _shared == null:
+		_shared = WorldState.create(5, data, "emp", ContentLoader.registry())
+		_settles0 = _shared.map.settles.duplicate(true)
+		_wars0 = _shared.wars.wars.duplicate(true)
+		_rel0 = _shared.player.rel.duplicate(true)
+	else:
+		for i in _settles0.size():
+			var st: Dictionary = _shared.map.settles[i]
+			st.clear()
+			st.merge(_settles0[i].duplicate(true))
+		_shared.wars.wars.clear()
+		_shared.wars.wars.merge(_wars0.duplicate(true))
+		_shared.wars.campaigns.clear()
+		_shared.player.rel = _rel0.duplicate(true)
+		_shared.journal.clear()
+	var s = _shared
 	s.roster.parties.clear()
 	s.wars.hour = 0
+	s._threat_step += 1  # the threat map is rebuilt from the parties this check places
+	assert(s.roster.diplomatic_wars == s.wars.wars)
 	return s
 
 static func _place(s, kind: String, fac: String, skip: Array = []) -> Dictionary:
@@ -104,7 +127,6 @@ func _check_marshal_and_defenders() -> void:
 	assert(events.back().what == "retreat" and events.back().why == "weak")
 	assert(not a.army and not b.army, "the lords are free again")
 	assert(foe in s.roster.parties)
-	s.dispose()
 
 ## An own town besieged near the marshal recalls a campaign against a castle; the host becomes its relief at once.
 func _check_recall() -> void:
@@ -129,7 +151,6 @@ func _check_recall() -> void:
 	assert(events.back().what == "relief" and events[events.size() - 2].why == "home", "retreat for home, then relief: %s" % [events])
 	assert(a.get("relief") == besieged.id and a.army, "the former host rides to the besieged town")
 	assert(int(besieged.siege.relN) == 1)
-	s.dispose()
 
 ## Relief reaches farther than before, one at a time per faction, and is not thrown at a hopeless siege.
 func _check_relief() -> void:
@@ -161,7 +182,6 @@ func _check_relief() -> void:
 	var l3 := _lord(s, "emp", "Одинокий", t3, 200, "e3", 120)
 	w._siege_tick(t3)
 	assert(l3.get("relief") == null and int(t3.siege.get("relN", 0)) == 0, "hopeless relief is not sent")
-	s.dispose()
 
 ## The player's holdings: no storm by a lord passing by; a faction hostile to the player besieges them in a campaign,
 ## the journal tells the player, and the siege is lifted or the holding taken by the rules of every siege.
@@ -220,7 +240,6 @@ func _check_player_holding() -> void:
 	assert(kt.fac == "khan" and kt.get("owner") == null, "the town is lost")
 	assert(s.journal.any(func(j): return "Владение потеряно" in j.text and j.kind == WorldState.JOURNAL_BAD))
 	assert(not news.any(func(t): return "пало" in t), "losing the last holding is not the fall of a state: %s" % [news])
-	s.dispose()
 
 ## A faction without settlements or without enemies starts no campaign.
 func _check_empty_lands() -> void:
@@ -241,4 +260,3 @@ func _check_empty_lands() -> void:
 	w._campaign("emp")
 	assert(not w.campaigns.has("emp"), "no lands, no campaign")
 	assert(w.ops.alerts("emp", s.map.settles, w._threat_at).is_empty())
-	s.dispose()

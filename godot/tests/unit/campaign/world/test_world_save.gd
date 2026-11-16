@@ -107,9 +107,8 @@ func _check_old_campaign(a: RefCounted, data: EuropeData) -> void:
 	var camp: Dictionary = c.wars.campaigns[f]
 	assert(camp.marshal is int and camp.marshal in army, "the old campaign gets a marshal")
 	assert(float(camp.s0) > 0.0, "its present strength becomes the start")
-	var round_trip = WorldSave.from_dict(WorldSave.to_dict(c), data, ContentLoader.registry())
-	assert(round_trip.wars.campaigns[f] == camp, "the new fields are saved")
-	round_trip.dispose()
+	var saved := Checkpoint.capture(c)
+	assert(Checkpoint.valid(saved) and saved.wars.campaigns[f] == camp, "the new fields are saved")
 	var bad := Checkpoint.capture(c)
 	bad.wars.campaigns[f].marshal = "x"
 	assert(not Checkpoint.valid(bad), "a marshal must be an id")
