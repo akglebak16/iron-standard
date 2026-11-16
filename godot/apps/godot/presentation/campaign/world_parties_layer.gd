@@ -10,6 +10,7 @@ const DRAW_MARGIN := 64.0 # banner, hostile ring and shadow extend beyond the pa
 
 var roster: RefCounted
 var player: RefCounted
+var motion: RefCounted # world_motion.gd; draws parties between steps
 var _factions := FactionCatalog.new()
 
 func build(party_roster: RefCounted, player_party: RefCounted) -> void:
@@ -38,6 +39,8 @@ func _draw_party(p: Dictionary) -> void:
 	var look := _factions.get_faction(p.fac)
 	if p.fac == "player": look = OriginalArt.palette("player")
 	var at := Vector2(p.x, p.y)
+	if motion != null:
+		at = motion.at(int(p.id), at)
 	var noble: bool = p.kind == "lord" or p.kind == "dead"
 	var scale := 1.15 if noble else (0.7 if p.kind == "caravan" else 0.9)
 	draw_colored_polygon(Brush.ellipse(at.x + 2, at.y + 3, 20 * scale, 7 * scale, 14), Color(0, 0, 0, 0.28))

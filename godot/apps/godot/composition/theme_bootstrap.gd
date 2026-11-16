@@ -4,3 +4,8 @@ extends Node
 ## the original theme before any game scene creates controls.
 func _enter_tree() -> void:
 	ThemeDB.get_project_theme().merge_with(load("res://apps/godot/visuals/game_theme.tres"))
+
+func _ready() -> void:
+	var overlay: CanvasLayer = preload("res://apps/godot/composition/fps_overlay.gd").new()
+	overlay.visible = preload("res://apps/godot/composition/presentation_preferences.gd").new().read_fps()
+	add_child(overlay)

@@ -95,7 +95,7 @@
 | Осада на карте: блокада, голод, вылазки, деблокада, переговоры, разграбление | `05i_siege.js` | `world_siege.gd`, `world_wars.gd`, `siege_window.gd` | `test_world_siege.gd`, `test_siege_window.gd` | совпадает и проверено | |
 | Расчётный бой | `05c_logic.js` `autoResult` | `auto_battle.gd` | `test_auto_battle.gd` | совпадает и проверено | |
 | Встреча с отрядом, переговоры | `06_ui.js` `openEncounter`, `06e_war.js` `parleyBody` | `encounter_dialog.gd` | `test_encounter_aftermath.gd` | совпадает и проверено | |
-| Плавное движение отрядов между тиками | `07_main.js` `snapWorld`, `rpos` | `party_layer.gd` | — | совпадает и проверено | |
+| Плавное движение отрядов между тиками | `07_main.js` `snapWorld`, `rpos` | `world_motion.gd`, `party_layer.gd`, `world_parties_layer.gd` | `test_map_motion_fps.gd` | совпадает и проверено | До 2026-11-16 отряды рисовались без сглаживания и шли рывками раз в шаг |
 
 ## Окна и меню
 
