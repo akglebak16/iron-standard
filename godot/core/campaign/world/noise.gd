@@ -22,8 +22,6 @@ class ValueNoise extends RefCounted:
 		_p.resize(4096)
 		for i in 4096:
 			_p[i] = rng.next()
-	func _at(x: int, y: int) -> float:
-		return _p[(x & 63) + (y & 63) * 64]
 	func _n1(x: float, y: float) -> float:
 		var xi := floori(x)
 		var yi := floori(y)
@@ -31,10 +29,14 @@ class ValueNoise extends RefCounted:
 		var fy := y - yi
 		fx = fx * fx * (3.0 - 2.0 * fx)
 		fy = fy * fy * (3.0 - 2.0 * fy)
-		var a := _at(xi, yi)
-		var b := _at(xi + 1, yi)
-		var c := _at(xi, yi + 1)
-		var d := _at(xi + 1, yi + 1)
+		var left := xi & 63
+		var right := (xi + 1) & 63
+		var row := (yi & 63) * 64
+		var next_row := ((yi + 1) & 63) * 64
+		var a := _p[row + left]
+		var b := _p[row + right]
+		var c := _p[next_row + left]
+		var d := _p[next_row + right]
 		var top := a + (b - a) * fx
 		var bottom := c + (d - c) * fx
 		return top + (bottom - top) * fy
