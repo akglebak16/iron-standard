@@ -1,5 +1,6 @@
 extends RefCounted
-## Lines for the Glebio/Zahariy pair (src/03b_gore.js BANTER, BANTER_DOWN). Presentation text only: no rules read it.
+## Companion pairs that talk to each other (src/03b_gore.js BANTER, BANTER_DOWN) and the Zahariy/Vikenty
+## line (#39), which grows with the pair's levels. Presentation text only: no rules read it.
 const FIRST_ID := "glebio"
 const SECOND_ID := "zahariy"
 # [who speaks first ("g" = Glebio, "z" = Zahariy), first line, reply]
@@ -12,9 +13,71 @@ const EXCHANGES := [
 	["z", "Глебушка, я тебе цветочек принёс. Это, ну, репейник.", "Лучший букет в моей жизни, сука, я щас заплачу!"],
 	["g", "Захарка, смотри на меня, а не на врагов!", "А я и смотрю! Ой, меня бьют!"],
 	["z", "Мамка сказала: найди шляхтича. Я нашёл!", "Передай мамке: я согласен, курва!"],
+	["z", "Глебушка, а ты за Доминион или за Пакт?", "Я за тебя, Захарка. Остальное политика, бля."],
+	["g", "Захарка, ты хоть раз был дальше околицы?", "Был. Сегодня. Жалею, Глебушка, очень жалею."],
+	["z", "После войны поселимся у меня. Никуда не выходим. Никогда.", "Курва, Захарка, это лучшее, что я слышал."],
 ]
 # Keyed by who fell; the survivor answers.
 const DOWN_REPLIES := {
 	"glebio": ["Глебушка! Ты чего лёг?! Я тебе пирог принесу!", "Глебушка, вставай, я не умею без тебя!"],
 	"zahariy": ["Захарка, не смей помирать, я тебе ещё не сказал, курва!", "Захарка, ёб твою мать, держись!"],
 }
+
+# Zahariy and Vikenty: a homebody who lives for politics and a sad monk-healer looking for happiness.
+# Stages follow the lower of the two levels (1–3, 4–6, 7+), like companion skill ranks.
+const ZV_EXCHANGES := [
+	[
+		["z", "Брат Викентий, ты за кого — за князя или за вече?", "За того, кто перевяжет мне душу. Пока никто."],
+		["v", "Захарий, держись ближе. Я лекарь, мне так спокойнее.", "Ближе — это почти как дома. Ладно."],
+		["z", "Ты всё грустишь. Может, тебе домой надо? Мне вот надо.", "Дом там, где не грустно. Я такого не нашёл."],
+	],
+	[
+		["v", "Захарий, рядом с тобой почти не грустно. Странно.", "Это потому что я никуда не хочу. Со мной спокойно."],
+		["z", "Викентий, я тебе подорожник сорвал. Для лечения. И вообще.", "Подорожник… Захарий, это почти таблетка счастья."],
+		["v", "Береги голову, Захарий. Мне её потом лечить.", "Лечи, если надо. Тебе можно."],
+	],
+	[
+		["z", "После войны пойдём ко мне. Будем сидеть дома. Вдвоём.", "Впервые хочу в тишину не от тоски, Захарий."],
+		["v", "Кажется, я нашёл таблетку счастья. Она с дубиной.", "Головка, слышала? Это он про нас."],
+		["z", "Викентий, я ради тебя вышел из дома. И не жалею. Почти.", "Самое смелое, что я слышал от домоседа."],
+	],
+]
+const ZV_DOWN := {
+	"zahariy": ["Захарий! Не смей, я тебя вылечу!", "Держись, домосед. Я уже бегу с бинтами."],
+	"vikenty": ["Викентий! Вставай, я тебя домой унесу!", "Брат Викентий, ты чего? Кто меня лечить будет?"],
+}
+# Outside battle: while the party waits ("camp") and in the battle report ("win", "lose").
+const ZV_CAMP := [
+	[["z", "Хорошо стоим. Почти как дома.", "Тихо. Даже грусть отдыхает."], ["v", "Захарий, ты правда никогда не уходил из Полоцка?", "Однажды до колодца. Жалею до сих пор."]],
+	[["z", "Викентий, посиди со мной у костра. Про князей расскажу.", "Расскажи. Твой голос лучше любых таблеток."], ["v", "Дай руку, у тебя ссадина. Просто ссадина. Сиди.", "Сижу. Мне нравится, когда ты лечишь."]],
+	[["z", "А в монастыре у тебя есть печка? Я бы там жил.", "Если ты будешь жить, Захарий, я поставлю две."], ["v", "Знаешь, мне сегодня не грустно. Совсем.", "Это я. Я хороший домосед."]],
+]
+const ZV_WIN := [
+	[["v", "Живы. Уже неплохо.", "Живы. Теперь бы домой."]],
+	[["z", "Викентий, ты цел? Покажи руки.", "Цел. Ты первым спросил. Спасибо."]],
+	[["v", "Ты дрался, будто защищал наш дом.", "А я и защищал. Ты теперь мой дом, брат Викентий."]],
+]
+const ZV_LOSE := [
+	[["z", "Говорил же: не надо было выходить.", "Говорил. Я запомнил."]],
+	[["v", "Мы проиграли, но ты жив. Это главное.", "Главное, что ты рядом. Остальное — политика."]],
+	[["v", "Мы проиграли, но ты жив. Это главное.", "Главное, что ты рядом. Остальное — политика."]],
+]
+
+# Every pair: who is "first" in the speaker tags, lines by stage, replies when one falls.
+const PAIRS := [
+	{"first": FIRST_ID, "second": SECOND_ID, "tags": ["g", "z"], "battle": [EXCHANGES], "down": DOWN_REPLIES},
+	{"first": "zahariy", "second": "vikenty", "tags": ["z", "v"], "battle": ZV_EXCHANGES, "down": ZV_DOWN,
+		"camp": ZV_CAMP, "win": ZV_WIN, "lose": ZV_LOSE},
+]
+const LEVELS_PER_STAGE := 3
+
+## Stage of a pair from the companions' levels: 0 until both reach 4, 1 until both reach 7, then 2.
+static func stage(level_a: int, level_b: int) -> int:
+	return clampi((mini(level_a, level_b) - 1) / LEVELS_PER_STAGE, 0, 2)
+
+## The exchanges of `kind` ("battle", "camp", "win", "lose") for the pair at this stage.
+static func lines_for(pair: Dictionary, kind: String, stage_index: int) -> Array:
+	var stages: Array = pair.get(kind, [])
+	if stages.is_empty():
+		return []
+	return stages[mini(stage_index, stages.size() - 1)]

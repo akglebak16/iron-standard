@@ -1,6 +1,7 @@
 extends "res://apps/godot/presentation/campaign/modal_window.gd"
 ## Pause menu with settings: save, sound, music, gore, back to the title (openMenu in src/06_ui.js).
 const Preferences = preload("res://apps/godot/composition/presentation_preferences.gd")
+const FpsOverlay = preload("res://apps/godot/composition/fps_overlay.gd")
 
 signal save_requested
 signal title_requested
@@ -37,6 +38,8 @@ func render() -> void:
 	_menu_button("Звук: %s" % ("включён" if audio.effects else "выключен"), func(): _audio_setting(not audio.effects, audio.music))
 	_menu_button("Музыка: %s" % ("включена" if audio.music else "выключена"), func(): _audio_setting(audio.effects, not audio.music))
 	_menu_button("Расчленёнка: %s" % ("включена" if blood else "выключена"), func(): _blood_setting(not blood))
+	var fps := preferences.read_fps()
+	_menu_button("Счётчик FPS: %s" % ("включён" if fps else "выключен"), func(): _fps_setting(not fps))
 	_menu_button("В главное меню", func(): title_requested.emit(), false, true)
 	heading("Управление")
 	if battle_mode:
@@ -54,6 +57,10 @@ func _blood_setting(blood: bool) -> void:
 	preferences.save_blood(blood)
 	var audio := preferences.read()
 	settings_changed.emit(audio.effects, audio.music, blood)
+
+func _fps_setting(on: bool) -> void:
+	preferences.save_fps(on)
+	FpsOverlay.set_enabled(on)
 
 func _menu_button(text: String, action: Callable, primary := false, danger := false) -> void:
 	var button := Button.new()

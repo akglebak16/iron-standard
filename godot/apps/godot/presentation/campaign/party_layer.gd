@@ -11,6 +11,7 @@ var _figure: Dictionary = {}
 
 var party: RefCounted
 var look: Dictionary = {}
+var motion: RefCounted # world_motion.gd; draws the marker between steps
 
 func build(player: RefCounted, player_look: Dictionary, gear: RefCounted = null) -> void:
 	party = player
@@ -23,14 +24,16 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if party == null:
 		return
+	var p := Vector2(party.x, party.y)
+	if motion != null:
+		p = motion.at(-1, p)
 	if party.has_route():
-		var pts := PackedVector2Array([Vector2(party.x, party.y)])
+		var pts := PackedVector2Array([p])
 		for i in range(party.pi, party.path.size()):
 			pts.append(party.path[i])
 		_dashed(pts, Color(20 / 255.0, 12 / 255.0, 4 / 255.0, 0.8), 5.0)
 		_dashed(pts, Color("#ffe9a0"), 2.6)
 		draw_arc(pts[pts.size() - 1], 9.0, 0.0, TAU, 20, Color("#ffe9a0"), 2.6, true)
-	var p := Vector2(party.x, party.y)
 	draw_colored_polygon(Brush.ellipse(p.x + 2, p.y + 3, 24, 8, 16), Color(0, 0, 0, 0.3))
 	draw_arc(p + Vector2(0, 1), 26.0, 0.0, TAU, 28, Color("#ffd86a"), 2.0, true)
 	if gear_catalog != null:

@@ -36,6 +36,8 @@ const PresentationPreferences = preload("res://apps/godot/composition/presentati
 const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_parties_layer.gd")
+const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
+const CompanionRemarks = preload("res://apps/godot/presentation/campaign/companion_remarks.gd")
 const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")
 
 signal title_requested
@@ -61,12 +63,16 @@ var _battle: Node2D
 var _preferences := PresentationPreferences.new()
 var _factions := FactionCatalog.new()
 var _waiting_return := false
+var _motion := WorldMotion.new()
+var _remark_rng := RandomNumberGenerator.new()
+var _camp_hour := 0
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
 var cache_static_artwork := true
 
 func _ready() -> void:
+	_remark_rng.randomize()
 	var loading := Label.new()
 	loading.text = "Строю карту…"
 	loading.position = Vector2(24, 24)
@@ -113,12 +119,14 @@ func _ready() -> void:
 	var others := WorldPartiesLayer.new()
 	map_view.add_child(others)
 	others.build(state.roster, state.player)
+	others.motion = _motion
 	_marks = WorldMarksLayer.new()
 	map_view.add_child(_marks)
 	_marks.build(state)
 	var party_layer := PartyLayer.new()
 	map_view.add_child(party_layer)
 	party_layer.build(state.player, preload("res://apps/godot/visuals/original_art.gd").palette("player"), state.gear)
+	party_layer.motion = _motion
 	camera = WorldCamera.new()
 	add_child(camera)
 	camera.make_current()
@@ -135,7 +143,7 @@ func _ready() -> void:
 	hud.pause_toggled.connect(func(): state.clock.paused = not state.clock.paused)
 	_town = TownWindow.new()
 	add_child(_town)
-	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; hud.show_notice("Ждём: %s. Клик по карте — в путь" % s.name))
+	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; state.waiting = true; hud.show_notice("Ждём: %s. Любой клик по карте или Z — в путь" % s.name))
 	_town.closed.connect(func(): state.clock.paused = false)
 	_party_window = PartyWindow.new()
 	_party_window.stat_preview = HeroStats.preview
@@ -170,7 +178,7 @@ func _ready() -> void:
 	_siege.assault.connect(_on_assault)
 	_siege.closed.connect(func(): if not _siege_hold: state.clock.paused = false)
 	state.siege_requested.connect(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s))
-	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null))
+	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town_remark(s); _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null))
 	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
 	state.log_added.connect(func(text: String):
 		hud.show_notice(text)
@@ -205,6 +213,7 @@ func _on_map_click(at: Vector2) -> void:
 		return
 	var p = state.player
 	p.tid = -1
+	state.waiting = false
 	var prey: Dictionary = state.party_near(at.x, at.y, 34.0)
 	if not prey.is_empty():
 		state.chase(prey)
@@ -223,7 +232,8 @@ func _on_map_click(at: Vector2) -> void:
 		p.path_to(state.map.paths, target.x, target.y)
 	else:
 		p.enter_id = -1
-		p.path_to(state.map.paths, at.x, at.y)
+		if not p.path_to(state.map.paths, at.x, at.y):
+			hud.show_notice("Туда не пройти")
 
 func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	_meeting = party
@@ -291,7 +301,7 @@ func _on_encounter_choice(action: String) -> void:
 		"greet":
 			_end_meeting(3.0)
 		"attack":
-			state.player.rel[p.fac] = maxi(-100, int(state.player.rel.get(p.fac, 0)) - (12 if p.kind == "caravan" else 30))
+			state.attack(p)
 			_start_battle(p)
 		"flee":
 			var chance := AutoBattle.flee_chance(state.player.speed_of(state.map.paths), state.roster.speed_of(p), p.kind == "camp")
@@ -310,6 +320,7 @@ func _on_encounter_choice(action: String) -> void:
 
 func _vassal_talk(p: Dictionary) -> void:
 	var vs = state.vassals
+	state.waiting = false
 	var v: Dictionary = vs.of_id(String(p.get("cid", "")))
 	if v.is_empty():
 		_end_meeting(3.0)
@@ -350,6 +361,40 @@ func _end_meeting(cooldown: float) -> void:
 	state.player.busy = ""
 	state.clock.paused = false
 
+## Result notes plus a word from a companion who fought (win/lose lines).
+func _notes_with_remark(resolved: Dictionary) -> Array:
+	var notes: Array = ResultWindow.campaign_notes(resolved)
+	var fought: Array = resolved.summary.get("comps", {}).keys()
+	var kind := CompanionRemarks.WIN if resolved.summary.win else CompanionRemarks.LOSE
+	var pair := CompanionRemarks.pair_exchange(state.player.comps, fought, state.companion_catalog, kind, _remark_rng)
+	if not pair.is_empty() and _remark_rng.randf() < 0.5:
+		notes.append_array(pair)
+		return notes
+	var line := CompanionRemarks.pick(fought, state.companion_catalog, kind, _remark_rng)
+	if line != "":
+		notes.append(line)
+	return notes
+
+## While the party waits, a pair of companions talks now and then (written to the chronicle).
+func _camp_talk() -> void:
+	if not state.waiting or state.hours_passed - _camp_hour < CompanionRemarks.CAMP_EVERY_HOURS:
+		return
+	_camp_hour = state.hours_passed
+	if _remark_rng.randf() >= CompanionRemarks.CAMP_CHANCE:
+		return
+	var hired: Array = state.player.comps.map(func(c): return c.id)
+	for line in CompanionRemarks.pair_exchange(state.player.comps, hired, state.companion_catalog, CompanionRemarks.CAMP, _remark_rng):
+		state.log_world(line, state.JOURNAL_INFO)
+
+## Now and then a hired companion comments on the town (town lines), written to the chronicle.
+func _town_remark(s: Dictionary) -> void:
+	if s.get("kind") != "town" or _remark_rng.randf() >= CompanionRemarks.TOWN_CHANCE:
+		return
+	var hired: Array = state.player.comps.map(func(c): return c.id)
+	var line := CompanionRemarks.pick(hired, state.companion_catalog, CompanionRemarks.TOWN, _remark_rng)
+	if line != "":
+		state.log_world(line, state.JOURNAL_INFO)
+
 func _show_resolved(resolved: Dictionary) -> void:
 	if int(resolved.summary.get("levels_gained", 0)) > 0:
 		UiSounds.play(self, "level")
@@ -385,10 +430,12 @@ func _finish_auto(p: Dictionary) -> void:
 	state.clock.paused = true
 	_auto_report = true
 	_result.show_report(bool(resolved.summary.win), "Расчётный бой", ResultWindow.campaign_rows({}, resolved, _bridge.troops, _bridge.gear, _bridge.goods),
-		ResultWindow.campaign_notes(resolved), [["Продолжить", "continue"]])
+		_notes_with_remark(resolved), [["Продолжить", "continue"]])
 
 func _after_auto_report() -> void:
 	_auto_report = false
+	if int(state.player.hero.get("pts", 0)) > 0 or int(state.player.hero.get("pp", 0)) > 0:
+		hud.show_notice("Есть свободные очки: атрибуты и перки в окне героя (H)")
 	if _loot_pending.is_empty():
 		state.clock.paused = false
 	else:
@@ -430,7 +477,7 @@ func _start_battle(p: Dictionary) -> void:
 		var result: Dictionary = session.result()
 		_result.show_report(bool(resolved.summary.win), ResultWindow.duration(float(result.get("time", 0.0))),
 			ResultWindow.campaign_rows(result, resolved, _bridge.troops, _bridge.gear, _bridge.goods),
-			ResultWindow.campaign_notes(resolved), [["Продолжить", "continue"]]), CONNECT_ONE_SHOT)
+			_notes_with_remark(resolved), [["Продолжить", "continue"]]), CONNECT_ONE_SHOT)
 	_battle = view
 	_set_world_visible(false)
 	add_child(view)
@@ -446,6 +493,8 @@ func _return_to_map() -> void:
 	_autosave.save(state, false)
 	camera.make_current()
 	_siege_hold = false
+	if int(state.player.hero.get("pts", 0)) > 0 or int(state.player.hero.get("pp", 0)) > 0:
+		hud.show_notice("Есть свободные очки: атрибуты и перки в окне героя (H)")
 	if _loot_pending.is_empty():
 		state.clock.paused = false
 	else:
@@ -498,9 +547,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_return_to_map()
 			else:
 				hud.show_notice("")
-		KEY_P, KEY_H, KEY_J:
+		KEY_P, KEY_H, KEY_J, KEY_K:
 			state.clock.paused = true
-			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal"}[(event as InputEventKey).keycode])
+			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal", KEY_K: "factions"}[(event as InputEventKey).keycode])
 		KEY_F5:
 			hud.show_notice("Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
 		KEY_ESCAPE:
@@ -512,6 +561,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_siege.close_window()
 			elif _meeting.is_empty():
 				_open_panel("menu")
+		KEY_Z:
+			if _waiting_return or _meeting.size() > 0 or _result.visible:
+				return
+			hud.show_notice(state.toggle_wait())
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
 		KEY_1, KEY_2, KEY_3:
@@ -522,8 +575,10 @@ func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
 	state.advance(delta)
+	_camp_talk()
+	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):
 		_autosave.save(state, false)
 	if not camera.detached:
-		camera.position = Vector2(state.player.x, state.player.y)
+		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))

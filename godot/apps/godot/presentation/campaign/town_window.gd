@@ -86,7 +86,7 @@ func _recruits(p, fx: Dictionary) -> void:
 			{"sound": "coin", "text": "×5", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 5, fx)},
 		], r.type)
 	heading("Ожидание")
-	note("Время идёт как обычно, а отряд стоит у стен. Любой клик по карте — в путь.")
+	note("Время идёт, а отряд стоит у стен. Любой клик по карте или Z — в путь.")
 	row("Подождать здесь", "", [{"sound": "click", "text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])
 
 func _tavern(p) -> void:

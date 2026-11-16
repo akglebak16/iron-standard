@@ -1,6 +1,6 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-## Settlements, roads and pathfinding must match the browser (fixture from tools/campaign/export_world.cjs).
+## Settlements, roads and pathfinding must match the browser (frozen fixture exported from the removed JS version).
 const WorldMap = preload("res://core/campaign/world/world_map.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const FIXTURE := "res://tests/unit/campaign/fixtures/world_parity.json"

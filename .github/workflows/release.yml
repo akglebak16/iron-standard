@@ -1,12 +1,16 @@
-# Выпуск версии: Actions → «Выпустить версию» → Run workflow.
+# Выпуск версии: сам после каждого слияния PR в main, если в его разделе «## Для игрока» что-то есть.
+# Вручную: Actions → «Выпустить версию» → Run workflow.
+# Собирает Godot-игру для Windows, прогоняет полный набор тестов и release-smoke и выкладывает архив с игрой в Releases.
 # Заметки собираются из раздела «## Для игрока» в описаниях PR, слитых в main после прошлого релиза.
 name: Выпустить версию
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Версия, например 0.19.0 (пусто — следующая минорная)'
+        description: 'Версия, например 0.22.0 (пусто — следующая минорная)'
         required: false
       title:
         description: 'Короткое название (необязательно)'
@@ -16,30 +20,153 @@ permissions:
   contents: write
   pull-requests: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  release:
+  notes:
+    name: Версия и заметки
     runs-on: ubuntu-latest
+    outputs:
+      ver: ${{ steps.v.outputs.ver }}
+      release: ${{ steps.need.outputs.release }}
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
+      # После слияния: релиз нужен, только если в слитом PR раздел «Для игрока» не пуст и не «нет».
+      - name: Нужен ли релиз
+        id: need
+        run: |
+          if [ "${{ github.event_name }}" != "push" ]; then echo "release=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
+            --jq '[.[] | select(.merged_at != null) | {number, title, body, mergedAt: .merged_at, url: .html_url}]' > merged.json
+          node .github/scripts/release-notes.mjs merged.json merged.md > /dev/null
+          if [ "$(jq length merged.json)" -gt 0 ] && ! grep -q '^- Изменений для игрока нет.$' merged.md; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Нет изменений для игрока — релиз не нужен"; echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Версия и дата прошлого релиза
         id: v
+        if: steps.need.outputs.release == 'true'
         run: |
           last=$(gh release list --limit 1 --exclude-drafts --json tagName,publishedAt --jq '.[0]')
           last_tag=$(echo "$last" | jq -r '.tagName // "v0.0.0"')
           since=$(echo "$last" | jq -r '.publishedAt // "2000-01-01T00:00:00Z"')
           ver="${{ inputs.version }}"
           if [ -z "$ver" ]; then IFS=. read -r a b c <<< "${last_tag#v}"; ver="$a.$((b+1)).0"; fi
-          echo "ver=${ver#v}" >> "$GITHUB_OUTPUT"; echo "since=$since" >> "$GITHUB_OUTPUT"
+          ver="${ver#v}"
+          if gh release view "v$ver" >/dev/null 2>&1; then echo "Релиз v$ver уже есть"; exit 1; fi
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"; echo "since=$since" >> "$GITHUB_OUTPUT"
       - name: Собрать заметки из PR
+        if: steps.need.outputs.release == 'true'
         run: |
           gh pr list --state merged --base main --limit 200 --search "merged:>${{ steps.v.outputs.since }}" \
             --json number,title,body,mergedAt,url > prs.json
-          node .github/scripts/release-notes.mjs prs.json notes.md
-      - name: Создать релиз
+          node .github/scripts/release-notes.mjs prs.json changes.md
+          {
+            echo "**Скачать:** \`IronStandard-v${{ steps.v.outputs.ver }}-windows.zip\` ниже, распаковать и запустить \`IronStandard.exe\`. Нужны Windows, клавиатура и мышь."
+            echo
+            cat changes.md
+          } > notes.md
+      - uses: actions/upload-artifact@v4
+        if: steps.need.outputs.release == 'true'
+        with:
+          name: release-notes
+          path: notes.md
+
+  build:
+    name: Сборка игры для Windows
+    needs: notes
+    if: needs.notes.outputs.release == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Закреплённый Godot и export templates
+        shell: pwsh
         run: |
-          name="${{ steps.v.outputs.ver }} — $(date -u +%F)"
+          $version = '4.7.2'
+          $base = "https://github.com/godotengine/godot/releases/download/$version-stable"
+          Invoke-WebRequest "$base/Godot_v$version-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/godot.zip"
+          Expand-Archive "$env:RUNNER_TEMP/godot.zip" "$env:RUNNER_TEMP/godot"
+          Invoke-WebRequest "$base/Godot_v$version-stable_export_templates.tpz" -OutFile "$env:RUNNER_TEMP/templates.zip"
+          Expand-Archive "$env:RUNNER_TEMP/templates.zip" "$env:RUNNER_TEMP/templates"
+          New-Item -ItemType File "$env:RUNNER_TEMP/godot/_sc_" | Out-Null
+          $target = "$env:RUNNER_TEMP/godot/editor_data/export_templates/$version.stable"
+          New-Item -ItemType Directory -Force $target | Out-Null
+          Copy-Item "$env:RUNNER_TEMP/templates/templates/*" $target -Recurse
+          "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
+      # Кеши только читаем: их прогревает workflow «Godot — архитектура и Windows» на main.
+      - name: Кеш импорта Godot
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            godot/.godot/imported
+            godot/.godot/editor
+            godot/.godot/uid_cache.bin
+            godot/.godot/global_script_class_cache.cfg
+            godot/.godot/extension_list.cfg
+          key: godot-import-4.7.2-${{ hashFiles('godot/**/*.import', 'godot/**/*.png', 'godot/**/*.svg', 'godot/**/*.ogg', 'godot/**/*.wav', 'godot/**/*.ttf', 'godot/**/*.otf') }}
+          restore-keys: |
+            godot-import-4.7.2-
+      - name: Кеш закреплённых native-инструментов
+        uses: actions/cache/restore@v4
+        with:
+          path: dist/godot/native-tools/
+          key: native-tools-${{ runner.os }}-${{ hashFiles('godot/tools/native_dependencies.json', 'godot/tools/native_bootstrap.ps1') }}
+      - name: Кеш объектов native
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            dist/godot/native-build/
+            godot/adapters/godot/native/bin/
+          key: native-objects-${{ runner.os }}-${{ hashFiles('godot/tools/native_dependencies.json', 'godot/tools/native_build.cjs', 'godot/tools/native_bindings.py') }}-${{ hashFiles('godot/**/*.cpp', 'godot/**/*.hpp') }}
+          restore-keys: |
+            native-objects-${{ runner.os }}-${{ hashFiles('godot/tools/native_dependencies.json', 'godot/tools/native_build.cjs', 'godot/tools/native_bindings.py') }}-
+      - name: Пакетное ядро контактов (закреплённые SHA256)
+        run: pwsh -File godot/tools/native_bootstrap.ps1
+      - name: Архитектура
+        run: node godot/tools/architecture.cjs
+      - name: Подготовка (native-сборка и импорт ассетов)
+        run: node godot/tools/test.cjs "$env:GODOT" --prepare-only
+      - name: Полный набор Godot-тестов
+        run: node godot/tools/test.cjs "$env:GODOT" --no-prepare
+      - name: Сборка и release-smoke
+        run: node godot/tools/release.cjs "$env:GODOT"
+      - name: Архив с игрой
+        shell: pwsh
+        run: Compress-Archive -Path dist/godot/migration-release/* -DestinationPath "IronStandard-v${{ needs.notes.outputs.ver }}-windows.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game
+          path: IronStandard-v${{ needs.notes.outputs.ver }}-windows.zip
+
+  publish:
+    name: Создать релиз
+    needs: [notes, build]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+      - uses: actions/download-artifact@v4
+        with:
+          name: game
+      - name: Релиз с архивом игры
+        run: |
+          ver="${{ needs.notes.outputs.ver }}"
+          name="$ver — $(date -u +%F)"
           [ -n "${{ inputs.title }}" ] && name="$name: ${{ inputs.title }}"
-          gh release create "v${{ steps.v.outputs.ver }}" --target main --title "$name" --notes-file notes.md --latest
+          gh release create "v$ver" "IronStandard-v$ver-windows.zip" --target "${{ github.sha }}" --title "$name" --notes-file notes.md --latest
