@@ -6,32 +6,45 @@ const Group = preload("res://core/battle/model/group.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 
+## AI side brain. Infantry and archers charge by the distance to enemy squads (groups with at least
+## AI_SQUAD_MIN_UNITS ready fighters), so a lone hero or companion riding up no longer starts the charge.
+## A charge where most fighters chase targets faster than themselves without closing in for
+## AI_KITE_SECONDS is called off: the group re-forms and marches on the nearest squad, the archers first
+## when the side is losing men to missiles, and charges again only at contact (DESIGN.md 1.4, step 1). With no squads on the field the old
+## nearest-fighter rule is kept, except for a group that has already called off a hopeless chase.
 static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> void:
 	var foe := battle.centroid(1 - side)
 	var own := battle.centroid(side)
 	if foe == Vector2.INF or own == Vector2.INF:
 		return
 	var groups: Array = battle.groups[side]
+	var foe_groups: Array = battle.groups[1 - side]
 	var infantry: Group = groups[Config.GROUP_INFANTRY]
 	var archers: Group = groups[Config.GROUP_ARCHERS]
 	var cavalry: Group = groups[Config.GROUP_CAVALRY]
+	battle.ai_scan_timers[side] -= dt
+	if battle.ai_scan_timers[side] <= 0.0:
+		battle.ai_scan_timers[side] = Config.AI_SQUAD_SCAN_SECONDS
+		_scan(battle, side)
+	var squads := _has_squads(foe_groups)
 	var has_infantry := infantry.has_active_units()
 	if infantry.order != Config.ORDER_CHARGE:
-		var nearest := _nearest_foe_distance(battle, infantry.center, 1 - side)
-		if nearest < Config.AI_INFANTRY_CHARGE_DISTANCE or elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS:
+		var nearest := _charge_distance(battle, infantry, side, squads)
+		if nearest < (Config.AI_KITE_RECHARGE_DISTANCE if infantry.kited else Config.AI_INFANTRY_CHARGE_DISTANCE) or (elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS and not infantry.kited):
 			infantry.order = Config.ORDER_CHARGE
 			if has_infantry and side == 1:
 				battle.record_notice(Event.Kind.ENEMY_CHARGE)
 		elif elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
-			_advance(infantry, foe, Config.AI_INFANTRY_ADVANCE_SPEED, dt)
+			_advance(infantry, _objective(infantry, foe_groups, foe), Config.AI_INFANTRY_ADVANCE_SPEED, dt)
 	if archers.order != Config.ORDER_CHARGE:
-		var nearest := _nearest_foe_distance(battle, archers.center, 1 - side)
+		var nearest := _charge_distance(battle, archers, side, squads)
+		var objective := _objective(archers, foe_groups, foe)
 		if nearest < Config.AI_ARCHER_CHARGE_DISTANCE or (not has_infantry and nearest < Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE):
 			archers.order = Config.ORDER_CHARGE
 		elif nearest > Config.AI_ARCHER_ADVANCE_DISTANCE and elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
-			_advance(archers, foe, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED, dt)
+			_advance(archers, objective, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED, dt)
 		else:
-			archers.direction = (foe - archers.center).angle()
+			archers.direction = (objective - archers.center).angle()
 	if not cavalry.has_active_units() or cavalry.order == Config.ORDER_CHARGE:
 		return
 	if cavalry.tactic_state == Config.AI_TACTIC_WAIT:
@@ -115,6 +128,124 @@ static func relayout(battle: State, dt: float) -> void:
 		for group: Group in side_groups:
 			if group.order != Config.ORDER_CHARGE:
 				group.layout()
+
+## Refreshes the enemy squad picture, the missile-loss memory and the kite check of charging groups.
+## Every group is sampled with a fixed stride, at most AI_SQUAD_SAMPLE_LIMIT fighters, so the cost does
+## not grow with the army size.
+static func _scan(battle: State, side: int) -> void:
+	battle.missile_losses[side] *= exp(-Config.AI_SQUAD_SCAN_SECONDS / Config.AI_MISSILE_LOSS_MEMORY_SECONDS)
+	var foe_groups: Array = battle.groups[1 - side]
+	for group: Group in foe_groups:
+		_sample_squad(battle, group)
+	for kind in [Config.GROUP_INFANTRY, Config.GROUP_ARCHERS]:
+		var group: Group = battle.groups[side][kind]
+		if group.order == Config.ORDER_CHARGE:
+			_check_kite(battle, group, side)
+		else:
+			group.squad_distance = _squad_distance(group.center, foe_groups)
+
+static func _sample_squad(battle: State, group: Group) -> void:
+	var flags := battle.motion.integer_fields
+	var positions := battle.motion.positions
+	var capacity := battle.motion.capacity
+	var fields = battle.motion.I
+	var count := group.units.size()
+	var stride := maxi(1, ceili(float(count) / Config.AI_SQUAD_SAMPLE_LIMIT))
+	var total := Vector2.ZERO
+	group.scan_points.clear()
+	for index in range(0, count, stride):
+		var row: int = group.units[index].battle_index
+		if row < 0 or flags[fields.DEAD * capacity + row] or flags[fields.GONE * capacity + row] or flags[fields.FLEEING * capacity + row] or flags[fields.HERO * capacity + row]:
+			continue
+		group.scan_points.append(positions[row])
+		total += positions[row]
+	group.scan_count = group.scan_points.size() * stride
+	group.scan_center = total / group.scan_points.size() if not group.scan_points.is_empty() else Vector2.INF
+
+static func _is_squad(group: Group) -> bool:
+	return group.scan_count >= Config.AI_SQUAD_MIN_UNITS
+
+static func _has_squads(foe_groups: Array) -> bool:
+	for group: Group in foe_groups:
+		if _is_squad(group): return true
+	return false
+
+## Distance from a point to the nearest sampled fighter of any enemy squad.
+static func _squad_distance(point: Vector2, foe_groups: Array, only_kind: int = -1) -> float:
+	var closest := INF
+	for group: Group in foe_groups:
+		if not _is_squad(group) or (only_kind >= 0 and group.kind != only_kind): continue
+		for position in group.scan_points:
+			closest = minf(closest, point.distance_squared_to(position))
+	return sqrt(closest)
+
+static func _charge_distance(battle: State, group: Group, side: int, squads: bool) -> float:
+	if squads: return group.squad_distance
+	return INF if group.kited else _nearest_foe_distance(battle, group.center, 1 - side)
+
+static func _objective(group: Group, foe_groups: Array, foe: Vector2) -> Vector2:
+	if group.focus_kind >= 0:
+		var squad: Group = foe_groups[group.focus_kind]
+		if _is_squad(squad): return squad.scan_center
+	return foe
+
+## A charge is hopeless when most sampled fighters chase faster targets out of reach and the mean gap
+## has not shrunk by AI_KITE_PROGRESS_DISTANCE for AI_KITE_SECONDS.
+static func _check_kite(battle: State, group: Group, side: int) -> void:
+	var count := group.units.size()
+	var stride := maxi(1, ceili(float(count) / Config.AI_SQUAD_SAMPLE_LIMIT))
+	var ready := 0
+	var chasers := 0
+	var gap_total := 0.0
+	for index in range(0, count, stride):
+		var unit: Unit = group.units[index]
+		if unit.battle_index < 0 or unit.dead or unit.gone or unit.fleeing or unit.hero:
+			continue
+		ready += 1
+		var target := battle.unit_for(unit.target_handle)
+		if target == null or target.dead or target.gone:
+			continue
+		var gap := unit.position.distance_to(target.position)
+		if gap > maxf(Config.AI_KITE_CONTACT_DISTANCE, unit.attack_range) and target.speed > unit.speed * Config.AI_KITE_SPEED_RATIO:
+			chasers += 1
+			gap_total += gap
+	if ready == 0 or chasers <= ready * Config.AI_KITE_CHASER_SHARE:
+		group.kite_seconds = 0.0
+		group.kite_gap = INF
+		return
+	var gap := gap_total / chasers
+	if gap < group.kite_gap - Config.AI_KITE_PROGRESS_DISTANCE:
+		group.kite_gap = gap
+		group.kite_seconds = 0.0
+		return
+	group.kite_seconds += Config.AI_SQUAD_SCAN_SECONDS
+	if group.kite_seconds >= Config.AI_KITE_SECONDS:
+		_call_off_charge(battle, group, side)
+
+## Back into formation where the men stand, facing the squad to march on.
+static func _call_off_charge(battle: State, group: Group, side: int) -> void:
+	var foe_groups: Array = battle.groups[1 - side]
+	group.order = Config.ORDER_HOLD
+	group.kited = true
+	group.kite_seconds = 0.0
+	group.kite_gap = INF
+	group.center = group.centroid()
+	group.focus_kind = -1
+	var archers: Group = foe_groups[Config.GROUP_ARCHERS]
+	if battle.missile_losses[side] >= Config.AI_MISSILE_PRESSURE_LOSSES and _is_squad(archers):
+		group.focus_kind = Config.GROUP_ARCHERS
+	else:
+		var closest := INF
+		for squad: Group in foe_groups:
+			var distance := _squad_distance(group.center, foe_groups, squad.kind)
+			if distance < closest:
+				closest = distance
+				group.focus_kind = squad.kind
+	var objective := _objective(group, foe_groups, battle.centroid(1 - side))
+	if objective != Vector2.INF and objective != group.center:
+		group.direction = (objective - group.center).angle()
+	group.squad_distance = _squad_distance(group.center, foe_groups)
+	group.layout()
 
 static func _nearest_foe_distance(battle: State, point: Vector2, side: int) -> float:
 	if battle.column_backend != null: return battle.column_backend.nearest_ready(battle.motion, point, side)

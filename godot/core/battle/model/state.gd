@@ -70,6 +70,8 @@ var side_factions := ["", ""]
 var reserve_caps := [0, 0]
 var reserve_lost := [0, 0]
 var active_counts := [0, 0] # Combat-ready units at the latest morale check.
+var missile_losses := [0.0, 0.0] # Fighters lost to missiles, decayed over AI_MISSILE_LOSS_MEMORY_SECONDS by tactics.
+var ai_scan_timers := [0.0, 0.0]
 var _events: Array[Dictionary] = []
 
 func contact_geometry() -> Dictionary:
@@ -330,6 +332,8 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 	handles.release(target.unit_handle)
 	target.hp = 0.0
 	record_event(Event.Kind.DOWN, target, source, attack, amount)
+	if attack == Event.Attack.PROJECTILE:
+		missile_losses[target.side] += 1.0
 	if source != null:
 		source.kills += 1
 		source.morale = minf(source.base_morale, source.morale + Config.KILL_MORALE_BONUS)

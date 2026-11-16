@@ -11,6 +11,16 @@ var backing: bool = false
 var tactic_state: String = Config.AI_TACTIC_WAIT
 var waypoint: Vector2 = Vector2.ZERO
 var units: Array[Unit] = []
+# Squad picture written by the opposing side's tactics scan (tactics.gd), refreshed every AI_SQUAD_SCAN_SECONDS.
+var scan_count: int = 0 # Estimated ready fighters (sample count times stride).
+var scan_center: Vector2 = Vector2.INF
+var scan_points := PackedVector2Array() # Sampled fighter positions, for the distance to the squad's nearest edge.
+# Own-side AI state for the kite check.
+var squad_distance: float = INF # From this group's center to the nearest enemy squad, at the latest scan.
+var kite_seconds: float = 0.0
+var kite_gap: float = INF # Best mean chase gap since the chase stopped closing in.
+var kited: bool = false # The group once called off a hopeless chase; single fighters no longer trigger its charge.
+var focus_kind: int = -1 # Enemy group kind the group marches on after calling off a chase.
 var _slot_direction := INF
 var _slot_lateral := Vector2.DOWN
 var _slot_forward := Vector2.RIGHT
