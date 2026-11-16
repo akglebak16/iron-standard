@@ -15,6 +15,7 @@ const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const StaticObstacleIndex = preload("res://runtime/spatial/static_obstacle_index.gd")
 const GenerationHandles = preload("res://runtime/simulation/generation_handles.gd")
+const DecisionTrace = preload("res://core/battle/simulation/ai/decision_trace.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
@@ -72,6 +73,9 @@ var reserve_lost := [0, 0]
 var active_counts := [0, 0] # Combat-ready units at the latest morale check.
 var missile_losses := [0.0, 0.0] # Fighters lost to missiles, decayed over AI_MISSILE_LOSS_MEMORY_SECONDS by tactics.
 var ai_scan_timers := [0.0, 0.0]
+## Observation port (ADR-022): brains write decision records here only while the session traces them.
+## No rule reads it; it is not part of snapshots or results.
+var ai_trace: DecisionTrace = null
 var _events: Array[Dictionary] = []
 
 func contact_geometry() -> Dictionary:

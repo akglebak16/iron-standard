@@ -17,9 +17,10 @@ const CompanionProfile = preload("res://core/characters/rules/companion_profile.
 const CompanionBuilder = preload("res://core/battle/data/companion_builder.gd")
 const SiegeSetup = preload("res://core/battle/data/siege_setup.gd")
 const VegetationSetup = preload("res://core/battle/data/vegetation_setup.gd")
+const AiProfiles = preload("res://core/battle/simulation/ai/profiles.gd")
 
 static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null, contact_solver := Callable(), movement_solver := Callable(), column_backend: RefCounted = null) -> Session:
-	if setup == null or catalog == null or not setup.hero_position.is_finite():
+	if setup == null or catalog == null or not setup.hero_position.is_finite() or not AiProfiles.valid(setup):
 		return null
 	var troop: Dictionary = catalog.get_troop(setup.hero_troop)
 	if troop.is_empty():
@@ -53,7 +54,8 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	if hero == null:
 		return null
 	state.add_unit(hero)
-	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile, party.survival, dialogue)
+	var profiles: Array[String] = [setup.player_ai_profile, setup.enemy_ai_profile]
+	return Session.new(state, hero, rng, gear_catalog, setup.hero_profile, party.survival, dialogue, profiles)
 
 ## Checks the saved companion roster. Returns the fit companions and the party effects
 ## they add up to, or an empty dictionary when a profile is unknown or repeated.

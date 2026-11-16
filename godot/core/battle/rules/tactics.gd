@@ -5,6 +5,35 @@ const State = preload("res://core/battle/model/state.gd")
 const Group = preload("res://core/battle/model/group.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const Event = preload("res://core/battle/combat_event.gd")
+# Decision trace codes (ADR-022): written only when State.ai_trace is set, translated by presentation.
+const PLAN_DEPLOY := "deploy"
+const PLAN_ADVANCE := "advance"
+const PLAN_ENGAGE := "engage"
+const PLAN_HOLD_WALLS := "hold_walls"
+const PLAN_SORTIE := "sortie"
+const DECISION_WAIT := "wait"
+const DECISION_ADVANCE := "advance"
+const DECISION_STAND := "stand"
+const DECISION_CHARGE := "charge"
+const DECISION_FLANK := "flank"
+const DECISION_CALL_OFF := "call_off"
+const DECISION_SORTIE := "sortie"
+const REASON_DEPLOYING := "deploying"
+const REASON_SQUAD_IN_REACH := "squad_in_reach"
+const REASON_FIGHTER_IN_REACH := "fighter_in_reach"
+const REASON_CONTACT_AFTER_CALL_OFF := "contact_after_call_off"
+const REASON_FORCE_TIMER := "force_timer"
+const REASON_ON_FOCUS := "on_focus"
+const REASON_ON_ENEMY := "on_enemy"
+const REASON_ENEMY_CLOSE := "enemy_close"
+const REASON_NO_INFANTRY := "no_infantry"
+const REASON_OUT_OF_RANGE := "out_of_range"
+const REASON_IN_RANGE := "in_range"
+const REASON_FLANK_TIMER := "flank_timer"
+const REASON_WAYPOINT_REACHED := "waypoint_reached"
+const REASON_HOPELESS_CHASE := "hopeless_chase"
+const REASON_SORTIE_TIMER := "sortie_timer"
+const REASON_ATTACKERS_INSIDE := "attackers_inside"
 
 ## AI side brain. Infantry and archers charge by the distance to enemy squads (groups with at least
 ## AI_SQUAD_MIN_UNITS ready fighters), so a lone hero or companion riding up no longer starts the charge.
@@ -22,6 +51,9 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 	var infantry: Group = groups[Config.GROUP_INFANTRY]
 	var archers: Group = groups[Config.GROUP_ARCHERS]
 	var cavalry: Group = groups[Config.GROUP_CAVALRY]
+	var trace := battle.ai_trace
+	if trace != null:
+		trace.set_plan(side, _field_plan(groups, elapsed))
 	battle.ai_scan_timers[side] -= dt
 	if battle.ai_scan_timers[side] <= 0.0:
 		battle.ai_scan_timers[side] = Config.AI_SQUAD_SCAN_SECONDS
@@ -30,21 +62,35 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 	var has_infantry := infantry.has_active_units()
 	if infantry.order != Config.ORDER_CHARGE:
 		var nearest := _charge_distance(battle, infantry, side, squads)
-		if nearest < (Config.AI_KITE_RECHARGE_DISTANCE if infantry.kited else Config.AI_INFANTRY_CHARGE_DISTANCE) or (elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS and not infantry.kited):
+		var in_reach := nearest < (Config.AI_KITE_RECHARGE_DISTANCE if infantry.kited else Config.AI_INFANTRY_CHARGE_DISTANCE)
+		if in_reach or (elapsed > Config.AI_INFANTRY_FORCE_CHARGE_SECONDS and not infantry.kited):
 			infantry.order = Config.ORDER_CHARGE
 			if has_infantry and side == 1:
 				battle.record_notice(Event.Kind.ENEMY_CHARGE)
+			if trace != null:
+				var reason := (REASON_CONTACT_AFTER_CALL_OFF if infantry.kited else (REASON_SQUAD_IN_REACH if squads else REASON_FIGHTER_IN_REACH)) if in_reach else REASON_FORCE_TIMER
+				trace.record(side, Config.GROUP_INFANTRY, DECISION_CHARGE, reason, {"distance": nearest})
 		elif elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
 			_advance(infantry, _objective(infantry, foe_groups, foe), Config.AI_INFANTRY_ADVANCE_SPEED, dt)
+			if trace != null:
+				trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE, REASON_ON_FOCUS if infantry.focus_kind >= 0 else REASON_ON_ENEMY, {"focus_kind": infantry.focus_kind})
+		elif trace != null:
+			trace.record(side, Config.GROUP_INFANTRY, DECISION_WAIT, REASON_DEPLOYING)
 	if archers.order != Config.ORDER_CHARGE:
 		var nearest := _charge_distance(battle, archers, side, squads)
 		var objective := _objective(archers, foe_groups, foe)
 		if nearest < Config.AI_ARCHER_CHARGE_DISTANCE or (not has_infantry and nearest < Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE):
 			archers.order = Config.ORDER_CHARGE
+			if trace != null:
+				trace.record(side, Config.GROUP_ARCHERS, DECISION_CHARGE, REASON_ENEMY_CLOSE if nearest < Config.AI_ARCHER_CHARGE_DISTANCE else REASON_NO_INFANTRY, {"distance": nearest})
 		elif nearest > Config.AI_ARCHER_ADVANCE_DISTANCE and elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS:
 			_advance(archers, objective, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED, dt)
+			if trace != null:
+				trace.record(side, Config.GROUP_ARCHERS, DECISION_ADVANCE, REASON_OUT_OF_RANGE, {"distance": nearest})
 		else:
 			archers.direction = (objective - archers.center).angle()
+			if trace != null:
+				trace.record(side, Config.GROUP_ARCHERS, DECISION_STAND, REASON_IN_RANGE if nearest <= Config.AI_ARCHER_ADVANCE_DISTANCE else REASON_DEPLOYING, {"distance": nearest})
 	if not cavalry.has_active_units() or cavalry.order == Config.ORDER_CHARGE:
 		return
 	if cavalry.tactic_state == Config.AI_TACTIC_WAIT:
@@ -52,6 +98,10 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 			cavalry.tactic_state = Config.AI_TACTIC_FLANK
 			var flank_side := 1.0 if cavalry.center.y >= battle.arena_size.y * 0.5 else -1.0
 			cavalry.waypoint = Vector2(lerpf(own.x, foe.x, Config.AI_CAVALRY_FLANK_PROGRESS), clampf(foe.y + flank_side * Config.AI_CAVALRY_FLANK_OFFSET, Config.AI_CAVALRY_FLANK_EDGE, battle.arena_size.y - Config.AI_CAVALRY_FLANK_EDGE))
+			if trace != null:
+				trace.record(side, Config.GROUP_CAVALRY, DECISION_FLANK, REASON_FLANK_TIMER, {"waypoint": cavalry.waypoint, "flank_side": flank_side})
+		elif trace != null:
+			trace.record(side, Config.GROUP_CAVALRY, DECISION_WAIT, REASON_DEPLOYING)
 	else:
 		var offset := cavalry.waypoint - cavalry.center
 		var remaining := offset.length()
@@ -59,6 +109,8 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 		cavalry.center += offset.normalized() * Config.AI_CAVALRY_FLANK_SPEED * dt
 		if remaining < Config.AI_CAVALRY_WAYPOINT_ARRIVAL or _nearest_foe_distance(battle, cavalry.center, 1 - side) < Config.AI_CAVALRY_CHARGE_DISTANCE:
 			cavalry.order = Config.ORDER_CHARGE
+			if trace != null:
+				trace.record(side, Config.GROUP_CAVALRY, DECISION_CHARGE, REASON_WAYPOINT_REACHED if remaining < Config.AI_CAVALRY_WAYPOINT_ARRIVAL else REASON_ENEMY_CLOSE, {"waypoint": cavalry.waypoint})
 
 ## siegeBrain in src/03_battle.js: gates are battered and may fall, the garrison opens the main gate after 45 s,
 ## and the defenders come out once the attackers are inside or, with a way open, after a while.
@@ -92,16 +144,27 @@ static func siege_step(battle: State, elapsed: float, dt: float = 0.0) -> void:
 	for unit: Unit in infantry.units:
 		if not unit.dead and not unit.gone and not unit.fleeing:
 			fit_infantry += 1
+	var trace := battle.ai_trace
 	if elapsed > Config.SIEGE_GATE_SORTIE_SECONDS and fit_infantry > Config.SIEGE_GATE_SORTIE_MIN_INFANTRY and battle.wall.open_main_gate():
 		battle.record_notice(Event.Kind.GATE_OPENED)
 		infantry.order = Config.ORDER_CHARGE
+		if trace != null:
+			trace.record(1, Config.GROUP_INFANTRY, DECISION_SORTIE, REASON_SORTIE_TIMER, {"fit_infantry": fit_infantry})
 	if infantry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_INFANTRY_ATTACKERS_INSIDE or (open and elapsed > Config.SIEGE_INFANTRY_FORCE_CHARGE_SECONDS)):
 		infantry.order = Config.ORDER_CHARGE
+		if trace != null:
+			trace.record(1, Config.GROUP_INFANTRY, DECISION_CHARGE, REASON_ATTACKERS_INSIDE if inside > Config.SIEGE_INFANTRY_ATTACKERS_INSIDE else REASON_FORCE_TIMER, {"inside": inside})
 	if cavalry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or (open and elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS)):
 		cavalry.order = Config.ORDER_CHARGE
 		battle.record_notice(Event.Kind.GARRISON_CAVALRY)
+		if trace != null:
+			trace.record(1, Config.GROUP_CAVALRY, DECISION_CHARGE, REASON_ATTACKERS_INSIDE if inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE else REASON_FORCE_TIMER, {"inside": inside})
 	if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE or not infantry.has_active_units():
+		if trace != null and archers.order != Config.ORDER_CHARGE:
+			trace.record(1, Config.GROUP_ARCHERS, DECISION_CHARGE, REASON_ATTACKERS_INSIDE if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE else REASON_NO_INFANTRY, {"inside": inside})
 		archers.order = Config.ORDER_CHARGE
+	if trace != null:
+		trace.set_plan(1, PLAN_SORTIE if infantry.order == Config.ORDER_CHARGE else PLAN_HOLD_WALLS)
 	if near_wall and not battle.siege_alerted:
 		battle.siege_alerted = true
 		battle.record_notice(Event.Kind.WALL_ALERT)
@@ -246,6 +309,14 @@ static func _call_off_charge(battle: State, group: Group, side: int) -> void:
 		group.direction = (objective - group.center).angle()
 	group.squad_distance = _squad_distance(group.center, foe_groups)
 	group.layout()
+	if battle.ai_trace != null:
+		battle.ai_trace.record(side, group.kind, DECISION_CALL_OFF, REASON_HOPELESS_CHASE, {"focus_kind": group.focus_kind, "missile_losses": battle.missile_losses[side]})
+
+## Plan label of the reference brain for the debug trace: it has no plans, only the stage of its timer script.
+static func _field_plan(groups: Array, elapsed: float) -> String:
+	for group: Group in groups:
+		if group.order == Config.ORDER_CHARGE: return PLAN_ENGAGE
+	return PLAN_ADVANCE if elapsed > Config.AI_GROUP_ADVANCE_DELAY_SECONDS else PLAN_DEPLOY
 
 static func _nearest_foe_distance(battle: State, point: Vector2, side: int) -> float:
 	if battle.column_backend != null: return battle.column_backend.nearest_ready(battle.motion, point, side)

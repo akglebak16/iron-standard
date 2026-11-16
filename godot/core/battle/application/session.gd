@@ -17,6 +17,11 @@ const BattleResult = preload("res://core/battle/rules/result.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 const RenderSnapshot = preload("res://core/battle/application/render_snapshot.gd")
 const Reinforcements = preload("res://core/battle/data/reinforcements.gd")
+const Profiles = preload("res://core/battle/simulation/ai/profiles.gd")
+const DecisionSchedule = preload("res://core/battle/simulation/ai/decision_schedule.gd")
+const DecisionTrace = preload("res://core/battle/simulation/ai/decision_trace.gd")
+const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
+const AiDebugSnapshot = preload("res://core/battle/application/ai_debug_snapshot.gd")
 const WEAPON_SLOT_MELEE := HeroGear.MELEE
 const WEAPON_SLOT_RANGED := HeroGear.RANGED
 enum Outcome { RUNNING, HERO_DOWN, VICTORY, DEFEAT }
@@ -44,14 +49,29 @@ var _companion_survival: float
 var _events: Array[Dictionary] = []
 var _companion_dialogue: Dictionary
 var _previous_positions := PackedVector2Array()
+## AI per side (ADR-022): profile ids from BattleSetup and their brains; a null brain follows player orders.
+var _ai_profiles: Array[String] = [Config.AI_PROFILE_PLAYER, Config.AI_PROFILE_REFERENCE]
+var _brains: Array[Script] = [null, Tactics]
+## Diagnostics only: refreshes the field assessment for the debug snapshot on commander ticks.
+var _schedule := DecisionSchedule.new()
+var _assessment: Dictionary = {}
+var _assessment_tick := -1
 
 ## Fixed production tick; advance(dt) remains for the legacy differential fixtures.
 func step() -> void:
 	advance(1.0 / 60.0)
 
-func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0, companion_dialogue: Dictionary = {}) -> void:
+func _init(state: State, hero: Unit, rng: RandomNumberGenerator, gear_catalog: GearCatalog = null, hero_profile: Dictionary = {}, companion_survival: float = 0.0, companion_dialogue: Dictionary = {}, ai_profiles: Array[String] = [Config.AI_PROFILE_PLAYER, Config.AI_PROFILE_REFERENCE]) -> void:
 	assert(state != null and hero != null and rng != null)
 	assert(hero.hero and hero in state.units)
+	# Factory validates profiles against the setup; unknown ids here keep the default profiles.
+	var known := ai_profiles.size() == 2 and Profiles.is_known(ai_profiles[0]) and Profiles.is_known(ai_profiles[1])
+	assert(known, "Unknown AI profile")
+	if known:
+		_ai_profiles = ai_profiles.duplicate()
+	else:
+		push_error("Unknown AI profiles %s" % str(ai_profiles))
+	_brains = [Profiles.brain(_ai_profiles[0]), Profiles.brain(_ai_profiles[1])]
 	_state = state
 	_hero = hero
 	_rng = rng
@@ -105,11 +125,18 @@ func advance(dt: float) -> void:
 		_state.record_notice(Event.Kind.BATTLE_RETREATED)
 	_elapsed_seconds += dt
 	_state.profiler.mark("commands_interpolation")
+	if _state.ai_trace != null:
+		_state.ai_trace.begin_tick(_tick, _elapsed_seconds)
+	var defender: Script = _brains[1]
 	if _state.wall == null:
-		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
+		if defender != null:
+			defender.enemy_step(_state, 1, _elapsed_seconds, dt)
 	else:
-		Tactics.siege_step(_state, _elapsed_seconds, dt)
+		if defender != null:
+			defender.siege_step(_state, _elapsed_seconds, dt)
 		SiegeDefense.step(_state, dt, _rng)
+	if _brains[0] != null:
+		_brains[0].enemy_step(_state, 0, _elapsed_seconds, dt)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
 	_state.profiler.mark("tactics_siege")
@@ -137,6 +164,34 @@ func advance(dt: float) -> void:
 	if _state.pending_retirements > 0:
 		_state.compact_inactive(_tick)
 	_state.profiler.mark("storage_compaction")
+	if _state.ai_trace != null and _schedule.commander_due(0, _tick):
+		_refresh_assessment()
+
+## Debug observation (ADR-022). Enabling starts the decision trace; the battle stays the same battle.
+func set_ai_debug(enabled: bool) -> void:
+	if enabled == (_state.ai_trace != null):
+		return
+	_state.ai_trace = DecisionTrace.new() if enabled else null
+	_assessment = {}
+	_assessment_tick = -1
+	if enabled:
+		_refresh_assessment()
+
+func ai_debug_enabled() -> bool:
+	return _state.ai_trace != null
+
+## Detached plan, orders, modes, morale and last reasons; empty while debugging is off.
+func ai_debug_snapshot() -> Dictionary:
+	if _state.ai_trace == null:
+		return {}
+	return AiDebugSnapshot.build(_state, _state.ai_trace, _assessment, _assessment_tick, _ai_profiles, _tick, _elapsed_seconds)
+
+func ai_profiles() -> Array[String]:
+	return _ai_profiles.duplicate()
+
+func _refresh_assessment() -> void:
+	_assessment = FieldAssessment.assess(_state)
+	_assessment_tick = _tick
 
 func result() -> Dictionary:
 	return _result.duplicate(true)
