@@ -12,6 +12,7 @@ var confirm_load := false
 var base_path := SaveStore.PATH
 var message := ""
 var _armed := ""
+var _name_text := ""
 
 func open_save(world: RefCounted) -> void:
 	mode = "save"
@@ -28,6 +29,7 @@ func open_load(ask_first := false, notice := "") -> void:
 func _open() -> void:
 	message = ""
 	_armed = ""
+	_name_text = ""
 	open_window()
 
 func _input(event: InputEvent) -> void:
@@ -39,10 +41,20 @@ func render() -> void:
 	set_width(720)
 	var saving := mode == "save"
 	title_label.text = "Сохранить игру" if saving else "Загрузить игру"
-	sub_label.text = message if message != "" else ("Выберите слот. Автосохранение и быстрое сохранение (F5) лежат отдельно и ручные слоты не затирают." if saving else "Выберите сохранение.")
+	sub_label.text = message if message != "" else ("Можно дать сохранению название, затем выбрать слот. Автосохранение и быстрое сохранение (F5) ручные слоты не затирают." if saving else "Выберите сохранение.")
 	set_tabs([], "")
 	clear_body()
 	_crest.hide()
+	if saving:
+		var field := LineEdit.new()
+		field.name = "SaveName"
+		field.placeholder_text = "Название сохранения (необязательно)"
+		field.max_length = SaveStore.MAX_NAME_LENGTH
+		field.text = _name_text
+		field.caret_column = _name_text.length()
+		field.custom_minimum_size.y = 40
+		field.text_changed.connect(func(text: String): _name_text = text)
+		body.add_child(field)
 	for entry in SaveSlots.list(base_path):
 		var id: String = entry.id
 		if saving and not SaveSlots.manual(id):
@@ -54,7 +66,7 @@ func render() -> void:
 			buttons.append({"text": text, "call": _save.bind(id, entry.exists)})
 		else:
 			buttons.append({"text": "Точно загрузить?" if _armed == id else "Загрузить", "disabled": not entry.ok, "call": _load.bind(id)})
-		row(entry.title, SaveSlots.summary(entry), buttons)
+		row(SaveSlots.label(entry), SaveSlots.summary(entry), buttons)
 		body.get_child(body.get_child_count() - 1).name = "Slot_" + id
 
 func _save(id: String, occupied: bool) -> void:
@@ -62,7 +74,11 @@ func _save(id: String, occupied: bool) -> void:
 		_armed = id
 		return
 	_armed = ""
-	message = "Игра сохранена: %s" % SaveSlots.title(id) if SaveSlots.save(state, id, base_path) else "Не удалось сохранить"
+	var saved := SaveSlots.save(state, id, base_path, _name_text)
+	message = "Не удалось сохранить"
+	if saved:
+		message = "Игра сохранена: %s" % SaveSlots.label({"title": SaveSlots.title(id), "meta": SaveStore.describe(SaveSlots.path(id, base_path)).meta})
+		_name_text = ""
 
 func _load(id: String) -> void:
 	if confirm_load and _armed != id:

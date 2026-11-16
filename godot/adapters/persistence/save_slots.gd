@@ -29,9 +29,18 @@ static func path(id: String, base := SaveStore.PATH) -> String:
 	if id != QUICK and not manual(id): return ""
 	return "%s.slot_%s.json" % [base.trim_suffix(".json"), id]
 
-static func save(state: RefCounted, id: String, base := SaveStore.PATH) -> bool:
+## `label` is the player's name for the save. Saving over a named slot without a new name keeps the old one.
+static func save(state: RefCounted, id: String, base := SaveStore.PATH, label := "") -> bool:
 	var file := path(id, base)
-	return state != null and file != "" and SaveStore.save(state, file)
+	if state == null or file == "": return false
+	if SaveStore.clean_name(label) == "" and manual(id):
+		label = str(SaveStore.describe(file).meta.get("name", ""))
+	return SaveStore.save(state, file, label)
+
+## "Слот 2 — Перед осадой": the slot with the player's name for it, if there is one.
+static func label(entry: Dictionary) -> String:
+	var given := SaveStore.clean_name(str(entry.get("meta", {}).get("name", "")))
+	return str(entry.title) if given == "" else "%s — %s" % [entry.title, given]
 
 ## One entry per slot, in screen order: {id, title, exists, ok, meta}.
 static func list(base := SaveStore.PATH) -> Array[Dictionary]:

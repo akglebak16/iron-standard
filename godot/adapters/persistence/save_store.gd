@@ -6,15 +6,18 @@ const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const PATH := "user://iron_standard_save.json"
 const MAX_FILE_BYTES := 24 * 1024 * 1024
 const KEEP_GENERATIONS := 3
+const MAX_NAME_LENGTH := 40
 
 static func exists(path := PATH) -> bool:
 	return FileAccess.file_exists(path) or not _generations(path).is_empty()
 
-static func save(state: RefCounted, path := PATH) -> bool:
+## `label` is the player's own name for the save; it is shown in the slot list.
+static func save(state: RefCounted, path := PATH, label := "") -> bool:
 	var data := WorldSave.to_dict(state)
 	if data.is_empty(): return false
 	# Shown on the save/load screen; not part of the checked payload, so a slot can be listed without restoring the world.
 	data["meta"] = _meta(state)
+	if clean_name(label) != "": data.meta["name"] = clean_name(label)
 	var text := JSON.stringify(data)
 	if text.to_utf8_buffer().size() > MAX_FILE_BYTES: return false
 	var generations := _generations(path)
@@ -58,6 +61,13 @@ static func describe(path := PATH) -> Dictionary:
 			meta["saved_at"] = float(FileAccess.get_modified_time(file))
 		return {"exists": true, "ok": true, "meta": meta}
 	return {"exists": not files.is_empty(), "ok": false, "meta": {}}
+
+## One line, no control characters, at most MAX_NAME_LENGTH characters.
+static func clean_name(label: String) -> String:
+	var out := ""
+	for character in label:
+		out += " " if character.unicode_at(0) < 32 or character.unicode_at(0) == 127 else character
+	return out.strip_edges().left(MAX_NAME_LENGTH).strip_edges()
 
 static func _meta(state: RefCounted) -> Dictionary:
 	var player = state.player

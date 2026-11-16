@@ -98,7 +98,7 @@ func _initialize() -> void:
 	await process_frame
 	s.player.gold = 555
 	window.open_save(s)
-	check(window.body.get_child_count() == SaveSlots.MANUAL_COUNT, "save mode lists manual slots only")
+	check(window.body.get_child_count() == SaveSlots.MANUAL_COUNT + 1 and window.body.get_node("SaveName") is LineEdit, "save mode lists the name field and manual slots only")
 	check(_button(window, "1").text == "Перезаписать" and _button(window, "4").text == "Сохранить", "occupied and empty slots differ")
 	_button(window, "1").pressed.emit()
 	check(int(_entry("1").meta.gold) == 321 and _button(window, "1").text == "Точно перезаписать?", "first click only asks")
@@ -106,11 +106,25 @@ func _initialize() -> void:
 	check(int(_entry("1").meta.gold) == 555, "second click overwrites")
 	_button(window, "4").pressed.emit()
 	check(int(_entry("4").meta.gold) == 555, "empty slot saves at once")
+	# names: typed in the field, kept when the slot is overwritten without a new one, cleaned and cut to length
+	check(SaveSlots.label(_entry("4")) == "Слот 4", "unnamed slot shows only its number")
+	var field := window.body.get_node("SaveName") as LineEdit
+	field.text = "  Перед осадой\nКёльна  "
+	field.text_changed.emit(field.text)
+	_button(window, "6").pressed.emit()
+	check(str(_entry("6").meta.get("name", "")) == "Перед осадой Кёльна" and SaveSlots.label(_entry("6")) == "Слот 6 — Перед осадой Кёльна", "name is saved and shown")
+	check((window.body.get_node("SaveName") as LineEdit).text == "" and window.sub_label.text.contains("Перед осадой Кёльна"), "field clears after saving")
+	_button(window, "6").pressed.emit()
+	_button(window, "6").pressed.emit()
+	check(str(_entry("6").meta.get("name", "")) == "Перед осадой Кёльна", "overwriting without a new name keeps the old one")
+	check(SaveSlots.save(s, "6", BASE, "x".repeat(100)) and str(_entry("6").meta.name).length() == SaveStore.MAX_NAME_LENGTH, "long name is cut")
+	check(SaveSlots.save(s, SaveSlots.QUICK, BASE) and not _entry(SaveSlots.QUICK).meta.has("name"), "quick save has no name")
+	check(SaveSlots.load_slot(data, "6", BASE).state != null, "named save loads")
 	var chosen: Array = []
 	window.load_chosen.connect(func(id: String): chosen.append(id))
 	window.open_load(true)
 	check(window.body.get_child_count() == SaveSlots.MANUAL_COUNT + 2, "load mode lists every slot")
-	check(_button(window, "2").disabled and _button(window, "6").disabled and not _button(window, "1").disabled, "damaged and empty slots cannot be loaded")
+	check(_button(window, "2").disabled and _button(window, "3").disabled and not _button(window, "1").disabled, "damaged slots cannot be loaded")
 	_button(window, "1").pressed.emit()
 	check(chosen.is_empty(), "loading inside a campaign asks first")
 	_button(window, "1").pressed.emit()
