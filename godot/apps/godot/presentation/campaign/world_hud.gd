@@ -136,22 +136,27 @@ func _stat(parent: Container, icon_name: String) -> Label:
 
 func refresh(state: RefCounted, near_settlement: Dictionary) -> void:
 	var clock = state.clock
-	_date.text = "День %d · %02d:00%s" % [clock.day, clock.hour, "" if clock.paused else ""]
+	_date.text = "День %d · %02d:00" % [clock.day, clock.hour]
 	_night.color.a = clock.night_level()
-	_buttons.pause.button_pressed = clock.paused
+	if _buttons.pause.button_pressed != clock.paused:
+		_buttons.pause.set_pressed_no_signal(clock.paused)
 	for key in ["1", "2", "4"]:
-		_buttons[key].button_pressed = false
-		_buttons[key].toggle_mode = true
-		_buttons[key].button_pressed = int(key) == clock.speed and not clock.paused
+		var pressed: bool = int(key) == clock.speed and not clock.paused
+		if _buttons[key].button_pressed != pressed:
+			_buttons[key].set_pressed_no_signal(pressed)
 	var p = state.player
 	var fx: Dictionary = state.player_effects()
 	var portions: int = Economy.provisions(p)
 	var men: int = Economy.troop_count(p.troops)
-	_stats.text = "Золото %d   Порции %d (%d дн.)   Бойцов %d/%d" % [p.gold, portions, ceili(portions / maxf(1.0, ceilf(men / 6.0))), men, Economy.size_cap(p.hero, fx)]
+	var food_days := ceili(portions / maxf(1.0, ceilf(men / 6.0)))
+	var capacity := Economy.size_cap(p.hero, fx)
+	_stats.text = "Золото %d   Порции %d (%d дн.)   Бойцов %d/%d" % [p.gold, portions, food_days, men, capacity]
 	_gold.text = str(p.gold)
-	_food.text = "%d · %d дн." % [portions, ceili(portions / maxf(1.0, ceilf(men / 6.0)))]
-	_food.add_theme_color_override("font_color", Color("#ff8d79") if portions < 12 else GameSkin.PARCH)
-	_men.text = "%d / %d" % [men, Economy.size_cap(p.hero, fx)]
+	_food.text = "%d · %d дн." % [portions, food_days]
+	var food_color := Color("#ff8d79") if portions < 12 else GameSkin.PARCH
+	if _food.get_theme_color("font_color") != food_color:
+		_food.add_theme_color_override("font_color", food_color)
+	_men.text = "%d / %d" % [men, capacity]
 	var lines := PackedStringArray()
 	for i in range(maxi(0, state.journal.size() - 4), state.journal.size()):
 		lines.append(String(state.journal[i].text))

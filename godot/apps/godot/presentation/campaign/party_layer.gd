@@ -6,8 +6,10 @@ const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 var gear_catalog: RefCounted
-var _appearance_key := ""
+var _appearance_inputs: Dictionary = {}
+var _resolved_look: Dictionary = {}
 var _figure: Dictionary = {}
+const APPEARANCE_FIELDS := ["sel", "armor", "weapon", "shield", "horse", "seed", "beard", "hair"]
 
 var party: RefCounted
 var look: Dictionary = {}
@@ -17,6 +19,25 @@ func build(player: RefCounted, player_look: Dictionary, gear: RefCounted = null)
 	party = player
 	look = player_look
 	gear_catalog = gear
+	_appearance_inputs.clear()
+	_resolved_look.clear()
+	_figure.clear()
+
+func _update_figure() -> void:
+	var hero: Dictionary = party.hero
+	var equipment: Variant = hero.get("eq")
+	# Compare the small appearance projection. Equipment can be edited in place.
+	var inputs := {"has_eq": hero.has("eq"), "eq": equipment}
+	for field in APPEARANCE_FIELDS:
+		inputs[field] = hero.get(field)
+	if inputs == _appearance_inputs:
+		return
+	_appearance_inputs = inputs.duplicate(true)
+	var resolved := HeroGear.resolve(hero, gear_catalog)
+	var current_look: Dictionary = resolved.get("look", {})
+	if current_look != _resolved_look or _figure.is_empty():
+		_resolved_look = current_look
+		_figure = OriginalArt.compose(current_look) if not current_look.is_empty() else {}
 
 func _process(_delta: float) -> void:
 	queue_redraw()
@@ -37,11 +58,8 @@ func _draw() -> void:
 	draw_colored_polygon(Brush.ellipse(p.x + 2, p.y + 3, 24, 8, 16), Color(0, 0, 0, 0.3))
 	draw_arc(p + Vector2(0, 1), 26.0, 0.0, TAU, 28, Color("#ffd86a"), 2.0, true)
 	if gear_catalog != null:
-		var resolved := HeroGear.resolve(party.hero, gear_catalog)
-		var signature := str(resolved.look)
-		if signature != _appearance_key:
-			_appearance_key = signature
-			_figure = OriginalArt.compose(resolved.look)
+		_update_figure()
+	if not _figure.is_empty():
 		var k := 0.4
 		draw_texture_rect(_figure.portrait, Rect2(p - Vector2(_figure.anchor) * k, _figure.portrait.get_size() * k), false)
 	if not look.is_empty():
