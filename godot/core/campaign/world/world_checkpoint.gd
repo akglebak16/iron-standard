@@ -65,6 +65,8 @@ static func valid(data: Variant) -> bool:
 		if not party.get("hide") is bool or not _route(party.get("path"), party.get("pi")) or not _stacks(party.get("troops")): return false
 		if not _goal(party): return false
 	if data.roster._next_party_id <= largest_id: return false
+	for campaign in data.wars.campaigns.values():
+		if not _campaign(campaign): return false
 	ids.clear()
 	largest_id = -1
 	for settlement in data.map.settles:
@@ -119,6 +121,21 @@ static func _goal(party: Dictionary) -> bool:
 	if party.has("gid") and party.gid != null and not party.gid is int: return false
 	for key in ["ga", "gs"]:
 		if party.has(key) and not _number(party[key]): return false
+	return true
+
+## An offensive campaign of world_wars.gd. Stage 2b added marshal, s0 and keep; older saves lack them and the campaign
+## goes on with the strongest lord as marshal and its present strength as the start.
+static func _campaign(c: Variant) -> bool:
+	if not c is Dictionary or not c.get("tid") is int or not c.get("gid") is int or not c.get("state") is String: return false
+	if not c.get("army") is Array: return false
+	for id in c.army:
+		if not id is int: return false
+	if c.get("marshal") != null and not c.marshal is int: return false
+	if c.has("s0") and not _number(c.s0): return false
+	if c.has("keep"):
+		if not c.keep is Array: return false
+		for id in c.keep:
+			if not id is int: return false
 	return true
 
 static func _number(value: Variant) -> bool:

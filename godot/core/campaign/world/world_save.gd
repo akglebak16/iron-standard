@@ -106,6 +106,10 @@ static func _valid_v1_header(data: Dictionary) -> bool:
 		if not war is Dictionary or not _numbers(war, ["since"]): return false
 	for campaign in data.get("campaigns", {}).values():
 		if not campaign is Dictionary or not _numbers(campaign, ["tid", "gid"]) or not _number_array(campaign.get("army")): return false
+		# stage 2b: marshal, strength at the muster and the lords left home; absent in older saves
+		if campaign.get("marshal") != null and not Checkpoint._number(campaign.marshal): return false
+		if campaign.has("s0") and not Checkpoint._number(campaign.s0): return false
+		if campaign.has("keep") and not _number_array(campaign.keep): return false
 	var clans: Dictionary = data.get("clans", {})
 	if not _rows(clans.get("clans", [])) or not clans.get("rulers", {}) is Dictionary or not _number_map(clans.get("switched", {})): return false
 	for ruler in clans.get("rulers", {}).values():
@@ -276,6 +280,12 @@ static func _from_v1(data: Dictionary, europe: EuropeData, definitions: Dictiona
 			if c.has(key):
 				c[key] = int(c[key])
 		c.army = c.army.map(func(id): return int(id))
+		if c.get("marshal") != null:
+			c.marshal = int(c.marshal)
+		if c.has("s0"):
+			c.s0 = float(c.s0)
+		if c.has("keep"):
+			c.keep = c.keep.map(func(id): return int(id))
 		state.wars.campaigns[f] = c
 	state.wars._tally = int(data.get("tally", 0))
 	state.journal = data.journal
