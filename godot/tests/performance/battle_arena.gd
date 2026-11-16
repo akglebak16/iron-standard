@@ -1,0 +1,352 @@
+extends SceneTree
+## AI arena (DESIGN.md 7.1): a headless series of whole battles on fixed seeds, AI against AI, with a JSON
+## report and a short table. Not the quick battle from the menu and not a speed benchmark: the AI phase time
+## is reported for comparison between profiles, the release budget is measured separately.
+##
+##   godot --headless --path godot --script res://tests/performance/battle_arena.gd -- \
+##     --scenarios=mixed,infantry_cavalry,archers,siege,kite --sizes=100,500,1000 --runs=8 --seed=4242 \
+##     --profiles=reference,reference --max-seconds=240 --backend=native --mirror --out=arena.json
+##
+## Profiles are BattleSetup AI profiles (ADR-022): the first plays side 0, the second side 1; --mirror adds a
+## run with sides swapped for every seed, so a profile is not favoured by its side. The hero leaves the
+## field before the battle, except in "kite", where he rides a scripted circle in front of the enemy line
+## and side 0 follows player orders (it holds), as in tests/integration/test_ai_kite.gd.
+const Loader = preload("res://adapters/content/catalog_loader.gd")
+const Catalog = preload("res://core/troops/data/catalog.gd")
+const Factory = preload("res://core/battle/application/factory.gd")
+const Setup = preload("res://core/battle/data/battle_setup.gd")
+const HeroInput = preload("res://core/battle/application/hero_input.gd")
+const Config = preload("res://core/battle/config.gd")
+const Event = preload("res://core/battle/combat_event.gd")
+const MotionStore = preload("res://core/battle/model/unit_columns.gd")
+const Benchmark = preload("res://tests/performance/battle_benchmark.gd")
+const Columns = preload("res://adapters/godot/native/columns.gd")
+const Contacts = preload("res://adapters/godot/native/contacts.gd")
+const Movement = preload("res://adapters/godot/native/movement.gd")
+
+const VERSION := 1
+const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite"]
+const SIZES := [100, 500, 1000]
+const TICK_SECONDS := 1.0 / 60.0
+const SAMPLE_TICKS := 30 # Idle sampling every 0.5 s.
+const KITE_SAMPLE_TICKS := 15 # Chase check every 0.25 s.
+const KITE_CHASE_SECONDS := 5.0 # DESIGN.md 7.3: share of enemy infantry chasing the hero longer than this.
+const KITE_HERO_SPEED := 160.0
+const KITE_ORBIT_RADIUS := 150.0
+const KITE_SAMPLE_LIMIT := 64
+const IDLE_MODES := [0, 1] # MotionStore.MODES: unassigned and slot.
+
+static func default_options() -> Dictionary:
+	return {"scenarios": SCENARIOS.duplicate(), "sizes": [100], "runs": 4, "seed": 4242, "max_seconds": 240.0,
+		"profiles": [Config.AI_PROFILE_REFERENCE, Config.AI_PROFILE_REFERENCE], "backend": "native",
+		"mirror": false, "phase_profile": true}
+
+func _initialize() -> void:
+	var options := default_options()
+	var out := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--scenarios="): options.scenarios = Array(arg.trim_prefix("--scenarios=").split(","))
+		elif arg.begins_with("--sizes="): options.sizes = Array(arg.trim_prefix("--sizes=").split(",")).map(func(v): return int(v))
+		elif arg.begins_with("--runs="): options.runs = int(arg.trim_prefix("--runs="))
+		elif arg.begins_with("--seed="): options.seed = int(arg.trim_prefix("--seed="))
+		elif arg.begins_with("--max-seconds="): options.max_seconds = float(arg.trim_prefix("--max-seconds="))
+		elif arg.begins_with("--profiles="): options.profiles = Array(arg.trim_prefix("--profiles=").split(","))
+		elif arg.begins_with("--backend="): options.backend = arg.trim_prefix("--backend=")
+		elif arg == "--mirror": options.mirror = true
+		elif arg == "--no-phase-profile": options.phase_profile = false
+		elif arg.begins_with("--out="): out = arg.trim_prefix("--out=")
+	var problem := validate(options)
+	if not problem.is_empty():
+		push_error(problem)
+		quit(1)
+		return
+	var catalog := Catalog.new()
+	if not Loader.populate(catalog):
+		push_error("Catalog failed to load")
+		quit(1)
+		return
+	var report := run_matrix(options, catalog)
+	if report.has("error"):
+		push_error(report.error)
+		quit(1)
+		return
+	print(table(report))
+	if not out.is_empty():
+		var file := FileAccess.open(out, FileAccess.WRITE)
+		if file == null:
+			push_error("Cannot write arena report")
+			quit(1)
+			return
+		file.store_string(JSON.stringify(report, "  ") + "\n")
+		print("Arena report: ", out)
+	quit(0)
+
+static func validate(options: Dictionary) -> String:
+	for scenario in options.scenarios:
+		if scenario not in SCENARIOS: return "Unknown arena scenario: %s" % scenario
+	for size in options.sizes:
+		if int(size) < 4: return "Arena size must be at least 4 per side"
+	if int(options.runs) < 1 or float(options.max_seconds) <= 0.0: return "Invalid runs or max seconds"
+	if options.profiles.size() != 2: return "Two profiles are needed: side 0 and side 1"
+	if options.backend not in ["native", "gdscript"]: return "Unknown backend: %s" % options.backend
+	return ""
+
+## Every scenario x size cell, runs seeds seed, seed+1, ...; with mirror, each seed is played both ways.
+static func run_matrix(options: Dictionary, catalog: Catalog) -> Dictionary:
+	var problem := validate(options)
+	if not problem.is_empty(): return {"error": problem}
+	var cells: Array[Dictionary] = []
+	for scenario in options.scenarios:
+		for size in options.sizes:
+			var runs: Array[Dictionary] = []
+			for run in int(options.runs):
+				# The kite has a scripted player side; mirroring it would only repeat the battle.
+				for swapped in ([false, true] if options.mirror and scenario != "kite" else [false]):
+					var battle := run_battle(scenario, int(size), int(options.seed) + run, options, catalog, swapped)
+					if battle.has("error"): return {"error": "%s %d: %s" % [scenario, size, battle.error]}
+					runs.append(battle)
+			cells.append({"scenario": scenario, "size": int(size), "runs": runs, "summary": summarize(runs)})
+	return {"version": VERSION, "engine": Engine.get_version_info().string, "debug": OS.is_debug_build(),
+		"options": options.duplicate(true), "cells": cells,
+		"note": "Headless arena; AI phase times are diagnostic samples, not the release budget."}
+
+static func setup_for(scenario: String, size: int, seed: int, profiles: Array, swapped: bool) -> Setup:
+	var setup: Setup = load("res://content/scenarios/demo_siege.tres" if scenario == "siege" else "res://content/scenarios/demo_battle.tres").to_setup()
+	setup.seed = seed
+	setup.hero_profile.clear()
+	setup.companion_profiles.clear()
+	setup.player_unit_cap = size
+	setup.enemy_unit_cap = size
+	var armies := _armies(scenario, size)
+	var sides := [0, 1] if not swapped else [1, 0]
+	# In a siege the walls stay with side 1; swapping only exchanges the profiles there.
+	setup.player_army.assign(armies[sides[0]] if scenario != "siege" else armies[0])
+	setup.enemy_army.assign(armies[sides[1]] if scenario != "siege" else armies[1])
+	setup.player_ai_profile = profiles[1 if swapped else 0]
+	setup.enemy_ai_profile = profiles[0 if swapped else 1]
+	if scenario == "kite":
+		setup.player_ai_profile = Config.AI_PROFILE_PLAYER
+		setup.enemy_ai_profile = profiles[1]
+	return setup
+
+static func _armies(scenario: String, size: int) -> Array:
+	match scenario:
+		"infantry_cavalry":
+			return [[{"type": "n1", "n": size}], [{"type": "e3c", "n": size}]]
+		"archers":
+			var archers := roundi(size * 0.6)
+			return [[{"type": "n1", "n": size - archers}, {"type": "n2a", "n": archers}], [{"type": "e1", "n": size - archers}, {"type": "e2a", "n": archers}]]
+		"kite":
+			var foot := size / 2
+			return [[{"type": "n1", "n": foot}, {"type": "n2a", "n": size - foot}], [{"type": "e1", "n": size}]]
+	var infantry := size / 2
+	var archers := size / 3
+	var cavalry := size - infantry - archers
+	return [[{"type": "n1", "n": infantry}, {"type": "n2a", "n": archers}, {"type": "n3c", "n": cavalry}],
+		[{"type": "e1", "n": infantry}, {"type": "e2a", "n": archers}, {"type": "e3c", "n": cavalry}]]
+
+## One battle to the decision or to max_seconds. Metrics only read the state and the events.
+static func run_battle(scenario: String, size: int, seed: int, options: Dictionary, catalog: Catalog, swapped: bool = false) -> Dictionary:
+	var setup := setup_for(scenario, size, seed, options.profiles, swapped)
+	var native: bool = options.backend == "native"
+	var session = Factory.create(setup, catalog, null, null, null, Contacts.create() if native else Callable(),
+		Movement.create() if native else Callable(), Columns.create() if native else null)
+	if session == null: return {"error": "cannot create battle"}
+	var state = session._state
+	var hero = session._hero
+	var initial := [0, 0]
+	for unit in state.units:
+		if unit.hero or unit.companion: continue
+		if unit.weight != 1.0: return {"error": "weighted units cannot stand in for soldiers"}
+		initial[unit.side] += 1
+	if initial[0] != size or initial[1] != size: return {"error": "population %s instead of %d" % [str(initial), size]}
+	var kite := scenario == "kite"
+	if kite:
+		_prepare_kite(session)
+	else:
+		state.mark_gone(hero) # The hero leaves before the battle: AI against AI only.
+	if options.phase_profile: state.profiler.clock = Time.get_ticks_usec
+	var max_ticks := ceili(float(options.max_seconds) / TICK_SECONDS)
+	var ai_samples: Array[int] = []
+	var engaged := {}
+	var idle_samples := [0, 0]
+	var unit_samples := [0, 0]
+	var decided_at := -1.0
+	var chase := {}
+	var chased_long := {}
+	var reached_archers := -1.0
+	var input := HeroInput.new()
+	var started := Time.get_ticks_msec()
+	var tick := 0
+	while tick < max_ticks:
+		if kite: _circle(session, input)
+		session.step()
+		tick += 1
+		if options.phase_profile: ai_samples.append(int(state.profiler.samples.get("tactics_siege", 0)))
+		for event in session.take_events():
+			if event.kind == Event.Kind.BATTLE_DECIDED and decided_at < 0.0:
+				decided_at = tick * TICK_SECONDS
+		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
+			_sample_idle(state, engaged, idle_samples, unit_samples)
+		if kite and tick % KITE_SAMPLE_TICKS == 0:
+			_sample_chase(session, chase, chased_long)
+			if reached_archers < 0.0 and _infantry_reached_archers(state):
+				reached_archers = tick * TICK_SECONDS
+		if session._outcome in [session.Outcome.VICTORY, session.Outcome.DEFEAT]: break
+	var outcome = session._outcome
+	var winner := -1
+	if outcome == session.Outcome.VICTORY: winner = 0
+	elif outcome == session.Outcome.DEFEAT: winner = 1
+	var dead := [0, 0]
+	var fled := [0, 0]
+	var never := [0, 0]
+	for unit in state.units:
+		if unit.hero or unit.companion: continue
+		if unit.dead: dead[unit.side] += 1
+		elif unit.fleeing or unit.gone: fled[unit.side] += 1
+		if not engaged.has(unit.id): never[unit.side] += 1
+	var profile_side := [1, 0] if swapped and not kite else [0, 1] # Side of options.profiles[0] and [1].
+	var result := {"scenario": scenario, "size": size, "seed": seed, "swapped": swapped,
+		"profiles": session.ai_profiles(), "winner": winner,
+		"winner_profile": profile_side.find(winner) if winner >= 0 else -1,
+		"decided": decided_at >= 0.0, "duration_seconds": decided_at if decided_at >= 0.0 else tick * TICK_SECONDS,
+		"ticks": tick, "initial": initial,
+		"losses": [float(dead[0]) / initial[0], float(dead[1]) / initial[1]],
+		"fled": [float(fled[0]) / initial[0], float(fled[1]) / initial[1]],
+		"never_engaged": [float(never[0]) / initial[0], float(never[1]) / initial[1]],
+		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
+		"wall_ms": Time.get_ticks_msec() - started}
+	if options.phase_profile: result.ai_phase = Benchmark.stats(ai_samples) if not ai_samples.is_empty() else {}
+	if kite:
+		result.kite = {"chase_share": float(chased_long.size()) / maxi(1, initial[1]),
+			"reached_archers_seconds": reached_archers}
+	return result
+
+## Never engaged: no combat mode (melee, shooting, skirmish) at any sample. Idle time: share of fighter
+## samples in formation or unassigned while the battle is undecided.
+static func _sample_idle(state, engaged: Dictionary, idle_samples: Array, unit_samples: Array) -> void:
+	var motion = state.motion
+	var capacity: int = motion.capacity
+	var flags: PackedInt64Array = motion.integer_fields
+	var I = MotionStore.I
+	for row in state.active_units.size():
+		if flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.FLEEING * capacity + row] or flags[I.HERO * capacity + row]:
+			continue
+		var side: int = flags[I.SIDE * capacity + row]
+		unit_samples[side] += 1
+		if flags[I.MODE * capacity + row] in IDLE_MODES:
+			idle_samples[side] += 1
+		else:
+			engaged[flags[I.ID * capacity + row]] = true
+
+static func _prepare_kite(session) -> void:
+	var state = session._state
+	var hero = session._hero
+	var spread := 200.0 + sqrt(float(state.units.size())) * 6.0
+	var enemy_line := Vector2(1380, 850)
+	_place(state, state.groups[0][Config.GROUP_INFANTRY], Vector2(700, 850 - spread), 0.0)
+	_place(state, state.groups[0][Config.GROUP_ARCHERS], Vector2(700, 850 + spread), 0.0)
+	_place(state, state.groups[1][Config.GROUP_INFANTRY], enemy_line, PI)
+	hero.speed = KITE_HERO_SPEED
+	hero.max_hp = 1000000.0
+	hero.hp = hero.max_hp
+	hero.position = _orbit_center() + Vector2(KITE_ORBIT_RADIUS, 0)
+
+static func _orbit_center() -> Vector2:
+	return Vector2(1180, 850)
+
+static func _place(state, group, at: Vector2, facing: float) -> void:
+	group.center = at
+	group.direction = facing
+	group.layout(true)
+	for unit in group.units:
+		unit.position = group.slot_position(unit, state.arena_size)
+		unit.velocity = Vector2.ZERO
+
+static func _circle(session, input: HeroInput) -> void:
+	var hero = session._hero
+	var offset: Vector2 = hero.position - _orbit_center()
+	var radial := offset.normalized() if offset.length() > 1.0 else Vector2.RIGHT
+	var move := Vector2(-radial.y, radial.x) + radial * clampf((KITE_ORBIT_RADIUS - offset.length()) / 40.0, -1.0, 1.0)
+	input.move = move.normalized()
+	input.face = move.angle()
+	session.set_hero_input(input)
+
+## Consecutive seconds each enemy infantryman runs after the hero beyond striking distance.
+static func _sample_chase(session, chase: Dictionary, chased_long: Dictionary) -> void:
+	var hero = session._hero
+	for unit in session._state.groups[1][Config.GROUP_INFANTRY].units:
+		if unit.dead or unit.gone or unit.fleeing: continue
+		var chasing: bool = unit.target_handle == hero.unit_handle and unit.ai_mode == Config.AI_MODE_MELEE and unit.position.distance_to(hero.position) > Config.AI_KITE_CONTACT_DISTANCE
+		var seconds: float = float(chase.get(unit.id, 0.0)) + KITE_SAMPLE_TICKS * TICK_SECONDS if chasing else 0.0
+		chase[unit.id] = seconds
+		if seconds > KITE_CHASE_SECONDS: chased_long[unit.id] = true
+
+## Enemy infantry within contact of a player archer, on sampled fighters of both groups.
+static func _infantry_reached_archers(state) -> bool:
+	var enemy := _sample_points(state.groups[1][Config.GROUP_INFANTRY])
+	var archers := _sample_points(state.groups[0][Config.GROUP_ARCHERS])
+	for a in enemy:
+		for b in archers:
+			if a.distance_to(b) < Config.AI_KITE_CONTACT_DISTANCE: return true
+	return false
+
+static func _sample_points(group) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var stride := maxi(1, ceili(float(group.units.size()) / KITE_SAMPLE_LIMIT))
+	for index in range(0, group.units.size(), stride):
+		var unit = group.units[index]
+		if not unit.dead and not unit.gone and not unit.fleeing: points.append(unit.position)
+	return points
+
+static func summarize(runs: Array[Dictionary]) -> Dictionary:
+	var count := runs.size()
+	var wins := [0, 0]
+	var profile_wins := [0, 0]
+	var draws := 0
+	var sums := {"duration_seconds": 0.0, "losses": [0.0, 0.0], "fled": [0.0, 0.0], "never_engaged": [0.0, 0.0], "idle_time": [0.0, 0.0]}
+	var ai_mean := 0.0
+	var ai_p95 := 0.0
+	var kite_share := 0.0
+	var kite_reached := 0
+	var kite_seconds := 0.0
+	for run in runs:
+		if run.winner >= 0:
+			wins[run.winner] += 1
+			profile_wins[run.winner_profile] += 1
+		else: draws += 1
+		sums.duration_seconds += run.duration_seconds
+		for key in ["losses", "fled", "never_engaged", "idle_time"]:
+			for side in 2: sums[key][side] += run[key][side]
+		if run.has("ai_phase") and not run.ai_phase.is_empty():
+			ai_mean += run.ai_phase.mean_ms
+			ai_p95 = maxf(ai_p95, run.ai_phase.p95_ms)
+		if run.has("kite"):
+			kite_share += run.kite.chase_share
+			if run.kite.reached_archers_seconds >= 0.0:
+				kite_reached += 1
+				kite_seconds += run.kite.reached_archers_seconds
+	var summary := {"runs": count, "wins": wins, "profile_wins": profile_wins, "draws": draws,
+		"win_rate": [float(wins[0]) / count, float(wins[1]) / count],
+		"profile_win_rate": [float(profile_wins[0]) / count, float(profile_wins[1]) / count],
+		"duration_seconds": sums.duration_seconds / count, "ai_phase_mean_ms": ai_mean / count, "ai_phase_worst_p95_ms": ai_p95}
+	for key in ["losses", "fled", "never_engaged", "idle_time"]:
+		summary[key] = [sums[key][0] / count, sums[key][1] / count]
+	if kite_reached > 0 or runs.any(func(run): return run.has("kite")):
+		summary.kite = {"chase_share": kite_share / count, "reached_runs": kite_reached,
+			"reached_archers_seconds": kite_seconds / kite_reached if kite_reached > 0 else -1.0}
+	return summary
+
+static func table(report: Dictionary) -> String:
+	var lines: Array[String] = []
+	lines.append("Arena: profiles %s, %d runs per cell%s" % [str(report.options.profiles), int(report.options.runs), " x2 mirrored" if report.options.mirror else ""])
+	lines.append("scenario          size  runs  win A/B/draw   losses 0/1   fled 0/1     never 0/1    idle 0/1     time s  AI ms mean/p95")
+	for cell in report.cells:
+		var s: Dictionary = cell.summary
+		lines.append("%-16s %5d %5d  %3d/%3d/%3d   %.2f/%.2f    %.2f/%.2f    %.2f/%.2f    %.2f/%.2f   %6.1f  %.3f/%.3f" % [
+			cell.scenario, cell.size, s.runs, s.profile_wins[0], s.profile_wins[1], s.draws,
+			s.losses[0], s.losses[1], s.fled[0], s.fled[1], s.never_engaged[0], s.never_engaged[1],
+			s.idle_time[0], s.idle_time[1], s.duration_seconds, s.ai_phase_mean_ms, s.ai_phase_worst_p95_ms])
+		if s.has("kite"):
+			lines.append("  kite: chasing hero > %.0f s %.2f, enemy reached archers in %d runs, mean %.1f s" % [KITE_CHASE_SECONDS, s.kite.chase_share, s.kite.reached_runs, s.kite.reached_archers_seconds])
+	return "\n".join(lines)

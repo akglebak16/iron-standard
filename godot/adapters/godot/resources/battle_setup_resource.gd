@@ -25,6 +25,8 @@ const FACTION_RESERVE_WAVES := ["undead"]
 @export var hero_profile: Dictionary = {} # Empty keeps the existing troop-based preview hero.
 @export var companion_profiles: Array[Dictionary] = [] # All hired companions, including injured ones.
 @export var hero_position : Vector2 = Vector2.ZERO
+@export var player_ai_profile: String = Config.AI_PROFILE_PLAYER # ADR-022: empty follows the player's orders.
+@export var enemy_ai_profile: String = Config.AI_PROFILE_REFERENCE
 
 func unit_cap(faction: String, override: int) -> int:
 	return int(FACTION_UNIT_CAPS.get(faction, Config.SOLO_UNIT_CAP)) if override == DEFAULT_UNIT_CAP_OVERRIDE else override

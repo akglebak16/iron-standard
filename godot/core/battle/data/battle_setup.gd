@@ -24,6 +24,9 @@ var hero_troop: String = ""
 var hero_profile: Dictionary = {} # Empty keeps the existing troop-based preview hero.
 var companion_profiles: Array[Dictionary] = [] # All hired companions, including injured ones.
 var hero_position : Vector2 = Vector2.ZERO
+## AI profile per side (ADR-022). The player's side follows orders; the arena may give it an AI brain too.
+var player_ai_profile: String = Config.AI_PROFILE_PLAYER
+var enemy_ai_profile: String = Config.AI_PROFILE_REFERENCE
 
 func unit_cap(faction: String, override: int) -> int:
 	return int(FACTION_UNIT_CAPS.get(faction, Config.SOLO_UNIT_CAP)) if override == DEFAULT_UNIT_CAP_OVERRIDE else override
@@ -31,7 +34,7 @@ func unit_cap(faction: String, override: int) -> int:
 func uses_reserve_waves(faction: String) -> bool:
 	return quick or faction in FACTION_RESERVE_WAVES
 
-const FIELDS := ["seed","biome","siege","quick","wall_damage","castle","wall_defense","player_faction","enemy_faction","player_unit_cap","enemy_unit_cap","enemy_leader_name","player_army","enemy_army","hero_troop","hero_profile","companion_profiles","hero_position"]
+const FIELDS := ["seed","biome","siege","quick","wall_damage","castle","wall_defense","player_faction","enemy_faction","player_unit_cap","enemy_unit_cap","enemy_leader_name","player_army","enemy_army","hero_troop","hero_profile","companion_profiles","hero_position","player_ai_profile","enemy_ai_profile"]
 
 func duplicate(deep: bool = true) -> RefCounted:
 	var values := new()

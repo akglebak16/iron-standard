@@ -185,6 +185,33 @@ const AI_KITE_RECHARGE_DISTANCE := 80.0 # A group that called off a chase closes
 const AI_KITE_CHASER_SHARE := 0.5 # More than this share of sampled fighters must be in hopeless chases.
 const AI_MISSILE_LOSS_MEMORY_SECONDS := 6.0 # Decay time of the per-side count of fighters lost to missiles.
 const AI_MISSILE_PRESSURE_LOSSES := 2.0 # Recent missile losses from which a side counts as under fire.
+# AI foundation (DESIGN.md stage 0-battle, ADR-022). Observation and scheduling only: nothing below changes a battle.
+const AI_PROFILE_PLAYER := "" # The side follows player orders; no AI brain makes decisions for it.
+const AI_PROFILE_REFERENCE := "reference" # The current timer-and-threshold brain (tactics.gd), frozen as the arena reference.
+const AI_COMMANDER_PERIOD_SECONDS := 0.5 # Decision schedule: one side commander decision this often.
+const AI_SQUAD_PERIOD_SECONDS := 0.25 # Decision schedule: one decision per group this often, staggered by group number.
+const AI_TRACE_RECENT := 32 # Decision records kept for the debug snapshot.
+# Field assessment (DESIGN.md 4.1). Unit classes for the "who beats whom" matrix, read from properties, not troop IDs.
+const AI_CLASS_FOOT := 0
+const AI_CLASS_SPEAR := 1 # Foot with anti_cavalry.
+const AI_CLASS_ARCHER := 2 # Foot with a ranged attack.
+const AI_CLASS_CAVALRY := 3 # Mounted melee.
+const AI_CLASS_HORSE_ARCHER := 4 # Mounted with a ranged attack.
+const AI_CLASSES := 5
+## Strength multiplier of a row class against a column class. An estimate for decisions, never a combat value.
+const AI_MATCHUP := [
+	[1.0, 1.0, 1.3, 0.8, 0.7],
+	[0.9, 1.0, 1.2, 1.6, 0.8],
+	[1.1, 1.2, 1.0, 0.8, 0.9],
+	[1.2, 0.6, 1.6, 1.0, 1.2],
+	[1.1, 1.2, 0.9, 0.8, 1.0],
+]
+const AI_FIELD_TIER_POWER := 0.25 # Fighting power of a fighter: weight x health share x (1 + this x tier).
+const AI_FIELD_CONTACT_DISTANCE := 60.0 # A melee fighter this close to its target counts as engaged.
+const AI_FIELD_ENGAGED_SHARE := 0.25 # A group with this share of engaged fighters is bound by the fight.
+const AI_FIELD_THREAT_RADIUS := 600.0 # Enemy groups farther than this from a group's center add no threat.
+const AI_FIELD_FRONT_ARC := PI * 0.25 # Enemy within this angle of the group's facing is in front.
+const AI_FIELD_REAR_ARC := PI * 0.75 # Beyond this angle the enemy is behind; in between, on a flank.
 const FORMATION_RELAYOUT_SECONDS := 2.4
 const FOOT_STEERING_RATE := 10.0
 const HORSE_STEERING_RATE := 2.4

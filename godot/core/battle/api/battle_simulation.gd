@@ -62,6 +62,14 @@ func take_events() -> Array[Dictionary]:
 func result() -> Dictionary:
 	return _session.result() if _session != null else {}
 
+## AI debug observation (ADR-022): turning it on or off never changes the battle.
+func set_ai_debug(enabled: bool) -> void:
+	if _session != null: _session.set_ai_debug(enabled)
+
+## Detached debug snapshot of the AI; empty while debugging is off.
+func ai_debug_snapshot() -> Dictionary:
+	return _session.ai_debug_snapshot() if _session != null else {}
+
 func dispose() -> void:
 	_commands.clear()
 	_session = null
