@@ -111,6 +111,8 @@ func _ready() -> void:
 	col.add_child(platform)
 	get_viewport().size_changed.connect(func():
 		if is_instance_valid(_dialog) and _dialog.visible: _fit_start_dialog.call_deferred(_dialog))
+	# Temporary birthday: remove this call and presentation/birthday/ to restore the ordinary menu.
+	preload("res://apps/godot/presentation/birthday/entry.gd").mount(self, ui, center, title, sub, platform, _background)
 
 func _sync_music() -> void:
 	var audio := _preferences.read()
