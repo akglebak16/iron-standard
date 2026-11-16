@@ -4,7 +4,8 @@ const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.g
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Start screen: hero name, culture, new game (the menu and culture choice in src/06_ui.js and src/07_main.js).
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
-const SaveStore = preload("res://adapters/persistence/save_store.gd")
+const SaveSlots = preload("res://adapters/persistence/save_slots.gd")
+const SaveSlotsWindow = preload("res://apps/godot/composition/save_slots_window.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const Preferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
@@ -30,6 +31,7 @@ var _name: LineEdit
 var _picked := "emp"
 var _buttons := {}
 var _dialog: CanvasLayer
+var _slots: CanvasLayer
 var _menu: VBoxContainer
 var _background: Node2D
 var _music: Node
@@ -134,8 +136,15 @@ func _build_menu() -> void:
 		_menu.remove_child(child)
 		child.queue_free()
 	_button(_menu, "Новая игра", _create, true)
-	if SaveStore.exists():
-		_button(_menu, "Продолжить", func(): GameOptions.continue_game = true; campaign_requested.emit())
+	if SaveSlots.any():
+		# One row: a sixth menu line would not fit a 960×650 window.
+		var saves := HBoxContainer.new()
+		saves.add_theme_constant_override("separation", 10)
+		_menu.add_child(saves)
+		for b in [_button(saves, "Продолжить", func(): _continue("")), _button(saves, "Загрузить", _load_dialog)]:
+			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			b.custom_minimum_size.y = 50
+			b.add_theme_font_size_override("font_size", 21)
 	_button(_menu, "Быстрый бой", _quick)
 	_button(_menu, "Как играть", _help)
 	_button(_menu, "Звук: %s" % ("вкл" if _preferences.read().effects else "выкл"), func():
@@ -146,6 +155,7 @@ func _build_menu() -> void:
 		_sync_music()
 		_build_menu())
 	for b in _menu.get_children():
+		if not b is Button: continue
 		b.custom_minimum_size.y = 50
 		b.add_theme_font_size_override("font_size", 21)
 
@@ -395,3 +405,17 @@ func _start() -> void:
 	GameOptions.culture = _picked
 	GameOptions.hero_name = _name.text.strip_edges() if not _name.text.strip_edges().is_empty() else "Безымянный"
 	campaign_requested.emit()
+
+## "" continues from the most recent save.
+func _continue(slot: String) -> void:
+	GameOptions.continue_game = true
+	GameOptions.load_slot = slot
+	campaign_requested.emit()
+
+func _load_dialog() -> void:
+	if not is_instance_valid(_slots):
+		_slots = SaveSlotsWindow.new()
+		_slots.name = "SaveSlots"
+		add_child(_slots)
+		_slots.load_chosen.connect(_continue)
+	_slots.open_load()

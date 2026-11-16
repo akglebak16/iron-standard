@@ -4,6 +4,7 @@ const Preferences = preload("res://apps/godot/composition/presentation_preferenc
 const FpsOverlay = preload("res://apps/godot/composition/fps_overlay.gd")
 
 signal save_requested
+signal load_requested
 signal title_requested
 signal settings_changed(effects: bool, music: bool, blood: bool)
 var preferences: Preferences
@@ -30,11 +31,13 @@ func render() -> void:
 	_crest.hide()
 	close_button.hide()
 	_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_scroll.custom_minimum_size.y = 410
+	_scroll.custom_minimum_size.y = 450
 	var audio := preferences.read()
 	var blood := preferences.read_blood()
 	_menu_button("Продолжить", close_window, true)
-	if not battle_mode: _menu_button("Сохранить игру", func(): save_requested.emit())
+	if not battle_mode:
+		_menu_button("Сохранить игру", func(): save_requested.emit())
+		_menu_button("Загрузить игру", func(): load_requested.emit())
 	_menu_button("Звук: %s" % ("включён" if audio.effects else "выключен"), func(): _audio_setting(not audio.effects, audio.music))
 	_menu_button("Музыка: %s" % ("включена" if audio.music else "выключена"), func(): _audio_setting(audio.effects, not audio.music))
 	_menu_button("Расчленёнка: %s" % ("включена" if blood else "выключена"), func(): _blood_setting(not blood))
@@ -47,7 +50,7 @@ func render() -> void:
 		note("1–4 — группа, Q — держать, E — за мной, R — в атаку, F — отойти. P — пауза, T — скорость, Esc — меню.")
 	else:
 		note("Клик по карте — идти, по городу — войти, по отряду или логову — догнать и напасть. Колесо — масштаб, перетаскивание — сдвиг карты.")
-		note("Пробел — пауза, 1/2/3 — скорость, P — отряд, H — герой, J — журнал, F5 — сохранить, Esc — закрыть окно или открыть это меню.")
+		note("Пробел — пауза, 1/2/3 — скорость, P — отряд, H — герой, J — журнал, F5 — быстрое сохранение, Esc — закрыть окно или открыть это меню.")
 
 func _audio_setting(effects: bool, music: bool) -> void:
 	preferences.save(effects, music)

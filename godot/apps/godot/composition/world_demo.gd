@@ -15,7 +15,8 @@ const WorldCamera = preload("res://apps/godot/presentation/campaign/world_camera
 const PartyLayer = preload("res://apps/godot/presentation/campaign/party_layer.gd")
 const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounter_dialog.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
-const SaveStore = preload("res://adapters/persistence/save_store.gd")
+const SaveSlots = preload("res://adapters/persistence/save_slots.gd")
+const SaveSlotsWindow = preload("res://apps/godot/composition/save_slots_window.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
 const UiSounds = preload("res://apps/godot/presentation/campaign/ui_sounds.gd")
 const ResultWindow = preload("res://apps/godot/composition/battle_result_window.gd")
@@ -39,8 +40,11 @@ const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_
 const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
 const CompanionRemarks = preload("res://apps/godot/presentation/campaign/companion_remarks.gd")
 const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")
+const LoadingView = preload("res://apps/godot/presentation/campaign/campaign_loading_view.gd")
 
 signal title_requested
+## Start the campaign scene again (loading another save from the pause menu).
+signal campaign_requested
 
 var state: RefCounted
 var map_view: Node2D
@@ -53,6 +57,7 @@ var _result: CanvasLayer
 var _auto_report := false
 var _siege: CanvasLayer
 var _menu: CanvasLayer
+var _slots: CanvasLayer
 var _marks: Node2D
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
@@ -70,17 +75,27 @@ var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
 var cache_static_artwork := true
+var profile_startup := false
+var startup_marks_us := {}
+var _world_job: Thread
+var profile_map_frames := false
+var map_step_us := 0
+var map_hud_us := 0
+var map_steps := 0
+
+func _startup_mark(stage: String) -> void:
+	if profile_startup:
+		startup_marks_us[stage] = Time.get_ticks_usec()
 
 func _ready() -> void:
+	_startup_mark("scene_entered")
 	_remark_rng.randomize()
-	var loading := Label.new()
-	loading.text = "Строю карту…"
-	loading.position = Vector2(24, 24)
-	var layer := CanvasLayer.new()
-	layer.layer = 10
-	layer.add_child(loading)
-	add_child(layer)
+	var loading := LoadingView.new()
+	loading.back_requested.connect(func(): title_requested.emit())
+	add_child(loading)
+	loading.show_stage("Готовим кампанию…")
 	await get_tree().process_frame
+	_startup_mark("loading_frame")
 	var seed_value := GameOptions.seed_value if GameOptions.seed_value != 0 else randi_range(1, 999999999)
 	var focus := PackedFloat64Array()
 	for arg in OS.get_cmdline_user_args():
@@ -92,28 +107,49 @@ func _ready() -> void:
 	var data := EuropeData.new()
 	if not (ContentLoader.populate(data)):
 		push_error("Required content failed to load: apps/godot/composition/world_demo.gd")
+		loading.show_error("Не удалось открыть данные кампании.")
 		return
 	if GameOptions.continue_game:
-		state = SaveStore.load_state(data)
+		var loaded := SaveSlots.load_slot(data, GameOptions.load_slot)
+		state = loaded.state
 		if state == null:
-			loading.text = "Не удалось загрузить сохранение. Файлы сохранений оставлены без изменений."
-			var back := Button.new()
-			back.text = "Вернуться в меню"
-			back.position = Vector2(24, 64)
-			back.pressed.connect(func(): title_requested.emit())
-			layer.add_child(back)
+			loading.show_error(loaded.error)
 			return
 	if state == null:
-		state = WorldState.create(seed_value, data, GameOptions.culture, ContentLoader.registry())
+		var registry := ContentLoader.registry()
+		_startup_mark("content_ready")
+		loading.show_stage("Создаём мир и отряды…")
+		var generate := WorldState.create.bind(seed_value, data, GameOptions.culture, registry)
+		# The worker owns the new simulation until joined. All nodes and GPU work stay here.
+		if DisplayServer.get_name() != "headless":
+			_world_job = Thread.new()
+			if _world_job.start(generate) != OK:
+				_world_job = null
+		if _world_job == null:
+			state = generate.call()
+		else:
+			while _world_job.is_alive():
+				await get_tree().process_frame
+				if not is_inside_tree(): return
+			state = _world_job.wait_to_finish()
+			_world_job = null
+		if state == null:
+			loading.show_error("Не удалось создать кампанию.")
+			return
 		state.player.hero.name = GameOptions.hero_name
 		state.player.hero.banner = GameOptions.banner
 	var saved_banner = state.player.hero.get("banner", 0)
+	_startup_mark("world_ready")
+	loading.show_stage("Рисуем карту…")
 	GameOptions.banner = clampi(int(saved_banner) if saved_banner is int or saved_banner is float else 0, 0, preload("res://apps/godot/visuals/original_art.gd").BANNERS.size() - 1)
 	preload("res://apps/godot/visuals/original_art.gd").select_player_banner(GameOptions.banner)
 	map_view = MapView.new()
 	map_view.cache_static_artwork = cache_static_artwork
+	if profile_startup:
+		map_view.ready_to_show.connect(_startup_mark.bind("map_painted"), CONNECT_ONE_SHOT)
 	add_child(map_view)
 	map_view.build_from(state.map)
+	_startup_mark("map_resources_ready")
 	var factions := FactionCatalog.new()
 	ContentLoader.populate(factions)
 	var others := WorldPartiesLayer.new()
@@ -129,6 +165,8 @@ func _ready() -> void:
 	party_layer.motion = _motion
 	camera = WorldCamera.new()
 	add_child(camera)
+	camera.set_process(false)
+	camera.set_process_unhandled_input(false)
 	camera.make_current()
 	camera.fit_all()
 	camera.map_clicked.connect(_on_map_click)
@@ -165,7 +203,13 @@ func _ready() -> void:
 			var current := _preferences.read()
 			_battle.apply_preferences(current.effects, current.music, _preferences.read_blood())
 			_battle.set_menu_open(false))
-	_menu.save_requested.connect(func(): _menu.sub_label.text = "Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
+	_slots = SaveSlotsWindow.new()
+	_slots.name = "SaveSlots"
+	add_child(_slots)
+	_slots.closed.connect(func(): state.clock.paused = false)
+	_slots.load_chosen.connect(_load_slot)
+	_menu.save_requested.connect(func(): _open_slots(true))
+	_menu.load_requested.connect(func(): _open_slots(false))
 	_menu.title_requested.connect(func(): _autosave.save(state, _battle != null); title_requested.emit())
 	_result = ResultWindow.new()
 	_result.name = "BattleResult"
@@ -198,11 +242,20 @@ func _ready() -> void:
 	else:
 		camera.detached = false
 		camera.zoom = Vector2(0.9, 0.9)
-	loading.text = ""
+	if DisplayServer.get_name() != "headless":
+		await map_view.ready_to_show
+	loading.queue_free()
+	camera.set_process(true)
+	camera.set_process_unhandled_input(true)
 	_ready_to_play = true
+	_startup_mark("input_ready")
 
 func _exit_tree() -> void:
 	_ready_to_play = false
+	if _world_job != null:
+		var abandoned = _world_job.wait_to_finish()
+		_world_job = null
+		if abandoned != null: abandoned.dispose()
 	if _bridge != null: _bridge.dispose()
 	if state != null:
 		state.dispose()
@@ -516,6 +569,20 @@ func _set_world_visible(on: bool) -> void:
 	camera.enabled = on
 	camera.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
 
+## The save/load screen replaces the pause menu; the map stays paused while it is open.
+func _open_slots(saving: bool) -> void:
+	if _battle != null:
+		return
+	_menu.close_window()
+	state.clock.paused = true
+	if saving: _slots.open_save(state)
+	else: _slots.open_load(true)
+
+func _load_slot(id: String) -> void:
+	GameOptions.continue_game = true
+	GameOptions.load_slot = id
+	campaign_requested.emit()
+
 func _open_panel(tab: String) -> void:
 	if tab == "menu":
 		state.clock.paused = true
@@ -526,7 +593,7 @@ func _open_panel(tab: String) -> void:
 	_party_window.open_for(state, tab)
 
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
-	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible:
+	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible or _slots.visible:
 		hud.show_tip({}, screen_pos)
 		return
 	var p: Dictionary = state.party_near(world_pos.x, world_pos.y, 30.0)
@@ -551,7 +618,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			state.clock.paused = true
 			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal", KEY_K: "factions"}[(event as InputEventKey).keycode])
 		KEY_F5:
-			hud.show_notice("Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
+			hud.show_notice("Быстрое сохранение" if SaveSlots.save(state, SaveSlots.QUICK) else "Не удалось сохранить")
 		KEY_ESCAPE:
 			if _menu.visible:
 				_menu.close_window()
@@ -574,11 +641,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
-	state.advance(delta)
+	var started := Time.get_ticks_usec() if profile_map_frames else 0
+	var steps: int = state.advance(delta)
+	if profile_map_frames:
+		map_steps = steps
+		map_step_us = Time.get_ticks_usec() - started
 	_camp_talk()
 	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):
 		_autosave.save(state, false)
 	if not camera.detached:
 		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
+	if profile_map_frames: started = Time.get_ticks_usec()
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
+	if profile_map_frames: map_hud_us = Time.get_ticks_usec() - started

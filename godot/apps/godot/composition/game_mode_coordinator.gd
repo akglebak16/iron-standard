@@ -7,6 +7,7 @@ const SiegeDemo = preload("res://apps/godot/composition/siege_demo.tscn")
 const QuickSetup = preload("res://apps/godot/composition/quick_battle_setup.gd")
 var _mode: Node
 var _transition_pending := false
+var _profile_campaign_start := false
 
 var _last_quick := {}
 func _ready() -> void:
@@ -20,6 +21,9 @@ func _ready() -> void:
 		add_child(load("res://tools/release_smoke.gd").new())
 		return
 	_show_menu()
+	if "--campaign-start-benchmark" in OS.get_cmdline_user_args():
+		_profile_campaign_start = true
+		add_child(load("res://tests/performance/campaign_start_benchmark.gd").new())
 
 func _replace(next: Node) -> void:
 	if _mode != null:
@@ -38,7 +42,9 @@ func _show_menu() -> void:
 
 func _show_campaign() -> void:
 	var campaign := Campaign.instantiate()
+	campaign.profile_startup = _profile_campaign_start
 	campaign.title_requested.connect(_request_menu)
+	campaign.campaign_requested.connect(_request_campaign)
 	_replace(campaign)
 
 func _request_campaign() -> void:

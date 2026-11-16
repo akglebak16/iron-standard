@@ -99,11 +99,18 @@ func step(dh: float) -> void:
 		var a: Dictionary = list[i]
 		if _skip_fight(a) or not (a in roster.parties):
 			continue
+		var ax: float = a.x
+		var ay: float = a.y
 		for j in range(i + 1, list.size()):
 			var b: Dictionary = list[j]
+			# Reject distant pairs before reading flags and searching the roster.
+			# Potential contacts keep the original distance and iteration order.
+			var dx: float = ax - b.x
+			if absf(dx) >= 15.0 or not (Vector2(dx, ay - b.y).length() < 15.0):
+				continue
 			if _skip_fight(b) or not (b in roster.parties):
 				continue
-			if Vector2(a.x - b.x, a.y - b.y).length() < 15.0 and roster.hostile(a, b):
+			if roster.hostile(a, b):
 				if skirmish != null:
 					skirmish.contact(a, b, auto_fight)
 				else:
