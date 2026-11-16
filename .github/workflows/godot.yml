@@ -102,6 +102,18 @@ jobs:
           New-Item -ItemType Directory -Force $target | Out-Null
           Copy-Item "$env:RUNNER_TEMP/templates/templates/*" $target -Recurse
           "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
+      # Импорт картинок с нуля занимает до двух минут; кеш хранит готовый импорт, Godot переимпортирует только изменённое.
+      - name: Кеш импорта Godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            godot/.godot/imported
+            godot/.godot/editor
+            godot/.godot/uid_cache.bin
+            godot/.godot/global_script_class_cache.cfg
+          key: godot-import-4.7.2-${{ hashFiles('godot/**/*.import', 'godot/**/*.png', 'godot/**/*.svg', 'godot/**/*.ogg', 'godot/**/*.ttf', 'godot/**/*.otf') }}
+          restore-keys: |
+            godot-import-4.7.2-
       - name: Пакетное ядро контактов (закреплённые SHA256)
         run: pwsh -File godot/tools/native_bootstrap.ps1
       - name: Godot-тесты (в PR только затронутые правкой; ночью и по кнопке все)
