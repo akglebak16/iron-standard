@@ -68,6 +68,7 @@ func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> 
 		s.siege = true
 		s.wall_damage = clampf(float(opponent.get("wall_damage", 0.0)), 0.0, 1.0)
 		s.wall_defense = opponent.get("wall_defense", {}).duplicate()
+		s.castle = bool(opponent.get("castle", false))
 	return s
 
 func party_dict(state: RefCounted, allies: Array = []) -> Dictionary:
@@ -95,6 +96,7 @@ func siege_opponent(state: RefCounted, s: Dictionary) -> Dictionary:
 	var o: Dictionary = state.siege.siege_party(s)
 	o["wall_damage"] = clampf(float(s.get("dmg", 0.0)), 0.0, 1.0)
 	o["wall_defense"] = SiegeAftermath.supplies(s)
+	o["castle"] = s.get("kind") == "castle"
 	return o
 
 ## World dict a siege result is resolved against: the town and the lords inside it.

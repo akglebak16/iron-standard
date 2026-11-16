@@ -46,6 +46,7 @@ var native_contact_failures := 0
 var _contact_geometry: Dictionary = {}
 var _contact_revision := -1
 var _contact_wall: SiegeWall
+var _contact_wall_revision := -1
 var _contact_arena := Vector2.ZERO
 var _contact_wall_shape := Vector2.INF
 var static_obstacles := StaticObstacleIndex.new()
@@ -67,7 +68,8 @@ var _events: Array[Dictionary] = []
 
 func contact_geometry() -> Dictionary:
 	var wall_shape := Vector2(wall.x, wall.half_width) if wall != null else Vector2.INF
-	if _contact_revision == static_obstacles.revision and _contact_wall == wall and _contact_wall_shape == wall_shape and _contact_arena == arena_size and not _contact_geometry.is_empty():
+	var wall_revision := wall.revision if wall != null else -1
+	if _contact_revision == static_obstacles.revision and _contact_wall == wall and _contact_wall_shape == wall_shape and _contact_wall_revision == wall_revision and _contact_arena == arena_size and not _contact_geometry.is_empty():
 		return _contact_geometry
 	var positions := PackedVector2Array()
 	var radii := PackedFloat64Array()
@@ -86,6 +88,7 @@ func contact_geometry() -> Dictionary:
 	_contact_revision = static_obstacles.revision
 	_contact_wall = wall
 	_contact_wall_shape = wall_shape
+	_contact_wall_revision = wall_revision
 	_contact_arena = arena_size
 	return _contact_geometry
 

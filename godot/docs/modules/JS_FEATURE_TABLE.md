@@ -18,10 +18,10 @@
 
 | Статус | Строк |
 | --- | --- |
-| совпадает и проверено | 22 |
-| отличается | 9 |
-| отсутствует | 4 |
-| не проверено | 40 |
+| совпадает и проверено | 27 |
+| отличается | 6 |
+| отсутствует | 1 |
+| не проверено | 41 |
 | не переносим | 2 |
 
 Чтобы удалить JS, все строки должны стать «совпадает и проверено» (или «не переносим» по решению владельца).
@@ -56,8 +56,8 @@
 | Смена оружия (X) | `03_battle.js` `swapWield` | `core/battle/application/session.gd` | `test_scene.gd`, `test_session.gd` | совпадает и проверено | |
 | Подкрепления волнами | `03_battle.js` (резерв) | `core/battle/model/state.gd`, `session.gd` | `test_reserve_waves.gd` | совпадает и проверено | |
 | Итог боя: потери, раненые, опыт | `03_battle.js` `finishBattle`, `05c_logic.js` | `core/battle/rules/result.gd`, `core/campaign/rules/battle_aftermath.gd` | `test_result.gd`, `test_battle_aftermath.gd` | не проверено | |
-| Стена, проходы, обход, укрытие | `03_battle.js` `siegeSetup`, `inGap`, `wallPush`, `wallVia`, `wallCover`, `siegeBrain` | `core/battle/model/siege_wall.gd`, `data/siege_setup.gd`, `rules/ai_decision.gd` | `test_siege.gd`, `test_siege_setup.gd` | отличается | Проходы всегда открыты (см. строку ниже) |
-| Ворота с прочностью: их выбивают, «Ворота пали!», гарнизон через 45 с сам выходит из главных ворот, пролом в сильно побитой стене | `03_battle.js` `gateBreak`, `B.wall.gates`, `paintRubble` | — | — | отсутствует | В Godot проходы открыты с начала боя, ворот нет; побитая стена только расширяет главный проход |
+| Стена, проходы, обход, укрытие | `03_battle.js` `siegeSetup`, `inGap`, `wallPush`, `wallVia`, `wallCover`, `siegeBrain` | `core/battle/model/siege_wall.gd`, `data/siege_setup.gd`, `rules/tactics.gd` | `test_siege.gd`, `test_siege_setup.gd` | совпадает и проверено | |
+| Ворота с прочностью: их выбивают, «Ворота пали!», гарнизон через 45 с сам выходит из главных ворот, пролом в сильно побитой стене | `03_battle.js` `gateBreak`, `B.wall.gates`, `paintRubble`; `03c_siegedef.js` `sdDraw` | `core/battle/model/siege_wall.gd`, `rules/tactics.gd` `siege_step`, `siege_defense_view.gd` | `test_siege.gd`, `test_siege_defense.gd`, `test_siege_setup.gd`, `test_terrain_view.gd` | совпадает и проверено | Обломки на месте павших ворот разложены своим генератором, а не `mulberry` |
 | Камни и кипящее масло со стены | `03c_siegedef.js` | `core/battle/model/siege_defense.gd`, `siege_defense_view.gd` | `test_siege_defense.gd` | совпадает и проверено | |
 | Кровь, брызги, лужи, отлетающие части | `03b_gore.js` | `impact_effects.gd`, `detached_parts.gd` | `test_impact_effects.gd` | отличается | По чек-листу паритета: не все эффекты и детали |
 | Реплики и перепалки спутников | `03b_gore.js` `voiceSay`, `banterSay` | `companion_dialogue.gd`, `banter_lines.gd` | `test_companion_dialogue.gd` | не проверено | |
@@ -125,7 +125,7 @@
 
 ## Что закрыть, по порядку
 
-1. **Ворота в осадном бою** (отсутствует): прочность ворот, выбивание пехотой, «Ворота пали!», выход гарнизона, пролом.
+1. ~~Ворота в осадном бою~~ — перенесено.
 2. ~~Карточка вещи~~ — перенесено (обоз и рынок).
 3. ~~Пыль из-под копыт и блики удара~~ — уже было в Godot (`unit_view.gd`), ошибка сверки.
 4. ~~Карточки заданий~~ — перенесено.

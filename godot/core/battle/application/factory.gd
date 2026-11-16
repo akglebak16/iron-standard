@@ -38,7 +38,7 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	if party.is_empty():
 		return null
 	if setup.siege:
-		SiegeSetup.apply(state, party.siege_skill, setup.wall_damage, setup.wall_defense)
+		SiegeSetup.apply(state, party.siege_skill, setup.wall_damage, setup.wall_defense, setup.castle, setup.seed if setup.seed != 0 else 7)
 	state.set_plants(VegetationSetup.create(state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF))
 	var defender_morale := roundf(Config.SIEGE_DEFENDER_MORALE * (1.0 - state.siege_skill)) if setup.siege else 0.0
 	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale, setup.uses_reserve_waves(setup.enemy_faction)):

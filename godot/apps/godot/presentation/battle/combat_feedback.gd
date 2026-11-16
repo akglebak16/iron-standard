@@ -32,6 +32,8 @@ const BATTLE_STARTED := "Битва началась."
 const ENEMY_CHARGE := "Враг идёт в атаку!"
 const WALL_ALERT := "Враг у стен!"
 const GARRISON_CAVALRY := "Конница гарнизона вышла в бой."
+const GATE_BROKEN := "Ворота пали!"
+const GATE_OPENED := "Гарнизон открыл ворота и вышел в бой!"
 const VICTORY := "Победа! Враг разбит."
 const DEFEAT := "Отряд разбит."
 const RETREATED := "Отряд отступает!"
@@ -63,6 +65,10 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 				_log(WALL_ALERT)
 			Event.Kind.GARRISON_CAVALRY:
 				_log(GARRISON_CAVALRY)
+			Event.Kind.GATE_BROKEN:
+				_log(GATE_BROKEN)
+			Event.Kind.GATE_OPENED:
+				_log(GATE_OPENED)
 			Event.Kind.BATTLE_DECIDED:
 				_log(VICTORY if event.won else DEFEAT)
 			Event.Kind.BATTLE_RETREATED:

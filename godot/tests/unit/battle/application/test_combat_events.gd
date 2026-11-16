@@ -71,6 +71,7 @@ func _check_notices() -> void:
 	assert(session.take_events() == [{"kind": Event.Kind.BATTLE_STARTED}, {"kind": Event.Kind.ORDER_APPLIED, "order": "follow", "selection": 0, "point": Vector2.ZERO}, {"kind": Event.Kind.WALL_ALERT}])
 	session.advance(STEP)
 	assert(session.take_events().is_empty())
+	battle.wall.open_main_gate() # The garrison only comes out on time once a way is open.
 	Tactics.siege_step(battle, Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS + STEP)
 	Tactics.siege_step(battle, Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS + STEP * 2)
 	assert(battle.take_events() == [{"kind": Event.Kind.GARRISON_CAVALRY}])

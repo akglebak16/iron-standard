@@ -103,7 +103,7 @@ func advance(dt: float) -> void:
 	if _state.wall == null:
 		Tactics.enemy_step(_state, 1, _elapsed_seconds, dt)
 	else:
-		Tactics.siege_step(_state, _elapsed_seconds)
+		Tactics.siege_step(_state, _elapsed_seconds, dt)
 		SiegeDefense.step(_state, dt, _rng)
 	Tactics.follow_hero(_state, _hero)
 	Tactics.relayout(_state, dt)
@@ -430,4 +430,6 @@ func _wall_defense_values() -> Dictionary:
 	return {"wall_x": _state.wall.x, "stones_left": _state.siege_defense.stones,
 		"stones": _state.siege_defense.stones_in_flight.map(func(s): return {"origin": s.origin, "impact": s.impact, "progress": clampf(s.time / s.duration, 0.0, 1.0)}),
 		"fires": _state.siege_defense.fires.map(func(f): return {"center": f.center, "half_size": f.half_size, "time": f.time, "duration": f.duration, "pour_from": f.pour_from}),
-		"cauldrons": _state.siege_defense.cauldrons.map(func(c): return {"gap": c.gap, "charged": c.charges > 0})}
+		"cauldrons": _state.siege_defense.cauldrons.map(func(c): return {"gap": c.gap, "charged": c.charges > 0}),
+		"half_width": _state.wall.half_width,
+		"gates": _state.wall.gates.map(func(g): return {"gap": g.gap, "hp": g.hp, "max": g.max, "hit": g.hit, "dead": g.dead, "open": g.open})}

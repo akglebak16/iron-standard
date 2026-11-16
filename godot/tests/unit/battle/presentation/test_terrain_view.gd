@@ -43,8 +43,7 @@ func _check_openings() -> void:
 	var wide_openings := 0
 	for opening in view._openings:
 		assert(opening.get_center().x == model.x)
-		var gap := model.gap_at(opening.get_center().y)
-		assert(gap == Vector2(opening.position.y, opening.end.y))
+		assert(Vector2(opening.position.y, opening.end.y) in model.all_gaps())
 		if opening.size.y > WallView.GATE_MIN_WIDTH:
 			wide_openings += 1
 	assert(wide_openings == 1)
@@ -54,6 +53,9 @@ func _check_openings() -> void:
 	assert(view._rubble == rubble)
 	assert(view._rubble.all(func(piece):
 		return view._openings.any(func(gap): return piece.position.y > gap.position.y and piece.position.y < gap.end.y)))
+	# paintWall: openings closed by gates get no rubble and no broken leaves; the gates are drawn over them.
+	view.configure(model.segments(), TEST_SEED, model.all_gaps())
+	assert(view._openings.size() == 3 and view._breaches.is_empty() and view._rubble.is_empty())
 	view.configure([], TEST_SEED)
 	assert(view._openings.is_empty() and view._rubble.is_empty())
 	view.free()
@@ -72,6 +74,8 @@ func _check_scene_wall() -> void:
 	var rubble := view._rubble.duplicate(true)
 	view.configure(model.segments(), TEST_SEED)
 	assert(view.get_child_count() == 4 + view._openings.size() * 2 + 2 and view._rubble == rubble)
+	view.configure(model.segments(), TEST_SEED, model.all_gaps())
+	assert(view.get_child_count() == 4 + view._openings.size() * 2, "Gates instead of broken leaves")
 	view.configure([], TEST_SEED)
 	assert(view.get_child_count() == 0)
 	view.free()
