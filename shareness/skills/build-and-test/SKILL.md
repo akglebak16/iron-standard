@@ -5,7 +5,7 @@ description: Проверить, протестировать, собрать и
 Команды выполняются из корня репозитория. `<Godot>` — путь к `Godot_v4.7.2-stable_win64_console.exe`.
 
 1. Архитектура: `node godot/tools/architecture.test.cjs` и `node godot/tools/architecture.cjs`. Новые исключения запрещены.
-2. Каталоги: пять экспортёров с `--check` (`tools/troops/export_troops.cjs`, `tools/equipment/export_gear.cjs`, `tools/characters/export_perks.cjs`, `tools/characters/export_companions.cjs`, `tools/campaign/export_goods.cjs`).
+2. Каталоги (`godot/content/gameplay/*.json`) — источник истины, их проверяют тесты каталогов (`test_catalog_validation.gd` и другие) в общем наборе.
 3. Тесты: `node godot/tools/test.cjs <Godot>`. Для своей правки — `--changed=HEAD` (staged, unstaged, untracked), для ветки — `--changed=main`. `--jobs=N` задаёт потоки, по умолчанию до 4. Runner изолирует `user://`: тесты не трогают сохранения игрока. Отчёт — `godot/.godot/test-last-run.json`.
 4. Сборка и smoke: `node godot/tools/release.cjs <Godot>`, игра — `dist/godot/migration-release/IronStandard.exe`.
 5. Перед первым запуском в чистой Windows-копии: `pwsh -File godot/tools/native_bootstrap.ps1`. Runner сам собирает native DLL; бинарники и `dist/` в Git не добавляй. После правки native-кода обязательны `test_native_contacts` и release-smoke.

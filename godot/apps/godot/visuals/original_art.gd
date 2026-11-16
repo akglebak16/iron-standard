@@ -3,7 +3,7 @@ const AssetPaths = preload("res://apps/godot/visuals/asset_paths.gd")
 ## Original Canvas layers shared by the battle and the campaign portraits.
 const MANIFEST = preload("res://apps/godot/visuals/assets/visual_manifest.gd").DATA
 const BANNERS = preload("res://apps/godot/visuals/assets/banner_definitions.gd").DATA
-## Hero and companion faces, helms by banner and neck stumps (export_visuals.cjs --faces-only).
+## Hero and companion faces, helms by banner and neck stumps (exported once from the removed JS version).
 const FACES = preload("res://apps/godot/visuals/assets/face_manifest.gd").DATA
 const FaceVariant = preload("res://apps/godot/visuals/face_variant.gd")
 const SHEETS = {

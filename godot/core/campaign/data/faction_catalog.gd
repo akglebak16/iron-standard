@@ -1,5 +1,5 @@
 extends "res://core/content/api/definition_catalog.gd"
-## Faction looks and names exported from FACTIONS in src/01_core.js (tools/campaign/export_world.cjs).
+## Faction looks and names exported from FACTIONS in src/01_core.js (exported once from the removed JS version).
 const CONTENT_KEY := "factions"
 
 var factions: Dictionary = {}

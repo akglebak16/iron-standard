@@ -1,6 +1,6 @@
 extends SceneTree
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
-## The Godot terrain must match the browser generator (fixture from tools/campaign/export_world.cjs).
+## The Godot terrain must match the browser generator (frozen fixture exported from the removed JS version).
 const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const FIXTURE := "res://tests/unit/campaign/fixtures/world_parity.json"

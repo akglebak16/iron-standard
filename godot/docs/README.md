@@ -43,9 +43,9 @@ node godot/tools/release.cjs <Godot-console.exe>
 
 Runner изолирует сохранения и настройки от данных игрока. Release-smoke
 проверяет также переход Campaign → Battle → Campaign и владельца камеры.
-Каталоги проверяются пятью экспортёрами с `--check`: `tools/troops/export_troops.cjs`,
-`tools/equipment/export_gear.cjs`, `tools/characters/export_perks.cjs`,
-`tools/characters/export_companions.cjs`, `tools/campaign/export_goods.cjs`.
+Каталоги в `content/gameplay/` — источник истины: правь JSON напрямую, его проверяют
+загрузчик `adapters/content/` и тесты каталогов. Браузерная JS-версия удалена 2026-11-16;
+история переноса — [таблица JS → Godot](modules/JS_FEATURE_TABLE.md) и [паритет механик](modules/PARITY_CHECKLIST.md).
 
 Методика измерений и ограничения отчётов: [benchmarks](benchmarks/README.md).
 Вспомогательные библиотеки и сборка: [зависимости](DEPENDENCIES.md).

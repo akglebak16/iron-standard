@@ -1,6 +1,6 @@
 extends "res://core/content/api/definition_catalog.gd"
 ## Europe map data (coast shapes, ridges, regions, rivers) exported from src/05_world.js
-## by tools/campaign/export_world.cjs into data/europe.json.
+## once from the removed JS version into data/europe.json.
 const CONTENT_KEY := "europe"
 
 var eu: Dictionary = {}
