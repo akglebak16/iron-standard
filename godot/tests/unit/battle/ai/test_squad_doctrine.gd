@@ -4,19 +4,25 @@ extends SceneTree
 ## loose near a siege wall, with its targets across it, in a pursuit, by order and when too small; a switch holds
 ## AI_FORMATION_SWITCH_SECONDS. A holding infantry group screens its archers from closing riders. Shock cavalry stuck in
 ## foot melee rallies away from its targets and charges again; contact with archers alone is no reason to rally.
+## The line aims at the nearest enemy squad, never at a lone hero; a line long in melee with many men waiting mingles.
 const Config = preload("res://core/battle/config.gd")
 const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const SiegeWall = preload("res://core/battle/model/siege_wall.gd")
 const SquadDoctrine = preload("res://core/battle/simulation/ai/squad_doctrine.gd")
+const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 
 const CENTER := Vector2(1100, 850)
 const PERIOD := Config.AI_SQUAD_PERIOD_SECONDS
 
 func _initialize() -> void:
+	assert(MotionStore.MODES.find(Config.AI_MODE_MELEE) == SquadDoctrine.MELEE_MODE)
+	assert(MotionStore.MODES.find(Config.AI_MODE_RANK) == SquadDoctrine.RANK_MODE)
 	for side in 2:
 		_check_formed_line(side)
 		_check_turn(side)
+		_check_squad_aim(side)
+		_check_mingle(side)
 		_check_loose(side)
 		_check_screen(side)
 		_check_cavalry_cycle(side)
@@ -93,6 +99,47 @@ func _check_turn(side: int) -> void:
 	assert(turned > 0.0 and turned <= Config.AI_FORMATION_TURN_RATE * PERIOD + 1e-6, "the line wheels at a limited rate")
 	var ahead: Vector2 = group.center - SquadDoctrine.sample_group(state, group).fitted(group.direction)
 	assert(ahead.length() < Config.AI_FORMATION_LEAD * 0.2, "it does not march off while the targets are on its flank")
+
+func _check_squad_aim(side: int) -> void:
+	var state := State.new()
+	state.setup_groups()
+	var men := _group(state, side, Config.GROUP_INFANTRY, 20, CENTER, 2201)
+	# A lone hero (no squad) right ahead, the enemy squad far on the flank; every man targets the hero.
+	var hero := Unit.new(1, 1 - side, CENTER + _forward(side) * 150.0, 100, 0, 1)
+	hero.hero = true
+	state.add_unit(hero)
+	_group(state, 1 - side, Config.GROUP_INFANTRY, 12, CENTER + Vector2(0, 600), 6601)
+	_target_all(men, [hero])
+	var group = state.groups[side][Config.GROUP_INFANTRY]
+	group.order = Config.ORDER_CHARGE
+	SquadDoctrine.step(state, 1.0 / 60.0)
+	assert(group.formed)
+	assert(absf(wrapf(group.direction - PI * 0.5, -PI, PI)) < 0.3, "the line faces the squad, not the hero: %f" % group.direction)
+
+func _check_mingle(side: int) -> void:
+	var state := State.new()
+	state.setup_groups()
+	var men := _group(state, side, Config.GROUP_INFANTRY, 20, CENTER, 3401)
+	var foes := _group(state, 1 - side, Config.GROUP_INFANTRY, 20, CENTER + _forward(side) * 40.0, 7701)
+	_target_all(men, foes)
+	var group = state.groups[side][Config.GROUP_INFANTRY]
+	group.order = Config.ORDER_CHARGE
+	SquadDoctrine.step(state, 1.0 / 60.0)
+	assert(group.formed)
+	# A third of the men fight in contact, the rest wait in their ranks.
+	for i in men.size():
+		men[i].ai_mode = Config.AI_MODE_MELEE if i % 3 == 0 else Config.AI_MODE_RANK
+		if i % 3 == 0: men[i].position = foes[i].position - _forward(side) * 30.0
+	_steps(state, ceili(Config.AI_FORMATION_MELEE_SECONDS / PERIOD) - 1)
+	assert(group.formed, "a short melee keeps the line")
+	_steps(state, 2)
+	assert(group.mingled and not group.formed, "a long melee with men waiting mingles the line")
+	for unit in men: unit.ai_mode = Config.AI_MODE_MELEE
+	_steps(state, ceili(Config.AI_FORMATION_SWITCH_SECONDS / PERIOD) + 2)
+	assert(not group.formed, "loose while the melee lasts")
+	for foe in foes: foe.position += _forward(side) * 400.0
+	_steps(state, ceili(Config.AI_FORMATION_SWITCH_SECONDS / PERIOD) + 2)
+	assert(not group.mingled and group.formed, "the contact is over: the line forms again")
 
 func _check_loose(side: int) -> void:
 	# Pursuit: most targets flee. The switch waits AI_FORMATION_SWITCH_SECONDS.

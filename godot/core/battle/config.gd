@@ -343,6 +343,13 @@ const AI_FORMATION_MIN_UNITS := 6
 const AI_FORMATION_WALL_DISTANCE := 260.0 # From the wall line to the fitted formation centre.
 const AI_FORMATION_PURSUIT_SHARE := 0.5
 const AI_FORMATION_SWITCH_SECONDS := 1.0
+const AI_FORMATION_AIM_RADIUS := 250.0 # The line turns to the cluster of its targets around the nearest one.
+# A line in melee (AI_FORMATION_CONTACT_SHARE of its sampled men fighting within AI_FIELD_CONTACT_DISTANCE) for
+# AI_FORMATION_MELEE_SECONDS while AI_FORMATION_WAITING_SHARE of them still wait in their ranks mingles: it goes loose,
+# so the wings and rear ranks join the melee, and forms again when the contact is over.
+const AI_FORMATION_CONTACT_SHARE := 0.1
+const AI_FORMATION_MELEE_SECONDS := 6.0
+const AI_FORMATION_WAITING_SHARE := 0.4
 # Spearmen (anti_cavalry): a rider closing in on the spearman faster than AI_BRACE_APPROACH_SPEED within
 # AI_BRACE_DISTANCE makes him stand and face the rider instead of running at him; in reach he strikes as usual.
 const AI_BRACE_DISTANCE := 260.0
