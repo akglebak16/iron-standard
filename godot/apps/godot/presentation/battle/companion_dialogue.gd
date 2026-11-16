@@ -54,17 +54,17 @@ var _rng := RandomNumberGenerator.new()
 var _speakers := {}
 var _banter_timer := 0.0
 var _banter_reply := {}
-var _banter_last := -1
+var _banter_last := {} # pair index -> last exchange index, so a pair does not repeat itself
 
 func configure(roster: Dictionary) -> void:
 	_speakers.clear()
 	_banter_timer = _rng.randf_range(BANTER_FIRST_DELAY.x, BANTER_FIRST_DELAY.y)
 	_banter_reply = {}
-	_banter_last = -1
+	_banter_last = {}
 	for id in roster:
 		var entry: Dictionary = roster[id]
 		_speakers[id] = {
-			"name": entry.name, "companion_id": entry.get("companion_id", ""), "lines": entry.lines.duplicate(true),
+			"name": entry.name, "companion_id": entry.get("companion_id", ""), "lines": entry.lines.duplicate(true), "level": int(entry.get("level", 1)),
 			"intro": _rng.randf_range(START_DELAY.x, START_DELAY.y),
 			"taunt": _rng.randf_range(INITIAL_TAUNT_DELAY.x, INITIAL_TAUNT_DELAY.y),
 			"cooldown": 0.0, "text": "", "remaining": 0.0, "unit": {},
@@ -168,31 +168,48 @@ func _advance_banter(dt: float) -> PackedStringArray:
 	_banter_timer -= dt
 	if _banter_timer > 0.0 or not _banter_reply.is_empty():
 		return journal
-	var first := _speaker_by_companion(Banter.FIRST_ID)
-	var second := _speaker_by_companion(Banter.SECOND_ID)
-	if not _banter_speaker_ready(first) or not _banter_speaker_ready(second) or first.remaining > 0.0 or second.remaining > 0.0:
+	var ready: Array = []
+	for pair_index in Banter.PAIRS.size():
+		var pair: Dictionary = Banter.PAIRS[pair_index]
+		var a := _speaker_by_companion(pair.first)
+		var b := _speaker_by_companion(pair.second)
+		if _banter_speaker_ready(a) and _banter_speaker_ready(b) and a.remaining <= 0.0 and b.remaining <= 0.0:
+			ready.append([pair_index, a, b])
+	if ready.is_empty():
 		_banter_timer = BANTER_RETRY_SECONDS
 		return journal
 	_banter_timer = _rng.randf_range(BANTER_INTERVAL.x, BANTER_INTERVAL.y)
-	var index := _rng.randi_range(0, Banter.EXCHANGES.size() - 1)
-	while index == _banter_last and Banter.EXCHANGES.size() > 1:
-		index = _rng.randi_range(0, Banter.EXCHANGES.size() - 1)
-	_banter_last = index
-	var exchange: Array = Banter.EXCHANGES[index]
-	var opener := first if exchange[0] == "g" else second
+	var chosen: Array = ready[_rng.randi_range(0, ready.size() - 1)]
+	var pair: Dictionary = Banter.PAIRS[chosen[0]]
+	var first: Dictionary = chosen[1]
+	var second: Dictionary = chosen[2]
+	var exchanges: Array = Banter.lines_for(pair, "battle", Banter.stage(first.level, second.level))
+	var last: int = _banter_last.get(chosen[0], -1)
+	var index := _rng.randi_range(0, exchanges.size() - 1)
+	while index == last and exchanges.size() > 1:
+		index = _rng.randi_range(0, exchanges.size() - 1)
+	_banter_last[chosen[0]] = index
+	var exchange: Array = exchanges[index]
+	var opener := first if exchange[0] == pair.tags[0] else second
 	var other := second if opener == first else first
 	journal.append_array(_banter_say(opener, exchange[1]))
 	_banter_reply = {"remaining": BANTER_REPLY_DELAY, "speaker": other, "text": exchange[2]}
 	return journal
 
 func _queue_down_reply(fallen: Dictionary) -> void:
-	var lines: Array = Banter.DOWN_REPLIES.get(fallen.companion_id, [])
-	if lines.is_empty():
+	var candidates: Array = []
+	for pair: Dictionary in Banter.PAIRS:
+		if fallen.companion_id != pair.first and fallen.companion_id != pair.second:
+			continue
+		var lines: Array = pair.down.get(fallen.companion_id, [])
+		var other := _speaker_by_companion(pair.second if fallen.companion_id == pair.first else pair.first)
+		if not lines.is_empty() and _banter_speaker_ready(other):
+			candidates.append([other, lines])
+	if candidates.is_empty():
 		return
-	var other := _speaker_by_companion(Banter.SECOND_ID if fallen.companion_id == Banter.FIRST_ID else Banter.FIRST_ID)
-	if not _banter_speaker_ready(other):
-		return
-	_banter_reply = {"remaining": BANTER_DOWN_DELAY, "speaker": other, "text": lines[_rng.randi_range(0, lines.size() - 1)]}
+	var chosen: Array = candidates[_rng.randi_range(0, candidates.size() - 1)]
+	var lines: Array = chosen[1]
+	_banter_reply = {"remaining": BANTER_DOWN_DELAY, "speaker": chosen[0], "text": lines[_rng.randi_range(0, lines.size() - 1)]}
 
 func _banter_say(speaker: Dictionary, text: String) -> PackedStringArray:
 	speaker.text = text

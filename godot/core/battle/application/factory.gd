@@ -89,7 +89,7 @@ static func _spawn_companions(state: State, fit: Array[Dictionary], gear_catalog
 		if unit == null:
 			return null
 		if not companion.voice.is_empty():
-			dialogue[unit.id] = {"name": unit.name, "companion_id": unit.companion_id, "lines": companion.voice}
+			dialogue[unit.id] = {"name": unit.name, "companion_id": unit.companion_id, "lines": companion.voice, "level": int(profile.get("lvl", 1))}
 	return dialogue
 
 ## Builds the player's hero from the preview troop and, when a profile is set, applies its
