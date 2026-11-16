@@ -3,7 +3,7 @@ extends RefCounted
 ## vassalRest, cvAI, autoFight, stepWorld in src/05_world.js and src/05h_vassals.js).
 ## Since stage 2a (docs/modules/ai/DESIGN.md §5.2, ADR-023) every party picks a goal through party_goals.gd — lords,
 ## faction vassals, the player's retinues (orders of world_vassals.gd are weight sets), bandits, caravans and the dead —
-## and this file carries the goal out: routes, chases, arrivals. Faction campaigns (world_wars.gd) stay as they were.
+## and this file carries the goal out: routes, chases, arrivals. Faction campaigns are operations of world_wars.gd (stage 2b).
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const Config = preload("res://core/campaign/config.gd")
@@ -421,6 +421,9 @@ func _arrived(p: Dictionary) -> void:
 				roster.remove(p)
 			return
 		if s.fac == "player" and p.fac != "player":
+			if s.kind == Config.SETTLEMENT_VILLAGE and p.get("goal", "") == "raid" and player != null and Rules.hostile_to_player(p, player.rel):
+				_raid_arrive(p, s)
+				return
 			p.state = "idle"
 			p.path = []
 			p.wait = float(roster.rint(4, 10))
@@ -457,7 +460,8 @@ func _raid_arrive(p: Dictionary, s: Dictionary) -> void:
 	p.state = "idle"
 	p.path = []
 	p.pi = 0
-	if s.kind == Config.SETTLEMENT_VILLAGE and Rules.at_war(p.fac, s.fac, roster.diplomatic_wars) and int(s.get("burnt", 0)) <= 0:
+	var foe: bool = Rules.at_war(p.fac, s.fac, roster.diplomatic_wars) or (s.fac == Config.PLAYER_FACTION and player != null and Rules.hostile_to_player(p, player.rel))
+	if s.kind == Config.SETTLEMENT_VILLAGE and foe and int(s.get("burnt", 0)) <= 0:
 		s.burnt = Config.GOAL_RAID_BURN_HOURS
 		p.gold += Config.GOAL_RAID_GOLD
 	p.wait = float(roster.rint(Config.GOAL_PATROL_WAIT.x, Config.GOAL_PATROL_WAIT.y))

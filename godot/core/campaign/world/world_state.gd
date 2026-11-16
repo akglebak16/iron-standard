@@ -78,10 +78,13 @@ func dispose() -> void:
 		for info in source.get_signal_list():
 			for connection in source.get_signal_connection_list(info.name):
 				source.disconnect(info.name, connection.callable)
-	if wars != null: wars.clans = null
+	if wars != null:
+		wars.clans = null
+		wars.player = null
+		wars.vassals = null
+		wars.threat = Callable()
 	if ai != null: ai.dispose()
 	if clans != null: clans.siege = null
-	if siege != null: siege.vassals = null
 	ai = null
 	threat = null
 	wars = null
@@ -127,6 +130,9 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.siege = WorldSiege.new(state.wars, state.roster, state.roster.rng)
 	state.wars.announced.connect(func(t): state.log_world(t, JOURNAL_INFO))
 	state.wars.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
+	state.wars.holding_news.connect(func(s, t, good): state.log_world(t, JOURNAL_GOOD if good else JOURNAL_BAD); state.settlement_changed.emit(s))
+	state.wars.player = state.player
+	state.wars.threat = func(x: float, y: float, f: String) -> float: return state.threat_map().threat(x, y, state.threat_enemies(f))
 	state.ai = PartyAI.new(state.roster, state.player)
 	state.undead = WorldUndead.new(state.roster, state.wars)
 	state.undead.init()
@@ -151,10 +157,8 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.companions.ensure(state.player)
 	state.vassals = WorldVassals.new(state.roster, state.siege, state.companions, state.player)
 	state.vassals.message.connect(func(t): state.log_world(t, JOURNAL_INFO))
-	state.siege.vassals = state.vassals
+	state.wars.vassals = state.vassals
 	state.ai.vassals = state.vassals
-	state.siege.lost.connect(func(s, t): state.log_world(t, JOURNAL_BAD); state.settlement_changed.emit(s))
-	state.siege.held.connect(func(_s, t): state.log_world(t, JOURNAL_GOOD))
 	state.siege.captured.connect(func(_s, t): state.log_world(t, JOURNAL_GOOD))
 	state.siege.surrendered.connect(func(s, t): state.log_world(t, JOURNAL_INFO); state.settlement_changed.emit(s))
 	state.skirmish = WorldSkirmish.new(state.roster)
@@ -278,8 +282,6 @@ func hour_tick() -> void:
 	skirmish.hour_tick()
 	if clock.hour == 12:
 		clans.refill()
-	if clock.hour % 3 == 0:
-		siege.assaults_tick(player)
 	for line in siege.block_hour(player, clock.hour):
 		log_world(line)
 	if not player.away and player.busy != "battle":

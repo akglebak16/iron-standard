@@ -41,6 +41,7 @@ func _initialize() -> void:
 	for i in 50:
 		b.step(0.2)
 	_check_old_save(a, data)
+	_check_old_campaign(a, data)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://test_save.json"))
 	print("World save tests passed")
 	quit(0)
@@ -70,4 +71,49 @@ func _check_old_save(a: RefCounted, data: EuropeData) -> void:
 	bad = Checkpoint.capture(a)
 	bad.roster.parties[0].gid = "x"
 	assert(not Checkpoint.valid(bad), "a goal target must be an id")
+	c.dispose()
+
+## A save made before stage 2b: a campaign under way has no marshal, no strength at the muster and no lords left home.
+## It loads, picks the strongest lord as its marshal and goes on from its present strength instead of retreating.
+func _check_old_campaign(a: RefCounted, data: EuropeData) -> void:
+	var old := Checkpoint.capture(a)
+	var f := ""
+	var foe := ""
+	for k in old.wars.wars:
+		var parts: PackedStringArray = String(k).split("|")
+		if a.wars.alive(parts[0]) and a.wars.alive(parts[1]):
+			f = parts[0]
+			foe = parts[1]
+			break
+	assert(f != "", "a war to campaign in")
+	var lords: Array = old.roster.parties.filter(func(q): return q.kind == "lord" and q.fac == f and not q.get("ruler", false) and not q.get("lock", false) and q.get("fight") == null)
+	assert(lords.size() >= 2)
+	var target: Dictionary = old.map.settles.filter(func(st): return st.fac == foe and st.kind == "town")[0]
+	var rally: Dictionary = old.map.settles.filter(func(st): return st.fac == f and st.kind != "camp")[0]
+	var army: Array = []
+	for q in lords.slice(0, 2):
+		q.army = true
+		q.erase("relief")
+		army.append(q.id)
+	old.wars.campaigns[f] = {"tid": target.id, "gid": rally.id, "state": "march", "t0": a.wars.now_h(), "t1": a.wars.now_h(), "army": army}
+	assert(Checkpoint.valid(old), "a campaign without stage 2b fields is valid")
+	var payload := Marshalls.raw_to_base64(var_to_bytes(old))
+	var c = WorldSave.from_dict({"version": 2, "encoding": "godot-variant-values-v1", "payload": payload, "sha256": payload.sha256_text()}, data, ContentLoader.registry())
+	assert(c != null, "a save with an old campaign loads")
+	assert(c.wars.campaigns[f].get("marshal") == null)
+	c.wars.hour = 2
+	c.wars._campaign(f)
+	assert(c.wars.campaigns.has(f), "the old campaign goes on instead of retreating")
+	var camp: Dictionary = c.wars.campaigns[f]
+	assert(camp.marshal is int and camp.marshal in army, "the old campaign gets a marshal")
+	assert(float(camp.s0) > 0.0, "its present strength becomes the start")
+	var round_trip = WorldSave.from_dict(WorldSave.to_dict(c), data, ContentLoader.registry())
+	assert(round_trip.wars.campaigns[f] == camp, "the new fields are saved")
+	round_trip.dispose()
+	var bad := Checkpoint.capture(c)
+	bad.wars.campaigns[f].marshal = "x"
+	assert(not Checkpoint.valid(bad), "a marshal must be an id")
+	bad = Checkpoint.capture(c)
+	bad.wars.campaigns[f].keep = ["x"]
+	assert(not Checkpoint.valid(bad), "lords left home are ids")
 	c.dispose()
