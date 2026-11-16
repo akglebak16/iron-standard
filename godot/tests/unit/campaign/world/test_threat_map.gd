@@ -1,12 +1,16 @@
 extends SceneTree
 ## Threat map (ADR-023): synthetic parties with made-up faction IDs, the empty map, linear cost, and the live world:
-## building and refreshing it spends no RNG and does not touch the checkpoint.
+## building and refreshing it spends no RNG and does not touch the checkpoint; no production code reads it yet.
 const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
 const Config = preload("res://core/campaign/config.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const WorldCheckpoint = preload("res://core/campaign/world/world_checkpoint.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
+
+## ADR-023: until stage 2a no AI decision reads the map. The first reader is added here together with its ADR update.
+const READERS_ALLOWED := ["res://core/campaign/world/world_state.gd", "res://core/campaign/world/threat_map.gd"]
+const READER_TOKENS := ["threat_map.gd", "threat_map(", "threat_enemies(", "threat_sources("]
 
 func _initialize() -> void:
 	_check_empty()
@@ -16,6 +20,7 @@ func _initialize() -> void:
 	_check_front()
 	_check_linear_cost()
 	_check_world()
+	_check_no_readers()
 	print("Threat map tests passed")
 	quit(0)
 
@@ -156,3 +161,26 @@ func _check_world() -> void:
 	assert(not s.threat_sources().any(func(x): return x.fac == Config.PLAYER_FACTION), "an absent player stamps nothing")
 	s.dispose()
 	assert(s.threat == null)
+
+func _check_no_readers() -> void:
+	var files: Array[String] = []
+	for root in ["res://core", "res://apps", "res://adapters", "res://runtime"]:
+		_scripts(root, files)
+	assert(files.size() > 50, "production scripts found: %d" % files.size())
+	for path in files:
+		if path in READERS_ALLOWED:
+			continue
+		var text := FileAccess.get_file_as_string(path)
+		for token in READER_TOKENS:
+			assert(not token in text, "%s reads the threat map (%s): update ADR-023 and READERS_ALLOWED first" % [path, token])
+
+func _scripts(dir: String, out: Array[String]) -> void:
+	var d := DirAccess.open(dir)
+	if d == null:
+		return
+	for name in d.get_directories():
+		if not name.begins_with("."):
+			_scripts(dir.path_join(name), out)
+	for name in d.get_files():
+		if name.ends_with(".gd"):
+			out.append(dir.path_join(name))
