@@ -21,6 +21,9 @@ func _initialize() -> void:
 	assert(second != null)
 	assert(second.player.hero.banner == 4)
 	assert(Checkpoint.capture(first) == Checkpoint.capture(second), "checkpoint must retain types and full float/RNG precision")
+	# Waiting is not saved (G.wait); both copies wait so hours keep running after the short walk.
+	first.waiting = true
+	second.waiting = true
 	for i in 300:
 		first.advance(0.137)
 		second.advance(0.137)

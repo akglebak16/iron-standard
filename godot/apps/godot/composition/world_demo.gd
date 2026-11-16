@@ -135,7 +135,7 @@ func _ready() -> void:
 	hud.pause_toggled.connect(func(): state.clock.paused = not state.clock.paused)
 	_town = TownWindow.new()
 	add_child(_town)
-	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; hud.show_notice("Ждём: %s. Клик по карте — в путь" % s.name))
+	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; state.waiting = true; hud.show_notice("Ждём: %s. Любой клик по карте или Z — в путь" % s.name))
 	_town.closed.connect(func(): state.clock.paused = false)
 	_party_window = PartyWindow.new()
 	_party_window.stat_preview = HeroStats.preview
@@ -205,6 +205,7 @@ func _on_map_click(at: Vector2) -> void:
 		return
 	var p = state.player
 	p.tid = -1
+	state.waiting = false
 	var prey: Dictionary = state.party_near(at.x, at.y, 34.0)
 	if not prey.is_empty():
 		state.chase(prey)
@@ -223,7 +224,8 @@ func _on_map_click(at: Vector2) -> void:
 		p.path_to(state.map.paths, target.x, target.y)
 	else:
 		p.enter_id = -1
-		p.path_to(state.map.paths, at.x, at.y)
+		if not p.path_to(state.map.paths, at.x, at.y):
+			hud.show_notice("Туда не пройти")
 
 func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	_meeting = party
@@ -291,7 +293,7 @@ func _on_encounter_choice(action: String) -> void:
 		"greet":
 			_end_meeting(3.0)
 		"attack":
-			state.player.rel[p.fac] = maxi(-100, int(state.player.rel.get(p.fac, 0)) - (12 if p.kind == "caravan" else 30))
+			state.attack(p)
 			_start_battle(p)
 		"flee":
 			var chance := AutoBattle.flee_chance(state.player.speed_of(state.map.paths), state.roster.speed_of(p), p.kind == "camp")
@@ -310,6 +312,7 @@ func _on_encounter_choice(action: String) -> void:
 
 func _vassal_talk(p: Dictionary) -> void:
 	var vs = state.vassals
+	state.waiting = false
 	var v: Dictionary = vs.of_id(String(p.get("cid", "")))
 	if v.is_empty():
 		_end_meeting(3.0)
@@ -389,6 +392,8 @@ func _finish_auto(p: Dictionary) -> void:
 
 func _after_auto_report() -> void:
 	_auto_report = false
+	if int(state.player.hero.get("pts", 0)) > 0 or int(state.player.hero.get("pp", 0)) > 0:
+		hud.show_notice("Есть свободные очки: атрибуты и перки в окне героя (H)")
 	if _loot_pending.is_empty():
 		state.clock.paused = false
 	else:
@@ -446,6 +451,8 @@ func _return_to_map() -> void:
 	_autosave.save(state, false)
 	camera.make_current()
 	_siege_hold = false
+	if int(state.player.hero.get("pts", 0)) > 0 or int(state.player.hero.get("pp", 0)) > 0:
+		hud.show_notice("Есть свободные очки: атрибуты и перки в окне героя (H)")
 	if _loot_pending.is_empty():
 		state.clock.paused = false
 	else:
@@ -512,6 +519,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				_siege.close_window()
 			elif _meeting.is_empty():
 				_open_panel("menu")
+		KEY_Z:
+			if _waiting_return or _meeting.size() > 0 or _result.visible:
+				return
+			hud.show_notice(state.toggle_wait())
 		KEY_SPACE:
 			state.clock.paused = not state.clock.paused
 		KEY_1, KEY_2, KEY_3:

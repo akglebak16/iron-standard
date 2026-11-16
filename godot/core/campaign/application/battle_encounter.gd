@@ -14,6 +14,7 @@ const Config = preload("res://core/campaign/config.gd")
 const Siege = preload("res://core/campaign/world/world_siege.gd")
 const WorldCompanions = preload("res://core/campaign/world/world_companions.gd")
 const SiegeAftermath = preload("res://core/campaign/rules/siege_aftermath.gd")
+const Progression = preload("res://core/characters/rules/progression.gd")
 
 var troops: Catalog
 var gear: GearCatalog
@@ -125,7 +126,8 @@ func is_hero_mounted(state: RefCounted) -> bool:
 	return bool(HeroGear.resolve(state.player.hero, gear).get("mounted", false))
 
 ## Applies a finished battle (played or calculated) to the world. `aftermath` is what EncounterAftermath returned.
-func _encounter_apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary, allies: Array = []) -> void:
+## Returns how many of the player's fallen the undead raised into their ranks (undeadAfterWin).
+func _encounter_apply(state: RefCounted, opponent: Dictionary, aftermath: Dictionary, allies: Array = []) -> int:
 	var p: RefCounted = state.player
 	var party: Dictionary = aftermath.party
 	p.troops = _split(state, p.troops, party.troops, allies)
@@ -142,7 +144,7 @@ func _encounter_apply(state: RefCounted, opponent: Dictionary, aftermath: Dictio
 	p.stop()
 	p.busy = ""
 	if opponent.get("kind") == "siege":
-		return
+		return 0
 	var updated := _find(aftermath.world.get("parties", []), opponent.id)
 	if updated.is_empty():
 		_remove_opponent(state, opponent)
@@ -151,7 +153,8 @@ func _encounter_apply(state: RefCounted, opponent: Dictionary, aftermath: Dictio
 			opponent[k] = updated[k] if updated.has(k) else opponent.get(k)
 		opponent.pi = 0
 		if opponent.get("fac") == "undead" and state.undead != null:
-			state.undead.raise(opponent, int(aftermath.summary.get("lost", 0)) * state.undead.RAISE)
+			return state.undead.raise(opponent, int(aftermath.summary.get("lost", 0)) * state.undead.RAISE)
+	return 0
 
 func _remove_opponent(state: RefCounted, opponent: Dictionary) -> void:
 	state.roster.remove(opponent)
@@ -258,21 +261,40 @@ func complete(ticket: RefCounted, result: Dictionary) -> Dictionary:
 	# Seal before log/settlement signals can synchronously call back into complete.
 	_encounter_pending_ticket = null
 	_encounter_applying = true
-	_encounter_apply(state, opponent, resolved, _encounter_pending_allies)
+	var raised := _encounter_apply(state, opponent, resolved, _encounter_pending_allies)
 	state.skirmish.split(opponent)
+	var summary: Dictionary = resolved.summary
+	if summary.win:
+		state.log_world("Победа над отрядом «%s». Добыча: %d золота." % [opponent.get("name", ""), int(summary.loot)], state.JOURNAL_GOOD)
+	else:
+		state.log_world("Ты потерпел поражение от «%s»." % opponent.get("name", ""), state.JOURNAL_BAD)
+		if raised > 0: state.log_world("Мертвецы подняли твоих павших: +%d в их строю." % raised, state.JOURNAL_BAD)
 	if not _encounter_pending_allies.is_empty(): state.log_world("Дружины вассалов бились рядом с тобой.")
 	var loot_id := -1
 	if not town.is_empty():
 		_encounter_apply_siege(state, town, resolved)
 		state.settlement_changed.emit(town)
-		if resolved.summary.has("captured"):
+		if summary.has("captured"):
 			state.log_world("%s взят штурмом!" % town.name, state.JOURNAL_GOOD)
+			for line in state.siege.capture_notes(town, was): state.log_world(line, state.JOURNAL_GOOD)
 			if was in Rules.REAL_FACTIONS: loot_id = int(town.id)
+	_journal_progress(state, summary)
 	_clear_pending()
 	_encounter_applying = false
 	resolved.loot_settlement_id = loot_id
 	# apply assigns dictionaries into live state; the reply must detach them again.
 	return resolved.duplicate(true)
+
+## Companion growth and the hero's new level (compsAfter, applyBattleResult).
+static func _journal_progress(state: RefCounted, summary: Dictionary) -> void:
+	for c in summary.get("comps", {}).values():
+		for rank in c.get("ranks", []):
+			state.log_world("%s: умение «%s» окрепло (ранг %s)." % [c.name, c.skill, rank], state.JOURNAL_GOOD)
+		if int(c.get("levels_gained", 0)) > 0:
+			state.log_world("%s достигает уровня %d." % [c.name, int(c.lvl)], state.JOURNAL_GOOD)
+	var gained := int(summary.get("levels_gained", 0))
+	if gained > 0:
+		state.log_world("Новый уровень: %d. Очки: атрибуты +%d, перки +%d." % [int(state.player.hero.get("lvl", 1)), gained * Progression.HERO_ATTRIBUTE_POINTS, gained * Progression.HERO_PERK_POINTS], state.JOURNAL_GOOD)
 
 func cancel(ticket: RefCounted) -> bool:
 	if ticket == null or ticket != _encounter_pending_ticket: return false
