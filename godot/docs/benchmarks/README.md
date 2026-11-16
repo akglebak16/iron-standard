@@ -68,3 +68,28 @@ VSync; второй повтор меняет порядок версий. Па�
 Общий view-benchmark поддерживает `--measure-seconds=60`, `--camera-route` и
 диагностический `--map-cache=off`; отчёт включает CPU/GPU render, draw calls и
 выборки видеопамяти. Прогрев начинается после готовности статического кэша.
+
+## Длительный оконный замер боя
+
+`compare_view.cjs` поддерживает `--backend=release`, `--measure-seconds=60`,
+`--camera=wide|near|hero` и `--repeat=5`. Например:
+
+```powershell
+node godot/tools/compare_view.cjs dist/godot/toolchain/Godot_v4.7.2-stable_win64_console.exe dist/godot/migration-release/IronStandard.exe --backend=release --mode=battle --n=1000 --measure-seconds=60 --repeat=5 --camera=wide --audio=on --require-target
+```
+
+`--require-target` возвращает ошибку при превышении p95/p99 кадра или отставании
+часов; он требует оконный release с включённым звуком и пять полных минутных
+повторов. Это проверка выбранного смешанного боя, а не всей матрицы blueprint.
+Исполняемый файл, DLL и исходники сверяются перед замером; JSON содержит все
+повторы, фактическую численность, состав и параметры. Для 100/300/500 меняй `--n`.
+Графика и эффекты остаются включёнными; `--sprites=gdscript` доступен только
+в прямом диагностическом запуске. `--profile-details` сохраняет покадровый trace.
+
+В обычной игре и оконном benchmark используется worker симуляции; прямой
+параметр `--worker=off` позволяет повторить однопоточный эталон. В профиле
+`worker_simulation_us` и `worker_snapshot_us` относятся к завершённому пакету
+из 1–4 тиков, `worker_wait_us` — к ожиданию на главном потоке. Для бюджета
+отдельного тика используй CPU benchmark: среднее по кадрам включает кадры без
+нового тика и не является средним по тикам. `--gpu-timing=off` — только диагностика
+расходов измерителя; GPU/CPU render поля в таком отчёте равны null.

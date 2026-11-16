@@ -14,6 +14,7 @@ func _initialize() -> void:
 	var reference := Factory.create(setup, catalog)
 	var observed := Factory.create(setup, catalog)
 	observed._state.profiler.clock = Time.get_ticks_usec
+	observed._state.profiler.detailed = true
 	var figures := Figures.new()
 	var impacts := Impacts.new()
 	for battle in [reference, observed]: battle.issue_order("charge", Vector2.ZERO, 3)

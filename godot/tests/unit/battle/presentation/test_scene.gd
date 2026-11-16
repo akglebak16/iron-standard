@@ -86,6 +86,7 @@ func _check() -> void:
 	var flight: Dictionary = view.get_battle_snapshot().shots[0]
 	assert(flight.origin.is_finite() and flight.progress > 0.0 and flight.progress < 1.0)
 	await process_frame
+	view.get_battle_snapshot() # Join before this fixture mutates the simulation.
 	for unit in session._state.units:
 		if unit.side == 1:
 			session._state.kill(unit, session._hero)
@@ -162,14 +163,14 @@ func _check_weapon_hud(view) -> void:
 func _check_figure_cache(art) -> void:
 	var unit := {"side": 0, "faction": "nord", "hero": false, "companion": false, "mounted": false, "look": {"weapon": "sword"}}
 	var foot: Dictionary = art.layers(unit)
-	assert(foot.body.get_image().get_used_rect().has_area())
-	assert(foot.weapon.get_image().get_used_rect().has_area())
+	assert(_art_image(art, foot.body).get_used_rect().has_area())
+	assert(_art_image(art, foot.weapon).get_used_rect().has_area())
 	assert(art.layers(unit).body == foot.body)
 	unit.look.weapon = "bow"
 	var archer: Dictionary = art.layers(unit)
-	assert(archer.weapon.get_image().get_data() != foot.weapon.get_image().get_data())
+	assert(_art_image(art, archer.weapon).get_data() != _art_image(art, foot.weapon).get_data())
 	unit.mounted = true
-	assert(art.layers(unit).body.get_image().get_data() != archer.body.get_image().get_data())
+	assert(_art_image(art, art.layers(unit).body).get_data() != _art_image(art, archer.body).get_data())
 
 func _check_defeat(packed: PackedScene, path: String) -> void:
 	var scene = packed.instantiate()
@@ -223,3 +224,13 @@ func _advance_view(view, seconds: float) -> void:
 		var delta := minf(remaining, 1.0 / 60.0)
 		view._process(delta)
 		remaining -= delta
+	# Publish the last scheduled batch without advancing any extra game time.
+	view._process(0.0)
+
+func _art_image(art, texture: Texture2D) -> Image:
+	# DummyRenderer cannot read back ImageTexture.update. Verify the exact packed
+	# pixels here; verify_sprite_batch.gd checks the rendered GPU images separately.
+	if texture is AtlasTexture and art.atlas != null:
+		for page in art.atlas._pages:
+			if page.texture == texture.atlas: return page.image.get_region(Rect2i(texture.region))
+	return texture.get_image()

@@ -87,8 +87,13 @@ func advance(dt: float) -> void:
 	_state.profiler.begin()
 	_previous_positions.resize(_state.units.size())
 	var positions := _state.motion.positions
-	for unit: Unit in _state.render_units():
-		_previous_positions[unit.history_index] = positions[unit.battle_index] if unit.battle_index >= 0 else unit.position
+	if _state.column_backend != null:
+		_previous_positions = _state.column_backend.capture(_state.motion, _previous_positions)
+		for unit: Unit in _state.retired_render_units:
+			_previous_positions[unit.history_index] = unit.position
+	else:
+		for unit: Unit in _state.render_units():
+			_previous_positions[unit.history_index] = positions[unit.battle_index] if unit.battle_index >= 0 else unit.position
 	for command in _orders:
 		if _state.give_order(command.order, command.point, command.selection):
 			_state.record_notice(Event.Kind.ORDER_APPLIED, {"order": command.order, "selection": command.selection, "point": command.point})
@@ -237,18 +242,27 @@ func snapshot(compact: bool = false) -> Dictionary:
 	var group_strength := PackedFloat64Array()
 	group_strength.resize(Config.GROUP_KINDS)
 	var positions := _state.motion.positions
-	for unit: Unit in _state.active_units:
-		if not unit.dead and not unit.gone:
-			counts[unit.side] += 1
-			if not unit.fleeing:
-				focus_sum[unit.side] += positions[unit.battle_index]
-				focus_count[unit.side] += 1
-				if unit.side == 1:
-					enemy_strength += unit.weight
-				else:
-					ally_strength += unit.weight
-					if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
-						group_strength[unit.group_kind] += unit.weight
+	if _state.column_backend != null:
+		var summary: Array = _state.column_backend.summary(_state.motion)
+		counts = summary[0]
+		focus_sum = summary[1]
+		focus_count = summary[2]
+		enemy_strength = summary[3]
+		ally_strength = summary[4]
+		group_strength = summary[5]
+	else:
+		for unit: Unit in _state.active_units:
+			if not unit.dead and not unit.gone:
+				counts[unit.side] += 1
+				if not unit.fleeing:
+					focus_sum[unit.side] += positions[unit.battle_index]
+					focus_count[unit.side] += 1
+					if unit.side == 1:
+						enemy_strength += unit.weight
+					else:
+						ally_strength += unit.weight
+						if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
+							group_strength[unit.group_kind] += unit.weight
 	if not compact:
 		for unit: Unit in _state.units: units.append(_unit_values(unit))
 	var camera_target := _camera_target(focus_sum, focus_count)
@@ -270,6 +284,7 @@ func snapshot(compact: bool = false) -> Dictionary:
 	return frame
 
 var _render_definitions: Array[Dictionary] = []
+var _render_special_flags := PackedInt32Array()
 
 func _render_snapshot() -> RenderSnapshot:
 	var frame := RenderSnapshot.new()
@@ -277,8 +292,26 @@ func _render_snapshot() -> RenderSnapshot:
 	var velocities := _state.motion.velocities
 	for i in range(_render_definitions.size(), _state.units.size()):
 		_render_definitions.append(_render_definition(_state.units[i]))
+		_render_special_flags.append(RenderSnapshot.COMPANION if _state.units[i].companion else 0)
 	_render_definitions[_hero.history_index] = _render_definition(_hero)
 	var visible := _state.render_units()
+	if _state.column_backend != null:
+		var packed: Array = _state.column_backend.render(_state.motion, _previous_positions, _render_special_flags, _render_definitions)
+		frame._render_positions = packed[0].duplicate()
+		frame._render_previous = packed[1]
+		frame._render_sides = packed[2]
+		frame._render_groups = packed[3]
+		frame._render_flags = packed[4]
+		frame._render_dynamic = packed[5]
+		frame._render_ids = packed[7]
+		frame._render_definitions = packed[8]
+		if _hero.battle_index >= 0: frame._render_dynamic[_hero.battle_index * RenderSnapshot.STRIDE + 4] = _hero.attack_windup
+		var histories: PackedInt32Array = packed[6]
+		for unit: Unit in _state.retired_render_units:
+			var row := histories.bsearch(unit.history_index)
+			histories.insert(row, unit.history_index)
+			_insert_retired_render_row(frame, unit, row)
+		return frame
 	var capacity := visible.size()
 	var out_positions := PackedVector2Array()
 	var previous := PackedVector2Array()
@@ -302,6 +335,7 @@ func _render_snapshot() -> RenderSnapshot:
 		var history := unit.history_index
 		var at := positions[dense] if dense >= 0 else unit.position
 		definitions[row] = _render_definitions[history]
+		frame._render_ids.append(unit.id)
 		out_positions[row] = at
 		previous[row] = at if history >= _previous_positions.size() or unit.retired_tick >= 0 and unit.retired_tick < _tick else _previous_positions[history]
 		sides[row] = unit.side
@@ -435,3 +469,19 @@ func _wall_defense_values() -> Dictionary:
 		"cauldrons": _state.siege_defense.cauldrons.map(func(c): return {"gap": c.gap, "charged": c.charges > 0}),
 		"half_width": _state.wall.half_width,
 		"gates": _state.wall.gates.map(func(g): return {"gap": g.gap, "hp": g.hp, "max": g.max, "hit": g.hit, "dead": g.dead, "open": g.open})}
+
+func _insert_retired_render_row(frame: RenderSnapshot, unit: Unit, row: int) -> void:
+	var history := unit.history_index
+	frame._render_positions.insert(row, unit.position)
+	frame._render_previous.insert(row, _previous_position(unit))
+	frame._render_sides.insert(row, unit.side)
+	frame._render_groups.insert(row, unit.group_kind)
+	frame._render_flags.insert(row, int(unit.dead) * RenderSnapshot.DEAD | int(unit.gone) * RenderSnapshot.GONE
+		| int(unit.hero) * RenderSnapshot.HERO | int(unit.companion) * RenderSnapshot.COMPANION
+		| int(unit.mounted) * RenderSnapshot.MOUNTED | int(unit.fleeing) * RenderSnapshot.FLEEING
+		| int(unit.blocking) * RenderSnapshot.BLOCKING | int(unit.leader) * RenderSnapshot.LEADER)
+	frame._render_ids.insert(row, unit.id)
+	frame._render_definitions.insert(row, _render_definitions[history])
+	var values := [unit.collision_radius, clampf(unit.hp / unit.max_hp, 0.0, 1.0) if unit.max_hp > 0.0 else 0.0,
+		unit.facing, unit.velocity.length(), unit.attack_windup if unit.hero else unit.ai_windup]
+	for field in range(RenderSnapshot.STRIDE - 1, -1, -1): frame._render_dynamic.insert(row * RenderSnapshot.STRIDE, values[field])

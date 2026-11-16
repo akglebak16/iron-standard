@@ -82,4 +82,15 @@ assert.deepEqual(documentationIssues(docFixture),[]);
 assert(documentationIssues(new Map([...docFixture,['ARCHITECTURE.md','obsolete rules']])).some(e=>e.includes('Retired')));
 assert(documentationIssues(new Map([...docFixture].filter(([f])=>!f.endsWith('BLUEPRINT.md')))).some(e=>e.includes('Missing canonical')));
 assert(documentationIssues(new Map([...docFixture,['../CLAUDE.md','See old rules']])).some(e=>e.includes('CLAUDE.md must refer')));
+const workerManifest={...manifest,isolatedWorkers:['adapters/worker.gd']};
+for(const source of ['extends Node','var x = Input.is_key_pressed(1)','var scene = load("scene.tscn")','var r = Resource.new()']) {
+  assert(analyze(new Map([['adapters/worker.gd',source]]),workerManifest).some(i=>i.rule==='worker-boundary'));
+}
+assert(analyze(new Map([
+  ['adapters/worker.gd','const Helper=preload("res://core/a/api/helper.gd")'],
+  ['core/a/api/helper.gd','const IO=preload("res://adapters/io.gd")'],
+  ['adapters/io.gd','extends RefCounted']
+]),workerManifest).some(i=>i.rule==='worker-boundary'));
+assert(analyze(new Map(),workerManifest).some(i=>i.rule==='worker-boundary'));
+assert.equal(analyze(new Map([['adapters/worker.gd','extends RefCounted\nvar clock = Time.get_ticks_usec\nvar thread = Thread.new()\nvar done = Semaphore.new()']]),workerManifest).length,0);
 console.log('Architecture checker negative tests passed');

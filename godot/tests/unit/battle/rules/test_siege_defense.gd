@@ -9,18 +9,26 @@ const Config = preload("res://core/battle/config.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 const Feedback = preload("res://apps/godot/presentation/battle/combat_feedback.gd")
 
+const Columns = preload("res://adapters/godot/native/columns.gd")
+var _native := false
+
 func _initialize() -> void:
-	_check_damaged_wall()
-	_check_supplies()
-	_check_stones()
-	_check_oil()
-	_check_no_defenders()
+	for native in [false, true]:
+		_native = native
+		_check_damaged_wall()
+		_check_supplies()
+		_check_stones()
+		_check_oil()
+		_check_no_defenders()
 	print("Siege defense tests passed")
 	quit(0)
 
 func _siege(damage: float = 0.0, supplies: Dictionary = {}, skill: float = 0.0) -> State:
 	var state := State.new()
 	state.setup_groups()
+	if _native:
+		state.column_backend = Columns.create()
+		assert(state.column_backend != null)
 	SiegeSetup.apply(state, skill, damage, supplies)
 	return state
 

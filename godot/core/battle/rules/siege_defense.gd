@@ -21,13 +21,18 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 ## Collects the attackers still fighting and returns how many defenders stand on the wall line.
 static func _muster(battle: State, attackers: Array[Unit]) -> int:
 	var defenders := 0
-	for unit: Unit in battle.active_units:
-		if not _ready(unit):
+	var positions := battle.motion.positions
+	var flags := battle.motion.integer_fields
+	var capacity := battle.motion.capacity
+	var fields = battle.motion.I
+	for row in positions.size():
+		if flags[fields.DEAD * capacity + row] or flags[fields.GONE * capacity + row] or flags[fields.FLEEING * capacity + row]:
 			continue
-		if unit.side == 1 and unit.position.x > battle.wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET:
+		var side := flags[fields.SIDE * capacity + row]
+		if side == 1 and positions[row].x > battle.wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET:
 			defenders += 1
-		elif unit.side == 0:
-			attackers.append(unit)
+		elif side == 0:
+			attackers.append(battle.active_units[row])
 	return defenders
 
 static func _step_stones(battle: State, defense: Defense, attackers: Array[Unit], defenders: int, skill_scale: float, dt: float, rng: RandomNumberGenerator) -> void:
@@ -44,6 +49,7 @@ static func _step_stones(battle: State, defense: Defense, attackers: Array[Unit]
 
 static func _step_cauldrons(battle: State, defense: Defense, attackers: Array[Unit], defenders: int, dt: float) -> void:
 	var wall := battle.wall
+	var positions := battle.motion.positions
 	for cauldron in defense.cauldrons:
 		cauldron.cooldown -= dt
 		if cauldron.charges <= 0 or cauldron.cooldown > 0.0 or defenders < Config.SIEGE_OIL_MIN_DEFENDERS:
@@ -51,7 +57,8 @@ static func _step_cauldrons(battle: State, defense: Defense, attackers: Array[Un
 		var gap: Vector2 = cauldron.gap
 		var crowd := 0
 		for unit in attackers:
-			if unit.position.x > wall.x - Config.SIEGE_OIL_REACH and unit.position.x < wall.x + wall.half_width and unit.position.y > gap.x - Config.SIEGE_OIL_GAP_MARGIN and unit.position.y < gap.y + Config.SIEGE_OIL_GAP_MARGIN:
+			var at := positions[unit.battle_index]
+			if at.x > wall.x - Config.SIEGE_OIL_REACH and at.x < wall.x + wall.half_width and at.y > gap.x - Config.SIEGE_OIL_GAP_MARGIN and at.y < gap.y + Config.SIEGE_OIL_GAP_MARGIN:
 				crowd += 1
 		if crowd < Config.SIEGE_OIL_MIN_CROWD:
 			continue
@@ -87,16 +94,22 @@ static func _throw_stone(battle: State, defense: Defense, attackers: Array[Unit]
 	var wall := battle.wall
 	var best: Unit = null
 	var best_crowd := 0
-	for unit in attackers:
-		if unit.position.x > wall.x - Config.SIEGE_STONE_NEAR_EDGE or unit.position.x < wall.x - Config.SIEGE_STONE_RANGE:
-			continue
-		var crowd := 0
-		for other in attackers:
-			if absf(other.position.x - unit.position.x) < Config.SIEGE_STONE_CROWD_BOX and absf(other.position.y - unit.position.y) < Config.SIEGE_STONE_CROWD_BOX:
-				crowd += 1
-		if crowd > best_crowd:
-			best_crowd = crowd
-			best = unit
+	if battle.column_backend != null:
+		var selected: PackedInt32Array = battle.column_backend.densest_ready(battle.motion, 0, wall.x - Config.SIEGE_STONE_RANGE, wall.x - Config.SIEGE_STONE_NEAR_EDGE, Config.SIEGE_STONE_CROWD_BOX, battle.arena_size, Config.SIEGE_STONE_CROWD_BOX)
+		if selected.size() == 2 and selected[0] >= 0:
+			best = battle.active_units[selected[0]]
+			best_crowd = selected[1]
+	else:
+		for unit in attackers:
+			if unit.position.x > wall.x - Config.SIEGE_STONE_NEAR_EDGE or unit.position.x < wall.x - Config.SIEGE_STONE_RANGE:
+				continue
+			var crowd := 0
+			for other in attackers:
+				if absf(other.position.x - unit.position.x) < Config.SIEGE_STONE_CROWD_BOX and absf(other.position.y - unit.position.y) < Config.SIEGE_STONE_CROWD_BOX:
+					crowd += 1
+			if crowd > best_crowd:
+				best_crowd = crowd
+				best = unit
 	if best == null or best_crowd < Config.SIEGE_STONE_MIN_CROWD:
 		defense.stone_cooldown = Config.SIEGE_STONE_RETRY_SECONDS
 		return

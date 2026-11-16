@@ -31,6 +31,8 @@ const PROFILES := {
 	Part.FRAGMENT: {"lift": Vector2(60, 160), "speed": Vector2(40, 110), "size": Vector2(2.5, 4), "spread": 0.8},
 }
 
+var native_enabled := true
+var _native: RefCounted
 var _rng: RandomNumberGenerator
 var _art := Art.new()
 var _active: Array[Dictionary] = []
@@ -38,6 +40,12 @@ var _settled: Array[Dictionary] = []
 var _next := 0
 
 func _init(rng: RandomNumberGenerator) -> void:
+	if ClassDB.class_exists("IronBattleEffects"):
+		_native = ClassDB.instantiate("IronBattleEffects")
+		_native.configure_parts({"bone_color": BONE_COLOR, "bone_width": BONY_WIDTH, "joint_radius": JOINT_RADIUS,
+			"shadow_radius": SHADOW_RADIUS, "shadow_color": SHADOW_COLOR, "arm_half": ARM_HALF_LENGTH,
+			"arm_sleeve": ARM_SLEEVE, "arm_skin": ARM_SKIN, "hand_radius": HAND_RADIUS,
+			"scale": Art.SPRITE_SCALE, "anchor": Art.HEAD_CENTER})
 	_rng = rng
 
 func clear() -> void:
@@ -113,12 +121,18 @@ func advance(dt: float, splashes: Array[Dictionary]) -> Array[Dictionary]:
 	return settled_with_blood
 
 func draw_ground(canvas: CanvasItem, visible: Rect2) -> void:
+	if native_enabled and _native != null:
+		_native.draw_parts(canvas.get_canvas_item(), _settled, _next, visible, false)
+		return
 	for i in _settled.size():
 		var part := _settled[(_next + i) % _settled.size()]
 		if visible.has_point(part.position):
 			_draw(canvas, part)
 
 func draw_air(canvas: CanvasItem) -> void:
+	if native_enabled and _native != null:
+		_native.draw_parts(canvas.get_canvas_item(), _active, 0, Rect2(), true)
+		return
 	for part in _active:
 		canvas.draw_circle(part.position, SHADOW_RADIUS, SHADOW_COLOR)
 		_draw(canvas, part)

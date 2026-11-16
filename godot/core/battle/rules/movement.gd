@@ -14,7 +14,10 @@ const COLLISION_SLACK := Config.CONTACT_QUERY_SLACK
 
 static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 	assert(rng != null, "A simulation tick requires the battle RNG")
-	_step(battle, dt, rng)
+	if battle.movement_solver.is_valid() and dt > 0.0:
+		_step_batch(battle, dt, rng)
+	else:
+		_step(battle, dt, rng)
 
 ## Isolates formation movement and collisions for comparison with the pre-index fixture.
 static func step_formation_only(battle: State, dt: float) -> SpatialIndex:
@@ -37,6 +40,8 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		var unit: Unit = battle.active_units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
 			continue
+		var sampled := battle.profiler.detailed and battle.profiler.clock.is_valid() and unit_index % 32 == battle.profiler.sample_lane
+		var probe := int(battle.profiler.clock.call()) if sampled else 0
 		unit.charge_cooldown -= dt
 		if rng != null:
 			unit.attack_cooldown -= dt
@@ -46,12 +51,15 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		var ai_face := unit.facing
 		var target: Unit = null
 		var target_distance := INF
+		if sampled: probe = battle.profiler.probe("sample_slot", probe)
 		if unit.fleeing:
 			destination = Vector2(battle.arena_size.x + Config.FLEE_DESTINATION_PADDING if unit.side == 1 else -Config.FLEE_DESTINATION_PADDING, unit.position.y)
 			velocity_scale = Config.FLEE_SPEED_MULTIPLIER
 		elif rng != null:
 			target = Targeting.refresh(battle, unit, dt, rng, index)
+			if sampled: probe = battle.profiler.probe("sample_target", probe)
 			AiDecision.plan_into(unit, group, target, battle.arena_size, destination)
+			if sampled: probe = battle.profiler.probe("sample_plan", probe)
 			destination = unit.plan_destination
 			velocity_scale = unit.plan_speed
 			ai_face = unit.plan_face
@@ -69,7 +77,9 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 				destination = enemy.position
 		if battle.wall != null:
 			destination = battle.wall.route(unit, destination)
+		if sampled: probe = battle.profiler.probe("sample_charge_route", probe)
 		velocities[unit_index] = _steer(unit, positions[unit_index], velocities[unit_index], destination, unit.speed * velocity_scale, dt)
+		if sampled: probe = battle.profiler.probe("sample_steer", probe)
 		if unit.fleeing:
 			unit.facing = unit.velocity.angle()
 			if unit.position.x < -Config.FLEE_EXIT_PADDING or unit.position.x > battle.arena_size.x + Config.FLEE_EXIT_PADDING:
@@ -77,9 +87,11 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		elif rng != null:
 			unit.facing = ai_face
 			CombatStep.advance_unit(battle, unit, target, target_distance, dt, rng)
+		if sampled: probe = battle.profiler.probe("sample_attack", probe)
 		positions[unit_index] += velocities[unit_index] * dt
 		if index != null:
 			index.update(unit_index)
+		if sampled: battle.profiler.probe("sample_integrate_index", probe)
 	battle.profiler.mark("ai_movement_combat")
 	_resolve_unit_collisions(battle, index, keep_index)
 	battle.profiler.mark("contacts")
@@ -122,16 +134,7 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 	var side := workspace.sides
 	var live := workspace.live
 	var max_radius := 0.0
-	for i in n:
-		var u: Unit = units[i]
-		rad[i] = u.collision_radius
-		mass[i] = u.mass
-		side[i] = u.side
-		live[i] = 0 if u.dead or u.gone else 1
-		max_radius = maxf(max_radius, u.collision_radius)
 	if battle.contact_solver.is_valid():
-		for i in n:
-			workspace.fleeing[i] = 1 if units[i].fleeing else 0
 		var solved: Array = battle.contact_solver.call(workspace, battle.contact_geometry())
 		if solved.size() == 2 and solved[0] is PackedVector2Array and solved[1] is PackedVector2Array and solved[0].size() == n and solved[1].size() == n:
 			workspace.positions = solved[0]
@@ -141,6 +144,13 @@ static func _resolve_packed(battle: State, index: SpatialIndex) -> void: # index
 			battle.native_contact_steps += 1
 			return
 		battle.native_contact_failures += 1
+	for i in n:
+		var u: Unit = units[i]
+		rad[i] = u.collision_radius
+		mass[i] = u.mass
+		side[i] = u.side
+		live[i] = 0 if u.dead or u.gone else 1
+		max_radius = maxf(max_radius, u.collision_radius)
 	if battle.collision_grid == null:
 		battle.collision_grid = CollisionGrid.new(pos, battle.arena_size, live)
 	else:
@@ -231,3 +241,39 @@ static func _separate(a: Unit, b: Unit) -> bool:
 	a.position -= normal * overlap * b.mass / total_mass
 	b.position += normal * overlap * a.mass / total_mass
 	return true
+
+## Native execution pauses before rule effects; shared state/RNG are published before resolving them.
+static func _step_batch(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
+	var groups := PackedFloat64Array()
+	for side in battle.groups:
+		for group: Group in side:
+			var sine := sin(group.direction)
+			var cosine := cos(group.direction)
+			groups.append_array(PackedFloat64Array([group.center.x, group.center.y, -sine, cosine, cosine, sine, group.direction, float(group.order == Config.ORDER_CHARGE), float(group.backing)]))
+	var context := {"groups": groups, "arena": battle.arena_size,
+		"wall_x": battle.wall.x if battle.wall != null else INF,
+		"wall_half": battle.wall.half_width if battle.wall != null else 0.0,
+		"gaps": PackedVector2Array(battle.wall.gaps()) if battle.wall != null else PackedVector2Array()}
+	var begin := true
+	while true:
+		var result: Array = battle.movement_solver.call(battle.motion, context, rng, dt, begin)
+		begin = false
+		if result.size() != 3:
+			battle.native_movement_failures += 1
+			push_error("Native movement rejected a batch; cannot replay a partially applied tick")
+			return
+		if result[0] == 0: break
+		battle.native_movement_interactions += 1
+		var unit: Unit = battle.active_units[result[1]]
+		var target: Unit = battle.active_units[result[2]] if result[2] >= 0 else null
+		match result[0]:
+			1: Charge.hit(battle, unit, target, rng)
+			2: CombatStep.advance_unit(battle, unit, target, unit.plan_distance, dt, rng)
+			3: battle.mark_gone(unit)
+	battle.native_movement_steps += 1
+	battle.profiler.mark("ai_movement_combat")
+	if battle.use_spatial_index and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
+		_resolve_packed(battle, null)
+	else:
+		_resolve_unit_collisions(battle, null)
+	battle.profiler.mark("contacts")

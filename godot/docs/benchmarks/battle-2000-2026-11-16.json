@@ -1,0 +1,2301 @@
+{
+  "hardware": {
+    "recorded_at": "2026-11-16T00:31:47.4607473+01:00",
+    "ram_bytes": 34068267008,
+    "cpu": "Intel(R) Core(TM) i5-14400F",
+    "logical_processors": 16,
+    "gpu": "NVIDIA GeForce RTX 4070 SUPER",
+    "driver": "32.0.16.1060",
+    "power_scheme": "Power Scheme GUID: 6de5128e-246c-44b3-a5df-974de778670d  (Lenovo Default)",
+    "node": "v26.13.1"
+  },
+  "initial_cpu": {
+    "active_storage_records": 1809,
+    "contact_backend": "native",
+    "cpu": "Intel(R) Core(TM) i5-14400F",
+    "debug": false,
+    "engine": "4.7.2-stable (official)",
+    "events": {
+      "0": 2205,
+      "1": 441,
+      "3": 192
+    },
+    "gpu_time": null,
+    "live_max": 2001,
+    "live_min": 1809,
+    "logical_processors": 16,
+    "measured_ticks": 600,
+    "memory_end_bytes": null,
+    "memory_start_bytes": null,
+    "native_contact_failures": 0,
+    "native_contact_steps": 660,
+    "note": "Headless CPU benchmark, not an FPS measurement. Early battle termination shortens the sample.",
+    "ordinary_initial": [
+      1000,
+      1000
+    ],
+    "outcome_history_records": 2001,
+    "phase_profile": {
+      "ai_movement_combat": {
+        "count": 600,
+        "mean_ms": 13.482615,
+        "p50_ms": 13.218,
+        "p95_ms": 16.125,
+        "p99_ms": 18.06
+      },
+      "commands_interpolation": {
+        "count": 600,
+        "mean_ms": 0.27176,
+        "p50_ms": 0.251,
+        "p95_ms": 0.414,
+        "p99_ms": 0.564
+      },
+      "contacts": {
+        "count": 600,
+        "mean_ms": 2.06590166666667,
+        "p50_ms": 2.059,
+        "p95_ms": 2.544,
+        "p99_ms": 2.758
+      },
+      "hero": {
+        "count": 600,
+        "mean_ms": 0.014775,
+        "p50_ms": 0.014,
+        "p95_ms": 0.02,
+        "p99_ms": 0.024
+      },
+      "morale_result_events": {
+        "count": 600,
+        "mean_ms": 0.0414516666666667,
+        "p50_ms": 0.007,
+        "p95_ms": 0.01,
+        "p99_ms": 1.921
+      },
+      "movement_index": {
+        "count": 600,
+        "mean_ms": 0.500305,
+        "p50_ms": 0.486,
+        "p95_ms": 0.619,
+        "p99_ms": 0.848
+      },
+      "projectiles": {
+        "count": 600,
+        "mean_ms": 0.0105783333333333,
+        "p50_ms": 0.01,
+        "p95_ms": 0.014,
+        "p99_ms": 0.018
+      },
+      "storage_compaction": {
+        "count": 600,
+        "mean_ms": 0.632635,
+        "p50_ms": 0.001,
+        "p95_ms": 2.543,
+        "p99_ms": 2.92
+      },
+      "tactics_siege": {
+        "count": 600,
+        "mean_ms": 0.873951666666667,
+        "p50_ms": 0.848,
+        "p95_ms": 1.1,
+        "p99_ms": 1.415
+      }
+    },
+    "requested_per_side": 1000,
+    "requested_ticks": 600,
+    "sampling_version": 2,
+    "scenario": "contact",
+    "seed": 4242,
+    "simulation": {
+      "count": 600,
+      "mean_ms": 17.9012833333333,
+      "p50_ms": 17.439,
+      "p95_ms": 21.625,
+      "p99_ms": 24.55
+    },
+    "snapshot": {
+      "count": 600,
+      "mean_ms": 3.07469833333333,
+      "p50_ms": 3.004,
+      "p95_ms": 3.697,
+      "p99_ms": 4.26
+    },
+    "snapshot_format": "compact-columns",
+    "special_initial": 1,
+    "warmup_events_discarded": true,
+    "warmup_snapshots": true,
+    "warmup_ticks": 60,
+    "weight": 1
+  },
+  "optimized_single_thread": {
+    "complete": true,
+    "source": {
+      "revision": "04845d6d4cf7fd3c5e173900c2b3889711c93899",
+      "source_sha256": "a1b36ed88301fb279bb4c2b3d54e6f6faa11dea3bc3fa8c930b82ff58f4a5a66",
+      "dirty": true
+    },
+    "build": {
+      "source": {
+        "revision": "04845d6d4cf7fd3c5e173900c2b3889711c93899",
+        "source_sha256": "a1b36ed88301fb279bb4c2b3d54e6f6faa11dea3bc3fa8c930b82ff58f4a5a66",
+        "dirty": true
+      },
+      "dependencies": {
+        "iron_contacts.windows.x86_64.dll": "b5bfb5fda83bf66ca5cc9e453f255f8153f4df81075e817bac501b7420e37e15"
+      },
+      "executable_sha256": "916c189c36edd703a9a0de014ec032900cb91a6a6299a46749066025bf4a1826",
+      "built_at": "2026-11-15T23:37:37.815Z",
+      "smoke_passed": true,
+      "stale_source": false
+    },
+    "options": {
+      "n": 1000,
+      "frames": 240,
+      "repeat": 5,
+      "audio": "on",
+      "mode": "battle",
+      "seconds": 60,
+      "camera": "wide",
+      "backendChoice": "release"
+    },
+    "scope": "selected mixed battle view; not the complete blueprint matrix",
+    "target_failures": [
+      "run 1: frame budget exceeded",
+      "run 2: frame budget exceeded",
+      "run 3: frame budget exceeded",
+      "run 4: frame budget exceeded",
+      "run 5: frame budget exceeded"
+    ],
+    "results": [
+      {
+        "backend": "release",
+        "iteration": 1,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.00195752380952478,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 416.889873417722,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 4740,
+            "mean_ms": 12.6592666666667,
+            "p50_ms": 12.77,
+            "p95_ms": 19.325,
+            "p99_ms": 24.027
+          },
+          "gpu_timing": true,
+          "live": [
+            375,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.006716,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3643,
+          "native_sprites": true,
+          "native_steps": 3643,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 4740,
+              "mean_ms": 0.065410970464135,
+              "p50_ms": 0.017,
+              "p95_ms": 0.184,
+              "p99_ms": 0.254
+            },
+            "drawing_us": {
+              "count": 4740,
+              "mean_ms": 3.03563143459916,
+              "p50_ms": 3.017,
+              "p95_ms": 3.653,
+              "p99_ms": 4.418
+            },
+            "feedback_us": {
+              "count": 4740,
+              "mean_ms": 0.00572932489451477,
+              "p50_ms": 0.005,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 4740,
+              "mean_ms": 1.66718502109705,
+              "p50_ms": 1.593,
+              "p95_ms": 2.7,
+              "p99_ms": 3.17
+            },
+            "ground_us": {
+              "count": 4740,
+              "mean_ms": 0.524755696202532,
+              "p50_ms": 0.48,
+              "p95_ms": 1.208,
+              "p99_ms": 1.349
+            },
+            "minimap_us": {
+              "count": 4740,
+              "mean_ms": 0.0869107594936709,
+              "p50_ms": 0.084,
+              "p95_ms": 0.125,
+              "p99_ms": 0.173
+            },
+            "particles_us": {
+              "count": 4740,
+              "mean_ms": 0.646887974683544,
+              "p50_ms": 0.77,
+              "p95_ms": 0.947,
+              "p99_ms": 1.115
+            },
+            "presentation_us": {
+              "count": 4740,
+              "mean_ms": 1.1082335443038,
+              "p50_ms": 1.408,
+              "p95_ms": 2.012,
+              "p99_ms": 2.294
+            },
+            "projectiles_us": {
+              "count": 4740,
+              "mean_ms": 0.192302320675105,
+              "p50_ms": 0.213,
+              "p95_ms": 0.305,
+              "p99_ms": 0.399
+            },
+            "simulation_us": {
+              "count": 4740,
+              "mean_ms": 2.09004746835443,
+              "p50_ms": 2.048,
+              "p95_ms": 4.98,
+              "p99_ms": 7.094
+            }
+          },
+          "render_cpu": {
+            "count": 4740,
+            "mean_ms": 1.82950738396624,
+            "p50_ms": 1.808,
+            "p95_ms": 2.218,
+            "p99_ms": 2.774
+          },
+          "render_gpu": {
+            "count": 4740,
+            "mean_ms": 1.45140232067511,
+            "p50_ms": 1.117,
+            "p95_ms": 3.132,
+            "p99_ms": 5.928
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3601,
+          "simulation_ticks_total": 3643,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149211559,
+          "video_memory_samples": [
+            1144218873,
+            1144197849,
+            1144302969,
+            1144302969,
+            1144323993,
+            1144302969,
+            1144354425,
+            1150917009,
+            1151080497,
+            1151277959,
+            1150892231,
+            1150923119,
+            1150875071,
+            1150675823,
+            1150591007,
+            1150364015,
+            1150244111,
+            1150178663,
+            1150088135,
+            1150086959,
+            1149996167,
+            1149957119,
+            1149866975,
+            1149786935,
+            1149681215,
+            1149616943,
+            1149660047,
+            1149607199,
+            1149590735,
+            1149624263,
+            1149586319,
+            1149631823,
+            1149552143,
+            1149603383,
+            1149663215,
+            1149557519,
+            1149620159,
+            1149574343,
+            1149539135,
+            1149211559
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 2,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.015571296296297,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 412.265669807456,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 4882,
+            "mean_ms": 12.2901947972143,
+            "p50_ms": 12.147,
+            "p95_ms": 18.059,
+            "p99_ms": 21.265
+          },
+          "gpu_timing": true,
+          "live": [
+            376,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.00324,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3641,
+          "native_sprites": true,
+          "native_steps": 3641,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 4882,
+              "mean_ms": 0.0634598525194592,
+              "p50_ms": 0.016,
+              "p95_ms": 0.183,
+              "p99_ms": 0.238
+            },
+            "drawing_us": {
+              "count": 4882,
+              "mean_ms": 3.07068865219172,
+              "p50_ms": 3.058,
+              "p95_ms": 3.61,
+              "p99_ms": 3.971
+            },
+            "feedback_us": {
+              "count": 4882,
+              "mean_ms": 0.00569930356411307,
+              "p50_ms": 0.005,
+              "p95_ms": 0.007,
+              "p99_ms": 0.01
+            },
+            "figures_us": {
+              "count": 4882,
+              "mean_ms": 1.64708951249488,
+              "p50_ms": 1.578,
+              "p95_ms": 2.681,
+              "p99_ms": 3.042
+            },
+            "ground_us": {
+              "count": 4882,
+              "mean_ms": 0.547137238836542,
+              "p50_ms": 0.483,
+              "p95_ms": 1.202,
+              "p99_ms": 1.409
+            },
+            "minimap_us": {
+              "count": 4882,
+              "mean_ms": 0.086290249897583,
+              "p50_ms": 0.084,
+              "p95_ms": 0.126,
+              "p99_ms": 0.186
+            },
+            "particles_us": {
+              "count": 4882,
+              "mean_ms": 0.674896353953298,
+              "p50_ms": 0.77,
+              "p95_ms": 0.936,
+              "p99_ms": 1.065
+            },
+            "presentation_us": {
+              "count": 4882,
+              "mean_ms": 1.07133346988939,
+              "p50_ms": 1.376,
+              "p95_ms": 1.993,
+              "p99_ms": 2.282
+            },
+            "projectiles_us": {
+              "count": 4882,
+              "mean_ms": 0.197105284719377,
+              "p50_ms": 0.212,
+              "p95_ms": 0.299,
+              "p99_ms": 0.373
+            },
+            "simulation_us": {
+              "count": 4882,
+              "mean_ms": 2.01985129045473,
+              "p50_ms": 2.014,
+              "p95_ms": 4.838,
+              "p99_ms": 6.976
+            }
+          },
+          "render_cpu": {
+            "count": 4882,
+            "mean_ms": 1.80541130684146,
+            "p50_ms": 1.792,
+            "p95_ms": 2.112,
+            "p99_ms": 2.47
+          },
+          "render_gpu": {
+            "count": 4882,
+            "mean_ms": 1.34486317083163,
+            "p50_ms": 1.104,
+            "p95_ms": 2.873,
+            "p99_ms": 5.081
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3600,
+          "simulation_ticks_total": 3641,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149230399,
+          "video_memory_samples": [
+            1144218873,
+            1144197849,
+            1144281945,
+            1144281945,
+            1144302969,
+            1146503321,
+            1151166033,
+            1151292311,
+            1150947335,
+            1150958759,
+            1150844639,
+            1150666775,
+            1150609247,
+            1150571567,
+            1150410503,
+            1150232207,
+            1150346519,
+            1150107047,
+            1150041719,
+            1150103687,
+            1150090727,
+            1149950639,
+            1149981815,
+            1149871463,
+            1149793847,
+            1149700991,
+            1149633551,
+            1149635903,
+            1149587759,
+            1149628727,
+            1149620591,
+            1149624047,
+            1149600143,
+            1149619007,
+            1149602303,
+            1149648887,
+            1149649967,
+            1149569951,
+            1149601583,
+            1149595583,
+            1149436199
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 3,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.00547348484848602,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 428.303797468354,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 4661,
+            "mean_ms": 12.8744559107488,
+            "p50_ms": 12.813,
+            "p95_ms": 19.377,
+            "p99_ms": 23.794
+          },
+          "gpu_timing": true,
+          "live": [
+            374,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.009672,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3649,
+          "native_sprites": true,
+          "native_steps": 3649,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 4661,
+              "mean_ms": 0.0679302724737181,
+              "p50_ms": 0.018,
+              "p95_ms": 0.194,
+              "p99_ms": 0.264
+            },
+            "drawing_us": {
+              "count": 4661,
+              "mean_ms": 3.14014803690195,
+              "p50_ms": 3.137,
+              "p95_ms": 3.691,
+              "p99_ms": 4.706
+            },
+            "feedback_us": {
+              "count": 4661,
+              "mean_ms": 0.00596889079596653,
+              "p50_ms": 0.006,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 4661,
+              "mean_ms": 1.60374704998927,
+              "p50_ms": 1.479,
+              "p95_ms": 2.689,
+              "p99_ms": 3.358
+            },
+            "ground_us": {
+              "count": 4661,
+              "mean_ms": 0.629544518343703,
+              "p50_ms": 0.604,
+              "p95_ms": 1.338,
+              "p99_ms": 1.597
+            },
+            "minimap_us": {
+              "count": 4661,
+              "mean_ms": 0.0872754773653722,
+              "p50_ms": 0.083,
+              "p95_ms": 0.128,
+              "p99_ms": 0.193
+            },
+            "particles_us": {
+              "count": 4661,
+              "mean_ms": 0.696519201888007,
+              "p50_ms": 0.797,
+              "p95_ms": 0.978,
+              "p99_ms": 1.21
+            },
+            "presentation_us": {
+              "count": 4661,
+              "mean_ms": 1.14053379103197,
+              "p50_ms": 1.43,
+              "p95_ms": 2.069,
+              "p99_ms": 2.382
+            },
+            "projectiles_us": {
+              "count": 4661,
+              "mean_ms": 0.20567002789101,
+              "p50_ms": 0.223,
+              "p95_ms": 0.316,
+              "p99_ms": 0.39
+            },
+            "simulation_us": {
+              "count": 4661,
+              "mean_ms": 2.14848251448187,
+              "p50_ms": 2.092,
+              "p95_ms": 5.03,
+              "p99_ms": 7.569
+            }
+          },
+          "render_cpu": {
+            "count": 4661,
+            "mean_ms": 1.88357755846385,
+            "p50_ms": 1.854,
+            "p95_ms": 2.246,
+            "p99_ms": 3.004
+          },
+          "render_gpu": {
+            "count": 4661,
+            "mean_ms": 1.42305578202103,
+            "p50_ms": 1.152,
+            "p95_ms": 3.125,
+            "p99_ms": 5.653
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3600,
+          "simulation_ticks_total": 3649,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149184367,
+          "video_memory_samples": [
+            1144218873,
+            1144239897,
+            1144281945,
+            1144260921,
+            1144323993,
+            1150827201,
+            1151116487,
+            1151190239,
+            1150970519,
+            1150941503,
+            1150766639,
+            1150611911,
+            1150424903,
+            1150256063,
+            1150328423,
+            1150062527,
+            1150102079,
+            1150082399,
+            1150003487,
+            1149902855,
+            1149864023,
+            1149721679,
+            1149729143,
+            1149630839,
+            1149610295,
+            1149617567,
+            1149645287,
+            1149655655,
+            1149595823,
+            1149620519,
+            1149608999,
+            1149659039,
+            1149660983,
+            1149666599,
+            1149620927,
+            1149646511,
+            1149196175,
+            1149581855,
+            1149582407
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 4,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 1.21430643318377e-16,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 410.27066205106,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 4622,
+            "mean_ms": 12.9824543487668,
+            "p50_ms": 12.63,
+            "p95_ms": 19.877,
+            "p99_ms": 25.863
+          },
+          "gpu_timing": true,
+          "live": [
+            375,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.006838,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3644,
+          "native_sprites": true,
+          "native_steps": 3644,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 4622,
+              "mean_ms": 0.0677987884032886,
+              "p50_ms": 0.018,
+              "p95_ms": 0.19,
+              "p99_ms": 0.239
+            },
+            "drawing_us": {
+              "count": 4622,
+              "mean_ms": 3.09476914755517,
+              "p50_ms": 3.091,
+              "p95_ms": 3.653,
+              "p99_ms": 4.235
+            },
+            "feedback_us": {
+              "count": 4622,
+              "mean_ms": 0.00581501514495889,
+              "p50_ms": 0.006,
+              "p95_ms": 0.007,
+              "p99_ms": 0.01
+            },
+            "figures_us": {
+              "count": 4622,
+              "mean_ms": 1.61117676330593,
+              "p50_ms": 1.5,
+              "p95_ms": 2.669,
+              "p99_ms": 2.97
+            },
+            "ground_us": {
+              "count": 4622,
+              "mean_ms": 0.585082648204241,
+              "p50_ms": 0.582,
+              "p95_ms": 1.215,
+              "p99_ms": 1.343
+            },
+            "minimap_us": {
+              "count": 4622,
+              "mean_ms": 0.086985287754219,
+              "p50_ms": 0.084,
+              "p95_ms": 0.127,
+              "p99_ms": 0.17
+            },
+            "particles_us": {
+              "count": 4622,
+              "mean_ms": 0.690021419299005,
+              "p50_ms": 0.806,
+              "p95_ms": 0.971,
+              "p99_ms": 1.137
+            },
+            "presentation_us": {
+              "count": 4622,
+              "mean_ms": 1.13527131112073,
+              "p50_ms": 1.435,
+              "p95_ms": 2.054,
+              "p99_ms": 2.322
+            },
+            "projectiles_us": {
+              "count": 4622,
+              "mean_ms": 0.203893552574643,
+              "p50_ms": 0.222,
+              "p95_ms": 0.314,
+              "p99_ms": 0.383
+            },
+            "simulation_us": {
+              "count": 4622,
+              "mean_ms": 2.16479489398529,
+              "p50_ms": 2.073,
+              "p95_ms": 5.226,
+              "p99_ms": 7.734
+            }
+          },
+          "render_cpu": {
+            "count": 4622,
+            "mean_ms": 1.82234768498486,
+            "p50_ms": 1.807,
+            "p95_ms": 2.137,
+            "p99_ms": 2.557
+          },
+          "render_gpu": {
+            "count": 4622,
+            "mean_ms": 1.52553028991778,
+            "p50_ms": 1.111,
+            "p95_ms": 3.484,
+            "p99_ms": 6.81
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3602,
+          "simulation_ticks_total": 3644,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149201863,
+          "video_memory_samples": [
+            1144218873,
+            1144155801,
+            1144281945,
+            1144176825,
+            1144302969,
+            1146505673,
+            1151166033,
+            1151331431,
+            1151051135,
+            1150936607,
+            1150848983,
+            1150605671,
+            1150484639,
+            1150347383,
+            1150244063,
+            1150120007,
+            1150096463,
+            1150056743,
+            1149989015,
+            1149885071,
+            1149798287,
+            1149681215,
+            1149622103,
+            1149580823,
+            1149576623,
+            1149629519,
+            1149654431,
+            1149616271,
+            1149583943,
+            1149581999,
+            1149597839,
+            1149589775,
+            1149591167,
+            1149630527,
+            1149630527,
+            1149477023,
+            1149578735,
+            1149319703,
+            1149287207
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 5,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 1.76941794549634e-16,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 409.485589346054,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 5031,
+            "mean_ms": 11.9268018286623,
+            "p50_ms": 11.787,
+            "p95_ms": 18.155,
+            "p99_ms": 22.118
+          },
+          "gpu_timing": true,
+          "live": [
+            377,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.005672,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3639,
+          "native_sprites": true,
+          "native_steps": 3639,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 5031,
+              "mean_ms": 0.061726893261777,
+              "p50_ms": 0.015,
+              "p95_ms": 0.183,
+              "p99_ms": 0.241
+            },
+            "drawing_us": {
+              "count": 5031,
+              "mean_ms": 3.00434605446233,
+              "p50_ms": 2.991,
+              "p95_ms": 3.55,
+              "p99_ms": 4.003
+            },
+            "feedback_us": {
+              "count": 5031,
+              "mean_ms": 0.00585470085470085,
+              "p50_ms": 0.006,
+              "p95_ms": 0.007,
+              "p99_ms": 0.01
+            },
+            "figures_us": {
+              "count": 5031,
+              "mean_ms": 1.57772788709998,
+              "p50_ms": 1.459,
+              "p95_ms": 2.609,
+              "p99_ms": 2.989
+            },
+            "ground_us": {
+              "count": 5031,
+              "mean_ms": 0.55062333532101,
+              "p50_ms": 0.531,
+              "p95_ms": 1.214,
+              "p99_ms": 1.331
+            },
+            "minimap_us": {
+              "count": 5031,
+              "mean_ms": 0.0849976147883125,
+              "p50_ms": 0.081,
+              "p95_ms": 0.123,
+              "p99_ms": 0.181
+            },
+            "particles_us": {
+              "count": 5031,
+              "mean_ms": 0.674040349831047,
+              "p50_ms": 0.773,
+              "p95_ms": 0.933,
+              "p99_ms": 1.063
+            },
+            "presentation_us": {
+              "count": 5031,
+              "mean_ms": 1.03390677797655,
+              "p50_ms": 1.362,
+              "p95_ms": 1.975,
+              "p99_ms": 2.178
+            },
+            "projectiles_us": {
+              "count": 5031,
+              "mean_ms": 0.197370900417412,
+              "p50_ms": 0.216,
+              "p95_ms": 0.301,
+              "p99_ms": 0.366
+            },
+            "simulation_us": {
+              "count": 5031,
+              "mean_ms": 1.95490300139137,
+              "p50_ms": 1.956,
+              "p95_ms": 4.92,
+              "p99_ms": 6.9
+            }
+          },
+          "render_cpu": {
+            "count": 5031,
+            "mean_ms": 1.79122500496919,
+            "p50_ms": 1.775,
+            "p95_ms": 2.1,
+            "p99_ms": 2.506
+          },
+          "render_gpu": {
+            "count": 5031,
+            "mean_ms": 1.29901232359372,
+            "p50_ms": 1.053,
+            "p95_ms": 3.045,
+            "p99_ms": 4.794
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3601,
+          "simulation_ticks_total": 3639,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149381743,
+          "video_memory_samples": [
+            1144197849,
+            1144218873,
+            1144302969,
+            1144323993,
+            1144323993,
+            1144323993,
+            1151242161,
+            1151112599,
+            1151072615,
+            1150971503,
+            1150896095,
+            1150651151,
+            1150523879,
+            1150419215,
+            1150248071,
+            1150326023,
+            1150060367,
+            1150099055,
+            1150104743,
+            1150002599,
+            1149994199,
+            1149972743,
+            1149849263,
+            1149834503,
+            1149663743,
+            1149642119,
+            1149628175,
+            1149623039,
+            1149630815,
+            1149631031,
+            1149598055,
+            1149619295,
+            1149580991,
+            1149588911,
+            1149604319,
+            1149616199,
+            1149595871,
+            1149621167,
+            1149564863,
+            1149605399,
+            1149353159,
+            1149387167
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60
+        }
+      }
+    ]
+  },
+  "worker_wide": {
+    "complete": true,
+    "source": {
+      "revision": "04845d6d4cf7fd3c5e173900c2b3889711c93899",
+      "source_sha256": "5887bb682ae0d81ef7ac1a210c5bd492b6e3c07940352b53d05e6b95d8a2c4ce",
+      "dirty": true
+    },
+    "build": {
+      "source": {
+        "revision": "04845d6d4cf7fd3c5e173900c2b3889711c93899",
+        "source_sha256": "5887bb682ae0d81ef7ac1a210c5bd492b6e3c07940352b53d05e6b95d8a2c4ce",
+        "dirty": true
+      },
+      "dependencies": {
+        "iron_contacts.windows.x86_64.dll": "b5bfb5fda83bf66ca5cc9e453f255f8153f4df81075e817bac501b7420e37e15"
+      },
+      "executable_sha256": "0e0d17aae60921b9fa725116db135eedc164bfcdde78830c82fd591b65e3930a",
+      "built_at": "2026-11-15T23:52:17.569Z",
+      "smoke_passed": true,
+      "stale_source": false
+    },
+    "options": {
+      "n": 1000,
+      "frames": 240,
+      "repeat": 5,
+      "audio": "on",
+      "mode": "battle",
+      "seconds": 60,
+      "camera": "wide",
+      "backendChoice": "release"
+    },
+    "scope": "selected mixed battle view; not the complete blueprint matrix",
+    "target_failures": [],
+    "results": [
+      {
+        "backend": "release",
+        "iteration": 1,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.000295848484849464,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 398.645092924682,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 6134,
+            "mean_ms": 9.78214444082165,
+            "p50_ms": 9.54,
+            "p95_ms": 12.809,
+            "p99_ms": 15.299
+          },
+          "gpu_timing": true,
+          "live": [
+            377,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.005931,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3635,
+          "native_sprites": true,
+          "native_steps": 3635,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 6134,
+              "mean_ms": 0.0506048255624389,
+              "p50_ms": 0.011,
+              "p95_ms": 0.177,
+              "p99_ms": 0.218
+            },
+            "drawing_us": {
+              "count": 6134,
+              "mean_ms": 3.05432279100098,
+              "p50_ms": 3.023,
+              "p95_ms": 3.656,
+              "p99_ms": 4.456
+            },
+            "feedback_us": {
+              "count": 6134,
+              "mean_ms": 0.00590707531790023,
+              "p50_ms": 0.006,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 6134,
+              "mean_ms": 1.65856993805021,
+              "p50_ms": 1.592,
+              "p95_ms": 2.659,
+              "p99_ms": 3.229
+            },
+            "ground_us": {
+              "count": 6134,
+              "mean_ms": 0.520919139223997,
+              "p50_ms": 0.493,
+              "p95_ms": 1.103,
+              "p99_ms": 1.243
+            },
+            "minimap_us": {
+              "count": 6134,
+              "mean_ms": 0.0871747636126508,
+              "p50_ms": 0.085,
+              "p95_ms": 0.121,
+              "p99_ms": 0.16
+            },
+            "particles_us": {
+              "count": 6134,
+              "mean_ms": 0.672937398108901,
+              "p50_ms": 0.765,
+              "p95_ms": 0.936,
+              "p99_ms": 1.16
+            },
+            "presentation_us": {
+              "count": 6134,
+              "mean_ms": 0.615823769155527,
+              "p50_ms": 0.737,
+              "p95_ms": 1.497,
+              "p99_ms": 1.677
+            },
+            "projectiles_us": {
+              "count": 6134,
+              "mean_ms": 0.197194000652103,
+              "p50_ms": 0.211,
+              "p95_ms": 0.304,
+              "p99_ms": 0.384
+            },
+            "simulation_us": {
+              "count": 6134,
+              "mean_ms": 0.00435588522986632,
+              "p50_ms": 0.002,
+              "p95_ms": 0.003,
+              "p99_ms": 0.004
+            },
+            "worker_simulation_us": {
+              "count": 6134,
+              "mean_ms": 1.65597799152266,
+              "p50_ms": 1.748,
+              "p95_ms": 4.83,
+              "p99_ms": 6.438
+            },
+            "worker_snapshot_us": {
+              "count": 6134,
+              "mean_ms": 0.244662862732312,
+              "p50_ms": 0.336,
+              "p95_ms": 0.527,
+              "p99_ms": 0.666
+            },
+            "worker_wait_us": {
+              "count": 6134,
+              "mean_ms": 0.00435588522986632,
+              "p50_ms": 0.002,
+              "p95_ms": 0.003,
+              "p99_ms": 0.004
+            }
+          },
+          "render_cpu": {
+            "count": 6134,
+            "mean_ms": 1.79663596348223,
+            "p50_ms": 1.78,
+            "p95_ms": 2.128,
+            "p99_ms": 2.589
+          },
+          "render_gpu": {
+            "count": 6134,
+            "mean_ms": 1.31483061623737,
+            "p50_ms": 1.116,
+            "p95_ms": 2.296,
+            "p99_ms": 3.786
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3601,
+          "simulation_ticks_total": 3635,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149354359,
+          "video_memory_samples": [
+            1144218873,
+            1144218873,
+            1144323993,
+            1144260921,
+            1144029657,
+            1144345017,
+            1144354425,
+            1151150073,
+            1151160959,
+            1151234927,
+            1151053271,
+            1150902023,
+            1150913015,
+            1150829159,
+            1150749479,
+            1150606655,
+            1150587407,
+            1150422623,
+            1150284239,
+            1150195271,
+            1150325999,
+            1150092791,
+            1150062047,
+            1150097447,
+            1150018103,
+            1149926591,
+            1149995495,
+            1149925151,
+            1149847655,
+            1149834215,
+            1149649343,
+            1149703199,
+            1149606719,
+            1149641663,
+            1149590975,
+            1149611303,
+            1149587303,
+            1149627791,
+            1149635135,
+            1149571631,
+            1149574655,
+            1149577271,
+            1149572279,
+            1149622319,
+            1149601727,
+            1149630311,
+            1149606263,
+            1149606983,
+            1149607055,
+            1149320423,
+            1149489503
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60,
+          "worker": true
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 2,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.000733031746032509,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 421.62155511811,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 6096,
+            "mean_ms": 9.84331020341207,
+            "p50_ms": 9.679,
+            "p95_ms": 13.083,
+            "p99_ms": 15.836
+          },
+          "gpu_timing": true,
+          "live": [
+            377,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.007342,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3635,
+          "native_sprites": true,
+          "native_steps": 3635,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 6096,
+              "mean_ms": 0.0530764435695538,
+              "p50_ms": 0.012,
+              "p95_ms": 0.188,
+              "p99_ms": 0.239
+            },
+            "drawing_us": {
+              "count": 6096,
+              "mean_ms": 3.24083595800525,
+              "p50_ms": 3.226,
+              "p95_ms": 3.969,
+              "p99_ms": 5.045
+            },
+            "feedback_us": {
+              "count": 6096,
+              "mean_ms": 0.00580347769028871,
+              "p50_ms": 0.006,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 6096,
+              "mean_ms": 1.72642257217848,
+              "p50_ms": 1.727,
+              "p95_ms": 2.662,
+              "p99_ms": 3.203
+            },
+            "ground_us": {
+              "count": 6096,
+              "mean_ms": 0.594670439632546,
+              "p50_ms": 0.527,
+              "p95_ms": 1.359,
+              "p99_ms": 1.806
+            },
+            "minimap_us": {
+              "count": 6096,
+              "mean_ms": 0.0891420603674541,
+              "p50_ms": 0.088,
+              "p95_ms": 0.122,
+              "p99_ms": 0.158
+            },
+            "particles_us": {
+              "count": 6096,
+              "mean_ms": 0.707014763779528,
+              "p50_ms": 0.795,
+              "p95_ms": 1.028,
+              "p99_ms": 1.283
+            },
+            "presentation_us": {
+              "count": 6096,
+              "mean_ms": 0.639633038057743,
+              "p50_ms": 0.772,
+              "p95_ms": 1.565,
+              "p99_ms": 1.79
+            },
+            "projectiles_us": {
+              "count": 6096,
+              "mean_ms": 0.208106135170604,
+              "p50_ms": 0.223,
+              "p95_ms": 0.324,
+              "p99_ms": 0.416
+            },
+            "simulation_us": {
+              "count": 6096,
+              "mean_ms": 0.00663172572178478,
+              "p50_ms": 0.002,
+              "p95_ms": 0.003,
+              "p99_ms": 0.004
+            },
+            "worker_simulation_us": {
+              "count": 6096,
+              "mean_ms": 1.69134826115486,
+              "p50_ms": 1.767,
+              "p95_ms": 4.872,
+              "p99_ms": 6.703
+            },
+            "worker_snapshot_us": {
+              "count": 6096,
+              "mean_ms": 0.259439140419948,
+              "p50_ms": 0.347,
+              "p95_ms": 0.572,
+              "p99_ms": 0.746
+            },
+            "worker_wait_us": {
+              "count": 6096,
+              "mean_ms": 0.00663172572178478,
+              "p50_ms": 0.002,
+              "p95_ms": 0.003,
+              "p99_ms": 0.004
+            }
+          },
+          "render_cpu": {
+            "count": 6096,
+            "mean_ms": 1.89367896981627,
+            "p50_ms": 1.875,
+            "p95_ms": 2.298,
+            "p99_ms": 3.201
+          },
+          "render_gpu": {
+            "count": 6096,
+            "mean_ms": 1.22824475065617,
+            "p50_ms": 1.088,
+            "p95_ms": 2.317,
+            "p99_ms": 3.79
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3601,
+          "simulation_ticks_total": 3635,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149341375,
+          "video_memory_samples": [
+            1144218873,
+            1144218873,
+            1144302969,
+            1144218873,
+            1144050681,
+            1144302969,
+            1144368537,
+            1151232321,
+            1151234207,
+            1151210855,
+            1151060231,
+            1150924199,
+            1150904807,
+            1150931303,
+            1150854335,
+            1150748375,
+            1150687175,
+            1150565255,
+            1150539287,
+            1150373471,
+            1150303151,
+            1150247183,
+            1150339319,
+            1150070303,
+            1150133111,
+            1150111343,
+            1150024079,
+            1150001975,
+            1149991103,
+            1149863279,
+            1149835439,
+            1149674351,
+            1149727847,
+            1149616607,
+            1149663047,
+            1149615239,
+            1149630959,
+            1149596639,
+            1149613391,
+            1149637007,
+            1149598199,
+            1149604679,
+            1149604463,
+            1149602735,
+            1149635423,
+            1149642527,
+            1149596015,
+            1149610727,
+            1149588863,
+            1149629399,
+            1149331535
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60,
+          "worker": true
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 3,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.00370266666666776,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 404.41984114119,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 6169,
+            "mean_ms": 9.72731998703193,
+            "p50_ms": 9.465,
+            "p95_ms": 12.62,
+            "p99_ms": 14.607
+          },
+          "gpu_timing": true,
+          "live": [
+            377,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.010244,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3638,
+          "native_sprites": true,
+          "native_steps": 3638,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 6169,
+              "mean_ms": 0.050716971956557,
+              "p50_ms": 0.011,
+              "p95_ms": 0.176,
+              "p99_ms": 0.224
+            },
+            "drawing_us": {
+              "count": 6169,
+              "mean_ms": 3.08873691035824,
+              "p50_ms": 3.047,
+              "p95_ms": 3.689,
+              "p99_ms": 4.535
+            },
+            "feedback_us": {
+              "count": 6169,
+              "mean_ms": 0.0058575133733182,
+              "p50_ms": 0.006,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 6169,
+              "mean_ms": 1.67245436861728,
+              "p50_ms": 1.58,
+              "p95_ms": 2.685,
+              "p99_ms": 3.228
+            },
+            "ground_us": {
+              "count": 6169,
+              "mean_ms": 0.540679364564759,
+              "p50_ms": 0.506,
+              "p95_ms": 1.161,
+              "p99_ms": 1.307
+            },
+            "minimap_us": {
+              "count": 6169,
+              "mean_ms": 0.0878375749716323,
+              "p50_ms": 0.085,
+              "p95_ms": 0.125,
+              "p99_ms": 0.166
+            },
+            "particles_us": {
+              "count": 6169,
+              "mean_ms": 0.67378537850543,
+              "p50_ms": 0.768,
+              "p95_ms": 0.944,
+              "p99_ms": 1.154
+            },
+            "presentation_us": {
+              "count": 6169,
+              "mean_ms": 0.614147673853137,
+              "p50_ms": 0.692,
+              "p95_ms": 1.502,
+              "p99_ms": 1.673
+            },
+            "projectiles_us": {
+              "count": 6169,
+              "mean_ms": 0.19714702544983,
+              "p50_ms": 0.211,
+              "p95_ms": 0.304,
+              "p99_ms": 0.393
+            },
+            "simulation_us": {
+              "count": 6169,
+              "mean_ms": 0.00399286756362457,
+              "p50_ms": 0.002,
+              "p95_ms": 0.004,
+              "p99_ms": 0.004
+            },
+            "worker_simulation_us": {
+              "count": 6169,
+              "mean_ms": 1.64484324850057,
+              "p50_ms": 1.76,
+              "p95_ms": 4.8,
+              "p99_ms": 6.393
+            },
+            "worker_snapshot_us": {
+              "count": 6169,
+              "mean_ms": 0.241792186740152,
+              "p50_ms": 0.328,
+              "p95_ms": 0.528,
+              "p99_ms": 0.705
+            },
+            "worker_wait_us": {
+              "count": 6169,
+              "mean_ms": 0.00399286756362457,
+              "p50_ms": 0.002,
+              "p95_ms": 0.004,
+              "p99_ms": 0.004
+            }
+          },
+          "render_cpu": {
+            "count": 6169,
+            "mean_ms": 1.80910001621008,
+            "p50_ms": 1.781,
+            "p95_ms": 2.137,
+            "p99_ms": 2.662
+          },
+          "render_gpu": {
+            "count": 6169,
+            "mean_ms": 1.27353606743394,
+            "p50_ms": 1.102,
+            "p95_ms": 2.083,
+            "p99_ms": 3.33
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3602,
+          "simulation_ticks_total": 3638,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149298223,
+          "video_memory_samples": [
+            1144197849,
+            1144197849,
+            1144323993,
+            1144260921,
+            1144176825,
+            1144323993,
+            1144354425,
+            1151006601,
+            1151091057,
+            1151311031,
+            1151068367,
+            1150947287,
+            1150954055,
+            1150875071,
+            1150783847,
+            1150556735,
+            1150613591,
+            1150424735,
+            1150344767,
+            1150241471,
+            1150318847,
+            1150157567,
+            1150083071,
+            1150078775,
+            1150063631,
+            1149997871,
+            1149948047,
+            1149929207,
+            1149864647,
+            1149844151,
+            1149688559,
+            1149695495,
+            1149627215,
+            1149615359,
+            1149624335,
+            1149586175,
+            1149632975,
+            1149658967,
+            1149635999,
+            1149619943,
+            1149560423,
+            1149605183,
+            1149580703,
+            1149592583,
+            1149612095,
+            1149614783,
+            1149567263,
+            1149518087,
+            1149589631,
+            1149128135,
+            1149560039
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60,
+          "worker": true
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 4,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.0047423333333344,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 402.024310654267,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 6129,
+            "mean_ms": 9.78985968347202,
+            "p50_ms": 9.549,
+            "p95_ms": 13.132,
+            "p99_ms": 15.432
+          },
+          "gpu_timing": true,
+          "live": [
+            377,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.004415,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3632,
+          "native_sprites": true,
+          "native_steps": 3632,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 6129,
+              "mean_ms": 0.0516558981889378,
+              "p50_ms": 0.011,
+              "p95_ms": 0.181,
+              "p99_ms": 0.226
+            },
+            "drawing_us": {
+              "count": 6129,
+              "mean_ms": 3.08548507097406,
+              "p50_ms": 3.049,
+              "p95_ms": 3.719,
+              "p99_ms": 4.449
+            },
+            "feedback_us": {
+              "count": 6129,
+              "mean_ms": 0.00570876162506118,
+              "p50_ms": 0.006,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 6129,
+              "mean_ms": 1.67414765867189,
+              "p50_ms": 1.583,
+              "p95_ms": 2.661,
+              "p99_ms": 3.165
+            },
+            "ground_us": {
+              "count": 6129,
+              "mean_ms": 0.529638766519824,
+              "p50_ms": 0.495,
+              "p95_ms": 1.115,
+              "p99_ms": 1.297
+            },
+            "minimap_us": {
+              "count": 6129,
+              "mean_ms": 0.0872708435307554,
+              "p50_ms": 0.085,
+              "p95_ms": 0.121,
+              "p99_ms": 0.153
+            },
+            "particles_us": {
+              "count": 6129,
+              "mean_ms": 0.677585087289933,
+              "p50_ms": 0.777,
+              "p95_ms": 0.946,
+              "p99_ms": 1.17
+            },
+            "presentation_us": {
+              "count": 6129,
+              "mean_ms": 0.629124979605156,
+              "p50_ms": 0.735,
+              "p95_ms": 1.532,
+              "p99_ms": 1.695
+            },
+            "projectiles_us": {
+              "count": 6129,
+              "mean_ms": 0.199550660792952,
+              "p50_ms": 0.216,
+              "p95_ms": 0.308,
+              "p99_ms": 0.378
+            },
+            "simulation_us": {
+              "count": 6129,
+              "mean_ms": 0.00337134932289117,
+              "p50_ms": 0.002,
+              "p95_ms": 0.003,
+              "p99_ms": 0.004
+            },
+            "worker_simulation_us": {
+              "count": 6129,
+              "mean_ms": 1.66993179964105,
+              "p50_ms": 1.765,
+              "p95_ms": 4.85,
+              "p99_ms": 6.402
+            },
+            "worker_snapshot_us": {
+              "count": 6129,
+              "mean_ms": 0.251036384402023,
+              "p50_ms": 0.338,
+              "p95_ms": 0.551,
+              "p99_ms": 0.706
+            },
+            "worker_wait_us": {
+              "count": 6129,
+              "mean_ms": 0.00337134932289117,
+              "p50_ms": 0.002,
+              "p95_ms": 0.003,
+              "p99_ms": 0.004
+            }
+          },
+          "render_cpu": {
+            "count": 6129,
+            "mean_ms": 1.8145013868494,
+            "p50_ms": 1.789,
+            "p95_ms": 2.166,
+            "p99_ms": 2.726
+          },
+          "render_gpu": {
+            "count": 6129,
+            "mean_ms": 1.29879409365312,
+            "p50_ms": 1.105,
+            "p95_ms": 2.411,
+            "p99_ms": 3.679
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3600,
+          "simulation_ticks_total": 3632,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149366935,
+          "video_memory_samples": [
+            1144218873,
+            1144218873,
+            1144176825,
+            1144281945,
+            1144302969,
+            1144323993,
+            1144323993,
+            1150907313,
+            1151135025,
+            1151019935,
+            1151151167,
+            1150940759,
+            1150956983,
+            1150824863,
+            1150767383,
+            1150607735,
+            1150587407,
+            1150421591,
+            1150325663,
+            1150213871,
+            1150326023,
+            1150098263,
+            1150074695,
+            1150093391,
+            1150065287,
+            1149945287,
+            1149970799,
+            1149931559,
+            1149848135,
+            1149837671,
+            1149676055,
+            1149710759,
+            1149619679,
+            1149639311,
+            1149596831,
+            1149586607,
+            1149603959,
+            1149657239,
+            1149643343,
+            1149617567,
+            1149585455,
+            1149607775,
+            1149579623,
+            1149605183,
+            1149608207,
+            1149630311,
+            1149612959,
+            1149612263,
+            1149564431,
+            1149544343,
+            1149469799
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60,
+          "worker": true
+        }
+      },
+      {
+        "backend": "release",
+        "iteration": 5,
+        "report": {
+          "actual_groups": [
+            [
+              500,
+              333,
+              167
+            ],
+            [
+              500,
+              333,
+              167
+            ]
+          ],
+          "backlog_seconds": 0.0104793333333341,
+          "camera_route": false,
+          "camera_scope": "wide",
+          "cpu": "Intel(R) Core(TM) i5-14400F",
+          "debug": false,
+          "diagnostics_only": true,
+          "display": "Windows",
+          "draw_calls_mean": 392.327737809752,
+          "dropped_seconds": 0,
+          "engine": "4.7.2-stable (official)",
+          "frame": {
+            "count": 6255,
+            "mean_ms": 9.59263085531575,
+            "p50_ms": 9.354,
+            "p95_ms": 12.919,
+            "p99_ms": 15.631
+          },
+          "gpu_timing": true,
+          "live": [
+            377,
+            290
+          ],
+          "max_fps": 0,
+          "measurement_seconds": 60.004441,
+          "mode": "battle",
+          "music": true,
+          "native_failures": 0,
+          "native_movement_failures": 0,
+          "native_movement_steps": 3632,
+          "native_sprites": true,
+          "native_steps": 3632,
+          "ordinary_initial": [
+            1000,
+            1000
+          ],
+          "phase_profile": {
+            "bake_us": {
+              "count": 6255,
+              "mean_ms": 0.0512581934452438,
+              "p50_ms": 0.011,
+              "p95_ms": 0.184,
+              "p99_ms": 0.232
+            },
+            "drawing_us": {
+              "count": 6255,
+              "mean_ms": 3.08296370903277,
+              "p50_ms": 3.076,
+              "p95_ms": 3.684,
+              "p99_ms": 4.42
+            },
+            "feedback_us": {
+              "count": 6255,
+              "mean_ms": 0.00594900079936051,
+              "p50_ms": 0.006,
+              "p95_ms": 0.008,
+              "p99_ms": 0.011
+            },
+            "figures_us": {
+              "count": 6255,
+              "mean_ms": 1.67276770583533,
+              "p50_ms": 1.603,
+              "p95_ms": 2.621,
+              "p99_ms": 2.961
+            },
+            "ground_us": {
+              "count": 6255,
+              "mean_ms": 0.518760831334932,
+              "p50_ms": 0.508,
+              "p95_ms": 1.134,
+              "p99_ms": 1.277
+            },
+            "minimap_us": {
+              "count": 6255,
+              "mean_ms": 0.0885059952038369,
+              "p50_ms": 0.086,
+              "p95_ms": 0.119,
+              "p99_ms": 0.163
+            },
+            "particles_us": {
+              "count": 6255,
+              "mean_ms": 0.684076418864908,
+              "p50_ms": 0.787,
+              "p95_ms": 0.971,
+              "p99_ms": 1.191
+            },
+            "presentation_us": {
+              "count": 6255,
+              "mean_ms": 0.625299760191847,
+              "p50_ms": 0.587,
+              "p95_ms": 1.558,
+              "p99_ms": 1.748
+            },
+            "projectiles_us": {
+              "count": 6255,
+              "mean_ms": 0.202639808153477,
+              "p50_ms": 0.22,
+              "p95_ms": 0.316,
+              "p99_ms": 0.407
+            },
+            "simulation_us": {
+              "count": 6255,
+              "mean_ms": 0.00488249400479616,
+              "p50_ms": 0.002,
+              "p95_ms": 0.004,
+              "p99_ms": 0.004
+            },
+            "worker_simulation_us": {
+              "count": 6255,
+              "mean_ms": 1.64092997601918,
+              "p50_ms": 1.74,
+              "p95_ms": 4.795,
+              "p99_ms": 6.426
+            },
+            "worker_snapshot_us": {
+              "count": 6255,
+              "mean_ms": 0.25158001598721,
+              "p50_ms": 0.34,
+              "p95_ms": 0.562,
+              "p99_ms": 0.747
+            },
+            "worker_wait_us": {
+              "count": 6255,
+              "mean_ms": 0.00488249400479616,
+              "p50_ms": 0.002,
+              "p95_ms": 0.004,
+              "p99_ms": 0.004
+            }
+          },
+          "render_cpu": {
+            "count": 6255,
+            "mean_ms": 1.79751510791367,
+            "p50_ms": 1.788,
+            "p95_ms": 2.139,
+            "p99_ms": 2.662
+          },
+          "render_gpu": {
+            "count": 6255,
+            "mean_ms": 1.21400943245404,
+            "p50_ms": 1.019,
+            "p95_ms": 2.364,
+            "p99_ms": 4.043
+          },
+          "seed": 4242,
+          "simulation_ticks_measured": 3600,
+          "simulation_ticks_total": 3632,
+          "sound": true,
+          "special_initial": 1,
+          "trace": [],
+          "video_memory_bytes": 1149437543,
+          "video_memory_samples": [
+            1144218873,
+            1144218873,
+            1144071705,
+            1144281945,
+            1144323993,
+            1144323993,
+            1144302969,
+            1144378377,
+            1151230473,
+            1151211263,
+            1151221463,
+            1150950719,
+            1150950143,
+            1150915607,
+            1150730447,
+            1150684223,
+            1150586399,
+            1150483175,
+            1150409639,
+            1150241375,
+            1150307111,
+            1150266719,
+            1150104575,
+            1150106207,
+            1150100159,
+            1150008671,
+            1149992543,
+            1149969143,
+            1149878639,
+            1149777407,
+            1149745655,
+            1149638327,
+            1149632231,
+            1149597959,
+            1149614735,
+            1149563135,
+            1149590351,
+            1149594023,
+            1149628223,
+            1149612383,
+            1149569903,
+            1149567959,
+            1149613679,
+            1149574439,
+            1149610127,
+            1149587399,
+            1149618863,
+            1149602591,
+            1149601127,
+            1149600503,
+            1149303503,
+            1149579071
+          ],
+          "viewport": "(1920.0, 1080.0)",
+          "visual_seed": 4242,
+          "vsync": 0,
+          "warmup_frames": 60,
+          "worker": true
+        }
+      }
+    ]
+  },
+  "gpu_pixel_parity": {
+    "different_pixels_above_3": 0,
+    "maximum_channel_difference": 0,
+    "painted_pixels": 171381,
+    "width": 960,
+    "height": 720
+  }
+}

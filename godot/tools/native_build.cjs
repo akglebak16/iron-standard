@@ -23,11 +23,11 @@ async function main() {
  if(!fs.existsSync(marker)||fs.readFileSync(marker,'utf8')!==generatorHash){
   console.log((await run(python,[path.join(root,'tools/native_bindings.py'),cpp,build])).trim()); fs.writeFileSync(marker,generatorHash);
  }
- const inputs=[...files(path.join(cpp,'src'),'.cpp'),...files(path.join(build,'gen/src'),'.cpp'),path.join(root,'adapters/godot/native/contact_adapter.cpp')];
+ const inputs=[...files(path.join(cpp,'src'),'.cpp'),...files(path.join(build,'gen/src'),'.cpp'),...files(path.join(root,'adapters/godot/native'),'.cpp'),...files(path.join(root,'apps/godot'),'.cpp')];
  const outputPaths=[]; const queue=[];
  for(const source of inputs){
   const id=crypto.createHash('sha256').update(source).digest('hex').slice(0,16);const out=path.join(objects,id+'.o');outputPaths.push(out);
-  const deps=source.includes('contact_adapter')?[source,path.join(root,'runtime/simulation/native/contact_solver.hpp')]:[source];
+  const deps=source.startsWith(root)?[source,...files(path.join(root,'core/battle'),'.hpp'),...files(path.join(root,'runtime'),'.hpp'),...files(path.join(root,'apps/godot'),'.hpp')]:[source];
   const fingerprint=crypto.createHash('sha256').update(generatorHash+flags.join('\0')+deps.map(f=>fs.readFileSync(f)).join('\0')).digest('hex');
   if(!fs.existsSync(out)||!fs.existsSync(out+'.hash')||fs.readFileSync(out+'.hash','utf8')!==fingerprint)queue.push({source,out,fingerprint});
  }

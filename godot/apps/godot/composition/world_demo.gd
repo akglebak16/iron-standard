@@ -1,4 +1,7 @@
 extends Node
+const BattleWorker = preload("res://adapters/godot/battle_worker.gd")
+const NativeMovement = preload("res://adapters/godot/native/movement.gd")
+const NativeColumns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## World map demo: generates Europe for a seed, puts the party in its home town. Click to walk, wheel to zoom,
@@ -392,7 +395,7 @@ func _start_battle(p: Dictionary) -> void:
 	_battle_ticket = _bridge.begin(state, p)
 	var setup: BattleSetup = _bridge.battle_setup(_battle_ticket)
 	if setup == null: return
-	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions, Contacts.create())
+	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions, Contacts.create(), NativeMovement.create(), NativeColumns.create())
 	if session == null:
 		_bridge.cancel(_battle_ticket)
 		push_error("Cannot start the battle")
@@ -402,7 +405,7 @@ func _start_battle(p: Dictionary) -> void:
 	view.name = "Battle"
 	var audio := _preferences.read()
 	view.hero_level = int(state.player.hero.get("lvl", 1))
-	view.configure(session, audio.effects, audio.music, _preferences.read_blood(), setup.seed, setup.biome)
+	view.configure(session, audio.effects, audio.music, _preferences.read_blood(), setup.seed, setup.biome, BattleWorker.new(session))
 	view.audio_preferences_changed.connect(func(e: bool, m: bool): _preferences.save(e, m))
 	view.blood_preference_changed.connect(func(on: bool): _preferences.save_blood(on))
 	view.menu_requested.connect(func():

@@ -5,6 +5,7 @@ const CombatStep = preload("res://core/battle/rules/combat_step.gd")
 const State = preload("res://core/battle/model/state.gd")
 
 func _initialize() -> void:
+	_check_native_particles()
 	var effects := Effects.new()
 	var hit := {"kind": Event.Kind.HIT, "position": Vector2(20, 30), "impact_style": Event.ImpactStyle.BLOOD}
 	var dust := {"kind": Event.Kind.HIT, "position": Vector2(30, 30), "impact_style": Event.ImpactStyle.DUST}
@@ -76,3 +77,26 @@ func _check_death_effects() -> void:
 	assert(effects._pools.is_empty() and effects._particles.size() == 6)
 	effects.advance(0.0, [down])
 	assert(effects._particles.size() == 6)
+
+func _check_native_particles() -> void:
+	var a := Effects.new()
+	var b := Effects.new()
+	a.native_enabled = false
+	assert(b._native != null)
+	a._rng.seed = 82
+	b._rng.seed = 82
+	var marks_a: Array = []
+	var marks_b: Array = []
+	a.on_mark = func(mark): marks_a.append(mark)
+	b.on_mark = func(mark): marks_b.append(mark)
+	for index in 500:
+		var particle := {"kind": index % 3, "position": Vector2(index * 1.13, index * 2.31),
+			"velocity": Vector2(index * 0.31, -index * 0.93), "color": Color(0.4, 0.2, 0.1),
+			"remaining": 0.01 + index % 17 * 0.05, "lifetime": 1.0, "radius": 2.7}
+		a._particles.append(particle)
+		b._particles.append(particle.duplicate())
+	for tick in 100:
+		a.advance(1.0 / 60.0, [])
+		b.advance(1.0 / 60.0, [])
+		assert(a._particles == b._particles and marks_a == marks_b, "Visual particle physics/order must stay exact")
+		assert(a._rng.state == b._rng.state)

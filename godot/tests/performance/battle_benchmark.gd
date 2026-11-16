@@ -1,5 +1,7 @@
 extends RefCounted
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const NativeMovement = preload("res://adapters/godot/native/movement.gd")
+const NativeColumns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## CPU baseline. Count and weight checks execute in release too; --ticks is simulation time, not frame count.
 const Factory = preload("res://core/battle/application/factory.gd")
@@ -13,7 +15,9 @@ var seed_value := 4242
 var output := ""
 var legacy_snapshot := false
 var profile_phases := false
+var profile_details := false
 var contact_backend := "native"
+var movement_backend := "native"
 var _tree: SceneTree
 
 func run(tree: SceneTree) -> void:
@@ -27,6 +31,10 @@ func run(tree: SceneTree) -> void:
 		elif arg.begins_with("--out="): output = arg.trim_prefix("--out=")
 		elif arg == "--legacy-snapshot": legacy_snapshot = true
 		elif arg == "--profile-phases": profile_phases = true
+		elif arg == "--profile-details":
+			profile_phases = true
+			profile_details = true
+		elif arg.begins_with("--movement="): movement_backend = arg.trim_prefix("--movement=")
 		elif arg.begins_with("--contacts="): contact_backend = arg.trim_prefix("--contacts=")
 	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege"]:
 		fail("Invalid benchmark parameters")
@@ -44,25 +52,34 @@ func run(tree: SceneTree) -> void:
 	setup.siege = scenario == "siege"
 	var types := ["n1", "e1"]
 	if scenario == "volley": types = ["n2a", "e2a"]
-	elif scenario == "cavalry": types = ["n2s", "e2s"]
+	elif scenario == "cavalry": types = ["n3c", "e3c"]
 	setup.player_army.assign([{"type": types[0], "n": size}])
 	setup.enemy_army.assign([{"type": types[1], "n": size}])
-	if contact_backend not in ["native", "gdscript"]:
+	if contact_backend not in ["native", "gdscript"] or movement_backend not in ["native", "gdscript"]:
 		fail("Unknown contact backend")
 		return
 	var solver := Contacts.create() if contact_backend == "native" else Callable()
 	if contact_backend == "native" and not solver.is_valid():
 		fail("Native contact backend unavailable")
 		return
-	var session = Factory.create(setup, catalog, null, null, null, solver)
+	var movement := NativeMovement.create() if movement_backend == "native" else Callable()
+	if movement_backend == "native" and not movement.is_valid():
+		fail("Native movement backend unavailable")
+		return
+	var session = Factory.create(setup, catalog, null, null, null, solver, movement, NativeColumns.create() if movement_backend == "native" else null)
 	if session == null:
 		fail("Cannot create benchmark battle")
 		return
 	if profile_phases: session._state.profiler.clock = Time.get_ticks_usec
+	session._state.profiler.detailed = profile_details
 	var initial := [0, 0]
+	var mounted := [0, 0]
+	var ranged := [0, 0]
 	for unit in session._state.units:
 		if unit.hero or unit.companion: continue
 		initial[unit.side] += 1
+		if unit.mounted: mounted[unit.side] += 1
+		if unit.attack_range > 0: ranged[unit.side] += 1
 		if unit.weight != 1.0:
 			fail("Weighted units cannot stand in for individual soldiers")
 			return
@@ -70,6 +87,9 @@ func run(tree: SceneTree) -> void:
 			var ordinal: int = initial[unit.side] - 1
 			var front := 12.0 if scenario == "contact" else 180.0
 			unit.position = Vector2(1300.0 + (front + (ordinal / 50) * 24.0) * (-1.0 if unit.side == 0 else 1.0), 200.0 + (ordinal % 50) * 26.0)
+	if scenario == "cavalry" and mounted != [size, size] or scenario == "volley" and ranged != [size, size]:
+		fail("Scenario composition does not match its name")
+		return
 	if initial != [size, size]:
 		fail("Actual population differs: %s" % str(initial))
 		return
@@ -105,6 +125,9 @@ func run(tree: SceneTree) -> void:
 			events[key] = int(events.get(key, 0)) + 1
 		if frame.outcome in [session.Outcome.VICTORY, session.Outcome.DEFEAT]: break
 	var phase_stats := {}
+	if movement_backend == "native" and (session._state.native_movement_steps == 0 or session._state.native_movement_failures != 0):
+		fail("Native movement was not executed reliably")
+		return
 	if contact_backend == "native" and (session._state.native_contact_steps == 0 or session._state.native_contact_failures != 0):
 		fail("Native contact fallback occurred")
 		return
@@ -118,6 +141,9 @@ func run(tree: SceneTree) -> void:
 		"simulation": stats(simulation), "snapshot": stats(snapshots), "events": events,
 		"snapshot_format": "legacy-dictionaries" if legacy_snapshot else "compact-columns",
 		"phase_profile": phase_stats,
+		"ordinary_mounted": mounted, "ordinary_ranged": ranged,
+		"movement_backend": movement_backend, "native_movement_steps": session._state.native_movement_steps,
+		"native_movement_failures": session._state.native_movement_failures, "native_movement_interactions": session._state.native_movement_interactions,
 		"contact_backend": contact_backend, "native_contact_steps": session._state.native_contact_steps,
 		"native_contact_failures": session._state.native_contact_failures,
 		"active_storage_records": session._state.active_units.size(),

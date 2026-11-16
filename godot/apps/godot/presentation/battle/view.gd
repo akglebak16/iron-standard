@@ -64,6 +64,9 @@ var _paused := false
 var _speed_index := 0
 var _attack_pressed := false
 var attract_mode := false
+var player_input_enabled := true
+var profile_frames := false
+var frame_profile := {}
 var _figure_identity_count := -1
 var _figure_seed := 0
 var _journal_label: Label
@@ -73,12 +76,12 @@ var _menu_open := false
 var _paused_before_menu := false
 
 func configure(session: Session, effects_enabled: bool = true, music_enabled: bool = true, blood_enabled: bool = true,
-		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME) -> void:
+		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME, execution: Simulation = null) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
 	_figure_seed = terrain_seed
 	_figures.biome = biome
-	_simulation = Simulation.new(session)
+	_simulation = execution if execution != null else Simulation.new(session)
 	_dialogue.configure(session.companion_dialogue())
 	_effects_enabled = effects_enabled
 	_music_enabled = music_enabled
@@ -95,7 +98,7 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 		_figures.on_settled = func(unit: Dictionary, headless: bool): _bake.paint(func(canvas): _figures.draw_corpse(canvas, unit, headless))
 
 func get_battle_snapshot() -> Dictionary:
-	return _session.snapshot() if _session != null else {}
+	return _simulation.snapshot() if _simulation != null else {}
 
 ## The finished battle result (for the report window).
 func battle_result() -> Dictionary:
@@ -106,6 +109,8 @@ func show_result_summary(summary: String) -> void:
 	_update_status()
 
 func _ready() -> void:
+	set_process_input(player_input_enabled)
+	set_process_unhandled_input(player_input_enabled)
 	if _session == null:
 		push_error("Battle view requires a session")
 		set_physics_process(false)
@@ -151,11 +156,40 @@ func _ready() -> void:
 
 func _process(real_dt: float) -> void:
 	if _session == null: return
+	if _simulation.supports_async():
+		_process_async(real_dt)
+		return
+	var started := Time.get_ticks_usec() if profile_frames else 0
 	var simulation_seconds := _pre_step(real_dt, real_dt)
 	if simulation_seconds <= 0.0: return
 	var count := _clock.advance(simulation_seconds, _simulation.step)
+	if profile_frames: frame_profile.simulation_us = Time.get_ticks_usec() - started
+	started = Time.get_ticks_usec() if profile_frames else 0
 	if count > 0:
 		_post_step(count * FixedClock.STEP_SECONDS, _simulation.take_events(), real_dt)
+	if profile_frames: frame_profile.presentation_us = Time.get_ticks_usec() - started
+	queue_redraw()
+
+func _publish_async_batch(real_dt: float) -> void:
+	var started := Time.get_ticks_usec() if profile_frames else 0
+	var completed := _simulation.finish_batch()
+	if profile_frames:
+		frame_profile.worker_wait_us = Time.get_ticks_usec() - started
+		frame_profile.merge(_simulation.batch_profile() if completed > 0 else {"worker_simulation_us": 0, "worker_snapshot_us": 0}, true)
+		frame_profile.simulation_us = frame_profile.get("worker_simulation_us", 0)
+	started = Time.get_ticks_usec() if profile_frames else 0
+	if completed > 0:
+		_post_step(completed * FixedClock.STEP_SECONDS, _simulation.take_events(), real_dt)
+	if profile_frames: frame_profile.presentation_us = Time.get_ticks_usec() - started
+
+func _process_async(real_dt: float) -> void:
+	_publish_async_batch(real_dt)
+	# All UI/session reads finish before publishing the next job. Drawing only
+	# sees the detached frame; input callbacks append commands to a main-thread queue.
+	var seconds := _pre_step(real_dt, real_dt)
+	if seconds <= 0.0: return
+	var count := _clock.advance(seconds, func(): pass)
+	if count > 0: _simulation.start_batch(count)
 	queue_redraw()
 
 func _order(order: String, point: Vector2) -> void:
@@ -182,7 +216,7 @@ func _pre_step(dt: float, real_dt: float) -> float:
 	if _paused:
 		return 0.0
 	var simulation_dt: float = dt * PLAYBACK_SPEEDS[_speed_index]
-	if _frame.outcome == Session.Outcome.RUNNING and not attract_mode:
+	if _frame.outcome == Session.Outcome.RUNNING and not attract_mode and player_input_enabled:
 		_simulation.submit([{
 			"kind": "hero_input",
 			"move": Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))),
@@ -254,7 +288,10 @@ func _handle_battle_mouse(event: InputEventMouseButton) -> void:
 		queue_redraw()
 
 func _pointer_world_position() -> Vector2:
-	return camera.screen_to_world(get_viewport().get_mouse_position())
+	return camera.screen_to_world(_pointer_screen_position())
+
+func _pointer_screen_position() -> Vector2:
+	return get_viewport().get_mouse_position() if player_input_enabled else get_viewport_rect().size * 0.5
 
 func _on_viewport_resized() -> void:
 	camera.fit_viewport()
@@ -268,6 +305,7 @@ func _select_group(group: int) -> void:
 
 func set_menu_open(open: bool) -> void:
 	if open and not _menu_open:
+		if _simulation.supports_async(): _publish_async_batch(0.0)
 		_paused_before_menu = _paused
 		_paused = true
 	elif not open and _menu_open:
@@ -297,6 +335,7 @@ func _select_weapon(slot: String) -> void:
 
 func _toggle_pause() -> void:
 	if _frame.outcome not in [Session.Outcome.VICTORY, Session.Outcome.DEFEAT]:
+		if not _paused and _simulation.supports_async(): _publish_async_batch(0.0)
 		_paused = not _paused
 		_update_status()
 
@@ -337,10 +376,11 @@ func _refresh(dt: float, events: Array[Dictionary], real_dt: float = -1.0, frame
 		var portrait_units: Array[Dictionary] = []
 		for index in _frame.render.size(): portrait_units.append(_frame.render.unit_at(index))
 		_figures.configure_identities(_session.unit_appearance_ids(), _figure_seed)
+		_figures.prepare_art(portrait_units)
 		_controls.configure_portraits(portrait_units, _session.unit_appearance_ids())
 		_figure_identity_count = _frame.render.size()
 	for group in 4: _hud_orders[group] = _session.selected_orders(group)
-	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, get_viewport().get_mouse_position(), events)
+	camera.advance(dt if real_dt < 0.0 else real_dt, _frame.camera_target, _frame.hero_down, _pointer_screen_position(), events)
 	if attract_mode:
 		camera.position = Vector2(_frame.arena_size) * 0.5
 	_navigation.update_frame(_frame, dt)
@@ -382,17 +422,29 @@ func _update_status() -> void:
 func _draw() -> void:
 	if _frame.is_empty():
 		return
+	var started := Time.get_ticks_usec() if profile_frames else 0
 	var visible := (get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
 	if not attract_mode:
 		CommandGhost.draw(self, _frame.get("player_groups", []), _selection)
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
+	var figures_started := Time.get_ticks_usec() if profile_frames else 0
 	_figures.draw_compact(self, _frame.render, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), attract_mode)
+	var shots_started := Time.get_ticks_usec() if profile_frames else 0
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))
 	HeroSwing.draw(self, _hero_swing)
 	for shot in _frame.shots:
 		ProjectileView.draw(self, shot)
+	var particles_started := Time.get_ticks_usec() if profile_frames else 0
 	_impacts.draw_particles(self)
+	var feedback_started := Time.get_ticks_usec() if profile_frames else 0
 	_feedback.draw(self)
 	if not attract_mode: _dialogue.draw(self)
+	if profile_frames:
+		frame_profile.drawing_us = Time.get_ticks_usec() - started
+		frame_profile.ground_us = figures_started - started
+		frame_profile.figures_us = shots_started - figures_started
+		frame_profile.projectiles_us = particles_started - shots_started
+		frame_profile.particles_us = feedback_started - particles_started
+		frame_profile.feedback_us = Time.get_ticks_usec() - feedback_started

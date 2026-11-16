@@ -10,6 +10,7 @@ fs.mkdirSync(path.join(root, '.godot'), { recursive: true });
 const userData = fs.mkdtempSync(path.join(root, '.godot', 'test-userdata-'));
 const env = { ...process.env, APPDATA: userData, XDG_DATA_HOME: userData };
 const timeouts = {
+  'tests/integration/test_native_movement.gd': 120000,
   'tests/integration/test_native_contacts.gd': 120000,
   'tests/unit/campaign/world/test_world_wars.gd': 120000,
   // Four 900-tick battles compare indexed and exhaustive targeting/contact loops.

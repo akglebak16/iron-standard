@@ -5,14 +5,18 @@ const Event = preload("res://core/battle/combat_event.gd")
 const EPSILON := 0.0001
 
 func _initialize() -> void:
+	var native = ClassDB.instantiate("IronBattleSprites")
+	assert(native != null)
 	var fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://tests/unit/battle/fixtures/unit_motion.json"))
 	for sample in fixture.poses:
 		var actual := Motion.swing_pose(int(sample.kind), sample.bump)
+		assert(Vector3(native.sample_swing(int(sample.kind), sample.bump)).distance_to(actual) < EPSILON)
 		var expected: Array = sample.result
 		assert(actual.distance_to(Vector3(expected[0], expected[1], expected[2])) < EPSILON, "original swingPose")
 	for sample in fixture.bodies:
 		var body := Motion.body_transform(_vec(sample.at), sample.time, sample.phase, sample.speed, sample.mounted, sample.facing, sample.bump)
 		_check_transform(body, sample.calls[0].transform)
+		_check_transform(native.sample_body(_vec(sample.at), sample.time, sample.phase, sample.speed, sample.mounted, sample.facing, sample.bump, 0.31), sample.calls[0].transform)
 		var anchor := _vec(sample.anchor)
 		assert((-anchor).distance_to(_vec(sample.calls[0].offset)) < EPSILON)
 		if sample.bump > 0 and sample.kind > 0:

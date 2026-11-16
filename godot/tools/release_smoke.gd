@@ -1,5 +1,7 @@
 extends Node
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const Movement = preload("res://adapters/godot/native/movement.gd")
+const Columns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## Explicit checks: assert expressions do not run in exported release builds.
 const Europe = preload("res://core/campaign/data/europe_data.gd")
@@ -41,7 +43,12 @@ func _ready() -> void:
 	if not solver.is_valid():
 		fail("Native contact adapter unavailable")
 		return
-	var session = Factory.create(setup, bridge.troops, bridge.gear, bridge.perks, bridge.companions, solver)
+	var movement := Movement.create()
+	var columns := Columns.create()
+	if not movement.is_valid() or columns == null or not ClassDB.class_exists("IronBattleSprites") or not ClassDB.class_exists("IronBattleEffects"):
+		fail("Native battle adapters unavailable")
+		return
+	var session = Factory.create(setup, bridge.troops, bridge.gear, bridge.perks, bridge.companions, solver, movement, columns)
 	if session == null:
 		fail("Battle initialization")
 		return
@@ -51,6 +58,9 @@ func _ready() -> void:
 	for i in 60: session.advance(1.0 / 60.0)
 	if session.snapshot().tick != 60:
 		fail("Battle did not advance")
+		return
+	if session._state.native_movement_steps != 60 or session._state.native_movement_failures != 0 or session.snapshot(true).render.size() == 0:
+		fail("Native movement/snapshot failed")
 		return
 	if session._state.native_contact_failures != 0:
 		fail("Native contact adapter rejected valid battle")
