@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
+const os = require('os');
 
 const engine = process.argv[2] || 'godot';
 const root = path.resolve(__dirname, '..');
@@ -15,6 +16,9 @@ const timeouts = {
   'tests/unit/battle/rules/test_spatial_full_battle.gd': 60000,
   // Multiple world constructions, continuation and recovery from a torn generation.
   'tests/integration/test_save_v2.gd': 120000,
+  // Parallel jobs share the CPU: the slowest campaign tests get room.
+  'tests/unit/campaign/world/test_party_ai.gd': 90000,
+  'tests/unit/campaign/world/test_world_save.gd': 90000,
 };
 // Бюджет полного прогона Godot-тестов (правило в docs/architecture/DEVELOPMENT.md). Превышение — предупреждение CI.
 const BUDGET_MS = 180000;
@@ -33,9 +37,9 @@ function findTests(dir) {
     return entry.isFile() && /^test_.*\.gd$/.test(entry.name) ? [full] : [];
   });
 }
-function run(args, timeout) {
+function run(args, timeout, runEnv = env) {
   return new Promise(resolve => {
-    const child = spawn(engine, args, {env, windowsHide:true});
+    const child = spawn(engine, args, {env: runEnv, windowsHide:true});
     let stdout = '', stderr = '', error, stopping = false;
     const stop = reason => {
       if (stopping) return;
@@ -76,18 +80,30 @@ const tests = findTests(root).sort().filter(file => {
 const started = Date.now();
 const timings = [];
 if (!tests.length) throw new Error('No Godot tests found');
-for (const test of tests) {
-  const relative = path.relative(root, test).replaceAll('\\', '/');
-  const testStart = Date.now();
-  const result = await run(['--headless', '--path', root, '--script', `res://${relative}`], timeouts[relative] || 30000);
-  const output = `${result.stdout || ''}\n${result.stderr || ''}`;
-  if (result.error || result.status !== 0 || scriptErrors.test(output) || !/tests passed/i.test(output)) {
-    process.stderr.write(output);
-    throw new Error(`Godot test failed: ${relative}${result.error ? ` (${result.error.message})` : ''}`);
+// Tests run in parallel, each Godot process with its own user data so saves and preferences never collide.
+const jobs = Math.max(1, Math.min(tests.length, Number(process.env.GODOT_TEST_JOBS) || Math.min(4, os.cpus().length)));
+console.log(`Running ${tests.length} Godot test files in ${jobs} parallel jobs`);
+const failures = [];
+let next = 0;
+async function worker() {
+  while (next < tests.length) {
+    const test = tests[next++];
+    const relative = path.relative(root, test).replaceAll('\\', '/');
+    const own = fs.mkdtempSync(path.join(userData, 'job-'));
+    const testStart = Date.now();
+    const result = await run(['--headless', '--path', root, '--script', `res://${relative}`], timeouts[relative] || 30000, { ...env, APPDATA: own, XDG_DATA_HOME: own });
+    const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+    if (result.error || result.status !== 0 || scriptErrors.test(output) || !/tests passed/i.test(output)) {
+      process.stderr.write(`----- ${relative} -----\n${output}\n`);
+      failures.push(`${relative}${result.error ? ` (${result.error.message})` : ''}`);
+      continue;
+    }
+    timings.push([relative, Date.now() - testStart]);
+    console.log(`${relative} OK (${((Date.now() - testStart) / 1000).toFixed(1)} s)`);
   }
-  timings.push([relative, Date.now() - testStart]);
-  console.log(`${relative} OK (${((Date.now() - testStart) / 1000).toFixed(1)} s)`);
 }
+await Promise.all(Array.from({ length: jobs }, worker));
+if (failures.length) throw new Error(`Godot tests failed: ${failures.join(', ')}`);
 const elapsed = Date.now() - started;
 console.log(`Slowest: ${timings.sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, ms]) => `${name} ${(ms / 1000).toFixed(1)} s`).join('; ')}`);
 if (elapsed > BUDGET_MS) console.log(`::warning::Godot-тесты шли ${(elapsed / 1000).toFixed(0)} с при бюджете ${BUDGET_MS / 1000} с: ускорь самые медленные или раздели их`);

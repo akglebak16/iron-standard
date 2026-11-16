@@ -7,6 +7,9 @@ const path = require('path');
 const SKIP_DIRS = new Set(['.godot', '.git', 'dist', 'node_modules']);
 const TEXT = /\.(gd|tscn|tres|gdextension|gdshader|json|cfg)$/;
 const IGNORED = /^docs\/.*\.md$|\.uid$|\.import$/;
+// Node and PowerShell authoring scripts have their own checks and never run inside Godot tests;
+// the native kernel build is the exception: it changes what every battle test runs on.
+const NODE_TOOLS = /^tools\/(?!native_)[^/]*\.(cjs|js|mjs|ps1|py|md|json)$|^tools\/[a-z_]+\/[^/]*\.(cjs|js|mjs|py|json)$/;
 // Правка этих файлов может изменить поведение всего проекта.
 const GLOBAL = new Set(['project.godot', 'export_presets.cfg']);
 // Только эти папки видит граф; правка в другом месте (tools, нативные исходники и т.п.) = полный набор.
@@ -59,7 +62,7 @@ function selectTests(root, changed) {
   const seen = new Set();
   const queue = [];
   for (const file of changed) {
-    if (!file || IGNORED.test(file)) continue;
+    if (!file || IGNORED.test(file) || NODE_TOOLS.test(file)) continue;
     if (!GRAPH_DIRS.test(file) && !GLOBAL.has(file)) return { full: true, reason: `${file} вне графа зависимостей` };
     if (GLOBAL.has(file)) return { full: true, reason: `${file} влияет на весь проект` };
     for (const source of dependents.get(file) || []) if (GLOBAL.has(source)) return { full: true, reason: `${file} подключён в ${source}` };
