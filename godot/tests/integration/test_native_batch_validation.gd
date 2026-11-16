@@ -19,7 +19,8 @@ func _initialize() -> void:
 	assert(rng.state == original_rng, "Rejected batches cannot consume RNG or abandon columns")
 	var groups := PackedFloat64Array()
 	for side in state.groups:
-		for group in side: groups.append_array(PackedFloat64Array([100,100,0,1,1,0,0,0,0]))
+		# Movement._step_batch: frame, order flags, stage 1v doctrine (formed, rally, screen point and line).
+		for group in side: groups.append_array(PackedFloat64Array([100,100,0,1,1,0,0,0,0, 0,0,INF,INF,0,1]))
 	var context := {"groups":groups,"arena":state.arena_size}
 	# Retaining a value across handoff must trigger COW, not alias later native writes.
 	var retained_reals := state.motion.real_fields

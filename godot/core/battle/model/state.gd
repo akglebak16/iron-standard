@@ -228,6 +228,9 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 				group.layout()
 		if order != Config.ORDER_RETREAT:
 			group.backing = false
+		# A new order ends a cavalry rally (stage 1v); the line formation follows the order by itself.
+		group.rally = false
+		group.contact_seconds = 0.0
 	return changed
 
 func centroid(side: int) -> Vector2:

@@ -44,7 +44,7 @@ static func choose(battle: State, unit: Unit, index: SpatialIndex = null) -> Uni
 		if enemy == previous:
 			distance *= Config.CURRENT_TARGET_MULTIPLIER
 		if melee:
-			distance = SpatialIndex.melee_weight(distance, raw, at, unit.speed, enemy, enemy_position, enemy == previous)
+			distance = SpatialIndex.melee_weight(distance, raw, at, unit.speed, enemy, enemy_position, enemy == previous, melee_cavalry)
 		else:
 			distance = SpatialIndex.ranged_weight(distance, unit.id, unit.damage, enemy, enemy == previous)
 		if distance < best_distance:

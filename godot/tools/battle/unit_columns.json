@@ -18,7 +18,8 @@
     "plan_speed",
     "plan_distance",
     "chase_seconds",
-    "damage"
+    "damage",
+    "shield_block"
   ],
   "integer": [
     "id",
@@ -38,7 +39,8 @@
     "leader",
     "attackers",
     "leashed",
-    "aimers"
+    "aimers",
+    "anti_cavalry"
   ],
   "vector": [
     "slot_offset",
@@ -50,7 +52,10 @@
     "melee",
     "shoot",
     "shootslot",
-    "skirm"
+    "skirm",
+    "rank",
+    "brace",
+    "fallback"
   ],
   "parameters": [
     "SIEGE_ROUTE_DESTINATION_WEIGHT",
@@ -107,6 +112,21 @@
     "AI_CHARGE_CHASE_SPEED_SHARE",
     "TARGET_VOLLEY_HIT_SHARE",
     "TARGET_OVERKILL_MULTIPLIER",
-    "TARGET_FRONT_SPREAD"
+    "TARGET_FRONT_SPREAD",
+    "AI_FORMATION_FRONT_DEPTH",
+    "AI_FORMATION_REAR_ENGAGE_BUFFER",
+    "AI_BRACE_DISTANCE",
+    "AI_BRACE_APPROACH_SPEED",
+    "AI_SCREEN_SPREAD",
+    "AI_SCREEN_RADIUS",
+    "AI_ARCHER_FALLBACK_DISTANCE",
+    "AI_ARCHER_FALLBACK_APPROACH_SPEED",
+    "AI_ARCHER_FALLBACK_STEP",
+    "AI_ARCHER_FALLBACK_SPEED_MULTIPLIER",
+    "AI_ARCHER_FALLBACK_COVER_DISTANCE",
+    "AI_ARCHER_FALLBACK_EDGE",
+    "TARGET_SHIELDED_MULTIPLIER",
+    "TARGET_SPEAR_FRONT_MULTIPLIER",
+    "CHARGE_FRONT_ARC"
   ]
 }

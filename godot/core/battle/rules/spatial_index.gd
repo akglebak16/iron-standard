@@ -126,7 +126,7 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 			d *= Config.CAVALRY_ARCHER_TARGET_MULTIPLIER
 		d *= Config.CURRENT_TARGET_MULTIPLIER
 		if melee:
-			d = melee_weight(d, raw, at, own_speed, previous, previous.position, true)
+			d = melee_weight(d, raw, at, own_speed, previous, previous.position, true, melee_cavalry)
 		else:
 			d = ranged_weight(d, own_id, own_damage, previous, true)
 		state[0] = previous.battle_index
@@ -181,7 +181,9 @@ const RING_LIMIT := 3
 ## and only ever raising the distance, so the search bounds above stay valid. Same arithmetic as consider() in
 ## movement_kernel.hpp: a target fought by more than TARGET_CROWD_FREE_ATTACKERS others (the fighter himself not
 ## counted) and one receding faster than the fighter can run look farther away. `raw` is the plain distance.
-static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: float, enemy: Unit, enemy_position: Vector2, own_target: bool) -> float:
+## Stage 1v (DESIGN.md 4.3): for a melee rider, a spearman facing him (within CHARGE_FRONT_ARC) looks
+## TARGET_SPEAR_FRONT_MULTIPLIER farther, so cavalry takes a flank or another target instead of his points.
+static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: float, enemy: Unit, enemy_position: Vector2, own_target: bool, rider := false) -> float:
 	var crowd := float(enemy.attackers) - (1.0 if own_target else 0.0) - Config.TARGET_CROWD_FREE_ATTACKERS
 	if crowd > 0.0:
 		weighted *= 1.0 + Config.TARGET_CROWD_MULTIPLIER * crowd
@@ -189,17 +191,29 @@ static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: fl
 		var excess := enemy.velocity.dot(enemy_position - at) / raw - own_speed
 		if excess > 0.0:
 			weighted *= 1.0 + Config.TARGET_OUTRUN_MULTIPLIER * excess / own_speed
+	if rider and enemy.anti_cavalry and not enemy.mounted and not enemy.fleeing and raw > 0.0:
+		var turn := (at - enemy_position).angle() - enemy.facing
+		if turn > PI:
+			turn -= PI * 2.0
+		elif turn < -PI:
+			turn += PI * 2.0
+		if absf(turn) < Config.CHARGE_FRONT_ARC:
+			weighted *= Config.TARGET_SPEAR_FRONT_MULTIPLIER
 	return weighted
 
 ## Stage 1a-archers weights of a shooter's target (DESIGN.md 4.4, decision 15), after the older multipliers and only
 ## ever raising the distance. Same arithmetic as consider() in movement_kernel.hpp. Overkill: the shooters already
 ## aiming at the enemy (the shooter himself not counted) plus him, beyond hp / (damage x TARGET_VOLLEY_HIT_SHARE),
 ## each add TARGET_OVERKILL_MULTIPLIER. Front ranks: a fixed share up to TARGET_FRONT_SPREAD from both ids.
+## Stage 1v (DESIGN.md 4.4): a shielded enemy who is not a shooter looks TARGET_SHIELDED_MULTIPLIER farther, so
+## shooters and men without shields come first (troop data "shb", not ids).
 static func ranged_weight(weighted: float, own_id: int, own_damage: float, enemy: Unit, own_target: bool) -> float:
 	if own_damage > 0.0:
 		var surplus := float(enemy.aimers) - (1.0 if own_target else 0.0) + 1.0 - enemy.hp / (own_damage * Config.TARGET_VOLLEY_HIT_SHARE)
 		if surplus > 0.0:
 			weighted *= 1.0 + Config.TARGET_OVERKILL_MULTIPLIER * surplus
+	if enemy.attack_range <= 0.0 and enemy.shield_block > 0.0:
+		weighted *= Config.TARGET_SHIELDED_MULTIPLIER
 	return weighted * (1.0 + Config.TARGET_FRONT_SPREAD * front_share(own_id, enemy.id))
 
 ## A fixed number in [0, 1) for a shooter and a target: integer mixing of both ids, the same in C++ (front_share in
@@ -236,7 +250,7 @@ func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, 
 		if enemy == previous:
 			distance *= Config.CURRENT_TARGET_MULTIPLIER
 		if melee:
-			distance = melee_weight(distance, raw, at, own_speed, enemy, enemy_position, enemy == previous)
+			distance = melee_weight(distance, raw, at, own_speed, enemy, enemy_position, enemy == previous, melee_cavalry)
 		else:
 			distance = ranged_weight(distance, own_id, own_damage, enemy, enemy == previous)
 		if distance < best or distance == best and index < best_index:

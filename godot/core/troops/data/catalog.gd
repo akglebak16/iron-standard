@@ -31,6 +31,9 @@ func replace_data(data: Variant) -> bool:
 			return false
 		if troop.hp <= 0 or troop.spd <= 0 or troop.cd <= 0 or troop.block > 1 or troop.get("shb", 0) > 1:
 			return false
+		# Spearmen flag (battle doctrines, DESIGN.md 4.3): true/false, or 1/0 as in the browser data.
+		if troop.has("anticav") and not (troop.anticav is bool or ((troop.anticav is int or troop.anticav is float) and (troop.anticav == 0 or troop.anticav == 1))):
+			return false
 		if troop.has("look") and not troop.look is Dictionary:
 			return false
 		if not _valid_battle_traits(troop.get("battle_traits", {})):

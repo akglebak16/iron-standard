@@ -1,5 +1,6 @@
 extends RefCounted
 const Morale = preload("res://core/battle/rules/morale.gd")
+const SquadDoctrine = preload("res://core/battle/simulation/ai/squad_doctrine.gd")
 const CombatStep = preload("res://core/battle/rules/combat_step.gd")
 const Movement = preload("res://core/battle/rules/movement.gd")
 const Tactics = preload("res://core/battle/rules/tactics.gd")
@@ -138,6 +139,7 @@ func advance(dt: float) -> void:
 	if _brains[0] != null:
 		_brains[0].enemy_step(_state, 0, _elapsed_seconds, dt)
 	Tactics.follow_hero(_state, _hero)
+	SquadDoctrine.step(_state, dt)
 	Tactics.relayout(_state, dt)
 	_state.profiler.mark("tactics_siege")
 	_handle_swap()

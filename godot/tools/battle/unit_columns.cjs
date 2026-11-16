@@ -17,7 +17,7 @@ for(const [kind,fields] of Object.entries(groups)) {
  h+=`enum ${prefix} { ${fields.map(n=>prefix+'_'+n.toUpperCase()).join(', ')}, ${prefix}_COUNT };\n`;
 }
 gd+='const MODES = '+JSON.stringify(schema.modes)+'\n';
-h+='enum Mode { UNASSIGNED, SLOT, MELEE, SHOOT, SHOOT_SLOT, SKIRMISH };\n}\n';
+h+='enum Mode { UNASSIGNED, SLOT, MELEE, SHOOT, SHOOT_SLOT, SKIRMISH, RANK, BRACE, FALLBACK };\n}\n';
 gd+=`var capacity := 0
 var real_fields := PackedFloat64Array()
 var integer_fields := PackedInt64Array()

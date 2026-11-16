@@ -98,7 +98,9 @@ public:
     if (begin) {
       PackedFloat64Array group = context.get("groups", PackedFloat64Array());
       Vector2 arena = context.get("arena", Vector2());
-      if (group.size() != 54 || !arena.is_finite() ||
+      // Movement._step_batch: per group frame, order flags and the stage 1v doctrine.
+      constexpr int GROUP_FIELDS = 15;
+      if (group.size() != 6 * GROUP_FIELDS || !arena.is_finite() ||
           arena.x < 2 * kernel.parameters[SLOT_EDGE] ||
           arena.y < 2 * kernel.parameters[SLOT_EDGE])
         return {};
@@ -111,13 +113,17 @@ public:
                    kernel.all_gaps);
       kernel.groups.resize(6);
       for (int n = 0; n < 6; ++n) {
-        const double *g = group.ptr() + n * 9;
+        const double *g = group.ptr() + n * GROUP_FIELDS;
         kernel.groups[n] = {{float(g[0]), float(g[1])},
                             {float(g[2]), float(g[3])},
                             {float(g[4]), float(g[5])},
                             g[6],
                             g[7] != 0,
-                            g[8] != 0};
+                            g[8] != 0,
+                            g[9] != 0,
+                            g[10] != 0,
+                            {float(g[11]), float(g[12])},
+                            {float(g[13]), float(g[14])}};
       }
     }
     // Release the handoff packet aliases before requesting writable pointers.

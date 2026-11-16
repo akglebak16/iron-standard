@@ -25,8 +25,8 @@ const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Movement = preload("res://adapters/godot/native/movement.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
 
-const VERSION := 2 # 2: volley metrics.
-const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite"]
+const VERSION := 3 # 2: volley metrics. 3: stage 1v doctrine metrics.
+const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
 const SAMPLE_TICKS := 30 # Idle sampling every 0.5 s.
@@ -36,6 +36,10 @@ const KITE_HERO_SPEED := 160.0
 const KITE_ORBIT_RADIUS := 150.0
 const KITE_SAMPLE_LIMIT := 64
 const IDLE_MODES := [0, 1] # MotionStore.MODES: unassigned and slot.
+const COMBAT_MODES := [2, 3, 4, 5] # MotionStore.MODES: melee, shoot, shootslot, skirm.
+# Stage 1v doctrine modes (MotionStore.MODES), neither idle nor fighting: a man keeping his place in a formed line,
+# a spearman braced against a rider, an archer stepping back from infantry.
+const DOCTRINE_MODES := {"rank": 6, "brace": 7, "fallback": 8}
 const VOLLEY_TICKS := 60 # Shots of one side within 1 s form a volley.
 const VOLLEY_MIN_SHOTS := 10 # Shorter windows are stray shots, not volleys.
 
@@ -142,6 +146,13 @@ static func _armies(scenario: String, size: int) -> Array:
 		"kite":
 			var foot := size / 2
 			return [[{"type": "n1", "n": foot}, {"type": "n2a", "n": size - foot}], [{"type": "e1", "n": size}]]
+		"spears":
+			# Stage 1v: foot with spearmen and archers against shock cavalry with foot.
+			var spears := roundi(size * 0.3)
+			var bows := roundi(size * 0.3)
+			var riders := size / 2
+			return [[{"type": "n1", "n": size - spears - bows}, {"type": "n2s", "n": spears}, {"type": "n2a", "n": bows}],
+				[{"type": "e3c", "n": riders}, {"type": "e1", "n": size - riders}]]
 	var infantry := size / 2
 	var archers := size / 3
 	var cavalry := size - infantry - archers
@@ -174,6 +185,10 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var engaged := {}
 	var idle_samples := [0, 0]
 	var unit_samples := [0, 0]
+	var doctrine_samples := {}
+	for key in DOCTRINE_MODES: doctrine_samples[key] = [0, 0]
+	var rallies := [0, 0]
+	var rallying := [false, false]
 	var decided_at := -1.0
 	var chase := {}
 	var chased_long := {}
@@ -194,7 +209,11 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 				track_shot(volleys, state, int(event.target_id), tick)
 		advance_volleys(volleys, tick)
 		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
-			_sample_idle(state, engaged, idle_samples, unit_samples)
+			_sample_idle(state, engaged, idle_samples, unit_samples, doctrine_samples)
+			for side in 2:
+				var rally: bool = state.groups[side][Config.GROUP_CAVALRY].get("rally") == true # Absent before stage 1v.
+				if rally and not rallying[side]: rallies[side] += 1
+				rallying[side] = rally
 		if kite and tick % KITE_SAMPLE_TICKS == 0:
 			_sample_chase(session, chase, chased_long)
 			if reached_archers < 0.0 and _infantry_reached_archers(state):
@@ -223,6 +242,9 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		"never_engaged": [float(never[0]) / initial[0], float(never[1]) / initial[1]],
 		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
 		"wall_ms": Time.get_ticks_msec() - started}
+	result.doctrine = {"rallies": rallies}
+	for key in DOCTRINE_MODES:
+		result.doctrine[key] = [float(doctrine_samples[key][0]) / maxi(1, unit_samples[0]), float(doctrine_samples[key][1]) / maxi(1, unit_samples[1])]
 	if options.phase_profile: result.ai_phase = Benchmark.stats(ai_samples) if not ai_samples.is_empty() else {}
 	result.volleys = volley_report(volleys)
 	if kite:
@@ -313,8 +335,9 @@ static func volley_report(tracker: Dictionary) -> Dictionary:
 		"first_volley_targets": float(first_targets) / first_sides if first_sides > 0 else 0.0}
 
 ## Never engaged: no combat mode (melee, shooting, skirmish) at any sample. Idle time: share of fighter
-## samples in formation or unassigned while the battle is undecided.
-static func _sample_idle(state, engaged: Dictionary, idle_samples: Array, unit_samples: Array) -> void:
+## samples in formation or unassigned while the battle is undecided. Doctrine modes (stage 1v) are counted apart:
+## neither idle nor fighting.
+static func _sample_idle(state, engaged: Dictionary, idle_samples: Array, unit_samples: Array, doctrine_samples: Dictionary = {}) -> void:
 	var motion = state.motion
 	var capacity: int = motion.capacity
 	var flags: PackedInt64Array = motion.integer_fields
@@ -324,10 +347,14 @@ static func _sample_idle(state, engaged: Dictionary, idle_samples: Array, unit_s
 			continue
 		var side: int = flags[I.SIDE * capacity + row]
 		unit_samples[side] += 1
-		if flags[I.MODE * capacity + row] in IDLE_MODES:
+		var mode: int = flags[I.MODE * capacity + row]
+		if mode in IDLE_MODES:
 			idle_samples[side] += 1
-		else:
+		elif mode in COMBAT_MODES:
 			engaged[flags[I.ID * capacity + row]] = true
+		else:
+			for key in doctrine_samples:
+				if DOCTRINE_MODES[key] == mode: doctrine_samples[key][side] += 1
 
 static func _prepare_kite(session) -> void:
 	var state = session._state
@@ -403,7 +430,14 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var volley_keys := ["doomed_share", "dead_share", "wasted_share", "targets_per_volley", "shots_per_target", "first_volley_shots", "first_volley_targets"]
 	var volley_sums := {}
 	var volley_runs := 0
+	var doctrine := {"rallies": [0.0, 0.0]}
+	for key in DOCTRINE_MODES: doctrine[key] = [0.0, 0.0]
+	var doctrine_runs := 0
 	for run in runs:
+		if run.has("doctrine"):
+			doctrine_runs += 1
+			for key in doctrine:
+				for side in 2: doctrine[key][side] += float(run.doctrine[key][side])
 		if run.has("volleys") and int(run.volleys.volleys) > 0:
 			volley_runs += 1
 			for key in volley_keys: volley_sums[key] = float(volley_sums.get(key, 0.0)) + float(run.volleys[key])
@@ -428,6 +462,10 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		"duration_seconds": sums.duration_seconds / count, "ai_phase_mean_ms": ai_mean / count, "ai_phase_worst_p95_ms": ai_p95}
 	for key in ["losses", "fled", "never_engaged", "idle_time"]:
 		summary[key] = [sums[key][0] / count, sums[key][1] / count]
+	if doctrine_runs > 0:
+		for key in doctrine:
+			for side in 2: doctrine[key][side] /= doctrine_runs
+		summary.doctrine = doctrine
 	if volley_runs > 0:
 		summary.volleys = {"runs": volley_runs}
 		for key in volley_keys: summary.volleys[key] = volley_sums[key] / volley_runs
@@ -449,6 +487,9 @@ static func table(report: Dictionary) -> String:
 		if s.has("volleys"):
 			var v: Dictionary = s.volleys
 			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])
+		if s.has("doctrine"):
+			var d: Dictionary = s.doctrine
+			lines.append("  doctrine: rank %.2f/%.2f, brace %.3f/%.3f, fallback %.3f/%.3f, rallies %.1f/%.1f per battle" % [d.rank[0], d.rank[1], d.brace[0], d.brace[1], d.fallback[0], d.fallback[1], d.rallies[0], d.rallies[1]])
 		if s.has("kite"):
 			lines.append("  kite: chasing hero > %.0f s %.2f, enemy reached archers in %d runs, mean %.1f s" % [KITE_CHASE_SECONDS, s.kite.chase_share, s.kite.reached_runs, s.kite.reached_archers_seconds])
 	return "\n".join(lines)

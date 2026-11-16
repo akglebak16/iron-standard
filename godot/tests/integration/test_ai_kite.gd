@@ -21,10 +21,11 @@ func _initialize() -> void:
 	assert(Loader.populate(catalog))
 	_test_lone_hero_does_not_start_charge(catalog)
 	_test_hopeless_chase_called_off(catalog)
+	_test_formed_line_ignores_hero(catalog)
 	print("AI kite tests passed")
 	quit(0)
 
-func _session(catalog: Catalog, charge: bool):
+func _session(catalog: Catalog, charge: bool, loose := false):
 	var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 	setup.hero_profile.clear()
 	setup.companion_profiles.clear()
@@ -45,6 +46,8 @@ func _session(catalog: Catalog, charge: bool):
 	hero.hp = hero.max_hp
 	if charge:
 		state.groups[1][Config.GROUP_INFANTRY].order = Config.ORDER_CHARGE
+	# Stage 1v: in the field a charging line keeps its formation; the stage K call-off is about the loose charge.
+	state.groups[1][Config.GROUP_INFANTRY].loose = loose
 	return session
 
 func _place(state, group, at: Vector2, facing: float) -> void:
@@ -102,7 +105,7 @@ func _test_lone_hero_does_not_start_charge(catalog: Catalog) -> void:
 	assert(infantry.center.x < ENEMY_LINE.x - Config.AI_INFANTRY_ADVANCE_SPEED, "The line keeps marching on the squads")
 
 func _test_hopeless_chase_called_off(catalog: Catalog) -> void:
-	var session = _session(catalog, true)
+	var session = _session(catalog, true, true)
 	var state = session._state
 	var infantry = state.groups[1][Config.GROUP_INFANTRY]
 	var input := HeroInput.new()
@@ -128,3 +131,24 @@ func _test_hopeless_chase_called_off(catalog: Catalog) -> void:
 	var chasers := _hero_chasers(session, infantry)
 	print("Share still chasing the hero at the end: %.2f" % chasers)
 	assert(chasers < 0.25)
+
+## Stage 1v (DESIGN.md 4.3): a charging line in the field marches as a formation; only its front ranks step out,
+## and only at the engage distance, so the circling hero drags nobody, and the line still reaches the squads.
+func _test_formed_line_ignores_hero(catalog: Catalog) -> void:
+	var session = _session(catalog, true)
+	var state = session._state
+	var infantry = state.groups[1][Config.GROUP_INFANTRY]
+	var input := HeroInput.new()
+	var peak_chasers := 0.0
+	var formed := false
+	var reached := -1
+	for tick in 1800:
+		_circle_step(session, input)
+		formed = formed or infantry.formed
+		peak_chasers = maxf(peak_chasers, _hero_chasers(session, infantry))
+		if reached < 0 and _nearest_squad_distance(state, infantry.centroid()) < Config.AI_INFANTRY_CHARGE_DISTANCE:
+			reached = tick
+	print("Formed line: peak share after the hero %.2f, reached the squads at %.2f s" % [peak_chasers, reached * TICK_SECONDS])
+	assert(formed, "a charge in the field forms a line")
+	assert(peak_chasers < KITE_TEMPTED_SHARE * 0.5, "a formed line is not dragged after the hero")
+	assert(reached >= 0, "the line reaches the player's squads")
