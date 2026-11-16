@@ -2,7 +2,8 @@ extends RefCounted
 ## Campaign simulator (docs/modules/ai/DESIGN.md §7.2): the world runs without the player for N days on a fixed seed
 ## while an observer only reads it. The world goes through the same clock as the game (clock.advance -> step/hour_tick);
 ## the observer spends no RNG and changes nothing, so the same seed gives the same world with or without it.
-## Invariants of §7.2 are measured, not enforced: this is the "before" reference of the current AI.
+## Invariants of §7.2 are measured, not enforced. Since stage 2a the goal of a party (party_goals.gd) is part of the
+## "goal" that the jitter metric watches, next to tid/sid/chase of the player; before 2a parties had no goal field.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -47,6 +48,9 @@ var _edge_streak := {}  # party id -> hours
 var _edge := {"party_hours": 0, "streaks": 0, "max_streak": 0, "by_kind": {}}
 var _flees := {"count": 0, "into_more_threat": 0, "dest_ratio_sum": 0.0, "safe_better": 0, "safe_ratio_sum": 0.0, "measured": 0}
 var _threat_cost := {"samples": 0, "usec": 0, "sources": 0, "cells": 0}
+var _goal_steps := {}   # kind -> goal ("" = none) -> party-steps
+var _burnt := {}        # settlement id -> was burning at the last hour
+var _burns := 0         # villages set on fire (by the dead or by raids)
 var heat_cols := 0
 var heat_rows := 0
 var heat_lords := PackedInt32Array()
@@ -107,7 +111,7 @@ func _day() -> int:
 	return int(world.clock.day)
 
 func _goal(p: Dictionary) -> String:
-	return "%s|%s|%s" % [p.get("tid"), p.get("sid"), p.get("tpl", false)]
+	return "%s|%s|%s|%s|%s" % [p.get("tid"), p.get("sid"), p.get("tpl", false), p.get("goal", ""), p.get("gid")]
 
 func _snapshot_parties() -> void:
 	for p in world.roster.parties:
@@ -130,6 +134,10 @@ func observe_step() -> void:
 			continue
 		var st: Dictionary = _party_stats[id]
 		st.steps += 1
+		var by_goal: Dictionary = _goal_steps.get(p.kind, {})
+		var g := "army" if p.get("army", false) else ("inside" if p.hide else String(p.get("goal", "")))
+		by_goal[g] = int(by_goal.get(g, 0)) + 1
+		_goal_steps[p.kind] = by_goal
 		var goal := _goal(p)
 		if goal != last.goal:
 			st.goal += 1
@@ -182,6 +190,7 @@ func observe_hour() -> void:
 	_observe_sieges(day)
 	_observe_edges()
 	_observe_heat()
+	_observe_burns()
 	var crisis: Dictionary = world.undead.crisis
 	if crisis.get("on", false) and _crisis.start_day < 0:
 		_crisis.start_day = day
@@ -259,7 +268,7 @@ func _observe_sieges(day: int) -> void:
 			continue
 		if rec == null:
 			rec = {"id": s.id, "name": s.get("name", ""), "kind": s.kind, "defender": s.fac, "attacker": sg.get("f", ""),
-				"start_day": day, "end_day": -1, "hours": 0, "relief": false, "helper_hours": 0, "outcome": ""}
+				"start_day": day, "end_day": -1, "hours": 0, "relief": false, "defended": false, "helper_hours": 0, "outcome": ""}
 			_sieges[s.id] = rec
 		rec.hours += 1
 		if int(sg.get("relN", 0)) > 0:
@@ -269,6 +278,10 @@ func _observe_sieges(day: int) -> void:
 			if p.get("relief") == s.id:
 				relieving = true
 				break
+		for p in world.roster.parties:
+			if p.get("goal", "") == "defend" and p.get("gid") == s.id and p.fac == rec.defender:
+				rec.defended = true
+				break
 		if relieving:
 			continue
 		for p in world.roster.parties:
@@ -277,6 +290,33 @@ func _observe_sieges(day: int) -> void:
 			if Rules.troop_count(p.troops) >= RELIEF_MIN_TROOPS and Vector2(p.x - s.x, p.y - s.y).length() <= RELIEF_SCAN_RADIUS:
 				rec.helper_hours += 1
 				break
+
+## Villages that caught fire this hour: the dead burn them, since stage 2a lords raid them too.
+func _observe_burns() -> void:
+	for s in world.map.settles:
+		var on := int(s.get("burnt", 0)) > 0
+		if on and not _burnt.get(s.id, false):
+			_burns += 1
+		_burnt[s.id] = on
+
+## Goal shares by kind of party: the part of party-steps spent on each goal ("army": in a faction campaign,
+## "inside": resting inside a settlement, "none": no goal).
+func _goal_shares() -> Dictionary:
+	var out := {}
+	for kind in _goal_steps:
+		var total := 0
+		for g in _goal_steps[kind]:
+			total += int(_goal_steps[kind][g])
+		var shares := {}
+		for g in _goal_steps[kind]:
+			shares["none" if g == "" else g] = float(_goal_steps[kind][g]) / maxf(1.0, total)
+		out[kind] = shares
+	return out
+
+static func _share_text(shares: Dictionary) -> String:
+	var keys := shares.keys()
+	keys.sort_custom(func(x, y): return float(shares[x]) > float(shares[y]))
+	return ", ".join(keys.map(func(k): return "%s %d%%" % [k, roundi(float(shares[k]) * 100.0)]))
 
 ## Parties standing at the map edge with nowhere to go.
 func _observe_edges() -> void:
@@ -456,6 +496,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 		open.outcome = "ongoing"
 		sieges.append(open)
 	var no_relief := sieges.filter(func(r): return not r.relief and r.helper_hours >= RELIEF_GRACE_HOURS)
+	var no_help := no_relief.filter(func(r): return not r.get("defended", false))
 	var declared := _war_log.filter(func(w): return not w.get("initial", false) and w.declared > 1)
 	var jitter := _jitter()
 	var lord_j: Dictionary = jitter.get("lord", {})
@@ -475,7 +516,8 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"max_share": max_share, "max_share_leader": max_leader, "max_share_day": max_share_day,
 		"final_share": _daily.back().share if not _daily.is_empty() else 0.0, "final_leader": _daily.back().leader if not _daily.is_empty() else "",
 		"sieges": sieges.size(), "sieges_with_relief": sieges.filter(func(r): return r.relief).size(),
-		"sieges_no_relief_with_helper": no_relief.size(),
+		"sieges_no_relief_with_helper": no_relief.size(), "sieges_defended": sieges.filter(func(r): return r.get("defended", false)).size(),
+		"sieges_no_help_with_helper": no_help.size(), "villages_burnt": _burns, "lord_goals": _share_text(_goal_shares().get("lord", {})),
 		"edge_idle_party_hours": _edge.party_hours, "edge_stuck_6h": _edge.streaks, "edge_max_streak_hours": _edge.max_streak,
 		"flees": _flees.count, "flees_measured": _flees.measured,
 		"flees_into_more_threat": float(_flees.into_more_threat) / maxf(1.0, _flees.measured),
@@ -495,6 +537,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"undead": _crisis,
 		"lords": {"died": _lord_log.died, "new": _lord_log.new},
 		"jitter": jitter,
+		"goal_shares": _goal_shares(),
 		"sieges": sieges,
 		"edge": _edge,
 		"daily": _daily,

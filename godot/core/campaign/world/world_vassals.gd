@@ -4,6 +4,7 @@ extends RefCounted
 ## Stored in player.vass = [{cid, c, sid, mode, gold, pid, rest, day, trib, inc, up, n}]; the fief is marked s.vass = cid.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
+const Config = preload("res://core/campaign/config.gd")
 
 const MK := 2.0
 const TRIB := 0.3
@@ -212,82 +213,23 @@ func defence_hit(p: Dictionary, r: float, win: bool) -> void:
 	if p.troops.is_empty():
 		roster.remove(p)
 
-## Retinue AI (cvAI).
-func ai(p: Dictionary, dh: float) -> void:
+## What the goal evaluator needs to steer a retinue (cvAI): its order, its fief and whom it follows. The order picks
+## a set of goal weights (Config.GOAL_RETINUE_MODES); party_ai.gd and party_goals.gd do the rest, as for every party.
+## Returns {} when the vassal or the fief is gone: the retinue then disbands.
+func retinue_context(p: Dictionary) -> Dictionary:
 	var v := of_id(String(p.get("cid", "")))
 	var s: Dictionary = roster.map.settlement_by_id(v.sid) if not v.is_empty() else {}
 	if v.is_empty() or s.is_empty():
-		roster.remove(p)
-		return
-	p.ai = float(p.get("ai", 0.0)) - dh
-	if p.ai <= 0.0:
-		p.ai = roster.rnd(0.8, 1.6)
-		var me := roster.strength_of(p)
-		var mode: String = v.get("mode", "guard")
-		var radius := 150.0 if mode == "guard" else 260.0
-		var tgt: Dictionary = {}
-		var tb := 1e9
-		var threat: Dictionary = {}
-		for o in roster.parties:
-			if o == p or o.hide or o.kind == "camp" or o.get("fight", false) or o.get("lock", false) or not roster.hostile(p, o):
-				continue
-			var d := Vector2(o.x - p.x, o.y - p.y).length()
-			if d > radius or (mode == "guard" and Vector2(o.x - s.x, o.y - s.y).length() > 230.0):
-				continue
-			var so := roster.strength_of(o)
-			if so < me * 0.8:
-				if d < tb:
-					tb = d
-					tgt = o
-			elif so > me * 1.2 and d < 150.0:
-				threat = o
-		if not threat.is_empty() and tgt.is_empty():
-			var home_x: float = player.x if mode == "follow" and not player.away else s.x
-			var home_y: float = player.y if mode == "follow" and not player.away else s.y
-			p.state = "flee"
-			p.tid = null
-			roster.path_to(p, home_x, home_y)
-		elif not tgt.is_empty():
-			p.tid = tgt.id
-			p.state = "hunt"
-			roster.path_to(p, tgt.x, tgt.y)
-		else:
-			if p.state == "hunt" or p.state == "flee":
-				p.state = "idle"
-				p.tid = null
-			if p.pi >= p.path.size():
-				if mode == "follow" and not player.away:
-					if Vector2(player.x - p.x, player.y - p.y).length() > 70.0:
-						roster.path_to(p, player.x + roster.rnd(-40, 40), player.y + roster.rnd(20, 50))
-						p.state = "travel"
-				elif mode == "patrol":
-					var a := roster.rnd(0.0, TAU)
-					var r := roster.rnd(80.0, 300.0)
-					if roster.path_to(p, clampf(s.x + cos(a) * r, 60.0, WW - 60.0), clampf(s.y + sin(a) * r, 60.0, WH - 60.0)):
-						p.state = "travel"
-				else:
-					var far := Vector2(s.x - p.x, s.y - p.y).length() > 110.0
-					if far or roster.rng.randf() < 0.25:
-						var a := roster.rnd(0.0, TAU)
-						var r := 20.0 if far else roster.rnd(30.0, 90.0)
-						if roster.path_to(p, clampf(s.x + cos(a) * r, 60.0, WW - 60.0), clampf(s.y + 22 + sin(a) * r, 60.0, WH - 60.0)):
-							p.state = "travel"
-	if p.state == "hunt":
-		var t: Dictionary = roster.party_by_id(p.tid) if p.tid != null else {}
-		if t.is_empty() or t.hide:
-			p.state = "idle"
-			p.path = []
-			p.tid = null
-		else:
-			p.rp = float(p.get("rp", 0.0)) - dh
-			if p.rp <= 0.0:
-				p.rp = 0.7
-				roster.path_to(p, t.x, t.y)
-	if p.pi < p.path.size():
-		if roster.move_along(p, dh) and p.state == "travel":
-			p.state = "idle"
-			p.path = []
-			p.pi = 0
+		return {}
+	var mode: String = v.get("mode", "guard")
+	if not MODES.has(mode):
+		mode = "guard"
+	var ctx := {"mode": mode, "fief": s, "havens": [{"id": s.id, "x": s.x, "y": s.y}]}
+	if mode == "follow" and not player.away:
+		ctx.lead = {"id": -1, "x": player.x, "y": player.y}
+		ctx.keep = Config.GOAL_RETINUE_FOLLOW_KEEP
+		ctx.havens = [{"id": null, "x": player.x, "y": player.y}]
+	return ctx
 
 func set_mode(cid: String, mode: String) -> void:
 	var v := of_id(cid)
@@ -301,6 +243,8 @@ func set_mode(cid: String, mode: String) -> void:
 		p.state = "idle"
 		p.tid = null
 		p.ai = 0.0
+		p.goal = ""
+		p.gid = null
 
 func give(cid: String, gold: int) -> bool:
 	var v := of_id(cid)

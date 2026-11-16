@@ -64,7 +64,9 @@ var companion_catalog := CompanionCatalog.new()
 var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
-var threat: ThreatMap = null  # derived from parties (ADR-023): built on first request, then refreshed every hour; never saved
+var threat: ThreatMap = null  # derived from parties (ADR-023): rebuilt on the first request after each step or hour; never saved
+var _threat_step := 0         # world steps and hours so far in this session (not saved): the map is rebuilt when it changes
+var _threat_built := -1
 
 ## Release owned subscriptions and the deliberate cross-links between campaign systems.
 ## Called when leaving the campaign; disposing one context must not clear another's data.
@@ -75,6 +77,7 @@ func dispose() -> void:
 			for connection in source.get_signal_connection_list(info.name):
 				source.disconnect(info.name, connection.callable)
 	if wars != null: wars.clans = null
+	if ai != null: ai.dispose()
 	if clans != null: clans.siege = null
 	if siege != null: siege.vassals = null
 	ai = null
@@ -155,6 +158,8 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.skirmish.clans = state.clans
 	state.skirmish.undead = state.undead
 	state.ai.skirmish = state.skirmish
+	state.ai.threat_map = state.threat_map
+	state.ai.enemies = state.threat_enemies
 	state.rel_watch()
 	return state
 
@@ -180,6 +185,7 @@ func advance(real_dt: float) -> int:
 	return clock.advance(real_dt, step, hour_tick)
 
 func step(dh: float) -> void:
+	_threat_step += 1
 	if player.tid >= 0 and player.busy == "":
 		var tg: Dictionary = roster.party_by_id(player.tid)
 		if tg.is_empty() or tg.hide:
@@ -259,14 +265,17 @@ func hour_tick() -> void:
 		WorldCompanions.heal(player, heal)
 	if clock.hour == 0:
 		_day_tick()
-	if threat != null:
-		threat.rebuild(threat_sources(), hours_passed)
+	_threat_step += 1
+	ai.hour_tick()
 
-## Threat map of this world hour (DESIGN.md §5.1, ADR-023). The first request builds it; after that hour_tick
-## refreshes it. It spends no RNG and is not saved: a loaded world rebuilds it from the parties.
+## Threat map of the current world step (DESIGN.md §5.1, ADR-023). The first request after a step or an hour rebuilds
+## it from the parties, so a loaded world sees exactly the map the saved one would have seen. It spends no RNG and is
+## not saved. Party goals (party_ai.gd, party_goals.gd) read it for risk, flight and alarms.
 func threat_map() -> ThreatMap:
 	if threat == null:
 		threat = ThreatMap.new(PartyAI.WW, PartyAI.WH)
+	if _threat_built != _threat_step:
+		_threat_built = _threat_step
 		threat.rebuild(threat_sources(), hours_passed)
 	return threat
 

@@ -46,7 +46,7 @@ func _initialize() -> void:
 	assert(s.roster.hostile(retinue, {"kind": "lord", "fac": "khan"}))
 	for m in ["patrol", "follow", "guard"]:
 		vs.set_mode(cid, m)
-		vs.ai(retinue, 1.0)
+		s.ai.ai_party(retinue, 1.0)
 	# helpers join a battle and share the losses
 	var enemy: Dictionary = s.roster.make_party("bandit", "bandit", "Тест", retinue.x + 20, retinue.y, [{"type": "b1", "n": 10}])
 	var help: Array = vs.helpers(enemy)
@@ -83,6 +83,7 @@ func _initialize() -> void:
 	vs.grant(cid, castle.id)
 	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())
 	assert(back.player.vass.size() == 1 and back.player.vass[0].sid is int and back.map.settlement_by_id(castle.id).vass == cid)
+	_check_orders(s, cid, castle, where)
 	var pw := PartyWindow.new()
 	root.add_child(pw)
 	await process_frame
@@ -90,3 +91,33 @@ func _initialize() -> void:
 	assert(pw.body.get_child_count() >= 3)
 	print("Vassals tests passed")
 	quit(0)
+
+## Orders of a retinue are weight sets of the shared goals (party_goals.gd); for the player they mean what they meant.
+func _check_orders(s, cid: String, castle: Dictionary, town: Dictionary) -> void:
+	var vs = s.vassals
+	var retinue: Dictionary = vs.party_of(vs.of_id(cid))
+	assert(not retinue.is_empty())
+	var all: Array = s.roster.parties
+	s.roster.parties = [retinue]  # nobody else on the map: only the order decides
+	var p = s.player
+	p.away = false
+	p.x = town.x + 10.0
+	p.y = town.y + 34.0
+	vs.set_mode(cid, "guard")
+	retinue.x = castle.x + 300.0
+	retinue.y = castle.y + 22.0
+	s.ai.ai_party(retinue, 0.2)
+	assert(retinue.goal == "guard" and not retinue.path.is_empty(), "guarding: back to the fief")
+	var end: Vector2 = retinue.path[retinue.path.size() - 1]
+	assert(end.distance_to(Vector2(castle.x, castle.y + 22.0)) < 40.0, "the guard stands by its fief: %s" % [end])
+	vs.set_mode(cid, "follow")
+	s.ai.ai_party(retinue, 0.2)
+	assert(retinue.goal == "follow" and retinue.gid == -1 and not retinue.path.is_empty(), "following the player")
+	end = retinue.path[retinue.path.size() - 1]
+	assert(end.distance_to(Vector2(p.x, p.y)) < 80.0, "the retinue rides up to the player: %s" % [end])
+	vs.set_mode(cid, "patrol")
+	s.ai.ai_party(retinue, 0.2)
+	assert(retinue.goal == "patrol" and not retinue.path.is_empty(), "patrolling around the fief")
+	end = retinue.path[retinue.path.size() - 1]
+	assert(end.distance_to(Vector2(castle.x, castle.y)) < 700.0)
+	s.roster.parties = all

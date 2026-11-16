@@ -38,6 +38,24 @@ func _initialize() -> void:
 	assert(migrated != null and migrated.player.troops == first.player.troops)
 	assert(migrated.player.gold == first.player.gold and migrated.player.hero == first.player.hero)
 	assert(Save.to_dict(migrated).version == 2)
+	# v1 from before stage 2a: no AI goals in parties, no alarms in settlements; loads as "no goal" and runs on
+	var pre_goals := legacy.duplicate(true)
+	for q in pre_goals.parties:
+		for k in ["goal", "gid", "ga", "gs"]:
+			q.erase(k)
+	var pre_migrated := Save.from_dict(JSON.parse_string(JSON.stringify(pre_goals)), europe, ContentLoader.registry())
+	assert(pre_migrated != null and pre_migrated.roster.parties.all(func(q): return not q.has("goal")))
+	for i in 40:
+		pre_migrated.advance(0.137)
+	assert(pre_migrated.roster.parties.any(func(q): return q.get("goal", "") != ""), "old parties get new goals")
+	assert(Save.to_dict(pre_migrated).version == 2)
+	pre_migrated.dispose()
+	var with_goals := Save.from_dict(JSON.parse_string(JSON.stringify(legacy)), europe, ContentLoader.registry())
+	for i in with_goals.roster.parties.size():
+		var q: Dictionary = with_goals.roster.parties[i]
+		assert(q.get("gid") == null or q.gid is int, "v1 goal targets come back as ids")
+		assert(q.get("goal", "") == first.roster.parties[i].get("goal", ""))
+	with_goals.dispose()
 	var banner_legacy := legacy.duplicate(true)
 	banner_legacy.player.banner = 3
 	var banner_migrated := Save.from_dict(banner_legacy, europe, ContentLoader.registry())

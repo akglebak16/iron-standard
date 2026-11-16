@@ -131,6 +131,8 @@ func _table(rows: Array, meta: Dictionary) -> String:
 		["туда-обратно/день", "lord_flipflops_per_day"], ["дёрганых партий", "parties_over_jitter_limit"],
 		["макс. доля земель", "max_share"], ["у кого", "max_share_leader"], ["доля в конце", "final_share"],
 		["осад", "sieges"], ["с выручкой", "sieges_with_relief"], ["без выручки, свой лорд рядом ≥12 ч", "sieges_no_relief_with_helper"],
+		["с защитой (цель «защита»)", "sieges_defended"], ["без выручки и защиты, свой лорд рядом", "sieges_no_help_with_helper"],
+		["поджогов деревень", "villages_burnt"], ["время лордов по целям", "lord_goals"],
 		["у края без цели, партия·ч", "edge_idle_party_hours"], ["застряли ≥6 ч", "edge_stuck_6h"],
 		["бегств", "flees_measured"], ["бег в большую угрозу", "flees_into_more_threat"], ["угроза в конце бегства", "flee_threat_ratio"],
 		["угроза в клетке карты угроз", "threat_safe_cell_ratio"], ["перестройка карты, мкс", "threat_rebuild_usec"], ["секунд", "wall_seconds"]]
