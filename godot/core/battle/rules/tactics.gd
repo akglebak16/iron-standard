@@ -47,7 +47,9 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 		if remaining < Config.AI_CAVALRY_WAYPOINT_ARRIVAL or _nearest_foe_distance(battle, cavalry.center, 1 - side) < Config.AI_CAVALRY_CHARGE_DISTANCE:
 			cavalry.order = Config.ORDER_CHARGE
 
-static func siege_step(battle: State, elapsed: float) -> void:
+## siegeBrain in src/03_battle.js: gates are battered and may fall, the garrison opens the main gate after 45 s,
+## and the defenders come out once the attackers are inside or, with a way open, after a while.
+static func siege_step(battle: State, elapsed: float, dt: float = 0.0) -> void:
 	var inside := 0
 	var near_wall := false
 	for unit: Unit in battle.active_units:
@@ -60,9 +62,20 @@ static func siege_step(battle: State, elapsed: float) -> void:
 	var infantry: Group = battle.groups[1][Config.GROUP_INFANTRY]
 	var cavalry: Group = battle.groups[1][Config.GROUP_CAVALRY]
 	var archers: Group = battle.groups[1][Config.GROUP_ARCHERS]
-	if inside > Config.SIEGE_INFANTRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_INFANTRY_FORCE_CHARGE_SECONDS:
+	var open := battle.wall.has_open_gap()
+	for index in battle.wall.bash(battle.active_units, dt):
+		var gap: Vector2 = battle.wall.gates[index].gap
+		battle.record_notice(Event.Kind.GATE_BROKEN, {"position": Vector2(battle.wall.x, (gap.x + gap.y) * 0.5), "gap": gap})
+	var fit_infantry := 0
+	for unit: Unit in infantry.units:
+		if not unit.dead and not unit.gone and not unit.fleeing:
+			fit_infantry += 1
+	if elapsed > Config.SIEGE_GATE_SORTIE_SECONDS and fit_infantry > Config.SIEGE_GATE_SORTIE_MIN_INFANTRY and battle.wall.open_main_gate():
+		battle.record_notice(Event.Kind.GATE_OPENED)
 		infantry.order = Config.ORDER_CHARGE
-	if cavalry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS):
+	if infantry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_INFANTRY_ATTACKERS_INSIDE or (open and elapsed > Config.SIEGE_INFANTRY_FORCE_CHARGE_SECONDS)):
+		infantry.order = Config.ORDER_CHARGE
+	if cavalry.order != Config.ORDER_CHARGE and (inside > Config.SIEGE_CAVALRY_ATTACKERS_INSIDE or (open and elapsed > Config.SIEGE_CAVALRY_FORCE_CHARGE_SECONDS)):
 		cavalry.order = Config.ORDER_CHARGE
 		battle.record_notice(Event.Kind.GARRISON_CAVALRY)
 	if inside > Config.SIEGE_ARCHERS_ATTACKERS_INSIDE or not infantry.has_active_units():

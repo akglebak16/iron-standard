@@ -34,13 +34,25 @@ func _defenders(state: State, count: int) -> void:
 		_add(state, 1, Vector2(state.wall.x + 60, 200 + i * 30))
 
 func _check_damaged_wall() -> void:
+	# siegeSetup: a town has a main gate and two side gates, all shut; damage weakens them and opens a breach.
 	var intact := _siege()
-	assert(intact.wall.gap_at(850.0) == Vector2(770, 930))
+	assert(intact.wall.all_gaps() == [Vector2(775, 925), Vector2(330, 410), Vector2(1290, 1370)])
+	assert(intact.wall.gates.map(func(g): return g.hp) == [900.0, 420.0, 420.0])
+	assert(intact.wall.gaps().is_empty() and intact.wall.gap_at(850.0) == Vector2.ZERO, "Shut gates are wall")
 	var battered := _siege(0.5)
-	assert(battered.wall.gap_at(850.0) == Vector2(740, 960), "Half-battered walls widen the gate by 30 on each side")
-	assert(battered.wall.gap_at(330.0 + 1.0) == Vector2(330, 425), "Side breaches keep their size")
+	assert(battered.wall.gates.map(func(g): return g.hp) == [585.0, 273.0, 273.0], "Half-battered gates keep 65%")
+	# mulberry(7 + 3) = 0.502: the breach is 230 below the middle, 60 + 80 * damage wide.
+	assert(battered.wall.gaps() == [Vector2(1030, 1130)] and battered.wall.gap_at(1080.0) == Vector2(1030, 1130))
 	var ruined := _siege(2.0)
-	assert(ruined.wall.gap_at(850.0) == Vector2(710, 990), "Damage is clamped to 1")
+	assert(ruined.wall.all_gaps()[3] == Vector2(1010, 1150), "Damage is clamped to 1")
+	assert(ruined.wall.gates.map(func(g): return g.hp) == [270.0, 126.0, 126.0])
+	assert(_siege(0.29).wall.all_gaps().size() == 3, "No breach below 0.3")
+	var skilled := _siege(0.0, {}, 0.9)
+	assert(skilled.wall.gates.map(func(g): return g.hp) == [576.0, 269.0, 269.0], "Siegecraft weakens the gates")
+	var castle := State.new()
+	castle.setup_groups()
+	SiegeSetup.apply(castle, 0.0, 0.0, {}, true)
+	assert(castle.wall.all_gaps() == [Vector2(780, 920)] and castle.wall.gates[0].hp == 1400.0 and castle.wall.half_width == 32.0)
 
 func _check_supplies() -> void:
 	var town: Defense = _siege().siege_defense
@@ -50,11 +62,11 @@ func _check_supplies() -> void:
 	var castle: Defense = _siege(0.0, {"stones": 14, "oil": 3}).siege_defense
 	assert(castle.stones == 14 and castle.cauldrons.map(func(c): return c.charges) == [3, 2, 2])
 	var battered: Defense = _siege(1.0, {"stones": 14, "oil": 3}).siege_defense
-	assert(battered.stones == 6 and battered.cauldrons.map(func(c): return c.charges) == [1, 1, 1])
+	assert(battered.stones == 6 and battered.cauldrons.map(func(c): return c.charges) == [1, 1, 1, 1], "The breach gets a cauldron too")
 	var poor: Defense = _siege(1.0, {"stones": 10, "oil": 2}).siege_defense
-	assert(poor.cauldrons.map(func(c): return c.charges) == [1, 1, 1])
+	assert(poor.cauldrons.map(func(c): return c.charges) == [1, 1, 1, 1])
 	var no_side: Defense = _siege(1.0, {"stones": 10, "oil": 1}).siege_defense
-	assert(no_side.cauldrons.map(func(c): return c.charges) == [1, 0, 0], "Side cauldrons need three oil")
+	assert(no_side.cauldrons.map(func(c): return c.charges) == [1, 0, 0, 0], "Side cauldrons need three oil")
 
 func _check_stones() -> void:
 	var state := _siege()
@@ -120,7 +132,7 @@ func _check_oil() -> void:
 	var defense: Defense = state.siege_defense
 	assert(defense.fires.size() == 1 and defense.cauldrons[0].charges == 1 and defense.cauldrons[0].cooldown == 14.0)
 	var fire: Dictionary = defense.fires[0]
-	assert(fire.center == Vector2(state.wall.x - 36, 850) and fire.half_size == Vector2(64, 92))
+	assert(fire.center == Vector2(state.wall.x - 36, 850) and fire.half_size == Vector2(64, 87))
 	var events := state.take_events().filter(func(e): return e.kind == Event.Kind.OIL_POURED)
 	assert(events.size() == 1 and events[0].first)
 	assert(defense.announced == 2)

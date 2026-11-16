@@ -22,9 +22,12 @@ func _initialize() -> void:
 	var state := session._state
 	var wall = state.wall
 	assert(wall.x == 1620.0 and wall.half_width == 22.0 and is_equal_approx(state.siege_skill, 0.7))
-	assert(wall.gap_at(330.0) == Vector2.ZERO and wall.gap_at(331.0) == Vector2(330, 425))
-	assert(wall.gap_at(850.0) == Vector2(770, 930) and wall.gap_at(1300.0) == Vector2(1275, 1370))
-	var expected := [Rect2(1598, 0, 44, 330), Rect2(1598, 425, 44, 345), Rect2(1598, 930, 44, 345), Rect2(1598, 1370, 44, 330)]
+	# A town: main gate and two side gates, shut, weakened by the companion's siegecraft (×0.72).
+	assert(wall.all_gaps() == [Vector2(775, 925), Vector2(330, 410), Vector2(1290, 1370)] and wall.gaps().is_empty())
+	assert(wall.gates.map(func(g): return g.hp) == [648.0, 302.0, 302.0])
+	var expected := [Rect2(1598, 0, 44, 330), Rect2(1598, 410, 44, 365), Rect2(1598, 925, 44, 365), Rect2(1598, 1370, 44, 330)]
+	var gates: Array = session.snapshot().wall_defense.gates
+	assert(gates.size() == 3 and gates[0].gap == Vector2(775, 925) and gates[0].max == 648.0 and not gates[0].open and not gates[0].dead)
 	assert(session.snapshot().walls == expected)
 	var detached: Array = session.snapshot().walls
 	detached.clear()
@@ -43,9 +46,17 @@ func _initialize() -> void:
 	hero.position = Vector2(1610, 700)
 	session.advance(0.01)
 	assert(hero.position.x == 1588.0)
-	hero.position = Vector2(1610, 771)
+	hero.position = Vector2(1610, 776)
 	session.advance(0.01)
-	assert(hero.position.x == 1610.0 and is_equal_approx(hero.position.y, 779.375))
+	assert(hero.position.x == 1588.0, "A shut gate stops the hero like the wall")
+	assert(state.wall.open_main_gate())
+	hero.position = Vector2(1610, 776)
+	session.advance(0.01)
+	assert(hero.position.x == 1610.0 and is_equal_approx(hero.position.y, 784.375), "An open gate lets him through")
+	setup.castle = true
+	var castle := Factory.create(setup, troops, null, null, companions)
+	assert(castle._state.wall.all_gaps() == [Vector2(780, 920)] and castle._state.wall.half_width == 32.0)
+	setup.castle = false
 	setup.siege = false
 	assert(Factory.create(setup, troops, null, null, companions).snapshot().walls.is_empty())
 	print("Siege setup tests passed")

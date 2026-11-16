@@ -5,11 +5,11 @@ const SEGMENT_SCENE := preload("res://apps/godot/presentation/battle/terrain/wal
 const TOWER_SCENE := preload("res://apps/godot/presentation/battle/terrain/wall/wall_tower.tscn")
 const GATE_LEAF_SCENE := preload("res://apps/godot/presentation/battle/terrain/wall/wall_gate_leaf.tscn")
 
-func configure(walls: Array[Rect2], seed_value: int) -> void:
+func configure(walls: Array[Rect2], seed_value: int, gate_gaps: Array = []) -> void:
 	for child in get_children():
 		remove_child(child)
 		child.free()
-	super.configure(walls, seed_value)
+	super.configure(walls, seed_value, gate_gaps)
 	for segment in _segments:
 		var piece := SEGMENT_SCENE.instantiate()
 		piece.configure(segment)
@@ -18,7 +18,7 @@ func configure(walls: Array[Rect2], seed_value: int) -> void:
 		var center := opening.get_center()
 		_add_tower(Vector2(center.x, opening.position.y))
 		_add_tower(Vector2(center.x, opening.end.y))
-		if opening.size.y > GATE_MIN_WIDTH:
+		if opening in _breaches and opening.size.y > GATE_MIN_WIDTH:
 			_add_gate_leaf(center, -1.0)
 			_add_gate_leaf(center, 1.0)
 

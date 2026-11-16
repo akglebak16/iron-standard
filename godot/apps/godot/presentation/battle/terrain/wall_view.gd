@@ -32,10 +32,14 @@ const HINGE_SPACING := 15.0
 var _segments: Array[Rect2] = []
 var _openings: Array[Rect2] = []
 var _rubble: Array[Dictionary] = []
+## Openings without a gate (a breach in a battered wall, or every opening when no gates are known).
+var _breaches: Array[Rect2] = []
 
-func configure(walls: Array[Rect2], seed_value: int) -> void:
+## `gate_gaps` are openings closed by gates: they get no rubble or broken leaves (paintWall skips gp.gate).
+func configure(walls: Array[Rect2], seed_value: int, gate_gaps: Array = []) -> void:
 	_segments = walls.duplicate()
 	_openings.clear()
+	_breaches.clear()
 	_rubble.clear()
 	_segments.sort_custom(func(a: Rect2, b: Rect2): return a.position.y < b.position.y)
 	var rng := RandomNumberGenerator.new()
@@ -48,6 +52,13 @@ func configure(walls: Array[Rect2], seed_value: int) -> void:
 			continue
 		var opening := Rect2(preceding.position.x, preceding.end.y, preceding.size.x, width)
 		_openings.append(opening)
+		var gated := false
+		for gap in gate_gaps:
+			if is_equal_approx(gap.x, opening.position.y) and is_equal_approx(gap.y, opening.end.y):
+				gated = true
+		if gated:
+			continue
+		_breaches.append(opening)
 		var inset := minf(RUBBLE_END_MARGIN, width * 0.5)
 		for j in RUBBLE_COUNT:
 			_rubble.append({
@@ -68,7 +79,7 @@ func _draw() -> void:
 		var center := opening.get_center()
 		_draw_tower(Vector2(center.x, opening.position.y))
 		_draw_tower(Vector2(center.x, opening.end.y))
-		if opening.size.y > GATE_MIN_WIDTH:
+		if opening in _breaches and opening.size.y > GATE_MIN_WIDTH:
 			_draw_gate_leaf(center, -1.0)
 			_draw_gate_leaf(center, 1.0)
 

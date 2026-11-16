@@ -10,7 +10,8 @@ var seed: int = 0
 var biome: String = Config.DEFAULT_BIOME
 var siege: bool = false
 var quick: bool = false # Quick battle: every army above the cap fights in reserve waves.
-var wall_damage: float = 0.0 # Siege only: battered walls widen the gate and cut defender supplies.
+var wall_damage: float = 0.0 # Siege only: battered walls weaken the gates, open a breach from 0.3 and cut defender supplies.
+var castle: bool = false # Siege only: a castle has one heavy gate and a thicker wall (B.cfg.fort).
 var wall_defense: Dictionary = {} # Siege only: {"stones": int, "oil": int}; empty uses the browser default.
 var player_faction: String = ""
 var enemy_faction: String = ""
@@ -30,7 +31,7 @@ func unit_cap(faction: String, override: int) -> int:
 func uses_reserve_waves(faction: String) -> bool:
 	return quick or faction in FACTION_RESERVE_WAVES
 
-const FIELDS := ["seed","biome","siege","quick","wall_damage","wall_defense","player_faction","enemy_faction","player_unit_cap","enemy_unit_cap","enemy_leader_name","player_army","enemy_army","hero_troop","hero_profile","companion_profiles","hero_position"]
+const FIELDS := ["seed","biome","siege","quick","wall_damage","castle","wall_defense","player_faction","enemy_faction","player_unit_cap","enemy_unit_cap","enemy_leader_name","player_army","enemy_army","hero_troop","hero_profile","companion_profiles","hero_position"]
 
 func duplicate(deep: bool = true) -> RefCounted:
 	var values := new()
