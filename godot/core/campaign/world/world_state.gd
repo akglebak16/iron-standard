@@ -25,6 +25,8 @@ const PerkCatalog = preload("res://core/characters/data/perk_catalog.gd")
 const PerkEffects = preload("res://core/characters/rules/perk_effects.gd")
 const TroopCatalog = preload("res://core/troops/data/catalog.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
+const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
+const Config = preload("res://core/campaign/config.gd")
 
 ## Starting troops by culture (CULT in src/05_world.js).
 const START_TROOPS := {
@@ -62,6 +64,7 @@ var companion_catalog := CompanionCatalog.new()
 var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
+var threat: ThreatMap = null  # derived from parties (ADR-023): built on first request, then refreshed every hour; never saved
 
 ## Release owned subscriptions and the deliberate cross-links between campaign systems.
 ## Called when leaving the campaign; disposing one context must not clear another's data.
@@ -75,6 +78,7 @@ func dispose() -> void:
 	if clans != null: clans.siege = null
 	if siege != null: siege.vassals = null
 	ai = null
+	threat = null
 	wars = null
 	clans = null
 	siege = null
@@ -255,6 +259,29 @@ func hour_tick() -> void:
 		WorldCompanions.heal(player, heal)
 	if clock.hour == 0:
 		_day_tick()
+	if threat != null:
+		threat.rebuild(threat_sources(), hours_passed)
+
+## Threat map of this world hour (DESIGN.md §5.1, ADR-023). The first request builds it; after that hour_tick
+## refreshes it. It spends no RNG and is not saved: a loaded world rebuilds it from the parties.
+func threat_map() -> ThreatMap:
+	if threat == null:
+		threat = ThreatMap.new(PartyAI.WW, PartyAI.WH)
+		threat.rebuild(threat_sources(), hours_passed)
+	return threat
+
+## Every party with troops, plus the player's own party while it is on the map.
+func threat_sources() -> Array:
+	var out: Array = []
+	for p in roster.parties:
+		out.append({"fac": p.fac, "x": p.x, "y": p.y, "strength": roster.strength_of(p)})
+	if not player.away and not player.troops.is_empty():
+		out.append({"fac": Config.PLAYER_FACTION, "x": player.x, "y": player.y, "strength": Rules.strength(player.troops, roster.info)})
+	return out
+
+## Factions hostile to `fac` that have strength on the threat map.
+func threat_enemies(fac: String) -> Array:
+	return threat_map().enemies_of(fac, func(a: String, b: String) -> bool: return ThreatMap.factions_hostile(a, b, wars.wars, player.rel))
 
 var _hostile := {}
 
