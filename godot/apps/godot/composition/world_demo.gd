@@ -65,6 +65,7 @@ var _factions := FactionCatalog.new()
 var _waiting_return := false
 var _motion := WorldMotion.new()
 var _remark_rng := RandomNumberGenerator.new()
+var _camp_hour := 0
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
@@ -364,10 +365,26 @@ func _end_meeting(cooldown: float) -> void:
 func _notes_with_remark(resolved: Dictionary) -> Array:
 	var notes: Array = ResultWindow.campaign_notes(resolved)
 	var fought: Array = resolved.summary.get("comps", {}).keys()
-	var line := CompanionRemarks.pick(fought, state.companion_catalog, CompanionRemarks.WIN if resolved.summary.win else CompanionRemarks.LOSE, _remark_rng)
+	var kind := CompanionRemarks.WIN if resolved.summary.win else CompanionRemarks.LOSE
+	var pair := CompanionRemarks.pair_exchange(state.player.comps, fought, state.companion_catalog, kind, _remark_rng)
+	if not pair.is_empty() and _remark_rng.randf() < 0.5:
+		notes.append_array(pair)
+		return notes
+	var line := CompanionRemarks.pick(fought, state.companion_catalog, kind, _remark_rng)
 	if line != "":
 		notes.append(line)
 	return notes
+
+## While the party waits, a pair of companions talks now and then (written to the chronicle).
+func _camp_talk() -> void:
+	if not state.waiting or state.hours_passed - _camp_hour < CompanionRemarks.CAMP_EVERY_HOURS:
+		return
+	_camp_hour = state.hours_passed
+	if _remark_rng.randf() >= CompanionRemarks.CAMP_CHANCE:
+		return
+	var hired: Array = state.player.comps.map(func(c): return c.id)
+	for line in CompanionRemarks.pair_exchange(state.player.comps, hired, state.companion_catalog, CompanionRemarks.CAMP, _remark_rng):
+		state.log_world(line, state.JOURNAL_INFO)
 
 ## Now and then a hired companion comments on the town (town lines), written to the chronicle.
 func _town_remark(s: Dictionary) -> void:
@@ -558,6 +575,7 @@ func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
 	state.advance(delta)
+	_camp_talk()
 	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):
 		_autosave.save(state, false)

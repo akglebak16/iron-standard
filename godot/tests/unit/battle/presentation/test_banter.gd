@@ -68,7 +68,7 @@ func _check_exchange() -> void:
 		dialogue._speakers[GLEBIO_UNIT].remaining = 0.0
 		dialogue._speakers[ZAHARIY_UNIT].remaining = 0.0
 		batch.append_array(dialogue.advance(0.01, frame, [], false))
-		seen.append(dialogue._banter_last)
+		seen.append(dialogue._banter_last.get(0, -1)) # Glebio/Zahariy is pair 0
 		for i in 40:
 			dialogue.advance(0.1, frame, [], false)
 	for i in range(1, seen.size()):
