@@ -16,8 +16,8 @@ const timeouts = {
   'tests/integration/test_native_movement.gd': 120000,
   'tests/integration/test_native_contacts.gd': 120000,
   'tests/unit/campaign/world/test_world_wars.gd': 120000,
-  // Four 900-tick battles compare indexed and exhaustive targeting/contact loops.
-  'tests/unit/battle/rules/test_spatial_full_battle.gd': 60000,
+  // Four 900-tick battles compare indexed and exhaustive loops. Parallel Windows CI exceeded 60 s.
+  'tests/unit/battle/rules/test_spatial_full_battle.gd': 120000,
   // Multiple world constructions, continuation and recovery from a torn generation.
   'tests/integration/test_save_v2.gd': 120000,
   // Parallel jobs share the CPU: the slowest campaign tests get room.
