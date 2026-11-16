@@ -32,7 +32,9 @@ assert.ok(pick(['tests/unit/troops/test_troop.gd']).includes('tests/unit/troops/
 assert.deepStrictEqual(pick(['docs/README.md', 'core/troops/rules/troop.gd.uid']), ['tests/architecture/test_boundaries.gd']);
 // общее и невидимое графу даёт полный набор, в том числе автозагрузки и main_scene
 assert.strictEqual(pick(['project.godot']), 'FULL');
-assert.strictEqual(pick(['tools/anything.cjs']), 'FULL');
+assert.deepStrictEqual(pick(['tools/anything.cjs']), ['tests/architecture/test_boundaries.gd'], 'Node scripts have their own checks');
+assert.strictEqual(pick(['tools/native_build.cjs']), 'FULL', 'The native kernel changes every battle');
+assert.strictEqual(pick(['tools/anything.gd']), 'FULL');
 assert.strictEqual(pick(['apps/godot/composition/theme.gd']), 'FULL');
 assert.strictEqual(pick(['apps/godot/composition/game.tscn']), 'FULL');
 console.log('Test selection tests passed');
