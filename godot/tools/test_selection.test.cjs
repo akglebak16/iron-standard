@@ -36,6 +36,8 @@ assert.strictEqual(pick(['project.godot']), 'FULL');
 assert.deepStrictEqual(pick(['tools/anything.cjs']), ['tests/architecture/test_boundaries.gd'], 'Node scripts have their own checks');
 assert.strictEqual(pick(['tools/native_build.cjs']), 'FULL', 'The native kernel changes every battle');
 assert.strictEqual(pick(['tools/anything.gd']), 'FULL');
+// превью и эталонные кадры в tools/ не трогают игру: полный набор из-за картинки не нужен
+assert.deepStrictEqual(pick(['tools/previews/birthday.png', 'tools/baseline/main_0300.png', 'tools/baseline/README.md']), ['tests/architecture/test_boundaries.gd']);
 assert.strictEqual(pick(['apps/godot/composition/theme.gd']), 'FULL');
 assert.strictEqual(pick(['apps/godot/composition/game.tscn']), 'FULL');
 assert.strictEqual(pick(['core/battle/api/native/movement_kernel.hpp']), 'FULL', 'Native headers have no res:// edge');
