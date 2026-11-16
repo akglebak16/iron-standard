@@ -303,7 +303,8 @@ func _patrol(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary,
 		if score > 0.0:
 			out.append({"goal": "patrol", "gid": s.id, "x": s.x, "y": s.y, "score": score})
 
-## Raids: enemy villages of a faction at war, the player's holdings when he is an enemy, own ruins held by the dead.
+## Raids: enemy villages of a faction at war, the player's villages when he is an enemy, own ruins held by the dead.
+## The player's towns and castles are besieged by campaigns (world_wars.gd, stage 2b), not raided.
 func _raid(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "raid")
 	if w <= 0.0:
@@ -317,7 +318,7 @@ func _raid(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 		if s.fac == fac or s.kind == "camp" or s.get("siege") != null:
 			continue
 		if s.fac == Config.PLAYER_FACTION:
-			if player_target.is_valid() and _player_enemy(p):
+			if s.kind == Config.SETTLEMENT_VILLAGE and int(s.get("burnt", 0)) <= 0 and player_target.is_valid() and _player_enemy(p):
 				targets.append({"s": s, "value": float(Config.GOAL_RAID_VALUE.player), "range": Config.GOAL_RAID_RANGE})
 		elif s.kind == Config.SETTLEMENT_VILLAGE and s.fac != Config.UNDEAD_FACTION and int(s.get("burnt", 0)) <= 0 and at_war.call(fac, String(s.fac)):
 			targets.append({"s": s, "value": float(Config.GOAL_RAID_VALUE.village), "range": Config.GOAL_RAID_RANGE})

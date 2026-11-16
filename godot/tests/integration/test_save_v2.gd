@@ -60,6 +60,35 @@ func _initialize() -> void:
 		assert(q.get("gid") == null or q.gid is int, "v1 goal targets come back as ids")
 		assert(q.get("goal", "") == first.roster.parties[i].get("goal", ""))
 	with_goals.dispose()
+	# v1 with two campaigns under way: one from before stage 2b (no marshal, start strength or lords left home) goes on,
+	# one written with the stage 2b fields gets its ids back as ints; one load checks both
+	var pre_ops := legacy.duplicate(true)
+	var war_key: String = first.wars.wars.keys()[0]
+	var fac: String = war_key.split("|")[0]
+	var foe: String = war_key.split("|")[1]
+	var host: Array = pre_ops.parties.filter(func(q): return q.kind == "lord" and q.fac == fac and not q.get("ruler", false)).slice(0, 2)
+	var foe_host: Array = pre_ops.parties.filter(func(q): return q.kind == "lord" and q.fac == foe and not q.get("ruler", false)).slice(0, 2)
+	for q in host + foe_host:
+		q.army = true
+	var goal_town: Dictionary = first.map.settles.filter(func(st): return st.fac == foe and st.kind == "town")[0]
+	var rally_town: Dictionary = first.map.settles.filter(func(st): return st.fac == fac and st.kind != "camp")[0]
+	var foe_goal: Dictionary = first.map.settles.filter(func(st): return st.fac == fac and st.kind == "town")[0]
+	var foe_rally: Dictionary = first.map.settles.filter(func(st): return st.fac == foe and st.kind != "camp")[0]
+	pre_ops.campaigns = {fac: {"tid": goal_town.id, "gid": rally_town.id, "state": "march", "t0": first.wars.now_h(), "t1": first.wars.now_h(), "army": host.map(func(q): return q.id)},
+		foe: {"tid": foe_goal.id, "gid": foe_rally.id, "state": "muster", "t0": first.wars.now_h(), "army": foe_host.map(func(q): return q.id),
+			"marshal": foe_host[0].id, "s0": 500, "keep": [foe_host[1].id]}}
+	var ops_migrated := Save.from_dict(JSON.parse_string(JSON.stringify(pre_ops)), europe, ContentLoader.registry())
+	assert(ops_migrated != null and ops_migrated.wars.campaigns[fac].army.all(func(id): return id is int))
+	assert(ops_migrated.wars.campaigns[fac].get("marshal") == null)
+	var typed: Dictionary = ops_migrated.wars.campaigns[foe]
+	assert(typed.marshal is int and typed.keep[0] is int and typed.s0 is float, "v1 stage 2b fields come back typed")
+	ops_migrated.wars.hour = 2
+	ops_migrated.wars._campaign(fac)
+	assert(ops_migrated.wars.campaigns.has(fac) and ops_migrated.wars.campaigns[fac].marshal is int, "an old campaign gets a marshal and goes on")
+	assert(Checkpoint.valid(Checkpoint.capture(ops_migrated)))
+	ops_migrated.dispose()
+	pre_ops.campaigns[foe].marshal = "x"
+	assert(Save.from_dict(JSON.parse_string(JSON.stringify(pre_ops)), europe, ContentLoader.registry()) == null, "a v1 marshal must be a number")
 	var banner_legacy := legacy.duplicate(true)
 	banner_legacy.player.banner = 3
 	var banner_migrated := Save.from_dict(banner_legacy, europe, ContentLoader.registry())

@@ -39,6 +39,26 @@ func _initialize() -> void:
 	p.vass[0].gold = 2000.0
 	vs.day_tick()
 	assert(p.gold >= gold and Rules.troop_count(retinue.troops) > 4, "the retinue grows")
+	# a retinue by its fief helps the garrison hold a siege (stage 2b: sieges instead of storms) and shares its losses
+	retinue.x = castle.x + 2000.0
+	var bare: float = s.wars.siege_def(castle)
+	retinue.x = castle.x + 10.0
+	retinue.y = castle.y + 20.0
+	assert(s.wars.siege_def(castle) > bare, "the retinue by the walls counts for the defence")
+	var men: int = Rules.troop_count(retinue.troops)
+	var khan_army: Dictionary = s.roster.make_party("lord", "khan", "Тумен", castle.x + 20, castle.y, [{"type": "k2a", "n": 400}], {"army": true})
+	castle.siege = {"f": "khan", "t0": s.wars.now_h(), "a0": s.roster.strength_of(khan_army), "g0": 100}
+	for i in 10:
+		if castle.get("siege") == null or not retinue in s.roster.parties or Rules.troop_count(retinue.troops) < men:
+			break
+		retinue.x = castle.x + 10.0
+		retinue.y = castle.y + 20.0
+		s.wars._siege_tick(castle)
+	assert(Rules.troop_count(retinue.troops) < men or not retinue in s.roster.parties, "the retinue bleeds with the garrison")
+	castle.siege = null
+	s.roster.remove(khan_army)
+	if not retinue in s.roster.parties:
+		retinue = vs.spawn(p.vass[0])
 	# retinue AI and hostility
 	assert(not s.roster.hostile(retinue, {"kind": "caravan", "fac": "emp"}))
 	assert(s.roster.hostile(retinue, {"kind": "bandit", "fac": "bandit"}))
@@ -63,7 +83,7 @@ func _initialize() -> void:
 		t.n = int(t.n / 2)
 	var mine: Array = b._split(s, p.troops, after, allies)
 	assert(Rules.troop_count(mine) <= 10 and Rules.troop_count(retinue.troops) <= before)
-	# a hostile lord storms an empty fief of the player
+	# a hostile faction takes an empty fief of the player by a siege (stage 2b: no more storms by a lord passing by)
 	var town: Dictionary = {}
 	for t in s.map.settles:
 		if t.kind == "town" and t.fac == "khan":
@@ -73,9 +93,11 @@ func _initialize() -> void:
 	town.gar = []
 	var lord: Dictionary = s.roster.parties.filter(func(q): return q.kind == "lord" and q.fac == "khan")[0]
 	lord.hide = false
+	lord.army = true
 	lord.x = town.x
 	lord.y = town.y
-	s.siege.assaults_tick(p)
+	town.siege = {"f": "khan", "t0": s.wars.now_h() - 20, "a0": s.roster.strength_of(lord), "g0": 10}
+	s.wars._siege_tick(town)
 	assert(town.fac == "khan", "the empty town falls")
 	# revoke: the companion comes back with the vassal's purse
 	assert(vs.revoke(cid))
