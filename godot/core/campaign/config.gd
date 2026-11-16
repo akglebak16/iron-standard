@@ -117,7 +117,7 @@ const GOAL_FLEE_SAFER := 0.8         # a haven must feel less than this share of
 const GOAL_FLEE_SAFE_RADIUS := 300.0 # without a haven: safest threat-map cell this close
 const GOAL_FLEE_FALLBACK := 220.0    # last resort: this far straight away from the enemy (the browser AI)
 const GOAL_FLEE_RESIDUAL := 0.5      # score of a flight under way once the enemy is out of sight, until the hold ends
-const GOAL_MAP_MARGIN := 60.0        # points picked by the AI stay this far from the map edge
+const GOAL_MAP_MARGIN := 150.0       # random points and fallbacks of the AI stay this far from the map edge (was 60)
 # Patrol, defence, raids, rest and escort.
 const GOAL_ALARM_HOURS := 24         # a settlement remembers enemies seen around it this long (saved as s.alarm)
 const GOAL_ALARM_MIN_THREAT := 80.0  # enemy strength on the threat map that raises the alarm
