@@ -13,8 +13,8 @@
 
 | Файлы | Источник | Условия |
 | --- | --- | --- |
-| `apps/godot/visuals/assets/*.png`, `icon_*.svg`, `item_*.svg`, `white_*.svg` | Canvas и окончательный CSS из `src/`; экспортёры в `tools/` | Производные собственной графики репозитория; права исходных авторов сохраняются, новая лицензия не назначается |
-| `apps/godot/presentation/battle/terrain/assets/ground_*.png` | `src/02_art.js: paintGround`, seed 4017, 2600×1700 | Те же условия исходного проекта; внешний материал не используется |
+| `apps/godot/visuals/assets/*.png`, `icon_*.svg`, `item_*.svg`, `white_*.svg` | Canvas и окончательный CSS удалённой JS-версии; выгружены один раз и теперь правятся как файлы | Производные собственной графики репозитория; права исходных авторов сохраняются, новая лицензия не назначается |
+| `apps/godot/presentation/battle/terrain/assets/ground_*.png` | `paintGround` удалённой JS-версии, seed 4017, 2600×1700 | Те же условия исходного проекта; внешний материал не используется |
 | `apps/godot/visuals/assets/fonts/AlegreyaSC-Bold.ttf` | [Google Fonts / Alegreya SC](https://github.com/google/fonts/tree/main/ofl/alegreyasc) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSC-OFL.txt` включена |
 | `apps/godot/visuals/assets/fonts/AlegreyaSans-Medium.ttf`, `AlegreyaSans-Bold.ttf` | [Google Fonts / Alegreya Sans](https://github.com/google/fonts/tree/main/ofl/alegreyasans) | SIL OFL 1.1, коммерческое использование разрешено; полная лицензия `AlegreyaSans-OFL.txt` включена |
 
@@ -23,6 +23,6 @@
 - Если ассет сделан скриптом, скрипт лежит в `tools/battle/`, а результат всё равно можно править руками.
 - Скриншоты и эталоны для сравнения (`tools/baseline/`) скрыты от импорта файлом `.gdignore`.
 
-`banner_*` — разреженные замены пикселей из шести BANNERS оригинала (`tools/export_banners.cjs`); `input.png`, `modal_header.png`, `modal_footer.png` — снимки исходного CSS. Это производные собственной графики проекта с теми же правами.
+`banner_*` — разреженные замены пикселей из шести BANNERS оригинала (выгружены из JS-версии, ныне удалённой); `input.png`, `modal_header.png`, `modal_footer.png` — снимки исходного CSS. Это производные собственной графики проекта с теми же правами.
 
 Праздничный модуль: apps/godot/presentation/birthday/happy_birthday.wav — собственная синтезированная запись мелодии Happy Birthday to You, без сторонней фонограммы; генератор tools/birthday/render_music.cjs. Праздничный рисунок и конфетти создаются кодом поверх существующего облика Викентия. Условия исходного репозитория сохраняются.

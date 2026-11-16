@@ -1590,14 +1590,6 @@
       "destination": "tests/unit/campaign/world/test_world_wars.gd.uid"
     },
     {
-      "source": "campaign/tools/export_goods.cjs",
-      "destination": "tools/campaign/export_goods.cjs"
-    },
-    {
-      "source": "campaign/tools/export_world.cjs",
-      "destination": "tools/campaign/export_world.cjs"
-    },
-    {
       "source": "campaign/world/auto_battle.gd",
       "destination": "core/campaign/world/auto_battle.gd"
     },
@@ -1862,14 +1854,6 @@
       "destination": "tests/unit/characters/rules/test_perk_effects.gd.uid"
     },
     {
-      "source": "characters/tools/export_companions.cjs",
-      "destination": "tools/characters/export_companions.cjs"
-    },
-    {
-      "source": "characters/tools/export_perks.cjs",
-      "destination": "tools/characters/export_perks.cjs"
-    },
-    {
       "source": "equipment/config.gd",
       "destination": "core/equipment/config.gd"
     },
@@ -1936,10 +1920,6 @@
     {
       "source": "equipment/tests/rules/test_hero_gear.gd.uid",
       "destination": "tests/unit/equipment/rules/test_hero_gear.gd.uid"
-    },
-    {
-      "source": "equipment/tools/export_gear.cjs",
-      "destination": "tools/equipment/export_gear.cjs"
     },
     {
       "source": "project.godot",
@@ -2042,10 +2022,6 @@
       "destination": "tests/unit/troops/data/test_catalog_validation.gd.uid"
     },
     {
-      "source": "troops/tools/export_troops.cjs",
-      "destination": "tools/troops/export_troops.cjs"
-    },
-    {
       "source": "VISUAL_PARITY.md",
       "destination": "docs/modules/VISUAL_PARITY.md",
       "introduced_revision": "8a97999"
@@ -2146,16 +2122,6 @@
       "introduced_revision": "8a97999"
     },
     {
-      "source": "battle/tools/export_hud_layout.cjs",
-      "destination": "tools/battle/export_hud_layout.cjs",
-      "introduced_revision": "8a97999"
-    },
-    {
-      "source": "battle/tools/export_motion.cjs",
-      "destination": "tools/battle/export_motion.cjs",
-      "introduced_revision": "8a97999"
-    },
-    {
       "source": "battle/tools/motion_preview.gd",
       "destination": "tools/battle/motion_preview.gd",
       "introduced_revision": "8a97999"
@@ -2163,11 +2129,6 @@
     {
       "source": "battle/tools/motion_preview.gd.uid",
       "destination": "tools/battle/motion_preview.gd.uid",
-      "introduced_revision": "8a97999"
-    },
-    {
-      "source": "battle/tools/render_motion_reference.cjs",
-      "destination": "tools/battle/render_motion_reference.cjs",
       "introduced_revision": "8a97999"
     },
     {
@@ -2188,16 +2149,6 @@
     {
       "source": "tools/build_theme.gd.uid",
       "destination": "tools/build_theme.gd.uid",
-      "introduced_revision": "8a97999"
-    },
-    {
-      "source": "tools/export_css_styles.cjs",
-      "destination": "tools/export_css_styles.cjs",
-      "introduced_revision": "8a97999"
-    },
-    {
-      "source": "tools/export_visuals.cjs",
-      "destination": "tools/export_visuals.cjs",
       "introduced_revision": "8a97999"
     },
     {
