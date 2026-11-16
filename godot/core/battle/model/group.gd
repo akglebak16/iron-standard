@@ -75,15 +75,26 @@ func layout(initial: bool = false) -> void:
 		active[i].slot_offset = Vector2((column - (row_width - 1) / 2.0) * spacing, -row * spacing * Config.FORMATION_ROW_DEPTH)
 
 func slot_position(unit: Unit, arena_size: Vector2) -> Vector2:
+	return formation_point(unit.slot_offset, center, arena_size)
+
+## The slot of `offset` in a formation centred on `at` with this group's direction (the slot itself when at == center).
+func formation_point(offset: Vector2, at: Vector2, arena_size: Vector2) -> Vector2:
+	_refresh_frame()
+	var pos := at + _slot_lateral * offset.x + _slot_forward * offset.y
+	return pos.clamp(Vector2.ONE * Config.SLOT_EDGE, arena_size - Vector2.ONE * Config.SLOT_EDGE)
+
+## Formation centre implied by a fighter standing at `position` with this slot offset (inverse of the slot).
+func implied_center(offset: Vector2, position: Vector2) -> Vector2:
+	_refresh_frame()
+	return position - _slot_lateral * offset.x - _slot_forward * offset.y
+
+func _refresh_frame() -> void:
 	if direction != _slot_direction:
 		_slot_direction = direction
 		var sine := sin(direction)
 		var cosine := cos(direction)
 		_slot_lateral = Vector2(-sine, cosine)
 		_slot_forward = Vector2(cosine, sine)
-	var offset: Vector2 = unit.slot_offset
-	var pos := center + _slot_lateral * offset.x + _slot_forward * offset.y
-	return pos.clamp(Vector2.ONE * Config.SLOT_EDGE, arena_size - Vector2.ONE * Config.SLOT_EDGE)
 
 func centroid() -> Vector2:
 	var total := Vector2.ZERO

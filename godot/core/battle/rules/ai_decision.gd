@@ -9,7 +9,9 @@ static func plan(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2) -> 
 	return {"mode": unit.ai_mode, "destination": unit.plan_destination, "face": unit.plan_face, "speed_scale": unit.plan_speed, "target_distance": unit.plan_distance}
 
 ## Same decision without allocating: the result goes to unit.ai_mode and unit.plan_*.
-static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2, slot: Vector2) -> void:
+## `center` is the formation centre fitted to the group this tick (State.formation_centers); with Vector2.INF
+## the charge leash is off, as in direct calls from tests.
+static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2, slot: Vector2, center := Vector2.INF, dt := 0.0) -> void:
 	var position := unit.position
 	var enemy_position := enemy.position if enemy != null else Vector2.ZERO
 	var slot_distance := position.distance_to(slot)
@@ -60,6 +62,40 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 		if destination.x < margin or destination.x > arena_size.x - margin or destination.y < margin or destination.y > arena_size.y - margin:
 			destination = arena_size * 0.5
 		speed_scale = Config.AI_SKIRMISH_SPEED_MULTIPLIER
+	# Charge leash (DESIGN.md 1.4 step 2) for melee fighters; plan() in movement_kernel.hpp does the same.
+	if group.order == Config.ORDER_CHARGE and unit.attack_range <= 0.0 and center.is_finite():
+		var home := group.formation_point(unit.slot_offset, center, arena_size)
+		var away := position.distance_to(home)
+		var mounted := unit.mounted
+		var leashed := unit.leashed
+		var chase := unit.chase_seconds
+		# A chase: the target runs away from him (its speed along the line from him) at a good share of his speed.
+		var chasing := mode == Config.AI_MODE_MELEE and distance > reach and enemy.velocity.dot(enemy_position - position) / distance >= unit.speed * Config.AI_CHARGE_CHASE_SPEED_SHARE
+		if leashed:
+			if away < (Config.AI_CHARGE_MOUNTED_RETURN_DISTANCE if mounted else Config.AI_CHARGE_FOOT_RETURN_DISTANCE):
+				leashed = false
+		elif chasing and (away > (Config.AI_CHARGE_MOUNTED_HARD_LEASH if mounted else Config.AI_CHARGE_FOOT_HARD_LEASH) or chase > Config.AI_CHARGE_CHASE_SECONDS):
+			leashed = true
+			chase = 0.0
+		var soft: float = Config.AI_CHARGE_MOUNTED_SOFT_LEASH if mounted else Config.AI_CHARGE_FOOT_SOFT_LEASH
+		if away <= soft:
+			chase = 0.0
+		if mode == Config.AI_MODE_MELEE and distance > reach:
+			if leashed:
+				# Walk back to the own place around the group, not to a point behind the fight.
+				mode = Config.AI_MODE_SLOT
+				destination = home
+				face = group.direction if away < Config.AI_SLOT_FACE_DISTANCE else (home - position).angle()
+			elif chasing and away > soft and enemy_position.distance_to(home) > away:
+				# Stop and wait for a target that would draw him farther from the group.
+				chase += dt
+				mode = Config.AI_MODE_SLOT
+				destination = position
+		unit.leashed = leashed
+		unit.chase_seconds = chase
+	elif unit.leashed or unit.chase_seconds != 0.0:
+		unit.leashed = false
+		unit.chase_seconds = 0.0
 	unit.ai_mode = mode
 	unit.plan_destination = destination
 	unit.plan_face = face

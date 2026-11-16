@@ -1,0 +1,6323 @@
+{
+ "meta": {
+  "recorded_at": "2026-11-16",
+  "stage": "1a (DESIGN.md 8)",
+  "branch": "claude/ai-stage1a-battle-cbf287",
+  "revision": "33e0ba2 (code 5db1d05)",
+  "engine": "Godot 4.7.2 stable steam ed1daf0bf, debug editor build, --headless --script",
+  "cpu": "AMD Ryzen 7 5700X",
+  "conditions": "Three arena processes in parallel with other Claude sessions and Godot tests: AI phase times are diagnostics, not a speed measurement. The stage 1a rules run in the movement phase (ai_movement_combat, native kernel), which the arena does not report.",
+  "before": "Reference AI before stage 1a = 0-measure baseline ai-baseline-2026-11-16-arena.json (same code for these scenarios, kite 100 reproduced bit for bit). kite_before below is a rerun with 8 seeds at 500 (the baseline has 4).",
+  "commands": [
+   "battle_arena.gd --scenarios=kite --sizes=100,500 --runs=8 --seed=4242 --profiles=reference,reference --max-seconds=240 --backend=native",
+   "battle_arena.gd --scenarios=mixed,infantry_cavalry,archers,siege --sizes=100 --runs=8 --seed=4242 --profiles=reference,reference --max-seconds=240 --backend=native --mirror",
+   "battle_arena.gd --scenarios=mixed,infantry_cavalry,archers,siege --sizes=500 --runs=4 --seed=4242 --profiles=reference,reference --max-seconds=240 --backend=native --mirror"
+  ]
+ },
+ "kite_before": {
+  "cells": [
+   {
+    "runs": [
+     {
+      "ai_phase": {
+       "count": 2953,
+       "mean_ms": 0.0385218421943786,
+       "p50_ms": 0.023,
+       "p95_ms": 0.091,
+       "p99_ms": 0.328
+      },
+      "decided": true,
+      "duration_seconds": 47.0,
+      "fled": [
+       0.0,
+       0.17
+      ],
+      "idle_time": [
+       0.53791388857498,
+       0.484135259943393
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.4,
+       "reached_archers_seconds": 29.75
+      },
+      "losses": [
+       0.29,
+       0.83
+      ],
+      "never_engaged": [
+       0.27,
+       0.0
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4242,
+      "size": 100,
+      "swapped": false,
+      "ticks": 2953,
+      "wall_ms": 709,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 4213,
+       "mean_ms": 0.0361920246854973,
+       "p50_ms": 0.022,
+       "p95_ms": 0.09,
+       "p99_ms": 0.294
+      },
+      "decided": true,
+      "duration_seconds": 68.0,
+      "fled": [
+       0.0,
+       0.18
+      ],
+      "idle_time": [
+       0.59361857743646,
+       0.475885008315514
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.53,
+       "reached_archers_seconds": 35.25
+      },
+      "losses": [
+       0.58,
+       0.82
+      ],
+      "never_engaged": [
+       0.24,
+       0.01
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4243,
+      "size": 100,
+      "swapped": false,
+      "ticks": 4213,
+      "wall_ms": 1443,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 4213,
+       "mean_ms": 0.0365352480417755,
+       "p50_ms": 0.022,
+       "p95_ms": 0.096,
+       "p99_ms": 0.295
+      },
+      "decided": true,
+      "duration_seconds": 68.0,
+      "fled": [
+       0.0,
+       0.12
+      ],
+      "idle_time": [
+       0.591576321596469,
+       0.454717457114026
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.21,
+       "reached_archers_seconds": 25.5
+      },
+      "losses": [
+       0.67,
+       0.88
+      ],
+      "never_engaged": [
+       0.18,
+       0.03
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4244,
+      "size": 100,
+      "swapped": false,
+      "ticks": 4213,
+      "wall_ms": 1923,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 3373,
+       "mean_ms": 0.0370394307737919,
+       "p50_ms": 0.023,
+       "p95_ms": 0.09,
+       "p99_ms": 0.293
+      },
+      "decided": true,
+      "duration_seconds": 54.0,
+      "fled": [
+       0.0,
+       0.14
+      ],
+      "idle_time": [
+       0.543085578916198,
+       0.503410831129055
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.41,
+       "reached_archers_seconds": 34.25
+      },
+      "losses": [
+       0.39,
+       0.86
+      ],
+      "never_engaged": [
+       0.29,
+       0.04
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4245,
+      "size": 100,
+      "swapped": false,
+      "ticks": 3373,
+      "wall_ms": 786,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 4093,
+       "mean_ms": 0.0357727827999023,
+       "p50_ms": 0.022,
+       "p95_ms": 0.094,
+       "p99_ms": 0.292
+      },
+      "decided": true,
+      "duration_seconds": 66.0,
+      "fled": [
+       0.0,
+       0.17
+      ],
+      "idle_time": [
+       0.590081068192656,
+       0.432801235839341
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.42,
+       "reached_archers_seconds": 29.0
+      },
+      "losses": [
+       0.59,
+       0.83
+      ],
+      "never_engaged": [
+       0.26,
+       0.03
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4246,
+      "size": 100,
+      "swapped": false,
+      "ticks": 4093,
+      "wall_ms": 1766,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 2773,
+       "mean_ms": 0.0382463036422647,
+       "p50_ms": 0.023,
+       "p95_ms": 0.09,
+       "p99_ms": 0.331
+      },
+      "decided": true,
+      "duration_seconds": 44.0,
+      "fled": [
+       0.0,
+       0.17
+      ],
+      "idle_time": [
+       0.528700189753321,
+       0.508910891089109
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.43,
+       "reached_archers_seconds": 30.0
+      },
+      "losses": [
+       0.24,
+       0.83
+      ],
+      "never_engaged": [
+       0.29,
+       0.03
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4247,
+      "size": 100,
+      "swapped": false,
+      "ticks": 2773,
+      "wall_ms": 669,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 4453,
+       "mean_ms": 0.0380163934426229,
+       "p50_ms": 0.023,
+       "p95_ms": 0.094,
+       "p99_ms": 0.315
+      },
+      "decided": true,
+      "duration_seconds": 72.0,
+      "fled": [
+       0.0,
+       0.05
+      ],
+      "idle_time": [
+       0.568485795177194,
+       0.382310509377428
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.43,
+       "reached_archers_seconds": 17.25
+      },
+      "losses": [
+       0.79,
+       0.95
+      ],
+      "never_engaged": [
+       0.03,
+       0.05
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4248,
+      "size": 100,
+      "swapped": false,
+      "ticks": 4453,
+      "wall_ms": 2273,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 2653,
+       "mean_ms": 0.0383780625706747,
+       "p50_ms": 0.023,
+       "p95_ms": 0.091,
+       "p99_ms": 0.351
+      },
+      "decided": true,
+      "duration_seconds": 42.0,
+      "fled": [
+       0.0,
+       0.16
+      ],
+      "idle_time": [
+       0.511426726920594,
+       0.484899611945335
+      ],
+      "initial": [
+       100,
+       100
+      ],
+      "kite": {
+       "chase_share": 0.44,
+       "reached_archers_seconds": 24.75
+      },
+      "losses": [
+       0.36,
+       0.84
+      ],
+      "never_engaged": [
+       0.25,
+       0.03
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4249,
+      "size": 100,
+      "swapped": false,
+      "ticks": 2653,
+      "wall_ms": 649,
+      "winner": 0,
+      "winner_profile": 0
+     }
+    ],
+    "scenario": "kite",
+    "size": 100,
+    "summary": {
+     "ai_phase_mean_ms": 0.0373377610188635,
+     "ai_phase_worst_p95_ms": 0.096,
+     "draws": 0,
+     "duration_seconds": 57.625,
+     "fled": [
+      0.0,
+      0.145
+     ],
+     "idle_time": [
+      0.558111018320984,
+      0.46588385059415
+     ],
+     "kite": {
+      "chase_share": 0.40875,
+      "reached_archers_seconds": 28.21875,
+      "reached_runs": 8
+     },
+     "losses": [
+      0.48875,
+      0.855
+     ],
+     "never_engaged": [
+      0.22625,
+      0.0275
+     ],
+     "profile_win_rate": [
+      1.0,
+      0.0
+     ],
+     "profile_wins": [
+      8,
+      0
+     ],
+     "runs": 8,
+     "win_rate": [
+      1.0,
+      0.0
+     ],
+     "wins": [
+      8,
+      0
+     ]
+    }
+   },
+   {
+    "runs": [
+     {
+      "ai_phase": {
+       "count": 14400,
+       "mean_ms": 0.0475194444444444,
+       "p50_ms": 0.024,
+       "p95_ms": 0.049,
+       "p99_ms": 0.352
+      },
+      "decided": false,
+      "duration_seconds": 240.0,
+      "fled": [
+       0.07,
+       0.0
+      ],
+      "idle_time": [
+       0.662516969469397,
+       0.532956261548996
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.714,
+       "reached_archers_seconds": 20.75
+      },
+      "losses": [
+       0.93,
+       0.73
+      ],
+      "never_engaged": [
+       0.018,
+       0.004
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4242,
+      "size": 500,
+      "swapped": false,
+      "ticks": 14400,
+      "wall_ms": 6929,
+      "winner": -1,
+      "winner_profile": -1
+     },
+     {
+      "ai_phase": {
+       "count": 7093,
+       "mean_ms": 0.0734077259269703,
+       "p50_ms": 0.032,
+       "p95_ms": 0.114,
+       "p99_ms": 0.372
+      },
+      "decided": true,
+      "duration_seconds": 116.0,
+      "fled": [
+       0.0,
+       0.194
+      ],
+      "idle_time": [
+       0.636718792987708,
+       0.572432665994527
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.788,
+       "reached_archers_seconds": 19.0
+      },
+      "losses": [
+       0.476,
+       0.806
+      ],
+      "never_engaged": [
+       0.112,
+       0.004
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4243,
+      "size": 500,
+      "swapped": false,
+      "ticks": 7093,
+      "wall_ms": 5779,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 5833,
+       "mean_ms": 0.0810593176752957,
+       "p50_ms": 0.033,
+       "p95_ms": 0.119,
+       "p99_ms": 0.371
+      },
+      "decided": true,
+      "duration_seconds": 95.0,
+      "fled": [
+       0.0,
+       0.188
+      ],
+      "idle_time": [
+       0.609829476248478,
+       0.588432697304922
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.38,
+       "reached_archers_seconds": 32.75
+      },
+      "losses": [
+       0.396,
+       0.812
+      ],
+      "never_engaged": [
+       0.112,
+       0.002
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4244,
+      "size": 500,
+      "swapped": false,
+      "ticks": 5833,
+      "wall_ms": 5527,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 5653,
+       "mean_ms": 0.0814652396957368,
+       "p50_ms": 0.034,
+       "p95_ms": 0.134,
+       "p99_ms": 0.593
+      },
+      "decided": true,
+      "duration_seconds": 92.0,
+      "fled": [
+       0.0,
+       0.156
+      ],
+      "idle_time": [
+       0.59217388929849,
+       0.453759737079113
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.698,
+       "reached_archers_seconds": 20.5
+      },
+      "losses": [
+       0.638,
+       0.844
+      ],
+      "never_engaged": [
+       0.032,
+       0.004
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4245,
+      "size": 500,
+      "swapped": false,
+      "ticks": 5653,
+      "wall_ms": 5617,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 14400,
+       "mean_ms": 0.0514617361111111,
+       "p50_ms": 0.024,
+       "p95_ms": 0.06,
+       "p99_ms": 0.409
+      },
+      "decided": false,
+      "duration_seconds": 240.0,
+      "fled": [
+       0.11,
+       0.0
+      ],
+      "idle_time": [
+       0.652259156937884,
+       0.585653582884164
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.762,
+       "reached_archers_seconds": 20.0
+      },
+      "losses": [
+       0.89,
+       0.646
+      ],
+      "never_engaged": [
+       0.046,
+       0.004
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4246,
+      "size": 500,
+      "swapped": false,
+      "ticks": 14400,
+      "wall_ms": 7622,
+      "winner": -1,
+      "winner_profile": -1
+     },
+     {
+      "ai_phase": {
+       "count": 8952,
+       "mean_ms": 0.0632698838248436,
+       "p50_ms": 0.028,
+       "p95_ms": 0.114,
+       "p99_ms": 0.442
+      },
+      "decided": true,
+      "duration_seconds": 147.0,
+      "fled": [
+       0.0,
+       0.094
+      ],
+      "idle_time": [
+       0.683612032535103,
+       0.490023752969121
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.656,
+       "reached_archers_seconds": 19.25
+      },
+      "losses": [
+       0.786,
+       0.906
+      ],
+      "never_engaged": [
+       0.094,
+       0.002
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4247,
+      "size": 500,
+      "swapped": false,
+      "ticks": 8952,
+      "wall_ms": 6048,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 8772,
+       "mean_ms": 0.0652164842681259,
+       "p50_ms": 0.029,
+       "p95_ms": 0.187,
+       "p99_ms": 0.392
+      },
+      "decided": true,
+      "duration_seconds": 144.0,
+      "fled": [
+       0.0,
+       0.068
+      ],
+      "idle_time": [
+       0.664760997300302,
+       0.441200302506482
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.75,
+       "reached_archers_seconds": 20.5
+      },
+      "losses": [
+       0.836,
+       0.932
+      ],
+      "never_engaged": [
+       0.08,
+       0.004
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4248,
+      "size": 500,
+      "swapped": false,
+      "ticks": 8772,
+      "wall_ms": 6083,
+      "winner": 0,
+      "winner_profile": 0
+     },
+     {
+      "ai_phase": {
+       "count": 6613,
+       "mean_ms": 0.0732505670648722,
+       "p50_ms": 0.033,
+       "p95_ms": 0.119,
+       "p99_ms": 0.529
+      },
+      "decided": true,
+      "duration_seconds": 108.0,
+      "fled": [
+       0.0,
+       0.132
+      ],
+      "idle_time": [
+       0.609902263374486,
+       0.45836413445232
+      ],
+      "initial": [
+       500,
+       500
+      ],
+      "kite": {
+       "chase_share": 0.304,
+       "reached_archers_seconds": 32.0
+      },
+      "losses": [
+       0.722,
+       0.868
+      ],
+      "never_engaged": [
+       0.074,
+       0.004
+      ],
+      "profiles": [
+       "",
+       "reference"
+      ],
+      "scenario": "kite",
+      "seed": 4249,
+      "size": 500,
+      "swapped": false,
+      "ticks": 6613,
+      "wall_ms": 5693,
+      "winner": 0,
+      "winner_profile": 0
+     }
+    ],
+    "scenario": "kite",
+    "size": 500,
+    "summary": {
+     "ai_phase_mean_ms": 0.067081299876425,
+     "ai_phase_worst_p95_ms": 0.187,
+     "draws": 2,
+     "duration_seconds": 147.75,
+     "fled": [
+      0.0225,
+      0.104
+     ],
+     "idle_time": [
+      0.638971697268981,
+      0.515352891842456
+     ],
+     "kite": {
+      "chase_share": 0.6315,
+      "reached_archers_seconds": 23.09375,
+      "reached_runs": 8
+     },
+     "losses": [
+      0.70925,
+      0.818
+     ],
+     "never_engaged": [
+      0.071,
+      0.0035
+     ],
+     "profile_win_rate": [
+      0.75,
+      0.0
+     ],
+     "profile_wins": [
+      6,
+      0
+     ],
+     "runs": 8,
+     "win_rate": [
+      0.75,
+      0.0
+     ],
+     "wins": [
+      6,
+      0
+     ]
+    }
+   }
+  ],
+  "debug": true,
+  "engine": "4.7.2-stable (steam)",
+  "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+  "options": {
+   "backend": "native",
+   "max_seconds": 240.0,
+   "mirror": false,
+   "phase_profile": true,
+   "profiles": [
+    "reference",
+    "reference"
+   ],
+   "runs": 8,
+   "scenarios": [
+    "kite"
+   ],
+   "seed": 4242,
+   "sizes": [
+    100,
+    500
+   ]
+  },
+  "version": 1
+ },
+ "after": {
+  "kite": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.02745125,
+        "p50_ms": 0.021,
+        "p95_ms": 0.037,
+        "p99_ms": 0.147
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.01,
+        0.0
+       ],
+       "idle_time": [
+        0.449110320284698,
+        0.604950099800399
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.0,
+        "reached_archers_seconds": 17.5
+       },
+       "losses": [
+        0.99,
+        0.85
+       ],
+       "never_engaged": [
+        0.0,
+        0.03
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 7728,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0268402083333333,
+        "p50_ms": 0.021,
+        "p95_ms": 0.036,
+        "p99_ms": 0.125
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.03,
+        0.0
+       ],
+       "idle_time": [
+        0.443178660739094,
+        0.53249434667191
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.0,
+        "reached_archers_seconds": 17.75
+       },
+       "losses": [
+        0.97,
+        0.91
+       ],
+       "never_engaged": [
+        0.0,
+        0.03
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 5738,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0266927083333333,
+        "p50_ms": 0.021,
+        "p95_ms": 0.037,
+        "p99_ms": 0.139
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.451344607707236,
+        0.444754594091649
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.04,
+        "reached_archers_seconds": 18.25
+       },
+       "losses": [
+        1.0,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.02
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 4568,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0295536805555556,
+        "p50_ms": 0.023,
+        "p95_ms": 0.041,
+        "p99_ms": 0.152
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.425634481780802,
+        0.570709341005124
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.11,
+        "reached_archers_seconds": 17.75
+       },
+       "losses": [
+        1.0,
+        0.89
+       ],
+       "never_engaged": [
+        0.0,
+        0.02
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 6346,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0293771527777778,
+        "p50_ms": 0.022,
+        "p95_ms": 0.041,
+        "p99_ms": 0.164
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.443622662573263,
+        0.556505401596994
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.0,
+        "reached_archers_seconds": 17.75
+       },
+       "losses": [
+        1.0,
+        0.9
+       ],
+       "never_engaged": [
+        0.0,
+        0.02
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 6205,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0320475694444444,
+        "p50_ms": 0.024,
+        "p95_ms": 0.048,
+        "p99_ms": 0.171
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.451813042878809,
+        0.500387639827223
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.0,
+        "reached_archers_seconds": 17.75
+       },
+       "losses": [
+        1.0,
+        0.94
+       ],
+       "never_engaged": [
+        0.0,
+        0.06
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 5800,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0363389583333333,
+        "p50_ms": 0.029,
+        "p95_ms": 0.051,
+        "p99_ms": 0.184
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.424505129316573,
+        0.619736391646696
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.0,
+        "reached_archers_seconds": 18.25
+       },
+       "losses": [
+        0.95,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.01
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 8189,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.0606414579717332,
+        "p50_ms": 0.038,
+        "p95_ms": 0.176,
+        "p99_ms": 0.498
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.466009204470743,
+        0.376340882002384
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "kite": {
+        "chase_share": 0.0,
+        "reached_archers_seconds": 17.5
+       },
+       "losses": [
+        0.89,
+        0.97
+       ],
+       "never_engaged": [
+        0.01,
+        0.05
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4033,
+       "wall_ms": 5107,
+       "winner": 0,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "kite",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0336178732186889,
+      "ai_phase_worst_p95_ms": 0.176,
+      "draws": 7,
+      "duration_seconds": 218.125,
+      "fled": [
+       0.01125,
+       0.00375
+      ],
+      "idle_time": [
+       0.444402263718902,
+       0.525734837080298
+      ],
+      "kite": {
+       "chase_share": 0.01875,
+       "reached_archers_seconds": 17.8125,
+       "reached_runs": 8
+      },
+      "losses": [
+       0.975,
+       0.91125
+      ],
+      "never_engaged": [
+       0.00125,
+       0.03
+      ],
+      "profile_win_rate": [
+       0.125,
+       0.0
+      ],
+      "profile_wins": [
+       1,
+       0
+      ],
+      "runs": 8,
+      "win_rate": [
+       0.125,
+       0.0
+      ],
+      "wins": [
+       1,
+       0
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0883011805555556,
+        "p50_ms": 0.042,
+        "p95_ms": 0.07,
+        "p99_ms": 0.716
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.156,
+        0.0
+       ],
+       "idle_time": [
+        0.567854073154426,
+        0.687088654172625
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.278,
+        "reached_archers_seconds": 19.0
+       },
+       "losses": [
+        0.844,
+        0.592
+       ],
+       "never_engaged": [
+        0.012,
+        0.0
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 13247,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0962475694444444,
+        "p50_ms": 0.042,
+        "p95_ms": 0.076,
+        "p99_ms": 0.8
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.16,
+        0.0
+       ],
+       "idle_time": [
+        0.574483881783781,
+        0.730914782090244
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.002,
+        "reached_archers_seconds": 19.75
+       },
+       "losses": [
+        0.84,
+        0.586
+       ],
+       "never_engaged": [
+        0.006,
+        0.002
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 13158,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0619865277777778,
+        "p50_ms": 0.035,
+        "p95_ms": 0.063,
+        "p99_ms": 0.59
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.567951073293367,
+        0.702271217052018
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.252,
+        "reached_archers_seconds": 18.25
+       },
+       "losses": [
+        0.85,
+        0.6
+       ],
+       "never_engaged": [
+        0.012,
+        0.006
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 8834,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0587872222222222,
+        "p50_ms": 0.032,
+        "p95_ms": 0.059,
+        "p99_ms": 0.541
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.116,
+        0.0
+       ],
+       "idle_time": [
+        0.572266128843132,
+        0.668698593353998
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.012,
+        "reached_archers_seconds": 20.75
+       },
+       "losses": [
+        0.884,
+        0.66
+       ],
+       "never_engaged": [
+        0.006,
+        0.006
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 8140,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0606631944444444,
+        "p50_ms": 0.034,
+        "p95_ms": 0.06,
+        "p99_ms": 0.59
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.13,
+        0.0
+       ],
+       "idle_time": [
+        0.569344273924661,
+        0.724747301696077
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.004,
+        "reached_archers_seconds": 20.5
+       },
+       "losses": [
+        0.87,
+        0.608
+       ],
+       "never_engaged": [
+        0.012,
+        0.002
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4246,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 8607,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0591127083333333,
+        "p50_ms": 0.031,
+        "p95_ms": 0.059,
+        "p99_ms": 0.506
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.144,
+        0.0
+       ],
+       "idle_time": [
+        0.572794437201217,
+        0.719715141188731
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.004,
+        "reached_archers_seconds": 19.25
+       },
+       "losses": [
+        0.856,
+        0.584
+       ],
+       "never_engaged": [
+        0.004,
+        0.002
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4247,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 8557,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0554080555555556,
+        "p50_ms": 0.03,
+        "p95_ms": 0.057,
+        "p99_ms": 0.521
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.122,
+        0.0
+       ],
+       "idle_time": [
+        0.561308716345159,
+        0.702584674294571
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.01,
+        "reached_archers_seconds": 21.0
+       },
+       "losses": [
+        0.878,
+        0.646
+       ],
+       "never_engaged": [
+        0.004,
+        0.004
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4248,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 7910,
+       "winner": -1,
+       "winner_profile": -1
+      },
+      {
+       "ai_phase": {
+        "count": 14400,
+        "mean_ms": 0.0493819444444444,
+        "p50_ms": 0.025,
+        "p95_ms": 0.049,
+        "p99_ms": 0.371
+       },
+       "decided": false,
+       "duration_seconds": 240.0,
+       "fled": [
+        0.122,
+        0.0
+       ],
+       "idle_time": [
+        0.563508755346551,
+        0.699382021528489
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "kite": {
+        "chase_share": 0.002,
+        "reached_archers_seconds": 20.5
+       },
+       "losses": [
+        0.878,
+        0.596
+       ],
+       "never_engaged": [
+        0.0,
+        0.006
+       ],
+       "profiles": [
+        "",
+        "reference"
+       ],
+       "scenario": "kite",
+       "seed": 4249,
+       "size": 500,
+       "swapped": false,
+       "ticks": 14400,
+       "wall_ms": 7090,
+       "winner": -1,
+       "winner_profile": -1
+      }
+     ],
+     "scenario": "kite",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.0662360503472222,
+      "ai_phase_worst_p95_ms": 0.076,
+      "draws": 8,
+      "duration_seconds": 240.0,
+      "fled": [
+       0.1375,
+       0.0
+      ],
+      "idle_time": [
+       0.568688917486537,
+       0.704425298172094
+      ],
+      "kite": {
+       "chase_share": 0.0705,
+       "reached_archers_seconds": 19.875,
+       "reached_runs": 8
+      },
+      "losses": [
+       0.8625,
+       0.609
+      ],
+      "never_engaged": [
+       0.007,
+       0.0035
+      ],
+      "profile_win_rate": [
+       0.0,
+       0.0
+      ],
+      "profile_wins": [
+       0,
+       0
+      ],
+      "runs": 8,
+      "win_rate": [
+       0.0,
+       0.0
+      ],
+      "wins": [
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": false,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 8,
+    "scenarios": [
+     "kite"
+    ],
+    "seed": 4242,
+    "sizes": [
+     100,
+     500
+    ]
+   },
+   "version": 1
+  },
+  "100": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 2773,
+        "mean_ms": 0.0583339343671114,
+        "p50_ms": 0.038,
+        "p95_ms": 0.179,
+        "p99_ms": 0.518
+       },
+       "decided": true,
+       "duration_seconds": 44.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.434168272318561,
+        0.408469945355191
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.65
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2773,
+       "wall_ms": 1968,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2533,
+        "mean_ms": 0.0573478089222266,
+        "p50_ms": 0.037,
+        "p95_ms": 0.18,
+        "p99_ms": 0.508
+       },
+       "decided": true,
+       "duration_seconds": 40.0,
+       "fled": [
+        0.0,
+        0.13
+       ],
+       "idle_time": [
+        0.412610106629578,
+        0.449747048903879
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.54,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2533,
+       "wall_ms": 1103,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2293,
+        "mean_ms": 0.0583044047099869,
+        "p50_ms": 0.038,
+        "p95_ms": 0.182,
+        "p99_ms": 0.54
+       },
+       "decided": true,
+       "duration_seconds": 36.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.45812204930932,
+        0.45274040039383
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.51
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2293,
+       "wall_ms": 598,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2593,
+        "mean_ms": 0.0593814114924798,
+        "p50_ms": 0.039,
+        "p95_ms": 0.183,
+        "p99_ms": 0.514
+       },
+       "decided": true,
+       "duration_seconds": 41.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.442001007218399,
+        0.427651217596229
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.61
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2593,
+       "wall_ms": 1416,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 2773,
+        "mean_ms": 0.0578993869455463,
+        "p50_ms": 0.038,
+        "p95_ms": 0.181,
+        "p99_ms": 0.498
+       },
+       "decided": true,
+       "duration_seconds": 44.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.408977556109726,
+        0.415821812596006
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.61
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2773,
+       "wall_ms": 1727,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3373,
+        "mean_ms": 0.0566990809368515,
+        "p50_ms": 0.037,
+        "p95_ms": 0.18,
+        "p99_ms": 0.464
+       },
+       "decided": true,
+       "duration_seconds": 54.0,
+       "fled": [
+        0.0,
+        0.12
+       ],
+       "idle_time": [
+        0.360916700974338,
+        0.416615573267934
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.7,
+        0.88
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3373,
+       "wall_ms": 3721,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0602211888394662,
+        "p50_ms": 0.039,
+        "p95_ms": 0.184,
+        "p99_ms": 0.529
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.448438818565401,
+        0.421845275840203
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.49
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2473,
+       "wall_ms": 615,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2893,
+        "mean_ms": 0.0593007258900795,
+        "p50_ms": 0.037,
+        "p95_ms": 0.183,
+        "p99_ms": 0.491
+       },
+       "decided": true,
+       "duration_seconds": 46.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.393197478375605,
+        0.41641861193796
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.64,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2893,
+       "wall_ms": 1611,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2713,
+        "mean_ms": 0.058010320678216,
+        "p50_ms": 0.038,
+        "p95_ms": 0.183,
+        "p99_ms": 0.453
+       },
+       "decided": true,
+       "duration_seconds": 43.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.428896843475431,
+        0.390878988561108
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.6
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2713,
+       "wall_ms": 1493,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2653,
+        "mean_ms": 0.0585793441387109,
+        "p50_ms": 0.037,
+        "p95_ms": 0.185,
+        "p99_ms": 0.485
+       },
+       "decided": true,
+       "duration_seconds": 42.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.406495468277946,
+        0.431420631028282
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.59,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2653,
+       "wall_ms": 1649,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2593,
+        "mean_ms": 0.0597589664481296,
+        "p50_ms": 0.039,
+        "p95_ms": 0.18,
+        "p99_ms": 0.504
+       },
+       "decided": true,
+       "duration_seconds": 41.0,
+       "fled": [
+        0.0,
+        0.13
+       ],
+       "idle_time": [
+        0.400788237077459,
+        0.446222368855163
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.55,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2593,
+       "wall_ms": 1112,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 2593,
+        "mean_ms": 0.058839568067875,
+        "p50_ms": 0.039,
+        "p95_ms": 0.182,
+        "p99_ms": 0.489
+       },
+       "decided": true,
+       "duration_seconds": 41.0,
+       "fled": [
+        0.0,
+        0.14
+       ],
+       "idle_time": [
+        0.417373862058324,
+        0.432241067017948
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.57,
+        0.86
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2593,
+       "wall_ms": 1195,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2233,
+        "mean_ms": 0.065871921182266,
+        "p50_ms": 0.041,
+        "p95_ms": 0.19,
+        "p99_ms": 0.547
+       },
+       "decided": true,
+       "duration_seconds": 35.0,
+       "fled": [
+        0.08,
+        0.0
+       ],
+       "idle_time": [
+        0.475921196643561,
+        0.452655889145497
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.92,
+        0.43
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2233,
+       "wall_ms": 612,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0628847553578649,
+        "p50_ms": 0.04,
+        "p95_ms": 0.188,
+        "p99_ms": 0.512
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.438264365890434,
+        0.434768940584722
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.57
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2473,
+       "wall_ms": 1210,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3433,
+        "mean_ms": 0.0628884357704632,
+        "p50_ms": 0.04,
+        "p95_ms": 0.215,
+        "p99_ms": 0.51
+       },
+       "decided": true,
+       "duration_seconds": 55.0,
+       "fled": [
+        0.11,
+        0.0
+       ],
+       "idle_time": [
+        0.371276442653619,
+        0.39071986123157
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.89,
+        0.75
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3433,
+       "wall_ms": 3565,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2713,
+        "mean_ms": 0.0606782159970512,
+        "p50_ms": 0.039,
+        "p95_ms": 0.185,
+        "p99_ms": 0.489
+       },
+       "decided": true,
+       "duration_seconds": 43.0,
+       "fled": [
+        0.0,
+        0.06
+       ],
+       "idle_time": [
+        0.397435897435897,
+        0.436331110749715
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.66,
+        0.94
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2713,
+       "wall_ms": 1503,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "mixed",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0596874668590203,
+      "ai_phase_worst_p95_ms": 0.215,
+      "draws": 0,
+      "duration_seconds": 42.6875,
+      "fled": [
+       0.075625,
+       0.05625
+      ],
+      "idle_time": [
+       0.41843026893835,
+       0.426534296441577
+      ],
+      "losses": [
+       0.7525,
+       0.7075
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.1875,
+       0.8125
+      ],
+      "profile_wins": [
+       3,
+       13
+      ],
+      "runs": 16,
+      "win_rate": [
+       0.4375,
+       0.5625
+      ],
+      "wins": [
+       7,
+       9
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0586131128174838,
+        "p50_ms": 0.042,
+        "p95_ms": 0.125,
+        "p99_ms": 0.353
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.591436006624083,
+        0.471790839394535
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        1.0,
+        0.03
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1693,
+       "wall_ms": 487,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0614022445363261,
+        "p50_ms": 0.042,
+        "p95_ms": 0.133,
+        "p99_ms": 0.349
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.06
+       ],
+       "idle_time": [
+        0.47123502847045,
+        0.574850299401198
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.01,
+        0.94
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 509,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0697572356763142,
+        "p50_ms": 0.046,
+        "p95_ms": 0.162,
+        "p99_ms": 0.372
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.06,
+        0.0
+       ],
+       "idle_time": [
+        0.591575958353053,
+        0.473372781065089
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.94,
+        0.05
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1693,
+       "wall_ms": 555,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1633,
+        "mean_ms": 0.0576160440906307,
+        "p50_ms": 0.041,
+        "p95_ms": 0.126,
+        "p99_ms": 0.338
+       },
+       "decided": true,
+       "duration_seconds": 25.0,
+       "fled": [
+        0.0,
+        0.02
+       ],
+       "idle_time": [
+        0.490396403759706,
+        0.590551181102362
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.02,
+        0.98
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1633,
+       "wall_ms": 465,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0602457176609569,
+        "p50_ms": 0.041,
+        "p95_ms": 0.125,
+        "p99_ms": 0.349
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.59684738476236,
+        0.47123502847045
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.01
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1693,
+       "wall_ms": 500,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1633,
+        "mean_ms": 0.0595688916105328,
+        "p50_ms": 0.042,
+        "p95_ms": 0.125,
+        "p99_ms": 0.43
+       },
+       "decided": true,
+       "duration_seconds": 25.0,
+       "fled": [
+        0.0,
+        0.01
+       ],
+       "idle_time": [
+        0.489387755102041,
+        0.581536224860674
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.0,
+        0.99
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1633,
+       "wall_ms": 473,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0571712935617248,
+        "p50_ms": 0.04,
+        "p95_ms": 0.127,
+        "p99_ms": 0.362
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.09,
+        0.0
+       ],
+       "idle_time": [
+        0.558529206423086,
+        0.4739336492891
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.91,
+        0.05
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1693,
+       "wall_ms": 471,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.0586023958927553,
+        "p50_ms": 0.04,
+        "p95_ms": 0.125,
+        "p99_ms": 0.337
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.45662100456621,
+        0.559179869524697
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.04,
+        1.0
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1753,
+       "wall_ms": 491,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0553780271707029,
+        "p50_ms": 0.039,
+        "p95_ms": 0.12,
+        "p99_ms": 0.324
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.600672753483902,
+        0.47234796299941
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        1.0,
+        0.03
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1693,
+       "wall_ms": 459,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0556615475487301,
+        "p50_ms": 0.038,
+        "p95_ms": 0.118,
+        "p99_ms": 0.338
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.473372781065089,
+        0.56550424128181
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.05,
+        1.0
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 457,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.0588916143753565,
+        "p50_ms": 0.041,
+        "p95_ms": 0.127,
+        "p99_ms": 0.344
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.04,
+        0.0
+       ],
+       "idle_time": [
+        0.570477775136677,
+        0.455321570859419
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.96,
+        0.05
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1753,
+       "wall_ms": 495,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0571600708800945,
+        "p50_ms": 0.04,
+        "p95_ms": 0.121,
+        "p99_ms": 0.326
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.472627018511225,
+        0.570749108204518
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.05,
+        1.0
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 474,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0563697578263438,
+        "p50_ms": 0.04,
+        "p95_ms": 0.122,
+        "p99_ms": 0.323
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.574988021082894,
+        0.472533963378618
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        1.0,
+        0.03
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1693,
+       "wall_ms": 468,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0577755463673952,
+        "p50_ms": 0.04,
+        "p95_ms": 0.128,
+        "p99_ms": 0.329
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.06
+       ],
+       "idle_time": [
+        0.473559589581689,
+        0.57609217474796
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.03,
+        0.94
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 476,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.0720028522532801,
+        "p50_ms": 0.047,
+        "p95_ms": 0.148,
+        "p99_ms": 0.511
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.550964187327824,
+        0.45489006823351
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        1.0,
+        0.03
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 1753,
+       "wall_ms": 602,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.0549663319551093,
+        "p50_ms": 0.039,
+        "p95_ms": 0.122,
+        "p99_ms": 0.327
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.04
+       ],
+       "idle_time": [
+        0.471501572327044,
+        0.571462601238685
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.03,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 456,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "infantry_cavalry",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0594489177639835,
+      "ai_phase_worst_p95_ms": 0.162,
+      "draws": 0,
+      "duration_seconds": 26.0625,
+      "fled": [
+       0.015,
+       0.011875
+      ],
+      "idle_time": [
+       0.527137027911083,
+       0.520959472753252
+      ],
+      "losses": [
+       0.499375,
+       0.505625
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.0,
+       1.0
+      ],
+      "profile_wins": [
+       0,
+       16
+      ],
+      "runs": 16,
+      "win_rate": [
+       0.5,
+       0.5
+      ],
+      "wins": [
+       8,
+       8
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4333,
+        "mean_ms": 0.0612324024924994,
+        "p50_ms": 0.038,
+        "p95_ms": 0.185,
+        "p99_ms": 0.474
+       },
+       "decided": true,
+       "duration_seconds": 70.0,
+       "fled": [
+        0.06,
+        0.0
+       ],
+       "idle_time": [
+        0.383345212639582,
+        0.369531894823724
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.94,
+        0.83
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4333,
+       "wall_ms": 3881,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3853,
+        "mean_ms": 0.0629561380742279,
+        "p50_ms": 0.039,
+        "p95_ms": 0.197,
+        "p99_ms": 0.51
+       },
+       "decided": true,
+       "duration_seconds": 62.0,
+       "fled": [
+        0.0,
+        0.1
+       ],
+       "idle_time": [
+        0.379031283971494,
+        0.397517817645613
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.77,
+        0.9
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3853,
+       "wall_ms": 2762,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4153,
+        "mean_ms": 0.0670486395376836,
+        "p50_ms": 0.041,
+        "p95_ms": 0.227,
+        "p99_ms": 0.536
+       },
+       "decided": true,
+       "duration_seconds": 67.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.37654028436019,
+        0.370791844476055
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.8
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4153,
+       "wall_ms": 4184,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4453,
+        "mean_ms": 0.170655288569504,
+        "p50_ms": 0.059,
+        "p95_ms": 0.344,
+        "p99_ms": 1.435
+       },
+       "decided": true,
+       "duration_seconds": 72.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.356392193093891,
+        0.379581766917293
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.97
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4453,
+       "wall_ms": 6692,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3853,
+        "mean_ms": 0.0971593563457046,
+        "p50_ms": 0.056,
+        "p95_ms": 0.197,
+        "p99_ms": 0.794
+       },
+       "decided": true,
+       "duration_seconds": 62.0,
+       "fled": [
+        0.0,
+        0.09
+       ],
+       "idle_time": [
+        0.37661878973393,
+        0.389036786060019
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.74,
+        0.91
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3853,
+       "wall_ms": 5133,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3973,
+        "mean_ms": 0.131649635036496,
+        "p50_ms": 0.058,
+        "p95_ms": 0.209,
+        "p99_ms": 0.927
+       },
+       "decided": true,
+       "duration_seconds": 64.0,
+       "fled": [
+        0.09,
+        0.0
+       ],
+       "idle_time": [
+        0.38106536955748,
+        0.370229885057471
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.91,
+        0.75
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3973,
+       "wall_ms": 6104,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.101056285643442,
+        "p50_ms": 0.06,
+        "p95_ms": 0.35,
+        "p99_ms": 0.798
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.08,
+        0.0
+       ],
+       "idle_time": [
+        0.383522388059702,
+        0.375406479585692
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.92,
+        0.81
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4033,
+       "wall_ms": 5307,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3973,
+        "mean_ms": 0.128849735716084,
+        "p50_ms": 0.057,
+        "p95_ms": 0.205,
+        "p99_ms": 0.893
+       },
+       "decided": true,
+       "duration_seconds": 64.0,
+       "fled": [
+        0.07,
+        0.0
+       ],
+       "idle_time": [
+        0.387849910661108,
+        0.371526980482204
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.93,
+        0.76
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3973,
+       "wall_ms": 5376,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 5113,
+        "mean_ms": 0.078304322315666,
+        "p50_ms": 0.053,
+        "p95_ms": 0.208,
+        "p99_ms": 0.637
+       },
+       "decided": true,
+       "duration_seconds": 83.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.352363279118,
+        0.363839811542992
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.93,
+        0.97
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 5113,
+       "wall_ms": 5414,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4873,
+        "mean_ms": 0.0671539092961215,
+        "p50_ms": 0.043,
+        "p95_ms": 0.191,
+        "p99_ms": 0.542
+       },
+       "decided": true,
+       "duration_seconds": 79.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.355474118185983,
+        0.370206832442482
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.97
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4873,
+       "wall_ms": 4835,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 5053,
+        "mean_ms": 0.0589445873738373,
+        "p50_ms": 0.04,
+        "p95_ms": 0.111,
+        "p99_ms": 0.386
+       },
+       "decided": true,
+       "duration_seconds": 82.0,
+       "fled": [
+        0.03,
+        0.0
+       ],
+       "idle_time": [
+        0.35563578923615,
+        0.3515784936968
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.97,
+        0.9
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 5053,
+       "wall_ms": 4323,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4213,
+        "mean_ms": 0.060555423688583,
+        "p50_ms": 0.04,
+        "p95_ms": 0.123,
+        "p99_ms": 0.507
+       },
+       "decided": true,
+       "duration_seconds": 68.0,
+       "fled": [
+        0.0,
+        0.08
+       ],
+       "idle_time": [
+        0.364756904816252,
+        0.384148518386291
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.82,
+        0.92
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4213,
+       "wall_ms": 3608,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4093,
+        "mean_ms": 0.0638192035182018,
+        "p50_ms": 0.042,
+        "p95_ms": 0.126,
+        "p99_ms": 0.539
+       },
+       "decided": true,
+       "duration_seconds": 66.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.384050242919777,
+        0.373977181053359
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.8
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4093,
+       "wall_ms": 3131,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4393,
+        "mean_ms": 0.0634680173002504,
+        "p50_ms": 0.039,
+        "p95_ms": 0.195,
+        "p99_ms": 0.515
+       },
+       "decided": true,
+       "duration_seconds": 71.0,
+       "fled": [
+        0.0,
+        0.04
+       ],
+       "idle_time": [
+        0.366651042887274,
+        0.372201492537313
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.83,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4393,
+       "wall_ms": 3926,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3613,
+        "mean_ms": 0.0706293938555217,
+        "p50_ms": 0.043,
+        "p95_ms": 0.236,
+        "p99_ms": 0.592
+       },
+       "decided": true,
+       "duration_seconds": 58.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.376452454351435,
+        0.393499486125385
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.67,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3613,
+       "wall_ms": 2650,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.0620800374444184,
+        "p50_ms": 0.039,
+        "p95_ms": 0.189,
+        "p99_ms": 0.505
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.0,
+        0.04
+       ],
+       "idle_time": [
+        0.378021978021978,
+        0.374257895986702
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.88,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4273,
+       "wall_ms": 3660,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "archers",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0840976485130151,
+      "ai_phase_worst_p95_ms": 0.35,
+      "draws": 0,
+      "duration_seconds": 68.875,
+      "fled": [
+       0.026875,
+       0.0375
+      ],
+      "idle_time": [
+       0.372360702600889,
+       0.375458322926212
+      ],
+      "losses": [
+       0.8725,
+       0.878125
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.3125,
+       0.6875
+      ],
+      "profile_wins": [
+       5,
+       11
+      ],
+      "runs": 16,
+      "win_rate": [
+       0.5625,
+       0.4375
+      ],
+      "wins": [
+       9,
+       7
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.761770058407624,
+        "p50_ms": 0.857,
+        "p95_ms": 1.535,
+        "p99_ms": 1.752
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.04,
+        0.0
+       ],
+       "idle_time": [
+        0.493380855397149,
+        0.516573396470082
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.96,
+        0.38
+       ],
+       "never_engaged": [
+        0.0,
+        0.04
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3253,
+       "wall_ms": 3209,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.796561020596373,
+        "p50_ms": 0.864,
+        "p95_ms": 1.584,
+        "p99_ms": 2.021
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.04,
+        0.0
+       ],
+       "idle_time": [
+        0.493380855397149,
+        0.516573396470082
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.96,
+        0.38
+       ],
+       "never_engaged": [
+        0.0,
+        0.04
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3253,
+       "wall_ms": 3361,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3133,
+        "mean_ms": 0.734314714331312,
+        "p50_ms": 0.845,
+        "p95_ms": 1.471,
+        "p99_ms": 1.643
+       },
+       "decided": true,
+       "duration_seconds": 50.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.501162790697674,
+        0.469605364405848
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.29
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3133,
+       "wall_ms": 3006,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3133,
+        "mean_ms": 0.768520906479413,
+        "p50_ms": 0.851,
+        "p95_ms": 1.573,
+        "p99_ms": 1.865
+       },
+       "decided": true,
+       "duration_seconds": 50.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.501162790697674,
+        0.469605364405848
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.29
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3133,
+       "wall_ms": 3119,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.681578542883492,
+        "p50_ms": 0.833,
+        "p95_ms": 1.424,
+        "p99_ms": 1.591
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.1,
+        0.0
+       ],
+       "idle_time": [
+        0.485129878278329,
+        0.508005513731312
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.32
+       ],
+       "never_engaged": [
+        0.0,
+        0.01
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3253,
+       "wall_ms": 2871,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.66534675683984,
+        "p50_ms": 0.805,
+        "p95_ms": 1.356,
+        "p99_ms": 1.495
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.1,
+        0.0
+       ],
+       "idle_time": [
+        0.485129878278329,
+        0.508005513731312
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.32
+       ],
+       "never_engaged": [
+        0.0,
+        0.01
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3253,
+       "wall_ms": 2798,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.642915126839962,
+        "p50_ms": 0.805,
+        "p95_ms": 1.13,
+        "p99_ms": 1.424
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.06,
+        0.0
+       ],
+       "idle_time": [
+        0.500639877143588,
+        0.476549506597184
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.94,
+        0.34
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3193,
+       "wall_ms": 2678,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.609241465706232,
+        "p50_ms": 0.793,
+        "p95_ms": 1.059,
+        "p99_ms": 1.394
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.06,
+        0.0
+       ],
+       "idle_time": [
+        0.500639877143588,
+        0.476549506597184
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.94,
+        0.34
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3193,
+       "wall_ms": 2530,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.615068274350141,
+        "p50_ms": 0.778,
+        "p95_ms": 0.973,
+        "p99_ms": 1.408
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.09,
+        0.0
+       ],
+       "idle_time": [
+        0.485689505637467,
+        0.466847237269773
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.91,
+        0.3
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3193,
+       "wall_ms": 2552,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.652097087378641,
+        "p50_ms": 0.784,
+        "p95_ms": 1.356,
+        "p99_ms": 1.487
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.09,
+        0.0
+       ],
+       "idle_time": [
+        0.485689505637467,
+        0.466847237269773
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.91,
+        0.3
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3193,
+       "wall_ms": 2699,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.733952709051049,
+        "p50_ms": 0.81,
+        "p95_ms": 1.541,
+        "p99_ms": 1.976
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.13,
+        0.0
+       ],
+       "idle_time": [
+        0.486617384654601,
+        0.51762043323634
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.87,
+        0.34
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3193,
+       "wall_ms": 3029,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.685633260256812,
+        "p50_ms": 0.817,
+        "p95_ms": 1.397,
+        "p99_ms": 1.675
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.13,
+        0.0
+       ],
+       "idle_time": [
+        0.486617384654601,
+        0.51762043323634
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.87,
+        0.34
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3193,
+       "wall_ms": 2843,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.63969197663695,
+        "p50_ms": 0.752,
+        "p95_ms": 1.134,
+        "p99_ms": 1.442
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.08,
+        0.0
+       ],
+       "idle_time": [
+        0.485819070904645,
+        0.452363010011842
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.92,
+        0.34
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3253,
+       "wall_ms": 2721,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.663153089455887,
+        "p50_ms": 0.75,
+        "p95_ms": 1.399,
+        "p99_ms": 1.509
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.08,
+        0.0
+       ],
+       "idle_time": [
+        0.485819070904645,
+        0.452363010011842
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.92,
+        0.34
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3253,
+       "wall_ms": 2805,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3313,
+        "mean_ms": 0.638330214307274,
+        "p50_ms": 0.785,
+        "p95_ms": 1.254,
+        "p99_ms": 1.451
+       },
+       "decided": true,
+       "duration_seconds": 53.0,
+       "fled": [
+        0.1,
+        0.0
+       ],
+       "idle_time": [
+        0.48529591214155,
+        0.460547504025765
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.39
+       ],
+       "never_engaged": [
+        0.0,
+        0.01
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3313,
+       "wall_ms": 2762,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3313,
+        "mean_ms": 0.642870510111681,
+        "p50_ms": 0.756,
+        "p95_ms": 1.315,
+        "p99_ms": 1.5
+       },
+       "decided": true,
+       "duration_seconds": 53.0,
+       "fled": [
+        0.1,
+        0.0
+       ],
+       "idle_time": [
+        0.48529591214155,
+        0.460547504025765
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.39
+       ],
+       "never_engaged": [
+        0.0,
+        0.01
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3313,
+       "wall_ms": 2779,
+       "winner": 1,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "siege",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.683190357102043,
+      "ai_phase_worst_p95_ms": 1.584,
+      "draws": 0,
+      "duration_seconds": 51.5,
+      "fled": [
+       0.08125,
+       0.0
+      ],
+      "idle_time": [
+       0.490466909356876,
+       0.483513995718518
+      ],
+      "losses": [
+       0.91875,
+       0.3375
+      ],
+      "never_engaged": [
+       0.0,
+       0.0075
+      ],
+      "profile_win_rate": [
+       0.5,
+       0.5
+      ],
+      "profile_wins": [
+       8,
+       8
+      ],
+      "runs": 16,
+      "win_rate": [
+       0.0,
+       1.0
+      ],
+      "wins": [
+       0,
+       16
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": true,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 8,
+    "scenarios": [
+     "mixed",
+     "infantry_cavalry",
+     "archers",
+     "siege"
+    ],
+    "seed": 4242,
+    "sizes": [
+     100
+    ]
+   },
+   "version": 1
+  },
+  "500": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4693,
+        "mean_ms": 0.0996307266141061,
+        "p50_ms": 0.051,
+        "p95_ms": 0.301,
+        "p99_ms": 0.822
+       },
+       "decided": true,
+       "duration_seconds": 76.0,
+       "fled": [
+        0.128,
+        0.0
+       ],
+       "idle_time": [
+        0.325025333649555,
+        0.324094760783367
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.872,
+        0.72
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4693,
+       "wall_ms": 4407,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 5833,
+        "mean_ms": 0.098069775415738,
+        "p50_ms": 0.05,
+        "p95_ms": 0.31,
+        "p99_ms": 0.809
+       },
+       "decided": true,
+       "duration_seconds": 95.0,
+       "fled": [
+        0.0,
+        0.056
+       ],
+       "idle_time": [
+        0.325570011108392,
+        0.312273666550729
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.87,
+        0.944
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 5833,
+       "wall_ms": 4937,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 6493,
+        "mean_ms": 0.0845861697212383,
+        "p50_ms": 0.044,
+        "p95_ms": 0.273,
+        "p99_ms": 0.774
+       },
+       "decided": true,
+       "duration_seconds": 106.0,
+       "fled": [
+        0.0,
+        0.022
+       ],
+       "idle_time": [
+        0.300521525312816,
+        0.315601429138547
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.934,
+        0.978
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 6493,
+       "wall_ms": 6025,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 5593,
+        "mean_ms": 0.0967986769175755,
+        "p50_ms": 0.051,
+        "p95_ms": 0.29,
+        "p99_ms": 0.828
+       },
+       "decided": true,
+       "duration_seconds": 91.0,
+       "fled": [
+        0.046,
+        0.0
+       ],
+       "idle_time": [
+        0.327860541299431,
+        0.296660274848194
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.954,
+        0.864
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 5593,
+       "wall_ms": 4922,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 5773,
+        "mean_ms": 0.10077758531093,
+        "p50_ms": 0.05,
+        "p95_ms": 0.147,
+        "p99_ms": 0.9
+       },
+       "decided": true,
+       "duration_seconds": 94.0,
+       "fled": [
+        0.066,
+        0.0
+       ],
+       "idle_time": [
+        0.326702417097118,
+        0.327694713555573
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.934,
+        0.846
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 5773,
+       "wall_ms": 5151,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.123142573766427,
+        "p50_ms": 0.056,
+        "p95_ms": 0.431,
+        "p99_ms": 1.048
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.0,
+        0.152
+       ],
+       "idle_time": [
+        0.338154240546892,
+        0.352266167948096
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.652,
+        0.848
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4033,
+       "wall_ms": 4577,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 7573,
+        "mean_ms": 0.0954586029314671,
+        "p50_ms": 0.05,
+        "p95_ms": 0.28,
+        "p99_ms": 1.006
+       },
+       "decided": true,
+       "duration_seconds": 124.0,
+       "fled": [
+        0.016,
+        0.0
+       ],
+       "idle_time": [
+        0.316016759160572,
+        0.29130877034358
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.984,
+        0.962
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 7573,
+       "wall_ms": 8777,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4333,
+        "mean_ms": 0.149434802677129,
+        "p50_ms": 0.072,
+        "p95_ms": 0.544,
+        "p99_ms": 1.409
+       },
+       "decided": true,
+       "duration_seconds": 70.0,
+       "fled": [
+        0.0,
+        0.146
+       ],
+       "idle_time": [
+        0.350353756457871,
+        0.336737651912142
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.678,
+        0.854
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4333,
+       "wall_ms": 6248,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "mixed",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.105987364169326,
+      "ai_phase_worst_p95_ms": 0.544,
+      "draws": 0,
+      "duration_seconds": 90.125,
+      "fled": [
+       0.032,
+       0.047
+      ],
+      "idle_time": [
+       0.326275573079081,
+       0.319579679385029
+      ],
+      "losses": [
+       0.85975,
+       0.877
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.25,
+       0.75
+      ],
+      "profile_wins": [
+       2,
+       6
+      ],
+      "runs": 8,
+      "win_rate": [
+       0.5,
+       0.5
+      ],
+      "wins": [
+       4,
+       4
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 1813,
+        "mean_ms": 0.192897959183673,
+        "p50_ms": 0.102,
+        "p95_ms": 0.351,
+        "p99_ms": 0.865
+       },
+       "decided": true,
+       "duration_seconds": 28.0,
+       "fled": [
+        0.248,
+        0.0
+       ],
+       "idle_time": [
+        0.579227011740509,
+        0.459491208105429
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.752,
+        0.048
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 1813,
+       "wall_ms": 4750,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.210475185396463,
+        "p50_ms": 0.102,
+        "p95_ms": 0.331,
+        "p99_ms": 0.862
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.0,
+        0.276
+       ],
+       "idle_time": [
+        0.456809368108889,
+        0.587772318128452
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.046,
+        0.724
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 1753,
+       "wall_ms": 4632,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.172974900171135,
+        "p50_ms": 0.099,
+        "p95_ms": 0.331,
+        "p99_ms": 0.741
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.288,
+        0.0
+       ],
+       "idle_time": [
+        0.611344354062801,
+        0.456712672521957
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.712,
+        0.05
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 1753,
+       "wall_ms": 3955,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.184536916715889,
+        "p50_ms": 0.099,
+        "p95_ms": 0.327,
+        "p99_ms": 0.745
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.328
+       ],
+       "idle_time": [
+        0.473416623970362,
+        0.583385664304297
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.028,
+        0.672
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 3745,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.196110667427268,
+        "p50_ms": 0.102,
+        "p95_ms": 0.332,
+        "p99_ms": 0.875
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.324,
+        0.0
+       ],
+       "idle_time": [
+        0.589390962671906,
+        0.458114785252756
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.676,
+        0.042
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 1753,
+       "wall_ms": 4345,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.29266568222091,
+        "p50_ms": 0.103,
+        "p95_ms": 0.345,
+        "p99_ms": 1.174
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.338
+       ],
+       "idle_time": [
+        0.493791145977057,
+        0.60802663547197
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.034,
+        0.662
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 5396,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1753,
+        "mean_ms": 0.200353108956075,
+        "p50_ms": 0.1,
+        "p95_ms": 0.328,
+        "p99_ms": 0.817
+       },
+       "decided": true,
+       "duration_seconds": 27.0,
+       "fled": [
+        0.292,
+        0.0
+       ],
+       "idle_time": [
+        0.613198458574181,
+        0.45644493408806
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.708,
+        0.038
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 1753,
+       "wall_ms": 4004,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 1693,
+        "mean_ms": 0.146918487891317,
+        "p50_ms": 0.074,
+        "p95_ms": 0.237,
+        "p99_ms": 0.683
+       },
+       "decided": true,
+       "duration_seconds": 26.0,
+       "fled": [
+        0.0,
+        0.32
+       ],
+       "idle_time": [
+        0.494098140618215,
+        0.606041591968447
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.044,
+        0.68
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "infantry_cavalry",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 1693,
+       "wall_ms": 3036,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "infantry_cavalry",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.199616613495341,
+      "ai_phase_worst_p95_ms": 0.351,
+      "draws": 0,
+      "duration_seconds": 26.75,
+      "fled": [
+       0.144,
+       0.15775
+      ],
+      "idle_time": [
+       0.53890950821549,
+       0.526998726230171
+      ],
+      "losses": [
+       0.375,
+       0.3645
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.0,
+       1.0
+      ],
+      "profile_wins": [
+       0,
+       8
+      ],
+      "runs": 8,
+      "win_rate": [
+       0.5,
+       0.5
+      ],
+      "wins": [
+       4,
+       4
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.13330798034168,
+        "p50_ms": 0.061,
+        "p95_ms": 0.363,
+        "p99_ms": 1.103
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.154,
+        0.0
+       ],
+       "idle_time": [
+        0.4841890229921,
+        0.415745307031499
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.846,
+        0.644
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4273,
+       "wall_ms": 5199,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4513,
+        "mean_ms": 0.123792155993796,
+        "p50_ms": 0.059,
+        "p95_ms": 0.357,
+        "p99_ms": 0.788
+       },
+       "decided": true,
+       "duration_seconds": 73.0,
+       "fled": [
+        0.128,
+        0.0
+       ],
+       "idle_time": [
+        0.47220392438669,
+        0.407081928188851
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.872,
+        0.696
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4513,
+       "wall_ms": 5173,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.13131291842301,
+        "p50_ms": 0.059,
+        "p95_ms": 0.347,
+        "p99_ms": 0.941
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.192,
+        0.0
+       ],
+       "idle_time": [
+        0.496191489361702,
+        0.430389144377307
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.808,
+        0.6
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4033,
+       "wall_ms": 4698,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4153,
+        "mean_ms": 0.132218877919576,
+        "p50_ms": 0.06,
+        "p95_ms": 0.348,
+        "p99_ms": 1.102
+       },
+       "decided": true,
+       "duration_seconds": 67.0,
+       "fled": [
+        0.0,
+        0.158
+       ],
+       "idle_time": [
+        0.423067514677104,
+        0.498699101004759
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.62,
+        0.842
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4153,
+       "wall_ms": 4955,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.124227240814416,
+        "p50_ms": 0.056,
+        "p95_ms": 0.335,
+        "p99_ms": 0.997
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.166,
+        0.0
+       ],
+       "idle_time": [
+        0.494490901168219,
+        0.420757391252271
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.834,
+        0.624
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4273,
+       "wall_ms": 4884,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4633,
+        "mean_ms": 0.124728469674077,
+        "p50_ms": 0.055,
+        "p95_ms": 0.447,
+        "p99_ms": 1.01
+       },
+       "decided": true,
+       "duration_seconds": 75.0,
+       "fled": [
+        0.0,
+        0.106
+       ],
+       "idle_time": [
+        0.381403383369073,
+        0.436314761534746
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.74,
+        0.894
+       ],
+       "never_engaged": [
+        0.0,
+        0.002
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4633,
+       "wall_ms": 5069,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 6133,
+        "mean_ms": 0.107650578835806,
+        "p50_ms": 0.053,
+        "p95_ms": 0.437,
+        "p99_ms": 0.896
+       },
+       "decided": true,
+       "duration_seconds": 100.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.399257820761791,
+        0.366982124079916
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.95,
+        0.888
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 6133,
+       "wall_ms": 5542,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.117368956112075,
+        "p50_ms": 0.055,
+        "p95_ms": 0.292,
+        "p99_ms": 0.795
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.17,
+        0.0
+       ],
+       "idle_time": [
+        0.49731263705551,
+        0.438370175548458
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.83,
+        0.634
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4033,
+       "wall_ms": 4295,
+       "winner": 1,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "archers",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.124325897264305,
+      "ai_phase_worst_p95_ms": 0.447,
+      "draws": 0,
+      "duration_seconds": 72.875,
+      "fled": [
+       0.1075,
+       0.033
+      ],
+      "idle_time": [
+       0.456014586721524,
+       0.426792491627226
+      ],
+      "losses": [
+       0.8125,
+       0.72775
+      ],
+      "never_engaged": [
+       0.001,
+       0.00025
+      ],
+      "profile_win_rate": [
+       0.25,
+       0.75
+      ],
+      "profile_wins": [
+       2,
+       6
+      ],
+      "runs": 8,
+      "win_rate": [
+       0.25,
+       0.75
+      ],
+      "wins": [
+       2,
+       6
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 3613,
+        "mean_ms": 2.79203681151398,
+        "p50_ms": 2.614,
+        "p95_ms": 5.062,
+        "p99_ms": 6.719
+       },
+       "decided": true,
+       "duration_seconds": 58.0,
+       "fled": [
+        0.164,
+        0.0
+       ],
+       "idle_time": [
+        0.505819645382356,
+        0.390746409230045
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.836,
+        0.314
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3613,
+       "wall_ms": 14066,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3613,
+        "mean_ms": 2.8352385828951,
+        "p50_ms": 2.707,
+        "p95_ms": 5.017,
+        "p99_ms": 6.782
+       },
+       "decided": true,
+       "duration_seconds": 58.0,
+       "fled": [
+        0.164,
+        0.0
+       ],
+       "idle_time": [
+        0.505819645382356,
+        0.390746409230045
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.836,
+        0.314
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3613,
+       "wall_ms": 14234,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3733,
+        "mean_ms": 2.65117331904634,
+        "p50_ms": 2.513,
+        "p95_ms": 4.717,
+        "p99_ms": 6.601
+       },
+       "decided": true,
+       "duration_seconds": 60.0,
+       "fled": [
+        0.148,
+        0.0
+       ],
+       "idle_time": [
+        0.503104662327963,
+        0.388180719603945
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.852,
+        0.374
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3733,
+       "wall_ms": 13838,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3733,
+        "mean_ms": 2.63539619608894,
+        "p50_ms": 2.529,
+        "p95_ms": 4.475,
+        "p99_ms": 6.549
+       },
+       "decided": true,
+       "duration_seconds": 60.0,
+       "fled": [
+        0.148,
+        0.0
+       ],
+       "idle_time": [
+        0.503104662327963,
+        0.388180719603945
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.852,
+        0.374
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3733,
+       "wall_ms": 13722,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3733,
+        "mean_ms": 2.78327832842218,
+        "p50_ms": 2.728,
+        "p95_ms": 4.645,
+        "p99_ms": 6.699
+       },
+       "decided": true,
+       "duration_seconds": 60.0,
+       "fled": [
+        0.178,
+        0.0
+       ],
+       "idle_time": [
+        0.500485150185623,
+        0.383122639327835
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.822,
+        0.356
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3733,
+       "wall_ms": 14668,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3733,
+        "mean_ms": 3.17135145995178,
+        "p50_ms": 3.044,
+        "p95_ms": 6.244,
+        "p99_ms": 7.809
+       },
+       "decided": true,
+       "duration_seconds": 60.0,
+       "fled": [
+        0.178,
+        0.0
+       ],
+       "idle_time": [
+        0.500485150185623,
+        0.383122639327835
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.822,
+        0.356
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3733,
+       "wall_ms": 16577,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3673,
+        "mean_ms": 3.02919411924857,
+        "p50_ms": 2.845,
+        "p95_ms": 6.079,
+        "p99_ms": 7.015
+       },
+       "decided": true,
+       "duration_seconds": 59.0,
+       "fled": [
+        0.194,
+        0.0
+       ],
+       "idle_time": [
+        0.493969204448246,
+        0.377430622938094
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.806,
+        0.33
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3673,
+       "wall_ms": 15490,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3673,
+        "mean_ms": 3.05530274979581,
+        "p50_ms": 2.852,
+        "p95_ms": 6.373,
+        "p99_ms": 7.274
+       },
+       "decided": true,
+       "duration_seconds": 59.0,
+       "fled": [
+        0.194,
+        0.0
+       ],
+       "idle_time": [
+        0.493969204448246,
+        0.377430622938094
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.806,
+        0.33
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "siege",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3673,
+       "wall_ms": 15565,
+       "winner": 1,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "siege",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 2.86912144587034,
+      "ai_phase_worst_p95_ms": 6.373,
+      "draws": 0,
+      "duration_seconds": 59.25,
+      "fled": [
+       0.171,
+       0.0
+      ],
+      "idle_time": [
+       0.500844665586047,
+       0.38487009777498
+      ],
+      "losses": [
+       0.829,
+       0.3435
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.5,
+       0.5
+      ],
+      "profile_wins": [
+       4,
+       4
+      ],
+      "runs": 8,
+      "win_rate": [
+       0.0,
+       1.0
+      ],
+      "wins": [
+       0,
+       8
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": true,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 4,
+    "scenarios": [
+     "mixed",
+     "infantry_cavalry",
+     "archers",
+     "siege"
+    ],
+    "seed": 4242,
+    "sizes": [
+     500
+    ]
+   },
+   "version": 1
+  }
+ }
+}

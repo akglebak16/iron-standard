@@ -14,6 +14,7 @@ const HERO_SPEED := 160.0 # A good horse; faster than any infantry (42-64).
 const ENEMY_LINE := Vector2(1380, 850)
 const PLAYER_INFANTRY := Vector2(700, 650)
 const PLAYER_ARCHERS := Vector2(700, 1050)
+const KITE_TEMPTED_SHARE := 0.3 # Share of the line that must run after the hero before the call-off is tested.
 
 func _initialize() -> void:
 	var catalog := Catalog.new()
@@ -119,7 +120,9 @@ func _test_hopeless_chase_called_off(catalog: Catalog) -> void:
 		elif reached < 0 and _nearest_squad_distance(state, infantry.centroid()) < Config.AI_INFANTRY_CHARGE_DISTANCE:
 			reached = tick
 			print("Enemy line reached the player's squads at %.2f s" % (tick * TICK_SECONDS))
-	assert(peak_chasers > Config.AI_KITE_CHASER_SHARE, "The forced charge must first run after the hero")
+	# Stage 1a: the crowd and outrun weights already keep part of the line off the hero (0.47 of 30 at the
+	# peak instead of more than half), so the forced charge only has to be tempted, not dragged entirely.
+	assert(peak_chasers > KITE_TEMPTED_SHARE, "The forced charge must first run after the hero")
 	assert(called_off >= 0 and called_off * TICK_SECONDS < Config.AI_KITE_SECONDS + 5.0, "The hopeless chase must be called off within a few seconds")
 	assert(reached >= 0, "After calling off the chase the line must reach the player's squads")
 	var chasers := _hero_chasers(session, infantry)
