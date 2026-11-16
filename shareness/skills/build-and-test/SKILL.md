@@ -6,6 +6,11 @@ description: Собрать и проверить Godot или браузерн�
 `node godot/tools/architecture.cjs`, пять экспортёров каталогов с `--check`,
 `node godot/tools/test.cjs <Godot-console.exe>` и `node godot/tools/release.cjs <Godot-console.exe>`.
 Runner изолирует `user://`; не запускай тесты сохранений на данных игрока.
+Для локальной итерации используй `--changed=HEAD` (включает staged/unstaged/untracked),
+для проверки ветки — `--changed=main`; native-изменения требуют полного набора.
+`--jobs=N` задаёт параллелизм; по умолчанию до 4. Долгие тесты идут первыми,
+кеш хранит только длительность, не результаты. Отчёт — godot/.godot/test-last-run.json.
+После изменения runner/выбора запускай также test_selection.test.cjs и test_schedule.test.cjs.
 Перед первым запуском в чистой Windows-копии: `pwsh -File godot/tools/native_bootstrap.ps1`.
 Архивы проверяются по SHA256; compiler/Python/godot-cpp остаются в dist.
 Runner сам собирает native DLL; не добавляй бинарники или dist в Git.

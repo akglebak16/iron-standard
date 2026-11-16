@@ -12,6 +12,12 @@ const FALL_SECONDS := Motion.FALL_SECONDS
 const SHADOW = preload("res://apps/godot/visuals/assets/contact_shadow.png")
 const FLEEING_OPACITY := 0.75
 
+const Atlas = preload("res://apps/godot/presentation/battle/battle_atlas.gd")
+var _atlas := Atlas.new()
+var _shadow: Texture2D = SHADOW
+var native_enabled := true
+var _native: RefCounted
+var _native_prepared := false
 var _art := Art.new()
 var _markers := UnitMarkers.new()
 var _time := 0.0
@@ -30,6 +36,27 @@ var _variants := {}
 var _previous_positions := {}
 var _directions := {}
 var biome := "grass"
+
+func _init() -> void:
+	if ClassDB.class_exists("IronBattleSprites"): _native = ClassDB.instantiate("IronBattleSprites")
+	_art.atlas = _atlas
+	_markers.atlas = _atlas
+
+func prepare_art(units: Array[Dictionary]) -> void:
+	_atlas.begin_prepare()
+	_shadow = _atlas.resolve(SHADOW)
+	var entries: Array = []
+	for unit in units:
+		var appearance := _art.layers(unit)
+		if _native != null and not unit.hero and not unit.companion and not unit.leader:
+			var rings: Array = []
+			for selection in 4: rings.append(_markers.ring_assets(unit, selection))
+			entries.append({"id": unit.id, "art": appearance, "rings": rings, "phase": _phases.get(unit.id, float(unit.id) * PHASE_STEP)})
+	var white := _markers.white_texture()
+	_atlas.end_prepare()
+	if _native != null:
+		_native.configure(entries, _shadow, white)
+		_native_prepared = true
 
 func configure_identities(ids: Dictionary, seed_value := 0, reference_variant := -1) -> void:
 	if _appearance_seed != seed_value or _reference_variant != reference_variant:
@@ -103,6 +130,22 @@ func has_falling_units() -> bool:
 
 func draw_compact(canvas: CanvasItem, frame: RenderSnapshot, visible: Rect2, headless_units: Dictionary,
 		vegetation: Array[Dictionary] = [], selection: int = Config.ALL_GROUPS, interpolation: float = 1.0, demo_mode := false) -> void:
+	if native_enabled and _native_prepared:
+		_native.draw(canvas.get_canvas_item(), frame.drawing_columns(), visible, vegetation, _time, interpolation, selection, demo_mode, _bumps, _flashes,
+			func(row: int, direction: Vector2):
+				var unit := frame.unit_at(row, interpolation)
+				unit.visual_direction = direction
+				_draw_shadow(canvas, unit)
+				if not demo_mode:
+					_markers.draw_ring(canvas, unit, selection)
+					_draw_polish(canvas, unit)
+				_draw_unit(canvas, unit, false)
+				if not demo_mode: _markers.draw_status(canvas, unit, _time), biome == "snow")
+		var corpses: Array[Dictionary] = []
+		for corpse: Dictionary in _corpses.values():
+			if visible.has_point(corpse.position): corpses.append(corpse)
+		draw(canvas, corpses, visible, headless_units, [], selection, 1.0, true, demo_mode)
+		return
 	var figures: Array[Dictionary] = []
 	var positions := frame.positions()
 	var previous := frame.previous_positions()
@@ -170,7 +213,7 @@ func _draw_polish(canvas: CanvasItem, unit: Dictionary) -> void:
 	var phase: float = _phases.get(unit.id, float(unit.id) * PHASE_STEP)
 	if unit.mounted and unit.speed > 35 and unit.id % 3 == 0:
 		var t := fposmod(_time * 2.3 + phase, 1.0)
-		var back: Vector2 = -_directions.get(unit.id, Vector2.from_angle(unit.facing))
+		var back: Vector2 = -unit.get("visual_direction", _directions.get(unit.id, Vector2.from_angle(unit.facing)))
 		var color := Color(241 / 255.0, 246 / 255.0, 247 / 255.0, 0.28) if biome == "snow" else Color(191 / 255.0, 168 / 255.0, 113 / 255.0, 0.24)
 		for k in 3:
 			var at: Vector2 = unit.position + back * (t * 30 + k * 5) + Vector2(k * 3, 0)
@@ -184,10 +227,10 @@ func _draw_polish(canvas: CanvasItem, unit: Dictionary) -> void:
 			var direction := Vector2.from_angle(phase + k * 2.1)
 			canvas.draw_line(origin + direction * 4, origin + direction * 10, Color(1, 229 / 255.0, 160 / 255.0, alpha), 1.5, true)
 
-static func _draw_shadow(canvas: CanvasItem, unit: Dictionary) -> void:
+func _draw_shadow(canvas: CanvasItem, unit: Dictionary) -> void:
 	var radius: float = unit.radius
 	var extent := Vector2(radius * 1.65, radius * 0.72)
-	canvas.draw_texture_rect(SHADOW, Rect2(Vector2(unit.position) + Vector2(4, 3) - extent, extent * 2.0), false)
+	canvas.draw_texture_rect(_shadow, Rect2(Vector2(unit.position) + Vector2(4, 3) - extent, extent * 2.0), false)
 
 static func _draw_plant(canvas: CanvasItem, plant: Dictionary, visible: Rect2) -> void:
 	if visible.intersects(plant.bounds):

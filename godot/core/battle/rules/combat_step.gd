@@ -52,7 +52,16 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 	# Reusing the pre-movement target grid would miss units pushed across cell boundaries.
 	var index: SpatialIndex = null
 	var hit_radius := Config.PROJECTILE_HIT_PADDING
-	if use_spatial and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
+	var batches: Array = []
+	var batch_index := 0
+	var native_queries := use_spatial and battle.column_backend != null and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS
+	if native_queries:
+		var impacts := PackedVector2Array()
+		for i in range(battle.projectiles.size() - 1, -1, -1):
+			var shot: Dictionary = battle.projectiles[i]
+			if shot.time + dt >= shot.duration: impacts.append(shot.impact)
+		if not impacts.is_empty(): batches = battle.column_backend.projectile_candidates(battle.motion, impacts, battle.arena_size, Config.PROJECTILE_HIT_PADDING, Config.PROJECTILE_HIT_HEIGHT, Config.SPATIAL_CELL_SIZE)
+	elif use_spatial and battle.active_units.size() >= Config.SPATIAL_MIN_UNITS:
 		for shot in battle.projectiles:
 			if shot.time + dt >= shot.duration:
 				if battle.projectile_index == null:
@@ -71,9 +80,12 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 		var victim: Unit = null
 		var closest := INF
 		var candidates := battle.projectile_candidates
-		if index != null:
+		if native_queries:
+			candidates.assign(batches[batch_index])
+			batch_index += 1
+		elif index != null:
 			index.nearby_into(shot.impact + Vector2(0.0, Config.PROJECTILE_HIT_HEIGHT), hit_radius, 0, candidates)
-		if index == null:
+		elif not native_queries:
 			candidates.clear()
 			for unit_index in battle.active_units.size(): candidates.append(unit_index)
 		for unit_index in candidates:

@@ -135,3 +135,4 @@ func _advance_view(view, seconds: float) -> void:
 		var delta := minf(remaining, 1.0 / 60.0)
 		view._process(delta)
 		remaining -= delta
+	view._process(0.0) # Publish the scheduled batch without adding a game tick.

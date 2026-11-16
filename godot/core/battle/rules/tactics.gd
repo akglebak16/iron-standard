@@ -52,13 +52,22 @@ static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> v
 static func siege_step(battle: State, elapsed: float, dt: float = 0.0) -> void:
 	var inside := 0
 	var near_wall := false
-	for unit: Unit in battle.active_units:
-		if unit.side != 0 or unit.dead or unit.gone or unit.fleeing:
-			continue
-		if unit.position.x > battle.wall.x + battle.wall.half_width:
-			inside += 1
-		if unit.position.x > battle.wall.x - Config.SIEGE_ALERT_DISTANCE:
-			near_wall = true
+	if battle.column_backend != null:
+		var summary: Array = battle.column_backend.wall_status(battle.motion, battle.wall.x + battle.wall.half_width, battle.wall.x - Config.SIEGE_ALERT_DISTANCE, battle.wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET)
+		inside = summary[1]
+		near_wall = summary[2]
+	else:
+		var positions := battle.motion.positions
+		var flags := battle.motion.integer_fields
+		var capacity := battle.motion.capacity
+		var fields = battle.motion.I
+		for row in positions.size():
+			if flags[fields.SIDE * capacity + row] != 0 or flags[fields.DEAD * capacity + row] or flags[fields.GONE * capacity + row] or flags[fields.FLEEING * capacity + row]:
+				continue
+			if positions[row].x > battle.wall.x + battle.wall.half_width:
+				inside += 1
+			if positions[row].x > battle.wall.x - Config.SIEGE_ALERT_DISTANCE:
+				near_wall = true
 	var infantry: Group = battle.groups[1][Config.GROUP_INFANTRY]
 	var cavalry: Group = battle.groups[1][Config.GROUP_CAVALRY]
 	var archers: Group = battle.groups[1][Config.GROUP_ARCHERS]
@@ -108,6 +117,7 @@ static func relayout(battle: State, dt: float) -> void:
 				group.layout()
 
 static func _nearest_foe_distance(battle: State, point: Vector2, side: int) -> float:
+	if battle.column_backend != null: return battle.column_backend.nearest_ready(battle.motion, point, side)
 	var closest := INF
 	for unit: Unit in battle.active_units:
 		if unit.side == side and not unit.dead and not unit.gone and not unit.fleeing:

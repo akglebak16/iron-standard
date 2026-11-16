@@ -23,6 +23,7 @@ const PALETTES := {
 }
 const LOOK_FIELDS := ["helm", "armor", "weapon", "shield", "horse", "undead"]
 
+var atlas: RefCounted
 var _cache: Dictionary = {}
 var _troop_ids := {}
 var _variants := {}
@@ -45,8 +46,9 @@ func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 	var original := OriginalArt.layers_for(unit, _troop_ids.get(uid, ""), int(_variants.get(uid, 0)))
 	if not original.is_empty():
 		if cacheable:
+			original = _pack(original)
 			_by_unit[uid] = original
-		return original
+		return _pack(original) if not cacheable else original
 	var look: Dictionary = unit.look
 	var palette := _palette(unit)
 	var key := [palette[0], palette[1], unit.mounted]
@@ -56,6 +58,7 @@ func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 	if not _cache.has(cache_key):
 		_cache[cache_key] = {"body": _body(look, palette, unit.mounted, false), "weapon": _weapon(look.get("weapon")),
 			"weapon_kind": look.get("weapon")}
+		_cache[cache_key] = _pack(_cache[cache_key])
 	var entry: Dictionary = _cache[cache_key]
 	if cacheable:
 		_by_unit[uid] = entry
@@ -189,3 +192,10 @@ static func _texture(shapes: String) -> Texture2D:
 		push_error("Cannot rasterize unit art: " + error_string(error))
 		return null
 	return ImageTexture.create_from_image(image)
+
+func _pack(entry: Dictionary) -> Dictionary:
+	if atlas == null: return entry
+	var packed := entry.duplicate()
+	for key in ["body", "weapon", "flash"]:
+		if packed.get(key) is Texture2D: packed[key] = atlas.resolve(packed[key])
+	return packed

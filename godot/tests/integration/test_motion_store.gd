@@ -1,10 +1,18 @@
 extends SceneTree
 const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
+const Columns = preload("res://adapters/godot/native/columns.gd")
 const Index = preload("res://core/battle/rules/spatial_index.gd")
 
 func _initialize() -> void:
+	for native in [false, true]: _check_columns(native)
+	print("Motion store tests passed")
+	quit(0)
+
+func _check_columns(native: bool) -> void:
 	var state := State.new()
+	state.column_backend = Columns.create() if native else null
+	assert(not native or state.column_backend != null)
 	var a := Unit.new(0,0,Vector2(10,20),100,0,1)
 	var b := Unit.new(1,1,Vector2(30,40),100,0,1)
 	a.velocity = Vector2(1,2)
@@ -38,5 +46,11 @@ func _initialize() -> void:
 	assert(index.nearby(Vector2(1200,800),1,0) == [1])
 	assert(index.nearby(Vector2(70,80),1,0).is_empty())
 	assert(state.centroid(1) == b.position and state.centroid(0) == c.position)
-	print("Motion store tests passed")
-	quit(0)
+
+	if native:
+		assert(state.column_backend.nearby(state.motion, Vector2(1200, 800), 0.0) == PackedInt32Array([1]))
+		assert(state.column_backend.nearest_ready(state.motion, Vector2(1200, 800), 0) == 0.0)
+		var previous: PackedVector2Array = state.column_backend.capture(state.motion, PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]))
+		assert(previous[b.history_index] == b.position and previous[c.history_index] == c.position)
+		previous[b.history_index] = Vector2.ZERO
+		assert(b.position != Vector2.ZERO)

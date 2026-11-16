@@ -12,7 +12,7 @@ const Equipment = preload("res://core/equipment/config.gd")
 const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
 const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
 const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
-const MotionStore = preload("res://runtime/simulation/motion_store.gd")
+const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const StaticObstacleIndex = preload("res://runtime/spatial/static_obstacle_index.gd")
 const GenerationHandles = preload("res://runtime/simulation/generation_handles.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
@@ -27,6 +27,7 @@ var siege_skill := 0.0
 var units: Array[Unit] = []
 var active_units: Array[Unit] = []
 var _visible_units: Array[Unit] = []
+var retired_render_units: Array[Unit] = []
 var pending_retirements := 0
 var _next_unit_id := 0
 var handles := GenerationHandles.new()
@@ -41,6 +42,11 @@ var projectile_candidates: Array[int] = []
 var motion := MotionStore.new()
 ## Optional batch port injected by composition. The reference solver needs no engine adapter.
 var contact_solver := Callable()
+var movement_solver := Callable()
+var native_movement_steps := 0
+var native_movement_failures := 0
+var native_movement_interactions := 0
+var column_backend: RefCounted
 var native_contact_steps := 0
 var native_contact_failures := 0
 var _contact_geometry: Dictionary = {}
@@ -216,6 +222,9 @@ func give_order(order: String, point: Vector2, selection: int = Config.ALL_GROUP
 	return changed
 
 func centroid(side: int) -> Vector2:
+	if column_backend != null:
+		var values: Array = column_backend.summary(motion)
+		return values[1][side] / values[2][side] if values[2][side] else Vector2.INF
 	var count := 0
 	var total := Vector2.ZERO
 	var positions := motion.positions
@@ -255,29 +264,36 @@ func render_units() -> Array[Unit]:
 func compact_inactive(tick: int) -> int:
 	var write := 0
 	var before := active_units.size()
+	var rows := PackedInt32Array()
+	var flags := motion.integer_fields
+	var dead_offset := MotionStore.I.DEAD * motion.capacity
+	var gone_offset := MotionStore.I.GONE * motion.capacity
 	for read in before:
 		var unit := active_units[read]
-		if unit.dead or unit.gone:
+		if flags[dead_offset + read] or flags[gone_offset + read]:
 			handles.release(unit.unit_handle)
 			unit.detach_motion()
 			unit.battle_index = -1
 			unit.retired_tick = tick
+			if not unit.gone and (unit.hero or unit.companion): retired_render_units.append(unit)
 			continue
+		rows.append(read)
 		if write != read:
-			motion.copy_row(read, write)
+			if column_backend == null: motion.copy_row(read, write)
 			active_units[write] = unit
 			unit.battle_index = write
 		write += 1
 	pending_retirements = 0
 	if write == before: return 0
+	if column_backend != null: column_backend.copy_rows(motion, rows)
 	var compacted := handles.compact_dense()
 	assert(compacted == write, "Active rows and handles must compact in the same stable order")
 	active_units.resize(write)
 	motion.resize(write)
-	_visible_units.assign(_visible_units.filter(func(u: Unit): return not u.gone and (not u.dead or u.hero or u.companion)))
+	_visible_units.assign(_visible_units.filter(func(u: Unit): return u.battle_index >= 0 or (not u.gone and (u.hero or u.companion))))
 	for side in groups:
 		for group: Group in side:
-			group.units.assign(group.units.filter(func(u: Unit): return not u.dead and not u.gone))
+			group.units.assign(group.units.filter(func(u: Unit): return u.battle_index >= 0))
 	if movement_index != null: movement_index.rebuild()
 	if projectile_index != null: projectile_index.rebuild()
 	return before - write
@@ -285,6 +301,7 @@ func compact_inactive(tick: int) -> int:
 func mark_gone(unit: Unit) -> void:
 	if unit.gone: return
 	unit.gone = true
+	retired_render_units.erase(unit)
 	pending_retirements += 1
 	handles.release(unit.unit_handle)
 
@@ -322,8 +339,10 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 				source.hp = minf(source.max_hp, source.hp + source.max_hp * heal)
 	var positions := motion.positions
 	var target_position := target.position
-	for unit: Unit in active_units:
-		if unit.dead or unit.gone or positions[unit.battle_index].distance_to(target_position) > Config.DEATH_MORALE_RADIUS:
+	var candidates: PackedInt32Array = column_backend.nearby(motion, target_position, Config.DEATH_MORALE_RADIUS) if column_backend != null else PackedInt32Array(range(active_units.size()))
+	for row in candidates:
+		var unit: Unit = active_units[row]
+		if positions[unit.battle_index].distance_to(target_position) > Config.DEATH_MORALE_RADIUS or unit.dead or unit.gone:
 			continue
 		if unit.side == target.side:
 			unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER

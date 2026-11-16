@@ -1,6 +1,8 @@
 extends Node2D
 ## Settled marks and corpses painted once into a texture the size of the field, like the browser paints them into
 ## the ground canvas (B.gg). Only new items are drawn each time; the texture keeps the rest.
+var last_paint_us := 0
+var last_paint_frame := -1
 var _viewport: SubViewport
 var _painter: Node2D
 var _sprite: Sprite2D
@@ -46,8 +48,11 @@ func pending() -> int:
 	return _queue.size()
 
 func _paint() -> void:
+	var started := Time.get_ticks_usec()
+	last_paint_frame = Engine.get_process_frames()
 	for fn in _queue:
 		fn.call(_painter)
 	_queue.clear()
+	last_paint_us = Time.get_ticks_usec() - started
 	# After the first (clearing) render keep the pixels: later renders only add.
 	_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_NEVER

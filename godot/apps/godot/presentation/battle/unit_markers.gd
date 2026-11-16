@@ -45,6 +45,8 @@ const BANNER_CLOTH := [Vector2(0, -26), Vector2(17, -25),
 	Vector2(13, -19), Vector2(17, -13), Vector2(0, -12)]
 const BANNER_MARK := [Vector2(7, -23), Vector2(10, -19), Vector2(7, -15), Vector2(4, -19)]
 
+var atlas: RefCounted
+var _white: Texture2D
 var _rings: Dictionary = {}
 var _fills: Dictionary = {}
 var _ring_textures: Dictionary = {}
@@ -91,6 +93,16 @@ static func ring_style(unit: Dictionary, selection: int) -> Color:
 	return ALLY_SELECTED_RING if selection == Config.ALL_GROUPS or unit.group_kind == selection else ALLY_IDLE_RING
 
 func draw_ring(canvas: CanvasItem, unit: Dictionary, selection: int) -> void:
+	var assets := ring_assets(unit, selection)
+	var fill: Texture2D = assets[1]
+	if fill != null: canvas.draw_texture_rect(fill, Rect2(Vector2(unit.position) - fill.get_size() * 0.25, fill.get_size() * 0.5), false, Color(241 / 255.0, 210 / 255.0, 122 / 255.0, 0.15))
+	var ring: Texture2D = assets[0]
+	canvas.draw_texture(ring, Vector2(unit.position) - ring.get_size() * 0.5)
+	if unit.hero and unit.blocking:
+		canvas.draw_arc(Vector2(unit.position) + BLOCK_ORIGIN, BLOCK_RADIUS, unit.facing - BLOCK_HALF_ANGLE,
+			unit.facing + BLOCK_HALF_ANGLE, RING_SEGMENTS, BLOCK_COLOR, BLOCK_WIDTH, true)
+
+func ring_assets(unit: Dictionary, selection: int) -> Array:
 	var radius: float = unit.radius + (HERO_RING_PADDING if unit.hero else RING_PADDING)
 	if not _rings.has(radius):
 		var points := PackedVector2Array()
@@ -103,10 +115,13 @@ func draw_ring(canvas: CanvasItem, unit: Dictionary, selection: int) -> void:
 		if not _fills.has(selected_radius):
 			var fill_points := PackedVector2Array()
 			for i in range(40): fill_points.append(Vector2.from_angle(TAU * i / 40.0) * Vector2(selected_radius, selected_radius * RING_FLATTEN))
-			_fills[selected_radius] = fill_points
-		canvas.draw_set_transform(unit.position)
-		canvas.draw_colored_polygon(_fills[selected_radius], Color(241 / 255.0, 210 / 255.0, 122 / 255.0, 0.15))
-		canvas.draw_set_transform(Vector2.ZERO)
+			var size := Vector2i(ceili(selected_radius * 2 + 4), ceili(selected_radius * RING_FLATTEN * 2 + 4))
+			var image := Image.create(size.x * 2, size.y * 2, false, Image.FORMAT_RGBA8)
+			for y in image.get_height():
+				for x in image.get_width():
+					if Geometry2D.is_point_in_polygon(Vector2(x + 0.5, y + 0.5) * 0.5 - Vector2(size) * 0.5, fill_points): image.set_pixel(x, y, Color.WHITE)
+			var texture: Texture2D = ImageTexture.create_from_image(image)
+			_fills[selected_radius] = atlas.resolve(texture) if atlas != null else texture
 	var width := 2.3 if selected else (HERO_WIDTH if unit.hero or unit.companion else (LEADER_WIDTH if unit.leader else STANDARD_WIDTH))
 	# One pre-rendered antialiased ring per look: a texture draw instead of a polyline with two transforms.
 	var color := ring_style(unit, selection)
@@ -114,11 +129,9 @@ func draw_ring(canvas: CanvasItem, unit: Dictionary, selection: int) -> void:
 	var texture: Texture2D = _ring_textures.get(key)
 	if texture == null:
 		texture = _ring_texture(radius, width, color, unit.side != 0)
+		if atlas != null: texture = atlas.resolve(texture)
 		_ring_textures[key] = texture
-	canvas.draw_texture(texture, Vector2(unit.position) - texture.get_size() * 0.5)
-	if unit.hero and unit.blocking:
-		canvas.draw_arc(Vector2(unit.position) + BLOCK_ORIGIN, BLOCK_RADIUS, unit.facing - BLOCK_HALF_ANGLE,
-			unit.facing + BLOCK_HALF_ANGLE, RING_SEGMENTS, BLOCK_COLOR, BLOCK_WIDTH, true)
+	return [texture, _fills[unit.radius + 5.0] if selected else null]
 
 static func health_bar(unit: Dictionary) -> Rect2:
 	if unit.health_fraction >= 1.0:
@@ -130,17 +143,17 @@ static func health_bar(unit: Dictionary) -> Rect2:
 func draw_status(canvas: CanvasItem, unit: Dictionary, battle_time := -1.0) -> void:
 	var bar := health_bar(unit)
 	if bar.has_area():
-		canvas.draw_rect(bar.grow(HEALTH_FRAME), HEALTH_FRAME_COLOR)
+		_draw_rect(canvas, bar.grow(HEALTH_FRAME), HEALTH_FRAME_COLOR)
 		var fill := Rect2(bar.position, Vector2(bar.size.x * unit.health_fraction, HEALTH_HEIGHT))
-		canvas.draw_rect(fill, ALLY_HEALTH if unit.side == 0 else ENEMY_HEALTH)
+		_draw_rect(canvas, fill, ALLY_HEALTH if unit.side == 0 else ENEMY_HEALTH)
 	if not unit.companion_name.is_empty():
 		_draw_name(canvas, unit)
 	if unit.leader:
 		_draw_banner(canvas, unit, battle_time)
 	if unit.fleeing:
 		var flag := Vector2(unit.position) + FLEE_FLAG_OFFSET
-		canvas.draw_rect(Rect2(Vector2(unit.position) + Vector2(-2, -67), FLEE_FLAG_POLE), POLE_COLOR)
-		canvas.draw_rect(Rect2(flag, FLEE_FLAG_SIZE), FLEE_FLAG_COLOR)
+		_draw_rect(canvas, Rect2(Vector2(unit.position) + Vector2(-2, -67), FLEE_FLAG_POLE), POLE_COLOR)
+		_draw_rect(canvas, Rect2(flag, FLEE_FLAG_SIZE), FLEE_FLAG_COLOR)
 
 static func _draw_name(canvas: CanvasItem, unit: Dictionary) -> void:
 	var font := preload("res://apps/godot/visuals/game_theme.gd").BODY_BOLD
@@ -155,3 +168,17 @@ func _draw_banner(canvas: CanvasItem, unit: Dictionary, battle_time: float) -> v
 	var direction := -1.0 if cos(unit.facing) < 0.0 else 1.0
 	var point := Vector2(unit.position) + BANNER_BASE_OFFSET * Vector2(-direction, 1)
 	BannerArt.draw_banner(canvas, point.x, point.y, Art.OriginalArt.palette(unit.faction), 17.0, battle_time)
+
+func _draw_rect(canvas: CanvasItem, rect: Rect2, color: Color) -> void:
+	if atlas == null:
+		canvas.draw_rect(rect, color)
+		return
+	canvas.draw_texture_rect(white_texture(), rect, false, color)
+
+func white_texture() -> Texture2D:
+	if _white == null:
+		var image := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+		image.fill(Color.WHITE)
+		var texture := ImageTexture.create_from_image(image)
+		_white = atlas.resolve(texture) if atlas != null else texture
+	return _white

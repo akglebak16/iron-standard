@@ -16,4 +16,4 @@ func solve(columns: RefCounted, geometry: Dictionary) -> Array:
 		if not _kernel.configure(geometry.parameters, geometry.positions, geometry.radii, geometry.gaps):
 			return []
 		_geometry = geometry
-	return _kernel.solve(columns.positions, columns.velocities, columns.radii, columns.masses, columns.sides, columns.live, columns.fleeing)
+	return _kernel.solve_columns(columns.positions, columns.velocities, columns.capacity, columns.real_fields, columns.integer_fields)

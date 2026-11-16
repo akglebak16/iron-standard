@@ -3,7 +3,8 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { selectTests } = require('./test_selection.cjs');
+const { selectTests, changedFiles } = require('./test_selection.cjs');
+const { execFileSync } = require('child_process');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'selection-'));
 const put = (file, text = '') => { fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true }); fs.writeFileSync(path.join(root, file), text); };
@@ -37,4 +38,16 @@ assert.strictEqual(pick(['tools/native_build.cjs']), 'FULL', 'The native kernel 
 assert.strictEqual(pick(['tools/anything.gd']), 'FULL');
 assert.strictEqual(pick(['apps/godot/composition/theme.gd']), 'FULL');
 assert.strictEqual(pick(['apps/godot/composition/game.tscn']), 'FULL');
+assert.strictEqual(pick(['core/battle/api/native/movement_kernel.hpp']), 'FULL', 'Native headers have no res:// edge');
+assert.strictEqual(pick(['apps/godot/presentation/battle/native/battle_sprites.cpp']), 'FULL', 'Native presentation must run the suite too');
+const git = args => execFileSync('git', args, { cwd: root, stdio: 'pipe' });
+git(['init']);
+git(['add', '.']);
+git(['-c', 'user.name=Test fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'fixture']);
+put('core/equipment/rules/gear.gd', '# staged change');
+git(['add', '.']);
+put('core/battle/model/unit.gd', '# unstaged change');
+put('tests/unit/test_new.gd', '# untracked test');
+assert.deepStrictEqual(changedFiles(root, 'HEAD').sort(), ['core/battle/model/unit.gd', 'core/equipment/rules/gear.gd', 'tests/unit/test_new.gd']);
+assert.strictEqual(changedFiles(root, 'nonexistent-base'), null, 'Bad base must request the full suite, not skip checks');
 console.log('Test selection tests passed');

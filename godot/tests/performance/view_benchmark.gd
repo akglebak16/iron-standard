@@ -1,5 +1,8 @@
 extends Node
+const BattleWorker = preload("res://adapters/godot/battle_worker.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const NativeMovement = preload("res://adapters/godot/native/movement.gd")
+const NativeColumns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 ## Informational: frame cost of a mass battle with its view (simulation + snapshot + drawing).
 ##   godot --path godot --script res://tools/battle/view_bench.gd [-- --n=300 --frames=240]
@@ -19,6 +22,10 @@ var _size := 300
 var _mode := "battle"
 var _seed := 4242
 var _audio := false
+var _native_sprites := true
+var _capture := ""
+var _camera_scope := "hero"
+var _actual_groups := [[], []]
 var _output := ""
 var _world: Node
 var _session: RefCounted
@@ -31,12 +38,17 @@ var _measure_seconds := 0.0
 var _measure_start := 0
 var _camera_route := false
 var _memory_samples: Array[float] = []
+var _trace: Array = []
+var _detailed := false
+var _gpu_timing := true
+var _worker := true
+var _profile_samples := {}
 const Stats = preload("res://tests/performance/battle_benchmark.gd")
 const World = preload("res://apps/godot/composition/world_demo.tscn")
 const Options = preload("res://apps/godot/composition/game_options.gd")
 
 func _ready() -> void:
-	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
+	get_viewport().gui_disable_input = true
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--n="):
 			_size = int(arg.substr(4))
@@ -50,11 +62,18 @@ func _ready() -> void:
 				get_tree().quit(1)
 				return
 			_audio = arg == "--audio=on"
+		elif arg.begins_with("--camera="): _camera_scope = arg.trim_prefix("--camera=")
+		elif arg == "--sprites=gdscript": _native_sprites = false
+		elif arg.begins_with("--capture="): _capture = arg.trim_prefix("--capture=")
 		elif arg.begins_with("--out="): _output = arg.trim_prefix("--out=")
 		elif arg == "--map-cache=off": _map_cache = false
 		elif arg.begins_with("--measure-seconds="): _measure_seconds = float(arg.trim_prefix("--measure-seconds="))
 		elif arg == "--camera-route": _camera_route = true
-	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"]:
+		elif arg == "--profile-details": _detailed = true
+		elif arg == "--gpu-timing=off": _gpu_timing = false
+		elif arg == "--worker=off": _worker = false
+	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), _gpu_timing)
+	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"] or _camera_scope not in ["hero", "near", "wide"]:
 		push_error("Invalid diagnostic parameters (positive population, >61 frames, battle/campaign mode)")
 		get_tree().quit(1)
 		return
@@ -81,27 +100,33 @@ func _ready() -> void:
 	var infantry := _size / 2
 	var archers := _size / 3
 	var cavalry := _size - infantry - archers
-	setup.player_army.assign([{"type": "n1", "n": infantry}, {"type": "n2a", "n": archers}, {"type": "n2s", "n": cavalry}])
-	setup.enemy_army.assign([{"type": "e1", "n": infantry}, {"type": "e2a", "n": archers}, {"type": "e2s", "n": cavalry}])
+	setup.player_army.assign([{"type": "n1", "n": infantry}, {"type": "n2a", "n": archers}, {"type": "n3c", "n": cavalry}])
+	setup.enemy_army.assign([{"type": "e1", "n": infantry}, {"type": "e2a", "n": archers}, {"type": "e3c", "n": cavalry}])
 	var solver := Contacts.create()
 	if not solver.is_valid():
 		push_error("Native backend unavailable")
 		get_tree().quit(1)
 		return
-	var session = Factory.create(setup, c, g, p, k, solver)
+	var session = Factory.create(setup, c, g, p, k, solver, NativeMovement.create(), NativeColumns.create())
 	if session == null:
 		push_error("Cannot create diagnostic battle")
 		get_tree().quit(1)
 		return
 	_session = session
 	var actual := [0, 0]
+	_actual_groups = [[0, 0, 0], [0, 0, 0]]
 	for unit in session._state.units:
 		if not unit.hero and not unit.companion:
 			actual[unit.side] += 1
+			_actual_groups[unit.side][unit.group_kind] += 1
 			if unit.weight != 1:
 				push_error("Weighted soldiers are not a population benchmark")
 				get_tree().quit(1)
 				return
+	if _actual_groups[0][Config.GROUP_CAVALRY] != cavalry or _actual_groups[1][Config.GROUP_CAVALRY] != cavalry:
+		push_error("Missing actual cavalry in mixed benchmark")
+		get_tree().quit(1)
+		return
 	if actual != [_size, _size]:
 		push_error("Population mismatch: %s" % str(actual))
 		get_tree().quit(1)
@@ -109,8 +134,20 @@ func _ready() -> void:
 	print("ordinary_active=%s; special=%d" % [str(actual), session._state.units.size() - 2 * _size])
 	session.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 	_view = BattleView.instantiate()
-	_view.configure(session, _audio, _audio, true, setup.seed, setup.biome)
+	_view.player_input_enabled = false
+	_view.profile_frames = true
+	_view._figures.native_enabled = _native_sprites
+	_view.configure(session, _audio, _audio, true, setup.seed, setup.biome, BattleWorker.new(session) if _worker else null)
+	_view._impacts._rng.seed = _seed
+	_view._figures._visual_rng.seed = _seed
+	_view._feedback.set_seed(_seed)
 	add_child(_view)
+	_view._music._rng.seed = _seed
+	if _camera_scope != "hero":
+		_view.camera.follow_enabled = false
+		_view.camera.position = session._state.arena_size * 0.5
+		_view.camera.zoom = Vector2.ONE * (0.55 if _camera_scope == "wide" else 1.35)
+		_view.camera.fit_viewport()
 
 func _process(_delta: float) -> void:
 	if _world != null and not _world._ready_to_play: return
@@ -124,6 +161,13 @@ func _process(_delta: float) -> void:
 		_world.camera.zoom = Vector2.ONE * [0.25, 0.9, 2.5][int(elapsed / 10.0) % 3]
 	if _last > 0 and _n >= 60:
 		_times.append(now - _last)
+		if _view != null:
+			_view.frame_profile.minimap_us = _view._navigation.last_draw_usec
+			_view.frame_profile.bake_us = _view._bake.last_paint_us if _view._bake.last_paint_frame >= Engine.get_process_frames() - 1 else 0
+			if _detailed: _trace.append([now - _measure_start, now - _last, _view.frame_profile.duplicate(), Performance.get_monitor(Performance.TIME_PROCESS) * 1000000.0])
+			for phase in _view.frame_profile:
+				if not _profile_samples.has(phase): _profile_samples[phase] = []
+				_profile_samples[phase].append(_view.frame_profile[phase])
 		_draw_calls += Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
 		_render_cpu.append(roundi(RenderingServer.viewport_get_measured_render_time_cpu(get_viewport().get_viewport_rid()) * 1000.0))
 		_render_gpu.append(roundi(RenderingServer.viewport_get_measured_render_time_gpu(get_viewport().get_viewport_rid()) * 1000.0))
@@ -136,16 +180,29 @@ func _process(_delta: float) -> void:
 
 func _finish() -> void:
 	set_process(false)
-	var report := {"mode":_mode,"debug":OS.is_debug_build(),"engine":Engine.get_version_info().string,
+	if _view != null: _view._simulation.render_snapshot() # Join before diagnostics read session counters.
+	var report := {"trace": _trace, "mode":_mode,"debug":OS.is_debug_build(),"engine":Engine.get_version_info().string,
+		"gpu_timing": _gpu_timing, "worker": _worker, "visual_seed": _seed,
 		"seed":_seed,"display":DisplayServer.get_name(),"viewport":str(get_viewport().get_visible_rect().size),
 		"vsync":DisplayServer.window_get_vsync_mode(),"max_fps":Engine.max_fps,"cpu":OS.get_processor_name(),
 		"warmup_frames":60,"frame":Stats.stats(_times),"diagnostics_only":true,
 		"draw_calls_mean":_draw_calls / maxi(1, _times.size()),"render_cpu":Stats.stats(_render_cpu),
 		"render_gpu":Stats.stats(_render_gpu),"video_memory_bytes":Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)}
-	report.merge({"measurement_seconds":float(Time.get_ticks_usec() - _measure_start) / 1000000.0,
-		"camera_route":_camera_route,"video_memory_samples":_memory_samples})
+	if not _gpu_timing:
+		report.render_gpu = null
+		report.render_cpu = null
+	report.merge({"native_movement_steps": _session._state.native_movement_steps if _session != null else 0,
+		"native_movement_failures": _session._state.native_movement_failures if _session != null else 0,
+		"measurement_seconds":float(Time.get_ticks_usec() - _measure_start) / 1000000.0,
+		"native_sprites":_native_sprites,"camera_scope":_camera_scope,"camera_route":_camera_route,"video_memory_samples":_memory_samples})
+	var phases := {}
+	for phase in _profile_samples:
+		var samples: Array[int] = []
+		samples.assign(_profile_samples[phase])
+		phases[phase] = Stats.stats(samples)
+	report.phase_profile = phases
 	if _view != null:
-		report.merge({"ordinary_initial":[_size,_size],"special_initial":1,
+		report.merge({"ordinary_initial":[_size,_size],"actual_groups":_actual_groups,"special_initial":1,
 			"sound":_view._effects_enabled,"music":_view._music_enabled,
 			"simulation_ticks_measured":_view._clock.ticks - _tick_start,
 			"simulation_ticks_total":_view._clock.ticks,"backlog_seconds":_view._clock.accumulator,
@@ -164,6 +221,9 @@ func _finish() -> void:
 			get_tree().quit(1)
 			return
 		file.store_string(JSON.stringify(report) + "\n")
+	if not _capture.is_empty():
+		var error := get_viewport().get_texture().get_image().save_png(_capture)
+		if error != OK: push_error("Cannot capture benchmark frame")
 	for child in get_children(): child.queue_free()
 	_view = null
 	_world = null

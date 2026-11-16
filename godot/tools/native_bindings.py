@@ -14,7 +14,7 @@ expected = Path(__file__).resolve().parents[2] / "dist" / "godot" / "native-buil
 if destination != expected:
     raise ValueError("Expected the dedicated dist/godot/native-build directory")
 profile = destination / "profile.json"
-profile.write_text(json.dumps({"enabled_classes": ["RefCounted", "OS"]}), encoding="utf-8")
+profile.write_text(json.dumps({"enabled_classes": ["RefCounted", "OS", "RandomNumberGenerator", "Texture2D", "RenderingServer"]}), encoding="utf-8")
 api = cpp / "gdextension" / "extension_api-4-7.json"
 trimmed = destination / "extension_api.json"
 trimmed.write_text(json.dumps(build_profile.generate_trimmed_api(str(api), str(profile))), encoding="utf-8")

@@ -36,6 +36,8 @@ static func _check(tree: SceneTree, world: Node, capture_dir: String) -> String:
 		var battle = world._battle
 		if battle == null:
 			return "Campaign battle did not initialize"
+		if not battle._simulation.supports_async():
+			return "Campaign battle worker did not initialize"
 		battle.set_process(false)
 		await tree.process_frame
 		if tree.root.get_camera_2d() != battle.camera:

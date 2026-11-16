@@ -111,6 +111,8 @@ const PROFILES := {
 	Particle.DUST: {"count": 6, "vx": Vector2(-25, 25), "vy": Vector2(-25, -5), "life": Vector2(0.4, 0.8), "radius": Vector2(4, 8), "jitter_x": Vector2(-10, 10), "jitter_y": Vector2(-4, 6)},
 }
 
+var native_enabled := true
+var _native: RefCounted
 var _rng := RandomNumberGenerator.new()
 var _parts := Parts.new(_rng)
 var _fountains: Array[Dictionary] = []
@@ -131,21 +133,26 @@ var blood_enabled := true:
 			_remove_blood_marks()
 
 func _init() -> void:
+	if ClassDB.class_exists("IronBattleEffects"): _native = ClassDB.instantiate("IronBattleEffects")
 	_rng.randomize()
 
 func advance(dt: float, events: Array[Dictionary]) -> Array[Dictionary]:
 	_advance_pools(dt)
-	for i in range(_particles.size() - 1, -1, -1):
-		var particle := _particles[i]
-		particle.remaining -= dt
-		if particle.remaining <= 0.0:
-			if particle.kind == Particle.BLOOD:
-				_remember({"position": particle.position, "radius": particle.radius, "color": particle.color})
-			_particles.remove_at(i)
-			continue
-		particle.position += particle.velocity * dt
-		if particle.kind != Particle.DUST:
-			particle.velocity.y += GRAVITY * dt
+	if native_enabled and _native != null:
+		for particle in _native.advance_particles(_particles, dt, GRAVITY, Particle.DUST):
+			if particle.kind == Particle.BLOOD: _remember({"position": particle.position, "radius": particle.radius, "color": particle.color})
+	else:
+		for i in range(_particles.size() - 1, -1, -1):
+			var particle := _particles[i]
+			particle.remaining -= dt
+			if particle.remaining <= 0.0:
+				if particle.kind == Particle.BLOOD:
+					_remember({"position": particle.position, "radius": particle.radius, "color": particle.color})
+				_particles.remove_at(i)
+				continue
+			particle.position += particle.velocity * dt
+			if particle.kind != Particle.DUST:
+				particle.velocity.y += GRAVITY * dt
 	var splashes: Array[Dictionary] = []
 	for part in _parts.advance(dt, splashes):
 		_add_pool(part.position, _sample(PART_POOL_RADIUS), part.color)
@@ -210,10 +217,14 @@ func draw_ground(canvas: CanvasItem, visible: Rect2) -> void:
 		# The ring's oldest element is the next slot to overwrite.
 		for i in _ground_marks.size():
 			draw_mark(canvas, _ground_marks[(_next_mark + i) % _ground_marks.size()])
-	for pool in _pools:
-		var color: Color = pool.color
-		color.a = POOL_ALPHA
-		_draw_ellipse(canvas, pool.position, pool.radius, POOL_SCALE, color)
+	if native_enabled and _native != null:
+		_native.draw_pools(canvas.get_canvas_item(), _pools, SPLAT_SEGMENTS, POOL_ALPHA, POOL_SCALE)
+	else:
+		for pool in _pools:
+			var color: Color = pool.color
+			color.a = POOL_ALPHA
+			_draw_ellipse(canvas, pool.position, pool.radius, POOL_SCALE, color)
+	_parts.native_enabled = native_enabled
 	_parts.draw_ground(canvas, visible)
 
 static func draw_mark(canvas: CanvasItem, mark: Dictionary) -> void:
@@ -234,10 +245,14 @@ static func draw_mark(canvas: CanvasItem, mark: Dictionary) -> void:
 		_draw_ellipse(canvas, point if pool else point + SPLAT_OFFSET, mark.radius, POOL_SCALE if pool else SPLAT_SCALE, color)
 
 func draw_particles(canvas: CanvasItem) -> void:
-	for particle in _particles:
-		var color: Color = particle.color
-		color.a = clampf(particle.remaining / particle.lifetime, 0.0, 1.0)
-		canvas.draw_circle(particle.position, particle.radius, color)
+	if native_enabled and _native != null:
+		_native.draw_particles(canvas.get_canvas_item(), _particles)
+	else:
+		for particle in _particles:
+			var color: Color = particle.color
+			color.a = clampf(particle.remaining / particle.lifetime, 0.0, 1.0)
+			canvas.draw_circle(particle.position, particle.radius, color)
+	_parts.native_enabled = native_enabled
 	_parts.draw_air(canvas)
 
 static func _draw_ellipse_radii(canvas: CanvasItem, center: Vector2, radii: Vector2, color: Color) -> void:

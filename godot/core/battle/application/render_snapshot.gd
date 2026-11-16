@@ -11,6 +11,7 @@ const FLEEING := 32
 const BLOCKING := 64
 const LEADER := 128
 
+var _render_ids := PackedInt64Array()
 var _render_positions := PackedVector2Array()
 var _render_previous := PackedVector2Array()
 var _render_flags := PackedInt32Array()
@@ -54,3 +55,7 @@ static func freeze(value: Variant) -> void:
 	elif value is Array:
 		for child in value: freeze(child)
 		value.make_read_only()
+
+## Detached input for a batch drawing adapter; it cannot write simulation or retained snapshots.
+func drawing_columns() -> Array:
+	return [_render_positions.duplicate(), _render_previous.duplicate(), _render_flags.duplicate(), _render_sides.duplicate(), _render_groups.duplicate(), _render_dynamic.duplicate(), _render_ids.duplicate()]

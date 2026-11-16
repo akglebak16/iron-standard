@@ -32,6 +32,9 @@ const ARROW_OUTLINE_WIDTH := 4
 const ARROW_SHAPE := [Vector2(22, 0), Vector2(-10, -15), Vector2(-4, 0), Vector2(-10, 15)]
 
 @onready var _ground: ColorRect = $MapGround
+var native_enabled := true
+var _native: RefCounted
+var last_draw_usec := 0
 var _frame: Dictionary = {}
 var _map := Rect2()
 var _time := 0.0
@@ -39,6 +42,9 @@ var _arrow := PackedVector2Array(ARROW_SHAPE)
 var _arrow_outline := PackedVector2Array(ARROW_SHAPE + [ARROW_SHAPE[0]])
 var _map_frame := GameSkin.box("plank", 0)
 var _frame_panel := Panel.new()
+
+func _init() -> void:
+	if ClassDB.class_exists("IronBattleSprites"): _native = ClassDB.instantiate("IronBattleSprites")
 
 func _ready() -> void:
 	_frame_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -75,10 +81,12 @@ func _layout_map() -> void:
 func _draw() -> void:
 	if _frame.is_empty():
 		return
+	var started := Time.get_ticks_usec()
 	var world_to_screen := get_viewport().get_canvas_transform()
 	_draw_minimap(world_to_screen.affine_inverse() * Rect2(Vector2.ZERO, size))
 	if not _frame.decided and _frame.enemy_strength > 0:
 		_draw_enemy_arrow(world_to_screen * Vector2(_frame.enemy_center))
+	last_draw_usec = Time.get_ticks_usec() - started
 
 func _draw_minimap(camera_rect: Rect2) -> void:
 	var scale := _map.size / Vector2(_frame.arena_size)
@@ -89,9 +97,12 @@ func _draw_minimap(camera_rect: Rect2) -> void:
 		var positions := render.positions()
 		var flags := render.flags()
 		var sides := render.sides()
-		for i in positions.size():
-			if flags[i] & (RenderSnapshot.DEAD | RenderSnapshot.GONE): continue
-			_draw_dot(positions[i], sides[i], bool(flags[i] & RenderSnapshot.HERO), bool(flags[i] & RenderSnapshot.MOUNTED), scale)
+		if native_enabled and _native != null:
+			_native.draw_minimap(get_canvas_item(), positions, flags, sides, _map, scale, Vector3(MAP_HERO_DOT, MAP_MOUNT_DOT, MAP_FOOT_DOT), PackedColorArray([Color.WHITE, MAP_ALLY, MAP_ENEMY]))
+		else:
+			for i in positions.size():
+				if flags[i] & (RenderSnapshot.DEAD | RenderSnapshot.GONE): continue
+				_draw_dot(positions[i], sides[i], bool(flags[i] & RenderSnapshot.HERO), bool(flags[i] & RenderSnapshot.MOUNTED), scale)
 	else:
 		for unit: Dictionary in _frame.units:
 			if not unit.dead and not unit.gone:

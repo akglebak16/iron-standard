@@ -7,7 +7,7 @@ const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'ResourceSa
 const NATIVE_SUFFIX = /\.(cpp|hpp|h)$/;
 const ASSET_SUFFIX = /\.(png|jpe?g|svg|webp|ogg|wav|mp3|ttf|otf|json|res|gdextension|tscn|tres)$/;
 const REFERENCED_SUFFIX = /\.(gd|tscn|tres|cpp|hpp|h|gdextension|png|jpe?g|svg|webp|ogg|wav|mp3|ttf|otf|json|res)$/;
-const NATIVE_VALUE_HEADERS = new Set(['algorithm','array','cmath','cstddef','cstdint','cstring','limits','numeric','tuple','type_traits','utility','vector']);
+const NATIVE_VALUE_HEADERS = new Set(['algorithm','array','cmath','cstddef','cstdint','cstring','limits','numeric','tuple','type_traits','utility','vector','functional','unordered_map']);
 
 // A file entry grants exactly that file, not similarly named internal scripts.
 const covers = (file, entry) => entry.endsWith('/') ? file.startsWith(entry) : file === entry;
@@ -210,6 +210,22 @@ function analyze(files, manifest) {
     }
   }
   // Transitive engine access must not be concealed in another core helper.
+  // An execution adapter may use Thread/Semaphore/Time, but its job graph must
+  // remain pure. Scene/resource/input access belongs to the main thread.
+  for (const file of manifest.isolatedWorkers || []) {
+    if (!files.has(file)) { add(file, 'worker-boundary', 'missing-worker'); continue; }
+    const ts = parsed.get(file) || [];
+    const code = ts.filter(t=>!t.string).map(t=>t.value).join(' ');
+    for (const symbol of PURE_FORBIDDEN.filter(x=>x!=='Time'))
+      if (ts.some(t=>!t.string && t.value===symbol)) add(file, 'worker-boundary', symbol);
+    if (/\b(?:static var|load\s*\()/.test(code)) add(file, 'worker-boundary', 'state-or-loading');
+    const seen = new Set([file]), stack = [...(graph.get(file) || [])];
+    while(stack.length) {
+      const next=stack.pop(); if(seen.has(next))continue; seen.add(next);
+      if(!isPure(next)||impure.has(next)) add(file,'worker-boundary',next);
+      stack.push(...(graph.get(next)||[]));
+    }
+  }
   for (const [file] of graph) {
     if (!isPure(file) || test(file)) continue;
     const seen = new Set([file]), stack = [...graph.get(file)];
@@ -262,6 +278,7 @@ function structureIssues(directories, manifest) {
 }
 
 function check() {
+  cp.execFileSync(process.execPath, [path.join(ROOT, 'tools/battle/unit_columns.cjs'), '--check'], {stdio:'pipe'});
   cp.execFileSync(process.execPath, [path.join(ROOT, 'tools/export_asset_paths.cjs'), '--check'], {stdio:'pipe'});
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, MANIFEST), 'utf8'));
   const malformed = manifestIssues(manifest);

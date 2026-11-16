@@ -14,6 +14,7 @@ const HIT_SHAKE_SECONDS := 0.18
 const GATE_SHAKE_SECONDS := 0.45 # gateBreak: B.shake = 0.45
 const HIT_SHAKE_SCREEN_PIXELS := 3.0
 
+var follow_enabled := true
 var _arena_size := Vector2.ZERO
 var _shake_remaining := 0.0
 var _shake_rng := RandomNumberGenerator.new()
@@ -25,7 +26,7 @@ func configure(arena_size: Vector2, hero_position: Vector2) -> void:
 	fit_viewport()
 
 func advance(dt: float, target: Vector2, hero_down: bool, pointer: Vector2, events: Array[Dictionary]) -> void:
-	if target.is_finite():
+	if follow_enabled and target.is_finite():
 		if not hero_down:
 			target += pointer_lead(target, screen_to_world(pointer))
 		position = position.lerp(target, minf(1.0, dt * FOLLOW_RATE))

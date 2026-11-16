@@ -1,4 +1,7 @@
 extends Node2D
+const BattleWorker = preload("res://adapters/godot/battle_worker.gd")
+const NativeMovement = preload("res://adapters/godot/native/movement.gd")
+const NativeColumns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Composition root: the only place that connects storage, scenario and view.
@@ -50,14 +53,14 @@ func _ready() -> void:
 	if not ContentLoader.populate(goods):
 		push_error("Cannot load trade goods catalog")
 		return
-	var session = Factory.create(battle_setup.to_setup(), catalog, gear_catalog, perk_catalog, companion_catalog, Contacts.create())
+	var session = Factory.create(battle_setup.to_setup(), catalog, gear_catalog, perk_catalog, companion_catalog, Contacts.create(), NativeMovement.create(), NativeColumns.create())
 	if session == null:
 		push_error("Invalid battle setup")
 		return
 	var view = BattleView.instantiate()
 	view.name = "Battle"
 	var audio := presentation_preferences.read()
-	view.configure(session, audio.effects, audio.music, presentation_preferences.read_blood(), battle_setup.seed, battle_setup.biome)
+	view.configure(session, audio.effects, audio.music, presentation_preferences.read_blood(), battle_setup.seed, battle_setup.biome, BattleWorker.new(session))
 	view.audio_preferences_changed.connect(_save_audio_preferences)
 	view.blood_preference_changed.connect(_save_blood_preference)
 	var profile := battle_setup.hero_profile.duplicate(true)

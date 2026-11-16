@@ -2,10 +2,14 @@ extends SceneTree
 const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
+const Columns = preload("res://adapters/godot/native/columns.gd")
 const Step = preload("res://core/battle/rules/combat_step.gd")
 
-func resolve(indexed: bool) -> Array:
+func resolve(indexed: bool, native := false) -> Array:
 	var state := State.new()
+	if native:
+		state.column_backend = Columns.create()
+		assert(state.column_backend != null)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 777
 	for i in 150:
@@ -28,5 +32,6 @@ func resolve(indexed: bool) -> Array:
 
 func _initialize() -> void:
 	assert(resolve(true) == resolve(false))
+	assert(resolve(true, true) == resolve(false))
 	print("Projectile broadphase tests passed")
 	quit(0)
