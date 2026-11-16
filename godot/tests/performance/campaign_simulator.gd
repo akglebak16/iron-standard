@@ -4,6 +4,8 @@ extends RefCounted
 ## the observer spends no RNG and changes nothing, so the same seed gives the same world with or without it.
 ## Invariants of §7.2 are measured, not enforced. Since stage 2a the goal of a party (party_goals.gd) is part of the
 ## "goal" that the jitter metric watches, next to tid/sid/chase of the player; before 2a parties had no goal field.
+## Since stage 2b the observer also listens to world_wars.operation (campaigns, lords left home, retreats, relief) and
+## measures how close the host keeps to its marshal on the march; a signal connection changes nothing in the world.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -22,6 +24,7 @@ const RELIEF_SCAN_RADIUS := 900.0   # an own lord this close could have tried to
 const RELIEF_MIN_TROOPS := 36       # 18 × MK, the relief threshold of world_wars
 const RELIEF_GRACE_HOURS := 12      # world_wars sends relief after 10 h of siege; a helper nearby this long is a miss
 const FLEE_SAFE_RADIUS := 300.0     # search radius of the threat-map alternative for a flight
+const HOST_RADIUS := 150.0          # a follower this close to the marshal keeps up with the host (OP_MUSTER_RADIUS)
 
 var world: RefCounted
 var steps := 0
@@ -51,6 +54,9 @@ var _threat_cost := {"samples": 0, "usec": 0, "sources": 0, "cells": 0}
 var _goal_steps := {}   # kind -> goal ("" = none) -> party-steps
 var _burnt := {}        # settlement id -> was burning at the last hour
 var _burns := 0         # villages set on fire (by the dead or by raids)
+var _ops_log: Array = [] # every operation event with its day
+var _skip := {}         # settlement id -> {why: true}: relief was due but not sent (busy elsewhere, too weak)
+var _ops := {"campaigns": 0, "kept": 0, "lords_out": 0, "retreat_weak": 0, "retreat_home": 0, "relief": 0, "march_hours": 0, "march_share": 0.0}
 var heat_cols := 0
 var heat_rows := 0
 var heat_lords := PackedInt32Array()
@@ -95,6 +101,8 @@ func _init(w: RefCounted) -> void:
 	heat_fights.resize(heat_cols * heat_rows)
 	heat_sieges.resize(heat_cols * heat_rows)
 	world.threat_map()  # from now on hour_tick refreshes it; it spends no RNG
+	if world.wars.has_signal("operation"):
+		world.wars.operation.connect(_on_operation)
 	for k in world.wars.wars:
 		_wars[k] = int(world.wars.wars[k].since)
 	for s in world.map.settles:
@@ -191,6 +199,7 @@ func observe_hour() -> void:
 	_observe_edges()
 	_observe_heat()
 	_observe_burns()
+	_observe_marches()
 	var crisis: Dictionary = world.undead.crisis
 	if crisis.get("on", false) and _crisis.start_day < 0:
 		_crisis.start_day = day
@@ -263,6 +272,8 @@ func _observe_sieges(day: int) -> void:
 			if rec != null:
 				rec.end_day = day
 				rec.outcome = "captured" if s.fac != rec.defender else "lifted"
+				rec.skip = _skip.get(s.id, {}).keys()
+				_skip.erase(s.id)
 				_siege_log.append(rec)
 				_sieges.erase(s.id)
 			continue
@@ -290,6 +301,49 @@ func _observe_sieges(day: int) -> void:
 			if Rules.troop_count(p.troops) >= RELIEF_MIN_TROOPS and Vector2(p.x - s.x, p.y - s.y).length() <= RELIEF_SCAN_RADIUS:
 				rec.helper_hours += 1
 				break
+
+## Operations of world_wars as they happen (stage 2b).
+func _on_operation(e: Dictionary) -> void:
+	match String(e.get("what", "")):
+		"start":
+			_ops.campaigns += 1
+			_ops.kept += int(e.get("keep", 0))
+			_ops.lords_out += int(e.get("army", 0))
+		"retreat":
+			_ops["retreat_" + String(e.get("why", "weak"))] = int(_ops.get("retreat_" + String(e.get("why", "weak")), 0)) + 1
+		"relief":
+			_ops.relief += 1
+		"no_relief":
+			if not _skip.has(e.sid):
+				_skip[e.sid] = {}
+			_skip[e.sid][String(e.why)] = true
+			return  # every 2 hours of such a siege; kept per siege, not logged
+	var row := e.duplicate()
+	row.day = _day()
+	row.hour = int(world.clock.hour)
+	_ops_log.append(row)
+
+## Hourly: the share of followers that keep up with the marshal on the march (marshals exist since stage 2b).
+func _observe_marches() -> void:
+	for f in world.wars.campaigns:
+		var c: Dictionary = world.wars.campaigns[f]
+		if String(c.get("state", "")) != "march" or c.get("marshal") == null:
+			continue
+		var m: Dictionary = world.roster.party_by_id(c.marshal)
+		if m.is_empty():
+			continue
+		var n := 0
+		var close := 0
+		for id in c.army:
+			var p: Dictionary = world.roster.party_by_id(id)
+			if p.is_empty() or p == m:
+				continue
+			n += 1
+			if Vector2(p.x - m.x, p.y - m.y).length() <= HOST_RADIUS:
+				close += 1
+		if n > 0:
+			_ops.march_hours += 1
+			_ops.march_share += float(close) / n
 
 ## Villages that caught fire this hour: the dead burn them, since stage 2a lords raid them too.
 func _observe_burns() -> void:
@@ -494,6 +548,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 	for id in _sieges:
 		var open: Dictionary = _sieges[id].duplicate()
 		open.outcome = "ongoing"
+		open.skip = _skip.get(id, {}).keys()
 		sieges.append(open)
 	var no_relief := sieges.filter(func(r): return not r.relief and r.helper_hours >= RELIEF_GRACE_HOURS)
 	var no_help := no_relief.filter(func(r): return not r.get("defended", false))
@@ -517,7 +572,12 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"final_share": _daily.back().share if not _daily.is_empty() else 0.0, "final_leader": _daily.back().leader if not _daily.is_empty() else "",
 		"sieges": sieges.size(), "sieges_with_relief": sieges.filter(func(r): return r.relief).size(),
 		"sieges_no_relief_with_helper": no_relief.size(), "sieges_defended": sieges.filter(func(r): return r.get("defended", false)).size(),
-		"sieges_no_help_with_helper": no_help.size(), "villages_burnt": _burns, "lord_goals": _share_text(_goal_shares().get("lord", {})),
+		"sieges_no_help_with_helper": no_help.size(),
+		"no_relief_busy": no_relief.filter(func(r): return "busy" in r.get("skip", [])).size(),
+		"no_relief_weak": no_relief.filter(func(r): return "weak" in r.get("skip", []) and not "busy" in r.get("skip", [])).size(), "villages_burnt": _burns, "lord_goals": _share_text(_goal_shares().get("lord", {})),
+		"campaigns": _ops.campaigns, "campaign_lords": float(_ops.lords_out) / maxf(1.0, _ops.campaigns),
+		"campaign_kept": float(_ops.kept) / maxf(1.0, _ops.campaigns), "retreats_weak": _ops.retreat_weak, "retreats_home": _ops.retreat_home,
+		"relief_sent": _ops.relief, "march_with_marshal": _ops.march_share / maxf(1.0, _ops.march_hours),
 		"edge_idle_party_hours": _edge.party_hours, "edge_stuck_6h": _edge.streaks, "edge_max_streak_hours": _edge.max_streak,
 		"flees": _flees.count, "flees_measured": _flees.measured,
 		"flees_into_more_threat": float(_flees.into_more_threat) / maxf(1.0, _flees.measured),
@@ -538,6 +598,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"lords": {"died": _lord_log.died, "new": _lord_log.new},
 		"jitter": jitter,
 		"goal_shares": _goal_shares(),
+		"operations": _ops_log,
 		"sieges": sieges,
 		"edge": _edge,
 		"daily": _daily,
