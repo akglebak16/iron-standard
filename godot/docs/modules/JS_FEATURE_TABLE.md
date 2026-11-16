@@ -18,10 +18,10 @@
 
 | Статус | Строк |
 | --- | --- |
-| совпадает и проверено | 27 |
+| совпадает и проверено | 30 |
 | отличается | 6 |
 | отсутствует | 1 |
-| не проверено | 41 |
+| не проверено | 39 |
 | не переносим | 2 |
 
 Чтобы удалить JS, все строки должны стать «совпадает и проверено» (или «не переносим» по решению владельца).
@@ -46,7 +46,7 @@
 
 | Возможность | JS | Godot | Проверка | Статус | Что не так |
 | --- | --- | --- | --- | --- | --- |
-| Создание и расстановка армий | `03_battle.js` `startBattle`, `mkUnit`, `layout` | `core/battle/application/factory.gd`, `core/battle/model/group.gd` | `test_groups.gd`, `test_hero_factory.gd`, `test_catalog_spawn.gd` | не проверено | В чек-листе паритета «Частично» |
+| Создание и расстановка армий | `03_battle.js` `startBattle`, `mkUnit`, `layout` | `core/battle/application/factory.gd`, `core/battle/model/group.gd` | `test_groups.gd`, `test_hero_factory.gd`, `test_catalog_spawn.gd`, `test_ui_feedback.gd` | не проверено | В чек-листе паритета «Частично». Герой встаёт на x = 730, как в `startBattle` |
 | Группы, приказы, перестроение | `03_battle.js` `giveOrder`, `slotPos` | `core/battle/model/group.gd` | `test_groups.gd`, `test_tactics.gd` | не проверено | |
 | ИИ бойцов: движение и режимы | `03_battle.js` `steer`, `aiUnit` | `core/battle/rules/ai_decision.gd`, `movement.gd` | `test_ai_decision.gd`, `test_movement.gd`, отпечатки | не проверено | |
 | Ближний бой, блок, натиск | `03_battle.js` `strike`, `undeadMul` | `core/battle/rules/combat.gd` | `test_combat.gd`, `test_block.gd`, `test_charge.gd` | не проверено | |
@@ -66,7 +66,8 @@
 | Боевой HUD: здоровье, силы, броня, мораль, группы, уровень героя | `07_main.js` `buildBattleHud`, `updateBattleHud` | `hud/battle_controls.gd` | `test_hud_layout.gd`, `test_autosave_music_hud.gd` | не проверено | Уровень героя и «[X]» сверены, остальное нет |
 | Призрачный строй выбранных групп на «Стоять» | `06h_polish.js` `commandDraw` | `hud/command_ghost.gd`, `session.gd` `player_groups` | `test_command_ghost.gd` | совпадает и проверено | |
 | Пыль из-под копыт и блики удара | `06h_polish.js` `unitPolish` | `presentation/battle/unit_view.gd` `_draw_polish` | — | не проверено | Код повторяет JS построчно; при первой сверке пропущен из-за другого имени |
-| Звуки боя | `04_audio.js` `sfx`, `tone`, `noise` | `presentation/battle/audio/` | `test_scene.gd` | не проверено | |
+| Звуки боя | `04_audio.js` `sfx`, `tone`, `noise` | `presentation/battle/audio/` | `test_scene.gd`, `test_ui_feedback.gd` | совпадает и проверено | Лязг, как в JS, звучит со случайной высотой 1900–2300 Гц: пять заранее собранных вариантов вместо расчёта на каждый удар |
+| Звуки окон: щелчок, монеты, новый уровень, приказ | `04_audio.js` `sfx('click'/'coin'/'level'/'order')`, вызовы в `06_*.js` | `presentation/campaign/ui_sounds.gd`, `sound_bank.gd` `ui_sounds` | `test_ui_feedback.gd` | совпадает и проверено | |
 | Музыка боя | `04_audio.js` `musicTick(dt, 'battle')` | `audio/battle_music.gd` | — | отличается | Godot по умолчанию играет записанную дорожку `battle_theme.ogg`; процедурная музыка JS — запасной вариант |
 
 ## Карта и кампания
@@ -113,7 +114,7 @@
 | Фракции в журнале | `06g_jfactions.js` | `party_window.gd` `_factions_tab` | — | не проверено | |
 | Окно осады и итог захвата | `06i_siege.js` | `siege_window.gd` | `test_siege_window.gd` | не проверено | |
 | Окно итогов боя с выходом | `07_main.js` `showResult`, `quickEnded` | `battle_result_window.gd` | `test_autosave_music_hud.gd` | совпадает и проверено | |
-| HUD карты, подсказки, уведомления | `07_main.js` `updateWorldHud`, `06_ui.js` `toast`, `worldTip` | `world_hud.gd`, `world_tips.gd` | `test_gear_and_menu.gd` | не проверено | |
+| HUD карты, подсказки, уведомления | `07_main.js` `updateWorldHud`, `06_ui.js` `toast`, `worldTip` | `world_hud.gd`, `world_tips.gd` | `test_gear_and_menu.gd`, `test_ui_feedback.gd` | совпадает и проверено | Уведомление гаснет через 2,2 с, как `toast` |
 | Маркер «Цель пути» | `06h_polish.js` `routeFinish` | `world_marks_layer.gd` | `test_autosave_music_hud.gd` | совпадает и проверено | |
 | Музыка карты и меню | `04_audio.js` `musicTick(dt, 'world')` | `world_music.gd` | `test_autosave_music_hud.gd` | совпадает и проверено | |
 | Ручное сохранение и загрузка | `07_main.js` `saveGame`, `loadGame` | `adapters/persistence/save_store.gd`, `world_save.gd` | `test_world_save.gd`, `test_save_v2.gd` | совпадает и проверено | |

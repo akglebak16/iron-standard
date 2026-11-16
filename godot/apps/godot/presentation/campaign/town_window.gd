@@ -82,12 +82,12 @@ func _recruits(p, fx: Dictionary) -> void:
 		var cost := Economy.hire_cost(troop, fx)
 		var can: bool = p.gold >= cost and count < cap
 		row("%s ×%d" % [troop.name, r.n], "ур. %d · %d зол. за бойца" % [troop.tier, cost], [
-			{"text": "Нанять", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 1, fx)},
-			{"text": "×5", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 5, fx)},
+			{"sound": "coin", "text": "Нанять", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 1, fx)},
+			{"sound": "coin", "text": "×5", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 5, fx)},
 		], r.type)
 	heading("Ожидание")
 	note("Время идёт как обычно, а отряд стоит у стен. Любой клик по карте — в путь.")
-	row("Подождать здесь", "", [{"text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])
+	row("Подождать здесь", "", [{"sound": "click", "text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])
 
 func _tavern(p) -> void:
 	var comps = state.companions
@@ -102,7 +102,7 @@ func _tavern(p) -> void:
 		var can: bool = p.gold >= price and n < comps.COMP_MAX
 		var cost := ("%d зол., жалованье %d/день" % [price, d.wage]) if price > 0 else "бесплатно, служит за честь"
 		row("%s · %s%s" % [c.name, d.role, (" · ур. %d" % c.lvl) if int(c.lvl) > 1 else ""], "«%s»\n%s: %s\n%s" % [d.story, d.skn, PartyWindowText.skill_text(d, c), cost],
-			[{"text": "Нанять", "disabled": not can, "call": func(): _say(comps.hire(p, settlement, c.id))}])
+			[{"sound": "coin", "text": "Нанять", "disabled": not can, "call": func(): _say(comps.hire(p, settlement, c.id))}])
 	var rm: Dictionary = comps.rumor(p, settlement)
 	if not rm.is_empty():
 		note("Трактирщик шепчет: «%s (%s) сейчас в %s. Ищет, к кому бы пристать»." % [rm.c.name, String(rm.c.role).to_lower(), rm.t.name])
@@ -115,7 +115,7 @@ func _quests(p) -> void:
 		note("Доска пуста.")
 	for item in board.duplicate():
 		row(q.text(item), "Срок: до дня %d · %s · награда %d" % [item.dl, q.detail(item, settlement), item.reward],
-			[{"text": "Взять", "disabled": p.quests.size() >= q.MAX_QUESTS, "call": func(): _say(q.accept(p, settlement, int(item.id)))}])
+			[{"sound": "order", "text": "Взять", "disabled": p.quests.size() >= q.MAX_QUESTS, "call": func(): _say(q.accept(p, settlement, int(item.id)))}])
 	if not p.quests.is_empty():
 		heading("Твои задания")
 		for item in p.quests:
@@ -133,12 +133,12 @@ func _oath(p) -> void:
 		note("Жалованье: %d золота в день. Враги сюзерена — твои враги. Когда он созывает войска, будь рядом с осаждаемым городом: это награда и шанс получить лен. Неявок: %d из 3." % [clans.pay(), p.strikes])
 		if p.summons is Dictionary:
 			note("Зов: %s%s." % [state.map.settlement_by_id(p.summons.tid).get("name", "?"), " (ты участвовал)" if p.summons.joined else ", срок до дня %d" % ceili(p.summons.until / 24.0)])
-		row("Оставить службу", "Отношения с фракцией ухудшатся.", [{"text": "Уйти", "call": func(): clans.leave()}])
+		row("Оставить службу", "Отношения с фракцией ухудшатся.", [{"sound": "click", "text": "Уйти", "call": func(): clans.leave()}])
 	elif p.liege == "":
 		var why: String = clans.oath_why(f)
 		heading("Принести присягу")
 		note("Нужен %d уровень героя и отношения от %d. Сюзерен платит жалованье и награждает за походы, но враги фракции станут твоими." % [clans.OATH_LVL, clans.OATH_REL])
-		row("Присягнуть", why, [{"text": "Присягнуть", "disabled": why != "", "call": func(): _say(clans.swear(f))}])
+		row("Присягнуть", why, [{"sound": "order", "text": "Присягнуть", "disabled": why != "", "call": func(): _say(clans.swear(f))}])
 	else:
 		note("Сначала оставь службу у %s." % _factions.get_faction(p.liege).gen)
 	heading("Мир")
@@ -191,20 +191,20 @@ func _hold(p, fx: Dictionary) -> void:
 	for t in garrison.duplicate():
 		var troop: Dictionary = state.roster.catalog.get_troop(t.type)
 		row("%s ×%d" % [troop.name, t.n], "ур. %d" % troop.tier, [
-			{"text": "Забрать", "call": func(): siege.gar_move(p, settlement, t.type, 1, false, cap)},
+			{"sound": "click", "text": "Забрать", "call": func(): siege.gar_move(p, settlement, t.type, 1, false, cap)},
 			{"text": "×5", "call": func(): siege.gar_move(p, settlement, t.type, 5, false, cap)}])
 	heading("Твой отряд")
 	for t in p.troops.duplicate():
 		var troop: Dictionary = state.roster.catalog.get_troop(t.type)
 		row("%s ×%d" % [troop.name, t.n], "ур. %d" % troop.tier, [
-			{"text": "Оставить", "call": func(): siege.gar_move(p, settlement, t.type, 1, true, cap)},
+			{"sound": "click", "text": "Оставить", "call": func(): siege.gar_move(p, settlement, t.type, 1, true, cap)},
 			{"text": "×5", "call": func(): siege.gar_move(p, settlement, t.type, 5, true, cap)}])
 
 func _market(p, fx: Dictionary) -> void:
 	heading("Провизия")
 	note("В запасе %d порций. Отряду нужна порция на шестерых бойцов в день." % Economy.provisions(p))
 	for offer in Economy.FOOD_OFFERS:
-		row("%d порций" % offer[0], "%d зол." % offer[1], [{"text": "Купить", "disabled": p.gold < offer[1], "call": func(): Economy.buy_food(p, offer[0], offer[1])}])
+		row("%d порций" % offer[0], "%d зол." % offer[1], [{"sound": "coin", "text": "Купить", "disabled": p.gold < offer[1], "call": func(): Economy.buy_food(p, offer[0], offer[1])}])
 	note("Оружие, доспехи и коней продают на вкладке «Товары», надевают в окне отряда (вкладка «Снаряжение»).")
 
 func _goods(p, fx: Dictionary) -> void:
@@ -273,5 +273,7 @@ static func _slot(it: Dictionary) -> String:
 	return SLOT_NAMES.get(it.get("slot", ""), "")
 
 func _trade(result: Dictionary) -> void:
+	if int(result.get("n", 0)) > 0:
+		UiSounds.play(self, "coin")
 	if result.n == 0 and result.why != "":
 		sub_label.text = Market.WHY[result.why]

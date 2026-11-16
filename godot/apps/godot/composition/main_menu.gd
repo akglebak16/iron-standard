@@ -1,4 +1,5 @@
 extends Control
+const UiSounds = preload("res://apps/godot/presentation/campaign/ui_sounds.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Start screen: hero name, culture, new game (the menu and culture choice in src/06_ui.js and src/07_main.js).
@@ -116,6 +117,7 @@ func _ready() -> void:
 
 func _sync_music() -> void:
 	var audio := _preferences.read()
+	UiSounds.enabled = audio.effects
 	_music.enabled = audio.effects and audio.music
 
 func _button(parent: Node, text: String, action: Callable, primary := false) -> Button:

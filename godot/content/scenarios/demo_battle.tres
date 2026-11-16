@@ -12,4 +12,4 @@ enemy_army = Array[Dictionary]([{"type": "e1", "n": 20}, {"type": "e2a", "n": 4}
 hero_troop = "n3"
 hero_profile = {"name": "Ты", "str": 3, "vit": 3, "agi": 2, "int": 2, "cha": 2, "perks": [], "eq": {"head": "head_nasal", "body": "body_mail", "hands": "hands_leather", "legs": "legs_boots", "melee": "sword_knight", "ranged": "bow_long", "shield": "shield_banded"}, "sel": "melee", "hp": 1.0}
 companion_profiles = Array[Dictionary]([{"id": "anselm"}, {"id": "ingrid"}, {"id": "tului"}])
-hero_position = Vector2(780, 850)
+hero_position = Vector2(730, 850)

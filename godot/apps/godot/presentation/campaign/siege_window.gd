@@ -95,6 +95,7 @@ func _go(gold: bool) -> void:
 	if r == null:
 		return
 	if r:
+		UiSounds.play(self, "coin")
 		state.settlement_changed.emit(settlement)
 		state.log_world("%s сдался без боя. Город твой, жители целы." % settlement.name)
 		captured.emit(settlement)
@@ -104,8 +105,8 @@ func _go(gold: bool) -> void:
 
 func _loot() -> void:
 	note("Город пал. Решай, что будет с ним и с жителями.")
-	row("Разграбить", "Золото сейчас, но жители возненавидят тебя, а доход упадёт.", [{"text": "Грабить", "call": func(): _finish(state.siege.sack(state.player, settlement))}])
-	row("Пощадить", "Жители поднесут дары, отношение к их фракции улучшится.", [{"text": "Пощадить", "call": func(): _finish(state.siege.spare(state.player, settlement))}])
+	row("Разграбить", "Золото сейчас, но жители возненавидят тебя, а доход упадёт.", [{"sound": "coin", "text": "Грабить", "call": func(): _finish(state.siege.sack(state.player, settlement))}])
+	row("Пощадить", "Жители поднесут дары, отношение к их фракции улучшится.", [{"sound": "click", "text": "Пощадить", "call": func(): _finish(state.siege.spare(state.player, settlement))}])
 
 func _finish(text: String) -> void:
 	state.log_world(text)
