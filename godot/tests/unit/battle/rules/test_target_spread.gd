@@ -47,11 +47,11 @@ func _check_crowd(side: int) -> void:
 	fighter.target_handle = crowded.unit_handle
 	crowded.attackers = int(Config.TARGET_CROWD_FREE_ATTACKERS) + 1
 	assert(_choose(state, fighter) == crowded)
-	# Archers do not crowd and are not deterred by a crowd.
+	# Archers do not count as melee attackers and are not deterred by a melee crowd (their own rules: test_archer_fire.gd).
 	fighter.target_handle = 0
 	crowded.attackers = 50
 	fighter.attack_range = 200.0
-	assert(_choose(state, fighter) == crowded, "a ranged fighter keeps the nearest target")
+	assert(_choose(state, fighter) == crowded, "a melee crowd does not deter a ranged fighter")
 	# Mounted melee is a melee fighter too.
 	fighter.attack_range = 0.0
 	fighter.mounted = true
@@ -77,7 +77,7 @@ func _check_outrun(side: int) -> void:
 	assert(_choose(state, fighter) == runner, "a faster fighter can follow")
 	fighter.speed = 50.0
 	fighter.attack_range = 180.0
-	assert(_choose(state, fighter) == runner, "an archer shoots whoever is nearest")
+	assert(_choose(state, fighter) == runner, "an archer is not deterred by a fast target")
 
 ## Retargeting keeps the counts of the tick current: the old target loses an attacker, the new one gains one.
 func _check_refresh_counts() -> void:

@@ -100,7 +100,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 	return index
 
 ## Stage 1a inputs, once per tick before any fighter moves; begin() in movement_kernel.hpp computes the same:
-## the melee attackers of every target, and for every group the formation centre that fits its ready fighters
+## the melee attackers and the shooters (aimers, stage 1a-archers) of every target, and for every group the formation centre that fits its ready fighters
 ## (the mean of position minus formation offset, summed in double precision in row order).
 static func _prepare_ai(battle: State) -> void:
 	var motion = battle.motion
@@ -112,8 +112,10 @@ static func _prepare_ai(battle: State) -> void:
 	var positions: PackedVector2Array = motion.positions
 	var count := battle.active_units.size()
 	var attackers: int = fields.ATTACKERS * capacity
+	var aimers: int = fields.AIMERS * capacity
 	for row in count:
 		flags[attackers + row] = 0
+		flags[aimers + row] = 0
 	var sums := PackedFloat64Array()
 	sums.resize(12)
 	var counts := PackedInt32Array()
@@ -128,10 +130,9 @@ static func _prepare_ai(battle: State) -> void:
 		sums[slot * 2] += fitted.x
 		sums[slot * 2 + 1] += fitted.y
 		counts[slot] += 1
-		if reals[motion.R.ATTACK_RANGE * capacity + row] <= 0.0:
-			var target := battle.unit_for(flags[fields.TARGET_HANDLE * capacity + row])
-			if target != null and target.side != side and not target.dead and not target.gone:
-				flags[attackers + target.battle_index] += 1
+		var target := battle.unit_for(flags[fields.TARGET_HANDLE * capacity + row])
+		if target != null and target.side != side and not target.dead and not target.gone:
+			flags[(attackers if reals[motion.R.ATTACK_RANGE * capacity + row] <= 0.0 else aimers) + target.battle_index] += 1
 	for slot in 6:
 		battle.formation_centers[slot] = Vector2(sums[slot * 2] / counts[slot], sums[slot * 2 + 1] / counts[slot]) if counts[slot] > 0 else Vector2.INF
 

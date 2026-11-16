@@ -37,6 +37,9 @@ func _check_cell(cell: Dictionary) -> void:
 			assert(run[key][side] >= 0.0 and run[key][side] <= 1.0, "%s out of range in %s" % [key, cell.scenario])
 	assert(run.losses[0] + run.fled[0] <= 1.0 + 1e-6 and run.losses[1] + run.fled[1] <= 1.0 + 1e-6)
 	assert(run.ai_phase.count == run.ticks and run.ai_phase.mean_ms >= 0.0, "AI phase sampled on every tick")
+	assert(run.volleys.aimed <= run.volleys.shots)
+	for key in ["doomed_share", "dead_share", "wasted_share"]:
+		assert(run.volleys[key] >= 0.0 and run.volleys[key] <= 1.0, "%s out of range in %s" % [key, cell.scenario])
 	assert(cell.summary.runs == 1 and cell.summary.wins[0] + cell.summary.wins[1] + cell.summary.draws == 1)
 	if cell.scenario == "kite":
 		assert(run.profiles == [Config.AI_PROFILE_PLAYER, Config.AI_PROFILE_REFERENCE], "The kite side 0 follows player orders")

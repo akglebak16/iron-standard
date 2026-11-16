@@ -45,6 +45,8 @@ static func choose(battle: State, unit: Unit, index: SpatialIndex = null) -> Uni
 			distance *= Config.CURRENT_TARGET_MULTIPLIER
 		if melee:
 			distance = SpatialIndex.melee_weight(distance, raw, at, unit.speed, enemy, enemy_position, enemy == previous)
+		else:
+			distance = SpatialIndex.ranged_weight(distance, unit.id, unit.damage, enemy, enemy == previous)
 		if distance < best_distance:
 			best_distance = distance
 			best = enemy
@@ -56,10 +58,14 @@ static func refresh(battle: State, unit: Unit, dt: float, rng: RandomNumberGener
 	if unit.target_timer <= 0.0 or unit.target_handle != 0 and target == null:
 		unit.target_timer = Config.RETARGET_MIN_SECONDS + rng.randf() * Config.RETARGET_RANDOM_SECONDS
 		var chosen := choose(battle, unit, index)
-		# Keep the attacker counts of this tick current (Movement._prepare_ai counted the old targets).
-		if unit.attack_range <= 0.0 and chosen != target:
-			if target != null: target.attackers -= 1
-			if chosen != null: chosen.attackers += 1
+		# Keep the attacker and aimer counts of this tick current (Movement._prepare_ai counted the old targets).
+		if chosen != target:
+			if unit.attack_range <= 0.0:
+				if target != null: target.attackers -= 1
+				if chosen != null: chosen.attackers += 1
+			else:
+				if target != null: target.aimers -= 1
+				if chosen != null: chosen.aimers += 1
 		target = chosen
 		unit.target_handle = target.unit_handle if target != null else 0
 	return target

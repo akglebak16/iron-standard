@@ -80,6 +80,13 @@ private:
     cells[c].units.push_back(row);
     locations[row] = c;
   }
+  // SpatialIndex.front_share: a fixed number in [0, 1) from the shooter's and the target's ids.
+  static double front_share(int64_t own_id, int64_t enemy_id) {
+    int64_t x = (own_id & 1048575) * 92821 + (enemy_id & 1048575) * 68917;
+    x = x ^ (x >> 15);
+    x = (x % 1000003) * 2654435761LL;
+    return double((x >> 20) & 1023) / 1024.0;
+  }
   int choose(int row, int previous) {
     Vec2 at = positions[row];
     int best = -1;
@@ -87,6 +94,8 @@ private:
     bool cavalry = i(I_MOUNTED, row) && r(R_ATTACK_RANGE, row) <= 0;
     bool melee = r(R_ATTACK_RANGE, row) <= 0;
     double own = r(R_SPEED, row);
+    double own_damage = r(R_DAMAGE, row);
+    int64_t own_id = i(I_ID, row);
     auto consider = [&](int e) {
       if (!live(e) || i(I_SIDE, e) == i(I_SIDE, row))
         return;
@@ -110,6 +119,15 @@ private:
           if (excess > 0)
             d *= 1.0 + p(TARGET_OUTRUN_MULTIPLIER) * excess / own;
         }
+      } else {
+        // Stage 1a-archers (DESIGN.md 4.4, decision 15): SpatialIndex.ranged_weight.
+        if (own_damage > 0) {
+          double surplus = double(i(I_AIMERS, e)) - (e == previous ? 1.0 : 0.0) + 1.0 -
+                           r(R_HP, e) / (own_damage * p(TARGET_VOLLEY_HIT_SHARE));
+          if (surplus > 0)
+            d *= 1.0 + p(TARGET_OVERKILL_MULTIPLIER) * surplus;
+        }
+        d *= 1.0 + p(TARGET_FRONT_SPREAD) * front_share(own_id, i(I_ID, e));
       }
       if (d < score || (d == score && (best < 0 || e < best))) {
         score = d;
@@ -299,12 +317,15 @@ private:
             float(d < p(SIEGE_ROUTE_CENTERING_DISTANCE) ? center : entry)};
   }
 
-  // Stage 1a inputs before any fighter moves, as Movement._prepare_ai: melee attackers of every target and the
+  // Stage 1a inputs before any fighter moves, as Movement._prepare_ai: melee attackers and shooters (aimers) of
+  // every target and the
   // formation centre fitted to each group (mean of position minus formation offset, double sums in row order).
   void prepare() {
     int count = int(positions.size());
-    for (int row = 0; row < count; ++row)
+    for (int row = 0; row < count; ++row) {
       i(I_ATTACKERS, row) = 0;
+      i(I_AIMERS, row) = 0;
+    }
     double sums[12] = {};
     int counts[6] = {};
     for (int row = 0; row < count; ++row) {
@@ -317,11 +338,9 @@ private:
       sums[slot * 2] += fitted.x;
       sums[slot * 2 + 1] += fitted.y;
       counts[slot] += 1;
-      if (r(R_ATTACK_RANGE, row) <= 0) {
-        int t = resolve(i(I_TARGET_HANDLE, row));
-        if (t >= 0 && i(I_SIDE, t) != i(I_SIDE, row))
-          i(I_ATTACKERS, t) += 1;
-      }
+      int t = resolve(i(I_TARGET_HANDLE, row));
+      if (t >= 0 && i(I_SIDE, t) != i(I_SIDE, row))
+        i(r(R_ATTACK_RANGE, row) <= 0 ? I_ATTACKERS : I_AIMERS, t) += 1;
     }
     for (int slot = 0; slot < 6; ++slot)
       centers[slot] =
@@ -391,11 +410,12 @@ public:
                 p(RETARGET_MIN_SECONDS) + random() * p(RETARGET_RANDOM_SECONDS);
             int old = target;
             target = choose(row, target);
-            if (r(R_ATTACK_RANGE, row) <= 0 && target != old) {
+            if (target != old) {
+              I counter = r(R_ATTACK_RANGE, row) <= 0 ? I_ATTACKERS : I_AIMERS;
               if (old >= 0)
-                i(I_ATTACKERS, old) -= 1;
+                i(counter, old) -= 1;
               if (target >= 0)
-                i(I_ATTACKERS, target) += 1;
+                i(counter, target) += 1;
             }
             i(I_TARGET_HANDLE, row) =
                 target >= 0 ? i(I_UNIT_HANDLE, target) : 0;

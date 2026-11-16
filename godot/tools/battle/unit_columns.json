@@ -17,7 +17,8 @@
     "plan_face",
     "plan_speed",
     "plan_distance",
-    "chase_seconds"
+    "chase_seconds",
+    "damage"
   ],
   "integer": [
     "id",
@@ -36,7 +37,8 @@
     "blocking",
     "leader",
     "attackers",
-    "leashed"
+    "leashed",
+    "aimers"
   ],
   "vector": [
     "slot_offset",
@@ -102,6 +104,9 @@
     "AI_CHARGE_MOUNTED_HARD_LEASH",
     "AI_CHARGE_MOUNTED_RETURN_DISTANCE",
     "AI_CHARGE_CHASE_SECONDS",
-    "AI_CHARGE_CHASE_SPEED_SHARE"
+    "AI_CHARGE_CHASE_SPEED_SHARE",
+    "TARGET_VOLLEY_HIT_SHARE",
+    "TARGET_OVERKILL_MULTIPLIER",
+    "TARGET_FRONT_SPREAD"
   ]
 }

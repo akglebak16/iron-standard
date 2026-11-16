@@ -23,8 +23,9 @@ const Benchmark = preload("res://tests/performance/battle_benchmark.gd")
 const Columns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Movement = preload("res://adapters/godot/native/movement.gd")
+const Combat = preload("res://core/battle/rules/combat.gd")
 
-const VERSION := 1
+const VERSION := 2 # 2: volley metrics.
 const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
@@ -35,6 +36,8 @@ const KITE_HERO_SPEED := 160.0
 const KITE_ORBIT_RADIUS := 150.0
 const KITE_SAMPLE_LIMIT := 64
 const IDLE_MODES := [0, 1] # MotionStore.MODES: unassigned and slot.
+const VOLLEY_TICKS := 60 # Shots of one side within 1 s form a volley.
+const VOLLEY_MIN_SHOTS := 10 # Shorter windows are stray shots, not volleys.
 
 static func default_options() -> Dictionary:
 	return {"scenarios": SCENARIOS.duplicate(), "sizes": [100], "runs": 4, "seed": 4242, "max_seconds": 240.0,
@@ -176,6 +179,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var chased_long := {}
 	var reached_archers := -1.0
 	var input := HeroInput.new()
+	var volleys := volley_tracker()
 	var started := Time.get_ticks_msec()
 	var tick := 0
 	while tick < max_ticks:
@@ -186,6 +190,9 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		for event in session.take_events():
 			if event.kind == Event.Kind.BATTLE_DECIDED and decided_at < 0.0:
 				decided_at = tick * TICK_SECONDS
+			elif event.kind == Event.Kind.SHOT:
+				track_shot(volleys, state, int(event.target_id), tick)
+		advance_volleys(volleys, tick)
 		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
 			_sample_idle(state, engaged, idle_samples, unit_samples)
 		if kite and tick % KITE_SAMPLE_TICKS == 0:
@@ -217,10 +224,93 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
 		"wall_ms": Time.get_ticks_msec() - started}
 	if options.phase_profile: result.ai_phase = Benchmark.stats(ai_samples) if not ai_samples.is_empty() else {}
+	result.volleys = volley_report(volleys)
 	if kite:
 		result.kite = {"chase_share": float(chased_long.size()) / maxi(1, initial[1]),
 			"reached_archers_seconds": reached_archers}
 	return result
+
+## Volley metrics (DESIGN.md 4.4, stage 1a-archers), read from SHOT events and the state only. A shot aims at
+## the shooter's current target. It is "doomed" when arrows already in flight to that target are expected to kill
+## it (expected damage per arrow: damage x TARGET_VOLLEY_HIT_SHARE), "dead" when the target died while the arrow
+## was still in flight. An arrow landing on the tick its target dies counts as landed. Volleys: 1 s windows per
+## side with at least VOLLEY_MIN_SHOTS shots; the first volley is each side's first such window.
+static func volley_tracker() -> Dictionary:
+	return {"ids": {}, "flight": [], "expected": {}, "shots": 0, "aimed": 0, "doomed": 0, "dead": 0,
+		"window": [{}, {}], "window_start": [-1, -1], "window_shots": [0, 0], "volleys": 0, "volley_targets": 0,
+		"volley_shots": 0, "first": [{}, {}]}
+
+static func track_shot(tracker: Dictionary, state, shooter_id: int, tick: int) -> void:
+	var ids: Dictionary = tracker.ids
+	if not ids.has(shooter_id):
+		for unit in state.units: ids[unit.id] = unit
+	var shooter = ids.get(shooter_id)
+	if shooter == null or shooter.hero: return
+	tracker.shots += 1
+	var target = state.unit_for(shooter.target_handle)
+	if target == null: return
+	tracker.aimed += 1
+	var expected: Dictionary = tracker.expected
+	var before: float = expected.get(target, 0.0)
+	var doomed: bool = before >= target.hp
+	if doomed: tracker.doomed += 1
+	var arrow: float = shooter.damage * Config.TARGET_VOLLEY_HIT_SHARE
+	expected[target] = before + arrow
+	var duration: float = Combat._flight_duration(shooter, shooter.position.distance_to(target.position))
+	tracker.flight.append([target, tick + maxi(0, ceili(duration / TICK_SECONDS) - 1), arrow, doomed])
+	var side: int = shooter.side
+	if tracker.window_start[side] < 0 or tick - tracker.window_start[side] >= VOLLEY_TICKS:
+		_close_volley(tracker, side)
+		tracker.window_start[side] = tick
+	tracker.window[side][target] = true
+	tracker.window_shots[side] += 1
+
+static func advance_volleys(tracker: Dictionary, tick: int) -> void:
+	var flight: Array = tracker.flight
+	var expected: Dictionary = tracker.expected
+	var kept := 0
+	for arrow in flight:
+		var target = arrow[0]
+		var landed: bool = arrow[1] <= tick
+		if landed or target.dead or target.gone:
+			if not landed and not arrow[3]: tracker.dead += 1
+			expected[target] = float(expected.get(target, 0.0)) - arrow[2]
+			if expected[target] <= 1e-9: expected.erase(target)
+			continue
+		flight[kept] = arrow
+		kept += 1
+	flight.resize(kept)
+
+static func _close_volley(tracker: Dictionary, side: int) -> void:
+	var shots: int = tracker.window_shots[side]
+	if shots >= VOLLEY_MIN_SHOTS:
+		var targets: int = tracker.window[side].size()
+		tracker.volleys += 1
+		tracker.volley_targets += targets
+		tracker.volley_shots += shots
+		if tracker.first[side].is_empty(): tracker.first[side] = {"shots": shots, "targets": targets}
+	tracker.window[side] = {}
+	tracker.window_shots[side] = 0
+
+static func volley_report(tracker: Dictionary) -> Dictionary:
+	for side in 2: _close_volley(tracker, side)
+	var first_shots := 0
+	var first_targets := 0
+	var first_sides := 0
+	for side in 2:
+		if tracker.first[side].is_empty(): continue
+		first_sides += 1
+		first_shots += int(tracker.first[side].shots)
+		first_targets += int(tracker.first[side].targets)
+	var aimed: int = maxi(1, tracker.aimed)
+	return {"shots": tracker.shots, "aimed": tracker.aimed,
+		"doomed_share": float(tracker.doomed) / aimed, "dead_share": float(tracker.dead) / aimed,
+		"wasted_share": float(tracker.doomed + tracker.dead) / aimed,
+		"volleys": tracker.volleys,
+		"targets_per_volley": float(tracker.volley_targets) / tracker.volleys if tracker.volleys > 0 else 0.0,
+		"shots_per_target": float(tracker.volley_shots) / tracker.volley_targets if tracker.volley_targets > 0 else 0.0,
+		"first_volley_shots": float(first_shots) / first_sides if first_sides > 0 else 0.0,
+		"first_volley_targets": float(first_targets) / first_sides if first_sides > 0 else 0.0}
 
 ## Never engaged: no combat mode (melee, shooting, skirmish) at any sample. Idle time: share of fighter
 ## samples in formation or unassigned while the battle is undecided.
@@ -310,7 +400,13 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var kite_share := 0.0
 	var kite_reached := 0
 	var kite_seconds := 0.0
+	var volley_keys := ["doomed_share", "dead_share", "wasted_share", "targets_per_volley", "shots_per_target", "first_volley_shots", "first_volley_targets"]
+	var volley_sums := {}
+	var volley_runs := 0
 	for run in runs:
+		if run.has("volleys") and int(run.volleys.volleys) > 0:
+			volley_runs += 1
+			for key in volley_keys: volley_sums[key] = float(volley_sums.get(key, 0.0)) + float(run.volleys[key])
 		if run.winner >= 0:
 			wins[run.winner] += 1
 			profile_wins[run.winner_profile] += 1
@@ -332,6 +428,9 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		"duration_seconds": sums.duration_seconds / count, "ai_phase_mean_ms": ai_mean / count, "ai_phase_worst_p95_ms": ai_p95}
 	for key in ["losses", "fled", "never_engaged", "idle_time"]:
 		summary[key] = [sums[key][0] / count, sums[key][1] / count]
+	if volley_runs > 0:
+		summary.volleys = {"runs": volley_runs}
+		for key in volley_keys: summary.volleys[key] = volley_sums[key] / volley_runs
 	if kite_reached > 0 or runs.any(func(run): return run.has("kite")):
 		summary.kite = {"chase_share": kite_share / count, "reached_runs": kite_reached,
 			"reached_archers_seconds": kite_seconds / kite_reached if kite_reached > 0 else -1.0}
@@ -347,6 +446,9 @@ static func table(report: Dictionary) -> String:
 			cell.scenario, cell.size, s.runs, s.profile_wins[0], s.profile_wins[1], s.draws,
 			s.losses[0], s.losses[1], s.fled[0], s.fled[1], s.never_engaged[0], s.never_engaged[1],
 			s.idle_time[0], s.idle_time[1], s.duration_seconds, s.ai_phase_mean_ms, s.ai_phase_worst_p95_ms])
+		if s.has("volleys"):
+			var v: Dictionary = s.volleys
+			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])
 		if s.has("kite"):
 			lines.append("  kite: chasing hero > %.0f s %.2f, enemy reached archers in %d runs, mean %.1f s" % [KITE_CHASE_SECONDS, s.kite.chase_share, s.kite.reached_runs, s.kite.reached_archers_seconds])
 	return "\n".join(lines)

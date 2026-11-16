@@ -301,6 +301,17 @@ const CURRENT_TARGET_MULTIPLIER := 0.85
 const TARGET_CROWD_FREE_ATTACKERS := 3.0 # Melee attackers a target takes before it starts to look farther away.
 const TARGET_CROWD_MULTIPLIER := 0.25 # Each further attacker adds this share of the distance.
 const TARGET_OUTRUN_MULTIPLIER := 2.0 # k in distance × (1 + k × max(0, receding speed − own speed) / own speed).
+# Stage 1a-archers (DESIGN.md 4.4, decision 15): fire distribution of shooters (attack_range > 0), the same for both
+# sides, foot and mounted, in GDScript and C++. Aimers are shooters whose current target it is, counted at the start
+# of the tick like attackers. A shooter expects one arrow to deal his damage × TARGET_VOLLEY_HIT_SHARE to the man he
+# aims at, so hp / that many shooters are enough; every shooter beyond that (him included) makes the target look
+# TARGET_OVERKILL_MULTIPLIER of its distance farther, and new shooters take his neighbours. An estimate, no new RNG.
+const TARGET_VOLLEY_HIT_SHARE := 0.35
+const TARGET_OVERKILL_MULTIPLIER := 0.5
+# Front ranks: a shooter weighs every enemy up to this share farther, by a fixed amount drawn from his id and the
+# enemy's id. Enemies about as close as the nearest one (the front ranks of a formation) then share the fire, while a
+# rear rank stays farther than the front. The same shooter keeps the same preference, so the current target stays sticky.
+const TARGET_FRONT_SPREAD := 0.15
 # Leash in a charge, measured from the fighter's place in a formation fitted around his group's current position
 # (mean of position minus formation offset). It holds only in a chase, while the target runs away from him at
 # AI_CHARGE_CHASE_SPEED_SHARE of his speed or faster; in a standing fight the formation may deform freely.
