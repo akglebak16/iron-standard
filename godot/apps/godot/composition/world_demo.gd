@@ -39,6 +39,7 @@ const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_
 const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
 const CompanionRemarks = preload("res://apps/godot/presentation/campaign/companion_remarks.gd")
 const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")
+const LoadingView = preload("res://apps/godot/presentation/campaign/campaign_loading_view.gd")
 
 signal title_requested
 
@@ -72,6 +73,7 @@ var _ready_to_play := false
 var cache_static_artwork := true
 var profile_startup := false
 var startup_marks_us := {}
+var _world_job: Thread
 
 func _startup_mark(stage: String) -> void:
 	if profile_startup:
@@ -80,13 +82,10 @@ func _startup_mark(stage: String) -> void:
 func _ready() -> void:
 	_startup_mark("scene_entered")
 	_remark_rng.randomize()
-	var loading := Label.new()
-	loading.text = "Строю карту…"
-	loading.position = Vector2(24, 24)
-	var layer := CanvasLayer.new()
-	layer.layer = 10
-	layer.add_child(loading)
-	add_child(layer)
+	var loading := LoadingView.new()
+	loading.back_requested.connect(func(): title_requested.emit())
+	add_child(loading)
+	loading.show_stage("Готовим кампанию…")
 	await get_tree().process_frame
 	_startup_mark("loading_frame")
 	var seed_value := GameOptions.seed_value if GameOptions.seed_value != 0 else randi_range(1, 999999999)
@@ -100,25 +99,39 @@ func _ready() -> void:
 	var data := EuropeData.new()
 	if not (ContentLoader.populate(data)):
 		push_error("Required content failed to load: apps/godot/composition/world_demo.gd")
+		loading.show_error("Не удалось открыть данные кампании.")
 		return
 	if GameOptions.continue_game:
 		state = SaveStore.load_state(data)
 		if state == null:
-			loading.text = "Не удалось загрузить сохранение. Файлы сохранений оставлены без изменений."
-			var back := Button.new()
-			back.text = "Вернуться в меню"
-			back.position = Vector2(24, 64)
-			back.pressed.connect(func(): title_requested.emit())
-			layer.add_child(back)
+			loading.show_error("Не удалось загрузить сохранение. Файлы сохранений оставлены без изменений.")
 			return
 	if state == null:
 		var registry := ContentLoader.registry()
 		_startup_mark("content_ready")
-		state = WorldState.create(seed_value, data, GameOptions.culture, registry)
+		loading.show_stage("Создаём мир и отряды…")
+		var generate := WorldState.create.bind(seed_value, data, GameOptions.culture, registry)
+		# The worker owns the new simulation until joined. All nodes and GPU work stay here.
+		if DisplayServer.get_name() != "headless":
+			_world_job = Thread.new()
+			if _world_job.start(generate) != OK:
+				_world_job = null
+		if _world_job == null:
+			state = generate.call()
+		else:
+			while _world_job.is_alive():
+				await get_tree().process_frame
+				if not is_inside_tree(): return
+			state = _world_job.wait_to_finish()
+			_world_job = null
+		if state == null:
+			loading.show_error("Не удалось создать кампанию.")
+			return
 		state.player.hero.name = GameOptions.hero_name
 		state.player.hero.banner = GameOptions.banner
 	var saved_banner = state.player.hero.get("banner", 0)
 	_startup_mark("world_ready")
+	loading.show_stage("Рисуем карту…")
 	GameOptions.banner = clampi(int(saved_banner) if saved_banner is int or saved_banner is float else 0, 0, preload("res://apps/godot/visuals/original_art.gd").BANNERS.size() - 1)
 	preload("res://apps/godot/visuals/original_art.gd").select_player_banner(GameOptions.banner)
 	map_view = MapView.new()
@@ -143,6 +156,8 @@ func _ready() -> void:
 	party_layer.motion = _motion
 	camera = WorldCamera.new()
 	add_child(camera)
+	camera.set_process(false)
+	camera.set_process_unhandled_input(false)
 	camera.make_current()
 	camera.fit_all()
 	camera.map_clicked.connect(_on_map_click)
@@ -212,12 +227,20 @@ func _ready() -> void:
 	else:
 		camera.detached = false
 		camera.zoom = Vector2(0.9, 0.9)
-	loading.text = ""
+	if DisplayServer.get_name() != "headless":
+		await map_view.ready_to_show
+	loading.queue_free()
+	camera.set_process(true)
+	camera.set_process_unhandled_input(true)
 	_ready_to_play = true
 	_startup_mark("input_ready")
 
 func _exit_tree() -> void:
 	_ready_to_play = false
+	if _world_job != null:
+		var abandoned = _world_job.wait_to_finish()
+		_world_job = null
+		if abandoned != null: abandoned.dispose()
 	if _bridge != null: _bridge.dispose()
 	if state != null:
 		state.dispose()
