@@ -1,7 +1,8 @@
 extends SceneTree
 ## Smoke run of the campaign simulator (tests/performance/campaign_simulator.gd): one day on one seed.
-## The observed world with an active threat map must end exactly like the same seed run without them:
-## the simulator and the map only read the world and spend no RNG (DESIGN.md §7.2, ADR-023).
+## The observed world must end exactly like the same seed run without the observer: the simulator and its extra
+## threat-map queries only read the world and spend no RNG (DESIGN.md §7.2, ADR-023). Since stage 2a the party goals
+## read the map themselves, so both runs build it.
 const Simulator = preload("res://tests/performance/campaign_simulator.gd")
 const WorldCheckpoint = preload("res://core/campaign/world/world_checkpoint.gd")
 
@@ -16,7 +17,7 @@ func _initialize() -> void:
 	_check_report(report)
 	var plain := Simulator.create_world(SEED)
 	Simulator.drive(plain, DAYS * 24, func() -> void: pass, func() -> void: pass)
-	assert(plain.threat == null, "the plain run never builds the map")
+	assert(plain.threat != null and plain.threat.built_hour == plain.hours_passed, "party goals use the map in the plain run too")
 	assert(observed.threat != null and observed.threat.built_hour == observed.hours_passed, "the observed run refreshed it every hour")
 	assert(plain.hours_passed == observed.hours_passed and plain.clock.day == observed.clock.day)
 	assert(plain.roster.rng.state == observed.roster.rng.state, "same RNG with and without the observer")
@@ -31,13 +32,14 @@ func _check_report(report: Dictionary) -> void:
 	var s: Dictionary = report.summary
 	assert(s.seed == SEED and s.days == DAYS and s.hours == DAYS * 24, "ran %d hours" % s.hours)
 	for key in ["wars_declared", "owner_changes", "lords_died", "lord_goal_changes_per_day", "max_share", "sieges",
-			"sieges_no_relief_with_helper", "edge_idle_party_hours", "flees", "threat_rebuild_usec", "threat_cells_per_party"]:
+			"sieges_no_relief_with_helper", "sieges_defended", "sieges_no_help_with_helper", "villages_burnt", "lord_goals", "edge_idle_party_hours", "flees", "threat_rebuild_usec", "threat_cells_per_party"]:
 		assert(s.has(key), "summary has %s" % key)
 	assert(s.max_share > 0.0 and s.max_share <= 1.0)
 	assert(s.lord_goal_changes_per_day >= 0.0 and s.lord_state_changes_per_day > 0.0, "lords do something")
 	assert(s.threat_cells_per_party > 0.0 and s.threat_cells_per_party <= 49.0, "a party visits at most a 7×7 square")
 	assert(report.daily.size() == DAYS, "one summary per day")
 	assert(report.jitter.has("lord"))
+	assert(report.goal_shares.has("lord") and not report.goal_shares.lord.is_empty(), "time of lords by goal")
 	var heat: Dictionary = report.heat
 	var cells: int = heat.cols * heat.rows
 	for key in ["land", "lords", "fights", "sieges"]:

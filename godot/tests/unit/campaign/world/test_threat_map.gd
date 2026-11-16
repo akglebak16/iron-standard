@@ -1,6 +1,6 @@
 extends SceneTree
 ## Threat map (ADR-023): synthetic parties with made-up faction IDs, the empty map, linear cost, and the live world:
-## building and refreshing it spends no RNG and does not touch the checkpoint; no production code reads it yet.
+## building and refreshing it spends no RNG and does not touch the checkpoint; since stage 2a only the party goals read it.
 const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
 const Config = preload("res://core/campaign/config.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
@@ -8,8 +8,9 @@ const WorldState = preload("res://core/campaign/world/world_state.gd")
 const WorldCheckpoint = preload("res://core/campaign/world/world_checkpoint.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 
-## ADR-023: until stage 2a no AI decision reads the map. The first reader is added here together with its ADR update.
-const READERS_ALLOWED := ["res://core/campaign/world/world_state.gd", "res://core/campaign/world/threat_map.gd"]
+## ADR-023: the map is read only by the goals of map parties (stage 2a). A new reader is added here with its ADR update.
+const READERS_ALLOWED := ["res://core/campaign/world/world_state.gd", "res://core/campaign/world/threat_map.gd",
+	"res://core/campaign/world/party_ai.gd", "res://core/campaign/world/party_goals.gd"]
 const READER_TOKENS := ["threat_map.gd", "threat_map(", "threat_enemies(", "threat_sources("]
 
 func _initialize() -> void:
@@ -155,9 +156,15 @@ func _check_world() -> void:
 		for field in WorldCheckpoint.FIELDS[component]:
 			assert(not "threat" in String(field), "the threat map is never saved")
 	s.player.away = true
+	var built := m.stamped_cells
+	m.stamped_cells = -1
+	assert(s.threat_map() == m and m.stamped_cells == -1, "within one world step the map is not rebuilt")
 	s.step(0.2)
+	assert(m.stamped_cells >= 0, "the party goals of the next step rebuilt it from the moved parties")
+	m.stamped_cells = -1
 	s.hour_tick()
-	assert(s.threat_map() == m and m.built_hour == s.hours_passed, "hour_tick refreshes the map once it is in use")
+	assert(s.threat_map() == m and m.built_hour == s.hours_passed and m.stamped_cells >= 0, "the hour refreshes it too (alarms of settlements)")
+	assert(built > 0)
 	assert(not s.threat_sources().any(func(x): return x.fac == Config.PLAYER_FACTION), "an absent player stamps nothing")
 	s.dispose()
 	assert(s.threat == null)
