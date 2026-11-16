@@ -70,8 +70,15 @@ var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
 var cache_static_artwork := true
+var profile_startup := false
+var startup_marks_us := {}
+
+func _startup_mark(stage: String) -> void:
+	if profile_startup:
+		startup_marks_us[stage] = Time.get_ticks_usec()
 
 func _ready() -> void:
+	_startup_mark("scene_entered")
 	_remark_rng.randomize()
 	var loading := Label.new()
 	loading.text = "Строю карту…"
@@ -81,6 +88,7 @@ func _ready() -> void:
 	layer.add_child(loading)
 	add_child(layer)
 	await get_tree().process_frame
+	_startup_mark("loading_frame")
 	var seed_value := GameOptions.seed_value if GameOptions.seed_value != 0 else randi_range(1, 999999999)
 	var focus := PackedFloat64Array()
 	for arg in OS.get_cmdline_user_args():
@@ -104,16 +112,22 @@ func _ready() -> void:
 			layer.add_child(back)
 			return
 	if state == null:
-		state = WorldState.create(seed_value, data, GameOptions.culture, ContentLoader.registry())
+		var registry := ContentLoader.registry()
+		_startup_mark("content_ready")
+		state = WorldState.create(seed_value, data, GameOptions.culture, registry)
 		state.player.hero.name = GameOptions.hero_name
 		state.player.hero.banner = GameOptions.banner
 	var saved_banner = state.player.hero.get("banner", 0)
+	_startup_mark("world_ready")
 	GameOptions.banner = clampi(int(saved_banner) if saved_banner is int or saved_banner is float else 0, 0, preload("res://apps/godot/visuals/original_art.gd").BANNERS.size() - 1)
 	preload("res://apps/godot/visuals/original_art.gd").select_player_banner(GameOptions.banner)
 	map_view = MapView.new()
 	map_view.cache_static_artwork = cache_static_artwork
+	if profile_startup:
+		map_view.ready_to_show.connect(_startup_mark.bind("map_painted"), CONNECT_ONE_SHOT)
 	add_child(map_view)
 	map_view.build_from(state.map)
+	_startup_mark("map_resources_ready")
 	var factions := FactionCatalog.new()
 	ContentLoader.populate(factions)
 	var others := WorldPartiesLayer.new()
@@ -200,6 +214,7 @@ func _ready() -> void:
 		camera.zoom = Vector2(0.9, 0.9)
 	loading.text = ""
 	_ready_to_play = true
+	_startup_mark("input_ready")
 
 func _exit_tree() -> void:
 	_ready_to_play = false
