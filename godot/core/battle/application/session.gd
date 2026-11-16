@@ -414,6 +414,8 @@ func _shot_values() -> Array[Dictionary]:
 ## The player's groups for commandDraw: where a holding group was told to stand and where it actually is.
 func _player_group_values() -> Array[Dictionary]:
 	var values: Array[Dictionary] = []
+	if _state.groups.is_empty():
+		return values # A bare session without groups (tests, previews).
 	for group in _state.groups[0]:
 		values.append({"kind": group.kind, "order": group.order, "backing": group.backing, "center": group.center, "direction": group.direction, "centroid": group.centroid()})
 	return values
