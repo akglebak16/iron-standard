@@ -62,6 +62,8 @@ var companion_catalog := CompanionCatalog.new()
 var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
+## Standing still on purpose (G.wait): time passes although the party does not move. Not saved, like in the browser.
+var waiting := false
 
 ## Release owned subscriptions and the deliberate cross-links between campaign systems.
 ## Called when leaving the campaign; disposing one context must not clear another's data.
@@ -146,6 +148,7 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.ai.vassals = state.vassals
 	state.siege.lost.connect(func(s, t): state.log_world(t, JOURNAL_BAD); state.settlement_changed.emit(s))
 	state.siege.held.connect(func(_s, t): state.log_world(t, JOURNAL_GOOD))
+	state.siege.captured.connect(func(_s, t): state.log_world(t, JOURNAL_GOOD))
 	state.siege.surrendered.connect(func(s, t): state.log_world(t, JOURNAL_INFO); state.settlement_changed.emit(s))
 	state.skirmish = WorldSkirmish.new(state.roster)
 	state.skirmish.clans = state.clans
@@ -172,8 +175,28 @@ func _place_player(seed_value: int) -> void:
 	player.x = px
 	player.y = py
 
+## The world only lives while the party travels, chases someone or waits (worldUpdate in src/07_main.js).
 func advance(real_dt: float) -> int:
+	if not (waiting or is_moving()):
+		return 0
 	return clock.advance(real_dt, step, hour_tick)
+
+func is_moving() -> bool:
+	return player.has_route() or player.tid >= 0
+
+## Z on the map: stand and let time pass, or go on again.
+func toggle_wait() -> String:
+	waiting = not waiting
+	if waiting:
+		player.stop()
+		player.tid = -1
+	return "Отряд ждёт" if waiting else "Снова в путь"
+
+## Attacking a party the player is at peace with (encAttack).
+func attack(p: Dictionary) -> void:
+	player.rel[p.fac] = maxf(-100.0, float(player.rel.get(p.fac, 0)) - (12.0 if p.kind == "caravan" else 30.0))
+	log_world("Ты напал на %s. Отношения испорчены." % roster.factions.get_faction(p.fac).get("gen", p.fac), JOURNAL_BAD)
+	rel_watch()
 
 func step(dh: float) -> void:
 	if player.tid >= 0 and player.busy == "":
@@ -205,6 +228,7 @@ func step(dh: float) -> void:
 ## Enters a settlement (townEnter): the party stops, relations with its owner warm up a little.
 func enter(s: Dictionary) -> void:
 	player.enter_id = -1
+	waiting = false
 	if s.is_empty() or s.kind == "camp" or Vector2(s.x - player.x, s.y - player.y).length() > 60.0:
 		return
 	player.stop()

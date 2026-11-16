@@ -74,8 +74,14 @@ static func _apply_companions(roster: Array, result: Dictionary, catalog: Compan
 		var share := 1.0 if result.win else Config.DEFEAT_XP_SHARE
 		var base_xp := share * float(result.xp) * Config.COMPANION_BATTLE_XP_SHARE + int(outcome.kills) * Config.COMPANION_KILL_XP + Config.COMPANION_BASE_XP
 		var xp := roundi(base_xp * Progression.xp_multiplier(companion, float(own.get("xp", 0))))
+		var before := int(companion.get("lvl", 1))
 		var levels := Progression.gain_companion_xp(companion, xp, definition.grow)
-		updates[companion.id] = {"down": outcome.down, "kills": outcome.kills, "xp": xp, "levels_gained": levels}
+		# Skill ranks grow at levels 4 and 7 (compRank: 1–3 I, 4–6 II, 7+ III).
+		var ranks: Array = []
+		for level in range(before + 1, before + levels + 1):
+			if level == 4 or level == 7:
+				ranks.append("II" if level == 4 else "III")
+		updates[companion.id] = {"down": outcome.down, "kills": outcome.kills, "xp": xp, "levels_gained": levels, "name": String(companion.get("name", definition.get("name", ""))), "lvl": int(companion.get("lvl", 1)), "skill": String(definition.get("skn", "")), "ranks": ranks}
 	return updates
 
 static func _total(counts: Dictionary) -> int:

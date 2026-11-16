@@ -114,9 +114,25 @@ func surrender(p, s: Dictionary) -> void:
 	s.dmg = minf(float(s.get("dmg", 0.0)), 0.1)
 	s.fire = 0
 
+signal captured(settlement: Dictionary, text: String)
+
 ## The settlement becomes the player's (captureSettle). Lords inside flee.
 func capture(p, s: Dictionary) -> void:
 	var was: String = s.fac
+	_capture_rules(p, s, was)
+	for line in capture_notes(s, was):
+		captured.emit(s, line)
+
+## Journal lines of captureSettle, also used after a storm, which captures through the battle aftermath.
+func capture_notes(s: Dictionary, was: String) -> Array[String]:
+	var out: Array[String] = []
+	if was == "undead":
+		out.append("Ты отбил %s у мертвецов. Руины будут восстанавливаться 10 дней." % s.name)
+	var what := "Деревня %s теперь твоя!" % s.name if s.kind == "village" else ("Город" if s.kind == "town" else "Замок") + " %s теперь твой!" % s.name
+	out.append("%s Доход %d золота в день, гарнизон получает половину жалованья. Оставь там гарнизон (против лорда нужно около 110 бойцов), иначе его отобьют." % [what, income(s)])
+	return out
+
+func _capture_rules(p, s: Dictionary, was: String) -> void:
 	s.cult = String(s.get("cult", was)) if String(s.get("cult", was)) in Rules.REAL_FACTIONS else "emp"
 	s.fac = "player"
 	s.owner = PLAYER_ID
