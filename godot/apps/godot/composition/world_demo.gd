@@ -74,6 +74,10 @@ var cache_static_artwork := true
 var profile_startup := false
 var startup_marks_us := {}
 var _world_job: Thread
+var profile_map_frames := false
+var map_step_us := 0
+var map_hud_us := 0
+var map_steps := 0
 
 func _startup_mark(stage: String) -> void:
 	if profile_startup:
@@ -612,11 +616,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
-	state.advance(delta)
+	var started := Time.get_ticks_usec() if profile_map_frames else 0
+	var steps: int = state.advance(delta)
+	if profile_map_frames:
+		map_steps = steps
+		map_step_us = Time.get_ticks_usec() - started
 	_camp_talk()
 	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):
 		_autosave.save(state, false)
 	if not camera.detached:
 		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
+	if profile_map_frames: started = Time.get_ticks_usec()
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
+	if profile_map_frames: map_hud_us = Time.get_ticks_usec() - started

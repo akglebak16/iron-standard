@@ -43,6 +43,14 @@ var _detailed := false
 var _gpu_timing := true
 var _worker := true
 var _profile_samples := {}
+var _campaign_day := 1
+var _campaign_speed := 1
+var _campaign_ready := false
+var _campaign_start := {}
+var _campaign_hide := ""
+var _campaign_paused := false
+var _campaign_step_us: Array[int] = []
+var _campaign_hud_us: Array[int] = []
 const Stats = preload("res://tests/performance/battle_benchmark.gd")
 const World = preload("res://apps/godot/composition/world_demo.tscn")
 const Options = preload("res://apps/godot/composition/game_options.gd")
@@ -72,16 +80,25 @@ func _ready() -> void:
 		elif arg == "--profile-details": _detailed = true
 		elif arg == "--gpu-timing=off": _gpu_timing = false
 		elif arg == "--worker=off": _worker = false
+		elif arg.begins_with("--campaign-day="): _campaign_day = int(arg.trim_prefix("--campaign-day="))
+		elif arg.begins_with("--campaign-speed="): _campaign_speed = int(arg.trim_prefix("--campaign-speed="))
+		elif arg.begins_with("--campaign-hide="): _campaign_hide = arg.trim_prefix("--campaign-hide=")
+		elif arg == "--campaign-paused": _campaign_paused = true
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), _gpu_timing)
 	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"] or _camera_scope not in ["hero", "near", "wide"]:
 		push_error("Invalid diagnostic parameters (positive population, >61 frames, battle/campaign mode)")
 		get_tree().quit(1)
 		return
 	if _mode == "campaign":
+		if _campaign_day < 1 or _campaign_day > 200 or _campaign_speed not in [1, 2, 4] or _campaign_hide not in ["", "settlements", "parties", "marks"]:
+			push_error("Invalid campaign benchmark day, speed or layer")
+			get_tree().quit(1)
+			return
 		Options.seed_value = _seed
 		Options.continue_game = false
 		_world = World.instantiate()
 		_world.cache_static_artwork = _map_cache
+		_world.profile_map_frames = true
 		add_child(_world)
 		return
 	var c := Catalog.new()
@@ -149,10 +166,34 @@ func _ready() -> void:
 		_view.camera.zoom = Vector2.ONE * (0.55 if _camera_scope == "wide" else 1.35)
 		_view.camera.fit_viewport()
 
+func _prepare_campaign() -> void:
+	var state: RefCounted = _world.state
+	var away: bool = state.player.away
+	state.player.away = true
+	while state.clock.day < _campaign_day:
+		state.clock.advance(1.0, state.step, state.hour_tick)
+	state.player.away = away
+	state.waiting = true
+	state.clock.paused = _campaign_paused
+	state.clock.speed = _campaign_speed
+	_campaign_start = {"day":state.clock.day,"hour":state.clock.hour,"parties":state.roster.parties.size(),
+		"wars":state.wars.wars.size(),"undead_parties":state.roster.parties.filter(func(p): return p.fac == "undead").size()}
+	if _campaign_hide == "settlements":
+		_world.map_view._settlement_layer.hide()
+	elif _campaign_hide == "marks":
+		_world._marks.hide()
+	elif _campaign_hide == "parties":
+		for child in _world.map_view.get_children():
+			if child.get_script() != null and child.get_script().resource_path.ends_with("/world_parties_layer.gd"):
+				child.hide()
+	_campaign_ready = true
+
 func _process(_delta: float) -> void:
 	if _world != null and not _world._ready_to_play: return
 	if _world != null and _world.map_view._static_cache != null and not _world.map_view._static_cache.ready_to_show: return
 	if _world == null and _view == null: return
+	if _world != null and not _campaign_ready:
+		_prepare_campaign()
 	var now := Time.get_ticks_usec()
 	if _world != null and _camera_route:
 		_world.camera.detached = true
@@ -161,6 +202,9 @@ func _process(_delta: float) -> void:
 		_world.camera.zoom = Vector2.ONE * [0.25, 0.9, 2.5][int(elapsed / 10.0) % 3]
 	if _last > 0 and _n >= 60:
 		_times.append(now - _last)
+		if _world != null:
+			if _world.map_steps > 0: _campaign_step_us.append(_world.map_step_us)
+			_campaign_hud_us.append(_world.map_hud_us)
 		if _view != null:
 			_view.frame_profile.minimap_us = _view._navigation.last_draw_usec
 			_view.frame_profile.bake_us = _view._bake.last_paint_us if _view._bake.last_paint_frame >= Engine.get_process_frames() - 1 else 0
@@ -209,7 +253,17 @@ func _finish() -> void:
 			"dropped_seconds":_view._clock.dropped_seconds,"live":_session.snapshot(true).counts,
 			"native_steps":_session._state.native_contact_steps,"native_failures":_session._state.native_contact_failures})
 	else:
+		var sorted := _times.duplicate()
+		sorted.sort()
+		var tail_count := maxi(1, ceili(sorted.size() * 0.01))
+		var tail_us := 0.0
+		for i in range(sorted.size() - tail_count, sorted.size()):
+			tail_us += sorted[i]
 		report.merge({"world_clock_paused":_world.state.clock.paused,"world_clock_speed":_world.state.clock.speed,
+			"campaign_start":_campaign_start,"hidden_layer":_campaign_hide,
+			"world_active_step_frames":Stats.stats(_campaign_step_us) if not _campaign_step_us.is_empty() else {},
+			"world_hud":Stats.stats(_campaign_hud_us),
+			"fps_mean":1000.0 / report.frame.mean_ms,"fps_1pct_low":1000000.0 * tail_count / maxf(1.0, tail_us),
 			"parties":_world.state.roster.parties.size(),"map_cache":_map_cache,
 			"map_cache_active":_world.map_view._static_cache != null,
 			"world_day":_world.state.clock.day,"world_hour":_world.state.clock.hour})
