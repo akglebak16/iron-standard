@@ -6,6 +6,7 @@ const EFFECTS_KEY := "effects"
 const MUSIC_KEY := "music"
 const VISUAL_SECTION := "visual"
 const BLOOD_KEY := "blood"
+const FPS_KEY := "fps"
 
 var _path: String
 
@@ -33,6 +34,18 @@ func save_blood(enabled: bool) -> Error:
 	var config := ConfigFile.new()
 	config.load(_path)
 	config.set_value(VISUAL_SECTION, BLOOD_KEY, enabled)
+	return config.save(_path)
+
+## The FPS counter is off unless the player switched it on.
+func read_fps() -> bool:
+	var config := ConfigFile.new()
+	config.load(_path)
+	return config.get_value(VISUAL_SECTION, FPS_KEY, false) == true
+
+func save_fps(enabled: bool) -> Error:
+	var config := ConfigFile.new()
+	config.load(_path)
+	config.set_value(VISUAL_SECTION, FPS_KEY, enabled)
 	return config.save(_path)
 
 static func _read_flag(config: ConfigFile, section: String, key: String) -> bool:

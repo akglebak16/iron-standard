@@ -27,6 +27,10 @@ func advance(dt: float, on_step: Callable, on_hour: Callable) -> int:
 			on_hour.call()
 	return steps
 
+## How far the next step has progressed, 0..1 (drawing interpolates between steps with it).
+func step_fraction() -> float:
+	return clampf(_acc / STEP, 0.0, 1.0)
+
 func _next_hour() -> void:
 	hour += 1
 	if hour >= 24:

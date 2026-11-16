@@ -36,6 +36,7 @@ const PresentationPreferences = preload("res://apps/godot/composition/presentati
 const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_parties_layer.gd")
+const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
 const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")
 
 signal title_requested
@@ -61,6 +62,7 @@ var _battle: Node2D
 var _preferences := PresentationPreferences.new()
 var _factions := FactionCatalog.new()
 var _waiting_return := false
+var _motion := WorldMotion.new()
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
@@ -113,12 +115,14 @@ func _ready() -> void:
 	var others := WorldPartiesLayer.new()
 	map_view.add_child(others)
 	others.build(state.roster, state.player)
+	others.motion = _motion
 	_marks = WorldMarksLayer.new()
 	map_view.add_child(_marks)
 	_marks.build(state)
 	var party_layer := PartyLayer.new()
 	map_view.add_child(party_layer)
 	party_layer.build(state.player, preload("res://apps/godot/visuals/original_art.gd").palette("player"), state.gear)
+	party_layer.motion = _motion
 	camera = WorldCamera.new()
 	add_child(camera)
 	camera.make_current()
@@ -533,8 +537,9 @@ func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
 	state.advance(delta)
+	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):
 		_autosave.save(state, false)
 	if not camera.detached:
-		camera.position = Vector2(state.player.x, state.player.y)
+		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
