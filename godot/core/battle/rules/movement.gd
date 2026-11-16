@@ -253,7 +253,8 @@ static func _step_batch(battle: State, dt: float, rng: RandomNumberGenerator) ->
 	var context := {"groups": groups, "arena": battle.arena_size,
 		"wall_x": battle.wall.x if battle.wall != null else INF,
 		"wall_half": battle.wall.half_width if battle.wall != null else 0.0,
-		"gaps": PackedVector2Array(battle.wall.gaps()) if battle.wall != null else PackedVector2Array()}
+		"gaps": PackedVector2Array(battle.wall.gaps()) if battle.wall != null else PackedVector2Array(),
+		"all_gaps": PackedVector2Array(battle.wall.all_gaps()) if battle.wall != null else PackedVector2Array()}
 	var begin := true
 	while true:
 		var result: Array = battle.movement_solver.call(battle.motion, context, rng, dt, begin)

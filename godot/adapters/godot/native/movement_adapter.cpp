@@ -107,6 +107,8 @@ public:
       kernel.wall_x = context.get("wall_x", INFINITY);
       kernel.wall_half = context.get("wall_half", 0.0);
       read_vectors(context.get("gaps", PackedVector2Array()), kernel.gaps);
+      read_vectors(context.get("all_gaps", PackedVector2Array()),
+                   kernel.all_gaps);
       kernel.groups.resize(6);
       for (int n = 0; n < 6; ++n) {
         const double *g = group.ptr() + n * 9;

@@ -32,6 +32,7 @@ func _initialize() -> void:
 		worker.start_batch(count)
 		for tick in count: reference.step()
 		# Getter joins without consuming the completion count or queued events.
+		assert(worker.result() == reference.result())
 		assert(worker.snapshot() == reference.snapshot())
 		assert(worker.finish_batch() == count)
 		assert(worker.finish_batch() == 0)

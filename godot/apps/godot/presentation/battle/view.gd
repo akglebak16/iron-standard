@@ -102,7 +102,7 @@ func get_battle_snapshot() -> Dictionary:
 
 ## The finished battle result (for the report window).
 func battle_result() -> Dictionary:
-	return _session.result() if _session != null else {}
+	return _simulation.result() if _simulation != null else {}
 
 func show_result_summary(summary: String) -> void:
 	_result_summary = summary

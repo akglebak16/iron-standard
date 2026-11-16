@@ -9,10 +9,12 @@ func _initialize() -> void:
 	var catalog := Catalog.new()
 	assert(Loader.populate(catalog))
 	assert(Movement.create().is_valid())
-	for scenario in ["field", "siege", "mixed"]:
-		var siege: bool = scenario == "siege"
+	for scenario in ["field", "siege", "castle", "breach", "mixed"]:
+		var siege: bool = scenario in ["siege", "castle", "breach"]
 		var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 		setup.siege = siege
+		setup.castle = scenario == "castle"
+		setup.wall_damage = 0.65 if scenario == "breach" else 0.0
 		setup.hero_profile.clear()
 		setup.companion_profiles.clear()
 		if scenario == "mixed":
@@ -28,6 +30,11 @@ func _initialize() -> void:
 					unit.position = Vector2(1200 + unit.side * 100 + (unit.id % 6) * 18, 550 + (unit.id % 12) * 22)
 				for group in battle._state.groups[1]: group.order = "charge"
 		for tick in 1200:
+			if siege and tick == 300:
+				for battle in [a, b]: battle._state.wall.open_main_gate()
+			if siege and tick == 600:
+				for battle in [a, b]:
+					for gate in battle._state.wall.gates: gate.hp = 0.0
 			if tick == 900:
 				for battle in [a, b]: battle._state.kill(battle._hero)
 			a.step()

@@ -17,7 +17,7 @@ public:
     double direction;
     bool charge, backing;
   };
-  std::vector<Vec2> positions, velocities, vectors, gaps;
+  std::vector<Vec2> positions, velocities, vectors, gaps, all_gaps;
   std::vector<Group> groups;
   std::vector<double> parameters;
   double *reals = nullptr;
@@ -187,12 +187,31 @@ private:
     double side = at.x < wall_x ? -1 : 1;
     if (side == (dest.x < wall_x ? -1 : 1))
       return dest;
+    double spread = double((i(I_ID, row) * int64_t(p(SIEGE_ROUTE_ID_FACTOR))) %
+                           int64_t(p(SIEGE_ROUTE_ID_SPREAD)));
+    if (gaps.empty()) {
+      Vec2 nearest;
+      double cost = INFINITY;
+      for (Vec2 gap : all_gaps) {
+        double candidate =
+            std::abs((double(gap.x) + gap.y) * .5 - at.y) + spread;
+        if (candidate < cost) {
+          cost = candidate;
+          nearest = gap;
+        }
+      }
+      double radius = r(R_COLLISION_RADIUS, row);
+      return {float(wall_x + side * (wall_half + radius + 2.0)),
+              float(std::min(std::max(double(at.y), double(nearest.x) + radius),
+                             double(nearest.y) - radius))};
+    }
     Vec2 best;
     double cost = INFINITY;
     for (Vec2 gap : gaps) {
       double center = (double(gap.x) + gap.y) * .5,
              c = std::abs(center - at.y) +
-                 std::abs(center - dest.y) * p(SIEGE_ROUTE_DESTINATION_WEIGHT);
+                 std::abs(center - dest.y) * p(SIEGE_ROUTE_DESTINATION_WEIGHT) +
+                 spread;
       if (c < cost) {
         cost = c;
         best = gap;
