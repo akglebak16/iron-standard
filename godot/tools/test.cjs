@@ -12,17 +12,22 @@ const root = path.resolve(__dirname, '..');
 fs.mkdirSync(path.join(root, '.godot'), { recursive: true });
 const userData = fs.mkdtempSync(path.join(root, '.godot', 'test-userdata-'));
 const env = { ...process.env, APPDATA: userData, XDG_DATA_HOME: userData };
+// Лимит — страховка от зависшего теста, а не норма скорости. Четыре процесса делят 4 vCPU раннера,
+// и один и тот же тест в CI идёт от 23 до 112 с в зависимости от соседей. Поэтому лимиты взяты
+// с запасом примерно втрое от худшего замера: прошедший тест они не замедляют, а ложных падений нет.
+const DEFAULT_TIMEOUT_MS = 90000;
 const timeouts = {
-  'tests/integration/test_native_movement.gd': 120000,
-  'tests/integration/test_native_contacts.gd': 120000,
-  'tests/unit/campaign/world/test_world_wars.gd': 120000,
-  // Four 900-tick battles compare indexed and exhaustive loops. Parallel Windows CI exceeded 60 s.
-  'tests/unit/battle/rules/test_spatial_full_battle.gd': 120000,
-  // Multiple world constructions, continuation and recovery from a torn generation.
-  'tests/integration/test_save_v2.gd': 120000,
-  // Parallel jobs share the CPU: the slowest campaign tests get room.
-  'tests/unit/campaign/world/test_party_ai.gd': 90000,
-  'tests/unit/campaign/world/test_world_save.gd': 90000,
+  // Сравнение native-ядра с эталонным GDScript: худший замер в CI 106 с.
+  'tests/integration/test_native_movement.gd': 300000,
+  'tests/integration/test_native_contacts.gd': 300000,
+  // Four 900-tick battles compare indexed and exhaustive loops: худший замер в CI 112 с.
+  'tests/unit/battle/rules/test_spatial_full_battle.gd': 300000,
+  // Multiple world constructions, continuation and recovery from a torn generation: до 80 с.
+  'tests/integration/test_save_v2.gd': 240000,
+  // Долгие тесты кампании: до 40 с под нагрузкой.
+  'tests/unit/campaign/world/test_world_wars.gd': 180000,
+  'tests/unit/campaign/world/test_party_ai.gd': 180000,
+  'tests/unit/campaign/world/test_world_save.gd': 180000,
 };
 // Бюджет полного прогона Godot-тестов (правило в docs/architecture/DEVELOPMENT.md). Превышение — предупреждение CI.
 const BUDGET_MS = 180000;
@@ -74,6 +79,11 @@ const tests = findTests(root).sort().filter(file => {
 const timings = [];
 if (!tests.length) throw new Error('No Godot tests found');
 // Tests run in parallel, each Godot process with its own user data so saves and preferences never collide.
+// `--prepare-only`: только native-сборка и импорт (CI сохраняет после этого кеши и прогревает их на main).
+// `--no-prepare`: подготовка уже сделана предыдущим шагом CI; локально этот флаг не нужен.
+const prepareOnly = process.argv.includes('--prepare-only');
+const skipPrepare = process.argv.includes('--no-prepare');
+if (prepareOnly && skipPrepare) throw new Error('--prepare-only и --no-prepare несовместимы');
 const jobsArg = process.argv.find(a => a.startsWith('--jobs='));
 const jobs = jobCount(jobsArg ? jobsArg.slice(7) : process.env.GODOT_TEST_JOBS, os.availableParallelism?.() || os.cpus().length, tests.length);
 const timingFile = path.join(root, '.godot', 'test-timings.json');
@@ -83,6 +93,7 @@ const relative = file => path.relative(root, file).replaceAll('\\', '/');
 const ordered = schedule(tests.map(relative), history, timeouts).map(file => path.join(root, file));
 tests.splice(0, tests.length, ...ordered);
 phases.selection_ms = Date.now() - totalStarted;
+if (!skipPrepare) {
 const nativeStarted = Date.now();
 const native = spawnSync(process.execPath,[path.join(root,'tools/native_build.cjs')],{encoding:'utf8',windowsHide:true});
 if(native.error || native.status!==0) throw new Error(`Native build failed: ${native.stderr || native.error}`);
@@ -90,14 +101,19 @@ phases.native_ms = Date.now() - nativeStarted;
 const importStarted = Date.now();
 // Assets (audio, images) are loaded through the import cache, which a clean checkout does not have yet.
 // A clean checkout imports every atlas (850+ images); on the CI runner this takes close to two minutes.
-const imported = await run(['--headless', '--path', root, '--import'], 300000);
+const imported = await run(['--headless', '--path', root, '--import'], 600000);
 if (imported.error || imported.status !== 0 || scriptErrors.test(`${imported.stdout}\n${imported.stderr}`)) {
   process.stderr.write(`${imported.stdout || ''}\n${imported.stderr || ''}`);
   throw new Error(`Godot asset import failed${imported.error ? ` (${imported.error.message})` : ''}`);
 }
 phases.import_ms = Date.now() - importStarted;
+// Сколько файлов Godot импортировал заново: при исправном кеше импорта это число близко к нулю.
+const reimported = /\(Re\)Importing Assets \((\d+) steps\)/.exec(imported.stdout || '');
+phases.reimported_files = reimported ? Number(reimported[1]) : 0;
+}
 const started = Date.now();
-console.log(`Preparation: native ${(phases.native_ms / 1000).toFixed(1)} s; import ${(phases.import_ms / 1000).toFixed(1)} s`);
+console.log(skipPrepare ? 'Preparation: сделана предыдущим шагом' : `Preparation: native ${(phases.native_ms / 1000).toFixed(1)} s; import ${(phases.import_ms / 1000).toFixed(1)} s, заново импортировано файлов: ${phases.reimported_files}`);
+if (prepareOnly) { console.log('Только подготовка: тесты не запускались.'); return; }
 console.log(`Running ${tests.length} Godot test files in ${jobs} parallel jobs`);
 const failures = [];
 let next = 0;
@@ -107,7 +123,7 @@ async function worker() {
     const relative = path.relative(root, test).replaceAll('\\', '/');
     const own = fs.mkdtempSync(path.join(userData, 'job-'));
     const testStart = Date.now();
-    const result = await run(['--headless', '--path', root, '--script', `res://${relative}`], timeouts[relative] || 30000, { ...env, APPDATA: own, XDG_DATA_HOME: own });
+    const result = await run(['--headless', '--path', root, '--script', `res://${relative}`], timeouts[relative] || DEFAULT_TIMEOUT_MS, { ...env, APPDATA: own, XDG_DATA_HOME: own });
     const output = `${result.stdout || ''}\n${result.stderr || ''}`;
     if (result.error || result.status !== 0 || scriptErrors.test(output) || !/tests passed/i.test(output)) {
       process.stderr.write(`----- ${relative} -----\n${output}\n`);

@@ -1,13 +1,30 @@
 name: Godot — архитектура и Windows
 on:
   pull_request:
+  # После слияния в main тесты не идут: этот запуск только прогревает кеши (импорт, native), чтобы их подхватывали PR.
+  # GitHub отдаёт в PR кеши своей ветки и main, но не чужих PR, поэтому без прогрева на main каждый PR импортировал всё с нуля.
+  push:
+    branches: [main]
+    paths:
+      - 'godot/**/*.import'
+      - 'godot/**/*.png'
+      - 'godot/**/*.svg'
+      - 'godot/**/*.ogg'
+      - 'godot/**/*.wav'
+      - 'godot/**/*.ttf'
+      - 'godot/**/*.otf'
+      - 'godot/**/*.cpp'
+      - 'godot/**/*.hpp'
+      - 'godot/tools/native_*'
+      - '.github/workflows/godot.yml'
   workflow_dispatch:
   schedule:
     - cron: '17 3 * * *'  # раз в сутки полный набор тестов
 permissions:
   contents: read
 concurrency:
-  group: godot-${{ github.ref }}
+  # Событие в имени группы: прогрев кеша на main не отменяет ночной полный прогон на том же main.
+  group: godot-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   # В PR гоняем только тесты, до которых доходят изменённые файлы. После слияния в main тесты не идут. Полный набор — раз в сутки и по кнопке.
@@ -17,6 +34,7 @@ jobs:
     outputs:
       godot: ${{ steps.f.outputs.godot }}
       content: ${{ steps.f.outputs.content }}
+      warm: ${{ steps.f.outputs.warm }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +44,10 @@ jobs:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
+          if [ "$EVENT" = "push" ]; then
+            echo "godot=false" >> "$GITHUB_OUTPUT"; echo "content=false" >> "$GITHUB_OUTPUT"; echo "warm=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "warm=false" >> "$GITHUB_OUTPUT"
           if [ "$EVENT" != "pull_request" ]; then
             echo "godot=true" >> "$GITHUB_OUTPUT"; echo "content=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
@@ -79,7 +101,8 @@ jobs:
   windows:
     name: godot-tests-and-release
     needs: changes
-    if: needs.changes.outputs.godot == 'true'
+    # warm: запуск на main после слияния, только подготовка и сохранение кешей, без тестов и сборки.
+    if: needs.changes.outputs.godot == 'true' || needs.changes.outputs.warm == 'true'
     runs-on: windows-2022
     timeout-minutes: 30
     steps:
@@ -103,25 +126,30 @@ jobs:
           New-Item -ItemType Directory -Force $target | Out-Null
           Copy-Item "$env:RUNNER_TEMP/templates/templates/*" $target -Recurse
           "GODOT=$env:RUNNER_TEMP/godot/Godot_v$version-stable_win64_console.exe" >> $env:GITHUB_ENV
-      # Импорт картинок с нуля занимает до двух минут; кеш хранит готовый импорт, Godot переимпортирует только изменённое.
+      # Кеши восстанавливаются здесь, а сохраняются сразу после подготовки (шаг «Подготовка» ниже), а не в конце задания:
+      # упавший тест больше не выбрасывает готовый импорт. Импорт картинок с нуля занимает около двух минут.
       - name: Кеш импорта Godot
-        uses: actions/cache@v4
+        id: cache-import
+        uses: actions/cache/restore@v4
         with:
           path: |
             godot/.godot/imported
             godot/.godot/editor
             godot/.godot/uid_cache.bin
             godot/.godot/global_script_class_cache.cfg
+            godot/.godot/extension_list.cfg
           key: godot-import-4.7.2-${{ hashFiles('godot/**/*.import', 'godot/**/*.png', 'godot/**/*.svg', 'godot/**/*.ogg', 'godot/**/*.wav', 'godot/**/*.ttf', 'godot/**/*.otf') }}
           restore-keys: |
             godot-import-4.7.2-
       - name: Кеш закреплённых native-инструментов
-        uses: actions/cache@v4
+        id: cache-native-tools
+        uses: actions/cache/restore@v4
         with:
           path: dist/godot/native-tools/
           key: native-tools-${{ runner.os }}-${{ hashFiles('godot/tools/native_dependencies.json', 'godot/tools/native_bootstrap.ps1') }}
       - name: Кеш объектов native (fingerprints проверяет native_build)
-        uses: actions/cache@v4
+        id: cache-native-objects
+        uses: actions/cache/restore@v4
         with:
           path: |
             dist/godot/native-build/
@@ -130,6 +158,7 @@ jobs:
           restore-keys: |
             native-objects-${{ runner.os }}-${{ hashFiles('godot/tools/native_dependencies.json', 'godot/tools/native_build.cjs', 'godot/tools/native_bindings.py') }}-
       - name: Кеш длительности тестов (только порядок, не результаты)
+        if: needs.changes.outputs.godot == 'true'
         uses: actions/cache@v4
         with:
           path: godot/.godot/test-timings.json
@@ -138,15 +167,44 @@ jobs:
             godot-test-times-${{ runner.os }}-
       - name: Пакетное ядро контактов (закреплённые SHA256)
         run: pwsh -File godot/tools/native_bootstrap.ps1
+      - name: Подготовка (native-сборка и импорт ассетов)
+        run: node godot/tools/test.cjs "$env:GODOT" --prepare-only
+      - name: Сохранить кеш импорта
+        if: steps.cache-import.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            godot/.godot/imported
+            godot/.godot/editor
+            godot/.godot/uid_cache.bin
+            godot/.godot/global_script_class_cache.cfg
+            godot/.godot/extension_list.cfg
+          key: ${{ steps.cache-import.outputs.cache-primary-key }}
+      - name: Сохранить кеш native-инструментов
+        if: steps.cache-native-tools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: dist/godot/native-tools/
+          key: ${{ steps.cache-native-tools.outputs.cache-primary-key }}
+      - name: Сохранить кеш объектов native
+        if: steps.cache-native-objects.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            dist/godot/native-build/
+            godot/adapters/godot/native/bin/
+          key: ${{ steps.cache-native-objects.outputs.cache-primary-key }}
       - name: Godot-тесты (в PR только затронутые правкой; ночью и по кнопке все)
+        if: needs.changes.outputs.godot == 'true'
         shell: pwsh
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          if ($env:BASE -and $env:BASE -notmatch '^0+$') { node godot/tools/test.cjs "$env:GODOT" "--changed=$env:BASE" } else { node godot/tools/test.cjs "$env:GODOT" }
-      - run: node godot/tools/release.cjs "$env:GODOT"
+          if ($env:BASE -and $env:BASE -notmatch '^0+$') { node godot/tools/test.cjs "$env:GODOT" --no-prepare "--changed=$env:BASE" } else { node godot/tools/test.cjs "$env:GODOT" --no-prepare }
+      - if: needs.changes.outputs.godot == 'true'
+        run: node godot/tools/release.cjs "$env:GODOT"
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && needs.changes.outputs.godot == 'true'
         with:
           name: windows-release-and-logs
           path: |
