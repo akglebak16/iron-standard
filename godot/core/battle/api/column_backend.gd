@@ -3,6 +3,7 @@ extends RefCounted
 func copy_rows(_columns: RefCounted, _rows: PackedInt32Array) -> void: pass
 func capture(_columns: RefCounted, previous: PackedVector2Array) -> PackedVector2Array: return previous
 func summary(_columns: RefCounted) -> Array: return []
+func wall_status(_columns: RefCounted, _inside_x: float, _alert_x: float, _defender_x: float) -> Array: return []
 func render(_columns: RefCounted, _previous: PackedVector2Array, _special_flags: PackedInt32Array, _definitions: Array[Dictionary]) -> Array: return []
 func nearby(_columns: RefCounted, _position: Vector2, _radius: float) -> PackedInt32Array: return PackedInt32Array()
 func nearest_ready(_columns: RefCounted, _position: Vector2, _side: int) -> float: return INF

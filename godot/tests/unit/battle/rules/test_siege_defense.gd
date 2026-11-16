@@ -20,8 +20,36 @@ func _initialize() -> void:
 		_check_stones()
 		_check_oil()
 		_check_no_defenders()
+	_check_wall_summary()
 	print("Siege defense tests passed")
 	quit(0)
+
+func _check_wall_summary() -> void:
+	var state := _siege()
+	var backend := Columns.create()
+	assert(backend != null)
+	var inside_x := state.wall.x + state.wall.half_width
+	var alert_x := state.wall.x - Config.SIEGE_ALERT_DISTANCE
+	var defender_x := state.wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET
+	var expected := PackedInt32Array()
+	var inside := 0
+	var near_wall := false
+	var defenders := 0
+	# Include exact edges, adjacent representable coordinates, and all exclusions.
+	for index in 240:
+		var edge: float = [inside_x, alert_x, defender_x][index % 3]
+		var unit := _add(state, (index / 3) % 2, Vector2(edge + [-0.25, 0.0, 0.25][(index / 6) % 3], 500))
+		unit.dead = index % 7 == 0
+		unit.gone = index % 11 == 0
+		unit.fleeing = index % 13 == 0
+		if unit.dead or unit.gone or unit.fleeing: continue
+		if unit.side == 0:
+			expected.append(unit.battle_index)
+			if unit.position.x > inside_x: inside += 1
+			if unit.position.x > alert_x: near_wall = true
+		elif unit.position.x > defender_x: defenders += 1
+	var actual: Array = backend.wall_status(state.motion, inside_x, alert_x, defender_x)
+	assert(actual == [expected, inside, near_wall, defenders])
 
 func _siege(damage: float = 0.0, supplies: Dictionary = {}, skill: float = 0.0) -> State:
 	var state := State.new()

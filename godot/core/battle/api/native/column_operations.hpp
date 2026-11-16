@@ -99,6 +99,22 @@ struct Summary {
     }
   }
 };
+struct WallSummary {
+  std::vector<int> attackers;
+  int inside = 0, defenders = 0;
+  bool alert = false;
+  void add(const ColumnView &c, int row, double x, double inside_x,
+           double alert_x, double defender_x) {
+    if (ready_on_side(c, row, 0)) {
+      attackers.push_back(row);
+      if (x > inside_x)
+        ++inside;
+      if (x > alert_x)
+        alert = true;
+    } else if (ready_on_side(c, row, 1) && x > defender_x)
+      ++defenders;
+  }
+};
 struct RenderRow {
   int flags, side, group, history;
   std::array<double, 5> dynamic;

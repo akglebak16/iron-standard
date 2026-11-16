@@ -16,6 +16,9 @@ class IronColumnKernel : public RefCounted {
 
 protected:
   static void _bind_methods() {
+    ClassDB::bind_method(
+        D_METHOD("wall_status", "columns", "inside_x", "alert_x", "defender_x"),
+        &IronColumnKernel::wall_status);
     ClassDB::bind_method(D_METHOD("densest_ready", "columns", "side", "low_x",
                                   "high_x", "half", "arena", "cell"),
                          &IronColumnKernel::densest_ready);
@@ -66,6 +69,29 @@ protected:
   };
 
 public:
+  Array wall_status(const Array &columns, double inside_x, double alert_x,
+                    double defender_x) {
+    Input c(columns);
+    if (!c.valid || !std::isfinite(inside_x) || !std::isfinite(alert_x) ||
+        !std::isfinite(defender_x))
+      return {};
+    iron::battle::WallSummary summary;
+    auto view = c.view();
+    const auto *positions = c.positions.ptr();
+    for (int row = 0; row < c.count; ++row)
+      summary.add(view, row, positions[row].x, inside_x, alert_x, defender_x);
+    PackedInt32Array attackers;
+    attackers.resize(summary.attackers.size());
+    auto *out = attackers.ptrw();
+    for (int row = 0; row < int(summary.attackers.size()); ++row)
+      out[row] = summary.attackers[row];
+    Array result;
+    result.push_back(attackers);
+    result.push_back(summary.inside);
+    result.push_back(summary.alert);
+    result.push_back(summary.defenders);
+    return result;
+  }
   PackedInt32Array densest_ready(const Array &columns, int side, double low_x,
                                  double high_x, double half, Vector2 arena,
                                  double cell) {

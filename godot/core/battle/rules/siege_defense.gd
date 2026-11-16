@@ -20,6 +20,10 @@ static func step(battle: State, dt: float, rng: RandomNumberGenerator) -> void:
 
 ## Collects the attackers still fighting and returns how many defenders stand on the wall line.
 static func _muster(battle: State, attackers: Array[Unit]) -> int:
+	if battle.column_backend != null:
+		var summary: Array = battle.column_backend.wall_status(battle.motion, battle.wall.x + battle.wall.half_width, battle.wall.x - Config.SIEGE_ALERT_DISTANCE, battle.wall.x - Config.SIEGE_DEFENDER_LINE_OFFSET)
+		for row in summary[0]: attackers.append(battle.active_units[row])
+		return summary[3]
 	var defenders := 0
 	var positions := battle.motion.positions
 	var flags := battle.motion.integer_fields

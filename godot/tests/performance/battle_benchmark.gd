@@ -36,7 +36,7 @@ func run(tree: SceneTree) -> void:
 			profile_details = true
 		elif arg.begins_with("--movement="): movement_backend = arg.trim_prefix("--movement=")
 		elif arg.begins_with("--contacts="): contact_backend = arg.trim_prefix("--contacts=")
-	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege"]:
+	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege", "mixed"]:
 		fail("Invalid benchmark parameters")
 		return
 	var catalog := Catalog.new()
@@ -55,6 +55,12 @@ func run(tree: SceneTree) -> void:
 	elif scenario == "cavalry": types = ["n3c", "e3c"]
 	setup.player_army.assign([{"type": types[0], "n": size}])
 	setup.enemy_army.assign([{"type": types[1], "n": size}])
+	if scenario == "mixed":
+		var infantry := size / 2
+		var archers := size / 3
+		var cavalry := size - infantry - archers
+		setup.player_army.assign([{"type": "n1", "n": infantry}, {"type": "n2a", "n": archers}, {"type": "n3c", "n": cavalry}])
+		setup.enemy_army.assign([{"type": "e1", "n": infantry}, {"type": "e2a", "n": archers}, {"type": "e3c", "n": cavalry}])
 	if contact_backend not in ["native", "gdscript"] or movement_backend not in ["native", "gdscript"]:
 		fail("Unknown contact backend")
 		return
@@ -92,6 +98,9 @@ func run(tree: SceneTree) -> void:
 		return
 	if initial != [size, size]:
 		fail("Actual population differs: %s" % str(initial))
+		return
+	if scenario == "mixed" and (mounted != [size - size / 2 - size / 3, size - size / 2 - size / 3] or ranged != [size / 3, size / 3]):
+		fail("Mixed scenario composition mismatch")
 		return
 	session.issue_order(Config.ORDER_CHARGE, Vector2.ZERO, Config.ALL_GROUPS)
 	if scenario in ["contact", "cavalry", "volley"]:

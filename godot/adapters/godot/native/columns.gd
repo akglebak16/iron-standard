@@ -19,6 +19,8 @@ func capture(columns: RefCounted, previous: PackedVector2Array) -> PackedVector2
 	return _kernel.capture(_values(columns), previous)
 func summary(columns: RefCounted) -> Array:
 	return _kernel.summary(_values(columns))
+func wall_status(columns: RefCounted, inside_x: float, alert_x: float, defender_x: float) -> Array:
+	return _kernel.wall_status(_values(columns), inside_x, alert_x, defender_x)
 func render(columns: RefCounted, previous: PackedVector2Array, special_flags: PackedInt32Array, definitions: Array[Dictionary]) -> Array:
 	return _kernel.render(_values(columns), previous, special_flags, definitions)
 func nearby(columns: RefCounted, position: Vector2, radius: float) -> PackedInt32Array:
