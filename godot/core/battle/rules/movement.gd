@@ -33,6 +33,8 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		else:
 			battle.movement_index.synchronize()
 		index = battle.movement_index
+	if rng != null:
+		_prepare_ai(battle)
 	battle.profiler.mark("movement_index")
 	var positions := battle.motion.positions
 	var velocities := battle.motion.velocities
@@ -58,7 +60,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		elif rng != null:
 			target = Targeting.refresh(battle, unit, dt, rng, index)
 			if sampled: probe = battle.profiler.probe("sample_target", probe)
-			AiDecision.plan_into(unit, group, target, battle.arena_size, destination)
+			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.side * 3 + unit.group_kind], dt)
 			if sampled: probe = battle.profiler.probe("sample_plan", probe)
 			destination = unit.plan_destination
 			velocity_scale = unit.plan_speed
@@ -96,6 +98,42 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 	_resolve_unit_collisions(battle, index, keep_index)
 	battle.profiler.mark("contacts")
 	return index
+
+## Stage 1a inputs, once per tick before any fighter moves; begin() in movement_kernel.hpp computes the same:
+## the melee attackers of every target, and for every group the formation centre that fits its ready fighters
+## (the mean of position minus formation offset, summed in double precision in row order).
+static func _prepare_ai(battle: State) -> void:
+	var motion = battle.motion
+	var capacity: int = motion.capacity
+	var fields = motion.I
+	var flags: PackedInt64Array = motion.integer_fields
+	var reals: PackedFloat64Array = motion.real_fields
+	var vectors: PackedVector2Array = motion.vector_fields
+	var positions: PackedVector2Array = motion.positions
+	var count := battle.active_units.size()
+	var attackers: int = fields.ATTACKERS * capacity
+	for row in count:
+		flags[attackers + row] = 0
+	var sums := PackedFloat64Array()
+	sums.resize(12)
+	var counts := PackedInt32Array()
+	counts.resize(6)
+	for row in count:
+		if flags[fields.DEAD * capacity + row] or flags[fields.GONE * capacity + row] or flags[fields.HERO * capacity + row] or flags[fields.FLEEING * capacity + row]:
+			continue
+		var side: int = flags[fields.SIDE * capacity + row]
+		var slot: int = side * 3 + flags[fields.GROUP_KIND * capacity + row]
+		var group: Group = battle.groups[side][slot - side * 3]
+		var fitted := group.implied_center(vectors[motion.V.SLOT_OFFSET * capacity + row], positions[row])
+		sums[slot * 2] += fitted.x
+		sums[slot * 2 + 1] += fitted.y
+		counts[slot] += 1
+		if reals[motion.R.ATTACK_RANGE * capacity + row] <= 0.0:
+			var target := battle.unit_for(flags[fields.TARGET_HANDLE * capacity + row])
+			if target != null and target.side != side and not target.dead and not target.gone:
+				flags[attackers + target.battle_index] += 1
+	for slot in 6:
+		battle.formation_centers[slot] = Vector2(sums[slot * 2] / counts[slot], sums[slot * 2 + 1] / counts[slot]) if counts[slot] > 0 else Vector2.INF
 
 static func _steer(unit: Unit, position: Vector2, velocity: Vector2, destination: Vector2, speed: float, dt: float) -> Vector2:
 	var delta: Vector2 = destination - position

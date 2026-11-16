@@ -73,6 +73,9 @@ var reserve_lost := [0, 0]
 var active_counts := [0, 0] # Combat-ready units at the latest morale check.
 var missile_losses := [0.0, 0.0] # Fighters lost to missiles, decayed over AI_MISSILE_LOSS_MEMORY_SECONDS by tactics.
 var ai_scan_timers := [0.0, 0.0]
+# Formation centre fitted to each group at the start of the GDScript movement tick (side * 3 + kind), the anchor
+# of the charge leash; Vector2.INF without ready fighters. The native kernel keeps its own copy.
+var formation_centers := PackedVector2Array([Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF])
 ## Observation port (ADR-022): brains write decision records here only while the session traces them.
 ## No rule reads it; it is not part of snapshots or results.
 var ai_trace: DecisionTrace = null

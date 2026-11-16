@@ -16,7 +16,8 @@
     "ai_windup",
     "plan_face",
     "plan_speed",
-    "plan_distance"
+    "plan_distance",
+    "chase_seconds"
   ],
   "integer": [
     "id",
@@ -33,7 +34,9 @@
     "mounted",
     "fleeing",
     "blocking",
-    "leader"
+    "leader",
+    "attackers",
+    "leashed"
   ],
   "vector": [
     "slot_offset",
@@ -88,6 +91,17 @@
     "AI_SKIRMISH_EDGE_MARGIN",
     "AI_SKIRMISH_SPEED_MULTIPLIER",
     "SIEGE_ROUTE_ID_FACTOR",
-    "SIEGE_ROUTE_ID_SPREAD"
+    "SIEGE_ROUTE_ID_SPREAD",
+    "TARGET_CROWD_FREE_ATTACKERS",
+    "TARGET_CROWD_MULTIPLIER",
+    "TARGET_OUTRUN_MULTIPLIER",
+    "AI_CHARGE_FOOT_SOFT_LEASH",
+    "AI_CHARGE_FOOT_HARD_LEASH",
+    "AI_CHARGE_FOOT_RETURN_DISTANCE",
+    "AI_CHARGE_MOUNTED_SOFT_LEASH",
+    "AI_CHARGE_MOUNTED_HARD_LEASH",
+    "AI_CHARGE_MOUNTED_RETURN_DISTANCE",
+    "AI_CHARGE_CHASE_SECONDS",
+    "AI_CHARGE_CHASE_SPEED_SHARE"
   ]
 }

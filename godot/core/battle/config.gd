@@ -295,6 +295,26 @@ const RETARGET_INITIAL_MAX_SECONDS := 0.5
 const TARGET_FLEE_DISTANCE_MULTIPLIER := 1.7
 const CAVALRY_ARCHER_TARGET_MULTIPLIER := 0.7
 const CURRENT_TARGET_MULTIPLIER := 0.85
+# Stage 1a (DESIGN.md 1.4 step 2, 4.4): fighter-level rules, the same for both sides and in GDScript and C++.
+# A melee fighter weighs a target farther away when others already fight it and when it runs away faster than
+# he can follow. Attackers are melee fighters whose current target it is, counted at the start of the tick.
+const TARGET_CROWD_FREE_ATTACKERS := 3.0 # Melee attackers a target takes before it starts to look farther away.
+const TARGET_CROWD_MULTIPLIER := 0.25 # Each further attacker adds this share of the distance.
+const TARGET_OUTRUN_MULTIPLIER := 2.0 # k in distance × (1 + k × max(0, receding speed − own speed) / own speed).
+# Leash in a charge, measured from the fighter's place in a formation fitted around his group's current position
+# (mean of position minus formation offset). It holds only in a chase, while the target runs away from him at
+# AI_CHARGE_CHASE_SPEED_SHARE of his speed or faster; in a standing fight the formation may deform freely.
+# Beyond the soft leash he stops running after a target that is even farther away; beyond the hard leash, or after
+# waiting out there too long, he walks back and chases again only when he is closer than the return distance.
+# In contact he always fights.
+const AI_CHARGE_CHASE_SPEED_SHARE := 0.5
+const AI_CHARGE_FOOT_SOFT_LEASH := 180.0
+const AI_CHARGE_FOOT_HARD_LEASH := 300.0
+const AI_CHARGE_FOOT_RETURN_DISTANCE := 110.0
+const AI_CHARGE_MOUNTED_SOFT_LEASH := 320.0
+const AI_CHARGE_MOUNTED_HARD_LEASH := 520.0
+const AI_CHARGE_MOUNTED_RETURN_DISTANCE := 200.0
+const AI_CHARGE_CHASE_SECONDS := 3.0 # Longest wait beyond the soft leash without contact.
 const AI_MODE_UNASSIGNED := ""
 const AI_MODE_SLOT := "slot"
 const AI_MODE_MELEE := "melee"

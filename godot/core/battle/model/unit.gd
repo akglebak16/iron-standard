@@ -232,6 +232,26 @@ var plan_distance: float:
 	set(value):
 		if _motion == null: _detached_plan_distance = value
 		else: _motion.real_fields[MotionStore.R.PLAN_DISTANCE * _motion.capacity + battle_index] = value
+## Stage 1a (DESIGN.md 4.4, 1.4): melee fighters targeting this unit, counted by movement at the start of the tick.
+var _detached_attackers: int = 0
+var attackers: int:
+	get: return _detached_attackers if _motion == null else _motion.integer_fields[MotionStore.I.ATTACKERS * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_attackers = value
+		else: _motion.integer_fields[MotionStore.I.ATTACKERS * _motion.capacity + battle_index] = value
+## Charge leash state: walking back to the group, and seconds spent waiting beyond the soft leash.
+var _detached_leashed: bool = false
+var leashed: bool:
+	get: return _detached_leashed if _motion == null else bool(_motion.integer_fields[MotionStore.I.LEASHED * _motion.capacity + battle_index])
+	set(value):
+		if _motion == null: _detached_leashed = value
+		else: _motion.integer_fields[MotionStore.I.LEASHED * _motion.capacity + battle_index] = int(value)
+var _detached_chase_seconds: float = 0.0
+var chase_seconds: float:
+	get: return _detached_chase_seconds if _motion == null else _motion.real_fields[MotionStore.R.CHASE_SECONDS * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_chase_seconds = value
+		else: _motion.real_fields[MotionStore.R.CHASE_SECONDS * _motion.capacity + battle_index] = value
 var _detached_ai_wind_target_handle: int = 0
 var ai_wind_target_handle: int:
 	get: return _detached_ai_wind_target_handle if _motion == null else _motion.integer_fields[MotionStore.I.AI_WIND_TARGET_HANDLE * _motion.capacity + battle_index]
@@ -289,6 +309,7 @@ func bind_motion(store: MotionStore) -> void:
 	store.real_fields[MotionStore.R.PLAN_FACE * store.capacity + battle_index] = _detached_plan_face
 	store.real_fields[MotionStore.R.PLAN_SPEED * store.capacity + battle_index] = _detached_plan_speed
 	store.real_fields[MotionStore.R.PLAN_DISTANCE * store.capacity + battle_index] = _detached_plan_distance
+	store.real_fields[MotionStore.R.CHASE_SECONDS * store.capacity + battle_index] = _detached_chase_seconds
 	store.integer_fields[MotionStore.I.ID * store.capacity + battle_index] = _detached_id
 	store.integer_fields[MotionStore.I.SIDE * store.capacity + battle_index] = _detached_side
 	store.integer_fields[MotionStore.I.GROUP_KIND * store.capacity + battle_index] = _detached_group_kind
@@ -304,6 +325,8 @@ func bind_motion(store: MotionStore) -> void:
 	store.integer_fields[MotionStore.I.FLEEING * store.capacity + battle_index] = int(_detached_fleeing)
 	store.integer_fields[MotionStore.I.BLOCKING * store.capacity + battle_index] = int(_detached_blocking)
 	store.integer_fields[MotionStore.I.LEADER * store.capacity + battle_index] = int(_detached_leader)
+	store.integer_fields[MotionStore.I.ATTACKERS * store.capacity + battle_index] = _detached_attackers
+	store.integer_fields[MotionStore.I.LEASHED * store.capacity + battle_index] = int(_detached_leashed)
 	store.vector_fields[MotionStore.V.SLOT_OFFSET * store.capacity + battle_index] = _detached_slot_offset
 	store.vector_fields[MotionStore.V.PLAN_DESTINATION * store.capacity + battle_index] = _detached_plan_destination
 	store.integer_fields[MotionStore.I.MODE * store.capacity + battle_index] = _detached_mode
@@ -330,6 +353,9 @@ func detach_motion() -> void:
 	_detached_plan_face = plan_face
 	_detached_plan_speed = plan_speed
 	_detached_plan_distance = plan_distance
+	_detached_chase_seconds = chase_seconds
+	_detached_attackers = attackers
+	_detached_leashed = leashed
 	_detached_id = id
 	_detached_side = side
 	_detached_group_kind = group_kind
