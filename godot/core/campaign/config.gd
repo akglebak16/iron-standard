@@ -72,3 +72,10 @@ const CARGO_PER_STRENGTH := 6
 const CARGO_HORSE_BONUS := 30
 const CARGO_WEIGHT_PRECISION := 10.0
 const CARGO_WEIGHT_EPSILON := 0.000001
+
+# Threat map of the campaign AI (docs/modules/ai/DESIGN.md §5.1, ADR-023). Derived from parties, never saved.
+const THREAT_CELL_SIZE := 100.0  # map units per cell: 52 × 34 cells over Europe
+const THREAT_RADIUS := 300.0     # strength fades linearly to zero at this distance
+const THREAT_FRONT_MIN := 20.0   # both sides need at least this influence in a front cell
+const THREAT_FRONT_BALANCE := 0.5 # |a - b| <= share of (a + b): neither side more than 3:1
+const THREAT_HAVEN_COST := 0.25  # strength per map unit of distance to the nearest own settlement
