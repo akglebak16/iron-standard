@@ -15,6 +15,8 @@ var enabled := true:
 				voice.stop()
 
 static var _bank: Dictionary = {}
+static var _clangs: Array[AudioStreamWAV] = []
+var _pitch_rng := RandomNumberGenerator.new()
 var _voices: Array[AudioStreamPlayer] = []
 var _last_played := {}
 var _clock := 0.0
@@ -22,6 +24,9 @@ var _clock := 0.0
 func _ready() -> void:
 	if _bank.is_empty():
 		_bank = Bank.build()
+	if _clangs.is_empty():
+		_clangs = Bank.clang_variants()
+	_pitch_rng.randomize()
 	for i in MAX_VOICES:
 		var voice := AudioStreamPlayer.new()
 		add_child(voice)
@@ -45,7 +50,7 @@ func advance(dt: float, events: Array[Dictionary], listener: Vector2) -> void:
 		for voice in _voices:
 			if voice.playing:
 				continue
-			voice.stream = _bank[sound]
+			voice.stream = _clangs[_pitch_rng.randi_range(0, _clangs.size() - 1)] if sound == Bank.Sound.CLANG and not _clangs.is_empty() else _bank[sound]
 			voice.volume_db = linear_to_db(Bank.MASTER_GAIN * distance_gain(event, listener))
 			voice.play()
 			_last_played[sound] = _clock

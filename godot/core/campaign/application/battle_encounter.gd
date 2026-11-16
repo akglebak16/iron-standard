@@ -62,7 +62,7 @@ func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> 
 	s.hero_troop = hero_troop(state.player.culture)
 	s.hero_profile = state.player.hero.duplicate(true)
 	s.enemy_leader_name = opponent.name if Rules.is_noble(opponent) else ""
-	s.hero_position = Vector2(780, 850)
+	s.hero_position = Vector2(730, 850) # startBattle: mkUnit(0, hd, 'player', 730, H / 2)
 	s.companion_profiles.assign(state.player.comps.duplicate(true))
 	if opponent.get("kind") == "siege":
 		s.siege = true

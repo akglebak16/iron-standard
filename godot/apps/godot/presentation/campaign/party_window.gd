@@ -72,7 +72,7 @@ func _troops(p, fx: Dictionary) -> void:
 		for up_id in troop.up:
 			var up: Dictionary = state.roster.catalog.get_troop(up_id)
 			var cost := Economy.upgrade_cost(troop, fx)
-			buttons.append({"text": "→ %s (%d)" % [up.name, cost], "disabled": p.gold < cost, "call": func(): Economy.upgrade(p, troop, up_id, fx)})
+			buttons.append({"sound": "coin", "text": "→ %s (%d)" % [up.name, cost], "disabled": p.gold < cost, "call": func(): Economy.upgrade(p, troop, up_id, fx)})
 		if Economy.troop_count(p.troops) > 1:
 			buttons.append({"text": "Распустить", "call": func(): Economy.remove_troops(p.troops, s.type, 1)})
 		row("%s ×%d" % [troop.name, s.n], "ур. %d · жалованье %d" % [troop.tier, troop.wage], buttons, s.type)
@@ -140,7 +140,7 @@ func _hero(p) -> void:
 		var plus := Button.new()
 		plus.text = "+"
 		plus.disabled = int(h.pts) < 1
-		plus.pressed.connect(func(): Economy.spend_attribute(h, key); render())
+		plus.pressed.connect(func(): Economy.spend_attribute(h, key); UiSounds.play(self, "order"); render())
 		attr_col.add_child(plus)
 		var perks := GridContainer.new()
 		perks.columns = 4 if get_viewport().get_visible_rect().size.x >= 1000 else 2
@@ -190,7 +190,7 @@ func _perk_card(h: Dictionary, perk: Dictionary) -> Button:
 		label.add_theme_color_override("font_color", GameSkin.BRASS if i in [0, 1] and rank > 0 else GameSkin.PARCH)
 		if i == 1: label.add_theme_font_override("font", GameSkin.DISPLAY)
 		col.add_child(label)
-	button.pressed.connect(func(): Economy.buy_perk(h, perk); render())
+	button.pressed.connect(func(): Economy.buy_perk(h, perk); UiSounds.play(self, "order"); render())
 	return button
 
 const CHRONICLE_LIMIT := 30
@@ -230,7 +230,7 @@ func _comps(p) -> void:
 		var ok: bool = comps.fit(c)
 		var btn: Dictionary
 		if _confirm == c.id:
-			btn = {"text": "Точно отпустить?", "call": func(): comps.fire(p, c.id); _confirm = ""}
+			btn = {"sound": "click", "text": "Точно отпустить?", "call": func(): comps.fire(p, c.id); _confirm = ""}
 		else:
 			btn = {"text": "Отпустить", "call": func(): _confirm = c.id}
 		var grant := {"text": "Выбери надел ↓" if _pick == c.id else "Дать надел", "call": func(): _pick = "" if _pick == c.id else c.id}
@@ -250,7 +250,7 @@ func _fief_pick(c: Dictionary) -> void:
 		note("Вассал отдаёт тебе 30% чистого дохода надела, остальное тратит на гарнизон и свою дружину. Выбери надел:")
 		for s in free:
 			row("%s (%s)" % [s.name, "город" if s.kind == "town" else "замок"], "доход %d в день, гарнизон %d" % [vs.net_income(s), Economy.troop_count(state.wars.garrison_of(s))],
-				[{"text": "Отдать", "call": func(): sub_label.text = vs.grant(c.id, s.id); _pick = ""}])
+				[{"sound": "coin", "text": "Отдать", "call": func(): sub_label.text = vs.grant(c.id, s.id); _pick = ""}])
 
 func _vassals(p) -> void:
 	var vs = state.vassals
@@ -266,10 +266,10 @@ func _vassals(p) -> void:
 		detail += "\nПриказ: %s — %s" % vs.MODES[v.get("mode", "guard")]
 		var buttons: Array = []
 		for m in vs.MODES:
-			buttons.append({"text": vs.MODES[m][0], "disabled": v.get("mode", "guard") == m, "call": func(): vs.set_mode(v.cid, m)})
-		buttons.append({"text": "+200", "disabled": p.gold < 200, "call": func(): vs.give(v.cid, 200)})
+			buttons.append({"sound": "click", "text": vs.MODES[m][0], "disabled": v.get("mode", "guard") == m, "call": func(): vs.set_mode(v.cid, m)})
+		buttons.append({"sound": "coin", "text": "+200", "disabled": p.gold < 200, "call": func(): vs.give(v.cid, 200)})
 		if _confirm == "v" + v.cid:
-			buttons.append({"text": "Точно забрать?", "call": func(): vs.revoke(v.cid); _confirm = ""})
+			buttons.append({"sound": "click", "text": "Точно забрать?", "call": func(): vs.revoke(v.cid); _confirm = ""})
 		else:
 			buttons.append({"text": "Забрать надел", "call": func(): _confirm = "v" + v.cid})
 		row("%s · вассал · ур. %d" % [v.c.name, v.c.lvl], detail, buttons)
@@ -494,8 +494,8 @@ func _gear(p) -> void:
 		parent.add_child(tile)
 	if eq.get("ranged") != null:
 		row("В руках в начале боя", "", [
-			{"text": "Ближнее", "disabled": h.get("sel") != "ranged", "call": func(): HeroEquip.wield(h, "melee")},
-			{"text": "Стрелковое", "disabled": h.get("sel") == "ranged", "call": func(): HeroEquip.wield(h, "ranged")}])
+			{"sound": "click", "text": "Ближнее", "disabled": h.get("sel") != "ranged", "call": func(): HeroEquip.wield(h, "melee")},
+			{"sound": "click", "text": "Стрелковое", "disabled": h.get("sel") == "ranged", "call": func(): HeroEquip.wield(h, "ranged")}])
 	var stats := GridContainer.new()
 	stats.columns = 3
 	equipment.add_child(stats)
@@ -573,7 +573,7 @@ func _gear(p) -> void:
 		if not it.is_empty():
 			var worn := _selected_gear in eq.values()
 			var current: Dictionary = gear.get_item(String(eq.get(it.slot))) if eq.get(it.slot) != null else {}
-			item_card(ItemCard.describe(it, current, not worn), [{"text": "Снять" if worn else "Надеть", "call": _selected_action}])
+			item_card(ItemCard.describe(it, current, not worn), [{"sound": "click" if worn else "order", "text": "Снять" if worn else "Надеть", "call": _selected_action}])
 			if not _selected_gear in eq.values():
 				_comparison(GearComparison.compare(h, it, gear, state.perks, stat_preview))
 		else:
