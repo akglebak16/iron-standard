@@ -339,13 +339,12 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 		"march":
 			var near := army.filter(func(p): return _dist(p, t) < Config.OP_SIEGE_GATHER)
 			if (_dist(marshal, t) < Config.OP_SIEGE_REACH and near.size() >= ceili(army.size() * 0.5)) or now_h() - int(c.t1) > Config.OP_MARCH_HOURS:
-				operation.emit({"what": "siege", "f": f, "near": near.size(), "army": army.size(), "marshal_d": _dist(marshal, t), "busy": t.get("siege") != null, "hours": now_h() - int(c.t1), "halted": c.get("halted", 0)})
+				operation.emit({"what": "siege", "f": f, "near": near.size(), "army": army.size(), "marshal_d": _dist(marshal, t), "busy": t.get("siege") != null, "hours": now_h() - int(c.t1)})
 				_begin_siege(f, t, c)
 				return
 			var keep_up := followers.filter(func(p): return _dist(p, marshal) < Config.OP_MUSTER_RADIUS).size()
 			var close := _dist(marshal, t) < Config.OP_SIEGE_APPROACH
 			if keep_up < ceili(followers.size() * Config.OP_MARCH_TOGETHER) and not close:
-				c.halted = int(c.get("halted", 0)) + 1
 				_halt(marshal)  # the marshal waits for the host
 			elif _idle(marshal):
 				_go(marshal, t)
@@ -716,10 +715,15 @@ func _relief_lords(s: Dictionary, sg: Dictionary) -> Array:
 			rel.append(p)
 	return rel
 
-## Relief host the lords at home could send to the besieged s from within reach (campaign_ops.gd relief_host).
+## Relief host the lords at home could send to the besieged s from within reach (campaign_ops.gd relief_host); when
+## those cannot outmatch the besiegers, lords from within OP_RELIEF_FAR_RANGE are gathered too.
 func _relief_host(s: Dictionary, a_str: float, reach: float) -> Array:
-	var cands: Array = roster.parties.filter(func(p): return p.kind == Config.LORD_KIND and p.fac == s.fac and not p.get("army", false) and not p.get("fight", false) and not p.get("lock", false) and p.get("relief") == null and Rules.troop_count(p.troops) >= Config.OP_RELIEF_MIN_TROOPS and Vector2(p.x - s.x, p.y - s.y).length() < reach)
-	return ops.relief_host(cands, s, a_str, Rules.strength(garrison_of(s), roster.info))
+	var cands: Array = roster.parties.filter(func(p): return p.kind == Config.LORD_KIND and p.fac == s.fac and not p.get("army", false) and not p.get("fight", false) and not p.get("lock", false) and p.get("relief") == null and Rules.troop_count(p.troops) >= Config.OP_RELIEF_MIN_TROOPS and Vector2(p.x - s.x, p.y - s.y).length() < maxf(reach, Config.OP_RELIEF_FAR_RANGE))
+	var gar := Rules.strength(garrison_of(s), roster.info)
+	var host := ops.relief_host(cands.filter(func(p): return Vector2(p.x - s.x, p.y - s.y).length() < reach), s, a_str, gar)
+	if host.is_empty() and reach < Config.OP_RELIEF_FAR_RANGE:
+		host = ops.relief_host(cands, s, a_str, gar)
+	return host
 
 ## A besieged own settlement the lords at home take care of: relief is on its way, or they can send it.
 func _covered(s: Dictionary) -> bool:

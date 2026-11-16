@@ -80,12 +80,12 @@ func _check_split() -> void:
 func _check_relief() -> void:
 	var o := _ops()
 	var town := _place(1, "town", "aa", 0, 0, {"f": "bb"})
-	var cands := [_lord(4, 300.0, 800, 0), _lord(2, 300.0, 100, 0), _lord(3, 300.0, 400, 0), _lord(5, 300.0, 600, 0), _lord(6, 300.0, 700, 0)]
+	var cands := [_lord(4, 300.0, 800, 0), _lord(2, 300.0, 100, 0), _lord(3, 300.0, 400, 0), _lord(5, 300.0, 600, 0), _lord(6, 300.0, 700, 0), _lord(7, 300.0, 750, 0), _lord(8, 300.0, 790, 0), _lord(9, 300.0, 795, 0)]
 	var host := o.relief_host(cands, town, 500.0, 100.0)
 	assert(host.size() == 2 and host[0].id == 2 and host[1].id == 3, "nearest first, until they outmatch the besiegers: %s" % [host])
-	var all := o.relief_host(cands, town, 1500.0, 0.0)
+	var all := o.relief_host(cands, town, 2000.0, 0.0)
 	assert(all.size() == Config.OP_RELIEF_MAX_LORDS, "at most %d lords relieve" % Config.OP_RELIEF_MAX_LORDS)
-	assert(o.relief_host(cands, town, 4000.0, 0.0).is_empty(), "hopeless relief is not sent")
+	assert(o.relief_host(cands, town, 4500.0, 0.0).is_empty(), "hopeless relief is not sent")
 	assert(o.relief_host([], town, 10.0, 1000.0).is_empty(), "no lords, no relief")
 
 func _check_retreat() -> void:
