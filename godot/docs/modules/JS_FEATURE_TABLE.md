@@ -18,11 +18,11 @@
 
 | Статус | Строк |
 | --- | --- |
-| совпадает и проверено | 67 |
-| отличается | 7 |
+| совпадает и проверено | 68 |
+| отличается | 0 |
 | отсутствует | 0 |
 | не проверено | 0 |
-| не переносим | 4 |
+| не переносим | 10 |
 
 Чтобы удалить JS, все строки должны стать «совпадает и проверено» (или «не переносим» по решению владельца).
 
@@ -36,10 +36,10 @@
 | Атрибуты, 20 перков и их эффекты | `01c_perks.js` | `core/characters/rules/perk_effects.gd` | `export_perks.cjs --check`, `test_perk_effects.gd`, `test_hero_strike.gd` | совпадает и проверено | |
 | Починка старых героев (`heroFix`) | `01c_perks.js` | `core/campaign/world/world_save.gd` | `test_save_v2.gd` | совпадает и проверено | Набор подставляемых полей не сверен |
 | Спрайты войск (536 вариантов) и составная экипировка | `02_art.js` `buildSprite` | PNG-атласы `visuals/assets/`, `original_art.gd` | экспорт из JS, `test_banner_palettes.gd` | совпадает и проверено | |
-| Лица героя и спутников | `02_art.js` `makeVariant`, `drawHead`, `drawHelm` | `visuals/face_variant.gd`, `faces_0.png` | `test_face_variant.gd` | отличается | Мелкие случайные детали шлема и цвет кистей рук общие для всех (seed 7) |
+| Лица героя и спутников | `02_art.js` `makeVariant`, `drawHead`, `drawHelm` | `visuals/face_variant.gd`, `faces_0.png` | `test_face_variant.gd` | не переносим | Решение владельца: оставить как есть. Мелкие случайные детали шлема и цвет кистей рук общие для всех (seed 7) |
 | Нежить: черепа и гнилые лица | `02_art.js` `drawUndeadHead` | атлас `components_*` | — | совпадает и проверено | |
-| Земля поля боя по биомам | `02_art.js` `paintGround` | `presentation/battle/terrain/ground.gdshader` | — | отличается | Шейдер вместо холста; точного совпадения рисунка нет |
-| Деревья и кусты | `02_art.js` `treeSprite`, `bushSprite` | атласы `tree_*`, `bush_*`, `vegetation_view.gd` | `test_vegetation.gd` | отличается | В JS каждое дерево своё (по seed), в Godot 3 дерева и 2 куста на биом |
+| Земля поля боя по биомам | `02_art.js` `paintGround` | `presentation/battle/terrain/ground.gdshader` | — | не переносим | Решение владельца: процедурное из JS не переносим. Шейдер вместо холста; точного совпадения рисунка нет |
+| Деревья и кусты | `02_art.js` `treeSprite`, `bushSprite` | атласы `tree_*`, `bush_*`, `vegetation_view.gd` | `test_vegetation.gd` | не переносим | Решение владельца: процедурное из JS не переносим. В JS каждое дерево своё (по seed), в Godot 3 дерева и 2 куста на биом |
 | Гербы, поселения, караван | `02_art.js` `crestCanvas`, `05b_worldart.js` | атласы `crest_*`, `settlements.png`, `caravan.png` | экспорт из JS | совпадает и проверено | |
 
 ## Бой
@@ -59,7 +59,7 @@
 | Стена, проходы, обход, укрытие | `03_battle.js` `siegeSetup`, `inGap`, `wallPush`, `wallVia`, `wallCover`, `siegeBrain` | `core/battle/model/siege_wall.gd`, `data/siege_setup.gd`, `rules/tactics.gd` | `test_siege.gd`, `test_siege_setup.gd` | совпадает и проверено | |
 | Ворота с прочностью: их выбивают, «Ворота пали!», гарнизон через 45 с сам выходит из главных ворот, пролом в сильно побитой стене | `03_battle.js` `gateBreak`, `B.wall.gates`, `paintRubble`; `03c_siegedef.js` `sdDraw` | `core/battle/model/siege_wall.gd`, `rules/tactics.gd` `siege_step`, `siege_defense_view.gd` | `test_siege.gd`, `test_siege_defense.gd`, `test_siege_setup.gd`, `test_terrain_view.gd` | совпадает и проверено | Обломки на месте павших ворот разложены своим генератором, а не `mulberry` |
 | Камни и кипящее масло со стены | `03c_siegedef.js` | `core/battle/model/siege_defense.gd`, `siege_defense_view.gd` | `test_siege_defense.gd` | совпадает и проверено | |
-| Кровь, брызги, лужи, отлетающие части | `03b_gore.js` | `impact_effects.gd`, `detached_parts.gd` | `test_impact_effects.gd` | отличается | По чек-листу паритета: не все эффекты и детали |
+| Кровь, брызги, лужи, отлетающие части | `03b_gore.js` | `impact_effects.gd`, `detached_parts.gd` | `test_impact_effects.gd` | не переносим | Решение владельца: оставить как есть. По чек-листу паритета: не все эффекты и детали |
 | Реплики и перепалки спутников | `03b_gore.js` `voiceSay`, `banterSay` | `companion_dialogue.gd`, `banter_lines.gd` | `test_companion_dialogue.gd` | совпадает и проверено | Пузырь реплики ниже над головой (47/58 против 78/98 px), по решению владельца оставлен |
 | Камера боя, тряска, стрелка к врагу за экраном, миникарта | `03_battle.js` `battleCamera`, `drawFoeArrow`, `drawMinimap` | `battle_camera.gd`, `hud/navigation_hud.gd` | `test_navigation_hud.gd` | совпадает и проверено | |
 | Журнал боя и всплывающие числа | `03_battle.js` `blog`, `ftext` | `combat_feedback.gd`, `view.gd` | `test_scene.gd` | совпадает и проверено | |
@@ -68,7 +68,7 @@
 | Пыль из-под копыт и блики удара | `06h_polish.js` `unitPolish` | `presentation/battle/unit_view.gd` `_draw_polish` | — | совпадает и проверено | Код повторяет JS построчно; при первой сверке пропущен из-за другого имени |
 | Звуки боя | `04_audio.js` `sfx`, `tone`, `noise` | `presentation/battle/audio/` | `test_scene.gd`, `test_ui_feedback.gd` | совпадает и проверено | Лязг, как в JS, звучит со случайной высотой 1900–2300 Гц: пять заранее собранных вариантов вместо расчёта на каждый удар |
 | Звуки окон: щелчок, монеты, новый уровень, приказ | `04_audio.js` `sfx('click'/'coin'/'level'/'order')`, вызовы в `06_*.js` | `presentation/campaign/ui_sounds.gd`, `sound_bank.gd` `ui_sounds` | `test_ui_feedback.gd` | совпадает и проверено | |
-| Музыка боя | `04_audio.js` `musicTick(dt, 'battle')` | `audio/battle_music.gd` | — | отличается | Godot по умолчанию играет записанную дорожку `battle_theme.ogg`; процедурная музыка JS — запасной вариант |
+| Музыка боя | `04_audio.js` `musicTick(dt, 'battle')` | `audio/battle_music.gd` | — | не переносим | Решение владельца: процедурное из JS не переносим. Godot по умолчанию играет записанную дорожку `battle_theme.ogg`; процедурная музыка JS — запасной вариант |
 
 ## Карта и кампания
 
@@ -77,7 +77,7 @@
 | Генерация Европы: берега, хребты, реки, мосты, биомы | `05_world.js` `genWorldV2` | `core/campaign/world/terrain_generator.gd`, `world_map.gd` | `test_world_map_parity.gd`, `test_terrain_parity.gd` | совпадает и проверено | |
 | Старая карта первой версии для давних сохранений | `05_world.js` `genWorldV1`, `mapVer` | — | — | не переносим | Решение владельца: браузерные сохранения не переносим |
 | Поиск пути, дороги дешевле | `05_world.js` `cellCost`, `findPath` | `pathfinder.gd` | `test_terrain_parity.gd` | совпадает и проверено | |
-| Рисунок карты: рельеф, дороги, реки, леса | `05b_worldart.js` | `presentation/campaign/*_layer.gd`, шейдеры | `test_campaign_render_cache.gd` | отличается | Видеокарта рисует по-своему; по чек-листу не все детали |
+| Рисунок карты: рельеф, дороги, реки, леса | `05b_worldart.js` | `presentation/campaign/*_layer.gd`, шейдеры | `test_campaign_render_cache.gd` | не переносим | Решение владельца: процедурное из JS не переносим. Видеокарта рисует по-своему; по чек-листу не все детали |
 | Подписи поселений без наложения | `06h_polish.js` `settlementLabels` | `settlement_layer.gd` | — | совпадает и проверено | Тот же перебор смещений, сверки нет |
 | Время, сутки, провизия, жалованье | `05_world.js` `dayTick`, `playerDay` | `world_state.gd`, `party_economy.gd` | `test_party_economy.gd`, `test_world_state.gd`, `test_world_time_journal.gd` | совпадает и проверено | Время идёт, только пока отряд в пути, преследует или ждёт (Z, «Ждать» в городе) |
 | Отряды на карте и их ИИ, караваны, лагеря | `05_world.js` | `party_ai.gd`, `party_roster.gd` | `test_party_ai.gd` | совпадает и проверено | |
@@ -120,7 +120,7 @@
 | Ручное сохранение и загрузка | `07_main.js` `saveGame`, `loadGame` | `adapters/persistence/save_store.gd`, `world_save.gd` | `test_world_save.gd`, `test_save_v2.gd` | совпадает и проверено | |
 | Автосохранение: после боя, в поселении, при выходе, в полночь | `07_main.js`, `06_ui.js` `saveGame(true)` | `composition/autosave.gd` | `test_autosave_music_hud.gd` | совпадает и проверено | |
 | Перенос сохранения из браузера | `07_main.js` `loadGame` | `world_save.gd` (формат v1) | `test_save_v2.gd` | не переносим | Решение владельца. Формат v1 в `world_save.gd` — собственный формат Godot, а не браузерный |
-| Управление с клавиатуры и мыши | `07_main.js` `bindInput`, `readHeroInput`, `worldKeyPan` | `world_demo.gd`, `world_camera.gd`, `view.gd` | `test_battle_controls.gd`, `test_world_time_journal.gd` | отличается | На карте нет K (фракции) и I (обоз); Z (ждать на месте) есть |
+| Управление с клавиатуры и мыши | `07_main.js` `bindInput`, `readHeroInput`, `worldKeyPan` | `world_demo.gd`, `world_camera.gd`, `view.gd` | `test_battle_controls.gd`, `test_world_time_journal.gd` | совпадает и проверено | K (фракции) и Z (ждать) есть; I (обоз) по решению владельца не переносим |
 | Сенсорное управление | `07_main.js` (touch) | — | — | не переносим | Решение владельца: игра для компьютера |
 | Мультиплеер | `08_net.js`, `09_netui.js`, `server/` | — | — | не переносим | Пока не трогаем |
 

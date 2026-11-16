@@ -505,9 +505,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_return_to_map()
 			else:
 				hud.show_notice("")
-		KEY_P, KEY_H, KEY_J:
+		KEY_P, KEY_H, KEY_J, KEY_K:
 			state.clock.paused = true
-			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal"}[(event as InputEventKey).keycode])
+			_party_window.open_for(state, {KEY_P: "troops", KEY_H: "hero", KEY_J: "journal", KEY_K: "factions"}[(event as InputEventKey).keycode])
 		KEY_F5:
 			hud.show_notice("Игра сохранена" if SaveStore.save(state) else "Не удалось сохранить")
 		KEY_ESCAPE:
