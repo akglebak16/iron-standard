@@ -40,6 +40,8 @@ private:
   std::vector<int64_t> slot_handles;
   std::vector<int> slot_rows;
   std::vector<int> locations;
+  // Formation centre fitted to each group at begin() (side * 3 + kind); INFINITY without ready fighters.
+  Vec2 centers[6];
   double &r(R f, int row) { return reals[int(f) * capacity + row]; }
   int64_t &i(I f, int row) { return integers[int(f) * capacity + row]; }
   Vec2 &v(V f, int row) { return vectors[int(f) * capacity + row]; }
@@ -78,21 +80,55 @@ private:
     cells[c].units.push_back(row);
     locations[row] = c;
   }
+  // SpatialIndex.front_share: a fixed number in [0, 1) from the shooter's and the target's ids.
+  static double front_share(int64_t own_id, int64_t enemy_id) {
+    int64_t x = (own_id & 1048575) * 92821 + (enemy_id & 1048575) * 68917;
+    x = x ^ (x >> 15);
+    x = (x % 1000003) * 2654435761LL;
+    return double((x >> 20) & 1023) / 1024.0;
+  }
   int choose(int row, int previous) {
     Vec2 at = positions[row];
     int best = -1;
     double score = INFINITY;
     bool cavalry = i(I_MOUNTED, row) && r(R_ATTACK_RANGE, row) <= 0;
+    bool melee = r(R_ATTACK_RANGE, row) <= 0;
+    double own = r(R_SPEED, row);
+    double own_damage = r(R_DAMAGE, row);
+    int64_t own_id = i(I_ID, row);
     auto consider = [&](int e) {
       if (!live(e) || i(I_SIDE, e) == i(I_SIDE, row))
         return;
-      double d = (at - positions[e]).length();
+      double raw = (at - positions[e]).length(), d = raw;
       if (i(I_FLEEING, e))
         d *= p(TARGET_FLEE_DISTANCE_MULTIPLIER);
       if (cavalry && r(R_ATTACK_RANGE, e) > 0 && !i(I_MOUNTED, e))
         d *= p(CAVALRY_ARCHER_TARGET_MULTIPLIER);
       if (e == previous)
         d *= p(CURRENT_TARGET_MULTIPLIER);
+      // Stage 1a (DESIGN.md 4.4, 1.4 step 2): SpatialIndex.melee_weight.
+      if (melee) {
+        double crowd = double(i(I_ATTACKERS, e)) - (e == previous ? 1.0 : 0.0) -
+                       p(TARGET_CROWD_FREE_ATTACKERS);
+        if (crowd > 0)
+          d *= 1.0 + p(TARGET_CROWD_MULTIPLIER) * crowd;
+        if (own > 0 && raw > 0) {
+          Vec2 delta = positions[e] - at;
+          float toward = velocities[e].x * delta.x + velocities[e].y * delta.y;
+          double excess = double(toward) / raw - own;
+          if (excess > 0)
+            d *= 1.0 + p(TARGET_OUTRUN_MULTIPLIER) * excess / own;
+        }
+      } else {
+        // Stage 1a-archers (DESIGN.md 4.4, decision 15): SpatialIndex.ranged_weight.
+        if (own_damage > 0) {
+          double surplus = double(i(I_AIMERS, e)) - (e == previous ? 1.0 : 0.0) + 1.0 -
+                           r(R_HP, e) / (own_damage * p(TARGET_VOLLEY_HIT_SHARE));
+          if (surplus > 0)
+            d *= 1.0 + p(TARGET_OVERKILL_MULTIPLIER) * surplus;
+        }
+        d *= 1.0 + p(TARGET_FRONT_SPREAD) * front_share(own_id, i(I_ID, e));
+      }
       if (d < score || (d == score && (best < 0 || e < best))) {
         score = d;
         best = e;
@@ -114,7 +150,7 @@ private:
     }
     return best;
   }
-  void plan(int row, const Group &g, Vec2 slot) {
+  void plan(int row, const Group &g, Vec2 slot, Vec2 center) {
     Vec2 at = positions[row], enemy = target >= 0 ? positions[target] : Vec2{};
     double sd = (at - slot).length();
     distance = target >= 0 ? (at - enemy).length() : INFINITY;
@@ -174,6 +210,57 @@ private:
         destination = Vec2{float(width), float(height)} * .5;
       velocity_scale = p(AI_SKIRMISH_SPEED_MULTIPLIER);
     }
+    // Charge leash (DESIGN.md 1.4 step 2): AiDecision.plan_into.
+    if (g.charge && range <= 0 && std::isfinite(center.x) &&
+        std::isfinite(center.y)) {
+      Vec2 home = center + g.lateral * v(V_SLOT_OFFSET, row).x +
+                  g.forward * v(V_SLOT_OFFSET, row).y;
+      home.x = std::clamp(home.x, float(p(SLOT_EDGE)),
+                          float(width - p(SLOT_EDGE)));
+      home.y = std::clamp(home.y, float(p(SLOT_EDGE)),
+                          float(height - p(SLOT_EDGE)));
+      double away = (at - home).length();
+      bool leashed = i(I_LEASHED, row);
+      double chase = r(R_CHASE_SECONDS, row);
+      bool chasing = false;
+      if (mode == MELEE && distance > reach) {
+        Vec2 delta = enemy - at;
+        float toward = velocities[target].x * delta.x + velocities[target].y * delta.y;
+        chasing = double(toward) / distance >=
+                  r(R_SPEED, row) * p(AI_CHARGE_CHASE_SPEED_SHARE);
+      }
+      if (leashed) {
+        if (away < p(mounted ? AI_CHARGE_MOUNTED_RETURN_DISTANCE
+                             : AI_CHARGE_FOOT_RETURN_DISTANCE))
+          leashed = false;
+      } else if (chasing && (away > p(mounted ? AI_CHARGE_MOUNTED_HARD_LEASH
+                                              : AI_CHARGE_FOOT_HARD_LEASH) ||
+                             chase > p(AI_CHARGE_CHASE_SECONDS))) {
+        leashed = true;
+        chase = 0;
+      }
+      double soft =
+          p(mounted ? AI_CHARGE_MOUNTED_SOFT_LEASH : AI_CHARGE_FOOT_SOFT_LEASH);
+      if (away <= soft)
+        chase = 0;
+      if (mode == MELEE && distance > reach) {
+        if (leashed) {
+          mode = SLOT;
+          destination = home;
+          face = away < p(AI_SLOT_FACE_DISTANCE) ? g.direction
+                                                 : angle(home - at);
+        } else if (chasing && away > soft && (enemy - home).length() > away) {
+          chase += dt;
+          mode = SLOT;
+          destination = at;
+        }
+      }
+      i(I_LEASHED, row) = leashed;
+      r(R_CHASE_SECONDS, row) = chase;
+    } else if (i(I_LEASHED, row) || r(R_CHASE_SECONDS, row) != 0) {
+      i(I_LEASHED, row) = 0;
+      r(R_CHASE_SECONDS, row) = 0;
+    }
     i(I_MODE, row) = mode;
     v(V_PLAN_DESTINATION, row) = destination;
     r(R_PLAN_FACE, row) = face;
@@ -230,6 +317,39 @@ private:
             float(d < p(SIEGE_ROUTE_CENTERING_DISTANCE) ? center : entry)};
   }
 
+  // Stage 1a inputs before any fighter moves, as Movement._prepare_ai: melee attackers and shooters (aimers) of
+  // every target and the
+  // formation centre fitted to each group (mean of position minus formation offset, double sums in row order).
+  void prepare() {
+    int count = int(positions.size());
+    for (int row = 0; row < count; ++row) {
+      i(I_ATTACKERS, row) = 0;
+      i(I_AIMERS, row) = 0;
+    }
+    double sums[12] = {};
+    int counts[6] = {};
+    for (int row = 0; row < count; ++row) {
+      if (!live(row) || i(I_HERO, row) || i(I_FLEEING, row))
+        continue;
+      int slot = int(i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row));
+      const Group &g = groups[slot];
+      Vec2 fitted = positions[row] - g.lateral * v(V_SLOT_OFFSET, row).x -
+                    g.forward * v(V_SLOT_OFFSET, row).y;
+      sums[slot * 2] += fitted.x;
+      sums[slot * 2 + 1] += fitted.y;
+      counts[slot] += 1;
+      int t = resolve(i(I_TARGET_HANDLE, row));
+      if (t >= 0 && i(I_SIDE, t) != i(I_SIDE, row))
+        i(r(R_ATTACK_RANGE, row) <= 0 ? I_ATTACKERS : I_AIMERS, t) += 1;
+    }
+    for (int slot = 0; slot < 6; ++slot)
+      centers[slot] =
+          counts[slot] > 0
+              ? Vec2{float(sums[slot * 2] / counts[slot]),
+                     float(sums[slot * 2 + 1] / counts[slot])}
+              : Vec2{float(INFINITY), float(INFINITY)};
+  }
+
 public:
   void begin() {
     cursor = stage = 0;
@@ -251,6 +371,7 @@ public:
       slot_handles[slot] = handle;
       slot_rows[slot] = row;
     }
+    prepare();
   }
   Result run() {
     for (; cursor < int(positions.size()); ++cursor) {
@@ -287,11 +408,20 @@ public:
               (i(I_TARGET_HANDLE, row) != 0 && target < 0)) {
             r(R_TARGET_TIMER, row) =
                 p(RETARGET_MIN_SECONDS) + random() * p(RETARGET_RANDOM_SECONDS);
+            int old = target;
             target = choose(row, target);
+            if (target != old) {
+              I counter = r(R_ATTACK_RANGE, row) <= 0 ? I_ATTACKERS : I_AIMERS;
+              if (old >= 0)
+                i(counter, old) -= 1;
+              if (target >= 0)
+                i(counter, target) += 1;
+            }
             i(I_TARGET_HANDLE, row) =
                 target >= 0 ? i(I_UNIT_HANDLE, target) : 0;
           }
-          plan(row, g, slot);
+          plan(row, g, slot,
+               centers[i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row)]);
           if (i(I_MODE, row) == MELEE && target >= 0 && i(I_MOUNTED, row) &&
               r(R_ATTACK_RANGE, row) <= 0 && r(R_CHARGE_COOLDOWN, row) <= 0 &&
               velocities[row].length() > p(CHARGE_MIN_SPEED) &&

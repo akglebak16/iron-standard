@@ -83,6 +83,13 @@ func _initialize() -> void:
 	assert(p.liege == "")
 	# a day runs
 	c.day_tick()
+	# a ruler carried off a lost field leaves the fight with no fight id, and the fight's side lookup still works
+	var carried: Dictionary = c.ruler_of("nord")
+	carried.fight = 7
+	c.ruler_home(carried)
+	assert(carried.fight == null, "ruler_home clears the fight id like the browser")
+	var sides: Array = s.skirmish._side({"id": 7}, [carried.id])
+	assert(sides.is_empty(), "a carried-off ruler is no longer on the fight's side")
 	# save keeps houses, rulers and the oath
 	c.swear("emp")
 	var back = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(s))), data, ContentLoader.registry())

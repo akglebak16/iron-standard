@@ -15,6 +15,7 @@ const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const StaticObstacleIndex = preload("res://runtime/spatial/static_obstacle_index.gd")
 const GenerationHandles = preload("res://runtime/simulation/generation_handles.gd")
+const DecisionTrace = preload("res://core/battle/simulation/ai/decision_trace.gd")
 const BLUNT_LOOK_WEAPONS := ["club", "mace"]
 
 var wall: SiegeWall
@@ -70,6 +71,14 @@ var side_factions := ["", ""]
 var reserve_caps := [0, 0]
 var reserve_lost := [0, 0]
 var active_counts := [0, 0] # Combat-ready units at the latest morale check.
+var missile_losses := [0.0, 0.0] # Fighters lost to missiles, decayed over AI_MISSILE_LOSS_MEMORY_SECONDS by tactics.
+var ai_scan_timers := [0.0, 0.0]
+# Formation centre fitted to each group at the start of the GDScript movement tick (side * 3 + kind), the anchor
+# of the charge leash; Vector2.INF without ready fighters. The native kernel keeps its own copy.
+var formation_centers := PackedVector2Array([Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF])
+## Observation port (ADR-022): brains write decision records here only while the session traces them.
+## No rule reads it; it is not part of snapshots or results.
+var ai_trace: DecisionTrace = null
 var _events: Array[Dictionary] = []
 
 func contact_geometry() -> Dictionary:
@@ -330,6 +339,8 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 	handles.release(target.unit_handle)
 	target.hp = 0.0
 	record_event(Event.Kind.DOWN, target, source, attack, amount)
+	if attack == Event.Attack.PROJECTILE:
+		missile_losses[target.side] += 1.0
 	if source != null:
 		source.kills += 1
 		source.morale = minf(source.base_morale, source.morale + Config.KILL_MORALE_BONUS)

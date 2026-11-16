@@ -98,11 +98,17 @@ func nearest_enemy(unit: Unit) -> Unit:
 	return _units[best_index] if best_index >= 0 else null
 
 ## Same choice as Targeting.choose (weighted distance, lowest index on ties) without scanning far cells.
+## The stage 1a melee and ranged weights only raise distances, so the bounds below (the smallest older multiplier)
+## still hold.
 func best_target(unit: Unit, previous: Unit) -> Unit:
 	var at := unit.position
 	var other_side := 1 - unit.side
 	var cells: Dictionary = _cells[other_side]
 	var melee_cavalry := unit.mounted and unit.attack_range <= 0.0
+	var melee := unit.attack_range <= 0.0
+	var own_speed := unit.speed
+	var own_id := unit.id
+	var own_damage := unit.damage
 	# Only the current target is discounted, so it is weighed first and the bound for everyone else
 	# uses the remaining multipliers (never below the cavalry-versus-archers one).
 	var min_k := Config.CAVALRY_ARCHER_TARGET_MULTIPLIER if melee_cavalry else 1.0
@@ -112,12 +118,17 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 	state[0] = -1
 	state[1] = INF
 	if previous != null and not previous.dead and not previous.gone:
-		var d := at.distance_to(previous.position)
+		var raw := at.distance_to(previous.position)
+		var d := raw
 		if previous.fleeing:
 			d *= Config.TARGET_FLEE_DISTANCE_MULTIPLIER
 		if melee_cavalry and previous.attack_range > 0.0 and not previous.mounted:
 			d *= Config.CAVALRY_ARCHER_TARGET_MULTIPLIER
 		d *= Config.CURRENT_TARGET_MULTIPLIER
+		if melee:
+			d = melee_weight(d, raw, at, own_speed, previous, previous.position, true)
+		else:
+			d = ranged_weight(d, own_id, own_damage, previous, true)
 		state[0] = previous.battle_index
 		state[1] = d
 	# Rings of cells around the unit while the next ring could still hold something closer; a far enemy
@@ -127,14 +138,14 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 		if ring >= 2 and (ring - 1) * size * min_k > float(state[1]) + 1e-6:
 			return _units[state[0]] if state[0] >= 0 else null
 		if ring == 0:
-			_scan_cell(cells, home, at, previous, melee_cavalry, min_k, state)
+			_scan_cell(cells, home, at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
 		else:
 			for dx in range(-ring, ring + 1):
-				_scan_cell(cells, home + Vector2i(dx, -ring), at, previous, melee_cavalry, min_k, state)
-				_scan_cell(cells, home + Vector2i(dx, ring), at, previous, melee_cavalry, min_k, state)
+				_scan_cell(cells, home + Vector2i(dx, -ring), at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
+				_scan_cell(cells, home + Vector2i(dx, ring), at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
 			for dy in range(-ring + 1, ring):
-				_scan_cell(cells, home + Vector2i(-ring, dy), at, previous, melee_cavalry, min_k, state)
-				_scan_cell(cells, home + Vector2i(ring, dy), at, previous, melee_cavalry, min_k, state)
+				_scan_cell(cells, home + Vector2i(-ring, dy), at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
+				_scan_cell(cells, home + Vector2i(ring, dy), at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
 		ring += 1
 	# Far targets: scan the closest occupied cell first so the bound prunes the rest.
 	var far := _far_cells
@@ -158,15 +169,48 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 		gaps[far_count] = gap
 		far_count += 1
 	if nearest_cell >= 0:
-		_scan_cell(cells, far[nearest_cell], at, previous, melee_cavalry, min_k, state)
+		_scan_cell(cells, far[nearest_cell], at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
 	for k in far_count:
 		if k != nearest_cell and gaps[k] * min_k <= float(state[1]) + 1e-6:
-			_scan_cell(cells, far[k], at, previous, melee_cavalry, min_k, state)
+			_scan_cell(cells, far[k], at, previous, melee_cavalry, melee, own_speed, own_id, own_damage, min_k, state)
 	return _units[state[0]] if state[0] >= 0 else null
 
 const RING_LIMIT := 3
 
-func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, melee_cavalry: bool, min_k: float, state: Array) -> void:
+## Stage 1a weights of a melee fighter's target (DESIGN.md 4.4, 1.4 step 2), applied after the older multipliers
+## and only ever raising the distance, so the search bounds above stay valid. Same arithmetic as consider() in
+## movement_kernel.hpp: a target fought by more than TARGET_CROWD_FREE_ATTACKERS others (the fighter himself not
+## counted) and one receding faster than the fighter can run look farther away. `raw` is the plain distance.
+static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: float, enemy: Unit, enemy_position: Vector2, own_target: bool) -> float:
+	var crowd := float(enemy.attackers) - (1.0 if own_target else 0.0) - Config.TARGET_CROWD_FREE_ATTACKERS
+	if crowd > 0.0:
+		weighted *= 1.0 + Config.TARGET_CROWD_MULTIPLIER * crowd
+	if own_speed > 0.0 and raw > 0.0:
+		var excess := enemy.velocity.dot(enemy_position - at) / raw - own_speed
+		if excess > 0.0:
+			weighted *= 1.0 + Config.TARGET_OUTRUN_MULTIPLIER * excess / own_speed
+	return weighted
+
+## Stage 1a-archers weights of a shooter's target (DESIGN.md 4.4, decision 15), after the older multipliers and only
+## ever raising the distance. Same arithmetic as consider() in movement_kernel.hpp. Overkill: the shooters already
+## aiming at the enemy (the shooter himself not counted) plus him, beyond hp / (damage x TARGET_VOLLEY_HIT_SHARE),
+## each add TARGET_OVERKILL_MULTIPLIER. Front ranks: a fixed share up to TARGET_FRONT_SPREAD from both ids.
+static func ranged_weight(weighted: float, own_id: int, own_damage: float, enemy: Unit, own_target: bool) -> float:
+	if own_damage > 0.0:
+		var surplus := float(enemy.aimers) - (1.0 if own_target else 0.0) + 1.0 - enemy.hp / (own_damage * Config.TARGET_VOLLEY_HIT_SHARE)
+		if surplus > 0.0:
+			weighted *= 1.0 + Config.TARGET_OVERKILL_MULTIPLIER * surplus
+	return weighted * (1.0 + Config.TARGET_FRONT_SPREAD * front_share(own_id, enemy.id))
+
+## A fixed number in [0, 1) for a shooter and a target: integer mixing of both ids, the same in C++ (front_share in
+## movement_kernel.hpp). Every step stays below 2^53, so 64-bit GDScript ints and int64_t agree.
+static func front_share(own_id: int, enemy_id: int) -> float:
+	var x := (own_id & 1048575) * 92821 + (enemy_id & 1048575) * 68917
+	x = x ^ (x >> 15)
+	x = (x % 1000003) * 2654435761
+	return float((x >> 20) & 1023) / 1024.0
+
+func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, melee_cavalry: bool, melee: bool, own_speed: float, own_id: int, own_damage: float, min_k: float, state: Array) -> void:
 	var bucket = cells.get(cell)
 	if bucket == null:
 		return
@@ -182,13 +226,19 @@ func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, 
 		var enemy: Unit = _units[index]
 		if enemy.dead or enemy.gone:
 			continue
-		var distance := at.distance_to(_positions[index] if _motion != null else enemy.position)
+		var enemy_position: Vector2 = _positions[index] if _motion != null else enemy.position
+		var raw := at.distance_to(enemy_position)
+		var distance := raw
 		if enemy.fleeing:
 			distance *= Config.TARGET_FLEE_DISTANCE_MULTIPLIER
 		if melee_cavalry and enemy.attack_range > 0.0 and not enemy.mounted:
 			distance *= Config.CAVALRY_ARCHER_TARGET_MULTIPLIER
 		if enemy == previous:
 			distance *= Config.CURRENT_TARGET_MULTIPLIER
+		if melee:
+			distance = melee_weight(distance, raw, at, own_speed, enemy, enemy_position, enemy == previous)
+		else:
+			distance = ranged_weight(distance, own_id, own_damage, enemy, enemy == previous)
 		if distance < best or distance == best and index < best_index:
 			best = distance
 			best_index = index

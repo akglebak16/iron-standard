@@ -1,0 +1,5835 @@
+{
+ "note": "Stage 1a-archers arena, DESIGN.md 7.1. before = ai-architecture 088f112 (after stage 1a) with the volley metrics of the arena; after = the same with the stage 1a-archers rules. Profile reference on both sides, --mirror, seed 4242+, debug, two arena processes in parallel.",
+ "before": {
+  "100": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4333,
+        "mean_ms": 0.0484142626355874,
+        "p50_ms": 0.032,
+        "p95_ms": 0.165,
+        "p99_ms": 0.355
+       },
+       "decided": true,
+       "duration_seconds": 70.0,
+       "fled": [
+        0.06,
+        0.0
+       ],
+       "idle_time": [
+        0.383345212639582,
+        0.369531894823724
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.94,
+        0.83
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4333,
+       "volleys": {
+        "aimed": 1419,
+        "dead_share": 0.0669485553206483,
+        "doomed_share": 0.193798449612403,
+        "first_volley_shots": 13.0,
+        "first_volley_targets": 5.5,
+        "shots": 1423,
+        "shots_per_target": 2.67477876106195,
+        "targets_per_volley": 6.27777777777778,
+        "volleys": 72,
+        "wasted_share": 0.260747004933051
+       },
+       "wall_ms": 3018,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3853,
+        "mean_ms": 0.0505255644951985,
+        "p50_ms": 0.032,
+        "p95_ms": 0.166,
+        "p99_ms": 0.405
+       },
+       "decided": true,
+       "duration_seconds": 62.0,
+       "fled": [
+        0.0,
+        0.1
+       ],
+       "idle_time": [
+        0.379031283971494,
+        0.397517817645613
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.77,
+        0.9
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3853,
+       "volleys": {
+        "aimed": 1312,
+        "dead_share": 0.0678353658536585,
+        "doomed_share": 0.196646341463415,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 4.5,
+        "shots": 1322,
+        "shots_per_target": 2.60747663551402,
+        "targets_per_volley": 6.48484848484848,
+        "volleys": 66,
+        "wasted_share": 0.264481707317073
+       },
+       "wall_ms": 2270,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4153,
+        "mean_ms": 0.0469308933301228,
+        "p50_ms": 0.031,
+        "p95_ms": 0.165,
+        "p99_ms": 0.33
+       },
+       "decided": true,
+       "duration_seconds": 67.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.37654028436019,
+        0.370791844476055
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.8
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4153,
+       "volleys": {
+        "aimed": 1369,
+        "dead_share": 0.0723155588020453,
+        "doomed_share": 0.18699780861943,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 5.0,
+        "shots": 1372,
+        "shots_per_target": 2.73903002309469,
+        "targets_per_volley": 6.09859154929578,
+        "volleys": 71,
+        "wasted_share": 0.259313367421476
+       },
+       "wall_ms": 2698,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4453,
+        "mean_ms": 0.0462281607904783,
+        "p50_ms": 0.031,
+        "p95_ms": 0.163,
+        "p99_ms": 0.319
+       },
+       "decided": true,
+       "duration_seconds": 72.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.356392193093891,
+        0.379581766917293
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.97
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4453,
+       "volleys": {
+        "aimed": 1426,
+        "dead_share": 0.0694249649368864,
+        "doomed_share": 0.213884992987377,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 5.0,
+        "shots": 1429,
+        "shots_per_target": 2.73170731707317,
+        "targets_per_volley": 6.09459459459459,
+        "volleys": 74,
+        "wasted_share": 0.283309957924264
+       },
+       "wall_ms": 2739,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3853,
+        "mean_ms": 0.0460952504541915,
+        "p50_ms": 0.032,
+        "p95_ms": 0.099,
+        "p99_ms": 0.39
+       },
+       "decided": true,
+       "duration_seconds": 62.0,
+       "fled": [
+        0.0,
+        0.09
+       ],
+       "idle_time": [
+        0.37661878973393,
+        0.389036786060019
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.74,
+        0.91
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3853,
+       "volleys": {
+        "aimed": 1312,
+        "dead_share": 0.0777439024390244,
+        "doomed_share": 0.173780487804878,
+        "first_volley_shots": 15.5,
+        "first_volley_targets": 5.5,
+        "shots": 1315,
+        "shots_per_target": 2.62331838565022,
+        "targets_per_volley": 6.55882352941176,
+        "volleys": 68,
+        "wasted_share": 0.251524390243902
+       },
+       "wall_ms": 2212,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3973,
+        "mean_ms": 0.0462705763906368,
+        "p50_ms": 0.032,
+        "p95_ms": 0.106,
+        "p99_ms": 0.378
+       },
+       "decided": true,
+       "duration_seconds": 64.0,
+       "fled": [
+        0.09,
+        0.0
+       ],
+       "idle_time": [
+        0.38106536955748,
+        0.370229885057471
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.91,
+        0.75
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3973,
+       "volleys": {
+        "aimed": 1344,
+        "dead_share": 0.0617559523809524,
+        "doomed_share": 0.161458333333333,
+        "first_volley_shots": 15.5,
+        "first_volley_targets": 5.5,
+        "shots": 1348,
+        "shots_per_target": 2.32938856015779,
+        "targets_per_volley": 7.14084507042254,
+        "volleys": 71,
+        "wasted_share": 0.223214285714286
+       },
+       "wall_ms": 2351,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.0490332258864369,
+        "p50_ms": 0.032,
+        "p95_ms": 0.166,
+        "p99_ms": 0.376
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.08,
+        0.0
+       ],
+       "idle_time": [
+        0.383522388059702,
+        0.375406479585692
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.92,
+        0.81
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4033,
+       "volleys": {
+        "aimed": 1340,
+        "dead_share": 0.0641791044776119,
+        "doomed_share": 0.201492537313433,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 4.0,
+        "shots": 1345,
+        "shots_per_target": 2.54405286343612,
+        "targets_per_volley": 6.48571428571429,
+        "volleys": 70,
+        "wasted_share": 0.265671641791045
+       },
+       "wall_ms": 2465,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3973,
+        "mean_ms": 0.0445285678328719,
+        "p50_ms": 0.032,
+        "p95_ms": 0.099,
+        "p99_ms": 0.381
+       },
+       "decided": true,
+       "duration_seconds": 64.0,
+       "fled": [
+        0.07,
+        0.0
+       ],
+       "idle_time": [
+        0.387849910661108,
+        0.371526980482204
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.93,
+        0.76
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3973,
+       "volleys": {
+        "aimed": 1353,
+        "dead_share": 0.0554323725055432,
+        "doomed_share": 0.160384331116038,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 4.0,
+        "shots": 1358,
+        "shots_per_target": 2.47761194029851,
+        "targets_per_volley": 6.79710144927536,
+        "volleys": 69,
+        "wasted_share": 0.215816703621582
+       },
+       "wall_ms": 2158,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 5113,
+        "mean_ms": 0.0442822217876002,
+        "p50_ms": 0.029,
+        "p95_ms": 0.139,
+        "p99_ms": 0.328
+       },
+       "decided": true,
+       "duration_seconds": 83.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.352363279118,
+        0.363839811542992
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.93,
+        0.97
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 5113,
+       "volleys": {
+        "aimed": 1498,
+        "dead_share": 0.0781041388518024,
+        "doomed_share": 0.152202937249666,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 5.0,
+        "shots": 1504,
+        "shots_per_target": 2.57861635220126,
+        "targets_per_volley": 6.44594594594595,
+        "volleys": 74,
+        "wasted_share": 0.230307076101469
+       },
+       "wall_ms": 3251,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4873,
+        "mean_ms": 0.0444563923660989,
+        "p50_ms": 0.03,
+        "p95_ms": 0.156,
+        "p99_ms": 0.323
+       },
+       "decided": true,
+       "duration_seconds": 79.0,
+       "fled": [
+        0.0,
+        0.03
+       ],
+       "idle_time": [
+        0.355474118185983,
+        0.370206832442482
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.97
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4873,
+       "volleys": {
+        "aimed": 1423,
+        "dead_share": 0.0555165144061841,
+        "doomed_share": 0.187631763879129,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 5.0,
+        "shots": 1428,
+        "shots_per_target": 3.00837988826816,
+        "targets_per_volley": 5.59375,
+        "volleys": 64,
+        "wasted_share": 0.243148278285313
+       },
+       "wall_ms": 3357,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 5053,
+        "mean_ms": 0.0419843657233327,
+        "p50_ms": 0.03,
+        "p95_ms": 0.086,
+        "p99_ms": 0.297
+       },
+       "decided": true,
+       "duration_seconds": 82.0,
+       "fled": [
+        0.03,
+        0.0
+       ],
+       "idle_time": [
+        0.35563578923615,
+        0.3515784936968
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.97,
+        0.9
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 5053,
+       "volleys": {
+        "aimed": 1486,
+        "dead_share": 0.0592193808882907,
+        "doomed_share": 0.129878869448183,
+        "first_volley_shots": 10.5,
+        "first_volley_targets": 3.0,
+        "shots": 1494,
+        "shots_per_target": 2.26727272727273,
+        "targets_per_volley": 6.875,
+        "volleys": 80,
+        "wasted_share": 0.189098250336474
+       },
+       "wall_ms": 3105,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4213,
+        "mean_ms": 0.0439252314265369,
+        "p50_ms": 0.032,
+        "p95_ms": 0.091,
+        "p99_ms": 0.363
+       },
+       "decided": true,
+       "duration_seconds": 68.0,
+       "fled": [
+        0.0,
+        0.08
+       ],
+       "idle_time": [
+        0.364756904816252,
+        0.384148518386291
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.82,
+        0.92
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4213,
+       "volleys": {
+        "aimed": 1374,
+        "dead_share": 0.0647743813682678,
+        "doomed_share": 0.157933042212518,
+        "first_volley_shots": 10.5,
+        "first_volley_targets": 3.0,
+        "shots": 1374,
+        "shots_per_target": 2.54584221748401,
+        "targets_per_volley": 6.7,
+        "volleys": 70,
+        "wasted_share": 0.222707423580786
+       },
+       "wall_ms": 2537,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4093,
+        "mean_ms": 0.0459347666748107,
+        "p50_ms": 0.032,
+        "p95_ms": 0.098,
+        "p99_ms": 0.368
+       },
+       "decided": true,
+       "duration_seconds": 66.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.384050242919777,
+        0.373977181053359
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.8
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4093,
+       "volleys": {
+        "aimed": 1359,
+        "dead_share": 0.0625459896983076,
+        "doomed_share": 0.169242089771891,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 5.5,
+        "shots": 1360,
+        "shots_per_target": 2.49593495934959,
+        "targets_per_volley": 6.83333333333333,
+        "volleys": 72,
+        "wasted_share": 0.231788079470199
+       },
+       "wall_ms": 2415,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4393,
+        "mean_ms": 0.0458647848850444,
+        "p50_ms": 0.031,
+        "p95_ms": 0.164,
+        "p99_ms": 0.338
+       },
+       "decided": true,
+       "duration_seconds": 71.0,
+       "fled": [
+        0.0,
+        0.04
+       ],
+       "idle_time": [
+        0.366651042887274,
+        0.372201492537313
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.83,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4393,
+       "volleys": {
+        "aimed": 1397,
+        "dead_share": 0.0672870436649964,
+        "doomed_share": 0.150322118826056,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 5.5,
+        "shots": 1401,
+        "shots_per_target": 2.43723849372385,
+        "targets_per_volley": 6.73239436619718,
+        "volleys": 71,
+        "wasted_share": 0.217609162491052
+       },
+       "wall_ms": 2782,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3613,
+        "mean_ms": 0.0501954054802104,
+        "p50_ms": 0.033,
+        "p95_ms": 0.167,
+        "p99_ms": 0.369
+       },
+       "decided": true,
+       "duration_seconds": 58.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.376452454351435,
+        0.393499486125385
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.67,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3613,
+       "volleys": {
+        "aimed": 1286,
+        "dead_share": 0.0637636080870918,
+        "doomed_share": 0.208398133748056,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 4.5,
+        "shots": 1291,
+        "shots_per_target": 2.88725490196078,
+        "targets_per_volley": 5.82857142857143,
+        "volleys": 70,
+        "wasted_share": 0.272161741835148
+       },
+       "wall_ms": 1947,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.045897729932132,
+        "p50_ms": 0.031,
+        "p95_ms": 0.164,
+        "p99_ms": 0.326
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.0,
+        0.04
+       ],
+       "idle_time": [
+        0.378021978021978,
+        0.374257895986702
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.88,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4273,
+       "volleys": {
+        "aimed": 1351,
+        "dead_share": 0.0606957809030348,
+        "doomed_share": 0.203552923760178,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 4.5,
+        "shots": 1355,
+        "shots_per_target": 2.83950617283951,
+        "targets_per_volley": 5.95588235294118,
+        "volleys": 68,
+        "wasted_share": 0.264248704663212
+       },
+       "wall_ms": 2689,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "archers",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0462854625057057,
+      "ai_phase_worst_p95_ms": 0.167,
+      "draws": 0,
+      "duration_seconds": 68.875,
+      "fled": [
+       0.026875,
+       0.0375
+      ],
+      "idle_time": [
+       0.372360702600889,
+       0.375458322926212
+      ],
+      "losses": [
+       0.8725,
+       0.878125
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.3125,
+       0.6875
+      ],
+      "profile_wins": [
+       5,
+       11
+      ],
+      "runs": 16,
+      "volleys": {
+       "dead_share": 0.0654714134115216,
+       "doomed_share": 0.177975322571624,
+       "first_volley_shots": 12.5,
+       "first_volley_targets": 4.6875,
+       "runs": 16,
+       "shots_per_target": 2.61171313746165,
+       "targets_per_volley": 6.4314483855206,
+       "wasted_share": 0.243446735983146
+      },
+      "win_rate": [
+       0.5625,
+       0.4375
+      ],
+      "wins": [
+       9,
+       7
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 2773,
+        "mean_ms": 0.0517922827262892,
+        "p50_ms": 0.035,
+        "p95_ms": 0.17,
+        "p99_ms": 0.431
+       },
+       "decided": true,
+       "duration_seconds": 44.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.434168272318561,
+        0.408469945355191
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.65
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2773,
+       "volleys": {
+        "aimed": 559,
+        "dead_share": 0.0858676207513417,
+        "doomed_share": 0.191413237924866,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 1.5,
+        "shots": 561,
+        "shots_per_target": 3.36206896551724,
+        "targets_per_volley": 3.74193548387097,
+        "volleys": 31,
+        "wasted_share": 0.277280858676208
+       },
+       "wall_ms": 1777,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2533,
+        "mean_ms": 0.0531942360836952,
+        "p50_ms": 0.035,
+        "p95_ms": 0.171,
+        "p99_ms": 0.464
+       },
+       "decided": true,
+       "duration_seconds": 40.0,
+       "fled": [
+        0.0,
+        0.13
+       ],
+       "idle_time": [
+        0.412610106629578,
+        0.449747048903879
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.54,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2533,
+       "volleys": {
+        "aimed": 479,
+        "dead_share": 0.125260960334029,
+        "doomed_share": 0.196242171189979,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 1.5,
+        "shots": 479,
+        "shots_per_target": 2.86725663716814,
+        "targets_per_volley": 4.70833333333333,
+        "volleys": 24,
+        "wasted_share": 0.321503131524008
+       },
+       "wall_ms": 1029,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2293,
+        "mean_ms": 0.054284343654601,
+        "p50_ms": 0.036,
+        "p95_ms": 0.172,
+        "p99_ms": 0.474
+       },
+       "decided": true,
+       "duration_seconds": 36.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.45812204930932,
+        0.45274040039383
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.51
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2293,
+       "volleys": {
+        "aimed": 422,
+        "dead_share": 0.0829383886255924,
+        "doomed_share": 0.139810426540284,
+        "first_volley_shots": 16.5,
+        "first_volley_targets": 3.0,
+        "shots": 424,
+        "shots_per_target": 3.25301204819277,
+        "targets_per_volley": 4.61111111111111,
+        "volleys": 18,
+        "wasted_share": 0.222748815165877
+       },
+       "wall_ms": 570,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2593,
+        "mean_ms": 0.0529166988044736,
+        "p50_ms": 0.036,
+        "p95_ms": 0.171,
+        "p99_ms": 0.448
+       },
+       "decided": true,
+       "duration_seconds": 41.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.442001007218399,
+        0.427651217596229
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.61
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2593,
+       "volleys": {
+        "aimed": 505,
+        "dead_share": 0.099009900990099,
+        "doomed_share": 0.132673267326733,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 1.0,
+        "shots": 506,
+        "shots_per_target": 3.02564102564103,
+        "targets_per_volley": 4.68,
+        "volleys": 25,
+        "wasted_share": 0.231683168316832
+       },
+       "wall_ms": 1257,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 2773,
+        "mean_ms": 0.052424450054093,
+        "p50_ms": 0.035,
+        "p95_ms": 0.172,
+        "p99_ms": 0.434
+       },
+       "decided": true,
+       "duration_seconds": 44.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.408977556109726,
+        0.415821812596006
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.61
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2773,
+       "volleys": {
+        "aimed": 578,
+        "dead_share": 0.069204152249135,
+        "doomed_share": 0.155709342560554,
+        "first_volley_shots": 16.5,
+        "first_volley_targets": 3.0,
+        "shots": 580,
+        "shots_per_target": 3.28947368421053,
+        "targets_per_volley": 4.07142857142857,
+        "volleys": 28,
+        "wasted_share": 0.224913494809689
+       },
+       "wall_ms": 1593,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3373,
+        "mean_ms": 0.0500121553513193,
+        "p50_ms": 0.034,
+        "p95_ms": 0.168,
+        "p99_ms": 0.409
+       },
+       "decided": true,
+       "duration_seconds": 54.0,
+       "fled": [
+        0.0,
+        0.12
+       ],
+       "idle_time": [
+        0.360916700974338,
+        0.416615573267934
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.7,
+        0.88
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3373,
+       "volleys": {
+        "aimed": 734,
+        "dead_share": 0.0762942779291553,
+        "doomed_share": 0.126702997275204,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 2.0,
+        "shots": 734,
+        "shots_per_target": 2.62105263157895,
+        "targets_per_volley": 5.13513513513514,
+        "volleys": 37,
+        "wasted_share": 0.20299727520436
+       },
+       "wall_ms": 3238,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0543938536190861,
+        "p50_ms": 0.036,
+        "p95_ms": 0.172,
+        "p99_ms": 0.479
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.448438818565401,
+        0.421845275840203
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.49
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2473,
+       "volleys": {
+        "aimed": 503,
+        "dead_share": 0.0795228628230616,
+        "doomed_share": 0.200795228628231,
+        "first_volley_shots": 10.0,
+        "first_volley_targets": 1.0,
+        "shots": 505,
+        "shots_per_target": 3.16037735849057,
+        "targets_per_volley": 4.07692307692308,
+        "volleys": 26,
+        "wasted_share": 0.280318091451292
+       },
+       "wall_ms": 584,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2893,
+        "mean_ms": 0.0532782578638092,
+        "p50_ms": 0.036,
+        "p95_ms": 0.174,
+        "p99_ms": 0.446
+       },
+       "decided": true,
+       "duration_seconds": 46.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.393197478375605,
+        0.41641861193796
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.64,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2893,
+       "volleys": {
+        "aimed": 595,
+        "dead_share": 0.0907563025210084,
+        "doomed_share": 0.176470588235294,
+        "first_volley_shots": 10.0,
+        "first_volley_targets": 3.0,
+        "shots": 599,
+        "shots_per_target": 3.56435643564356,
+        "targets_per_volley": 3.74074074074074,
+        "volleys": 27,
+        "wasted_share": 0.267226890756303
+       },
+       "wall_ms": 1509,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2713,
+        "mean_ms": 0.0558234426833763,
+        "p50_ms": 0.036,
+        "p95_ms": 0.176,
+        "p99_ms": 0.487
+       },
+       "decided": true,
+       "duration_seconds": 43.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.428896843475431,
+        0.390878988561108
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.6
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2713,
+       "volleys": {
+        "aimed": 505,
+        "dead_share": 0.0871287128712871,
+        "doomed_share": 0.201980198019802,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 2.0,
+        "shots": 508,
+        "shots_per_target": 3.12631578947368,
+        "targets_per_volley": 3.8,
+        "volleys": 25,
+        "wasted_share": 0.289108910891089
+       },
+       "wall_ms": 1424,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2653,
+        "mean_ms": 0.057859404447795,
+        "p50_ms": 0.037,
+        "p95_ms": 0.176,
+        "p99_ms": 0.456
+       },
+       "decided": true,
+       "duration_seconds": 42.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.406495468277946,
+        0.431420631028282
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.59,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2653,
+       "volleys": {
+        "aimed": 508,
+        "dead_share": 0.0866141732283465,
+        "doomed_share": 0.192913385826772,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 2.5,
+        "shots": 510,
+        "shots_per_target": 3.25,
+        "targets_per_volley": 4.0,
+        "volleys": 23,
+        "wasted_share": 0.279527559055118
+       },
+       "wall_ms": 1503,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2593,
+        "mean_ms": 0.0580266101041265,
+        "p50_ms": 0.036,
+        "p95_ms": 0.181,
+        "p99_ms": 0.457
+       },
+       "decided": true,
+       "duration_seconds": 41.0,
+       "fled": [
+        0.0,
+        0.13
+       ],
+       "idle_time": [
+        0.400788237077459,
+        0.446222368855163
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.55,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2593,
+       "volleys": {
+        "aimed": 535,
+        "dead_share": 0.0785046728971963,
+        "doomed_share": 0.235514018691589,
+        "first_volley_shots": 10.5,
+        "first_volley_targets": 1.5,
+        "shots": 535,
+        "shots_per_target": 4.92424242424242,
+        "targets_per_volley": 3.3,
+        "volleys": 20,
+        "wasted_share": 0.314018691588785
+       },
+       "wall_ms": 1047,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 2593,
+        "mean_ms": 0.0531457770921712,
+        "p50_ms": 0.036,
+        "p95_ms": 0.172,
+        "p99_ms": 0.463
+       },
+       "decided": true,
+       "duration_seconds": 41.0,
+       "fled": [
+        0.0,
+        0.14
+       ],
+       "idle_time": [
+        0.417373862058324,
+        0.432241067017948
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.57,
+        0.86
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2593,
+       "volleys": {
+        "aimed": 506,
+        "dead_share": 0.0928853754940712,
+        "doomed_share": 0.195652173913043,
+        "first_volley_shots": 10.5,
+        "first_volley_targets": 1.0,
+        "shots": 510,
+        "shots_per_target": 3.24107142857143,
+        "targets_per_volley": 3.86206896551724,
+        "volleys": 29,
+        "wasted_share": 0.288537549407115
+       },
+       "wall_ms": 1101,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2233,
+        "mean_ms": 0.0560228392297358,
+        "p50_ms": 0.036,
+        "p95_ms": 0.172,
+        "p99_ms": 0.478
+       },
+       "decided": true,
+       "duration_seconds": 35.0,
+       "fled": [
+        0.08,
+        0.0
+       ],
+       "idle_time": [
+        0.475921196643561,
+        0.452655889145497
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.92,
+        0.43
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2233,
+       "volleys": {
+        "aimed": 418,
+        "dead_share": 0.0645933014354067,
+        "doomed_share": 0.169856459330144,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 1.5,
+        "shots": 419,
+        "shots_per_target": 3.2375,
+        "targets_per_volley": 4.21052631578947,
+        "volleys": 19,
+        "wasted_share": 0.23444976076555
+       },
+       "wall_ms": 544,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0550347755762232,
+        "p50_ms": 0.036,
+        "p95_ms": 0.173,
+        "p99_ms": 0.465
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.438264365890434,
+        0.434768940584722
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.57
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2473,
+       "volleys": {
+        "aimed": 499,
+        "dead_share": 0.0901803607214429,
+        "doomed_share": 0.158316633266533,
+        "first_volley_shots": 13.0,
+        "first_volley_targets": 2.0,
+        "shots": 501,
+        "shots_per_target": 2.7109375,
+        "targets_per_volley": 4.92307692307692,
+        "volleys": 26,
+        "wasted_share": 0.248496993987976
+       },
+       "wall_ms": 1049,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3433,
+        "mean_ms": 0.0527739586367609,
+        "p50_ms": 0.035,
+        "p95_ms": 0.178,
+        "p99_ms": 0.424
+       },
+       "decided": true,
+       "duration_seconds": 55.0,
+       "fled": [
+        0.11,
+        0.0
+       ],
+       "idle_time": [
+        0.371276442653619,
+        0.39071986123157
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.89,
+        0.75
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3433,
+       "volleys": {
+        "aimed": 710,
+        "dead_share": 0.0957746478873239,
+        "doomed_share": 0.190140845070423,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 1.0,
+        "shots": 712,
+        "shots_per_target": 3.54621848739496,
+        "targets_per_volley": 3.71875,
+        "volleys": 32,
+        "wasted_share": 0.285915492957746
+       },
+       "wall_ms": 3155,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2713,
+        "mean_ms": 0.0559395503133063,
+        "p50_ms": 0.036,
+        "p95_ms": 0.179,
+        "p99_ms": 0.426
+       },
+       "decided": true,
+       "duration_seconds": 43.0,
+       "fled": [
+        0.0,
+        0.06
+       ],
+       "idle_time": [
+        0.397435897435897,
+        0.436331110749715
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.66,
+        0.94
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2713,
+       "volleys": {
+        "aimed": 492,
+        "dead_share": 0.107723577235772,
+        "doomed_share": 0.178861788617886,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 1.0,
+        "shots": 494,
+        "shots_per_target": 3.09677419354839,
+        "targets_per_volley": 4.04347826086957,
+        "volleys": 23,
+        "wasted_share": 0.286585365853659
+       },
+       "wall_ms": 1341,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "mixed",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0541826647650539,
+      "ai_phase_worst_p95_ms": 0.181,
+      "draws": 0,
+      "duration_seconds": 42.6875,
+      "fled": [
+       0.075625,
+       0.05625
+      ],
+      "idle_time": [
+       0.41843026893835,
+       0.426534296441577
+      ],
+      "losses": [
+       0.7525,
+       0.7075
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.1875,
+       0.8125
+      ],
+      "profile_wins": [
+       3,
+       13
+      ],
+      "runs": 16,
+      "volleys": {
+       "dead_share": 0.0882662054996418,
+       "doomed_share": 0.177690797651084,
+       "first_volley_shots": 12.34375,
+       "first_volley_targets": 1.78125,
+       "runs": 16,
+       "shots_per_target": 3.2672686631046,
+       "targets_per_volley": 4.16396924486226,
+       "wasted_share": 0.265957003150725
+      },
+      "win_rate": [
+       0.4375,
+       0.5625
+      ],
+      "wins": [
+       7,
+       9
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": true,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 8,
+    "scenarios": [
+     "archers",
+     "mixed"
+    ],
+    "seed": 4242,
+    "sizes": [
+     100
+    ]
+   },
+   "version": 2
+  },
+  "500": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.0975483267025509,
+        "p50_ms": 0.048,
+        "p95_ms": 0.269,
+        "p99_ms": 0.645
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.154,
+        0.0
+       ],
+       "idle_time": [
+        0.4841890229921,
+        0.415745307031499
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.846,
+        0.644
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4273,
+       "volleys": {
+        "aimed": 6339,
+        "dead_share": 0.0638902035021297,
+        "doomed_share": 0.433980123047799,
+        "first_volley_shots": 26.5,
+        "first_volley_targets": 7.0,
+        "shots": 6378,
+        "shots_per_target": 3.73451327433628,
+        "targets_per_volley": 15.2702702702703,
+        "volleys": 111,
+        "wasted_share": 0.497870326549929
+       },
+       "wall_ms": 4111,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4513,
+        "mean_ms": 0.0924921338355861,
+        "p50_ms": 0.046,
+        "p95_ms": 0.278,
+        "p99_ms": 0.602
+       },
+       "decided": true,
+       "duration_seconds": 73.0,
+       "fled": [
+        0.128,
+        0.0
+       ],
+       "idle_time": [
+        0.47220392438669,
+        0.407081928188851
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.872,
+        0.696
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4513,
+       "volleys": {
+        "aimed": 7207,
+        "dead_share": 0.0606354932704315,
+        "doomed_share": 0.452754266685167,
+        "first_volley_shots": 26.5,
+        "first_volley_targets": 7.0,
+        "shots": 7274,
+        "shots_per_target": 3.84081196581197,
+        "targets_per_volley": 16.0,
+        "volleys": 117,
+        "wasted_share": 0.513389759955599
+       },
+       "wall_ms": 4160,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.0958851971237292,
+        "p50_ms": 0.047,
+        "p95_ms": 0.241,
+        "p99_ms": 0.614
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.192,
+        0.0
+       ],
+       "idle_time": [
+        0.496191489361702,
+        0.430389144377307
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.808,
+        0.6
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4033,
+       "volleys": {
+        "aimed": 5974,
+        "dead_share": 0.062604620020087,
+        "doomed_share": 0.429193170405089,
+        "first_volley_shots": 25.0,
+        "first_volley_targets": 7.0,
+        "shots": 6018,
+        "shots_per_target": 3.76767676767677,
+        "targets_per_volley": 15.5294117647059,
+        "volleys": 102,
+        "wasted_share": 0.491797790425176
+       },
+       "wall_ms": 3872,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4153,
+        "mean_ms": 0.0945581507344089,
+        "p50_ms": 0.047,
+        "p95_ms": 0.209,
+        "p99_ms": 0.609
+       },
+       "decided": true,
+       "duration_seconds": 67.0,
+       "fled": [
+        0.0,
+        0.158
+       ],
+       "idle_time": [
+        0.423067514677104,
+        0.498699101004759
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.62,
+        0.842
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4153,
+       "volleys": {
+        "aimed": 6183,
+        "dead_share": 0.0679281901989326,
+        "doomed_share": 0.415655830502992,
+        "first_volley_shots": 25.0,
+        "first_volley_targets": 7.0,
+        "shots": 6220,
+        "shots_per_target": 3.63705882352941,
+        "targets_per_volley": 15.8878504672897,
+        "volleys": 107,
+        "wasted_share": 0.483584020701925
+       },
+       "wall_ms": 3908,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.0943969108354786,
+        "p50_ms": 0.046,
+        "p95_ms": 0.26,
+        "p99_ms": 0.617
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.166,
+        0.0
+       ],
+       "idle_time": [
+        0.494490901168219,
+        0.420757391252271
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.834,
+        0.624
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4273,
+       "volleys": {
+        "aimed": 6282,
+        "dead_share": 0.0635148042024833,
+        "doomed_share": 0.400191021967526,
+        "first_volley_shots": 39.0,
+        "first_volley_targets": 8.5,
+        "shots": 6338,
+        "shots_per_target": 3.6415313225058,
+        "targets_per_volley": 15.6727272727273,
+        "volleys": 110,
+        "wasted_share": 0.46370582617001
+       },
+       "wall_ms": 3938,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4633,
+        "mean_ms": 0.0894396719188431,
+        "p50_ms": 0.044,
+        "p95_ms": 0.331,
+        "p99_ms": 0.606
+       },
+       "decided": true,
+       "duration_seconds": 75.0,
+       "fled": [
+        0.0,
+        0.106
+       ],
+       "idle_time": [
+        0.381403383369073,
+        0.436314761534746
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.74,
+        0.894
+       ],
+       "never_engaged": [
+        0.0,
+        0.002
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4633,
+       "volleys": {
+        "aimed": 7663,
+        "dead_share": 0.0523293749184393,
+        "doomed_share": 0.507895080255774,
+        "first_volley_shots": 39.0,
+        "first_volley_targets": 8.5,
+        "shots": 7729,
+        "shots_per_target": 4.08044752264251,
+        "targets_per_volley": 15.5123966942149,
+        "volleys": 121,
+        "wasted_share": 0.560224455174214
+       },
+       "wall_ms": 4129,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 6133,
+        "mean_ms": 0.0794536116093266,
+        "p50_ms": 0.038,
+        "p95_ms": 0.355,
+        "p99_ms": 0.555
+       },
+       "decided": true,
+       "duration_seconds": 100.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.399257820761791,
+        0.366982124079916
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.95,
+        0.888
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 6133,
+       "volleys": {
+        "aimed": 8795,
+        "dead_share": 0.0546901648664014,
+        "doomed_share": 0.481409891984082,
+        "first_volley_shots": 33.5,
+        "first_volley_targets": 6.5,
+        "shots": 8855,
+        "shots_per_target": 3.82570806100218,
+        "targets_per_volley": 13.6607142857143,
+        "volleys": 168,
+        "wasted_share": 0.536100056850483
+       },
+       "wall_ms": 4553,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.0958752789486734,
+        "p50_ms": 0.048,
+        "p95_ms": 0.221,
+        "p99_ms": 0.611
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.17,
+        0.0
+       ],
+       "idle_time": [
+        0.49731263705551,
+        0.438370175548458
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.83,
+        0.634
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4033,
+       "volleys": {
+        "aimed": 6243,
+        "dead_share": 0.0618292487586096,
+        "doomed_share": 0.42063110683966,
+        "first_volley_shots": 33.5,
+        "first_volley_targets": 6.5,
+        "shots": 6279,
+        "shots_per_target": 3.90675844806008,
+        "targets_per_volley": 15.5145631067961,
+        "volleys": 103,
+        "wasted_share": 0.48246035559827
+       },
+       "wall_ms": 3865,
+       "winner": 1,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "archers",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.0924561602135746,
+      "ai_phase_worst_p95_ms": 0.355,
+      "draws": 0,
+      "duration_seconds": 72.875,
+      "fled": [
+       0.1075,
+       0.033
+      ],
+      "idle_time": [
+       0.456014586721524,
+       0.426792491627226
+      ],
+      "losses": [
+       0.8125,
+       0.72775
+      ],
+      "never_engaged": [
+       0.001,
+       0.00025
+      ],
+      "profile_win_rate": [
+       0.25,
+       0.75
+      ],
+      "profile_wins": [
+       2,
+       6
+      ],
+      "runs": 8,
+      "volleys": {
+       "dead_share": 0.0609277624671893,
+       "doomed_share": 0.442713811461011,
+       "first_volley_shots": 31.0,
+       "first_volley_targets": 7.25,
+       "runs": 8,
+       "shots_per_target": 3.80431327319562,
+       "targets_per_volley": 15.3809917327148,
+       "wasted_share": 0.503641573928201
+      },
+      "win_rate": [
+       0.25,
+       0.75
+      ],
+      "wins": [
+       2,
+       6
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4693,
+        "mean_ms": 0.0911314724057106,
+        "p50_ms": 0.047,
+        "p95_ms": 0.277,
+        "p99_ms": 0.729
+       },
+       "decided": true,
+       "duration_seconds": 76.0,
+       "fled": [
+        0.128,
+        0.0
+       ],
+       "idle_time": [
+        0.325025333649555,
+        0.324094760783367
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.872,
+        0.72
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4693,
+       "volleys": {
+        "aimed": 4528,
+        "dead_share": 0.0655918727915194,
+        "doomed_share": 0.410335689045936,
+        "first_volley_shots": 15.5,
+        "first_volley_targets": 3.5,
+        "shots": 4548,
+        "shots_per_target": 4.2136832239925,
+        "targets_per_volley": 8.46825396825397,
+        "volleys": 126,
+        "wasted_share": 0.475927561837456
+       },
+       "wall_ms": 4259,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 5833,
+        "mean_ms": 0.0821155494599691,
+        "p50_ms": 0.044,
+        "p95_ms": 0.264,
+        "p99_ms": 0.714
+       },
+       "decided": true,
+       "duration_seconds": 95.0,
+       "fled": [
+        0.0,
+        0.056
+       ],
+       "idle_time": [
+        0.325570011108392,
+        0.312273666550729
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.87,
+        0.944
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 5833,
+       "volleys": {
+        "aimed": 5528,
+        "dead_share": 0.0719971056439942,
+        "doomed_share": 0.33068017366136,
+        "first_volley_shots": 14.5,
+        "first_volley_targets": 4.5,
+        "shots": 5566,
+        "shots_per_target": 3.54822006472492,
+        "targets_per_volley": 9.65625,
+        "volleys": 160,
+        "wasted_share": 0.402677279305355
+       },
+       "wall_ms": 4523,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 6493,
+        "mean_ms": 0.0768024025874018,
+        "p50_ms": 0.041,
+        "p95_ms": 0.256,
+        "p99_ms": 0.704
+       },
+       "decided": true,
+       "duration_seconds": 106.0,
+       "fled": [
+        0.0,
+        0.022
+       ],
+       "idle_time": [
+        0.300521525312816,
+        0.315601429138547
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.934,
+        0.978
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 6493,
+       "volleys": {
+        "aimed": 5853,
+        "dead_share": 0.0731248932171536,
+        "doomed_share": 0.358619511361695,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 3.5,
+        "shots": 5885,
+        "shots_per_target": 3.35069444444444,
+        "targets_per_volley": 9.81818181818182,
+        "volleys": 176,
+        "wasted_share": 0.431744404578848
+       },
+       "wall_ms": 5686,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 5593,
+        "mean_ms": 0.0836922939388521,
+        "p50_ms": 0.045,
+        "p95_ms": 0.263,
+        "p99_ms": 0.72
+       },
+       "decided": true,
+       "duration_seconds": 91.0,
+       "fled": [
+        0.046,
+        0.0
+       ],
+       "idle_time": [
+        0.327860541299431,
+        0.296660274848194
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.954,
+        0.864
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 5593,
+       "volleys": {
+        "aimed": 5640,
+        "dead_share": 0.0716312056737589,
+        "doomed_share": 0.380496453900709,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 2.5,
+        "shots": 5672,
+        "shots_per_target": 3.68960953011251,
+        "targets_per_volley": 10.0066225165563,
+        "volleys": 151,
+        "wasted_share": 0.452127659574468
+       },
+       "wall_ms": 4565,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 5773,
+        "mean_ms": 0.0861068768404642,
+        "p50_ms": 0.047,
+        "p95_ms": 0.126,
+        "p99_ms": 0.768
+       },
+       "decided": true,
+       "duration_seconds": 94.0,
+       "fled": [
+        0.066,
+        0.0
+       ],
+       "idle_time": [
+        0.326702417097118,
+        0.327694713555573
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.934,
+        0.846
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 5773,
+       "volleys": {
+        "aimed": 5227,
+        "dead_share": 0.0776736177539698,
+        "doomed_share": 0.328678017983547,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 4.0,
+        "shots": 5256,
+        "shots_per_target": 3.25172630257376,
+        "targets_per_volley": 10.0822784810127,
+        "volleys": 158,
+        "wasted_share": 0.406351635737517
+       },
+       "wall_ms": 4731,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.0994857426233573,
+        "p50_ms": 0.05,
+        "p95_ms": 0.342,
+        "p99_ms": 0.761
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.0,
+        0.152
+       ],
+       "idle_time": [
+        0.338154240546892,
+        0.352266167948096
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.652,
+        0.848
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4033,
+       "volleys": {
+        "aimed": 3715,
+        "dead_share": 0.0855989232839838,
+        "doomed_share": 0.36043068640646,
+        "first_volley_shots": 18.0,
+        "first_volley_targets": 2.5,
+        "shots": 3734,
+        "shots_per_target": 3.85579937304075,
+        "targets_per_volley": 9.11428571428571,
+        "volleys": 105,
+        "wasted_share": 0.446029609690444
+       },
+       "wall_ms": 3996,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 7573,
+        "mean_ms": 0.0739836260398785,
+        "p50_ms": 0.04,
+        "p95_ms": 0.232,
+        "p99_ms": 0.711
+       },
+       "decided": true,
+       "duration_seconds": 124.0,
+       "fled": [
+        0.016,
+        0.0
+       ],
+       "idle_time": [
+        0.316016759160572,
+        0.29130877034358
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.984,
+        0.962
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 7573,
+       "volleys": {
+        "aimed": 5995,
+        "dead_share": 0.0775646371976647,
+        "doomed_share": 0.376146788990826,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 2.5,
+        "shots": 6033,
+        "shots_per_target": 3.56983930778739,
+        "targets_per_volley": 8.93922651933702,
+        "volleys": 181,
+        "wasted_share": 0.45371142618849
+       },
+       "wall_ms": 7015,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4333,
+        "mean_ms": 0.0939526886683591,
+        "p50_ms": 0.048,
+        "p95_ms": 0.288,
+        "p99_ms": 0.722
+       },
+       "decided": true,
+       "duration_seconds": 70.0,
+       "fled": [
+        0.0,
+        0.146
+       ],
+       "idle_time": [
+        0.350353756457871,
+        0.336737651912142
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.678,
+        0.854
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4333,
+       "volleys": {
+        "aimed": 4026,
+        "dead_share": 0.0832091405861898,
+        "doomed_share": 0.38648782911078,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 2.5,
+        "shots": 4051,
+        "shots_per_target": 3.99008919722498,
+        "targets_per_volley": 8.62393162393162,
+        "volleys": 117,
+        "wasted_share": 0.46969696969697
+       },
+       "wall_ms": 4053,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "mixed",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.0859088315704991,
+      "ai_phase_worst_p95_ms": 0.342,
+      "draws": 0,
+      "duration_seconds": 90.125,
+      "fled": [
+       0.032,
+       0.047
+      ],
+      "idle_time": [
+       0.326275573079081,
+       0.319579679385029
+      ],
+      "losses": [
+       0.85975,
+       0.877
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.25,
+       0.75
+      ],
+      "profile_wins": [
+       2,
+       6
+      ],
+      "runs": 8,
+      "volleys": {
+       "dead_share": 0.0757989245185293,
+       "doomed_share": 0.366484393807664,
+       "first_volley_shots": 14.3125,
+       "first_volley_targets": 3.1875,
+       "runs": 8,
+       "shots_per_target": 3.68370768048766,
+       "targets_per_volley": 9.33862883019489,
+       "wasted_share": 0.442283318326194
+      },
+      "win_rate": [
+       0.5,
+       0.5
+      ],
+      "wins": [
+       4,
+       4
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": true,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 4,
+    "scenarios": [
+     "archers",
+     "mixed"
+    ],
+    "seed": 4242,
+    "sizes": [
+     500
+    ]
+   },
+   "version": 2
+  }
+ },
+ "after": {
+  "100": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 4093,
+        "mean_ms": 0.0478531639384315,
+        "p50_ms": 0.032,
+        "p95_ms": 0.164,
+        "p99_ms": 0.382
+       },
+       "decided": true,
+       "duration_seconds": 66.0,
+       "fled": [
+        0.0,
+        0.05
+       ],
+       "idle_time": [
+        0.376442015786278,
+        0.392315104794026
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.84,
+        0.95
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4093,
+       "volleys": {
+        "aimed": 1356,
+        "dead_share": 0.0309734513274336,
+        "doomed_share": 0.00884955752212389,
+        "first_volley_shots": 13.0,
+        "first_volley_targets": 9.0,
+        "shots": 1356,
+        "shots_per_target": 1.42574257425743,
+        "targets_per_volley": 12.2424242424242,
+        "volleys": 66,
+        "wasted_share": 0.0398230088495575
+       },
+       "wall_ms": 2610,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.0555856132800492,
+        "p50_ms": 0.033,
+        "p95_ms": 0.188,
+        "p99_ms": 0.453
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.0,
+        0.13
+       ],
+       "idle_time": [
+        0.402847248941901,
+        0.431818181818182
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.63,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3253,
+       "volleys": {
+        "aimed": 1110,
+        "dead_share": 0.0297297297297297,
+        "doomed_share": 0.0036036036036036,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 9.0,
+        "shots": 1111,
+        "shots_per_target": 1.46965317919075,
+        "targets_per_volley": 11.728813559322,
+        "volleys": 59,
+        "wasted_share": 0.0333333333333333
+       },
+       "wall_ms": 1514,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4033,
+        "mean_ms": 0.0464557401438135,
+        "p50_ms": 0.032,
+        "p95_ms": 0.164,
+        "p99_ms": 0.329
+       },
+       "decided": true,
+       "duration_seconds": 65.0,
+       "fled": [
+        0.0,
+        0.07
+       ],
+       "idle_time": [
+        0.385037406483791,
+        0.397706252312246
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.84,
+        0.93
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4033,
+       "volleys": {
+        "aimed": 1331,
+        "dead_share": 0.0383170548459805,
+        "doomed_share": 0.00751314800901578,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 10.0,
+        "shots": 1333,
+        "shots_per_target": 1.49808917197452,
+        "targets_per_volley": 10.7534246575342,
+        "volleys": 73,
+        "wasted_share": 0.0458302028549962
+       },
+       "wall_ms": 2760,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4333,
+        "mean_ms": 0.0459702284791138,
+        "p50_ms": 0.031,
+        "p95_ms": 0.152,
+        "p99_ms": 0.348
+       },
+       "decided": true,
+       "duration_seconds": 70.0,
+       "fled": [
+        0.0,
+        0.05
+       ],
+       "idle_time": [
+        0.380907147945856,
+        0.398203976908275
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.89,
+        0.95
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4333,
+       "volleys": {
+        "aimed": 1325,
+        "dead_share": 0.030188679245283,
+        "doomed_share": 0.00830188679245283,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 10.0,
+        "shots": 1326,
+        "shots_per_target": 1.58997050147493,
+        "targets_per_volley": 11.3,
+        "volleys": 60,
+        "wasted_share": 0.0384905660377358
+       },
+       "wall_ms": 2732,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4093,
+        "mean_ms": 0.0484094795993159,
+        "p50_ms": 0.032,
+        "p95_ms": 0.164,
+        "p99_ms": 0.357
+       },
+       "decided": true,
+       "duration_seconds": 66.0,
+       "fled": [
+        0.0,
+        0.07
+       ],
+       "idle_time": [
+        0.371968905905557,
+        0.391199898849412
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.78,
+        0.93
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4093,
+       "volleys": {
+        "aimed": 1365,
+        "dead_share": 0.043956043956044,
+        "doomed_share": 0.00805860805860806,
+        "first_volley_shots": 15.0,
+        "first_volley_targets": 9.0,
+        "shots": 1366,
+        "shots_per_target": 1.55704697986577,
+        "targets_per_volley": 11.640625,
+        "volleys": 64,
+        "wasted_share": 0.052014652014652
+       },
+       "wall_ms": 2909,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4993,
+        "mean_ms": 0.0452437412377328,
+        "p50_ms": 0.031,
+        "p95_ms": 0.128,
+        "p99_ms": 0.32
+       },
+       "decided": true,
+       "duration_seconds": 81.0,
+       "fled": [
+        0.01,
+        0.0
+       ],
+       "idle_time": [
+        0.388564325668117,
+        0.386856937282648
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.99,
+        0.95
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4993,
+       "volleys": {
+        "aimed": 1314,
+        "dead_share": 0.045662100456621,
+        "doomed_share": 0.00684931506849315,
+        "first_volley_shots": 15.0,
+        "first_volley_targets": 9.0,
+        "shots": 1316,
+        "shots_per_target": 1.49928057553957,
+        "targets_per_volley": 11.2096774193548,
+        "volleys": 62,
+        "wasted_share": 0.0525114155251142
+       },
+       "wall_ms": 2922,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3613,
+        "mean_ms": 0.0488953778023803,
+        "p50_ms": 0.032,
+        "p95_ms": 0.165,
+        "p99_ms": 0.408
+       },
+       "decided": true,
+       "duration_seconds": 58.0,
+       "fled": [
+        0.0,
+        0.11
+       ],
+       "idle_time": [
+        0.393570384802728,
+        0.408284023668639
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.74,
+        0.89
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3613,
+       "volleys": {
+        "aimed": 1196,
+        "dead_share": 0.0409698996655518,
+        "doomed_share": 0.0100334448160535,
+        "first_volley_shots": 11.0,
+        "first_volley_targets": 8.0,
+        "shots": 1198,
+        "shots_per_target": 1.4964234620887,
+        "targets_per_volley": 11.2741935483871,
+        "volleys": 62,
+        "wasted_share": 0.0510033444816054
+       },
+       "wall_ms": 2303,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3613,
+        "mean_ms": 0.0460365347356767,
+        "p50_ms": 0.033,
+        "p95_ms": 0.104,
+        "p99_ms": 0.391
+       },
+       "decided": true,
+       "duration_seconds": 58.0,
+       "fled": [
+        0.0,
+        0.08
+       ],
+       "idle_time": [
+        0.392033033762448,
+        0.416133981079008
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.72,
+        0.92
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3613,
+       "volleys": {
+        "aimed": 1190,
+        "dead_share": 0.038655462184874,
+        "doomed_share": 0.00588235294117647,
+        "first_volley_shots": 11.0,
+        "first_volley_targets": 8.0,
+        "shots": 1190,
+        "shots_per_target": 1.43852459016393,
+        "targets_per_volley": 11.6190476190476,
+        "volleys": 63,
+        "wasted_share": 0.0445378151260504
+       },
+       "wall_ms": 1755,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3253,
+        "mean_ms": 0.0547577620657854,
+        "p50_ms": 0.035,
+        "p95_ms": 0.166,
+        "p99_ms": 0.515
+       },
+       "decided": true,
+       "duration_seconds": 52.0,
+       "fled": [
+        0.0,
+        0.16
+       ],
+       "idle_time": [
+        0.414834811672451,
+        0.429359823399558
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.63,
+        0.84
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3253,
+       "volleys": {
+        "aimed": 1116,
+        "dead_share": 0.0385304659498208,
+        "doomed_share": 0.003584229390681,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 9.5,
+        "shots": 1118,
+        "shots_per_target": 1.56944444444444,
+        "targets_per_volley": 11.1724137931034,
+        "volleys": 58,
+        "wasted_share": 0.0421146953405018
+       },
+       "wall_ms": 1886,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3493,
+        "mean_ms": 0.0464325794446035,
+        "p50_ms": 0.032,
+        "p95_ms": 0.106,
+        "p99_ms": 0.43
+       },
+       "decided": true,
+       "duration_seconds": 56.0,
+       "fled": [
+        0.0,
+        0.11
+       ],
+       "idle_time": [
+        0.403331276989513,
+        0.41306312120821
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.71,
+        0.89
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3493,
+       "volleys": {
+        "aimed": 1170,
+        "dead_share": 0.0282051282051282,
+        "doomed_share": 0.00512820512820513,
+        "first_volley_shots": 13.5,
+        "first_volley_targets": 9.5,
+        "shots": 1170,
+        "shots_per_target": 1.44578313253012,
+        "targets_per_volley": 11.3181818181818,
+        "volleys": 66,
+        "wasted_share": 0.0333333333333333
+       },
+       "wall_ms": 1988,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3493,
+        "mean_ms": 0.0512330375035786,
+        "p50_ms": 0.033,
+        "p95_ms": 0.166,
+        "p99_ms": 0.419
+       },
+       "decided": true,
+       "duration_seconds": 56.0,
+       "fled": [
+        0.0,
+        0.13
+       ],
+       "idle_time": [
+        0.393782383419689,
+        0.413465346534653
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.64,
+        0.87
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3493,
+       "volleys": {
+        "aimed": 1208,
+        "dead_share": 0.0322847682119205,
+        "doomed_share": 0.00413907284768212,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 8.0,
+        "shots": 1208,
+        "shots_per_target": 1.48898071625344,
+        "targets_per_volley": 11.9016393442623,
+        "volleys": 61,
+        "wasted_share": 0.0364238410596026
+       },
+       "wall_ms": 2177,
+       "winner": 0,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3313,
+        "mean_ms": 0.0463851494114096,
+        "p50_ms": 0.032,
+        "p95_ms": 0.105,
+        "p99_ms": 0.408
+       },
+       "decided": true,
+       "duration_seconds": 53.0,
+       "fled": [
+        0.0,
+        0.15
+       ],
+       "idle_time": [
+        0.405983975963946,
+        0.434111647879764
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.6,
+        0.85
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3313,
+       "volleys": {
+        "aimed": 1095,
+        "dead_share": 0.028310502283105,
+        "doomed_share": 0.00730593607305936,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 8.0,
+        "shots": 1095,
+        "shots_per_target": 1.52560240963855,
+        "targets_per_volley": 10.7096774193548,
+        "volleys": 62,
+        "wasted_share": 0.0356164383561644
+       },
+       "wall_ms": 1572,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3673,
+        "mean_ms": 0.04692512932208,
+        "p50_ms": 0.032,
+        "p95_ms": 0.102,
+        "p99_ms": 0.405
+       },
+       "decided": true,
+       "duration_seconds": 59.0,
+       "fled": [
+        0.1,
+        0.0
+       ],
+       "idle_time": [
+        0.40681161241674,
+        0.388336566440349
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.9,
+        0.76
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3673,
+       "volleys": {
+        "aimed": 1213,
+        "dead_share": 0.0280296784830998,
+        "doomed_share": 0.00659521846661171,
+        "first_volley_shots": 17.0,
+        "first_volley_targets": 10.0,
+        "shots": 1213,
+        "shots_per_target": 1.48743016759777,
+        "targets_per_volley": 11.7377049180328,
+        "volleys": 61,
+        "wasted_share": 0.0346248969497115
+       },
+       "wall_ms": 2110,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3793,
+        "mean_ms": 0.0483113630371737,
+        "p50_ms": 0.032,
+        "p95_ms": 0.163,
+        "p99_ms": 0.377
+       },
+       "decided": true,
+       "duration_seconds": 61.0,
+       "fled": [
+        0.07,
+        0.0
+       ],
+       "idle_time": [
+        0.411503847658797,
+        0.390542692637511
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.93,
+        0.82
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3793,
+       "volleys": {
+        "aimed": 1236,
+        "dead_share": 0.0436893203883495,
+        "doomed_share": 0.00889967637540453,
+        "first_volley_shots": 16.5,
+        "first_volley_targets": 10.0,
+        "shots": 1237,
+        "shots_per_target": 1.59612518628912,
+        "targets_per_volley": 12.2,
+        "volleys": 55,
+        "wasted_share": 0.052588996763754
+       },
+       "wall_ms": 2438,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4873,
+        "mean_ms": 0.0430182639031397,
+        "p50_ms": 0.031,
+        "p95_ms": 0.083,
+        "p99_ms": 0.331
+       },
+       "decided": true,
+       "duration_seconds": 79.0,
+       "fled": [
+        0.0,
+        0.0
+       ],
+       "idle_time": [
+        0.375365882215197,
+        0.372299872935197
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        1.0,
+        0.96
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 4873,
+       "volleys": {
+        "aimed": 1362,
+        "dead_share": 0.0315712187958884,
+        "doomed_share": 0.00367107195301028,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 9.0,
+        "shots": 1362,
+        "shots_per_target": 1.44360902255639,
+        "targets_per_volley": 11.4,
+        "volleys": 70,
+        "wasted_share": 0.0352422907488987
+       },
+       "wall_ms": 2356,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3493,
+        "mean_ms": 0.049569710850272,
+        "p50_ms": 0.032,
+        "p95_ms": 0.166,
+        "p99_ms": 0.399
+       },
+       "decided": true,
+       "duration_seconds": 56.0,
+       "fled": [
+        0.0,
+        0.11
+       ],
+       "idle_time": [
+        0.400335440588311,
+        0.414901859504132
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.74,
+        0.89
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3493,
+       "volleys": {
+        "aimed": 1178,
+        "dead_share": 0.0382003395585739,
+        "doomed_share": 0.00848896434634975,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 9.5,
+        "shots": 1180,
+        "shots_per_target": 1.49860335195531,
+        "targets_per_volley": 11.1875,
+        "volleys": 64,
+        "wasted_share": 0.0466893039049236
+       },
+       "wall_ms": 2011,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "archers",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0481926796721598,
+      "ai_phase_worst_p95_ms": 0.188,
+      "draws": 0,
+      "duration_seconds": 61.75,
+      "fled": [
+       0.01125,
+       0.07625
+      ],
+      "idle_time": [
+       0.393957481263833,
+       0.404912455453238
+      ],
+      "losses": [
+       0.78625,
+       0.891875
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.5,
+       0.5
+      ],
+      "profile_wins": [
+       8,
+       8
+      ],
+      "runs": 16,
+      "volleys": {
+       "dead_share": 0.0354546152054627,
+       "doomed_share": 0.0066815182120332,
+       "first_volley_shots": 13.40625,
+       "first_volley_targets": 9.09375,
+       "runs": 16,
+       "shots_per_target": 1.5018943416138,
+       "targets_per_volley": 11.4622077086878,
+       "wasted_share": 0.0421361334174959
+      },
+      "win_rate": [
+       0.75,
+       0.25
+      ],
+      "wins": [
+       12,
+       4
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 2353,
+        "mean_ms": 0.0709974500637484,
+        "p50_ms": 0.043,
+        "p95_ms": 0.192,
+        "p99_ms": 0.741
+       },
+       "decided": true,
+       "duration_seconds": 37.0,
+       "fled": [
+        0.11,
+        0.0
+       ],
+       "idle_time": [
+        0.469009695290859,
+        0.437682570593963
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.89,
+        0.51
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2353,
+       "volleys": {
+        "aimed": 435,
+        "dead_share": 0.0551724137931034,
+        "doomed_share": 0.0114942528735632,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 4.5,
+        "shots": 436,
+        "shots_per_target": 1.78947368421053,
+        "targets_per_volley": 6.90909090909091,
+        "volleys": 22,
+        "wasted_share": 0.0666666666666667
+       },
+       "wall_ms": 962,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2533,
+        "mean_ms": 0.0557031188314252,
+        "p50_ms": 0.037,
+        "p95_ms": 0.172,
+        "p99_ms": 0.469
+       },
+       "decided": true,
+       "duration_seconds": 40.0,
+       "fled": [
+        0.0,
+        0.11
+       ],
+       "idle_time": [
+        0.414766558089034,
+        0.454761097932904
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.54,
+        0.89
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2533,
+       "volleys": {
+        "aimed": 471,
+        "dead_share": 0.0467091295116773,
+        "doomed_share": 0.00636942675159236,
+        "first_volley_shots": 10.5,
+        "first_volley_targets": 3.5,
+        "shots": 471,
+        "shots_per_target": 1.73529411764706,
+        "targets_per_volley": 7.39130434782609,
+        "volleys": 23,
+        "wasted_share": 0.0530785562632696
+       },
+       "wall_ms": 1189,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2953,
+        "mean_ms": 0.0558614967829326,
+        "p50_ms": 0.036,
+        "p95_ms": 0.187,
+        "p99_ms": 0.463
+       },
+       "decided": true,
+       "duration_seconds": 47.0,
+       "fled": [
+        0.12,
+        0.0
+       ],
+       "idle_time": [
+        0.402845777233782,
+        0.416755847729705
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.88,
+        0.7
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2953,
+       "volleys": {
+        "aimed": 606,
+        "dead_share": 0.0478547854785479,
+        "doomed_share": 0.0115511551155116,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 7.5,
+        "shots": 606,
+        "shots_per_target": 1.62376237623762,
+        "targets_per_volley": 7.76923076923077,
+        "volleys": 26,
+        "wasted_share": 0.0594059405940594
+       },
+       "wall_ms": 2420,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4093,
+        "mean_ms": 0.0478284876618617,
+        "p50_ms": 0.034,
+        "p95_ms": 0.097,
+        "p99_ms": 0.39
+       },
+       "decided": true,
+       "duration_seconds": 66.0,
+       "fled": [
+        0.05,
+        0.0
+       ],
+       "idle_time": [
+        0.362285246795746,
+        0.367658782885995
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.95,
+        0.85
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 100,
+       "swapped": true,
+       "ticks": 4093,
+       "volleys": {
+        "aimed": 856,
+        "dead_share": 0.044392523364486,
+        "doomed_share": 0.00817757009345794,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 4.5,
+        "shots": 856,
+        "shots_per_target": 1.53869047619048,
+        "targets_per_volley": 8.8421052631579,
+        "volleys": 38,
+        "wasted_share": 0.0525700934579439
+       },
+       "wall_ms": 3502,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 3013,
+        "mean_ms": 0.0535652173913043,
+        "p50_ms": 0.035,
+        "p95_ms": 0.177,
+        "p99_ms": 0.44
+       },
+       "decided": true,
+       "duration_seconds": 48.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.39821536600121,
+        0.402524127691166
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.65
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3013,
+       "volleys": {
+        "aimed": 644,
+        "dead_share": 0.0574534161490683,
+        "doomed_share": 0.0093167701863354,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 4.0,
+        "shots": 644,
+        "shots_per_target": 1.89912280701754,
+        "targets_per_volley": 7.125,
+        "volleys": 32,
+        "wasted_share": 0.0667701863354037
+       },
+       "wall_ms": 2099,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.0523780144065142,
+        "p50_ms": 0.035,
+        "p95_ms": 0.174,
+        "p99_ms": 0.429
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.0,
+        0.12
+       ],
+       "idle_time": [
+        0.381320224719101,
+        0.408761329305136
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.69,
+        0.88
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3193,
+       "volleys": {
+        "aimed": 701,
+        "dead_share": 0.0442225392296719,
+        "doomed_share": 0.00998573466476462,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 4.5,
+        "shots": 701,
+        "shots_per_target": 1.68093385214008,
+        "targets_per_volley": 8.03125,
+        "volleys": 32,
+        "wasted_share": 0.0542082738944365
+       },
+       "wall_ms": 2489,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2413,
+        "mean_ms": 0.0542602569415665,
+        "p50_ms": 0.036,
+        "p95_ms": 0.17,
+        "p99_ms": 0.455
+       },
+       "decided": true,
+       "duration_seconds": 38.0,
+       "fled": [
+        0.14,
+        0.0
+       ],
+       "idle_time": [
+        0.456146349803385,
+        0.42852569233232
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.86,
+        0.52
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2413,
+       "volleys": {
+        "aimed": 478,
+        "dead_share": 0.0564853556485356,
+        "doomed_share": 0.00418410041841004,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 6.5,
+        "shots": 478,
+        "shots_per_target": 1.70391061452514,
+        "targets_per_volley": 7.45833333333333,
+        "volleys": 24,
+        "wasted_share": 0.0606694560669456
+       },
+       "wall_ms": 739,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2533,
+        "mean_ms": 0.0557256217923411,
+        "p50_ms": 0.036,
+        "p95_ms": 0.173,
+        "p99_ms": 0.448
+       },
+       "decided": true,
+       "duration_seconds": 40.0,
+       "fled": [
+        0.0,
+        0.08
+       ],
+       "idle_time": [
+        0.417594310451453,
+        0.449459093982421
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.52,
+        0.92
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2533,
+       "volleys": {
+        "aimed": 481,
+        "dead_share": 0.0644490644490645,
+        "doomed_share": 0.0103950103950104,
+        "first_volley_shots": 10.0,
+        "first_volley_targets": 5.5,
+        "shots": 481,
+        "shots_per_target": 1.93548387096774,
+        "targets_per_volley": 7.04545454545455,
+        "volleys": 22,
+        "wasted_share": 0.0748440748440748
+       },
+       "wall_ms": 1083,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3073,
+        "mean_ms": 0.0537341360234299,
+        "p50_ms": 0.035,
+        "p95_ms": 0.174,
+        "p99_ms": 0.447
+       },
+       "decided": true,
+       "duration_seconds": 49.0,
+       "fled": [
+        0.11,
+        0.0
+       ],
+       "idle_time": [
+        0.400393581592492,
+        0.388734047234854
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.89,
+        0.69
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4246,
+       "size": 100,
+       "swapped": false,
+       "ticks": 3073,
+       "volleys": {
+        "aimed": 674,
+        "dead_share": 0.0474777448071217,
+        "doomed_share": 0.00593471810089021,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 4.0,
+        "shots": 675,
+        "shots_per_target": 1.80630630630631,
+        "targets_per_volley": 7.6551724137931,
+        "volleys": 29,
+        "wasted_share": 0.0534124629080119
+       },
+       "wall_ms": 2516,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3193,
+        "mean_ms": 0.0676307547760727,
+        "p50_ms": 0.041,
+        "p95_ms": 0.202,
+        "p99_ms": 0.608
+       },
+       "decided": true,
+       "duration_seconds": 51.0,
+       "fled": [
+        0.0,
+        0.1
+       ],
+       "idle_time": [
+        0.38197548666186,
+        0.386128364389234
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.72,
+        0.9
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4246,
+       "size": 100,
+       "swapped": true,
+       "ticks": 3193,
+       "volleys": {
+        "aimed": 693,
+        "dead_share": 0.0548340548340548,
+        "doomed_share": 0.00577200577200577,
+        "first_volley_shots": 15.0,
+        "first_volley_targets": 4.5,
+        "shots": 693,
+        "shots_per_target": 1.79423868312757,
+        "targets_per_volley": 7.59375,
+        "volleys": 32,
+        "wasted_share": 0.0606060606060606
+       },
+       "wall_ms": 2972,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2953,
+        "mean_ms": 0.0760518117168981,
+        "p50_ms": 0.048,
+        "p95_ms": 0.276,
+        "p99_ms": 0.591
+       },
+       "decided": true,
+       "duration_seconds": 47.0,
+       "fled": [
+        0.13,
+        0.0
+       ],
+       "idle_time": [
+        0.415408560311284,
+        0.409897713598075
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.87,
+        0.7
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4247,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2953,
+       "volleys": {
+        "aimed": 625,
+        "dead_share": 0.048,
+        "doomed_share": 0.0096,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 5.5,
+        "shots": 627,
+        "shots_per_target": 1.73423423423423,
+        "targets_per_volley": 7.16129032258065,
+        "volleys": 31,
+        "wasted_share": 0.0576
+       },
+       "wall_ms": 3040,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0655940153659523,
+        "p50_ms": 0.041,
+        "p95_ms": 0.204,
+        "p99_ms": 0.554
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.0,
+        0.15
+       ],
+       "idle_time": [
+        0.418035326929036,
+        0.464810386060813
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.52,
+        0.85
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4247,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2473,
+       "volleys": {
+        "aimed": 458,
+        "dead_share": 0.0480349344978166,
+        "doomed_share": 0.00655021834061135,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 5.0,
+        "shots": 458,
+        "shots_per_target": 1.85064935064935,
+        "targets_per_volley": 7.7,
+        "volleys": 20,
+        "wasted_share": 0.054585152838428
+       },
+       "wall_ms": 765,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0770930044480388,
+        "p50_ms": 0.045,
+        "p95_ms": 0.199,
+        "p99_ms": 0.862
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.13,
+        0.0
+       ],
+       "idle_time": [
+        0.448897795591182,
+        0.447030105777055
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.87,
+        0.6
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4248,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2473,
+       "volleys": {
+        "aimed": 472,
+        "dead_share": 0.048728813559322,
+        "doomed_share": 0.00211864406779661,
+        "first_volley_shots": 15.5,
+        "first_volley_targets": 6.5,
+        "shots": 473,
+        "shots_per_target": 1.7396449704142,
+        "targets_per_volley": 7.68181818181818,
+        "volleys": 22,
+        "wasted_share": 0.0508474576271186
+       },
+       "wall_ms": 1707,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2473,
+        "mean_ms": 0.0610032349373231,
+        "p50_ms": 0.039,
+        "p95_ms": 0.186,
+        "p99_ms": 0.558
+       },
+       "decided": true,
+       "duration_seconds": 39.0,
+       "fled": [
+        0.13,
+        0.0
+       ],
+       "idle_time": [
+        0.437125748502994,
+        0.442643991657308
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.87,
+        0.54
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4248,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2473,
+       "volleys": {
+        "aimed": 473,
+        "dead_share": 0.0634249471458774,
+        "doomed_share": 0.0105708245243129,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 7.0,
+        "shots": 473,
+        "shots_per_target": 1.76744186046512,
+        "targets_per_volley": 7.81818181818182,
+        "volleys": 22,
+        "wasted_share": 0.0739957716701903
+       },
+       "wall_ms": 980,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 2233,
+        "mean_ms": 0.0596703985669503,
+        "p50_ms": 0.038,
+        "p95_ms": 0.173,
+        "p99_ms": 0.532
+       },
+       "decided": true,
+       "duration_seconds": 35.0,
+       "fled": [
+        0.15,
+        0.0
+       ],
+       "idle_time": [
+        0.491962002192181,
+        0.445464982778416
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.85,
+        0.38
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4249,
+       "size": 100,
+       "swapped": false,
+       "ticks": 2233,
+       "volleys": {
+        "aimed": 437,
+        "dead_share": 0.0434782608695652,
+        "doomed_share": 0.0068649885583524,
+        "first_volley_shots": 12.5,
+        "first_volley_targets": 5.5,
+        "shots": 438,
+        "shots_per_target": 1.94915254237288,
+        "targets_per_volley": 6.94117647058824,
+        "volleys": 17,
+        "wasted_share": 0.0503432494279176
+       },
+       "wall_ms": 584,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 2413,
+        "mean_ms": 0.0563435557397431,
+        "p50_ms": 0.037,
+        "p95_ms": 0.173,
+        "p99_ms": 0.488
+       },
+       "decided": true,
+       "duration_seconds": 38.0,
+       "fled": [
+        0.09,
+        0.0
+       ],
+       "idle_time": [
+        0.459941166291746,
+        0.438436071259656
+       ],
+       "initial": [
+        100,
+        100
+       ],
+       "losses": [
+        0.91,
+        0.5
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4249,
+       "size": 100,
+       "swapped": true,
+       "ticks": 2413,
+       "volleys": {
+        "aimed": 474,
+        "dead_share": 0.0780590717299578,
+        "doomed_share": 0.00843881856540084,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 5.5,
+        "shots": 474,
+        "shots_per_target": 1.87790697674419,
+        "targets_per_volley": 7.81818181818182,
+        "volleys": 22,
+        "wasted_share": 0.0864978902953586
+       },
+       "wall_ms": 880,
+       "winner": 1,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "mixed",
+     "size": 100,
+     "summary": {
+      "ai_phase_mean_ms": 0.0602150359653814,
+      "ai_phase_worst_p95_ms": 0.276,
+      "draws": 0,
+      "duration_seconds": 44.0,
+      "fled": [
+       0.081875,
+       0.035
+      ],
+      "idle_time": [
+       0.422245199778584,
+       0.424329637825564
+      ],
+      "losses": [
+       0.7925,
+       0.6925
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.1875,
+       0.8125
+      ],
+      "profile_wins": [
+       3,
+       13
+      ],
+      "runs": 16,
+      "volleys": {
+       "dead_share": 0.0530485659417419,
+       "doomed_share": 0.00795776490175098,
+       "first_volley_shots": 12.4375,
+       "first_volley_targets": 5.25,
+       "runs": 16,
+       "shots_per_target": 1.77664042020313,
+       "targets_per_volley": 7.55883376207733,
+       "wasted_share": 0.0610063308434929
+      },
+      "win_rate": [
+       0.3125,
+       0.6875
+      ],
+      "wins": [
+       5,
+       11
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": true,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 8,
+    "scenarios": [
+     "archers",
+     "mixed"
+    ],
+    "seed": 4242,
+    "sizes": [
+     100
+    ]
+   },
+   "version": 2
+  },
+  "500": {
+   "cells": [
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 3793,
+        "mean_ms": 0.0969659899815449,
+        "p50_ms": 0.049,
+        "p95_ms": 0.217,
+        "p99_ms": 0.632
+       },
+       "decided": true,
+       "duration_seconds": 61.0,
+       "fled": [
+        0.12,
+        0.0
+       ],
+       "idle_time": [
+        0.508723952447679,
+        0.452558776736786
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.88,
+        0.678
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3793,
+       "volleys": {
+        "aimed": 5328,
+        "dead_share": 0.0399774774774775,
+        "doomed_share": 0.00525525525525526,
+        "first_volley_shots": 17.0,
+        "first_volley_targets": 14.0,
+        "shots": 5332,
+        "shots_per_target": 1.50169109357384,
+        "targets_per_volley": 37.3473684210526,
+        "volleys": 95,
+        "wasted_share": 0.0452327327327327
+       },
+       "wall_ms": 3856,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.0900074888836883,
+        "p50_ms": 0.046,
+        "p95_ms": 0.251,
+        "p99_ms": 0.603
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.082,
+        0.0
+       ],
+       "idle_time": [
+        0.500489278420694,
+        0.44807472934289
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.918,
+        0.806
+       ],
+       "never_engaged": [
+        0.002,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4273,
+       "volleys": {
+        "aimed": 6150,
+        "dead_share": 0.0429268292682927,
+        "doomed_share": 0.00601626016260163,
+        "first_volley_shots": 17.0,
+        "first_volley_targets": 14.0,
+        "shots": 6153,
+        "shots_per_target": 1.55028989160575,
+        "targets_per_volley": 36.0636363636364,
+        "volleys": 110,
+        "wasted_share": 0.0489430894308943
+       },
+       "wall_ms": 3980,
+       "winner": 1,
+       "winner_profile": 0
+      },
+      {
+       "ai_phase": {
+        "count": 4513,
+        "mean_ms": 0.0895510746731664,
+        "p50_ms": 0.046,
+        "p95_ms": 0.337,
+        "p99_ms": 0.608
+       },
+       "decided": true,
+       "duration_seconds": 73.0,
+       "fled": [
+        0.072,
+        0.0
+       ],
+       "idle_time": [
+        0.468566676406464,
+        0.439682194166304
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.928,
+        0.858
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4513,
+       "volleys": {
+        "aimed": 6189,
+        "dead_share": 0.0502504443367265,
+        "doomed_share": 0.00678623364032962,
+        "first_volley_shots": 16.5,
+        "first_volley_targets": 13.5,
+        "shots": 6192,
+        "shots_per_target": 1.49491279069767,
+        "targets_per_volley": 35.895652173913,
+        "volleys": 115,
+        "wasted_share": 0.0570366779770561
+       },
+       "wall_ms": 4045,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3733,
+        "mean_ms": 0.0985954995981784,
+        "p50_ms": 0.05,
+        "p95_ms": 0.233,
+        "p99_ms": 0.65
+       },
+       "decided": true,
+       "duration_seconds": 60.0,
+       "fled": [
+        0.0,
+        0.14
+       ],
+       "idle_time": [
+        0.463673576603988,
+        0.518789476075794
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.602,
+        0.86
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3733,
+       "volleys": {
+        "aimed": 5297,
+        "dead_share": 0.0404002265433264,
+        "doomed_share": 0.00490843873890882,
+        "first_volley_shots": 16.0,
+        "first_volley_targets": 13.5,
+        "shots": 5300,
+        "shots_per_target": 1.51012261191902,
+        "targets_per_volley": 38.1195652173913,
+        "volleys": 92,
+        "wasted_share": 0.0453086652822352
+       },
+       "wall_ms": 3878,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3553,
+        "mean_ms": 0.0962217844075429,
+        "p50_ms": 0.049,
+        "p95_ms": 0.24,
+        "p99_ms": 0.613
+       },
+       "decided": true,
+       "duration_seconds": 57.0,
+       "fled": [
+        0.158,
+        0.0
+       ],
+       "idle_time": [
+        0.518546448602536,
+        0.470183223917469
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.842,
+        0.626
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3553,
+       "volleys": {
+        "aimed": 5098,
+        "dead_share": 0.0413887799136916,
+        "doomed_share": 0.00451157316594743,
+        "first_volley_shots": 21.5,
+        "first_volley_targets": 15.0,
+        "shots": 5101,
+        "shots_per_target": 1.48599766627771,
+        "targets_per_volley": 39.4022988505747,
+        "volleys": 87,
+        "wasted_share": 0.0459003530796391
+       },
+       "wall_ms": 3628,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3373,
+        "mean_ms": 0.101743255262378,
+        "p50_ms": 0.049,
+        "p95_ms": 0.292,
+        "p99_ms": 0.683
+       },
+       "decided": true,
+       "duration_seconds": 54.0,
+       "fled": [
+        0.0,
+        0.142
+       ],
+       "idle_time": [
+        0.441080369525869,
+        0.540720303493127
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.582,
+        0.858
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3373,
+       "volleys": {
+        "aimed": 5021,
+        "dead_share": 0.0489942242581159,
+        "doomed_share": 0.00617406891057558,
+        "first_volley_shots": 20.5,
+        "first_volley_targets": 13.5,
+        "shots": 5025,
+        "shots_per_target": 1.57348793481667,
+        "targets_per_volley": 39.3950617283951,
+        "volleys": 81,
+        "wasted_share": 0.0551682931686915
+       },
+       "wall_ms": 3579,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3733,
+        "mean_ms": 0.0954476292526118,
+        "p50_ms": 0.048,
+        "p95_ms": 0.25,
+        "p99_ms": 0.625
+       },
+       "decided": true,
+       "duration_seconds": 60.0,
+       "fled": [
+        0.132,
+        0.0
+       ],
+       "idle_time": [
+        0.508772724185552,
+        0.457227464586418
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.868,
+        0.658
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3733,
+       "volleys": {
+        "aimed": 5323,
+        "dead_share": 0.0394514371594965,
+        "doomed_share": 0.00356941574300207,
+        "first_volley_shots": 18.5,
+        "first_volley_targets": 14.5,
+        "shots": 5328,
+        "shots_per_target": 1.49690663667042,
+        "targets_per_volley": 38.2365591397849,
+        "volleys": 93,
+        "wasted_share": 0.0430208529024986
+       },
+       "wall_ms": 3746,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3913,
+        "mean_ms": 0.0932113467927422,
+        "p50_ms": 0.048,
+        "p95_ms": 0.211,
+        "p99_ms": 0.61
+       },
+       "decided": true,
+       "duration_seconds": 63.0,
+       "fled": [
+        0.124,
+        0.0
+       ],
+       "idle_time": [
+        0.50438809261301,
+        0.455210882553961
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.876,
+        0.72
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "archers",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3913,
+       "volleys": {
+        "aimed": 5774,
+        "dead_share": 0.0445098718392795,
+        "doomed_share": 0.00571527537235885,
+        "first_volley_shots": 18.0,
+        "first_volley_targets": 16.0,
+        "shots": 5777,
+        "shots_per_target": 1.55414528760464,
+        "targets_per_volley": 38.1752577319588,
+        "volleys": 97,
+        "wasted_share": 0.0502251472116384
+       },
+       "wall_ms": 3851,
+       "winner": 1,
+       "winner_profile": 0
+      }
+     ],
+     "scenario": "archers",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.0952180086064816,
+      "ai_phase_worst_p95_ms": 0.337,
+      "draws": 0,
+      "duration_seconds": 62.125,
+      "fled": [
+       0.086,
+       0.03525
+      ],
+      "idle_time": [
+       0.489280139850724,
+       0.472805881359094
+      ],
+      "losses": [
+       0.812,
+       0.758
+      ],
+      "never_engaged": [
+       0.0005,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.25,
+       0.75
+      ],
+      "profile_wins": [
+       2,
+       6
+      ],
+      "runs": 8,
+      "volleys": {
+       "dead_share": 0.0434874113495508,
+       "doomed_share": 0.00536706512362241,
+       "first_volley_shots": 18.125,
+       "first_volley_targets": 14.25,
+       "runs": 8,
+       "shots_per_target": 1.52094423914572,
+       "targets_per_volley": 37.8294249533384,
+       "wasted_share": 0.0488544764731732
+      },
+      "win_rate": [
+       0.25,
+       0.75
+      ],
+      "wins": [
+       2,
+       6
+      ]
+     }
+    },
+    {
+     "runs": [
+      {
+       "ai_phase": {
+        "count": 5353,
+        "mean_ms": 0.0836951242294041,
+        "p50_ms": 0.046,
+        "p95_ms": 0.131,
+        "p99_ms": 0.736
+       },
+       "decided": true,
+       "duration_seconds": 87.0,
+       "fled": [
+        0.062,
+        0.0
+       ],
+       "idle_time": [
+        0.347512382039419,
+        0.333451837806877
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.938,
+        0.838
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 500,
+       "swapped": false,
+       "ticks": 5353,
+       "volleys": {
+        "aimed": 4805,
+        "dead_share": 0.0489073881373569,
+        "doomed_share": 0.00353798126951093,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 6.5,
+        "shots": 4806,
+        "shots_per_target": 1.55504737014048,
+        "targets_per_volley": 21.1103448275862,
+        "volleys": 145,
+        "wasted_share": 0.0524453694068678
+       },
+       "wall_ms": 4542,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4153,
+        "mean_ms": 0.103519142788346,
+        "p50_ms": 0.052,
+        "p95_ms": 0.296,
+        "p99_ms": 1.078
+       },
+       "decided": true,
+       "duration_seconds": 67.0,
+       "fled": [
+        0.0,
+        0.126
+       ],
+       "idle_time": [
+        0.351197700415203,
+        0.354288188115202
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.678,
+        0.874
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4242,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4153,
+       "volleys": {
+        "aimed": 3769,
+        "dead_share": 0.0551870522685062,
+        "doomed_share": 0.00716370390023879,
+        "first_volley_shots": 14.0,
+        "first_volley_targets": 7.0,
+        "shots": 3770,
+        "shots_per_target": 1.59369676320273,
+        "targets_per_volley": 21.7407407407407,
+        "volleys": 108,
+        "wasted_share": 0.062350756168745
+       },
+       "wall_ms": 4517,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4453,
+        "mean_ms": 0.0933276442847518,
+        "p50_ms": 0.049,
+        "p95_ms": 0.285,
+        "p99_ms": 0.744
+       },
+       "decided": true,
+       "duration_seconds": 72.0,
+       "fled": [
+        0.106,
+        0.0
+       ],
+       "idle_time": [
+        0.355563271772391,
+        0.332944123641304
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.894,
+        0.744
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4453,
+       "volleys": {
+        "aimed": 4283,
+        "dead_share": 0.0527667522764417,
+        "doomed_share": 0.00513658650478636,
+        "first_volley_shots": 13.0,
+        "first_volley_targets": 8.5,
+        "shots": 4287,
+        "shots_per_target": 1.59267563527653,
+        "targets_per_volley": 22.4873949579832,
+        "volleys": 119,
+        "wasted_share": 0.0579033387812281
+       },
+       "wall_ms": 4342,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3913,
+        "mean_ms": 0.0971985688729875,
+        "p50_ms": 0.051,
+        "p95_ms": 0.312,
+        "p99_ms": 0.749
+       },
+       "decided": true,
+       "duration_seconds": 63.0,
+       "fled": [
+        0.0,
+        0.156
+       ],
+       "idle_time": [
+        0.351553938543813,
+        0.359173914062683
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.652,
+        0.844
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4243,
+       "size": 500,
+       "swapped": true,
+       "ticks": 3913,
+       "volleys": {
+        "aimed": 3467,
+        "dead_share": 0.0484568791462359,
+        "doomed_share": 0.00634554369772137,
+        "first_volley_shots": 11.5,
+        "first_volley_targets": 6.5,
+        "shots": 3470,
+        "shots_per_target": 1.64906385021603,
+        "targets_per_volley": 20.6237623762376,
+        "volleys": 101,
+        "wasted_share": 0.0548024228439573
+       },
+       "wall_ms": 4005,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4273,
+        "mean_ms": 0.0944643107886731,
+        "p50_ms": 0.05,
+        "p95_ms": 0.316,
+        "p99_ms": 0.774
+       },
+       "decided": true,
+       "duration_seconds": 69.0,
+       "fled": [
+        0.106,
+        0.0
+       ],
+       "idle_time": [
+        0.337653216122528,
+        0.343737350064981
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.894,
+        0.734
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 500,
+       "swapped": false,
+       "ticks": 4273,
+       "volleys": {
+        "aimed": 4144,
+        "dead_share": 0.0506756756756757,
+        "doomed_share": 0.00482625482625483,
+        "first_volley_shots": 15.0,
+        "first_volley_targets": 9.5,
+        "shots": 4147,
+        "shots_per_target": 1.68483606557377,
+        "targets_per_volley": 21.7857142857143,
+        "volleys": 112,
+        "wasted_share": 0.0555019305019305
+       },
+       "wall_ms": 4254,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4333,
+        "mean_ms": 0.120271867066697,
+        "p50_ms": 0.058,
+        "p95_ms": 0.371,
+        "p99_ms": 1.188
+       },
+       "decided": true,
+       "duration_seconds": 70.0,
+       "fled": [
+        0.0,
+        0.14
+       ],
+       "idle_time": [
+        0.354089732161807,
+        0.353902811461421
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.698,
+        0.86
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4244,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4333,
+       "volleys": {
+        "aimed": 3962,
+        "dead_share": 0.0542655224634023,
+        "doomed_share": 0.00782433114588592,
+        "first_volley_shots": 21.5,
+        "first_volley_targets": 11.5,
+        "shots": 3963,
+        "shots_per_target": 1.62676056338028,
+        "targets_per_volley": 21.3628318584071,
+        "volleys": 113,
+        "wasted_share": 0.0620898536092882
+       },
+       "wall_ms": 5285,
+       "winner": 0,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 3793,
+        "mean_ms": 0.123644081202215,
+        "p50_ms": 0.057,
+        "p95_ms": 0.384,
+        "p99_ms": 1.231
+       },
+       "decided": true,
+       "duration_seconds": 61.0,
+       "fled": [
+        0.148,
+        0.0
+       ],
+       "idle_time": [
+        0.354438893159108,
+        0.350262306060944
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.852,
+        0.644
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 500,
+       "swapped": false,
+       "ticks": 3793,
+       "volleys": {
+        "aimed": 3430,
+        "dead_share": 0.0527696793002915,
+        "doomed_share": 0.00816326530612245,
+        "first_volley_shots": 12.0,
+        "first_volley_targets": 6.0,
+        "shots": 3432,
+        "shots_per_target": 1.67319941205292,
+        "targets_per_volley": 20.41,
+        "volleys": 100,
+        "wasted_share": 0.060932944606414
+       },
+       "wall_ms": 4861,
+       "winner": 1,
+       "winner_profile": 1
+      },
+      {
+       "ai_phase": {
+        "count": 4873,
+        "mean_ms": 0.0906601682741638,
+        "p50_ms": 0.047,
+        "p95_ms": 0.288,
+        "p99_ms": 0.743
+       },
+       "decided": true,
+       "duration_seconds": 79.0,
+       "fled": [
+        0.0,
+        0.094
+       ],
+       "idle_time": [
+        0.359058154876687,
+        0.322608176154306
+       ],
+       "initial": [
+        500,
+        500
+       ],
+       "losses": [
+        0.778,
+        0.906
+       ],
+       "never_engaged": [
+        0.0,
+        0.0
+       ],
+       "profiles": [
+        "reference",
+        "reference"
+       ],
+       "scenario": "mixed",
+       "seed": 4245,
+       "size": 500,
+       "swapped": true,
+       "ticks": 4873,
+       "volleys": {
+        "aimed": 4666,
+        "dead_share": 0.0525075010715817,
+        "doomed_share": 0.00728675525075011,
+        "first_volley_shots": 10.5,
+        "first_volley_targets": 7.0,
+        "shots": 4669,
+        "shots_per_target": 1.65117104329312,
+        "targets_per_volley": 21.187969924812,
+        "volleys": 133,
+        "wasted_share": 0.0597942563223318
+       },
+       "wall_ms": 4440,
+       "winner": 0,
+       "winner_profile": 1
+      }
+     ],
+     "scenario": "mixed",
+     "size": 500,
+     "summary": {
+      "ai_phase_mean_ms": 0.100847613438405,
+      "ai_phase_worst_p95_ms": 0.384,
+      "draws": 0,
+      "duration_seconds": 71.0,
+      "fled": [
+       0.05275,
+       0.0645
+      ],
+      "idle_time": [
+       0.351383411136369,
+       0.343796088420965
+      ],
+      "losses": [
+       0.798,
+       0.8055
+      ],
+      "never_engaged": [
+       0.0,
+       0.0
+      ],
+      "profile_win_rate": [
+       0.0,
+       1.0
+      ],
+      "profile_wins": [
+       0,
+       8
+      ],
+      "runs": 8,
+      "volleys": {
+       "dead_share": 0.0519420562924365,
+       "doomed_share": 0.00628555273765884,
+       "first_volley_shots": 13.625,
+       "first_volley_targets": 7.8125,
+       "runs": 8,
+       "shots_per_target": 1.62830633789198,
+       "targets_per_volley": 21.3385948714351,
+       "wasted_share": 0.0582276090300953
+      },
+      "win_rate": [
+       0.5,
+       0.5
+      ],
+      "wins": [
+       4,
+       4
+      ]
+     }
+    }
+   ],
+   "debug": true,
+   "engine": "4.7.2-stable (steam)",
+   "note": "Headless arena; AI phase times are diagnostic samples, not the release budget.",
+   "options": {
+    "backend": "native",
+    "max_seconds": 240.0,
+    "mirror": true,
+    "phase_profile": true,
+    "profiles": [
+     "reference",
+     "reference"
+    ],
+    "runs": 4,
+    "scenarios": [
+     "archers",
+     "mixed"
+    ],
+    "seed": 4242,
+    "sizes": [
+     500
+    ]
+   },
+   "version": 2
+  }
+ }
+}

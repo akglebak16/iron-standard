@@ -25,6 +25,8 @@ const PerkCatalog = preload("res://core/characters/data/perk_catalog.gd")
 const PerkEffects = preload("res://core/characters/rules/perk_effects.gd")
 const TroopCatalog = preload("res://core/troops/data/catalog.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
+const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
+const Config = preload("res://core/campaign/config.gd")
 
 ## Starting troops by culture (CULT in src/05_world.js).
 const START_TROOPS := {
@@ -62,6 +64,9 @@ var companion_catalog := CompanionCatalog.new()
 var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
+var threat: ThreatMap = null  # derived from parties (ADR-023): rebuilt on the first request after each step or hour; never saved
+var _threat_step := 0         # world steps and hours so far in this session (not saved): the map is rebuilt when it changes
+var _threat_built := -1
 ## Standing still on purpose (G.wait): time passes although the party does not move. Not saved, like in the browser.
 var waiting := false
 
@@ -74,9 +79,11 @@ func dispose() -> void:
 			for connection in source.get_signal_connection_list(info.name):
 				source.disconnect(info.name, connection.callable)
 	if wars != null: wars.clans = null
+	if ai != null: ai.dispose()
 	if clans != null: clans.siege = null
 	if siege != null: siege.vassals = null
 	ai = null
+	threat = null
 	wars = null
 	clans = null
 	siege = null
@@ -154,6 +161,8 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.skirmish.clans = state.clans
 	state.skirmish.undead = state.undead
 	state.ai.skirmish = state.skirmish
+	state.ai.threat_map = state.threat_map
+	state.ai.enemies = state.threat_enemies
 	state.rel_watch()
 	return state
 
@@ -199,6 +208,7 @@ func attack(p: Dictionary) -> void:
 	rel_watch()
 
 func step(dh: float) -> void:
+	_threat_step += 1
 	if player.tid >= 0 and player.busy == "":
 		var tg: Dictionary = roster.party_by_id(player.tid)
 		if tg.is_empty() or tg.hide:
@@ -279,6 +289,32 @@ func hour_tick() -> void:
 		WorldCompanions.heal(player, heal)
 	if clock.hour == 0:
 		_day_tick()
+	_threat_step += 1
+	ai.hour_tick()
+
+## Threat map of the current world step (DESIGN.md §5.1, ADR-023). The first request after a step or an hour rebuilds
+## it from the parties, so a loaded world sees exactly the map the saved one would have seen. It spends no RNG and is
+## not saved. Party goals (party_ai.gd, party_goals.gd) read it for risk, flight and alarms.
+func threat_map() -> ThreatMap:
+	if threat == null:
+		threat = ThreatMap.new(PartyAI.WW, PartyAI.WH)
+	if _threat_built != _threat_step:
+		_threat_built = _threat_step
+		threat.rebuild(threat_sources(), hours_passed)
+	return threat
+
+## Every party with troops, plus the player's own party while it is on the map.
+func threat_sources() -> Array:
+	var out: Array = []
+	for p in roster.parties:
+		out.append({"fac": p.fac, "x": p.x, "y": p.y, "strength": roster.strength_of(p)})
+	if not player.away and not player.troops.is_empty():
+		out.append({"fac": Config.PLAYER_FACTION, "x": player.x, "y": player.y, "strength": Rules.strength(player.troops, roster.info)})
+	return out
+
+## Factions hostile to `fac` that have strength on the threat map.
+func threat_enemies(fac: String) -> Array:
+	return threat_map().enemies_of(fac, func(a: String, b: String) -> bool: return ThreatMap.factions_hostile(a, b, wars.wars, player.rel))
 
 var _hostile := {}
 

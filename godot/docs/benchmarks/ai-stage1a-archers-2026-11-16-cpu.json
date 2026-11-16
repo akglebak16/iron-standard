@@ -1,0 +1,1291 @@
+{
+ "hardware": {
+  "recorded_at": "2026-11-16T16:17:00Z",
+  "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+  "cores": 8,
+  "logical_processors": 16,
+  "ram_bytes": 34282192896,
+  "os": "Windows 10 Home Single Language 10.0.19045",
+  "power_scheme": "Balanced",
+  "background": "Chrome, Steam, Overwolf, Discord, Telegram and the Claude desktop app open; CPU load before the matrix 12%. No Godot tests, builds, arenas or other AI sessions ran during the matrix."
+ },
+ "method": {
+  "command": "node godot/tools/benchmark.cjs <exe> --scenario=<s> --n=1000 --ticks=3600 --warmup=120 --seed=4242 --profile-phases --repeat=5 --execution-context=host",
+  "order": "Sequential, per scenario the three builds back to back; order rotated: contact base,mid,cur; cavalry cur,mid,base; volley mid,cur,base; approach base,cur,mid; siege cur,base,mid; mixed mid,base,cur.",
+  "base": "ai-architecture 13032bb (0-measure, before stage 1a), separate git worktree",
+  "mid": "ai-architecture 088f112 (stage 1a and 2a, main merged), separate git worktree",
+  "cur": "ai-architecture a43fe8a (stage 1a-archers)",
+  "dirty_note": "Builds are dirty only by files Godot writes on import (*.import line endings, project.godot header, .uid files main did not commit)."
+ },
+ "matrix": {
+  "contact": {
+   "base": {
+    "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+      "source_sha256": "8251a18b13d987a2609ed1af425b9aac6823ab412aebc1e9c09ccd2affc6fef3",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "7695e65ae66419ba954681510347a3ca082d9c2c3b6d9e61b5c47ab9ca11c4f2"
+     },
+     "executable_sha256": "dab144bcd666440ad20eeb3278fa2c72adf0c140764c7a90908a8884132d0a4c",
+     "built_at": "2026-11-16T15:14:19.263Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.673,
+     4.642,
+     4.787,
+     4.623,
+     4.604
+    ],
+    "mean": [
+     2.3928843038951,
+     2.39242460470498,
+     2.43007211723872,
+     2.38546972618589,
+     2.38231893559583
+    ],
+    "move_mean": [
+     1.24372348630929,
+     1.24084111068261,
+     1.25710335518704,
+     1.24106324720401,
+     1.23713459313536
+    ],
+    "move_p95": [
+     2.302,
+     2.272,
+     2.362,
+     2.301,
+     2.273
+    ],
+    "snapshot_p95": [
+     1.113,
+     1.093,
+     1.197,
+     1.112,
+     1.091
+    ],
+    "ticks": [
+     2593,
+     2593,
+     2593,
+     2593,
+     2593
+    ],
+    "events": {
+     "0": 8197,
+     "1": 1785,
+     "3": 1399,
+     "12": 1,
+     "19": 197
+    },
+    "deterministic": true
+   },
+   "mid": {
+    "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+      "source_sha256": "eb7a8c78a0641028040da9b746fc828042e8a02b0ab7982a450b67b14d271935",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "1d2703ff180ef17ad8512469bd7491db4e3b775cd4d7c8812c2e0b69c70dbc10"
+     },
+     "executable_sha256": "339d9e7119e5f971b8ae56c884d0a07b5fad5090352d8b84b3073bc58872ba10",
+     "built_at": "2026-11-16T15:15:36.861Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.477,
+     4.51,
+     4.65,
+     4.49,
+     4.482
+    ],
+    "mean": [
+     2.36655823595929,
+     2.38179607990954,
+     2.43341047870335,
+     2.37228533735394,
+     2.37321748963438
+    ],
+    "move_mean": [
+     1.30374519411986,
+     1.31612891066717,
+     1.33719675838673,
+     1.30938032416133,
+     1.30935130041463
+    ],
+    "move_p95": [
+     2.292,
+     2.317,
+     2.405,
+     2.334,
+     2.328
+    ],
+    "snapshot_p95": [
+     1.114,
+     1.104,
+     1.18,
+     1.115,
+     1.102
+    ],
+    "ticks": [
+     2653,
+     2653,
+     2653,
+     2653,
+     2653
+    ],
+    "events": {
+     "0": 8419,
+     "1": 2008,
+     "3": 1432,
+     "12": 1,
+     "19": 198
+    },
+    "deterministic": true
+   },
+   "cur": {
+    "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+      "source_sha256": "873ab45c012871fc68c72f0d24a1f8b08826478b3f2b0844fd6faf2003b017fb",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "0c16ead06be79dca3d5c6a1cbd9754580247487fbdae201114560a664d9ae009"
+     },
+     "executable_sha256": "40805e6fa84e3f38b2037e77e90885213103dc0f5dce6d7e5c0ff61351897ed2",
+     "built_at": "2026-11-16T15:17:46.237Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.507,
+     4.533,
+     4.568,
+     4.536,
+     4.585
+    ],
+    "mean": [
+     2.38863249151903,
+     2.42759555220505,
+     2.40427742178666,
+     2.40244779494911,
+     2.41045269506219
+    ],
+    "move_mean": [
+     1.31761666038447,
+     1.34149981153411,
+     1.32852770448549,
+     1.32736901620807,
+     1.3315367508481
+    ],
+    "move_p95": [
+     2.321,
+     2.34,
+     2.362,
+     2.334,
+     2.35
+    ],
+    "snapshot_p95": [
+     1.109,
+     1.088,
+     1.09,
+     1.103,
+     1.127
+    ],
+    "ticks": [
+     2653,
+     2653,
+     2653,
+     2653,
+     2653
+    ],
+    "events": {
+     "0": 8419,
+     "1": 2008,
+     "3": 1432,
+     "12": 1,
+     "19": 198
+    },
+    "deterministic": true
+   }
+  },
+  "cavalry": {
+   "base": {
+    "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+      "source_sha256": "8251a18b13d987a2609ed1af425b9aac6823ab412aebc1e9c09ccd2affc6fef3",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "7695e65ae66419ba954681510347a3ca082d9c2c3b6d9e61b5c47ab9ca11c4f2"
+     },
+     "executable_sha256": "dab144bcd666440ad20eeb3278fa2c72adf0c140764c7a90908a8884132d0a4c",
+     "built_at": "2026-11-16T15:14:19.263Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     5.383,
+     5.526,
+     5.445,
+     5.64,
+     5.566
+    ],
+    "mean": [
+     1.99617805555556,
+     2.02732277777778,
+     2.00100111111111,
+     2.05085777777778,
+     2.02666388888889
+    ],
+    "move_mean": [
+     1.13099805555556,
+     1.14443888888889,
+     1.13137166666667,
+     1.1571125,
+     1.14364555555556
+    ],
+    "move_p95": [
+     2.92,
+     2.999,
+     2.943,
+     3.042,
+     2.983
+    ],
+    "snapshot_p95": [
+     1.076,
+     1.125,
+     1.074,
+     1.165,
+     1.114
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 16247,
+     "1": 2396,
+     "2": 11106,
+     "3": 1853,
+     "12": 1,
+     "19": 58
+    },
+    "deterministic": true
+   },
+   "mid": {
+    "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+      "source_sha256": "eb7a8c78a0641028040da9b746fc828042e8a02b0ab7982a450b67b14d271935",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "1d2703ff180ef17ad8512469bd7491db4e3b775cd4d7c8812c2e0b69c70dbc10"
+     },
+     "executable_sha256": "339d9e7119e5f971b8ae56c884d0a07b5fad5090352d8b84b3073bc58872ba10",
+     "built_at": "2026-11-16T15:15:36.861Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     5.511,
+     5.382,
+     5.465,
+     5.786,
+     5.892
+    ],
+    "mean": [
+     2.19315916666667,
+     2.15790666666667,
+     2.18297194444444,
+     2.23218388888889,
+     2.27625166666667
+    ],
+    "move_mean": [
+     1.33513805555556,
+     1.31697138888889,
+     1.33304194444444,
+     1.353775,
+     1.38122305555556
+    ],
+    "move_p95": [
+     3.214,
+     3.173,
+     3.271,
+     3.318,
+     3.348
+    ],
+    "snapshot_p95": [
+     1.11,
+     1.101,
+     1.114,
+     1.163,
+     1.287
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 16387,
+     "1": 3125,
+     "2": 9972,
+     "3": 1841,
+     "12": 1,
+     "19": 55
+    },
+    "deterministic": true
+   },
+   "cur": {
+    "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+      "source_sha256": "873ab45c012871fc68c72f0d24a1f8b08826478b3f2b0844fd6faf2003b017fb",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "0c16ead06be79dca3d5c6a1cbd9754580247487fbdae201114560a664d9ae009"
+     },
+     "executable_sha256": "40805e6fa84e3f38b2037e77e90885213103dc0f5dce6d7e5c0ff61351897ed2",
+     "built_at": "2026-11-16T15:17:46.237Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     5.411,
+     5.471,
+     5.761,
+     5.566,
+     5.425
+    ],
+    "mean": [
+     2.17172222222222,
+     2.1998425,
+     2.29216333333333,
+     2.22281166666667,
+     2.18635
+    ],
+    "move_mean": [
+     1.32859777777778,
+     1.34719916666667,
+     1.39754111111111,
+     1.35716555555556,
+     1.33867416666667
+    ],
+    "move_p95": [
+     3.217,
+     3.251,
+     3.415,
+     3.278,
+     3.203
+    ],
+    "snapshot_p95": [
+     1.088,
+     1.102,
+     1.303,
+     1.175,
+     1.094
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 16387,
+     "1": 3125,
+     "2": 9972,
+     "3": 1841,
+     "12": 1,
+     "19": 55
+    },
+    "deterministic": true
+   }
+  },
+  "volley": {
+   "base": {
+    "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+      "source_sha256": "8251a18b13d987a2609ed1af425b9aac6823ab412aebc1e9c09ccd2affc6fef3",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "7695e65ae66419ba954681510347a3ca082d9c2c3b6d9e61b5c47ab9ca11c4f2"
+     },
+     "executable_sha256": "dab144bcd666440ad20eeb3278fa2c72adf0c140764c7a90908a8884132d0a4c",
+     "built_at": "2026-11-16T15:14:19.263Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     3.561,
+     3.63,
+     3.579,
+     3.612,
+     3.589
+    ],
+    "mean": [
+     1.59238560120618,
+     1.59735130041462,
+     1.58165322276668,
+     1.60088805126272,
+     1.60503015454203
+    ],
+    "move_mean": [
+     0.632613644930268,
+     0.636541650961176,
+     0.62848134187712,
+     0.63270260082925,
+     0.635303807010931
+    ],
+    "move_p95": [
+     1.465,
+     1.481,
+     1.452,
+     1.45,
+     1.472
+    ],
+    "snapshot_p95": [
+     1.532,
+     1.528,
+     1.521,
+     1.552,
+     1.572
+    ],
+    "ticks": [
+     2653,
+     2653,
+     2653,
+     2653,
+     2653
+    ],
+    "events": {
+     "0": 4538,
+     "3": 1174,
+     "5": 10856,
+     "12": 1,
+     "13": 6644,
+     "18": 1037,
+     "19": 756
+    },
+    "deterministic": true
+   },
+   "mid": {
+    "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+      "source_sha256": "eb7a8c78a0641028040da9b746fc828042e8a02b0ab7982a450b67b14d271935",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "1d2703ff180ef17ad8512469bd7491db4e3b775cd4d7c8812c2e0b69c70dbc10"
+     },
+     "executable_sha256": "339d9e7119e5f971b8ae56c884d0a07b5fad5090352d8b84b3073bc58872ba10",
+     "built_at": "2026-11-16T15:15:36.861Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     3.984,
+     3.751,
+     3.749,
+     3.729,
+     3.742
+    ],
+    "mean": [
+     1.80147531096871,
+     1.72438409347908,
+     1.68439992461365,
+     1.67246437994723,
+     1.68133773087071
+    ],
+    "move_mean": [
+     0.736737278552582,
+     0.717842442517904,
+     0.705768940821711,
+     0.70228119110441,
+     0.706738786279683
+    ],
+    "move_p95": [
+     1.646,
+     1.623,
+     1.623,
+     1.597,
+     1.598
+    ],
+    "snapshot_p95": [
+     1.781,
+     1.569,
+     1.545,
+     1.543,
+     1.554
+    ],
+    "ticks": [
+     2653,
+     2653,
+     2653,
+     2653,
+     2653
+    ],
+    "events": {
+     "0": 4538,
+     "3": 1174,
+     "5": 10856,
+     "12": 1,
+     "13": 6644,
+     "18": 1037,
+     "19": 756
+    },
+    "deterministic": true
+   },
+   "cur": {
+    "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+      "source_sha256": "873ab45c012871fc68c72f0d24a1f8b08826478b3f2b0844fd6faf2003b017fb",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "0c16ead06be79dca3d5c6a1cbd9754580247487fbdae201114560a664d9ae009"
+     },
+     "executable_sha256": "40805e6fa84e3f38b2037e77e90885213103dc0f5dce6d7e5c0ff61351897ed2",
+     "built_at": "2026-11-16T15:17:46.237Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     3.389,
+     3.421,
+     3.428,
+     3.367,
+     3.534
+    ],
+    "mean": [
+     1.13153333333333,
+     1.14144388888889,
+     1.13364527777778,
+     1.1269825,
+     1.15003055555556
+    ],
+    "move_mean": [
+     0.415832777777778,
+     0.421154166666667,
+     0.417145,
+     0.414774722222222,
+     0.430366666666667
+    ],
+    "move_p95": [
+     1.232,
+     1.252,
+     1.241,
+     1.242,
+     1.318
+    ],
+    "snapshot_p95": [
+     1.331,
+     1.321,
+     1.346,
+     1.317,
+     1.365
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 4902,
+     "3": 1238,
+     "5": 7195,
+     "13": 2641,
+     "18": 1260,
+     "19": 933
+    },
+    "deterministic": true
+   }
+  },
+  "approach": {
+   "base": {
+    "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+      "source_sha256": "8251a18b13d987a2609ed1af425b9aac6823ab412aebc1e9c09ccd2affc6fef3",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "7695e65ae66419ba954681510347a3ca082d9c2c3b6d9e61b5c47ab9ca11c4f2"
+     },
+     "executable_sha256": "dab144bcd666440ad20eeb3278fa2c72adf0c140764c7a90908a8884132d0a4c",
+     "built_at": "2026-11-16T15:14:19.263Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.416,
+     4.563,
+     4.378,
+     4.715,
+     4.395
+    ],
+    "mean": [
+     2.15378298250815,
+     2.20152949896235,
+     2.14854847316929,
+     2.25959086866291,
+     2.15800652238363
+    ],
+    "move_mean": [
+     1.10024547880225,
+     1.14742603024014,
+     1.09279306255559,
+     1.1361589089831,
+     1.09572517047139
+    ],
+    "move_p95": [
+     2.157,
+     2.309,
+     2.128,
+     2.224,
+     2.128
+    ],
+    "snapshot_p95": [
+     1.155,
+     1.132,
+     1.15,
+     1.322,
+     1.187
+    ],
+    "ticks": [
+     3373,
+     3373,
+     3373,
+     3373,
+     3373
+    ],
+    "events": {
+     "0": 8191,
+     "1": 1738,
+     "3": 1378,
+     "9": 1,
+     "12": 1,
+     "19": 195
+    },
+    "deterministic": true
+   },
+   "mid": {
+    "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+      "source_sha256": "eb7a8c78a0641028040da9b746fc828042e8a02b0ab7982a450b67b14d271935",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "1d2703ff180ef17ad8512469bd7491db4e3b775cd4d7c8812c2e0b69c70dbc10"
+     },
+     "executable_sha256": "339d9e7119e5f971b8ae56c884d0a07b5fad5090352d8b84b3073bc58872ba10",
+     "built_at": "2026-11-16T15:15:36.861Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.929,
+     4.914,
+     4.937,
+     4.981,
+     4.92
+    ],
+    "mean": [
+     2.34231036642656,
+     2.34210115878484,
+     2.34551706858753,
+     2.36127466332603,
+     2.34261071093016
+    ],
+    "move_mean": [
+     1.28626777325399,
+     1.28180457250235,
+     1.28301346695897,
+     1.29648449733793,
+     1.28125618540557
+    ],
+    "move_p95": [
+     2.611,
+     2.601,
+     2.615,
+     2.647,
+     2.593
+    ],
+    "snapshot_p95": [
+     1.165,
+     1.142,
+     1.148,
+     1.16,
+     1.122
+    ],
+    "ticks": [
+     3193,
+     3193,
+     3193,
+     3193,
+     3193
+    ],
+    "events": {
+     "0": 8331,
+     "1": 1820,
+     "3": 1403,
+     "9": 1,
+     "12": 1,
+     "19": 197
+    },
+    "deterministic": true
+   },
+   "cur": {
+    "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+      "source_sha256": "873ab45c012871fc68c72f0d24a1f8b08826478b3f2b0844fd6faf2003b017fb",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "0c16ead06be79dca3d5c6a1cbd9754580247487fbdae201114560a664d9ae009"
+     },
+     "executable_sha256": "40805e6fa84e3f38b2037e77e90885213103dc0f5dce6d7e5c0ff61351897ed2",
+     "built_at": "2026-11-16T15:17:46.237Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     5.013,
+     4.944,
+     4.969,
+     4.983,
+     5.031
+    ],
+    "mean": [
+     2.3620739116818,
+     2.35755903538992,
+     2.34971437519574,
+     2.35241778891325,
+     2.38845223927341
+    ],
+    "move_mean": [
+     1.29797745067335,
+     1.29504071406201,
+     1.28715596617601,
+     1.28975133103664,
+     1.30781020983401
+    ],
+    "move_p95": [
+     2.624,
+     2.6,
+     2.606,
+     2.633,
+     2.669
+    ],
+    "snapshot_p95": [
+     1.119,
+     1.114,
+     1.13,
+     1.128,
+     1.156
+    ],
+    "ticks": [
+     3193,
+     3193,
+     3193,
+     3193,
+     3193
+    ],
+    "events": {
+     "0": 8331,
+     "1": 1820,
+     "3": 1403,
+     "9": 1,
+     "12": 1,
+     "19": 197
+    },
+    "deterministic": true
+   }
+  },
+  "siege": {
+   "base": {
+    "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+      "source_sha256": "8251a18b13d987a2609ed1af425b9aac6823ab412aebc1e9c09ccd2affc6fef3",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "7695e65ae66419ba954681510347a3ca082d9c2c3b6d9e61b5c47ab9ca11c4f2"
+     },
+     "executable_sha256": "dab144bcd666440ad20eeb3278fa2c72adf0c140764c7a90908a8884132d0a4c",
+     "built_at": "2026-11-16T15:14:19.263Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     7.642,
+     7.621,
+     7.67,
+     7.944,
+     7.9
+    ],
+    "mean": [
+     5.33475527777778,
+     5.31670638888889,
+     5.3479575,
+     5.40499833333333,
+     5.36619944444444
+    ],
+    "move_mean": [
+     1.09251777777778,
+     1.09001888888889,
+     1.10218472222222,
+     1.09540055555556,
+     1.09703861111111
+    ],
+    "move_p95": [
+     2.064,
+     2.032,
+     2.058,
+     2.052,
+     2.043
+    ],
+    "snapshot_p95": [
+     1.157,
+     1.124,
+     1.141,
+     1.213,
+     1.319
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 7807,
+     "1": 1274,
+     "3": 1172,
+     "10": 1,
+     "11": 1,
+     "18": 1,
+     "20": 10,
+     "21": 10,
+     "22": 3,
+     "23": 2,
+     "24": 1
+    },
+    "deterministic": true
+   },
+   "mid": {
+    "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+      "source_sha256": "eb7a8c78a0641028040da9b746fc828042e8a02b0ab7982a450b67b14d271935",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "1d2703ff180ef17ad8512469bd7491db4e3b775cd4d7c8812c2e0b69c70dbc10"
+     },
+     "executable_sha256": "339d9e7119e5f971b8ae56c884d0a07b5fad5090352d8b84b3073bc58872ba10",
+     "built_at": "2026-11-16T15:15:36.861Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     7.859,
+     7.887,
+     7.927,
+     7.89,
+     7.952
+    ],
+    "mean": [
+     5.48097527777778,
+     5.46111472222222,
+     5.52499722222222,
+     5.48911416666667,
+     5.56360027777778
+    ],
+    "move_mean": [
+     1.22180222222222,
+     1.22731,
+     1.23936638888889,
+     1.23789,
+     1.24762861111111
+    ],
+    "move_p95": [
+     2.312,
+     2.315,
+     2.388,
+     2.336,
+     2.4
+    ],
+    "snapshot_p95": [
+     1.149,
+     1.188,
+     1.176,
+     1.185,
+     1.288
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 8042,
+     "1": 1402,
+     "3": 1242,
+     "10": 1,
+     "11": 1,
+     "20": 9,
+     "21": 9,
+     "22": 3,
+     "23": 2,
+     "24": 1
+    },
+    "deterministic": true
+   },
+   "cur": {
+    "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+      "source_sha256": "873ab45c012871fc68c72f0d24a1f8b08826478b3f2b0844fd6faf2003b017fb",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "0c16ead06be79dca3d5c6a1cbd9754580247487fbdae201114560a664d9ae009"
+     },
+     "executable_sha256": "40805e6fa84e3f38b2037e77e90885213103dc0f5dce6d7e5c0ff61351897ed2",
+     "built_at": "2026-11-16T15:17:46.237Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     7.794,
+     7.863,
+     7.881,
+     8.018,
+     7.894
+    ],
+    "mean": [
+     5.46168944444444,
+     5.47814444444444,
+     5.49192722222222,
+     5.52285361111111,
+     5.50365583333333
+    ],
+    "move_mean": [
+     1.24407083333333,
+     1.22880027777778,
+     1.22811444444444,
+     1.25250916666667,
+     1.25216916666667
+    ],
+    "move_p95": [
+     2.35,
+     2.323,
+     2.319,
+     2.349,
+     2.391
+    ],
+    "snapshot_p95": [
+     1.141,
+     1.162,
+     1.172,
+     1.265,
+     1.282
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 8042,
+     "1": 1402,
+     "3": 1242,
+     "10": 1,
+     "11": 1,
+     "20": 9,
+     "21": 9,
+     "22": 3,
+     "23": 2,
+     "24": 1
+    },
+    "deterministic": true
+   }
+  },
+  "mixed": {
+   "base": {
+    "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "13032bbf83631a5f89e95bb11bed7c591dc25ed8",
+      "source_sha256": "8251a18b13d987a2609ed1af425b9aac6823ab412aebc1e9c09ccd2affc6fef3",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "7695e65ae66419ba954681510347a3ca082d9c2c3b6d9e61b5c47ab9ca11c4f2"
+     },
+     "executable_sha256": "dab144bcd666440ad20eeb3278fa2c72adf0c140764c7a90908a8884132d0a4c",
+     "built_at": "2026-11-16T15:14:19.263Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     3.827,
+     3.854,
+     3.898,
+     3.886,
+     3.838
+    ],
+    "mean": [
+     2.12839861111111,
+     2.14802111111111,
+     2.14591583333333,
+     2.14882638888889,
+     2.13067888888889
+    ],
+    "move_mean": [
+     1.02493138888889,
+     1.0360525,
+     1.03324805555556,
+     1.03382861111111,
+     1.02626444444444
+    ],
+    "move_p95": [
+     1.701,
+     1.721,
+     1.739,
+     1.729,
+     1.714
+    ],
+    "snapshot_p95": [
+     1.233,
+     1.25,
+     1.27,
+     1.246,
+     1.228
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 8140,
+     "1": 4259,
+     "2": 812,
+     "3": 1335,
+     "5": 10147,
+     "9": 4,
+     "13": 4447
+    },
+    "deterministic": true
+   },
+   "mid": {
+    "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "088f1123a98b6d811c82bd0e0e5d66c2d251b31c",
+      "source_sha256": "eb7a8c78a0641028040da9b746fc828042e8a02b0ab7982a450b67b14d271935",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "1d2703ff180ef17ad8512469bd7491db4e3b775cd4d7c8812c2e0b69c70dbc10"
+     },
+     "executable_sha256": "339d9e7119e5f971b8ae56c884d0a07b5fad5090352d8b84b3073bc58872ba10",
+     "built_at": "2026-11-16T15:15:36.861Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.235,
+     4.229,
+     4.32,
+     4.308,
+     4.195
+    ],
+    "mean": [
+     2.22331055555556,
+     2.22727416666667,
+     2.26496916666667,
+     2.24791555555556,
+     2.21422277777778
+    ],
+    "move_mean": [
+     1.1637475,
+     1.1679325,
+     1.18183805555556,
+     1.17178444444444,
+     1.15999861111111
+    ],
+    "move_p95": [
+     2.05,
+     2.058,
+     2.09,
+     2.067,
+     2.036
+    ],
+    "snapshot_p95": [
+     1.27,
+     1.275,
+     1.35,
+     1.446,
+     1.263
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 8429,
+     "1": 4226,
+     "2": 862,
+     "3": 1386,
+     "5": 10405,
+     "9": 1,
+     "13": 5175
+    },
+    "deterministic": true
+   },
+   "cur": {
+    "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+    "dirty": true,
+    "build": {
+     "source": {
+      "revision": "a43fe8aa3645ee128da807389eaac0b13ada3e00",
+      "source_sha256": "873ab45c012871fc68c72f0d24a1f8b08826478b3f2b0844fd6faf2003b017fb",
+      "dirty": true
+     },
+     "dependencies": {
+      "iron_contacts.windows.x86_64.dll": "0c16ead06be79dca3d5c6a1cbd9754580247487fbdae201114560a664d9ae009"
+     },
+     "executable_sha256": "40805e6fa84e3f38b2037e77e90885213103dc0f5dce6d7e5c0ff61351897ed2",
+     "built_at": "2026-11-16T15:17:46.237Z",
+     "smoke_passed": true,
+     "stale_source": false
+    },
+    "p95": [
+     4.299,
+     4.299,
+     4.228,
+     4.227,
+     4.269
+    ],
+    "mean": [
+     2.2232175,
+     2.20714194444444,
+     2.19582333333333,
+     2.20389361111111,
+     2.21026194444444
+    ],
+    "move_mean": [
+     1.15022361111111,
+     1.14863138888889,
+     1.14131055555556,
+     1.14613777777778,
+     1.14563416666667
+    ],
+    "move_p95": [
+     2.102,
+     2.106,
+     2.083,
+     2.088,
+     2.09
+    ],
+    "snapshot_p95": [
+     1.258,
+     1.26,
+     1.233,
+     1.246,
+     1.26
+    ],
+    "ticks": [
+     3600,
+     3600,
+     3600,
+     3600,
+     3600
+    ],
+    "events": {
+     "0": 9058,
+     "1": 4060,
+     "2": 822,
+     "3": 1516,
+     "5": 10450,
+     "9": 2,
+     "13": 4141
+    },
+    "deterministic": true
+   }
+  }
+ }
+}

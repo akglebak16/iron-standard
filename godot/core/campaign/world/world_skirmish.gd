@@ -162,6 +162,9 @@ func rally(p: Dictionary, tgt: Dictionary) -> void:
 		o.state = "hunt"
 		o.tid = tgt.id
 		o.tpl = false
+		o.goal = "hunt"  # the rallied party takes the same goal (party_goals.gd), its hold time starts now
+		o.gid = tgt.id
+		o.ga = 0.0
 		roster.path_to(o, tgt.x, tgt.y)
 
 # ---------- allies of the enemy in the player's battle ----------

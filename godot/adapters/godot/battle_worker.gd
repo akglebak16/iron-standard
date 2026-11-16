@@ -89,6 +89,14 @@ func result() -> Dictionary:
 	_join()
 	return _backend.result() if not _closed else {}
 
+func set_ai_debug(enabled: bool) -> void:
+	_join()
+	if not _closed: _backend.set_ai_debug(enabled)
+
+func ai_debug_snapshot() -> Dictionary:
+	_join()
+	return _backend.ai_debug_snapshot() if not _closed else {}
+
 func dispose() -> void:
 	if _closed: return
 	finish_batch()

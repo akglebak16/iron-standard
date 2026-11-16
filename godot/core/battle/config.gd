@@ -173,6 +173,45 @@ const AI_CAVALRY_WAYPOINT_ARRIVAL := 60.0
 const AI_CAVALRY_CHARGE_DISTANCE := 250.0
 const AI_TACTIC_WAIT := "wait"
 const AI_TACTIC_FLANK := "flank"
+# Squad-level AI (DESIGN.md 1.4, stage K): attack decisions look at enemy squads, not single fighters.
+const AI_SQUAD_MIN_UNITS := 3 # A group with fewer ready fighters (e.g. the hero's companions alone) is not a squad.
+const AI_SQUAD_SCAN_SECONDS := 0.25 # Squad picture and kite check refresh; decisions in between reuse it.
+const AI_SQUAD_SAMPLE_LIMIT := 64 # Fighters sampled per group and scan; larger groups use a fixed stride.
+const AI_KITE_SECONDS := 3.0 # A charge that has not closed the gap for this long is called off.
+const AI_KITE_PROGRESS_DISTANCE := 20.0 # The mean chase gap must shrink by this much to count as progress.
+const AI_KITE_CONTACT_DISTANCE := 60.0 # Closer than this (or within weapon range) a fighter is fighting, not chasing.
+const AI_KITE_SPEED_RATIO := 1.0 # Target speed above own speed times this marks the chase as hopeless.
+const AI_KITE_RECHARGE_DISTANCE := 80.0 # A group that called off a chase closes in formation and charges only at contact.
+const AI_KITE_CHASER_SHARE := 0.5 # More than this share of sampled fighters must be in hopeless chases.
+const AI_MISSILE_LOSS_MEMORY_SECONDS := 6.0 # Decay time of the per-side count of fighters lost to missiles.
+const AI_MISSILE_PRESSURE_LOSSES := 2.0 # Recent missile losses from which a side counts as under fire.
+# AI foundation (DESIGN.md stage 0-battle, ADR-022). Observation and scheduling only: nothing below changes a battle.
+const AI_PROFILE_PLAYER := "" # The side follows player orders; no AI brain makes decisions for it.
+const AI_PROFILE_REFERENCE := "reference" # The current timer-and-threshold brain (tactics.gd), frozen as the arena reference.
+const AI_COMMANDER_PERIOD_SECONDS := 0.5 # Decision schedule: one side commander decision this often.
+const AI_SQUAD_PERIOD_SECONDS := 0.25 # Decision schedule: one decision per group this often, staggered by group number.
+const AI_TRACE_RECENT := 32 # Decision records kept for the debug snapshot.
+# Field assessment (DESIGN.md 4.1). Unit classes for the "who beats whom" matrix, read from properties, not troop IDs.
+const AI_CLASS_FOOT := 0
+const AI_CLASS_SPEAR := 1 # Foot with anti_cavalry.
+const AI_CLASS_ARCHER := 2 # Foot with a ranged attack.
+const AI_CLASS_CAVALRY := 3 # Mounted melee.
+const AI_CLASS_HORSE_ARCHER := 4 # Mounted with a ranged attack.
+const AI_CLASSES := 5
+## Strength multiplier of a row class against a column class. An estimate for decisions, never a combat value.
+const AI_MATCHUP := [
+	[1.0, 1.0, 1.3, 0.8, 0.7],
+	[0.9, 1.0, 1.2, 1.6, 0.8],
+	[1.1, 1.2, 1.0, 0.8, 0.9],
+	[1.2, 0.6, 1.6, 1.0, 1.2],
+	[1.1, 1.2, 0.9, 0.8, 1.0],
+]
+const AI_FIELD_TIER_POWER := 0.25 # Fighting power of a fighter: weight x health share x (1 + this x tier).
+const AI_FIELD_CONTACT_DISTANCE := 60.0 # A melee fighter this close to its target counts as engaged.
+const AI_FIELD_ENGAGED_SHARE := 0.25 # A group with this share of engaged fighters is bound by the fight.
+const AI_FIELD_THREAT_RADIUS := 600.0 # Enemy groups farther than this from a group's center add no threat.
+const AI_FIELD_FRONT_ARC := PI * 0.25 # Enemy within this angle of the group's facing is in front.
+const AI_FIELD_REAR_ARC := PI * 0.75 # Beyond this angle the enemy is behind; in between, on a flank.
 const FORMATION_RELAYOUT_SECONDS := 2.4
 const FOOT_STEERING_RATE := 10.0
 const HORSE_STEERING_RATE := 2.4
@@ -256,6 +295,37 @@ const RETARGET_INITIAL_MAX_SECONDS := 0.5
 const TARGET_FLEE_DISTANCE_MULTIPLIER := 1.7
 const CAVALRY_ARCHER_TARGET_MULTIPLIER := 0.7
 const CURRENT_TARGET_MULTIPLIER := 0.85
+# Stage 1a (DESIGN.md 1.4 step 2, 4.4): fighter-level rules, the same for both sides and in GDScript and C++.
+# A melee fighter weighs a target farther away when others already fight it and when it runs away faster than
+# he can follow. Attackers are melee fighters whose current target it is, counted at the start of the tick.
+const TARGET_CROWD_FREE_ATTACKERS := 3.0 # Melee attackers a target takes before it starts to look farther away.
+const TARGET_CROWD_MULTIPLIER := 0.25 # Each further attacker adds this share of the distance.
+const TARGET_OUTRUN_MULTIPLIER := 2.0 # k in distance × (1 + k × max(0, receding speed − own speed) / own speed).
+# Stage 1a-archers (DESIGN.md 4.4, decision 15): fire distribution of shooters (attack_range > 0), the same for both
+# sides, foot and mounted, in GDScript and C++. Aimers are shooters whose current target it is, counted at the start
+# of the tick like attackers. A shooter expects one arrow to deal his damage × TARGET_VOLLEY_HIT_SHARE to the man he
+# aims at, so hp / that many shooters are enough; every shooter beyond that (him included) makes the target look
+# TARGET_OVERKILL_MULTIPLIER of its distance farther, and new shooters take his neighbours. An estimate, no new RNG.
+const TARGET_VOLLEY_HIT_SHARE := 0.35
+const TARGET_OVERKILL_MULTIPLIER := 0.5
+# Front ranks: a shooter weighs every enemy up to this share farther, by a fixed amount drawn from his id and the
+# enemy's id. Enemies about as close as the nearest one (the front ranks of a formation) then share the fire, while a
+# rear rank stays farther than the front. The same shooter keeps the same preference, so the current target stays sticky.
+const TARGET_FRONT_SPREAD := 0.15
+# Leash in a charge, measured from the fighter's place in a formation fitted around his group's current position
+# (mean of position minus formation offset). It holds only in a chase, while the target runs away from him at
+# AI_CHARGE_CHASE_SPEED_SHARE of his speed or faster; in a standing fight the formation may deform freely.
+# Beyond the soft leash he stops running after a target that is even farther away; beyond the hard leash, or after
+# waiting out there too long, he walks back and chases again only when he is closer than the return distance.
+# In contact he always fights.
+const AI_CHARGE_CHASE_SPEED_SHARE := 0.5
+const AI_CHARGE_FOOT_SOFT_LEASH := 180.0
+const AI_CHARGE_FOOT_HARD_LEASH := 300.0
+const AI_CHARGE_FOOT_RETURN_DISTANCE := 110.0
+const AI_CHARGE_MOUNTED_SOFT_LEASH := 320.0
+const AI_CHARGE_MOUNTED_HARD_LEASH := 520.0
+const AI_CHARGE_MOUNTED_RETURN_DISTANCE := 200.0
+const AI_CHARGE_CHASE_SECONDS := 3.0 # Longest wait beyond the soft leash without contact.
 const AI_MODE_UNASSIGNED := ""
 const AI_MODE_SLOT := "slot"
 const AI_MODE_MELEE := "melee"
