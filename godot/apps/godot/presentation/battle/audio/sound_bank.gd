@@ -24,6 +24,28 @@ const HORN_LENGTH := 1.8
 const HORN_CUTOFF := 900.0
 const HORN_GAIN := 0.11
 
+## sfx('clang') draws its main tone from 1900–2300 Hz each time; five pre-rendered steps across that range.
+const CLANG_PITCHES := [1900.0, 2000.0, 2100.0, 2200.0, 2300.0]
+
+static func clang_variants() -> Array[AudioStreamWAV]:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = NOISE_SEED
+	var variants: Array[AudioStreamWAV] = []
+	for pitch: float in CLANG_PITCHES:
+		variants.append(_render([_tone(pitch, pitch, 0.2, Wave.TRIANGLE, 0.22), _tone(2900, 2900, 0.12, Wave.SQUARE, 0.05)], [_noise(3000, 3000, 0.05, Filter.HIGH, 0.25)], rng))
+	return variants
+
+## Window sounds of the campaign (sfx 'click', 'coin', 'level', 'order' in src/04_audio.js).
+static func ui_sounds() -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = NOISE_SEED
+	return {
+		"click": _render([_tone(660, 440, 0.05, Wave.SQUARE, 0.06)], [], rng),
+		"coin": _render([_tone(1320, 1320, 0.08, Wave.TRIANGLE, 0.14), _tone(1760, 1760, 0.18, Wave.TRIANGLE, 0.14, 0.07)], [], rng),
+		"level": _render([_tone(392, 392, 0.2, Wave.TRIANGLE, 0.2), _tone(523, 523, 0.2, Wave.TRIANGLE, 0.2, 0.15), _tone(659, 659, 0.4, Wave.TRIANGLE, 0.2, 0.3)], [], rng),
+		"order": _render([_tone(392, 392, 0.09, Wave.TRIANGLE, 0.18), _tone(523, 523, 0.12, Wave.TRIANGLE, 0.18, 0.08)], [], rng),
+	}
+
 static func build() -> Dictionary:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = NOISE_SEED

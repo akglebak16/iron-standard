@@ -2,6 +2,7 @@ extends CanvasLayer
 ## Base of the world windows: dimmed backdrop, titled panel, tab row, scrolling body and a close button (openModal in src/06_ui.js).
 signal closed
 
+const UiSounds = preload("res://apps/godot/presentation/campaign/ui_sounds.gd")
 const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const WIDTH := 900.0
@@ -162,7 +163,11 @@ func row(text: String, detail: String, buttons: Array = [], portrait := "") -> v
 		b.disabled = def.get("disabled", false)
 		b.focus_mode = Control.FOCUS_NONE
 		var action: Callable = def.call
-		b.pressed.connect(func(): action.call(); render())
+		var sound: String = def.get("sound", "")
+		b.pressed.connect(func():
+			action.call()
+			if sound != "": UiSounds.play(self, sound)
+			render())
 		actions.add_child(b)
 	body.add_child(card)
 

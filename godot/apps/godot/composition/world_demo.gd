@@ -17,6 +17,7 @@ const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounte
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
 const SaveStore = preload("res://adapters/persistence/save_store.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
+const UiSounds = preload("res://apps/godot/presentation/campaign/ui_sounds.gd")
 const ResultWindow = preload("res://apps/godot/composition/battle_result_window.gd")
 const Autosave = preload("res://apps/godot/composition/autosave.gd")
 const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
@@ -169,9 +170,11 @@ func _ready() -> void:
 	_siege.assault.connect(_on_assault)
 	_siege.closed.connect(func(): if not _siege_hold: state.clock.paused = false)
 	state.siege_requested.connect(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s))
-	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s); _autosave.save(state, _battle != null))
+	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null))
 	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
-	state.log_added.connect(func(text: String): hud.show_notice(text))
+	state.log_added.connect(func(text: String):
+		hud.show_notice(text)
+		if text.begins_with("Задание выполнено"): UiSounds.play(self, "coin"))
 	_bridge = Bridge.new(ContentLoader.registry(), state.roster.rng)
 	_dialog = EncounterDialog.new()
 	add_child(_dialog)
@@ -348,6 +351,8 @@ func _end_meeting(cooldown: float) -> void:
 	state.clock.paused = false
 
 func _show_resolved(resolved: Dictionary) -> void:
+	if int(resolved.summary.get("levels_gained", 0)) > 0:
+		UiSounds.play(self, "level")
 	var town_id := int(resolved.get("loot_settlement_id", -1))
 	_loot_pending = state.map.settlement_by_id(town_id) if town_id >= 0 else {}
 
@@ -450,6 +455,7 @@ func _return_to_map() -> void:
 
 func _sync_music() -> void:
 	var audio := _preferences.read()
+	UiSounds.enabled = audio.effects
 	_music.enabled = audio.effects and audio.music and _battle == null
 
 func _set_world_visible(on: bool) -> void:

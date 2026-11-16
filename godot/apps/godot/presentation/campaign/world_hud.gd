@@ -159,8 +159,19 @@ func refresh(state: RefCounted, near_settlement: Dictionary) -> void:
 	_near.text = "Рядом: %s" % near_settlement.name if not near_settlement.is_empty() and near_settlement.kind != "camp" else ""
 
 ## Tooltip for the settlement under the mouse (worldTip in src/07_main.js); empty dict hides it.
+## toast in src/06_ui.js: a message stays for 2.2 seconds, then the line clears.
+const NOTICE_SECONDS := 2.2
+var _notice_left := 0.0
+
 func show_notice(text: String) -> void:
 	_notice.text = text
+	_notice_left = NOTICE_SECONDS if text != "" else 0.0
+
+func _process(delta: float) -> void:
+	if _notice_left > 0.0:
+		_notice_left -= delta
+		if _notice_left <= 0.0:
+			_notice.text = ""
 
 func show_tip(settlement: Dictionary, screen_pos: Vector2, text := "") -> void:
 	if settlement.is_empty() and text == "":
