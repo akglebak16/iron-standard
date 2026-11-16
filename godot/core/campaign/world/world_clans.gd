@@ -307,7 +307,7 @@ func ruler_home(p: Dictionary) -> void:
 		p.y = h.y + 20
 		p.hide = true
 		p.wait = float(roster.rint(8, 16))
-	p.fight = false
+	p.fight = null  # rulerHome in src/05g_war.js; false would break `p.get("fight") == sk.id` in WorldSkirmish
 	p.state = "idle"
 	p.path = []
 	p.pi = 0
