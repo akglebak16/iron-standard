@@ -55,8 +55,8 @@ func _initialize() -> void:
 		"party": {"hero": {"lvl": 3}, "comps": []}}
 	var rows := ResultWindow.campaign_rows(result, resolved, s.roster.catalog, s.gear, null)
 	var labels: Array = rows.map(func(r): return r[0])
-	assert("Враг убит или бежал" in labels and "Добыча" in labels and "Новый уровень" in labels and "Опыт героя" in labels)
-	assert(not "Враг убит или бежал" in ResultWindow.campaign_rows({}, resolved, null, s.gear, null).map(func(r): return r[0]), "auto battle has no enemy count")
+	assert("Павшие противники" in labels and "Добыча" in labels and "Новый уровень" in labels and "Опыт героя" in labels)
+	assert(not "Павшие противники" in ResultWindow.campaign_rows({}, resolved, null, s.gear, null).map(func(r): return r[0]), "auto battle has no enemy count")
 	var window := ResultWindow.new()
 	root.add_child(window)
 	await process_frame
@@ -65,7 +65,7 @@ func _initialize() -> void:
 	window.show_report(true, "Расчётный бой", rows, ["Чёрный курган разрушен."], [["В меню", "menu"], ["Ещё бой", "again"]])
 	assert(window.visible and window.title_label.text == "Победа")
 	assert(window.body.find_child("ResultRows", true, false).get_child_count() == rows.size())
-	var again := window.body.find_child("Action_again", true, false) as Button
+	var again := window._footer.find_child("Action_again", true, false) as Button
 	assert(again != null)
 	again.pressed.emit()
 	assert(chosen == ["again"] and not window.visible)

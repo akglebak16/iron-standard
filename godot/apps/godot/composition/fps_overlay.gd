@@ -19,8 +19,9 @@ func _init() -> void:
 	_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_label.offset_left = -110.0
 	_label.offset_right = -8.0
-	_label.offset_top = 6.0
-	_label.offset_bottom = 30.0
+	# Below the 52 px playback buttons, not on top of their icons.
+	_label.offset_top = 68.0
+	_label.offset_bottom = 92.0
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.add_theme_font_size_override("font_size", 16)
