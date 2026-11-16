@@ -19,6 +19,7 @@ const JITTER_LIMIT_PER_DAY := 12.0  # goal or state changes per party-day above 
 const FLIPFLOP_STEPS := 15          # A -> B -> A within 3 world hours
 const RELIEF_SCAN_RADIUS := 900.0   # an own lord this close could have tried to relieve a siege (borders() reach)
 const RELIEF_MIN_TROOPS := 36       # 18 × MK, the relief threshold of world_wars
+const RELIEF_GRACE_HOURS := 12      # world_wars sends relief after 10 h of siege; a helper nearby this long is a miss
 const FLEE_SAFE_RADIUS := 300.0     # search radius of the threat-map alternative for a flight
 
 var world: RefCounted
@@ -454,7 +455,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 		var open: Dictionary = _sieges[id].duplicate()
 		open.outcome = "ongoing"
 		sieges.append(open)
-	var no_relief := sieges.filter(func(r): return not r.relief and r.helper_hours > 0)
+	var no_relief := sieges.filter(func(r): return not r.relief and r.helper_hours >= RELIEF_GRACE_HOURS)
 	var declared := _war_log.filter(func(w): return not w.get("initial", false) and w.declared > 1)
 	var jitter := _jitter()
 	var lord_j: Dictionary = jitter.get("lord", {})
@@ -466,7 +467,8 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"fallen": _fallen.map(func(f): return "%s@%d" % [f.fac, f.day]),
 		"undead_start_day": _crisis.start_day, "undead_end_day": _crisis.end_day, "undead_peak_troops": peak_troops,
 		"undead_peak_settlements": peak_settlements,
-		"lords_died": _lord_log.died.size(), "lords_new": _lord_log.new.size(), "vassals_died": _vassal_log.died, "vassals_new": _vassal_log.new,
+		"lords_died": _lord_log.died.size(), "lords_new": _lord_log.new.filter(func(l): return l.day > 1).size(),
+		"lords_first_day": _lord_log.new.filter(func(l): return l.day <= 1).size(), "vassals_died": _vassal_log.died, "vassals_new": _vassal_log.new,
 		"lord_goal_changes_per_day": lord_j.get("goal_per_day_mean", 0.0), "lord_goal_changes_p95": lord_j.get("goal_per_day_p95", 0.0),
 		"lord_state_changes_per_day": lord_j.get("state_per_day_mean", 0.0), "lord_flipflops_per_day": lord_j.get("flipflops_per_day", 0.0),
 		"parties_over_jitter_limit": jitter.values().reduce(func(a, k): return a + int(k.over_limit), 0),
@@ -486,7 +488,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 	return {
 		"summary": summary,
 		"config": {"seed": seed_value, "days": days, "culture": CULTURE, "player": "away", "heat_cell": HEAT_CELL, "edge_margin": EDGE_MARGIN,
-			"jitter_limit_per_day": JITTER_LIMIT_PER_DAY, "relief_scan_radius": RELIEF_SCAN_RADIUS},
+			"jitter_limit_per_day": JITTER_LIMIT_PER_DAY, "relief_scan_radius": RELIEF_SCAN_RADIUS, "relief_grace_hours": RELIEF_GRACE_HOURS},
 		"wars": {"log": _war_log, "ongoing": ongoing},
 		"owners": _owner_log,
 		"fallen": _fallen,

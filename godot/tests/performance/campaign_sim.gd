@@ -126,11 +126,11 @@ func _table(rows: Array, meta: Dictionary) -> String:
 	var cols := [["seed", "seed"], ["войн объявлено", "wars_declared"], ["миров", "wars_peace"], ["дней войны ср.", "war_days_mean"],
 		["смен владельца", "owner_changes"], ["из них нежити", "owner_changes_to_undead"], ["пали", "fallen"],
 		["нежить: начало", "undead_start_day"], ["конец", "undead_end_day"], ["пик войск", "undead_peak_troops"],
-		["лордов погибло", "lords_died"], ["новых", "lords_new"],
+		["лордов погибло", "lords_died"], ["новых (после 1-го дня)", "lords_new"],
 		["смен цели лорда/день", "lord_goal_changes_per_day"], ["p95", "lord_goal_changes_p95"], ["смен состояния/день", "lord_state_changes_per_day"],
 		["туда-обратно/день", "lord_flipflops_per_day"], ["дёрганых партий", "parties_over_jitter_limit"],
 		["макс. доля земель", "max_share"], ["у кого", "max_share_leader"], ["доля в конце", "final_share"],
-		["осад", "sieges"], ["с выручкой", "sieges_with_relief"], ["без выручки при своём лорде рядом", "sieges_no_relief_with_helper"],
+		["осад", "sieges"], ["с выручкой", "sieges_with_relief"], ["без выручки, свой лорд рядом ≥12 ч", "sieges_no_relief_with_helper"],
 		["у края без цели, партия·ч", "edge_idle_party_hours"], ["застряли ≥6 ч", "edge_stuck_6h"],
 		["бегств", "flees_measured"], ["бег в большую угрозу", "flees_into_more_threat"], ["угроза в конце бегства", "flee_threat_ratio"],
 		["угроза в клетке карты угроз", "threat_safe_cell_ratio"], ["перестройка карты, мкс", "threat_rebuild_usec"], ["секунд", "wall_seconds"]]
