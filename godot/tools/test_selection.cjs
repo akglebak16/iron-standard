@@ -25,8 +25,11 @@ const TOOL_ARTIFACTS = /^tools\/.*\.(png|gif|jpg|jpeg|webp|md|gdignore)$/;
 const NODE_TOOLS = /^tools\/(?!native_)[^/]*\.(cjs|js|mjs|ps1|py|md|json)$|^tools\/[a-z_]+\/[^/]*\.(cjs|js|mjs|py|json)$/;
 // Правка этих файлов может изменить поведение всего проекта.
 const GLOBAL = new Set(['project.godot', 'export_presets.cfg']);
-// Только эти папки видит граф; правка в другом месте (tools, нативные исходники и т.п.) = полный набор.
-const GRAPH_DIRS = /^(core|apps|adapters|content|runtime|tests)\//;
+// Только эти папки видит граф; правка в другом месте = полный набор.
+// Godot-скрипты в tools/ (снимки, замеры, превью) тоже идут по графу: тест выбирается, только если ссылается на них.
+const GRAPH_DIRS = /^(core|apps|adapters|content|runtime|tests|tools)\//;
+// Сборка нативного ядра меняет то, на чём идёт каждый бой.
+const NATIVE_TOOLS = /^tools\/native_/;
 const TEST_FILE = /^tests\/.*\btest_[^/]*\.gd$/;
 const ALWAYS = /^tests\/architecture\//;
 
@@ -77,6 +80,7 @@ function selectTests(root, changed) {
   for (const file of changed) {
     if (!file || IGNORED.test(file) || NODE_TOOLS.test(file) || TOOL_ARTIFACTS.test(file)) continue;
     if (/\.(cpp|hpp|h|c)$/.test(file)) return { full: true, reason: `${file}: native-зависимости вне res:// графа` };
+    if (NATIVE_TOOLS.test(file)) return { full: true, reason: `${file}: сборка нативного ядра` };
     if (!GRAPH_DIRS.test(file) && !GLOBAL.has(file)) return { full: true, reason: `${file} вне графа зависимостей` };
     if (GLOBAL.has(file)) return { full: true, reason: `${file} влияет на весь проект` };
     for (const source of dependents.get(file) || []) if (GLOBAL.has(source)) return { full: true, reason: `${file} подключён в ${source}` };
