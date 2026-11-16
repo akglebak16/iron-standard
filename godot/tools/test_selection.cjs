@@ -3,6 +3,16 @@
 // даёт полный набор: безопаснее потратить время, чем пропустить сломанный тест.
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
+
+// Include committed changes since base, the index, working tree and new files.
+function changedFiles(root, base) {
+  const run = args => spawnSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true });
+  const diff = run(['diff', '--name-only', '-z', '--relative', base, '--', '.']);
+  const untracked = run(['ls-files', '--others', '--exclude-standard', '-z', '--', '.']);
+  if (diff.error || diff.status !== 0 || untracked.error || untracked.status !== 0) return null;
+  return [...new Set([...diff.stdout.split('\0'), ...untracked.stdout.split('\0')].filter(Boolean))];
+}
 
 const SKIP_DIRS = new Set(['.godot', '.git', 'dist', 'node_modules']);
 const TEXT = /\.(gd|tscn|tres|gdextension|gdshader|json|cfg)$/;
@@ -63,6 +73,7 @@ function selectTests(root, changed) {
   const queue = [];
   for (const file of changed) {
     if (!file || IGNORED.test(file) || NODE_TOOLS.test(file)) continue;
+    if (/\.(cpp|hpp|h|c)$/.test(file)) return { full: true, reason: `${file}: native-зависимости вне res:// графа` };
     if (!GRAPH_DIRS.test(file) && !GLOBAL.has(file)) return { full: true, reason: `${file} вне графа зависимостей` };
     if (GLOBAL.has(file)) return { full: true, reason: `${file} влияет на весь проект` };
     for (const source of dependents.get(file) || []) if (GLOBAL.has(source)) return { full: true, reason: `${file} подключён в ${source}` };
@@ -79,4 +90,4 @@ function selectTests(root, changed) {
   return { full: false, tests };
 }
 
-module.exports = { buildGraph, selectTests };
+module.exports = { buildGraph, selectTests, changedFiles };
