@@ -6,6 +6,8 @@ const CompanionText = preload("res://apps/godot/presentation/campaign/companion_
 const TABS := [["troops", "Отряд"], ["hero", "Герой"], ["gear", "Обоз"], ["quests", "Задания"], ["factions", "Фракции"], ["comps", "Спутники"], ["journal", "Журнал"]]
 const HeroGear = preload("res://core/equipment/rules/hero_gear.gd")
 const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
+const QuestCard = preload("res://apps/godot/presentation/campaign/quest_card.gd")
+const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
 const GearComparison = preload("res://apps/godot/presentation/campaign/gear_comparison.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
@@ -273,15 +275,161 @@ func _vassals(p) -> void:
 		row("%s · вассал · ур. %d" % [v.c.name, v.c.lvl], detail, buttons)
 
 func _quests(p) -> void:
-	if p.quests.is_empty():
-		note("Заданий нет. Их дают на досках в городах.")
-	for q in p.quests:
-		var left: int = int(q.dl) - int(state.clock.day)
-		var target: Dictionary = state.map.settlement_by_id(q.from if q.type == "scout" and q.get("seen", false) else q.sid)
-		var buttons: Array = []
-		if not target.is_empty() and q.type != "purge":
-			buttons.append({"text": "На карте", "call": func(): quest_target.emit(target.x, target.y); close_window()})
-		row(state.quests.text(q), "%s · награда %d" % ["срок вышел" if left < 0 else ("последний день" if left == 0 else "осталось дней: %d" % left), q.reward], buttons)
+	if not _fcat_loaded:
+		_fcat_loaded = ContentLoader.populate(_fcat)
+	var bonus := float(state.player_effects().get("quest", 0.0))
+	var ordered: Array = p.quests.filter(func(q): return not state.map.settlement_by_id(q.sid).is_empty() and not state.map.settlement_by_id(q.from).is_empty())
+	ordered.sort_custom(func(a, b): return int(a.dl) < int(b.dl) or (int(a.dl) == int(b.dl) and int(a.reward) > int(b.reward)))
+	_quest_summary(ordered, bonus)
+	if ordered.is_empty():
+		note("Нет активных заданий. Задания раздают в городах: зайди в любой город и открой вкладку «Задания» — там висит доска заказов. Одновременно можно вести до %d." % QUEST_LIMIT)
+	for q in ordered:
+		_quest_card(QuestCard.describe(q, state, _fcat, bonus))
+
+const QUEST_LIMIT := 4
+
+## journalQuestsBody: active errands out of four, total reward, nearest deadline and errands done in the chronicle.
+func _quest_summary(quests: Array, bonus: float) -> void:
+	var total := 0
+	for q in quests:
+		total += roundi(float(q.reward) * (1.0 + bonus))
+	var near: int = int(quests[0].dl) - int(state.clock.day) if not quests.is_empty() else 0
+	var done: int = state.journal.filter(func(e): return String(e.text).begins_with("Задание выполнено")).size()
+	var tiles := [
+		["book", "%d/%d" % [quests.size(), QUEST_LIMIT], "Активных заданий", "журнал полон" if quests.size() >= QUEST_LIMIT else "можно взять ещё %d" % (QUEST_LIMIT - quests.size())],
+		["coin", str(total), "Сумма наград", "золотом"],
+		["hourglass", "—" if quests.is_empty() else ("просрочено" if near < 0 else ("сегодня" if near == 0 else QuestCard.days(near))), "Ближайший срок", "нет заданий" if quests.is_empty() else "до дня %d" % int(quests[0].dl)],
+		["flag", str(done), "Выполнено", "по свежей хронике"],
+	]
+	var line := HBoxContainer.new()
+	line.name = "QuestSummary"
+	line.add_theme_constant_override("separation", 12)
+	body.add_child(line)
+	for tile in tiles:
+		var box := HBoxContainer.new()
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		line.add_child(box)
+		var icon := TextureRect.new()
+		icon.texture = GameSkin.icon(tile[0])
+		icon.custom_minimum_size = Vector2(26, 26)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		box.add_child(icon)
+		var text := Label.new()
+		text.text = "%s\n%s\n%s" % [tile[1], tile[2], tile[3]]
+		text.add_theme_font_size_override("font_size", 13)
+		box.add_child(text)
+
+## jqCard: type and icon with «срочно»/«просрочено»/«готово к сдаче», the task, the client with his crest, distance,
+## camp size, progress bar, what blocks it, reward, deadline with a time bar and «Показать на карте».
+func _quest_card(card: Dictionary) -> void:
+	var panel := PanelContainer.new()
+	panel.name = "QuestCard"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#00000026")
+	style.border_color = Color("#c4452f") if card.blocked else Color("#150f0980")
+	style.set_border_width_all(1)
+	style.set_content_margin_all(8)
+	panel.add_theme_stylebox_override("panel", style)
+	body.add_child(panel)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
+	panel.add_child(line)
+	var icon := TextureRect.new()
+	icon.texture = GameSkin.icon(card.icon)
+	icon.custom_minimum_size = Vector2(32, 32)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	line.add_child(icon)
+	var main := VBoxContainer.new()
+	main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(main)
+	var top := HBoxContainer.new()
+	main.add_child(top)
+	var kind := Label.new()
+	kind.text = card.type
+	kind.add_theme_color_override("font_color", GameSkin.BRASS)
+	top.add_child(kind)
+	for tag in card.tags:
+		var tag_label := Label.new()
+		tag_label.name = "QuestTag"
+		tag_label.text = " " + tag[0]
+		tag_label.add_theme_color_override("font_color", Color("#8fc24f") if tag[1] > 0 else Color("#e0705a"))
+		top.add_child(tag_label)
+	var title := Label.new()
+	title.text = card.title
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	main.add_child(title)
+	var from := HBoxContainer.new()
+	main.add_child(from)
+	var crest := TextureRect.new()
+	crest.texture = OriginalArt.crest(card.faction)
+	crest.custom_minimum_size = Vector2(18, 18)
+	crest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	crest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	from.add_child(crest)
+	var from_label := Label.new()
+	from_label.text = "%s · %s" % [card.from, card.faction_name]
+	from_label.add_theme_color_override("font_color", GameSkin.MUTED)
+	from.add_child(from_label)
+	var details := [card.detail]
+	if card.camp_size >= 0:
+		details.append("В лагере около %d бойцов" % card.camp_size)
+	for text in details:
+		var detail := Label.new()
+		detail.text = text
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail.add_theme_color_override("font_color", GameSkin.MUTED)
+		main.add_child(detail)
+	if not card.progress.is_empty():
+		var progress_line := HBoxContainer.new()
+		main.add_child(progress_line)
+		var caption := Label.new()
+		caption.text = card.progress[2]
+		caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		progress_line.add_child(caption)
+		var count := Label.new()
+		count.text = "%d / %d" % [card.progress[0], card.progress[1]]
+		progress_line.add_child(count)
+		var bar := ProgressBar.new()
+		bar.name = "QuestProgress"
+		bar.max_value = maxf(1.0, float(card.progress[1]))
+		bar.value = card.progress[0]
+		bar.show_percentage = false
+		bar.custom_minimum_size.y = 8
+		main.add_child(bar)
+	if card.warning != "":
+		var warn := Label.new()
+		warn.name = "QuestWarning"
+		warn.text = card.warning
+		warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		warn.add_theme_color_override("font_color", Color("#e0705a"))
+		main.add_child(warn)
+	var side := VBoxContainer.new()
+	side.custom_minimum_size.x = 170
+	line.add_child(side)
+	var reward := Label.new()
+	reward.text = "%d золота" % card.reward
+	reward.add_theme_color_override("font_color", GameSkin.BRASS)
+	side.add_child(reward)
+	var deadline := Label.new()
+	deadline.text = "%s\n%s" % [card.deadline, card.until]
+	side.add_child(deadline)
+	var time := ProgressBar.new()
+	time.name = "QuestTime"
+	time.max_value = 1.0
+	time.step = 0.01
+	time.value = card.time_left
+	time.show_percentage = false
+	time.custom_minimum_size.y = 6
+	time.tooltip_text = "Осталось времени"
+	side.add_child(time)
+	if not card.target.is_empty():
+		var target: Dictionary = card.target
+		var go := Button.new()
+		go.text = "Показать на карте"
+		go.pressed.connect(func(): quest_target.emit(target.x, target.y); close_window())
+		side.add_child(go)
 
 func _gear(p) -> void:
 	var gear = state.gear
@@ -423,12 +571,16 @@ func _gear(p) -> void:
 	if _selected_gear != "":
 		var it: Dictionary = gear.get_item(_selected_gear)
 		if not it.is_empty():
-			row(it.name, _stats(it), [{"text": "Снять" if _selected_gear in eq.values() else "Надеть", "call": _selected_action}])
+			var worn := _selected_gear in eq.values()
+			var current: Dictionary = gear.get_item(String(eq.get(it.slot))) if eq.get(it.slot) != null else {}
+			item_card(ItemCard.describe(it, current, not worn), [{"text": "Снять" if worn else "Надеть", "call": _selected_action}])
 			if not _selected_gear in eq.values():
 				_comparison(GearComparison.compare(h, it, gear, state.perks, stat_preview))
 		else:
-			var good: Dictionary = state.market.goods.get(_selected_gear, {})
-			row(good.get("n", _selected_gear), "Торговый товар · продай на рынке города")
+			var good: Dictionary = state.market.goods.get(_selected_gear, {}).duplicate()
+			good["id"] = _selected_gear
+			item_card(ItemCard.describe(good), [])
+			note("Торговый товар · продай на рынке города")
 	else:
 		note("Выбери предмет, чтобы узнать о нём больше. Двойной щелчок — надеть или снять.")
 

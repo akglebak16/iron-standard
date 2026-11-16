@@ -17,6 +17,7 @@ const BattleMusic = preload("res://apps/godot/presentation/battle/audio/battle_m
 const TerrainView = preload("res://apps/godot/presentation/battle/terrain/terrain_view.gd")
 const VegetationView = preload("res://apps/godot/presentation/battle/terrain/vegetation_view.gd")
 const OrderMarker = preload("res://apps/godot/presentation/battle/hud/order_marker.gd")
+const CommandGhost = preload("res://apps/godot/presentation/battle/hud/command_ghost.gd")
 const NavigationHud = preload("res://apps/godot/presentation/battle/hud/navigation_hud.gd")
 const BattleCamera = preload("res://apps/godot/presentation/battle/battle_camera.gd")
 const BattleControls = preload("res://apps/godot/presentation/battle/hud/battle_controls.gd")
@@ -384,6 +385,8 @@ func _draw() -> void:
 	var visible := (get_viewport().get_canvas_transform().affine_inverse() * get_viewport_rect()).grow(UnitView.VIEW_MARGIN)
 	_impacts.draw_ground(self, visible)
 	_order_marker.draw(self)
+	if not attract_mode:
+		CommandGhost.draw(self, _frame.get("player_groups", []), _selection)
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
 	_figures.draw_compact(self, _frame.render, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), attract_mode)
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))

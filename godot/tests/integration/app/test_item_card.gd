@@ -1,0 +1,58 @@
+extends SceneTree
+const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
+const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
+const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
+const WorldState = preload("res://core/campaign/world/world_state.gd")
+const EuropeData = preload("res://core/campaign/data/europe_data.gd")
+const PartyWindow = preload("res://apps/godot/presentation/campaign/party_window.gd")
+const TownWindow = preload("res://apps/godot/presentation/campaign/town_window.gd")
+
+func _initialize() -> void:
+	var gear := GearCatalog.new()
+	assert(ContentLoader.populate(gear))
+	# swingLabel and the pierce bars as in itemDock (src/06b_inventory.js)
+	assert(ItemCard.swing_label(0.9) == "быстрый" and ItemCard.swing_label(1.1) == "обычный" and ItemCard.swing_label(1.35) == "медленный" and ItemCard.swing_label(1.4) == "тяжёлый")
+	var sword := gear.get_item("sword_knight")
+	var card := ItemCard.describe(sword, gear.get_item("sword_old"), true)
+	assert(card.subtitle == "Ближний бой · Меч · рубящий урон · Добротное")
+	var labels: Array = card.stats.map(func(s): return s.label)
+	assert(labels == ["Урон", "Хват", "Темп", "Длина", "Вес"])
+	assert(card.stats[0].delta.trend == 1 and card.stats[0].delta.text.begins_with("▲ +"))
+	assert(card.pierce.map(func(b): return b.value) == ["0%", "6%", "0%"], "Cut: almost nothing against heavy armour")
+	assert(card.note.begins_with("+15% урона"))
+	var bow := ItemCard.describe(gear.get_item("bow_long"))
+	assert(bow.stats.map(func(s): return s.label) == ["Урон", "Хват", "Дальность", "Перезарядка", "Вес"])
+	assert(bow.traits == ["щит уходит за спину", "боеприпасы бесконечные"])
+	assert(bow.pierce.map(func(b): return b.value) == ["18%", "38%", "22%"])
+	var shield := ItemCard.describe(gear.get_item("shield_banded"), {}, true)
+	assert(shield.stats[0].value == "68%" and shield.stats[0].delta.text == "▲ +68%" and shield.stats[1].value == "+12%", "An empty slot compares with nothing")
+	var horse := ItemCard.describe(gear.get_item("horse_war"))
+	assert(horse.stats.map(func(s): return s.label) == ["Скорость"] and horse.pierce.is_empty())
+	var grain := ItemCard.describe({"id": "grain", "n": "Зерно", "p": 14, "w": 1})
+	assert(grain.subtitle == "Товар · провизия" and grain.stats[2].value == "+6 порц.")
+	# the gear tab shows the card for the selected item
+	var data := EuropeData.new()
+	assert(ContentLoader.populate(data))
+	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
+	s.player.inv["sword_knight"] = 1
+	var pw := PartyWindow.new()
+	root.add_child(pw)
+	await process_frame
+	pw.open_for(s, "gear")
+	pw._selected_gear = "sword_knight"
+	pw.render()
+	var shown := pw.body.find_child("ItemCard", true, false)
+	assert(shown != null and shown.find_children("PierceBar", "", true, false).size() >= 1)
+	# the market opens the same card for an item on sale (tradeDock)
+	var tw := TownWindow.new()
+	root.add_child(tw)
+	await process_frame
+	var town: Dictionary = s.map.settles.filter(func(t): return t.kind == "town" and t.fac == "emp")[0]
+	tw.open_for(s, town)
+	tw.current_tab = "goods"
+	tw._trade_pick = "sword_knight"
+	tw.render()
+	assert(tw.body.find_child("ItemCard", true, false) != null, "The market shows the item card")
+	s.dispose()
+	print("Item card tests passed")
+	quit(0)

@@ -256,7 +256,7 @@ func snapshot(compact: bool = false) -> Dictionary:
 	var ready_groups: Array[int] = []
 	for weight in group_strength:
 		ready_groups.append(roundi(weight))
-	var frame := {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(),
+	var frame := {"tick": _tick, "outcome": _outcome, "hero_down": _hero.dead, "arena_size": _state.arena_size, "hero_position": _hero.position, "camera_target": camera_target, "stamina": _hero.stamina, "counts": counts, "units": units, "shots": _shot_values(), "walls": _wall_rects(), "wall_defense": _wall_defense_values(), "player_groups": _player_group_values(),
 		"enemy_center": enemy_center, "reserve": [_state.reserve[0].size(), _state.reserve[1].size()], "enemy_strength": roundi(enemy_strength), "decided": _battle_over_at >= 0.0,
 		"hero_weapon_name": _hero.hero_weapon.get("name", ""), "elapsed_seconds": _elapsed_seconds,
 		"ally_strength": roundi(ally_strength), "group_strength": ready_groups,
@@ -410,6 +410,15 @@ func _shot_values() -> Array[Dictionary]:
 	for shot in _state.projectiles:
 		shots.append({"origin": shot.origin, "impact": shot.impact, "progress": clampf(shot.time / shot.duration, 0.0, 1.0), "throwing": shot.throwing, "crossbow": shot.crossbow})
 	return shots
+
+## The player's groups for commandDraw: where a holding group was told to stand and where it actually is.
+func _player_group_values() -> Array[Dictionary]:
+	var values: Array[Dictionary] = []
+	if _state.groups.is_empty():
+		return values # A bare session without groups (tests, previews).
+	for group in _state.groups[0]:
+		values.append({"kind": group.kind, "order": group.order, "backing": group.backing, "center": group.center, "direction": group.direction, "centroid": group.centroid()})
+	return values
 
 func _wall_rects() -> Array[Rect2]:
 	var walls: Array[Rect2] = []
