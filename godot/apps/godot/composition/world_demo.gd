@@ -37,6 +37,7 @@ const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_parties_layer.gd")
 const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
+const CompanionRemarks = preload("res://apps/godot/presentation/campaign/companion_remarks.gd")
 const WorldHud = preload("res://apps/godot/presentation/campaign/world_hud.gd")
 
 signal title_requested
@@ -63,12 +64,14 @@ var _preferences := PresentationPreferences.new()
 var _factions := FactionCatalog.new()
 var _waiting_return := false
 var _motion := WorldMotion.new()
+var _remark_rng := RandomNumberGenerator.new()
 var camera: Camera2D
 var hud: CanvasLayer
 var _ready_to_play := false
 var cache_static_artwork := true
 
 func _ready() -> void:
+	_remark_rng.randomize()
 	var loading := Label.new()
 	loading.text = "Строю карту…"
 	loading.position = Vector2(24, 24)
@@ -174,7 +177,7 @@ func _ready() -> void:
 	_siege.assault.connect(_on_assault)
 	_siege.closed.connect(func(): if not _siege_hold: state.clock.paused = false)
 	state.siege_requested.connect(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s))
-	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null))
+	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town_remark(s); _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null))
 	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
 	state.log_added.connect(func(text: String):
 		hud.show_notice(text)
@@ -357,6 +360,24 @@ func _end_meeting(cooldown: float) -> void:
 	state.player.busy = ""
 	state.clock.paused = false
 
+## Result notes plus a word from a companion who fought (win/lose lines).
+func _notes_with_remark(resolved: Dictionary) -> Array:
+	var notes: Array = ResultWindow.campaign_notes(resolved)
+	var fought: Array = resolved.summary.get("comps", {}).keys()
+	var line := CompanionRemarks.pick(fought, state.companion_catalog, CompanionRemarks.WIN if resolved.summary.win else CompanionRemarks.LOSE, _remark_rng)
+	if line != "":
+		notes.append(line)
+	return notes
+
+## Now and then a hired companion comments on the town (town lines), written to the chronicle.
+func _town_remark(s: Dictionary) -> void:
+	if s.get("kind") != "town" or _remark_rng.randf() >= CompanionRemarks.TOWN_CHANCE:
+		return
+	var hired: Array = state.player.comps.map(func(c): return c.id)
+	var line := CompanionRemarks.pick(hired, state.companion_catalog, CompanionRemarks.TOWN, _remark_rng)
+	if line != "":
+		state.log_world(line, state.JOURNAL_INFO)
+
 func _show_resolved(resolved: Dictionary) -> void:
 	if int(resolved.summary.get("levels_gained", 0)) > 0:
 		UiSounds.play(self, "level")
@@ -392,7 +413,7 @@ func _finish_auto(p: Dictionary) -> void:
 	state.clock.paused = true
 	_auto_report = true
 	_result.show_report(bool(resolved.summary.win), "Расчётный бой", ResultWindow.campaign_rows({}, resolved, _bridge.troops, _bridge.gear, _bridge.goods),
-		ResultWindow.campaign_notes(resolved), [["Продолжить", "continue"]])
+		_notes_with_remark(resolved), [["Продолжить", "continue"]])
 
 func _after_auto_report() -> void:
 	_auto_report = false
@@ -439,7 +460,7 @@ func _start_battle(p: Dictionary) -> void:
 		var result: Dictionary = session.result()
 		_result.show_report(bool(resolved.summary.win), ResultWindow.duration(float(result.get("time", 0.0))),
 			ResultWindow.campaign_rows(result, resolved, _bridge.troops, _bridge.gear, _bridge.goods),
-			ResultWindow.campaign_notes(resolved), [["Продолжить", "continue"]]), CONNECT_ONE_SHOT)
+			_notes_with_remark(resolved), [["Продолжить", "continue"]]), CONNECT_ONE_SHOT)
 	_battle = view
 	_set_world_visible(false)
 	add_child(view)
