@@ -120,4 +120,4 @@ func _show_aftermath(view: Node2D, bridge: EncounterAftermath, opponent: Diction
 		if action == "again": again_requested.emit()
 		else: title_requested.emit())
 	report.show_report(bool(resolved.summary.win), ResultWindow.duration(float(view.battle_result().get("time", 0.0))),
-		ResultWindow.quick_rows(view.battle_result()), [], [["В меню", "menu"], ["Ещё бой", "again"]])
+		ResultWindow.quick_rows(view.battle_result(), troops), [], [["В меню", "menu"], ["Ещё бой", "again"]])

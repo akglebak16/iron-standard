@@ -117,7 +117,9 @@ func _ready() -> void:
 		button.icon = GameSkin.icon(["pause", "hourglass", "retreat", "gear"][i], "item")
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width", 26)
-		for state in ["normal", "hover", "pressed", "disabled"]: button.add_theme_stylebox_override(state, GameSkin.box("square", 4))
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		for state in ["normal", "hover", "pressed", "hover_pressed", "disabled"]: button.add_theme_stylebox_override(state, GameSkin.box("square", 4))
 		_playback.add_child(button)
 	_pause.pressed.connect(pause_pressed.emit)
 	_speed.pressed.connect(speed_pressed.emit)
