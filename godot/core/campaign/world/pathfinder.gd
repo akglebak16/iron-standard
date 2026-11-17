@@ -9,6 +9,9 @@ const GC := Generator.GC
 const TCOST := [0.0, 1.0, 1.75, 1.5, 0.0]
 
 var world: Generator
+## Settlement position is the gate. Its short approach is shared by navigation and artwork.
+var gate_approaches := {}
+var _bridge_axes := {}
 var road := PackedByteArray()
 var _g := PackedFloat32Array()
 var _prev := PackedInt32Array()
@@ -22,6 +25,8 @@ const NEIGHBOURS_DJ := [-1, -1, -1, 0, 0, 1, 1, 1]
 
 func _init(terrain: Generator) -> void:
 	world = terrain
+	for bridge in terrain.bridges:
+		_bridge_axes[int(bridge.k)] = Vector2.RIGHT if int(bridge.ax) == 0 else Vector2.DOWN
 	road.resize(GW * GH)
 	_g.resize(GW * GH)
 	_prev.resize(GW * GH)
@@ -29,6 +34,18 @@ func _init(terrain: Generator) -> void:
 
 func terr_at(x: float, y: float) -> int:
 	return world.cells[world.cell_of(x, y)]
+
+func register_gates(settles: Array) -> void:
+	for site in settles:
+		if site.kind == "camp":
+			continue
+		var gate := Vector2(site.x, site.y)
+		var length := 16.0 if site.kind != "village" else 9.0
+		for direction in [Vector2.DOWN, Vector2(0.8, 0.6), Vector2(-0.8, 0.6)]:
+			var apron: Vector2 = gate + direction * length
+			if los_clear(gate.x, gate.y, apron.x, apron.y, true):
+				gate_approaches[gate] = apron
+				break
 
 func passable_type(t: int) -> bool:
 	return t >= 1 and t <= 3
@@ -71,7 +88,7 @@ func nearest_pass(x: float, y: float) -> Vector2i:
 					return Vector2i(i, j)
 	return Vector2i(ci, cj)
 
-func los_clear(x0: float, y0: float, x1: float, y1: float) -> bool:
+func los_clear(x0: float, y0: float, x1: float, y1: float, avoid_decks := false) -> bool:
 	var d := sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0))
 	var n := ceili(d / (GC * 0.25))  # rivers are always on in the Europe map
 	var cells := world.cells
@@ -79,13 +96,43 @@ func los_clear(x0: float, y0: float, x1: float, y1: float) -> bool:
 		var t := float(i) / n
 		var x := x0 + (x1 - x0) * t
 		var y := y0 + (y1 - y0) * t
-		var c: int = cells[clampi(floori(y / GC), 0, GH - 1) * GW + clampi(floori(x / GC), 0, GW - 1)]
-		if c < 1 or c > 3:
+		var cell := clampi(floori(y / GC), 0, GH - 1) * GW + clampi(floori(x / GC), 0, GW - 1)
+		var c: int = cells[cell]
+		if c < 1 or c > 3 or (avoid_decks and world.bridge[cell] != 0):
 			return false
 	return true
 
 ## Returns an Array of Vector2 points, or null when there is no way. `raw` keeps every cell centre (used for roads).
 func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
+	var start := Vector2(sx, sy)
+	var target := Vector2(tx, ty)
+	if raw:
+		return _grid_path(sx, sy, tx, ty, raw)
+	if not passable_type(terr_at(tx, ty)):
+		target = (Vector2(nearest_pass(tx, ty)) + Vector2(0.5, 0.5)) * GC
+	start = _deck_point(start)
+	target = _deck_point(target)
+	var departure: Vector2 = gate_approaches.get(start, start)
+	var arrival: Vector2 = gate_approaches.get(target, target)
+	var path = _grid_path(departure.x, departure.y, arrival.x, arrival.y, false)
+	if path != null:
+		if start != Vector2(sx, sy):
+			path.push_front(start)
+		elif start != departure:
+			path.push_front(departure)
+		if target != arrival:
+			path.append(target)
+	return path
+
+func _deck_point(point: Vector2) -> Vector2:
+	var k := world.cell_of(point.x, point.y)
+	if not _bridge_axes.has(k):
+		return point
+	var center := Vector2((k % GW + 0.5) * GC, (k / GW + 0.5) * GC)
+	var axis: Vector2 = _bridge_axes[k]
+	return center + axis * (point - center).dot(axis)
+
+func _grid_path(sx: float, sy: float, tx: float, ty: float, raw: bool):
 	var a := nearest_pass(sx, sy)
 	var b := nearest_pass(tx, ty)
 	var s := a.y * GW + a.x
@@ -160,6 +207,8 @@ func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 			if roads[k] != 0:
 				cc *= 0.55
 			var diagonal := di != 0 and dj != 0
+			if diagonal and not raw and (world.bridge[k] != 0 or world.bridge[cur] != 0):
+				continue
 			if diagonal and (base[cj * GW + ni] == 0.0 or base[nj * GW + ci] == 0.0):
 				continue
 			var g: float = g_cur + cc * (1.414 if diagonal else 1.0)
@@ -202,11 +251,40 @@ func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 			if pts[i] != pts[i - 1]:
 				kept.append(pts[i])
 		return kept
+	# An arbitrary click in the bank cell must join the centre line before stepping onto the deck.
+	if pts.size() >= 2:
+		if world.bridge[s] != 0:
+			pts.insert(1, Vector2((s % GW + 0.5) * GC, (s / GW + 0.5) * GC))
+		if world.bridge[e] != 0:
+			pts.insert(pts.size() - 1, Vector2((e % GW + 0.5) * GC, (e / GW + 0.5) * GC))
+		var first_bank := Vector2((s % GW + 0.5) * GC, (s / GW + 0.5) * GC)
+		var last_bank := Vector2((e % GW + 0.5) * GC, (e / GW + 0.5) * GC)
+		if world.bridge[s] == 0 and world.bridge[world.cell_of(pts[1].x, pts[1].y)] != 0 and pts[0] != first_bank:
+			pts.insert(1, first_bank)
+		if world.bridge[e] == 0 and world.bridge[world.cell_of(pts[-2].x, pts[-2].y)] != 0 and pts[-1] != last_bank:
+			pts.insert(pts.size() - 1, last_bank)
 	var out: Array = [pts[0]]
 	var i := 0
+	# Keep bank centres and road bends. Only open country can be traversed by a free straight shortcut.
+	var fixed := PackedByteArray()
+	fixed.resize(pts.size())
+	for index in range(1, pts.size() - 1):
+		var prev: Vector2 = pts[index - 1]
+		var here: Vector2 = pts[index]
+		var after: Vector2 = pts[index + 1]
+		var a_cell := world.cell_of(prev.x, prev.y)
+		var cell := world.cell_of(here.x, here.y)
+		var b_cell := world.cell_of(after.x, after.y)
+		if world.bridge[a_cell] != 0 or world.bridge[cell] != 0 or world.bridge[b_cell] != 0:
+			fixed[index] = 1
+		elif road[cell] != 0 and (road[a_cell] == 0 or road[b_cell] == 0 or absf((here - prev).cross(after - here)) > 0.001):
+			fixed[index] = 1
+	var next_anchor := 1
 	while i < pts.size() - 1:
-		var j := pts.size() - 1
-		while j > i + 1 and not los_clear(pts[i].x, pts[i].y, pts[j].x, pts[j].y):
+		while next_anchor < pts.size() - 1 and (next_anchor <= i or fixed[next_anchor] == 0):
+			next_anchor += 1
+		var j := next_anchor
+		while j > i + 1 and not los_clear(pts[i].x, pts[i].y, pts[j].x, pts[j].y, true):
 			j -= 1
 		out.append(pts[j])
 		i = j

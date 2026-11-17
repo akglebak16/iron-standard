@@ -23,6 +23,7 @@ static func create(seed_in: int, data: EuropeData) -> RefCounted:
 	map.next_id = gen.next_id()
 	map.paths = Pathfinder.new(map.terrain)
 	map.roads = RoadGenerator.new().generate(map.terrain, map.paths, map.settles)
+	map.paths.register_gates(map.settles)
 	return map
 
 func settlement_by_id(id: int) -> Dictionary:

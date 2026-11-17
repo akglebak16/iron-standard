@@ -33,11 +33,25 @@ func _draw() -> void:
 		_bridge(b)
 
 func _bridge(b: Dictionary) -> void:
-	var length: float = float(b.w) + 18.0
-	var height := 12.0
-	draw_set_transform(Vector2(b.x, b.y), PI / 2.0 if int(b.ax) != 0 else 0.0, Vector2.ONE)
+	var center := Vector2(b.x, b.y)
+	var axis := Vector2.RIGHT if int(b.ax) == 0 else Vector2.DOWN
+	# Connectivity repairs at confluences can open a third bank, or two adjacent banks.
+	for direction in [axis, axis.orthogonal()]:
+		var reaches := Vector2.ZERO
+		for sign_value in [-1, 1]:
+			var bank: Vector2 = center + direction * Generator.GC * sign_value
+			if _world.walkable(_world.cells[_world.cell_of(bank.x, bank.y)]):
+				if sign_value < 0: reaches.x = Generator.GC
+				else: reaches.y = Generator.GC
+		if reaches.x + reaches.y > 0:
+			_deck(center + direction * (reaches.y - reaches.x) * 0.5, direction.angle(), reaches.x + reaches.y)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+func _deck(center: Vector2, angle: float, length: float) -> void:
+	var height := 14.0
+	draw_set_transform(center, angle, Vector2.ONE)
 	Brush.fill_rect(self, -length / 2 + 1, -height / 2 + 3, length, height, Color(10 / 255.0, 20 / 255.0, 20 / 255.0, 0.35))
-	Brush.fill_rect(self, -length / 2, -height / 2, length, height, Color("#85653c"))
+	Brush.fill_rect(self, -length / 2, -height / 2, length, height, Color("#bd9867"))
 	var plank := Color(40 / 255.0, 26 / 255.0, 12 / 255.0, 0.55)
 	var x := -length / 2 + 3
 	while x < length / 2:

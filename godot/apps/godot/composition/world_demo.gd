@@ -356,7 +356,7 @@ func _on_map_click(at: Vector2) -> void:
 		return
 	if not target.is_empty() and target.kind != "camp":
 		p.enter_id = target.id
-		if Vector2(target.x - p.x, target.y - p.y).length() < 50.0:
+		if Vector2(target.x - p.x, target.y - p.y).length() < 3.0:
 			state.enter(target)
 			return
 		p.path_to(state.map.paths, target.x, target.y)

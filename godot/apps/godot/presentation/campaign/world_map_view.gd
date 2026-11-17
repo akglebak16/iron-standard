@@ -49,7 +49,7 @@ func build_from(world_map: RefCounted) -> void:
 	relief.build(map.terrain)
 	var roads := RoadLayer.new()
 	artwork.add_child(roads)
-	roads.build(map.terrain, map.roads, map.settles)
+	roads.build(map.terrain, map.roads, map.settles, map.paths)
 	var rivers := RiverLayer.new()
 	artwork.add_child(rivers)
 	rivers.build(map.terrain)

@@ -13,7 +13,7 @@ static func to_dict(state: RefCounted) -> Dictionary:
 	var values := Checkpoint.capture(state)
 	if not Checkpoint.valid(values): return {}
 	var payload := Marshalls.raw_to_base64(var_to_bytes(values))
-	return {"version": VERSION, "encoding": "godot-variant-values-v1", "payload": payload, "sha256": payload.sha256_text()}
+	return {"version": VERSION, "route_revision": 1, "encoding": "godot-variant-values-v1", "payload": payload, "sha256": payload.sha256_text()}
 
 ## Retained only as the v1 migration fixture/export contract.
 static func to_v1_dict(state: RefCounted) -> Dictionary:
@@ -43,7 +43,7 @@ static func to_v1_dict(state: RefCounted) -> Dictionary:
 static func from_dict(data: Dictionary, europe: EuropeData, definitions: Dictionary) -> RefCounted:
 	if data.get("version") == 1:
 		if not _valid_v1_header(data): return null
-		return _from_v1(data.duplicate(true), europe, definitions)
+		return _refresh_old_routes(_from_v1(data.duplicate(true), europe, definitions))
 	if data.get("version") != VERSION or data.get("encoding") != "godot-variant-values-v1": return null
 	if not data.get("payload") is String or not data.get("sha256") is String: return null
 	if data.payload.length() > MAX_PAYLOAD_BYTES * 4 / 3 + 4 or data.payload.sha256_text() != data.sha256: return null
@@ -52,7 +52,31 @@ static func from_dict(data: Dictionary, europe: EuropeData, definitions: Diction
 	# This API does not deserialize Objects; never use bytes_to_var_with_objects here.
 	var values = bytes_to_var(bytes)
 	if not values is Dictionary: return null
-	return Checkpoint.restore(values, europe, definitions)
+	var world := Checkpoint.restore(values, europe, definitions)
+	return world if data.get("route_revision", 0) == 1 else _refresh_old_routes(world)
+
+static func _refresh_old_routes(world: RefCounted) -> RefCounted:
+	if world == null:
+		return null
+	var travelers: Array = world.roster.parties.duplicate()
+	travelers.append(world.player)
+	for traveler in travelers:
+		if traveler.pi >= traveler.path.size():
+			continue
+		var dest: Vector2 = traveler.path.back()
+		var from := Vector2(traveler.x, traveler.y)
+		var reroute: bool = world.map.paths.gate_approaches.has(dest)
+		for i in range(traveler.pi, traveler.path.size()):
+			if reroute: break
+			var to: Vector2 = traveler.path[i]
+			reroute = not world.map.paths.los_clear(from.x, from.y, to.x, to.y, true)
+			from = to
+		if reroute:
+			var route = world.map.paths.find_path(traveler.x, traveler.y, dest.x, dest.y)
+			if route != null:
+				traveler.path = route
+				traveler.pi = 0
+	return world
 
 static func _valid_v1_header(data: Dictionary) -> bool:
 	if not Checkpoint._plain(data) or not Checkpoint._number(data.get("seed")) or not WorldState.START_TROOPS.has(data.get("culture")): return false

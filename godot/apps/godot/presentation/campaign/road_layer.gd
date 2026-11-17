@@ -6,7 +6,7 @@ const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 var _runs_small: Array = []
 var _runs_big: Array = []
 
-func build(world: Generator, roads: Array, settles: Array) -> void:
+func build(world: Generator, roads: Array, settles: Array, paths: RefCounted) -> void:
 	var seen := {}
 	for seg in roads:
 		if seg.size() < 2:
@@ -14,7 +14,24 @@ func build(world: Generator, roads: Array, settles: Array) -> void:
 		var a := _kind_at(seg[0], settles)
 		var b := _kind_at(seg[seg.size() - 1], settles)
 		var main := (a == "town" or a == "castle") and (b == "town" or b == "castle")
-		var curve := _flatten(_road_curve(world, seg))
+		var approaches: Array = seg.duplicate()
+		for end in [0, -1]:
+			var gate: Vector2 = seg[end]
+			if paths.gate_approaches.has(gate):
+				var apron: Vector2 = paths.gate_approaches[gate]
+				var next: Vector2 = seg[1 if end == 0 else -2]
+				if paths.los_clear(apron.x, apron.y, next.x, next.y, true):
+					approaches.insert(1 if end == 0 else approaches.size() - 1, apron)
+				else:
+					# Keep a reachable junction where a long straight stretch skirts water.
+					var spur = paths.find_path(apron.x, apron.y, next.x, next.y, true)
+					if spur != null:
+						spur.push_front(apron)
+						spur.pop_back()
+						if end == 0: spur.reverse()
+						for point in spur:
+							approaches.insert(1 if end == 0 else approaches.size() - 1, point)
+		var curve := _flatten(_road_curve(world, approaches))
 		# Shared stretches of different roads coincide: draw each piece once so semi-transparent strokes do not stack.
 		var run := PackedVector2Array()
 		for i in curve.size() - 1:
@@ -49,7 +66,7 @@ func _road_curve(world: Generator, seg: Array) -> Array:
 			for k in range(1, n):
 				var p := a.lerp(q, float(k) / n)
 				pts.append([p.x, p.y, false])
-		pts.append([q.x, q.y, i == 0 or i == seg.size() - 1 or world.bridge[world.cell_of(q.x, q.y)] == 1])
+		pts.append([q.x, q.y, i <= 1 or i >= seg.size() - 2 or world.bridge[world.cell_of(q.x, q.y)] == 1])
 	var n := pts.size()
 	if n < 3:
 		return pts
@@ -94,7 +111,7 @@ func _flatten(pts: Array) -> PackedVector2Array:
 		var c := Vector2(pts[i][0], pts[i][1])
 		var next := Vector2(pts[i + 1][0], pts[i + 1][1])
 		var mid := (c + next) / 2.0
-		var curve := Brush.quad(cur, c, mid, 4)
+		var curve := PackedVector2Array([cur, c, mid]) if pts[i][2] else Brush.quad(cur, c, mid, 4)
 		for k in range(1, curve.size()):
 			out.append(curve[k])
 		cur = mid
@@ -103,9 +120,9 @@ func _flatten(pts: Array) -> PackedVector2Array:
 
 func _draw() -> void:
 	var outline := Color(52 / 255.0, 36 / 255.0, 18 / 255.0, 0.5)
-	var body := Color("#b8955f")
-	var light := Color(224 / 255.0, 200 / 255.0, 150 / 255.0, 0.7)
-	for pass_def in [[outline, 8.6, 11.0], [body, 5.4, 7.4], [light, 2.2, 3.2]]:
+	var body := Color("#b18c59")
+	var light := Color("#e4c990")
+	for pass_def in [[outline, 5.0, 9.2], [body, 3.6, 7.3], [light, 1.2, 4.8]]:
 		for run in _runs_small:
 			draw_polyline(run, pass_def[0], pass_def[1], true)
 		for run in _runs_big:
