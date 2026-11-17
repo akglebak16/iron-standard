@@ -21,6 +21,18 @@ var kite_seconds: float = 0.0
 var kite_gap: float = INF # Best mean chase gap since the chase stopped closing in.
 var kited: bool = false # The group once called off a hopeless chase; single fighters no longer trigger its charge.
 var focus_kind: int = -1 # Enemy group kind the group marches on after calling off a chase.
+# Stage 1v doctrines (simulation/ai/squad_doctrine.gd), the same for both sides; fighters read them every tick.
+var formed: bool = false # Infantry charge as a line: the centre moves with the formation, rear ranks keep their places.
+var loose: bool = false # Ordered loose: the group never forms a line in a charge (an input for a commander, stage 1g).
+var mingled: bool = false # A formed line long in melee went loose; it forms again when the contact is over.
+var rally: bool = false # Shock cavalry rides to its rally point (the group centre) instead of fighting.
+var screen: Vector2 = Vector2.INF # Spearmen form a line here to cover the own archers; INF when there is no threat.
+var screen_lateral: Vector2 = Vector2.DOWN # Direction of that line.
+var doctrine_timer: float = 0.0 # Until the next group decision; staggered by group number at creation.
+var doctrine_order: String = "" # Order and backing seen at the last decision: a change is decided at once.
+var doctrine_backing: bool = false
+var doctrine_seconds: float = Config.AI_FORMATION_SWITCH_SECONDS # Since the last formation switch (the first one is free), or in the current cavalry phase.
+var contact_seconds: float = 0.0 # Cavalry: riders stuck in foot melee; infantry: a formed line in melee.
 var _slot_direction := INF
 var _slot_lateral := Vector2.DOWN
 var _slot_forward := Vector2.RIGHT
@@ -30,6 +42,7 @@ func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void
 	kind = group_kind
 	center = at
 	direction = facing
+	doctrine_timer = (group_side * 3 + group_kind) * Config.AI_SQUAD_PERIOD_SECONDS / 6.0
 
 func active_units() -> Array[Unit]:
 	return units.filter(func(u: Unit): return not u.dead and not u.gone and not u.fleeing and not u.hero)
@@ -60,6 +73,14 @@ func layout(initial: bool = false) -> void:
 			return a.id < b.id)
 	else:
 		active.sort_custom(func(a: Unit, b: Unit): return a.position.dot(perpendicular) < b.position.dot(perpendicular))
+		# Stage 1v: within each column the man standing in front takes the front rank, so a re-formed line keeps
+		# its ranks instead of swapping men front to back (the formed charge fights with its front ranks).
+		var forward := Vector2(cos(direction), sin(direction))
+		for start in range(0, count, rows):
+			var file := active.slice(start, mini(start + rows, count))
+			file.sort_custom(func(a: Unit, b: Unit): return a.position.dot(forward) > b.position.dot(forward))
+			for k in file.size():
+				active[start + k] = file[k]
 	for i in count:
 		var column: int
 		var row: int

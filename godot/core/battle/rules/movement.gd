@@ -38,6 +38,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 	battle.profiler.mark("movement_index")
 	var positions := battle.motion.positions
 	var velocities := battle.motion.velocities
+	var wall_x: float = battle.wall.x if battle.wall != null else INF
 	for unit_index in battle.active_units.size():
 		var unit: Unit = battle.active_units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
@@ -60,7 +61,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		elif rng != null:
 			target = Targeting.refresh(battle, unit, dt, rng, index)
 			if sampled: probe = battle.profiler.probe("sample_target", probe)
-			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.side * 3 + unit.group_kind], dt)
+			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.side * 3 + unit.group_kind], dt, battle.formation_centers[unit.side * 3 + Config.GROUP_INFANTRY], wall_x)
 			if sampled: probe = battle.profiler.probe("sample_plan", probe)
 			destination = unit.plan_destination
 			velocity_scale = unit.plan_speed
@@ -288,7 +289,9 @@ static func _step_batch(battle: State, dt: float, rng: RandomNumberGenerator) ->
 		for group: Group in side:
 			var sine := sin(group.direction)
 			var cosine := cos(group.direction)
-			groups.append_array(PackedFloat64Array([group.center.x, group.center.y, -sine, cosine, cosine, sine, group.direction, float(group.order == Config.ORDER_CHARGE), float(group.backing)]))
+			# GROUP_FIELDS in movement_adapter.cpp: frame, order flags, then the stage 1v doctrine (formed, rally, screen).
+			groups.append_array(PackedFloat64Array([group.center.x, group.center.y, -sine, cosine, cosine, sine, group.direction, float(group.order == Config.ORDER_CHARGE), float(group.backing),
+				float(group.formed), float(group.rally), group.screen.x, group.screen.y, group.screen_lateral.x, group.screen_lateral.y]))
 	var context := {"groups": groups, "arena": battle.arena_size,
 		"wall_x": battle.wall.x if battle.wall != null else INF,
 		"wall_half": battle.wall.half_width if battle.wall != null else 0.0,

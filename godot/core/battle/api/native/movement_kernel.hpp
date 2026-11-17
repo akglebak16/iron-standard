@@ -16,6 +16,9 @@ public:
     Vec2 center, lateral, forward;
     double direction;
     bool charge, backing;
+    // Stage 1v doctrine (SquadDoctrine): formed infantry line, rallying cavalry, spearmen screen and its line.
+    bool formed = false, rally = false;
+    Vec2 screen{float(INFINITY), float(INFINITY)}, screen_lateral{0, 1};
   };
   std::vector<Vec2> positions, velocities, vectors, gaps, all_gaps;
   std::vector<Group> groups;
@@ -80,6 +83,7 @@ private:
     cells[c].units.push_back(row);
     locations[row] = c;
   }
+  static constexpr double PI = 3.14159265358979323846;
   // SpatialIndex.front_share: a fixed number in [0, 1) from the shooter's and the target's ids.
   static double front_share(int64_t own_id, int64_t enemy_id) {
     int64_t x = (own_id & 1048575) * 92821 + (enemy_id & 1048575) * 68917;
@@ -119,6 +123,17 @@ private:
           if (excess > 0)
             d *= 1.0 + p(TARGET_OUTRUN_MULTIPLIER) * excess / own;
         }
+        // Stage 1v: a spearman facing a melee rider looks farther to him.
+        if (cavalry && i(I_ANTI_CAVALRY, e) && !i(I_MOUNTED, e) &&
+            !i(I_FLEEING, e) && raw > 0) {
+          double turn = angle(at - positions[e]) - r(R_FACING, e);
+          if (turn > PI)
+            turn -= PI * 2.0;
+          else if (turn < -PI)
+            turn += PI * 2.0;
+          if (std::abs(turn) < p(CHARGE_FRONT_ARC))
+            d *= p(TARGET_SPEAR_FRONT_MULTIPLIER);
+        }
       } else {
         // Stage 1a-archers (DESIGN.md 4.4, decision 15): SpatialIndex.ranged_weight.
         if (own_damage > 0) {
@@ -127,6 +142,9 @@ private:
           if (surplus > 0)
             d *= 1.0 + p(TARGET_OVERKILL_MULTIPLIER) * surplus;
         }
+        // Stage 1v: shooters and men without shields first.
+        if (r(R_ATTACK_RANGE, e) <= 0 && r(R_SHIELD_BLOCK, e) > 0)
+          d *= p(TARGET_SHIELDED_MULTIPLIER);
         d *= 1.0 + p(TARGET_FRONT_SPREAD) * front_share(own_id, i(I_ID, e));
       }
       if (d < score || (d == score && (best < 0 || e < best))) {
@@ -150,7 +168,28 @@ private:
     }
     return best;
   }
-  void plan(int row, const Group &g, Vec2 slot, Vec2 center) {
+  // AiDecision._falls_back: a foot archer steps back from foot melee closing in, towards his own infantry (`cover`).
+  bool falls_back(Vec2 at, Vec2 enemy, Vec2 cover) {
+    if (r(R_ATTACK_RANGE, target) > 0 || i(I_MOUNTED, target) ||
+        i(I_FLEEING, target) || distance >= p(AI_ARCHER_FALLBACK_DISTANCE) ||
+        !std::isfinite(cover.x) || !std::isfinite(cover.y))
+      return false;
+    Vec2 delta = at - enemy;
+    float toward = velocities[target].x * delta.x + velocities[target].y * delta.y;
+    if (double(toward) / distance < p(AI_ARCHER_FALLBACK_APPROACH_SPEED))
+      return false;
+    if ((at - cover).length() >= p(AI_ARCHER_FALLBACK_COVER_DISTANCE))
+      return false;
+    Vec2 step = at + normalized(at - enemy) * p(AI_ARCHER_FALLBACK_STEP);
+    double edge = p(AI_ARCHER_FALLBACK_EDGE);
+    if (step.x < edge || step.y < edge || step.x > width - edge ||
+        step.y > height - edge)
+      return false;
+    if ((step - cover).length() >= p(AI_ARCHER_FALLBACK_COVER_DISTANCE))
+      return false;
+    return !std::isfinite(wall_x) || ((at.x < wall_x) == (step.x < wall_x));
+  }
+  void plan(int row, const Group &g, Vec2 slot, Vec2 center, Vec2 cover) {
     Vec2 at = positions[row], enemy = target >= 0 ? positions[target] : Vec2{};
     double sd = (at - slot).length();
     distance = target >= 0 ? (at - enemy).length() : INFINITY;
@@ -160,6 +199,9 @@ private:
     int mode = SLOT;
     bool mounted = i(I_MOUNTED, row);
     double range = r(R_ATTACK_RANGE, row);
+    // Stage 1v (AiDecision.plan_into): formed infantry line and rallying shock cavalry.
+    bool formed = g.charge && g.formed;
+    bool rallying = g.charge && g.rally && mounted;
     if (g.backing && sd > p(AI_BACKING_SLOT_DISTANCE)) {
     } else if (range > 0) {
       if (mounted) {
@@ -168,26 +210,59 @@ private:
           mode = SKIRMISH;
       } else if (target >= 0 && distance < reach + p(AI_ARCHER_MELEE_BUFFER))
         mode = MELEE;
+      else if (target >= 0 && falls_back(at, enemy, cover))
+        mode = FALLBACK;
       else if (target >= 0 && g.charge)
         mode = SHOOT;
       else if (target >= 0 && distance < range &&
                sd < p(AI_ARCHER_SLOT_DISTANCE))
         mode = SHOOT_SLOT;
     } else if (target >= 0) {
-      if (g.charge)
+      if (g.charge && !formed && !rallying)
         mode = MELEE;
-      else if (distance < p(mounted ? AI_MOUNTED_ENGAGE_DISTANCE
-                                    : AI_FOOT_ENGAGE_DISTANCE) &&
-               (enemy - slot).length() < p(mounted ? AI_MOUNTED_LEASH_DISTANCE
-                                                   : AI_FOOT_LEASH_DISTANCE))
-        mode = MELEE;
+      else {
+        double engage = p(mounted ? AI_MOUNTED_ENGAGE_DISTANCE
+                                  : AI_FOOT_ENGAGE_DISTANCE);
+        double leash =
+            p(mounted ? AI_MOUNTED_LEASH_DISTANCE : AI_FOOT_LEASH_DISTANCE);
+        if (rallying)
+          engage = -1.0;
+        else if (formed &&
+                 v(V_SLOT_OFFSET, row).y < -p(AI_FORMATION_FRONT_DEPTH))
+          engage = reach + p(AI_FORMATION_REAR_ENGAGE_BUFFER);
+        if (distance < engage && (enemy - slot).length() < leash)
+          mode = MELEE;
+        else if (formed)
+          mode = RANK;
+      }
+      if (i(I_ANTI_CAVALRY, row) && !mounted && i(I_MOUNTED, target) &&
+          distance > reach && distance < p(AI_BRACE_DISTANCE)) {
+        Vec2 delta = at - enemy;
+        float toward = velocities[target].x * delta.x + velocities[target].y * delta.y;
+        if (double(toward) / distance >= p(AI_BRACE_APPROACH_SPEED))
+          mode = BRACE;
+      }
     }
     destination = slot;
     face = sd < p(AI_SLOT_FACE_DISTANCE) ? g.direction : angle(slot - at);
     velocity_scale = 1;
+    if (mode == SLOT && i(I_ANTI_CAVALRY, row) && !mounted && range <= 0 &&
+        !g.charge && std::isfinite(g.screen.x) && std::isfinite(g.screen.y) &&
+        (at - g.screen).length() < p(AI_SCREEN_RADIUS)) {
+      destination = g.screen + g.screen_lateral * (double(v(V_SLOT_OFFSET, row).x) *
+                                                   p(AI_SCREEN_SPREAD));
+      face = angle(Vec2{g.screen_lateral.y, -g.screen_lateral.x});
+    }
     if (mode == MELEE) {
       face = angle(enemy - at);
       destination = distance > reach ? enemy : at;
+    } else if (mode == BRACE) {
+      face = angle(enemy - at);
+      destination = at;
+    } else if (mode == FALLBACK) {
+      face = angle(enemy - at);
+      destination = at + normalized(at - enemy) * p(AI_ARCHER_FALLBACK_STEP);
+      velocity_scale = p(AI_ARCHER_FALLBACK_SPEED_MULTIPLIER);
     } else if (mode == SHOOT || mode == SHOOT_SLOT) {
       face = angle(enemy - at);
       if (mode == SHOOT)
@@ -211,8 +286,8 @@ private:
       velocity_scale = p(AI_SKIRMISH_SPEED_MULTIPLIER);
     }
     // Charge leash (DESIGN.md 1.4 step 2): AiDecision.plan_into.
-    if (g.charge && range <= 0 && std::isfinite(center.x) &&
-        std::isfinite(center.y)) {
+    if (g.charge && range <= 0 && !formed && !rallying &&
+        std::isfinite(center.x) && std::isfinite(center.y)) {
       Vec2 home = center + g.lateral * v(V_SLOT_OFFSET, row).x +
                   g.forward * v(V_SLOT_OFFSET, row).y;
       home.x = std::clamp(home.x, float(p(SLOT_EDGE)),
@@ -421,7 +496,8 @@ public:
                 target >= 0 ? i(I_UNIT_HANDLE, target) : 0;
           }
           plan(row, g, slot,
-               centers[i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row)]);
+               centers[i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row)],
+               centers[i(I_SIDE, row) * 3]);
           if (i(I_MODE, row) == MELEE && target >= 0 && i(I_MOUNTED, row) &&
               r(R_ATTACK_RANGE, row) <= 0 && r(R_CHARGE_COOLDOWN, row) <= 0 &&
               velocities[row].length() > p(CHARGE_MIN_SPEED) &&

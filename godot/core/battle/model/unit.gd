@@ -278,11 +278,24 @@ var melee_reach: float:
 		if _motion == null: _detached_melee_reach = value
 		else: _motion.real_fields[MotionStore.R.MELEE_REACH * _motion.capacity + battle_index] = value
 var block_chance: float = 0.0
-var shield_block: float = 0.0 # Troop shield arrow bonus; hero gear will supply its own value later.
+## A column: shooters prefer targets without a shield (stage 1v, DESIGN.md 4.4). Troop shield arrow bonus; hero gear
+## will supply its own value later.
+var _detached_shield_block: float = 0.0
+var shield_block: float:
+	get: return _detached_shield_block if _motion == null else _motion.real_fields[MotionStore.R.SHIELD_BLOCK * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_shield_block = value
+		else: _motion.real_fields[MotionStore.R.SHIELD_BLOCK * _motion.capacity + battle_index] = value
 var accuracy: float = 0.0
 var pierce: float = 0.0
 var damage_type: String = "" # Empty for troop attacks without an equipped weapon.
-var anti_cavalry: bool = false
+## A column: spearmen brace against cavalry and cavalry avoids their front (stage 1v, DESIGN.md 4.3).
+var _detached_anti_cavalry: bool = false
+var anti_cavalry: bool:
+	get: return _detached_anti_cavalry if _motion == null else bool(_motion.integer_fields[MotionStore.I.ANTI_CAVALRY * _motion.capacity + battle_index])
+	set(value):
+		if _motion == null: _detached_anti_cavalry = value
+		else: _motion.integer_fields[MotionStore.I.ANTI_CAVALRY * _motion.capacity + battle_index] = int(value)
 var weapon_kind: String = ""
 var blunt_melee: bool = false # Innate attack classification for troops without an equipped weapon.
 var projectile_damage_multiplier: float = 1.0
@@ -324,6 +337,7 @@ func bind_motion(store: MotionStore) -> void:
 	store.real_fields[MotionStore.R.PLAN_DISTANCE * store.capacity + battle_index] = _detached_plan_distance
 	store.real_fields[MotionStore.R.CHASE_SECONDS * store.capacity + battle_index] = _detached_chase_seconds
 	store.real_fields[MotionStore.R.DAMAGE * store.capacity + battle_index] = _detached_damage
+	store.real_fields[MotionStore.R.SHIELD_BLOCK * store.capacity + battle_index] = _detached_shield_block
 	store.integer_fields[MotionStore.I.ID * store.capacity + battle_index] = _detached_id
 	store.integer_fields[MotionStore.I.SIDE * store.capacity + battle_index] = _detached_side
 	store.integer_fields[MotionStore.I.GROUP_KIND * store.capacity + battle_index] = _detached_group_kind
@@ -342,6 +356,7 @@ func bind_motion(store: MotionStore) -> void:
 	store.integer_fields[MotionStore.I.ATTACKERS * store.capacity + battle_index] = _detached_attackers
 	store.integer_fields[MotionStore.I.AIMERS * store.capacity + battle_index] = _detached_aimers
 	store.integer_fields[MotionStore.I.LEASHED * store.capacity + battle_index] = int(_detached_leashed)
+	store.integer_fields[MotionStore.I.ANTI_CAVALRY * store.capacity + battle_index] = int(_detached_anti_cavalry)
 	store.vector_fields[MotionStore.V.SLOT_OFFSET * store.capacity + battle_index] = _detached_slot_offset
 	store.vector_fields[MotionStore.V.PLAN_DESTINATION * store.capacity + battle_index] = _detached_plan_destination
 	store.integer_fields[MotionStore.I.MODE * store.capacity + battle_index] = _detached_mode
@@ -372,7 +387,9 @@ func detach_motion() -> void:
 	_detached_attackers = attackers
 	_detached_aimers = aimers
 	_detached_damage = damage
+	_detached_shield_block = shield_block
 	_detached_leashed = leashed
+	_detached_anti_cavalry = anti_cavalry
 	_detached_id = id
 	_detached_side = side
 	_detached_group_kind = group_kind

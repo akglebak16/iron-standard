@@ -326,12 +326,80 @@ const AI_CHARGE_MOUNTED_SOFT_LEASH := 320.0
 const AI_CHARGE_MOUNTED_HARD_LEASH := 520.0
 const AI_CHARGE_MOUNTED_RETURN_DISTANCE := 200.0
 const AI_CHARGE_CHASE_SECONDS := 3.0 # Longest wait beyond the soft leash without contact.
+# Stage 1v (DESIGN.md 4.3, 4.4, decision 14): doctrines of troop types, the same for both sides. Group decisions
+# (simulation/ai/squad_doctrine.gd, GDScript) run every AI_SQUAD_PERIOD_SECONDS per group, staggered by group number;
+# fighter rules (ai_decision.gd, spatial_index.gd and movement_kernel.hpp) read their results every tick.
+# Formation: an infantry group in a charge marches as a line ("formed") in the field. Its centre is the formation
+# fitted to its fighters plus AI_FORMATION_LEAD ahead, its direction turns to the mean of its fighters' targets.
+# Only the front ranks (slot offset less than AI_FORMATION_FRONT_DEPTH behind the front) step out to fight within the
+# engage distance; the rear ranks keep their places and fight only in contact. Loose (the old charge: every man for
+# himself, with the stage 1a leash) near a siege wall or with the targets across it, in a pursuit (most targets flee)
+# and with fewer than AI_FORMATION_MIN_UNITS fighters. A switch holds at least AI_FORMATION_SWITCH_SECONDS.
+const AI_FORMATION_LEAD := 45.0
+const AI_FORMATION_TURN_RATE := 0.6 # Radians per second.
+const AI_FORMATION_FRONT_DEPTH := 40.0 # Two front ranks: row depth is FORMATION_SPACING x FORMATION_ROW_DEPTH (26.7).
+const AI_FORMATION_REAR_ENGAGE_BUFFER := 10.0 # A rear rank fights a target within reach plus this.
+const AI_FORMATION_MIN_UNITS := 6
+const AI_FORMATION_WALL_DISTANCE := 260.0 # From the wall line to the fitted formation centre.
+const AI_FORMATION_PURSUIT_SHARE := 0.5
+const AI_FORMATION_SWITCH_SECONDS := 1.0
+const AI_FORMATION_AIM_RADIUS := 250.0 # The line turns to the cluster of its targets around the nearest one.
+# A line in melee (AI_FORMATION_CONTACT_SHARE of its sampled men fighting within AI_FIELD_CONTACT_DISTANCE) for
+# AI_FORMATION_MELEE_SECONDS while AI_FORMATION_WAITING_SHARE of them still wait in their ranks mingles: it goes loose,
+# so the wings and rear ranks join the melee, and forms again when the contact is over.
+const AI_FORMATION_CONTACT_SHARE := 0.1
+const AI_FORMATION_MELEE_SECONDS := 6.0
+const AI_FORMATION_WAITING_SHARE := 0.4
+# Spearmen (anti_cavalry): a rider closing in on the spearman faster than AI_BRACE_APPROACH_SPEED within
+# AI_BRACE_DISTANCE makes him stand and face the rider instead of running at him; in reach he strikes as usual.
+const AI_BRACE_DISTANCE := 260.0
+const AI_BRACE_APPROACH_SPEED := 40.0
+# Screen: enemy riders closer than AI_SCREEN_THREAT_DISTANCE to the own archers and closing in, an own infantry group
+# holding (not charging) within AI_SCREEN_RANGE of them: its spearmen within AI_SCREEN_RADIUS of the screen point form
+# a line AI_SCREEN_OFFSET in front of the archers towards the riders, spread by AI_SCREEN_SPREAD of their slot offset.
+const AI_SCREEN_THREAT_DISTANCE := 450.0
+const AI_SCREEN_RANGE := 350.0
+const AI_SCREEN_OFFSET := 70.0
+const AI_SCREEN_SPREAD := 0.8
+const AI_SCREEN_RADIUS := 400.0
+# Foot archers keep their distance: their target, foot melee closing in faster than AI_ARCHER_FALLBACK_APPROACH_SPEED
+# within AI_ARCHER_FALLBACK_DISTANCE, makes them step back AI_ARCHER_FALLBACK_STEP, but only towards their own infantry
+# (its fitted formation centre within AI_ARCHER_FALLBACK_COVER_DISTANCE before and after the step), inside the field
+# (AI_ARCHER_FALLBACK_EDGE) and on their side of a siege wall. Backing off is slower than infantry runs and they do not
+# shoot while moving, so an endless kite does not pay: the infantry catches up and they fight in melee as before.
+const AI_ARCHER_FALLBACK_DISTANCE := 160.0
+const AI_ARCHER_FALLBACK_APPROACH_SPEED := 20.0
+const AI_ARCHER_FALLBACK_STEP := 60.0
+const AI_ARCHER_FALLBACK_SPEED_MULTIPLIER := 0.8
+const AI_ARCHER_FALLBACK_COVER_DISTANCE := 450.0
+const AI_ARCHER_FALLBACK_EDGE := 90.0
+# Target priorities of the types, after the older multipliers and only raising the distance (search bounds hold).
+# A shooter weighs a shielded enemy that is not a shooter (shield_block > 0, troop data "shb") this much farther, so
+# archers and men without shields come first. A melee rider weighs a spearman (anti_cavalry, not fleeing) who faces him
+# within CHARGE_FRONT_ARC this much farther, so cavalry looks for a flank or another target.
+const TARGET_SHIELDED_MULTIPLIER := 1.3
+const TARGET_SPEAR_FRONT_MULTIPLIER := 2.0
+# Shock cavalry cycle (cavalry group in a charge): run-up and impact as before; when AI_CAVALRY_CONTACT_SHARE of its
+# sampled melee riders have been in contact with foot melee for AI_CAVALRY_MELEE_SECONDS, the group rides to a rally
+# point AI_CAVALRY_RALLY_DISTANCE beyond its centre, away from its targets (through them if it is past them), re-forms
+# there (mean distance to the slots under AI_CAVALRY_REFORM_DISTANCE, or after AI_CAVALRY_RALLY_SECONDS) and charges
+# again from the new run-up.
+const AI_CAVALRY_CONTACT_SHARE := 0.3
+const AI_CAVALRY_CONTACT_DISTANCE := 12.0 # Beyond reach: still in contact.
+const AI_CAVALRY_MELEE_SECONDS := 2.5
+const AI_CAVALRY_RALLY_DISTANCE := 320.0
+const AI_CAVALRY_RALLY_EDGE := 120.0
+const AI_CAVALRY_REFORM_DISTANCE := 70.0
+const AI_CAVALRY_RALLY_SECONDS := 7.0
 const AI_MODE_UNASSIGNED := ""
 const AI_MODE_SLOT := "slot"
 const AI_MODE_MELEE := "melee"
 const AI_MODE_SHOOT := "shoot"
 const AI_MODE_SHOOT_SLOT := "shootslot"
 const AI_MODE_SKIRMISH := "skirm"
+const AI_MODE_RANK := "rank" # Stage 1v: a formed fighter keeping his place in the line.
+const AI_MODE_BRACE := "brace" # Stage 1v: a spearman standing against a rider.
+const AI_MODE_FALLBACK := "fallback" # Stage 1v: an archer stepping back from infantry.
 const AI_BACKING_SLOT_DISTANCE := 40.0
 const AI_MOUNTED_SKIRMISH_TRIGGER := 1.15
 const AI_ARCHER_MELEE_BUFFER := 24.0

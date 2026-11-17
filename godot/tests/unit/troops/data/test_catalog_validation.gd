@@ -21,12 +21,21 @@ func _initialize() -> void:
 	var invalid_shield := original.duplicate(true)
 	invalid_shield.shb = 1.1
 	assert(not catalog.replace_data({"n1": invalid_shield}))
+	# Stage 1v reads "anticav" (spearmen) and "shb" (shield) as battle doctrine inputs: a flag, not any value.
+	for bad_flag in ["yes", 2, -1, 0.5, []]:
+		var invalid := original.duplicate(true)
+		invalid.anticav = bad_flag
+		assert(not catalog.replace_data({"n1": invalid}))
 	for traits in [[], {"morale_immune": 1}, {"morale_base": INF}, {"projectile_damage_multiplier": -1}, {"leader_loss_chance": 0.4}, {"leader_bond": " ", "leader_loss_chance": 0.4}, {"leader_bond": "test", "leader_loss_chance": 1.1}, {"unknown": true}]:
 		var invalid := original.duplicate(true)
 		invalid.battle_traits = traits
 		assert(not catalog.replace_data({"n1": invalid}))
 	assert(not catalog.replace_data([]))
 	assert(catalog.size() == 67 and catalog.get_troop("n1") == original)
+	for good_flag in [true, false, 1, 0, 1.0]:
+		var spear := original.duplicate(true)
+		spear.anticav = good_flag
+		assert(catalog.replace_data({"n1": spear}))
 	var definitions := {"n1": original.duplicate(true)}
 	assert(catalog.replace_data(definitions))
 	definitions.n1.hp = 0
