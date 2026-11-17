@@ -24,8 +24,9 @@ const Columns = preload("res://adapters/godot/native/columns.gd")
 const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Movement = preload("res://adapters/godot/native/movement.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
+const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 
-const VERSION := 3 # 2: volley metrics. 3: stage 1v doctrine metrics.
+const VERSION := 4 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics.
 const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
@@ -195,6 +196,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var reached_archers := -1.0
 	var input := HeroInput.new()
 	var volleys := volley_tracker()
+	var morale := morale_tracker(state, initial)
 	var started := Time.get_ticks_msec()
 	var tick := 0
 	while tick < max_ticks:
@@ -207,9 +209,12 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 				decided_at = tick * TICK_SECONDS
 			elif event.kind == Event.Kind.SHOT:
 				track_shot(volleys, state, int(event.target_id), tick)
+			elif event.kind in [Event.Kind.WAVERED, Event.Kind.FLED, Event.Kind.DOWN]:
+				track_morale(morale, state, event, tick)
 		advance_volleys(volleys, tick)
 		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
 			_sample_idle(state, engaged, idle_samples, unit_samples, doctrine_samples)
+			sample_rallies(morale)
 			for side in 2:
 				var rally: bool = state.groups[side][Config.GROUP_CAVALRY].get("rally") == true # Absent before stage 1v.
 				if rally and not rallying[side]: rallies[side] += 1
@@ -247,6 +252,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		result.doctrine[key] = [float(doctrine_samples[key][0]) / maxi(1, unit_samples[0]), float(doctrine_samples[key][1]) / maxi(1, unit_samples[1])]
 	if options.phase_profile: result.ai_phase = Benchmark.stats(ai_samples) if not ai_samples.is_empty() else {}
 	result.volleys = volley_report(volleys)
+	result.morale = morale_report(morale)
 	if kite:
 		result.kite = {"chase_share": float(chased_long.size()) / maxi(1, initial[1]),
 			"reached_archers_seconds": reached_archers}
@@ -333,6 +339,78 @@ static func volley_report(tracker: Dictionary) -> Dictionary:
 		"shots_per_target": float(tracker.volley_shots) / tracker.volley_targets if tracker.volley_targets > 0 else 0.0,
 		"first_volley_shots": float(first_shots) / first_sides if first_sides > 0 else 0.0,
 		"first_volley_targets": float(first_targets) / first_sides if first_sides > 0 else 0.0}
+
+## Morale metrics (DESIGN.md 4.5, stage 1b), read from WAVERED, FLED and DOWN events and the state only. Who flees
+## (share of each unit class that ever fled) and when (first flight, the flight that makes 10% of the side, mean time),
+## how many came back (a fighter seen ready again after his flight, sampled every SAMPLE_TICKS) and how many were cut
+## down while fleeing (the pursuit).
+static func morale_tracker(state, initial: Array) -> Dictionary:
+	var ids := {}
+	var class_total := [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+	for unit in state.units:
+		ids[unit.id] = unit
+		if unit.hero or unit.companion: continue
+		class_total[unit.side][FieldAssessment.unit_class(unit.mounted, unit.attack_range > 0.0, unit.anti_cavalry)] += 1
+	return {"ids": ids, "initial": initial.duplicate(), "class_total": class_total, "class_fled": [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]],
+		"wavered": [{}, {}], "fled": [{}, {}], "rallied": [{}, {}], "in_flight": {}, "flights": [0, 0], "rallies": [0, 0],
+		"killed_fleeing": [0, 0], "first": [-1.0, -1.0], "tenth": [-1.0, -1.0], "time_sum": [0.0, 0.0]}
+
+static func _morale_unit(tracker: Dictionary, state, id: int):
+	var ids: Dictionary = tracker.ids
+	if not ids.has(id):
+		for unit in state.units: ids[unit.id] = unit
+	return ids.get(id)
+
+static func track_morale(tracker: Dictionary, state, event: Dictionary, tick: int) -> void:
+	var unit = _morale_unit(tracker, state, int(event.target_id))
+	if unit == null or unit.hero or unit.companion: return
+	var side: int = unit.side
+	if event.kind == Event.Kind.WAVERED:
+		tracker.wavered[side][unit.id] = true
+	elif event.kind == Event.Kind.FLED:
+		var seconds := tick * TICK_SECONDS
+		tracker.flights[side] += 1
+		tracker.time_sum[side] += seconds
+		tracker.in_flight[unit.id] = unit
+		if tracker.first[side] < 0.0: tracker.first[side] = seconds
+		if not tracker.fled[side].has(unit.id):
+			tracker.fled[side][unit.id] = true
+			tracker.class_fled[side][FieldAssessment.unit_class(unit.mounted, unit.attack_range > 0.0, unit.anti_cavalry)] += 1
+			if tracker.tenth[side] < 0.0 and tracker.fled[side].size() * 10 >= int(tracker.initial[side]):
+				tracker.tenth[side] = seconds
+	elif event.kind == Event.Kind.DOWN and unit.fleeing:
+		tracker.killed_fleeing[side] += 1
+		tracker.in_flight.erase(unit.id)
+
+## A fighter who fled and stands ready again has rallied (before stage 1b nobody comes back).
+static func sample_rallies(tracker: Dictionary) -> void:
+	var in_flight: Dictionary = tracker.in_flight
+	for id in in_flight.keys():
+		var unit = in_flight[id]
+		if unit.dead or unit.gone:
+			in_flight.erase(id)
+		elif not unit.fleeing:
+			in_flight.erase(id)
+			tracker.rallies[unit.side] += 1
+			tracker.rallied[unit.side][id] = true
+
+static func morale_report(tracker: Dictionary) -> Dictionary:
+	var report := {"fled_ever": [0.0, 0.0], "rallied_share": [0.0, 0.0], "rallies": tracker.rallies.duplicate(),
+		"flights": tracker.flights.duplicate(), "wavered": [0.0, 0.0], "killed_fleeing_share": [0.0, 0.0],
+		"first_flight_seconds": tracker.first.duplicate(), "tenth_flight_seconds": tracker.tenth.duplicate(),
+		"mean_flight_seconds": [-1.0, -1.0], "class_fled": [[], []]}
+	for side in 2:
+		var initial := maxi(1, int(tracker.initial[side]))
+		var fled: int = tracker.fled[side].size()
+		report.fled_ever[side] = float(fled) / initial
+		report.wavered[side] = float(tracker.wavered[side].size()) / initial
+		report.rallied_share[side] = float(tracker.rallied[side].size()) / fled if fled > 0 else 0.0
+		report.killed_fleeing_share[side] = float(tracker.killed_fleeing[side]) / tracker.flights[side] if tracker.flights[side] > 0 else 0.0
+		if tracker.flights[side] > 0: report.mean_flight_seconds[side] = tracker.time_sum[side] / tracker.flights[side]
+		for klass in Config.AI_CLASSES:
+			var total: int = tracker.class_total[side][klass]
+			report.class_fled[side].append(float(tracker.class_fled[side][klass]) / total if total > 0 else -1.0)
+	return report
 
 ## Never engaged: no combat mode (melee, shooting, skirmish) at any sample. Idle time: share of fighter
 ## samples in formation or unassigned while the battle is undecided. Doctrine modes (stage 1v) are counted apart:
@@ -433,7 +511,26 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var doctrine := {"rallies": [0.0, 0.0]}
 	for key in DOCTRINE_MODES: doctrine[key] = [0.0, 0.0]
 	var doctrine_runs := 0
+	var morale_keys := ["fled_ever", "rallied_share", "rallies", "wavered", "killed_fleeing_share"]
+	var morale_sums := {}
+	for key in morale_keys: morale_sums[key] = [0.0, 0.0]
+	var morale_times := {"first_flight_seconds": [[0.0, 0], [0.0, 0]], "tenth_flight_seconds": [[0.0, 0], [0.0, 0]], "mean_flight_seconds": [[0.0, 0], [0.0, 0]]}
+	var morale_class := [[[0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0]], [[0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0]]]
+	var morale_runs := 0
 	for run in runs:
+		if run.has("morale"):
+			morale_runs += 1
+			for side in 2:
+				for key in morale_keys: morale_sums[key][side] += float(run.morale[key][side])
+				for key in morale_times:
+					if float(run.morale[key][side]) >= 0.0:
+						morale_times[key][side][0] += float(run.morale[key][side])
+						morale_times[key][side][1] += 1
+				for klass in run.morale.class_fled[side].size():
+					var share := float(run.morale.class_fled[side][klass])
+					if share >= 0.0:
+						morale_class[side][klass][0] += share
+						morale_class[side][klass][1] += 1
 		if run.has("doctrine"):
 			doctrine_runs += 1
 			for key in doctrine:
@@ -466,6 +563,16 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		for key in doctrine:
 			for side in 2: doctrine[key][side] /= doctrine_runs
 		summary.doctrine = doctrine
+	if morale_runs > 0:
+		var morale := {"runs": morale_runs, "class_fled": [[], []]}
+		for key in morale_keys: morale[key] = [morale_sums[key][0] / morale_runs, morale_sums[key][1] / morale_runs]
+		for key in morale_times:
+			morale[key] = []
+			for side in 2: morale[key].append(morale_times[key][side][0] / morale_times[key][side][1] if morale_times[key][side][1] > 0 else -1.0)
+		for side in 2:
+			for klass in Config.AI_CLASSES:
+				morale.class_fled[side].append(morale_class[side][klass][0] / morale_class[side][klass][1] if morale_class[side][klass][1] > 0 else -1.0)
+		summary.morale = morale
 	if volley_runs > 0:
 		summary.volleys = {"runs": volley_runs}
 		for key in volley_keys: summary.volleys[key] = volley_sums[key] / volley_runs
@@ -490,6 +597,15 @@ static func table(report: Dictionary) -> String:
 		if s.has("doctrine"):
 			var d: Dictionary = s.doctrine
 			lines.append("  doctrine: rank %.2f/%.2f, brace %.3f/%.3f, fallback %.3f/%.3f, rallies %.1f/%.1f per battle" % [d.rank[0], d.rank[1], d.brace[0], d.brace[1], d.fallback[0], d.fallback[1], d.rallies[0], d.rallies[1]])
+		if s.has("morale"):
+			var m: Dictionary = s.morale
+			lines.append("  morale: fled ever %.2f/%.2f, rallied %.2f/%.2f (%.1f/%.1f per battle), killed fleeing %.2f/%.2f, wavered %.2f/%.2f, first flight %.1f/%.1f s, 10%% fled at %.1f/%.1f s" % [m.fled_ever[0], m.fled_ever[1], m.rallied_share[0], m.rallied_share[1], m.rallies[0], m.rallies[1], m.killed_fleeing_share[0], m.killed_fleeing_share[1], m.wavered[0], m.wavered[1], m.first_flight_seconds[0], m.first_flight_seconds[1], m.tenth_flight_seconds[0], m.tenth_flight_seconds[1]])
+			var names := ["foot", "spear", "archer", "cavalry", "horse archer"]
+			var parts: Array[String] = []
+			for klass in names.size():
+				if m.class_fled[0][klass] >= 0.0 or m.class_fled[1][klass] >= 0.0:
+					parts.append("%s %s/%s" % [names[klass], "-" if m.class_fled[0][klass] < 0.0 else "%.2f" % m.class_fled[0][klass], "-" if m.class_fled[1][klass] < 0.0 else "%.2f" % m.class_fled[1][klass]])
+			lines.append("  fled by class: " + ", ".join(parts))
 		if s.has("kite"):
 			lines.append("  kite: chasing hero > %.0f s %.2f, enemy reached archers in %d runs, mean %.1f s" % [KITE_CHASE_SECONDS, s.kite.chase_share, s.kite.reached_runs, s.kite.reached_archers_seconds])
 	return "\n".join(lines)

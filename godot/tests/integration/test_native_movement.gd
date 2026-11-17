@@ -15,11 +15,14 @@ const DOCTRINE_RULES := ["formed", "rank", "brace", "screen", "fallback", "rally
 # Shield and spear priorities, proven by distance ratios the older multipliers cannot explain (see _check_doctrine).
 const SHIELD_PROOF_RATIO := 1.36
 const SPEAR_PROOF_RATIO := 1.25
+# Stage 1b: a wavering fighter stands against a far enemy and closes in slower; a fugitive nobody pursues rallies.
+const MORALE_RULES := ["standing", "slowed", "rallied", "fled"]
+const MORALE_LOW_BASE := 30.0 # Base morale of the shaken half: never back above MORALE_STEADY_SHARE of it.
 func _initialize() -> void:
 	var catalog := Catalog.new()
 	assert(Loader.populate(catalog))
 	assert(Movement.create().is_valid())
-	for scenario in ["field", "siege", "castle", "breach", "mixed", "kite", "volley", "doctrine"]:
+	for scenario in ["field", "siege", "castle", "breach", "mixed", "kite", "volley", "doctrine", "morale"]:
 		var siege: bool = scenario in ["siege", "castle", "breach"]
 		var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 		setup.siege = siege
@@ -40,6 +43,10 @@ func _initialize() -> void:
 			# Stage 1v doctrines (DESIGN.md 4.3, 4.4): formed lines, spearmen, archers keeping distance, shock cavalry.
 			setup.player_army.assign([{"type": "n1", "n": 24}, {"type": "n2s", "n": 16}, {"type": "n2a", "n": 20}, {"type": "n3c", "n": 10}])
 			setup.enemy_army.assign([{"type": "e1", "n": 30}, {"type": "e2a", "n": 14}, {"type": "e3c", "n": 16}])
+		if scenario == "morale":
+			# Stage 1b (DESIGN.md 4.5): the player's side charges loose with a shaken half and a few men about to run.
+			setup.player_army.assign([{"type": "n1", "n": 40}, {"type": "n2a", "n": 16}, {"type": "n3c", "n": 10}])
+			setup.enemy_army.assign([{"type": "e1", "n": 36}, {"type": "e2a", "n": 16}, {"type": "e3c", "n": 12}])
 		if scenario == "mixed":
 			setup.player_army.assign([{"type": "n1", "n": 35}, {"type": "n2a", "n": 20}, {"type": "n3c", "n": 15}])
 			setup.enemy_army.assign([{"type": "k1", "n": 30}, {"type": "k2a", "n": 20}, {"type": "k2c", "n": 20}])
@@ -48,6 +55,7 @@ func _initialize() -> void:
 		var input := HeroInput.new()
 		var fired := {"crowd": false, "wait": false, "leashed": false, "overkill": false, "front": false}
 		for key in DOCTRINE_RULES: fired[key] = false
+		for key in MORALE_RULES: fired[key] = false
 		var rider_timers := {}
 		for battle in [a, b]:
 			if scenario == "volley":
@@ -73,6 +81,23 @@ func _initialize() -> void:
 				_place(state, state.groups[1][Config.GROUP_CAVALRY], Vector2(1550, 1250), PI)
 				for group in state.groups[0]: group.order = Config.ORDER_HOLD
 				continue
+			if scenario == "morale":
+				var state = battle._state
+				_place(state, state.groups[0][Config.GROUP_INFANTRY], Vector2(1150, 850), 0.0)
+				_place(state, state.groups[0][Config.GROUP_ARCHERS], Vector2(1000, 850), 0.0)
+				_place(state, state.groups[0][Config.GROUP_CAVALRY], Vector2(1050, 500), 0.0)
+				_place(state, state.groups[1][Config.GROUP_INFANTRY], Vector2(1900, 850), PI)
+				_place(state, state.groups[1][Config.GROUP_ARCHERS], Vector2(2050, 850), PI)
+				_place(state, state.groups[1][Config.GROUP_CAVALRY], Vector2(2000, 1200), PI)
+				battle.issue_order("charge", Vector2.ZERO, 3)
+				state.groups[0][Config.GROUP_INFANTRY].loose = true
+				for unit in state.groups[0][Config.GROUP_INFANTRY].units:
+					if unit.id % 2 == 0:
+						unit.base_morale = MORALE_LOW_BASE
+						unit.morale = MORALE_LOW_BASE * 0.3
+					elif unit.id % 7 == 1:
+						unit.morale = -5.0
+				continue
 			if scenario == "kite":
 				battle._hero.speed = 260.0
 				battle._hero.max_hp = 1000000.0
@@ -97,7 +122,7 @@ func _initialize() -> void:
 			if siege and tick == 600:
 				for battle in [a, b]:
 					for gate in battle._state.wall.gates: gate.hp = 0.0
-			if tick == (700 if scenario == "doctrine" else 900) and scenario != "kite":
+			if tick == (700 if scenario == "doctrine" else 900) and scenario not in ["kite", "morale"]:
 				for battle in [a, b]: battle._state.kill(battle._hero)
 			if scenario == "kite":
 				var offset: Vector2 = a._hero.position - KITE_CENTER
@@ -114,6 +139,8 @@ func _initialize() -> void:
 				_check_volley(a._state, fired)
 			if scenario == "doctrine":
 				_check_doctrine(a._state, fired, tick, rider_timers)
+			if scenario == "morale":
+				_check_morale(a._state, fired)
 			a.step()
 			b.step()
 			assert(a._rng.state == b._rng.state, "RNG tick %d siege %s" % [tick, siege])
@@ -135,6 +162,8 @@ func _initialize() -> void:
 			assert(fired.overkill and fired.front, "the stage 1a-archers rules must fire in the compared battle: %s" % fired)
 		if scenario == "doctrine":
 			for key in DOCTRINE_RULES: assert(fired[key], "the stage 1v rule %s must fire in the compared battle: %s" % [key, fired])
+		if scenario == "morale":
+			for key in MORALE_RULES: assert(fired[key], "the stage 1b rule %s must fire in the compared battle: %s" % [key, fired])
 	print("Native movement parity tests passed")
 	quit(0)
 
@@ -216,3 +245,22 @@ static func _check_doctrine(state, fired: Dictionary, tick: int, rider_timers: D
 			if float(nearest.aimers) + 1.0 <= nearest.hp / (unit.damage * Config.TARGET_VOLLEY_HIT_SHARE): fired.shield = true
 		if rider and nearest.anti_cavalry and not nearest.mounted and nearest.attackers < Config.TARGET_CROWD_FREE_ATTACKERS and target.attack_range <= 0.0 and ratio > SPEAR_PROOF_RATIO:
 			if nearest.velocity.dot(nearest.position - unit.position) <= 0.0: fired.spear = true
+
+## Proof that the stage 1b fighter rules decided something. Standing: a wavering man of a loose charge waits where he
+## stands although his target is farther than the engage distance and not running from him (no leash, no chase).
+## Slowed: a wavering man closing in on his target at less than full speed (only the morale rule slows melee). Fled and
+## rallied: a man ran and came back.
+static func _check_morale(state, fired: Dictionary) -> void:
+	for unit in state.active_units:
+		if unit.dead or unit.gone or unit.hero: continue
+		if unit.fleeing: fired.fled = true
+		if unit.rallies > 0: fired.rallied = true
+		if not unit.wavering or unit.fleeing: continue
+		var group = state.groups[unit.side][unit.group_kind]
+		if group.order != Config.ORDER_CHARGE or group.formed or unit.attack_range > 0.0: continue
+		var target = state.unit_for(unit.target_handle)
+		if target == null or target.dead or target.gone: continue
+		var engage: float = Config.AI_MOUNTED_ENGAGE_DISTANCE if unit.mounted else Config.AI_FOOT_ENGAGE_DISTANCE
+		if unit.ai_mode == Config.AI_MODE_SLOT and not unit.leashed and unit.plan_distance >= engage and unit.plan_destination == unit.position:
+			if target.velocity.length() < unit.speed * Config.AI_CHARGE_CHASE_SPEED_SHARE: fired.standing = true
+		if unit.ai_mode == Config.AI_MODE_MELEE and unit.plan_speed < 1.0: fired.slowed = true

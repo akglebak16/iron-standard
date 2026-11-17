@@ -9,6 +9,7 @@ const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const DecisionTrace = preload("res://core/battle/simulation/ai/decision_trace.gd")
 const FLEEING := 1
 const HERO := 2
+const WAVERING := 4
 
 static func build(battle: State, trace: DecisionTrace, assessment: Dictionary, assessment_tick: int, profiles: Array[String], tick: int, elapsed: float) -> Dictionary:
 	var recorded := trace.snapshot()
@@ -21,7 +22,8 @@ static func build(battle: State, trace: DecisionTrace, assessment: Dictionary, a
 			if group == null: continue
 			var entry := {"kind": kind, "order": group.order, "backing": group.backing, "tactic_state": group.tactic_state,
 				"center": group.center, "direction": group.direction, "waypoint": group.waypoint,
-				"kited": group.kited, "focus_kind": group.focus_kind, "last": recorded.last[side][kind]}
+				"kited": group.kited, "focus_kind": group.focus_kind, "last": recorded.last[side][kind],
+				"morale_state": group.morale_state, "morale_pressure": group.morale_pressure, "fleeing_share": group.morale_fleeing_share}
 			if assessed.size() > side:
 				entry.assessment = assessed[side].groups[kind].duplicate(true)
 			groups.append(entry)
@@ -51,5 +53,5 @@ static func _units(battle: State) -> Dictionary:
 		positions.append(motion.positions[row])
 		sides.append(columns[I.SIDE * capacity + row])
 		modes.append(columns[I.MODE * capacity + row])
-		flags.append(int(columns[I.FLEEING * capacity + row]) * FLEEING | int(columns[I.HERO * capacity + row]) * HERO)
+		flags.append(int(columns[I.FLEEING * capacity + row]) * FLEEING | int(columns[I.HERO * capacity + row]) * HERO | int(columns[I.WAVERING * capacity + row]) * WAVERING)
 	return {"positions": positions, "sides": sides, "modes": modes, "flags": flags, "mode_names": MotionStore.MODES.duplicate()}

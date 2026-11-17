@@ -16,6 +16,8 @@ static func chance(target: Unit, arrow: bool) -> float:
 
 static func check(target: Unit, incoming: float, arrow: bool, rng: RandomNumberGenerator) -> bool:
 	var probability := chance(target, arrow)
+	if target.wavering:
+		probability *= Config.MORALE_WAVER_BLOCK_MULTIPLIER
 	if probability <= 0.0 or absf(wrapf(incoming - target.facing, -PI, PI)) > Config.BLOCK_ARC:
 		return false
 	return rng.randf() < probability

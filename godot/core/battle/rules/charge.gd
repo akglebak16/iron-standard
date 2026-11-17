@@ -17,8 +17,13 @@ static func hit(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGe
 	var speed := attacker.velocity.length()
 	attacker.charge_cooldown = Config.CHARGE_COOLDOWN
 	var damage: float = attacker.damage * (Config.CHARGE_BASE_DAMAGE + speed / Config.CHARGE_SPEED_DAMAGE_DIVISOR)
+	if attacker.wavering:
+		damage *= Config.MORALE_WAVER_DAMAGE_MULTIPLIER
 	var incoming := (attacker.position - target.position).angle()
 	var front := absf(wrapf(incoming - target.facing, -PI, PI)) < Config.CHARGE_FRONT_ARC
+	# Stage 1b: the charge shakes its victim, unless a spearman meets it face on.
+	if not (target.anti_cavalry and front):
+		target.morale -= Config.MORALE_CHARGE_SHOCK * battle.hit_morale_multiplier(target, attacker.position)
 	if target.anti_cavalry and front and not target.fleeing:
 		damage *= Config.CHARGE_ANTI_DAMAGE_MULTIPLIER
 		battle.hurt(attacker, Config.CHARGE_COUNTER_DAMAGE * rng.randf_range(Config.CHARGE_COUNTER_RANDOM_MIN, Config.CHARGE_COUNTER_RANDOM_MAX), target, 0.0, rng, Event.Attack.COUNTER)

@@ -473,7 +473,61 @@ const MORALE_EVEN_ODDS := 0.8
 const MORALE_STRONG_RECOVERY := 4.0
 const MORALE_EVEN_RECOVERY := 2.5
 const MORALE_WEAK_RECOVERY := 1.0
-const MORALE_WAVER_THRESHOLD := 22.0
 const MORALE_FORCE_FLEE_START_SHARE := 0.2
 const MORALE_FORCE_FLEE_ENEMY_SHARE := 0.5
 const MORALE_FORCE_FLEE_MIN_START := 4
+# Stage 1b morale (DESIGN.md 4.5). The same rules for both sides and for player orders; fighters only, the hero,
+# companions and the undead (morale_immune) keep their old ways. Steps of a fighter: steady -> wavering (below
+# MORALE_WAVER_SHARE of his base morale; steady again from MORALE_STEADY_SHARE) -> fleeing (morale at 0 or the side
+# collapses) -> rallied (wavering, at most MORALE_RALLY_LIMIT times). Before stage 1b "wavering" was only a notice
+# below 22 (tier 1: base 86, so 0.26 of it).
+const MORALE_WAVER_SHARE := 0.35
+const MORALE_STEADY_SHARE := 0.5
+# A wavering fighter strikes and blocks worse, advances slower (melee and shooting approach) and does not charge a
+# far enemy: in a loose charge he fights only what comes within the hold engage distance and stands his ground.
+const MORALE_WAVER_DAMAGE_MULTIPLIER := 0.85
+const MORALE_WAVER_BLOCK_MULTIPLIER := 0.8
+const MORALE_WAVER_SPEED_MULTIPLIER := 0.85
+# A hit from the flank or the rear of the target's formation (the group's facing while it keeps a formation, the
+# fighter's own facing in a loose charge; sectors as in the field assessment) costs more morale than one from the front.
+const MORALE_FLANK_HIT_MULTIPLIER := 1.5
+const MORALE_REAR_HIT_MULTIPLIER := 2.5
+# A cavalry charge shakes its victim, except a spearman meeting it face on; times the hit direction multiplier.
+const MORALE_CHARGE_SHOCK := 6.0
+# Threat from the field assessment (DESIGN.md 4.1; terrain joins it there, TERRAIN.md 7): enemy strength near the
+# group by sector against the group's own strength. Pressure: flank threat, plus the rear threat
+# MORALE_THREAT_REAR_WEIGHT times, plus MORALE_THREAT_FRONT_WEIGHT of the front threat beyond MORALE_THREAT_FRONT_FREE
+# (an overwhelming enemy ahead); an even fight in front costs nothing. Above MORALE_THREAT_FREE every fighter of the
+# group loses MORALE_THREAT_LOSS per second per unit of pressure, up to MORALE_THREAT_CAP units.
+const MORALE_THREAT_FRONT_FREE := 2.0
+const MORALE_THREAT_FRONT_WEIGHT := 0.5
+const MORALE_THREAT_REAR_WEIGHT := 1.6
+const MORALE_THREAT_FREE := 0.3
+const MORALE_THREAT_CAP := 1.5
+const MORALE_THREAT_LOSS := 6.0
+const MORALE_THREAT_STRENGTH_FLOOR := 1.0 # Strength below this counts as this much (a group of a few wounded men).
+# Panic: a fighter who starts to flee costs friends within MORALE_PANIC_RADIUS MORALE_PANIC_LOSS each (at most
+# MORALE_PANIC_CAP per check); every fighter of a group loses MORALE_PANIC_SHARE_LOSS per second times its fleeing share.
+const MORALE_PANIC_RADIUS := 110.0
+const MORALE_PANIC_LOSS := 4.0
+const MORALE_PANIC_CAP := 12.0
+const MORALE_PANIC_SHARE_LOSS := 6.0
+# Rally: a fleeing fighter with no ready enemy within MORALE_PURSUIT_RADIUS recovers MORALE_ROUT_RECOVERY per second,
+# MORALE_RALLY_LEADER_BONUS more with an own leader or the hero within MORALE_RALLY_LEADER_RADIUS; at
+# MORALE_RALLY_SHARE of his base morale he turns back, wavering, unless the side has collapsed or he is within
+# MORALE_RALLY_EDGE of the side edges of the field. Pursued, he does not recover. A flight starts at zero morale or,
+# after a heavy blow, down to minus MORALE_RALLY_SHARE of the base.
+const MORALE_PURSUIT_RADIUS := 150.0
+const MORALE_ROUT_RECOVERY := 6.0
+const MORALE_RALLY_LEADER_BONUS := 4.0
+const MORALE_RALLY_LEADER_RADIUS := 260.0
+const MORALE_RALLY_SHARE := 0.3
+const MORALE_RALLY_EDGE := 120.0
+const MORALE_RALLY_LIMIT := 1
+# Group step for the debug overlay and future commanders: routed from this fleeing share, wavering from this
+# share of wavering and fleeing fighters.
+const MORALE_GROUP_ROUTED_SHARE := 0.5
+const MORALE_GROUP_WAVERING_SHARE := 0.3
+const MORALE_GROUP_STEADY := 0
+const MORALE_GROUP_WAVERING := 1
+const MORALE_GROUP_ROUTED := 2

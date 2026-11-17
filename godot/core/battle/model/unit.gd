@@ -151,7 +151,15 @@ var fleeing: bool:
 	set(value):
 		if _motion == null: _detached_fleeing = value
 		else: _motion.integer_fields[MotionStore.I.FLEEING * _motion.capacity + battle_index] = int(value)
-var wavering: bool = false
+## Stage 1b morale step (DESIGN.md 4.5): a column, because the C++ kernel holds a wavering fighter back.
+var _detached_wavering: bool = false
+var wavering: bool:
+	get: return _detached_wavering if _motion == null else bool(_motion.integer_fields[MotionStore.I.WAVERING * _motion.capacity + battle_index])
+	set(value):
+		if _motion == null: _detached_wavering = value
+		else: _motion.integer_fields[MotionStore.I.WAVERING * _motion.capacity + battle_index] = int(value)
+var waver_noticed: bool = false # The WAVERED notice goes out once per fighter, however often he wavers.
+var rallies: int = 0 # Times he turned back from a flight (MORALE_RALLY_LIMIT).
 var companion_id: String = "" # Stable campaign identity for the result, distinct from a troop type.
 var companion: bool:
 	get:
@@ -357,6 +365,7 @@ func bind_motion(store: MotionStore) -> void:
 	store.integer_fields[MotionStore.I.AIMERS * store.capacity + battle_index] = _detached_aimers
 	store.integer_fields[MotionStore.I.LEASHED * store.capacity + battle_index] = int(_detached_leashed)
 	store.integer_fields[MotionStore.I.ANTI_CAVALRY * store.capacity + battle_index] = int(_detached_anti_cavalry)
+	store.integer_fields[MotionStore.I.WAVERING * store.capacity + battle_index] = int(_detached_wavering)
 	store.vector_fields[MotionStore.V.SLOT_OFFSET * store.capacity + battle_index] = _detached_slot_offset
 	store.vector_fields[MotionStore.V.PLAN_DESTINATION * store.capacity + battle_index] = _detached_plan_destination
 	store.integer_fields[MotionStore.I.MODE * store.capacity + battle_index] = _detached_mode
@@ -390,6 +399,7 @@ func detach_motion() -> void:
 	_detached_shield_block = shield_block
 	_detached_leashed = leashed
 	_detached_anti_cavalry = anti_cavalry
+	_detached_wavering = wavering
 	_detached_id = id
 	_detached_side = side
 	_detached_group_kind = group_kind

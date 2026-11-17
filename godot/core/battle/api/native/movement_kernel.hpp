@@ -202,6 +202,9 @@ private:
     // Stage 1v (AiDecision.plan_into): formed infantry line and rallying shock cavalry.
     bool formed = g.charge && g.formed;
     bool rallying = g.charge && g.rally && mounted;
+    // Stage 1b (AiDecision.plan_into): a wavering fighter in a loose charge stands his ground against a far enemy.
+    bool wavering = i(I_WAVERING, row);
+    bool standing = false;
     if (g.backing && sd > p(AI_BACKING_SLOT_DISTANCE)) {
     } else if (range > 0) {
       if (mounted) {
@@ -218,9 +221,14 @@ private:
                sd < p(AI_ARCHER_SLOT_DISTANCE))
         mode = SHOOT_SLOT;
     } else if (target >= 0) {
-      if (g.charge && !formed && !rallying)
+      if (g.charge && !formed && !rallying) {
         mode = MELEE;
-      else {
+        if (wavering && distance >= p(mounted ? AI_MOUNTED_ENGAGE_DISTANCE
+                                              : AI_FOOT_ENGAGE_DISTANCE)) {
+          mode = SLOT;
+          standing = true;
+        }
+      } else {
         double engage = p(mounted ? AI_MOUNTED_ENGAGE_DISTANCE
                                   : AI_FOOT_ENGAGE_DISTANCE);
         double leash =
@@ -252,6 +260,10 @@ private:
       destination = g.screen + g.screen_lateral * (double(v(V_SLOT_OFFSET, row).x) *
                                                    p(AI_SCREEN_SPREAD));
       face = angle(Vec2{g.screen_lateral.y, -g.screen_lateral.x});
+    }
+    if (standing) {
+      face = angle(enemy - at);
+      destination = at;
     }
     if (mode == MELEE) {
       face = angle(enemy - at);
@@ -336,6 +348,9 @@ private:
       i(I_LEASHED, row) = 0;
       r(R_CHASE_SECONDS, row) = 0;
     }
+    // Stage 1b: a wavering fighter advances slower.
+    if (wavering && (mode == MELEE || mode == SHOOT))
+      velocity_scale *= p(MORALE_WAVER_SPEED_MULTIPLIER);
     i(I_MODE, row) = mode;
     v(V_PLAN_DESTINATION, row) = destination;
     r(R_PLAN_FACE, row) = face;

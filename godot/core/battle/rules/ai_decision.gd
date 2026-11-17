@@ -24,6 +24,10 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 	# Stage 1v (DESIGN.md 4.3): a formed infantry line and a rallying shock cavalry do not charge man by man.
 	var formed := charge and group.formed
 	var rallying := charge and group.rally and mounted
+	# Stage 1b (DESIGN.md 4.5): a wavering fighter in a loose charge does not run at a far enemy; he stands his ground
+	# and fights what comes within the hold engage distance.
+	var wavering := unit.wavering
+	var standing := false
 	if group.backing and slot_distance > Config.AI_BACKING_SLOT_DISTANCE:
 		pass
 	elif unit.attack_range > 0.0:
@@ -41,6 +45,9 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 	elif enemy != null:
 		if charge and not formed and not rallying:
 			mode = Config.AI_MODE_MELEE
+			if wavering and distance >= (Config.AI_MOUNTED_ENGAGE_DISTANCE if mounted else Config.AI_FOOT_ENGAGE_DISTANCE):
+				mode = Config.AI_MODE_SLOT
+				standing = true
 		else:
 			var engage: float = Config.AI_MOUNTED_ENGAGE_DISTANCE if mounted else Config.AI_FOOT_ENGAGE_DISTANCE
 			var leash: float = Config.AI_MOUNTED_LEASH_DISTANCE if mounted else Config.AI_FOOT_LEASH_DISTANCE
@@ -64,6 +71,9 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 	if mode == Config.AI_MODE_SLOT and unit.anti_cavalry and not mounted and unit.attack_range <= 0.0 and not charge and group.screen.is_finite() and position.distance_to(group.screen) < Config.AI_SCREEN_RADIUS:
 		destination = group.screen + group.screen_lateral * (unit.slot_offset.x * Config.AI_SCREEN_SPREAD)
 		face = Vector2(group.screen_lateral.y, -group.screen_lateral.x).angle()
+	if standing:
+		face = (enemy_position - position).angle()
+		destination = position
 	if mode == Config.AI_MODE_MELEE:
 		face = (enemy_position - position).angle()
 		destination = enemy_position if distance > reach else position
@@ -125,6 +135,9 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 	elif unit.leashed or unit.chase_seconds != 0.0:
 		unit.leashed = false
 		unit.chase_seconds = 0.0
+	# Stage 1b: a wavering fighter advances slower.
+	if wavering and (mode == Config.AI_MODE_MELEE or mode == Config.AI_MODE_SHOOT):
+		speed_scale *= Config.MORALE_WAVER_SPEED_MULTIPLIER
 	unit.ai_mode = mode
 	unit.plan_destination = destination
 	unit.plan_face = face

@@ -40,7 +40,8 @@
     "attackers",
     "leashed",
     "aimers",
-    "anti_cavalry"
+    "anti_cavalry",
+    "wavering"
   ],
   "vector": [
     "slot_offset",
@@ -127,6 +128,7 @@
     "AI_ARCHER_FALLBACK_EDGE",
     "TARGET_SHIELDED_MULTIPLIER",
     "TARGET_SPEAR_FRONT_MULTIPLIER",
-    "CHARGE_FRONT_ARC"
+    "CHARGE_FRONT_ARC",
+    "MORALE_WAVER_SPEED_MULTIPLIER"
   ]
 }

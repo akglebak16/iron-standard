@@ -10,6 +10,7 @@ func _initialize() -> void:
 	var victim = Unit.new(1, 1, Vector2(10, 0), 50.0, 55.0, 2)
 	var ally = Unit.new(2, 1, Vector2(20, 0), 100.0, 0.0, 1)
 	var distant = Unit.new(3, 1, Vector2(200, 0), 100.0, 0.0, 1)
+	victim.facing = PI # Facing the attacker: a blow from the rear costs more morale (stage 1b, test_morale_stages.gd).
 	for unit in [attacker, victim, ally, distant]:
 		battle.add_unit(unit)
 	assert(battle.hurt(victim, 40.0, attacker) == 20)

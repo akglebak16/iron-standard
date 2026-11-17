@@ -13,6 +13,7 @@ const LEADER_DOWN := "%s пал!"
 const BONDED_LEADER_DOWN := "%s пал — мертвецы рассыпаются в прах!"
 const WAVERED := "%s дрогнул."
 const FLED := "%s бежит с поля боя."
+const RALLIED := "%s опомнился и возвращается в бой."
 const RESERVE_UNDEAD := "Из-за холма выходят ещё %d мертвецов"
 const RESERVE_ENEMY := "К врагу подходит подкрепление: %d"
 const RESERVE_ALLY := "К нам подходит подкрепление: %d"
@@ -88,6 +89,9 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 			Event.Kind.FLED:
 				if _rng.randf() < ROUT_MESSAGE_CHANCE:
 					_log(FLED % event.target_name)
+			Event.Kind.RALLIED:
+				if _rng.randf() < ROUT_MESSAGE_CHANCE:
+					_log(RALLIED % event.target_name)
 			Event.Kind.HIT:
 				if event.target_hero or event.source_hero:
 					_label(event.position + Vector2(_rng.randf_range(-6, 6), -2), str(event.amount), Demo.DAMAGE_RECEIVED_COLOR if event.target_hero else Demo.DAMAGE_DEALT_COLOR)

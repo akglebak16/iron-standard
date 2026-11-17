@@ -322,7 +322,7 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 		return 0
 	var amount: int = Damage.after_armor(raw_damage, target.armor, pierce)
 	target.hp -= amount
-	target.morale -= amount * Config.HIT_MORALE_PER_DAMAGE
+	target.morale -= amount * Config.HIT_MORALE_PER_DAMAGE * (hit_morale_multiplier(target, source.position) if source != null else 1.0)
 	record_event(Event.Kind.HIT, target, source, attack, amount)
 	if target.hp <= 0.0 and target.hero and not target.last_stand_used:
 		var recovery: float = float(target.perk_effects.get("lastStand", 0.0))
@@ -333,6 +333,23 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 	if target.hp <= 0.0:
 		kill(target, source, rng, attack, amount)
 	return amount
+
+## Stage 1b (DESIGN.md 4.5): a blow from the flank or the rear of the target's formation costs more morale. The frame
+## is the group's facing while the group keeps a formation (holding, following, a formed line) and the fighter's own
+## facing in a loose charge; the sectors are those of the field assessment (AI_FIELD_FRONT_ARC, AI_FIELD_REAR_ARC).
+func hit_morale_multiplier(target: Unit, from: Vector2) -> float:
+	var facing := target.facing
+	if target.side < groups.size() and target.group_kind >= 0 and target.group_kind < groups[target.side].size():
+		var group: Group = groups[target.side][target.group_kind]
+		if group.order != Config.ORDER_CHARGE or group.formed:
+			facing = group.direction
+	var offset := from - target.position
+	if offset == Vector2.ZERO:
+		return 1.0
+	var angle := absf(wrapf(offset.angle() - facing, -PI, PI))
+	if angle <= Config.AI_FIELD_FRONT_ARC:
+		return 1.0
+	return Config.MORALE_REAR_HIT_MULTIPLIER if angle >= Config.AI_FIELD_REAR_ARC else Config.MORALE_FLANK_HIT_MULTIPLIER
 
 func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, attack: Event.Attack = Event.Attack.NONE, amount: int = 0) -> void:
 	if target.dead:
