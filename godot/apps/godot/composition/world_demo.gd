@@ -81,6 +81,8 @@ var _world_job: Thread
 var profile_map_frames := false
 ## Time budget (µs) of world simulation per frame; a longer step is continued next frame (0 = no slicing).
 var slice_us := 600
+var _hitch_log := 0
+var _last_sim_us := 0
 var map_step_us := 0
 var map_hud_us := 0
 var map_steps := 0
@@ -643,21 +645,30 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
+	if _hitch_log == 0 and _last_sim_us == 0:
+		print("MAPBUILD sliced world, slice %d us, time-based motion" % slice_us)
 	# The budget grows when the world falls behind real time (fast speeds), so the game never runs slower than it should.
 	state.slicer.budget_us = 0 if slice_us <= 0 else int(slice_us * minf(4.0, 1.0 + maxf(0.0, state.clock.backlog() - 1.5)))
 	state.slicer.now_us = Time.get_ticks_usec
 	state.slicer.frame_signal = func() -> Signal: return get_tree().process_frame
 	state.slicer.hold = func() -> bool: return _battle != null or not _ready_to_play
 	state.advance_async(delta)  # not awaited: long world steps rest between frames inside the slice budget
+	var sim_us: int = state.slicer.take_used_us()
 	if profile_map_frames:
-		map_step_us = state.slicer.take_used_us()
-		map_steps = 1 if map_step_us > 0 else 0
+		map_step_us = sim_us
+		map_steps = 1 if sim_us > 0 else 0
 	_camp_talk()
 	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):
 		_autosave.save(state, false)
 	if not camera.detached:
 		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
-	var started := Time.get_ticks_usec() if profile_map_frames else 0
+	var started := Time.get_ticks_usec()
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
-	if profile_map_frames: map_hud_us = Time.get_ticks_usec() - started
+	var hud_us := Time.get_ticks_usec() - started
+	if profile_map_frames: map_hud_us = hud_us
+	# A long frame is written to the log (--log-file) with what this frame spent on the world and the HUD: how hitches are found on a real machine.
+	if delta > 0.0125 and _hitch_log < 400:
+		_hitch_log += 1
+		print("HITCH %.1f ms (previous frame); world before %d us, now %d us, hud %d us, speed x%d, backlog %.1f, sim busy %s" % [delta * 1000.0, _last_sim_us, sim_us, hud_us, state.clock.speed, state.clock.backlog(), state.sim_busy()])
+	_last_sim_us = sim_us
