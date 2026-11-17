@@ -1,6 +1,6 @@
 extends RefCounted
 ## One temporary integration point. No campaign data or calendar checks.
-const ENABLED := true
+const ENABLED := false
 const Scene = preload("res://apps/godot/presentation/birthday/celebration.tscn")
 
 static func mount(menu: Control, ui: CanvasLayer, center: CenterContainer, title: Label, subtitle: Label, platform: Label, background: Node) -> Control:
