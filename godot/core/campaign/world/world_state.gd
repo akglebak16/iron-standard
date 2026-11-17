@@ -200,6 +200,17 @@ func advance(real_dt: float) -> int:
 		return 0
 	return clock.advance(real_dt, step, hour_tick)
 
+## The same time flow as advance(), split for a simulation that runs elsewhere (world_sim_thread.gd): tick_time() lets
+## real time pass, advance_one() runs one due step.
+func tick_time(real_dt: float) -> void:
+	if waiting or is_moving():
+		clock.add_time(real_dt)
+
+func advance_one() -> bool:
+	if not (waiting or is_moving()):
+		return false
+	return clock.advance_one(step, hour_tick)
+
 func is_moving() -> bool:
 	return player.has_route() or player.tid >= 0
 

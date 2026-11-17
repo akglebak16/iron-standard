@@ -13,6 +13,12 @@ var road := PackedByteArray()
 var _g := PackedFloat32Array()
 var _prev := PackedInt32Array()
 var _closed := PackedByteArray()
+## Terrain part of cell_cost (0 = impassable). Cells and biomes never change after the terrain is generated, the roads do
+## (the road generator writes `road` between searches), so only the road discount is applied at use.
+var _base := PackedFloat64Array()
+## Neighbours in the order the search has always visited them: (di, dj) for dj, di in -1..1 without the centre.
+const NEIGHBOURS_DI := [-1, 0, 1, -1, 1, -1, 0, 1]
+const NEIGHBOURS_DJ := [-1, -1, -1, 0, 0, 1, 1, 1]
 
 func _init(terrain: Generator) -> void:
 	world = terrain
@@ -27,16 +33,25 @@ func terr_at(x: float, y: float) -> int:
 func passable_type(t: int) -> bool:
 	return t >= 1 and t <= 3
 
+func _ensure_base() -> void:
+	if _base.size() == GW * GH:
+		return
+	_base.resize(GW * GH)
+	for k in GW * GH:
+		var t: int = world.cells[k]
+		var c := 0.0
+		if passable_type(t):
+			c = TCOST[t]
+			if world.bio[k] == 1:
+				c *= 1.25
+			elif world.bio[k] == 3:
+				c *= 1.1
+		_base[k] = c
+
 func cell_cost(k: int) -> float:
-	var t: int = world.cells[k]
-	if not passable_type(t):
-		return 0.0
-	var c: float = TCOST[t]
-	if world.bio[k] == 1:
-		c *= 1.25
-	elif world.bio[k] == 3:
-		c *= 1.1
-	if road[k] != 0:
+	_ensure_base()
+	var c: float = _base[k]
+	if c != 0.0 and road[k] != 0:
 		c *= 0.55
 	return c
 
@@ -59,9 +74,13 @@ func nearest_pass(x: float, y: float) -> Vector2i:
 func los_clear(x0: float, y0: float, x1: float, y1: float) -> bool:
 	var d := sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0))
 	var n := ceili(d / (GC * 0.25))  # rivers are always on in the Europe map
+	var cells := world.cells
 	for i in range(1, n):
 		var t := float(i) / n
-		if not passable_type(terr_at(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)):
+		var x := x0 + (x1 - x0) * t
+		var y := y0 + (y1 - y0) * t
+		var c: int = cells[clampi(floori(y / GC), 0, GH - 1) * GW + clampi(floori(x / GC), 0, GW - 1)]
+		if c < 1 or c > 3:
 			return false
 	return true
 
@@ -73,46 +92,98 @@ func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 	var e := b.y * GW + b.x
 	if s == e:
 		return [Vector2(tx, ty)]
+	_ensure_base()
 	_g.fill(1e9)
 	_closed.fill(0)
-	var h: Array = []
+	# The binary heap of heap.gd (same swaps, so equal-cost ties break the same way) on two flat arrays: no [priority, cell] pair per push.
+	var hp := PackedFloat64Array()
+	var hv := PackedInt32Array()
+	var hn := 1
+	hp.append(0.0)
+	hv.append(s)
 	_g[s] = 0.0
 	_prev[s] = -1
-	Heap.push(h, 0.0, s)
+	var base := _base
+	var roads := road
+	var closed := _closed
 	var found := false
-	while not h.is_empty():
-		var cur: int = Heap.pop(h)[1]
-		if _closed[cur] != 0:
+	while hn > 0:
+		var cur: int = hv[0]
+		hn -= 1
+		var last_p: float = hp[hn]
+		var last_v: int = hv[hn]
+		hp.resize(hn)
+		hv.resize(hn)
+		if hn > 0:
+			hp[0] = last_p
+			hv[0] = last_v
+			var i := 0
+			while true:
+				var l := i * 2 + 1
+				var r := l + 1
+				var m := i
+				if l < hn and hp[l] < hp[m]:
+					m = l
+				if r < hn and hp[r] < hp[m]:
+					m = r
+				if m == i:
+					break
+				var tp := hp[m]
+				hp[m] = hp[i]
+				hp[i] = tp
+				var tv := hv[m]
+				hv[m] = hv[i]
+				hv[i] = tv
+				i = m
+		if closed[cur] != 0:
 			continue
-		_closed[cur] = 1
+		closed[cur] = 1
 		if cur == e:
 			found = true
 			break
 		var ci := cur % GW
 		var cj := cur / GW
-		for dj in range(-1, 2):
-			for di in range(-1, 2):
-				if di == 0 and dj == 0:
-					continue
-				var ni := ci + di
-				var nj := cj + dj
-				if ni < 0 or nj < 0 or ni >= GW or nj >= GH:
-					continue
-				var k := nj * GW + ni
-				if _closed[k] != 0:
-					continue
-				var cc := cell_cost(k)
-				if cc == 0.0:
-					continue
-				if di != 0 and dj != 0 and (cell_cost(cj * GW + ni) == 0.0 or cell_cost(nj * GW + ci) == 0.0):
-					continue
-				var g: float = _g[cur] + cc * (1.414 if di != 0 and dj != 0 else 1.0)
-				if g < _g[k]:
-					_g[k] = g
-					_prev[k] = cur
-					var dx := float(ni - b.x)
-					var dy := float(nj - b.y)
-					Heap.push(h, g + sqrt(dx * dx + dy * dy) * 0.55, k)
+		var g_cur: float = _g[cur]
+		for n in 8:
+			var di: int = NEIGHBOURS_DI[n]
+			var dj: int = NEIGHBOURS_DJ[n]
+			var ni := ci + di
+			var nj := cj + dj
+			if ni < 0 or nj < 0 or ni >= GW or nj >= GH:
+				continue
+			var k := nj * GW + ni
+			if closed[k] != 0:
+				continue
+			var cc: float = base[k]
+			if cc == 0.0:
+				continue
+			if roads[k] != 0:
+				cc *= 0.55
+			var diagonal := di != 0 and dj != 0
+			if diagonal and (base[cj * GW + ni] == 0.0 or base[nj * GW + ci] == 0.0):
+				continue
+			var g: float = g_cur + cc * (1.414 if diagonal else 1.0)
+			if g < _g[k]:
+				_g[k] = g
+				_prev[k] = cur
+				var dx := float(ni - b.x)
+				var dy := float(nj - b.y)
+				var pri := g + sqrt(dx * dx + dy * dy) * 0.55
+				hp.append(pri)
+				hv.append(k)
+				var i := hn
+				hn += 1
+				while i > 0:
+					var p := (i - 1) >> 1
+					if hp[p] <= hp[i]:
+						break
+					var tp := hp[p]
+					hp[p] = hp[i]
+					hp[i] = tp
+					var tv := hv[p]
+					hv[p] = hv[i]
+					hv[i] = tv
+					i = p
 	if not found:
 		return null
 	var pts: Array = []

@@ -16,6 +16,49 @@ var motion: RefCounted # world_motion.gd; draws parties between steps
 var _factions := FactionCatalog.new()
 var _decals: SubViewport
 var cache_decals := true
+var _tiers := {}
+var _records := {}  # party id -> its frozen copy, kept between freezes
+var _freezes := 0
+var _frozen: Variant = null  # copies of what is drawn, while the simulation thread owns the world (world_sim_thread.gd)
+
+## The world goes to the simulation thread: remember what to draw. Call while the main thread still owns the world.
+func freeze() -> void:
+	var out: Array = []
+	_freezes += 1
+	var renew := _freezes % 16 == 0  # the figure of a party (its best troop) is looked up again now and then
+	var kept := {}
+	for party in roster.parties:
+		if party.hide or party.kind == "camp":
+			continue
+		var rec: Variant = _records.get(party.id)
+		if rec == null or renew or rec.stacks != party.troops.size():
+			rec = {"id": party.id, "kind": party.kind, "fac": party.fac, "hide": false, "top": _top_troop(party), "stacks": party.troops.size()}
+		rec.x = party.x
+		rec.y = party.y
+		rec.hostile = Rules.hostile_to_player(party, player.rel)
+		kept[party.id] = rec
+		out.append(rec)
+	_records = kept
+	_frozen = out
+
+func thaw() -> void:
+	_frozen = null
+
+func _top_troop(p: Dictionary) -> String:
+	var troop := ""
+	var tier := -1
+	for stack in p.troops:
+		var t := _tier_of(stack.type)
+		if t > tier:
+			tier = t
+			troop = stack.type
+	return troop
+
+## Tier of a troop type, remembered: the catalogue hands out a deep copy of the troop on every question.
+func _tier_of(type: String) -> int:
+	if not _tiers.has(type):
+		_tiers[type] = int(roster.catalog.get_troop(type).tier)
+	return _tiers[type]
 
 func build(party_roster: RefCounted, player_party: RefCounted) -> void:
 	roster = party_roster
@@ -41,7 +84,7 @@ func _draw() -> void:
 		return
 	var visible_area: Rect2 = (get_global_transform_with_canvas().affine_inverse() * get_viewport_rect()).grow(DRAW_MARGIN)
 	var parties: Array = []
-	for party in roster.parties:
+	for party in (_frozen if _frozen != null else roster.parties):
 		if not party.hide and party.kind != "camp" and visible_area.has_point(Vector2(party.x, party.y)):
 			parties.append(party)
 	parties.sort_custom(func(a, b): return a.y < b.y)  # lower parties are drawn on top
@@ -55,7 +98,7 @@ func _draw_party(p: Dictionary) -> void:
 	var noble: bool = p.kind == "lord" or p.kind == "dead"
 	var variant := 2 if noble else (0 if p.kind == "caravan" else 1)
 	var scale_factor: float = Decals.MARKER_SCALES[variant]
-	var hostile := Rules.hostile_to_player(p, player.rel)
+	var hostile: bool = p.hostile if p.has("hostile") else Rules.hostile_to_player(p, player.rel)
 	var cached: bool = _decals != null and _decals.ready_to_draw
 	if cached:
 		_decals.draw_base(self, at, variant, hostile)
@@ -66,13 +109,7 @@ func _draw_party(p: Dictionary) -> void:
 	if p.kind == "caravan":
 		draw_texture_rect(preload("res://apps/godot/visuals/assets/caravan.png"), Rect2(at - Vector2(27.5, 28), Vector2(55, 35)), false)
 		return
-	var troop := ""
-	var tier := -1
-	for stack in p.troops:
-		var info: Dictionary = roster.catalog.get_troop(stack.type)
-		if int(info.tier) > tier:
-			tier = int(info.tier)
-			troop = stack.type
+	var troop: String = p.top if p.has("top") else _top_troop(p)
 	var sprite := OriginalArt.sprite(troop, p.fac)
 	if sprite != null:
 		var key: String = troop + "|" + p.fac

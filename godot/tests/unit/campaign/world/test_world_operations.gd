@@ -97,6 +97,18 @@ func _check_marshal_and_defenders() -> void:
 	assert(news.any(func(t): return "ведёт Маршал" in t), "the chronicle names the marshal: %s" % [news])
 	assert(a.sid == camp.gid, "the marshal rides to the rally point")
 	assert(b.state == "travel" and _end(b).distance_to(Vector2(a.x, a.y)) < Config.OP_FOLLOW_KEEP, "the others ride to the marshal")
+	# a lord already riding to the marshal keeps his route (no search every two hours); once the marshal moves away he gets a new one
+	var route_b: Array = b.path.duplicate()
+	w._follow(b, a)
+	assert(b.path == route_b and b.pi == 0, "a lord on his way to the marshal is not routed again")
+	var marshal_was := Vector2(a.x, a.y)
+	a.x += 600.0
+	w._follow(b, a)
+	assert(b.path != route_b and _end(b).distance_to(Vector2(a.x, a.y)) < Config.OP_FOLLOW_KEEP, "a lord whose marshal moved on is routed to him again")
+	a.x = marshal_was.x
+	_at(b, b.x, b.y)
+	w._follow(b, a)
+	assert(not b.path.is_empty(), "a lord without a route is sent to the marshal")
 	# the host gathered at the rally: the march begins
 	var rally: Dictionary = s.map.settlement_by_id(camp.gid)
 	_at(a, rally.x, rally.y)

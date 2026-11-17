@@ -42,10 +42,24 @@ var height := 3400.0
 ## goal|gid|faction -> number of parties of the faction pursuing it; kept by note()/rebuild_claims().
 var claims := {}
 var _own := {}  # faction -> own settlements, until reset()
+var _foes := {}  # faction -> Array hostile to it on the threat map, until reset(); "!" + faction: only the outlaws among them
+# The party candidates() works on, with what risk_at/crowd_factor would otherwise recompute for every settlement.
+var _cp: Dictionary = {}
+var _cp_map: ThreatMap = null
+var _cp_foes: Array = []
+var _cp_key := ""
+var _cp_ready := false  # the map and the foes are asked for at the first risk_at, not before: the threat map of a step
+						# is frozen when it is first requested, and that moment must not move
 
 ## Forgets per-step caches; call when parties or settlements may have changed (every world step).
 func reset() -> void:
 	_own = {}
+	_foes = {}
+	_cp = {}
+	_cp_map = null
+	_cp_foes = []
+	_cp_key = ""
+	_cp_ready = false
 
 # ---------- curves ----------
 
@@ -68,12 +82,52 @@ static func combine(factors: Array) -> float:
 	var mod := 1.0 - 1.0 / factors.size()
 	return score + (1.0 - score) * mod * score
 
+## combine() for 3, 4, 5 or 6 factors without building the array: the same products in the same order.
+static func combine3(a: float, b: float, c: float) -> float:
+	var score := clamp01(a)
+	score *= clamp01(b)
+	score *= clamp01(c)
+	if score <= 0.0:
+		return score
+	return score + (1.0 - score) * (1.0 - 1.0 / 3) * score
+
+static func combine4(a: float, b: float, c: float, d: float) -> float:
+	var score := clamp01(a)
+	score *= clamp01(b)
+	score *= clamp01(c)
+	score *= clamp01(d)
+	if score <= 0.0:
+		return score
+	return score + (1.0 - score) * (1.0 - 1.0 / 4) * score
+
+static func combine5(a: float, b: float, c: float, d: float, e: float) -> float:
+	var score := clamp01(a)
+	score *= clamp01(b)
+	score *= clamp01(c)
+	score *= clamp01(d)
+	score *= clamp01(e)
+	if score <= 0.0:
+		return score
+	return score + (1.0 - score) * (1.0 - 1.0 / 5) * score
+
+static func combine6(a: float, b: float, c: float, d: float, e: float, f: float) -> float:
+	var score := clamp01(a)
+	score *= clamp01(b)
+	score *= clamp01(c)
+	score *= clamp01(d)
+	score *= clamp01(e)
+	score *= clamp01(f)
+	if score <= 0.0:
+		return score
+	return score + (1.0 - score) * (1.0 - 1.0 / 6) * score
+
 static func distance_factor(d: float, range_: float) -> float:
 	return 1.0 - Config.GOAL_DISTANCE_FALLOFF * clamp01(d / maxf(1.0, range_))
 
 func crowd_factor(goal: String, gid: Variant, p: Dictionary) -> float:
-	var n := int(claims.get(_claim_key(goal, gid, String(p.fac)), 0))
-	if goal_key(p) == _claim_key(goal, gid, String(p.fac)):
+	var key := _claim_key(goal, gid, String(p.fac))
+	var n := int(claims.get(key, 0))
+	if (_cp_key if is_same(p, _cp) else goal_key(p)) == key:
 		n -= 1
 	return 1.0 / (1.0 + Config.GOAL_CROWD_PENALTY * maxi(0, n))
 
@@ -97,7 +151,7 @@ static func risk_factor(risk: float, mods: Dictionary) -> float:
 # ---------- claims ----------
 
 static func _claim_key(goal: String, gid: Variant, fac: String) -> String:
-	return "%s|%s|%s" % [goal, gid, fac]
+	return goal + "|" + str(gid) + "|" + fac
 
 static func goal_key(p: Dictionary) -> String:
 	var g := String(p.get("goal", ""))
@@ -131,13 +185,27 @@ func _enemies(fac: String) -> Array:
 ## Threat-map layers hostile to the party. A profile with `outlaws_only` (caravans) fears only the factions that
 ## fight everyone: lords of states at war leave caravans alone (Rules.hostile).
 func foes(p: Dictionary) -> Array:
-	var all := _enemies(String(p.fac))
-	if not bool(profile(p).get("outlaws_only", false)):
-		return all
-	return all.filter(func(f): return f == Config.BANDIT_FACTION or f == Config.UNDEAD_FACTION)
+	var fac := String(p.fac)
+	var outlaws := bool(profile(p).get("outlaws_only", false))
+	var key := "!" + fac if outlaws else fac
+	var cached: Variant = _foes.get(key)
+	if cached != null:
+		return cached
+	var all := _enemies(fac)
+	var out: Array = all if not outlaws else all.filter(func(f): return f == Config.BANDIT_FACTION or f == Config.UNDEAD_FACTION)
+	_foes[key] = out
+	return out
 
 ## Enemy strength felt at (x, y) on the threat map, in strengths of a party of strength `me`.
 func risk_at(p: Dictionary, x: float, y: float, me: float, minus := 0.0) -> float:
+	if is_same(p, _cp):
+		if not _cp_ready:
+			_cp_ready = true
+			_cp_map = _map()
+			_cp_foes = foes(p) if _cp_map != null else []
+		if _cp_map == null:
+			return 0.0
+		return maxf(0.0, _cp_map.threat(x, y, _cp_foes) - minus) / maxf(0.001, me)
 	var m := _map()
 	if m == null:
 		return 0.0
@@ -163,6 +231,9 @@ func own_strength(p: Dictionary) -> float:
 ## lord (the vassal's lord party), mode (retinue order), haven_extra ([{id, x, y}] havens besides own settlements),
 ## wave (an undead army: {mode, tid, x, y, rx, ry} of its wave), front ({x, y} where the dead of its barrow strike).
 func candidates(p: Dictionary, ctx := {}) -> Array:
+	_cp = p
+	_cp_ready = false
+	_cp_key = goal_key(p)
 	var mods := _mods(p)
 	var prof := profile(p, String(ctx.get("mode", "")))
 	var me := own_strength(p)
@@ -204,10 +275,15 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 	var pressure := 0.0
 	var from := Vector2(p.x, p.y)
 	var look := maxf(sight, flee_sight)
+	var px: float = p.x
+	var py: float = p.y
 	for o in parties:
-		if o == p or o.hide or o.kind == "camp" or o.get("lock", false) or (skip_busy and o.get("fight", false)):
+		# Distant parties are rejected before their flags are read (the checks are pure, so their order does not matter).
+		if absf(o.x - px) > look or absf(o.y - py) > look:
 			continue
-		var d := Vector2(o.x - p.x, o.y - p.y).length()
+		if is_same(o, p) or o.hide or o.kind == "camp" or o.get("lock", false) or (skip_busy and o.get("fight", false)):
+			continue
+		var d := Vector2(o.x - px, o.y - py).length()
 		if d > look or not hostile.call(p, o):
 			continue
 		var so: float = strength.call(o)
@@ -252,7 +328,7 @@ func _hunt(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, ctx: Di
 				if chasing and p.get("gid") == o.id and float(p.get("ga", 0.0)) > Config.GOAL_FASTER_CHASE_HOURS:
 					catch = 0.0
 		var risk := risk_factor(risk_at(p, o.x, o.y, me, float(e.strength)), mods)
-		var s := w * combine([adv, worth, distance_factor(float(e.d), float(seen.sight)), catch, crowd_factor("hunt", o.id, p), risk])
+		var s := w * combine6(adv, worth, distance_factor(float(e.d), float(seen.sight)), catch, crowd_factor("hunt", o.id, p), risk)
 		if s > 0.0:
 			out.append({"goal": "hunt", "gid": o.id, "x": o.x, "y": o.y, "score": s})
 
@@ -286,16 +362,19 @@ func _defend(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: 
 	if w <= 0.0:
 		return
 	var doom: Dictionary = doomed.call() if doomed.is_valid() else {}
+	var defend_range := Config.GOAL_DEFEND_RANGE
 	for s in own_settlements(String(p.fac)):
+		if absf(s.x - p.x) > defend_range or absf(s.y - p.y) > defend_range:
+			continue
 		var d := Vector2(s.x - p.x, s.y - p.y).length()
-		if d > Config.GOAL_DEFEND_RANGE:
+		if d > defend_range:
 			continue
 		var enemy := risk_at(p, s.x, s.y, me)
 		var dead: bool = doom.has(s.id) and s.kind != Config.SETTLEMENT_VILLAGE
 		var urgency := 1.0 if s.get("siege") != null or dead else clamp01(enemy / Config.GOAL_DEFEND_THREAT_SHARE)
 		if urgency <= 0.0:
 			continue
-		var score := w * combine([urgency, distance_factor(d, Config.GOAL_DEFEND_RANGE), risk_factor(enemy, mods), crowd_factor("defend", s.id, p)])
+		var score := w * combine4(urgency, distance_factor(d, Config.GOAL_DEFEND_RANGE), risk_factor(enemy, mods), crowd_factor("defend", s.id, p))
 		if score > 0.0:
 			out.append({"goal": "defend", "gid": s.id, "x": s.x, "y": s.y, "score": score, "inside": dead})
 
@@ -308,11 +387,13 @@ func _patrol(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary,
 	var centre := Vector2(p.x, p.y) if fief.is_empty() else Vector2(fief.x, fief.y)
 	var reach := Config.GOAL_PATROL_RANGE if fief.is_empty() else Config.GOAL_RETINUE_PATROL_RANGE.y
 	for s in own_settlements(String(p.fac)):
+		if absf(s.x - centre.x) > reach or absf(s.y - centre.y) > reach:
+			continue
 		var d := Vector2(s.x - centre.x, s.y - centre.y).length()
 		if d > reach:
 			continue
 		var alarm := ramp(float(s.get("alarm", 0)), 0.0, float(Config.GOAL_ALARM_HOURS), Config.GOAL_PATROL_BASE, 1.0)
-		var score := w * combine([alarm, distance_factor(d, reach), crowd_factor("patrol", s.id, p)])
+		var score := w * combine3(alarm, distance_factor(d, reach), crowd_factor("patrol", s.id, p))
 		if score > 0.0:
 			out.append({"goal": "patrol", "gid": s.id, "x": s.x, "y": s.y, "score": score})
 
@@ -329,7 +410,10 @@ func _raid(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 	if fac == Config.UNDEAD_FACTION:
 		return  # the dead burn villages ahead of their wave (_ravage)
 	var targets: Array = []
+	var reach := Config.GOAL_RAID_RANGE
 	for s in settles:
+		if absf(s.x - p.x) > reach or absf(s.y - p.y) > reach:
+			continue  # beyond the raid range (settlements, the player's villages): not a target, no need to ask about wars
 		if s.fac == fac or s.kind == "camp" or s.get("siege") != null:
 			continue
 		if s.fac == Config.PLAYER_FACTION:
@@ -345,7 +429,7 @@ func _raid(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 		var d := Vector2(s.x - p.x, s.y - p.y).length()
 		if d > float(t.range):
 			continue
-		var score := w * combine([float(t.value), full, distance_factor(d, float(t.range)), risk_factor(foreign_risk(p, s.x, s.y, me), mods), crowd_factor("raid", s.id, p)])
+		var score := w * combine5(float(t.value), full, distance_factor(d, float(t.range)), risk_factor(foreign_risk(p, s.x, s.y, me), mods), crowd_factor("raid", s.id, p))
 		if score > 0.0:
 			out.append({"goal": "raid", "gid": s.id, "x": s.x, "y": s.y, "score": score})
 
@@ -382,14 +466,17 @@ func _rest(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 		n += int(t.n)
 	var need := ramp(1.0 - n / full_strength_count(p), Config.GOAL_REST_NEED.x, Config.GOAL_REST_NEED.y, Config.GOAL_REST_BASE, 1.0)
 	var vassal: bool = p.kind == "vassal"
+	var rest_range := Config.GOAL_REST_RANGE
 	for s in own_settlements(String(p.fac)):
+		if absf(s.x - p.x) > rest_range or absf(s.y - p.y) > rest_range:
+			continue
 		if vassal and s.kind == Config.SETTLEMENT_TOWN:
 			continue
 		var d := Vector2(s.x - p.x, s.y - p.y).length()
-		if d > Config.GOAL_REST_RANGE:
+		if d > rest_range:
 			continue
 		var place := Config.GOAL_REST_VILLAGE if s.kind == Config.SETTLEMENT_VILLAGE and not vassal else 1.0
-		var score := w * combine([need, place, distance_factor(d, Config.GOAL_REST_RANGE), risk_factor(risk_at(p, s.x, s.y, me), mods)])
+		var score := w * combine4(need, place, distance_factor(d, Config.GOAL_REST_RANGE), risk_factor(risk_at(p, s.x, s.y, me), mods))
 		if score > 0.0:
 			out.append({"goal": "rest", "gid": s.id, "x": s.x, "y": s.y, "score": score})
 

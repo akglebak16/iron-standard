@@ -49,7 +49,9 @@ var _campaign_ready := false
 var _campaign_start := {}
 var _campaign_hide := ""
 var _campaign_paused := false
+var _sim_thread := true  # the world steps on a worker thread, as in the game (--sim-thread=off: on the main thread)
 var _campaign_step_us: Array[int] = []
+var _campaign_main_us: Array[int] = []
 var _campaign_hud_us: Array[int] = []
 const Stats = preload("res://tests/performance/battle_benchmark.gd")
 const World = preload("res://apps/godot/composition/world_demo.tscn")
@@ -84,6 +86,7 @@ func _ready() -> void:
 		elif arg.begins_with("--campaign-speed="): _campaign_speed = int(arg.trim_prefix("--campaign-speed="))
 		elif arg.begins_with("--campaign-hide="): _campaign_hide = arg.trim_prefix("--campaign-hide=")
 		elif arg == "--campaign-paused": _campaign_paused = true
+		elif arg == "--sim-thread=off": _sim_thread = false
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), _gpu_timing)
 	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"] or _camera_scope not in ["hero", "near", "wide"]:
 		push_error("Invalid diagnostic parameters (positive population, >61 frames, battle/campaign mode)")
@@ -99,6 +102,7 @@ func _ready() -> void:
 		_world = World.instantiate()
 		_world.cache_static_artwork = _map_cache
 		_world.profile_map_frames = true
+		_world.sim_thread = _sim_thread
 		add_child(_world)
 		return
 	var c := Catalog.new()
@@ -204,6 +208,7 @@ func _process(_delta: float) -> void:
 		_times.append(now - _last)
 		if _world != null:
 			if _world.map_steps > 0: _campaign_step_us.append(_world.map_step_us)
+			_campaign_main_us.append(_world.map_main_us)
 			_campaign_hud_us.append(_world.map_hud_us)
 		if _view != null:
 			_view.frame_profile.minimap_us = _view._navigation.last_draw_usec
@@ -261,6 +266,7 @@ func _finish() -> void:
 			tail_us += sorted[i]
 		report.merge({"world_clock_paused":_world.state.clock.paused,"world_clock_speed":_world.state.clock.speed,
 			"campaign_start":_campaign_start,"hidden_layer":_campaign_hide,
+			"world_main_thread":Stats.stats(_campaign_main_us) if not _campaign_main_us.is_empty() else {},
 			"world_active_step_frames":Stats.stats(_campaign_step_us) if not _campaign_step_us.is_empty() else {},
 			"world_hud":Stats.stats(_campaign_hud_us),
 			"fps_mean":1000.0 / report.frame.mean_ms,"fps_1pct_low":1000000.0 * tail_count / maxf(1.0, tail_us),

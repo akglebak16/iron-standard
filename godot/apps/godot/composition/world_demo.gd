@@ -46,7 +46,28 @@ signal title_requested
 ## Start the campaign scene again (loading another save from the pause menu).
 signal campaign_requested
 
-var state: RefCounted
+## The world. While the simulation thread runs a step (world_sim_thread.gd) the world is its own: reading `state` waits
+## for that step, so every handler and window sees a whole world. _process never waits: it asks _sim.poll() first.
+var state: RefCounted:
+	get:
+		if _sim != null:
+			_sim.take()
+		return _state
+	set(value):
+		_state = value
+var _state: RefCounted
+const WorldSimThread = preload("res://apps/godot/composition/world_sim_thread.gd")
+## One world step at a time runs on a worker thread and the map is drawn from frozen copies meanwhile (ADR-024).
+## Off in headless runs (tests drive the world step by step) unless a benchmark turns it on.
+var sim_thread := DisplayServer.get_name() != "headless"
+var _sim: WorldSimThread
+var _frozen := false
+var _frozen_at := Vector2.ZERO
+var _frozen_speed := 1
+var _pending_dt := 0.0
+var _events: Array = []  # [handler, args] of world signals raised inside a step on the worker; run when the world is back
+var _no_arg := RefCounted.new()
+var _hitch_log := 0
 var map_view: Node2D
 var _meeting: Dictionary = {}
 var _dialog: CanvasLayer
@@ -59,6 +80,8 @@ var _siege: CanvasLayer
 var _menu: CanvasLayer
 var _slots: CanvasLayer
 var _marks: Node2D
+var _others: Node2D
+var _party_layer: Node2D
 var _siege_hold := false
 var _loot_pending: Dictionary = {}
 var _battle_ticket: RefCounted
@@ -82,6 +105,7 @@ var profile_map_frames := false
 var map_step_us := 0
 var map_hud_us := 0
 var map_steps := 0
+var map_main_us := 0  # time of this node's _process on the main thread
 
 func _startup_mark(stage: String) -> void:
 	if profile_startup:
@@ -153,6 +177,7 @@ func _ready() -> void:
 	var factions := FactionCatalog.new()
 	ContentLoader.populate(factions)
 	var others := WorldPartiesLayer.new()
+	_others = others
 	map_view.add_child(others)
 	others.build(state.roster, state.player)
 	others.motion = _motion
@@ -160,6 +185,7 @@ func _ready() -> void:
 	map_view.add_child(_marks)
 	_marks.build(state)
 	var party_layer := PartyLayer.new()
+	_party_layer = party_layer
 	map_view.add_child(party_layer)
 	party_layer.build(state.player, preload("res://apps/godot/visuals/original_art.gd").palette("player"), state.gear)
 	party_layer.motion = _motion
@@ -221,12 +247,12 @@ func _ready() -> void:
 	add_child(_siege)
 	_siege.assault.connect(_on_assault)
 	_siege.closed.connect(func(): if not _siege_hold: state.clock.paused = false)
-	state.siege_requested.connect(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s))
-	state.settlement_entered.connect(func(s: Dictionary): state.clock.paused = true; _town_remark(s); _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null))
-	state.settlement_changed.connect(func(_s): map_view.refresh_settlements())
-	state.log_added.connect(func(text: String):
+	state.siege_requested.connect(_ev(func(s: Dictionary): state.clock.paused = true; _siege.open_for(state, s)))
+	state.settlement_entered.connect(_ev(func(s: Dictionary): state.clock.paused = true; _town_remark(s); _town.open_for(state, s); UiSounds.play(self, "click"); _autosave.save(state, _battle != null)))
+	state.settlement_changed.connect(_ev(func(_s): map_view.refresh_settlements()))
+	state.log_added.connect(_ev(func(text: String):
 		hud.show_notice(text)
-		if text.begins_with("Задание выполнено"): UiSounds.play(self, "coin"))
+		if text.begins_with("Задание выполнено"): UiSounds.play(self, "coin")))
 	_bridge = Bridge.new(ContentLoader.registry(), state.roster.rng)
 	_dialog = EncounterDialog.new()
 	add_child(_dialog)
@@ -234,7 +260,7 @@ func _ready() -> void:
 	if not (ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/composition/world_demo.gd")
 		return
-	state.party_met.connect(_on_party_met)
+	state.party_met.connect(_ev(_on_party_met))
 	if focus.size() == 3:
 		camera.detached = true
 		camera.position = Vector2(focus[0], focus[1])
@@ -247,11 +273,49 @@ func _ready() -> void:
 	loading.queue_free()
 	camera.set_process(true)
 	camera.set_process_unhandled_input(true)
+	if sim_thread:
+		_sim = WorldSimThread.new()
+		if not _sim.start(_state):
+			_sim = null
 	_ready_to_play = true
 	_startup_mark("input_ready")
 
+## A handler of a world signal. Raised inside a step on the simulation thread it is put off until the world is back
+## on the main thread (_thaw); raised on the main thread it runs at once, as before.
+func _ev(handler: Callable) -> Callable:
+	return func(a: Variant = _no_arg, b: Variant = _no_arg) -> void:
+		var args: Array = []
+		for v in [a, b]:
+			if not is_same(v, _no_arg):
+				args.append(v)
+		if OS.get_thread_caller_id() != OS.get_main_thread_id():
+			_events.append([handler, args])
+		else:
+			handler.callv(args)
+
+func _freeze() -> void:
+	_frozen = true
+	_frozen_at = Vector2(_state.player.x, _state.player.y)
+	_frozen_speed = _state.clock.speed
+	_others.freeze()
+	_party_layer.freeze()
+	_marks.frozen = true
+
+func _thaw() -> void:
+	_frozen = false
+	_others.thaw()
+	_party_layer.thaw()
+	_marks.frozen = false
+	var events := _events
+	_events = []
+	for e in events:
+		(e[0] as Callable).callv(e[1])
+
 func _exit_tree() -> void:
 	_ready_to_play = false
+	if _sim != null:
+		_sim.stop()
+		_sim = null
 	if _world_job != null:
 		var abandoned = _world_job.wait_to_finish()
 		_world_job = null
@@ -641,17 +705,58 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
-	var started := Time.get_ticks_usec() if profile_map_frames else 0
-	var steps: int = state.advance(delta)
-	if profile_map_frames:
-		map_steps = steps
-		map_step_us = Time.get_ticks_usec() - started
+	if _sim != null and not _sim.poll():
+		# A world step is running on the simulation thread: draw the frozen copies and touch nothing of the world.
+		_pending_dt += delta
+		_motion.tick(delta, true, 0.0, _frozen_speed)
+		if not camera.detached:
+			camera.position = _motion.at(-1, _frozen_at)
+		_log_hitch(delta, 0, 0)
+		map_main_us = 0
+		return
+	var frame_from := Time.get_ticks_usec()
+	if _frozen:
+		_thaw()  # runs what the step raised: a meeting or a town may open here
+		if _battle != null:
+			return
+	var started := Time.get_ticks_usec()
+	var sim_us := 0
+	if _sim != null:
+		state.tick_time(delta + _pending_dt)
+		_pending_dt = 0.0
+		if profile_map_frames:
+			map_steps = 1 if _sim.last_step_us > 0 else 0
+			map_step_us = _sim.last_step_us
+			_sim.last_step_us = 0
+	else:
+		var steps: int = state.advance(delta)
+		sim_us = Time.get_ticks_usec() - started
+		if profile_map_frames:
+			map_steps = steps
+			map_step_us = sim_us
 	_camp_talk()
 	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
-	if _autosave.crossed_midnight(state):
+	var save_due: bool = _autosave.crossed_midnight(state)
+	if save_due and _sim == null:
 		_autosave.save(state, false)
 	if not camera.detached:
 		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
-	if profile_map_frames: started = Time.get_ticks_usec()
+	started = Time.get_ticks_usec()
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
-	if profile_map_frames: map_hud_us = Time.get_ticks_usec() - started
+	var hud_us := Time.get_ticks_usec() - started
+	if profile_map_frames: map_hud_us = hud_us
+	_log_hitch(delta, sim_us, hud_us)
+	# The next due step goes to the simulation thread; this frame and the next ones are drawn from frozen copies.
+	if _sim != null and _battle == null and save_due:
+		_freeze()
+		_sim.give(_autosave.save.bind(_state, false))  # the midnight autosave writes the whole world: off the main thread too
+	elif _sim != null and _battle == null and not state.clock.paused and (state.waiting or state.is_moving()) and state.clock.backlog() >= 1.0:
+		_freeze()
+		_sim.give()
+	map_main_us = Time.get_ticks_usec() - frame_from
+
+## A long frame is written to the log (--log-file): how hitches are found on a real machine.
+func _log_hitch(delta: float, sim_us: int, hud_us: int) -> void:
+	if delta > 0.0125 and _hitch_log < 400:
+		_hitch_log += 1
+		print("HITCH %.1f ms (previous frame); world on this thread %d us, hud %d us, thread %s, step running %s" % [delta * 1000.0, sim_us, hud_us, _sim != null, _frozen])
