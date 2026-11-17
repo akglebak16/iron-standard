@@ -6,6 +6,9 @@ extends RefCounted
 ## "goal" that the jitter metric watches, next to tid/sid/chase of the player; before 2a parties had no goal field.
 ## Since stage 2b the observer also listens to world_wars.operation (campaigns, lords left home, retreats, relief) and
 ## measures how close the host keeps to its marshal on the march; a signal connection changes nothing in the world.
+## Since stage 2c it follows the undead crisis (DESIGN.md §5.5): where and how fast the dead go, what the living lose
+## and retake, whether the invasion burns out or overruns the world, and how long undead parties stand idle. It listens
+## to world_undead.announced (storms) and, when present, world_undead.wave (the director of the invasion).
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -25,6 +28,8 @@ const RELIEF_MIN_TROOPS := 36       # 18 × MK, the relief threshold of world_wa
 const RELIEF_GRACE_HOURS := 12      # world_wars sends relief after 10 h of siege; a helper nearby this long is a miss
 const FLEE_SAFE_RADIUS := 300.0     # search radius of the threat-map alternative for a flight
 const HOST_RADIUS := 150.0          # a follower this close to the marshal keeps up with the host (OP_MUSTER_RADIUS)
+const UNDEAD_STAND_STREAK_HOURS := 12 # an undead party standing idle this long in a row counts as stuck
+const UNDEAD_BURN_RADIUS := 60.0      # a village that caught fire with an undead party this close was burnt by the dead
 
 var world: RefCounted
 var steps := 0
@@ -56,6 +61,11 @@ var _burnt := {}        # settlement id -> was burning at the last hour
 var _burns := 0         # villages set on fire (by the dead or by raids)
 var _ops_log: Array = [] # every operation event with its day
 var _skip := {}         # settlement id -> {why: true}: relief was due but not sent (busy elsewhere, too weak)
+var _undead := {"armies": 0, "raids": 0, "party_hours": 0, "idle_hours": 0, "gather_hours": 0, "roam_hours": 0, "stuck": 0,
+	"max_stand": 0, "storms": 0, "storms_won": 0, "burns": 0, "captures": [], "retaken": [], "armies_gone_day": -1, "waves": [],
+	"reach_sum": 0.0, "reach_days": 0, "front_max": 0.0, "ruin_campaigns": 0, "ruin_campaigns_won": 0}
+var _undead_seen := {}   # party id -> kind
+var _undead_stand := {}  # party id -> hours standing idle in a row
 var _ops := {"campaigns": 0, "kept": 0, "lords_out": 0, "retreat_weak": 0, "retreat_home": 0, "relief": 0, "march_hours": 0, "march_share": 0.0}
 var heat_cols := 0
 var heat_rows := 0
@@ -103,6 +113,9 @@ func _init(w: RefCounted) -> void:
 	world.threat_map()  # from now on hour_tick refreshes it; it spends no RNG
 	if world.wars.has_signal("operation"):
 		world.wars.operation.connect(_on_operation)
+	world.undead.announced.connect(_on_undead_news)
+	if world.undead.has_signal("wave"):
+		world.undead.wave.connect(_on_wave)
 	for k in world.wars.wars:
 		_wars[k] = int(world.wars.wars[k].since)
 	for s in world.map.settles:
@@ -200,6 +213,7 @@ func observe_hour() -> void:
 	_observe_heat()
 	_observe_burns()
 	_observe_marches()
+	_observe_undead()
 	var crisis: Dictionary = world.undead.crisis
 	if crisis.get("on", false) and _crisis.start_day < 0:
 		_crisis.start_day = day
@@ -235,6 +249,10 @@ func _observe_owners(day: int) -> void:
 		var was: String = _owners.get(s.id, s.fac)
 		if was != s.fac:
 			_owner_log.append({"day": day, "id": s.id, "name": s.get("name", ""), "kind": s.kind, "from": was, "to": s.fac})
+			if s.fac == "undead" and s.kind != "camp":
+				_undead.captures.append({"day": day, "after": day - int(_crisis.start_day), "id": s.id, "kind": s.kind, "from": was, "dist": _barrow_dist(s)})
+			elif was == "undead" and s.fac in Rules.REAL_FACTIONS and s.kind != "camp":
+				_undead.retaken.append({"day": day, "id": s.id, "kind": s.kind, "by": s.fac})
 			_owners[s.id] = s.fac
 	var alive: Array = world.wars.factions_alive()
 	for f in _alive:
@@ -306,6 +324,8 @@ func _observe_sieges(day: int) -> void:
 func _on_operation(e: Dictionary) -> void:
 	match String(e.get("what", "")):
 		"start":
+			if bool(e.get("ruin", false)):
+				_undead.ruin_campaigns += 1
 			_ops.campaigns += 1
 			_ops.kept += int(e.get("keep", 0))
 			_ops.lords_out += int(e.get("army", 0))
@@ -313,6 +333,8 @@ func _on_operation(e: Dictionary) -> void:
 			_ops["retreat_" + String(e.get("why", "weak"))] = int(_ops.get("retreat_" + String(e.get("why", "weak")), 0)) + 1
 		"relief":
 			_ops.relief += 1
+		"retaken":
+			_undead.ruin_campaigns_won += 1
 		"no_relief":
 			if not _skip.has(e.sid):
 				_skip[e.sid] = {}
@@ -351,7 +373,97 @@ func _observe_burns() -> void:
 		var on := int(s.get("burnt", 0)) > 0
 		if on and not _burnt.get(s.id, false):
 			_burns += 1
+			for p in world.roster.parties:
+				if p.fac == "undead" and p.kind != "camp" and Vector2(p.x - s.x, p.y - s.y).length() < UNDEAD_BURN_RADIUS:
+					_undead.burns += 1
+					break
 		_burnt[s.id] = on
+
+## Distance from a point to the nearest barrow of the crisis (also destroyed ones: where the wave came from).
+func _barrow_dist(s: Dictionary) -> float:
+	var best := -1.0
+	for id in world.undead.crisis.get("src", []):
+		var b: Dictionary = world.map.settlement_by_id(int(id))
+		if b.is_empty():
+			continue
+		var d := Vector2(b.x - s.x, b.y - s.y).length()
+		if best < 0.0 or d < best:
+			best = d
+	return best
+
+## Storms of towns and castles by the dead, from the chronicle (the text is the only trace of a failed storm).
+func _on_undead_news(text: String) -> void:
+	if "пал под натиском мертвецов" in text:
+		_undead.storms += 1
+		_undead.storms_won += 1
+	elif "отбил натиск мертвецов" in text:
+		_undead.storms += 1
+
+## Decisions of the invasion director (stage 2c): a new target or a change between gathering and attacking.
+func _on_wave(e: Dictionary) -> void:
+	var row := e.duplicate()
+	row.day = _day()
+	row.hour = int(world.clock.hour)
+	_undead.waves.append(row)
+
+## Hourly: undead parties standing idle, gathering or roaming aimlessly; daily at noon how far the armies are from home.
+func _observe_undead() -> void:
+	if not world.undead.crisis.get("on", false):
+		return
+	var seen := {}
+	var armies := 0
+	for p in world.roster.parties:
+		if p.fac != "undead" or p.kind == "camp":
+			continue
+		if not _undead_seen.has(p.id):
+			_undead_seen[p.id] = p.kind
+			if p.kind == "dead":
+				_undead.armies += 1
+			else:
+				_undead.raids += 1
+		if p.kind == "dead":
+			armies += 1
+		if p.hide or p.get("fight", false):
+			continue
+		_undead.party_hours += 1
+		var goal := String(p.get("goal", ""))
+		var standing: bool = p.pi >= p.path.size()
+		if standing and goal == "muster":
+			_undead.gather_hours += 1
+		elif standing:
+			_undead.idle_hours += 1
+			seen[p.id] = true
+			var n := int(_undead_stand.get(p.id, 0)) + 1
+			_undead_stand[p.id] = n
+			if n == UNDEAD_STAND_STREAK_HOURS:
+				_undead.stuck += 1
+			_undead.max_stand = maxi(int(_undead.max_stand), n)
+		elif p.state == "roam" and goal == "":
+			_undead.roam_hours += 1
+	for id in _undead_stand.keys():
+		if not seen.has(id):
+			_undead_stand.erase(id)
+	var day := _day()
+	if armies == 0 and _undead.armies > 0 and int(_undead.armies_gone_day) < 0:
+		_undead.armies_gone_day = day
+	elif armies > 0:
+		_undead.armies_gone_day = -1
+	if int(world.clock.hour) != 12:
+		return
+	var sum := 0.0
+	var n_armies := 0
+	for p in world.roster.parties:
+		if p.kind == "dead" and p.get("src") != null:
+			var b: Dictionary = world.map.settlement_by_id(int(p.src))
+			if not b.is_empty():
+				sum += Vector2(p.x - b.x, p.y - b.y).length()
+				n_armies += 1
+	if n_armies > 0:
+		_undead.reach_sum += sum / n_armies
+		_undead.reach_days += 1
+	for s in world.map.settles:
+		if s.fac == "undead" and s.kind != "camp":
+			_undead.front_max = maxf(float(_undead.front_max), _barrow_dist(s))
 
 ## Goal shares by kind of party: the part of party-steps spent on each goal ("army": in a faction campaign,
 ## "inside": resting inside a settlement, "none": no goal).
@@ -416,6 +528,11 @@ func _observe_day(day: int) -> void:
 		var n: int = world.wars.hold_of(f).all
 		total += n
 	var undead_n: int = world.wars.hold_of("undead").all
+	var undead_core: int = world.wars.hold_of("undead").core
+	var core_total := 0
+	for s in world.map.settles:
+		if s.kind == "town" or s.kind == "castle":
+			core_total += 1
 	total += undead_n
 	for f in Rules.REAL_FACTIONS:
 		var n: int = world.wars.hold_of(f).all
@@ -451,6 +568,7 @@ func _observe_day(day: int) -> void:
 	_daily.append({"day": day, "leader": leader, "share": float(best) / maxf(1.0, float(total)), "wars": world.wars.wars.size(),
 		"alive": world.wars.factions_alive().size(), "parties": world.roster.parties.size(), "lords": lords,
 		"undead_parties": undead_parties, "undead_troops": undead_troops, "undead_settlements": undead_n,
+		"undead_core_share": float(undead_core) / maxf(1.0, core_total),
 		"front_cells": front_cells, "fronts": fronts})
 
 static func _percentile(values: Array, q: float) -> float:
@@ -541,9 +659,17 @@ func report(seed_value: int, days: int) -> Dictionary:
 			max_leader = d.leader
 	var peak_troops := 0
 	var peak_settlements := 0
+	var peak_core := 0.0
 	for d in _daily:
 		peak_troops = maxi(peak_troops, d.undead_troops)
 		peak_settlements = maxi(peak_settlements, d.undead_settlements)
+		peak_core = maxf(peak_core, float(d.get("undead_core_share", 0.0)))
+	var u_captures: Array = _undead.captures
+	var u_core: Array = u_captures.filter(func(c): return c.kind == "town" or c.kind == "castle")
+	var u_targets := 0
+	for w in _undead.waves:
+		if String(w.get("what", "")) == "target":
+			u_targets += 1
 	var sieges: Array = _siege_log.duplicate()
 	for id in _sieges:
 		var open: Dictionary = _sieges[id].duplicate()
@@ -563,6 +689,21 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"fallen": _fallen.map(func(f): return "%s@%d" % [f.fac, f.day]),
 		"undead_start_day": _crisis.start_day, "undead_end_day": _crisis.end_day, "undead_peak_troops": peak_troops,
 		"undead_peak_settlements": peak_settlements,
+		"undead_armies": _undead.armies, "undead_raids": _undead.raids,
+		"undead_first_capture_after": u_core[0].after if not u_core.is_empty() else -1,
+		"undead_captures": u_core.size(), "undead_captures_by_day100": u_core.filter(func(c): return c.day <= 100).size(),
+		"undead_storms": _undead.storms, "undead_storms_won": _undead.storms_won, "undead_burns": _undead.burns,
+		"undead_retaken": _undead.retaken.size(), "undead_ruin_campaigns": _undead.ruin_campaigns, "undead_ruin_campaigns_won": _undead.ruin_campaigns_won,
+		"undead_reach_mean": float(_undead.reach_sum) / maxf(1.0, _undead.reach_days), "undead_front_max": _undead.front_max,
+		"undead_peak_core_share": peak_core, "undead_final_core_share": float(_daily.back().get("undead_core_share", 0.0)) if not _daily.is_empty() else 0.0,
+		"undead_final_troops": _daily.back().undead_troops if not _daily.is_empty() else 0, "undead_armies_gone_day": _undead.armies_gone_day,
+		"factions_alive_end": world.wars.factions_alive().size(),
+		"undead_idle_share": float(_undead.idle_hours) / maxf(1.0, _undead.party_hours),
+		"undead_gather_share": float(_undead.gather_hours) / maxf(1.0, _undead.party_hours),
+		"undead_roam_share": float(_undead.roam_hours) / maxf(1.0, _undead.party_hours),
+		"undead_stuck_12h": _undead.stuck, "undead_max_stand_hours": _undead.max_stand, "undead_targets": u_targets,
+		"dead_goal_changes_per_day": jitter.get("dead", {}).get("goal_per_day_mean", 0.0),
+		"raid_goal_changes_per_day": jitter.get("raid", {}).get("goal_per_day_mean", 0.0),
 		"lords_died": _lord_log.died.size(), "lords_new": _lord_log.new.filter(func(l): return l.day > 1).size(),
 		"lords_first_day": _lord_log.new.filter(func(l): return l.day <= 1).size(), "vassals_died": _vassal_log.died, "vassals_new": _vassal_log.new,
 		"lord_goal_changes_per_day": lord_j.get("goal_per_day_mean", 0.0), "lord_goal_changes_p95": lord_j.get("goal_per_day_p95", 0.0),
@@ -595,6 +736,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"owners": _owner_log,
 		"fallen": _fallen,
 		"undead": _crisis,
+		"undead_detail": {"captures": _undead.captures, "retaken": _undead.retaken, "waves": _undead.waves},
 		"lords": {"died": _lord_log.died, "new": _lord_log.new},
 		"jitter": jitter,
 		"goal_shares": _goal_shares(),

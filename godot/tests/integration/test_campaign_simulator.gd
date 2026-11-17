@@ -33,7 +33,8 @@ func _check_report(report: Dictionary) -> void:
 	assert(s.seed == SEED and s.days == DAYS and s.hours == DAYS * 24, "ran %d hours" % s.hours)
 	for key in ["wars_declared", "owner_changes", "lords_died", "lord_goal_changes_per_day", "max_share", "sieges",
 			"sieges_no_relief_with_helper", "sieges_defended", "sieges_no_help_with_helper", "villages_burnt", "campaigns", "campaign_kept",
-			"retreats_weak", "retreats_home", "relief_sent", "march_with_marshal", "lord_goals", "edge_idle_party_hours", "flees", "threat_rebuild_usec", "threat_cells_per_party"]:
+			"retreats_weak", "retreats_home", "relief_sent", "march_with_marshal", "lord_goals", "edge_idle_party_hours", "flees", "threat_rebuild_usec", "threat_cells_per_party",
+			"undead_captures", "undead_storms", "undead_idle_share", "undead_stuck_12h", "undead_reach_mean", "factions_alive_end"]:
 		assert(s.has(key), "summary has %s" % key)
 	assert(s.max_share > 0.0 and s.max_share <= 1.0)
 	assert(s.lord_goal_changes_per_day >= 0.0 and s.lord_state_changes_per_day > 0.0, "lords do something")
