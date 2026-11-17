@@ -11,7 +11,7 @@ func _initialize() -> void:
 	assert(m.at(1, Vector2(100, 100)) == Vector2(100, 100), "First sight is drawn where it is")
 	m.tick(0.016, true, 0.0, 1)
 	assert(m.at(1, Vector2(110, 100)) == Vector2(100, 100), "Right after a step the figure is still at the old point")
-	m.tick(0.4, true, 0.5, 1)
+	m.tick(WorldMotion.STEP_SECONDS * 0.5, true, 0.5, 1)
 	assert(m.at(1, Vector2(110, 100)).is_equal_approx(Vector2(105, 100)), "Half a step drawn halfway")
 	m.tick(0.016, false, 0.5, 1)
 	m.tick(1.0, false, 0.5, 1)
