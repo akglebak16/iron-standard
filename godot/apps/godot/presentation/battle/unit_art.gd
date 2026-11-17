@@ -27,6 +27,7 @@ var atlas: RefCounted
 var _cache: Dictionary = {}
 var _troop_ids := {}
 var _variants := {}
+var _severed_cache: Dictionary = {}
 
 func configure_identities(ids: Dictionary, variants: Dictionary) -> void:
 	_troop_ids = ids.duplicate()
@@ -71,6 +72,54 @@ func detached_head(unit: Dictionary) -> Texture2D:
 	if not entry.has("head"):
 		entry.head = _texture(_head_shapes(unit.look, _palette(unit)))
 	return entry.head
+
+## Split the existing bust at the waist; retain the horse and lower stump.
+## Cache by appearance, never by casualty, and keep full-size image coordinates.
+func split_torso(unit: Dictionary) -> Dictionary:
+	var entry := OriginalArt.layers_for(unit)
+	if entry.is_empty():
+		entry = layers(unit)
+	var body: Texture2D = entry.get("corpse", entry.body)
+	var key := body.get_rid()
+	if not _severed_cache.has(key):
+		var image := body.get_image()
+		var anchor: Vector2 = entry.get("anchor", ANCHOR)
+		var scale_value: float = entry.get("scale", SPRITE_SCALE)
+		var lower := Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
+		if unit.mounted:
+			# Isolate the rider before slicing: a horizontal cut of the cavalry
+			# atlas also severs the horse's neck and launches it with the rider.
+			var foot := unit.duplicate()
+			foot.mounted = false
+			var rider := OriginalArt.layers_for(foot)
+			var offset := Vector2i(Vector2(entry.head_center) - Vector2(rider.head_center))
+			var rider_image: Image = rider.corpse.get_image()
+			image = Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
+			image.blit_rect(rider_image, Rect2i(Vector2i.ZERO, rider_image.get_size()), offset)
+			lower = OriginalArt.mount_corpse(unit, image.get_size())
+		var cut := clampi(roundi(Vector2(entry.get("head_center", HEAD_CENTER)).y + 22.0 / scale_value), 1, image.get_height() - 1)
+		var upper := Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
+		upper.blit_rect(image, Rect2i(0, 0, image.get_width(), cut), Vector2i.ZERO)
+		lower.blend_rect(image, Rect2i(0, cut, image.get_width(), image.get_height() - cut), Vector2i(0, cut))
+		_severed_cache[key] = {"upper": ImageTexture.create_from_image(upper),
+			"lower": ImageTexture.create_from_image(lower), "anchor": Vector2(anchor.x, cut - 12.0 / scale_value),
+			"scale": scale_value}
+	return _severed_cache[key]
+
+func detached_leg(unit: Dictionary) -> Texture2D:
+	var original := OriginalArt.layers_for(unit)
+	var entry := layers(unit) if original.is_empty() else original
+	var key := "leg:" + str(entry.body.get_rid())
+	if not _severed_cache.has(key):
+		var skin := skin_color(unit).to_html()
+		var cloth := sleeve_color(unit).to_html()
+		var shapes := _path("M24 39L40 39L45 45L40 50L24 48Z", "#" + cloth)
+		shapes += _path("M40 43L51 43L51 48L40 49Z", "#" + skin)
+		shapes += _path("M49 42L57 42L57 51L52 53L49 48Z", WOOD)
+		if unit.look.get("undead") == "skel":
+			shapes = '<path d="M24 44L52 46" stroke="#e2dac4" stroke-width="4"/><circle cx="24" cy="44" r="3"/><circle cx="52" cy="46" r="3"/>'
+		_severed_cache[key] = _texture(shapes)
+	return _severed_cache[key]
 
 static func skin_color(unit: Dictionary) -> Color:
 	return Color(SKIN.get(unit.look.get("undead"), DEFAULT_SKIN))

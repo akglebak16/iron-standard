@@ -2,7 +2,7 @@ extends RefCounted
 
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const Event = preload("res://core/battle/combat_event.gd")
-enum Part { HEAD, ARM, BONE, FRAGMENT }
+enum Part { HEAD, ARM, BONE, FRAGMENT, LEG, TORSO }
 
 const MAX_ACTIVE := 70
 const MAX_SETTLED := 600
@@ -29,6 +29,8 @@ const PROFILES := {
 	Part.ARM: {"lift": Vector2(100, 180), "speed": Vector2(50, 120), "size": Vector2.ZERO, "spread": 0.0},
 	Part.BONE: {"lift": Vector2(80, 180), "speed": Vector2(40, 120), "size": Vector2(4, 7), "spread": 1.0},
 	Part.FRAGMENT: {"lift": Vector2(60, 160), "speed": Vector2(40, 110), "size": Vector2(2.5, 4), "spread": 0.8},
+	Part.LEG: {"lift": Vector2(90, 160), "speed": Vector2(40, 100), "size": Vector2.ZERO, "spread": 0.0},
+	Part.TORSO: {"lift": Vector2(70, 120), "speed": Vector2(30, 70), "size": Vector2.ZERO, "spread": 0.0},
 }
 
 var native_enabled := true
@@ -72,6 +74,8 @@ static func head_offset(unit: Dictionary) -> Vector2:
 func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int = 1) -> void:
 	var unit: Dictionary = event.target_visual
 	var offset := Vector2(0, -ARM_HEIGHT) if kind == Part.ARM else head_offset(unit)
+	if kind == Part.LEG: offset = Vector2(0, -5)
+	if kind == Part.TORSO: offset = Vector2(0, -20)
 	var floor_point: Vector2 = event.position + Vector2(offset.x, 0)
 	var profile: Dictionary = PROFILES[kind]
 	for i in count:
@@ -95,6 +99,17 @@ func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int 
 				part.skin = Art.skin_color(unit)
 			Part.BONE:
 				part.velocity.y = _sample(FALLBACK_HORIZONTAL)
+			Part.LEG:
+				part.texture = _art.detached_leg(unit)
+				part.anchor = Vector2(40, 45)
+				part.scale = Art.SPRITE_SCALE
+				part.mirrored = cos(float(unit.facing)) < 0.0
+			Part.TORSO:
+				var split := _art.split_torso(unit)
+				part.texture = split.upper
+				part.anchor = split.anchor
+				part.scale = split.scale
+				part.mirrored = cos(float(unit.facing)) < 0.0
 		_active.append(part)
 
 func advance(dt: float, splashes: Array[Dictionary]) -> Array[Dictionary]:
@@ -114,7 +129,7 @@ func advance(dt: float, splashes: Array[Dictionary]) -> Array[Dictionary]:
 		part.velocity *= DRAG
 		part.spin *= SPIN_DRAG
 		if part.vertical_speed < REST_SPEED:
-			if part.kind in [Part.HEAD, Part.ARM] and part.color.a > 0.0:
+			if part.kind in [Part.HEAD, Part.ARM, Part.LEG, Part.TORSO] and part.color.a > 0.0:
 				settled_with_blood.append(part)
 			_settle(part)
 			_active.remove_at(i)
@@ -149,7 +164,7 @@ static func _draw(canvas: CanvasItem, part: Dictionary) -> void:
 	var position: Vector2 = part.position - Vector2(0, part.height)
 	canvas.draw_set_transform(position, part.angle)
 	match part.kind:
-		Part.HEAD:
+		Part.HEAD, Part.LEG, Part.TORSO:
 			var direction := -1.0 if part.mirrored else 1.0
 			canvas.draw_set_transform(position, part.angle, Vector2(direction, 1.0) * float(part.get("scale", Art.SPRITE_SCALE)))
 			if part.texture != null:

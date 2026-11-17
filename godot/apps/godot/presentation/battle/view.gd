@@ -436,6 +436,7 @@ func _draw() -> void:
 		CommandGhost.draw(self, _frame.get("player_groups", []), _selection)
 	SiegeDefenseView.draw_under(self, _frame.get("wall_defense", {}), _frame.elapsed_seconds)
 	var figures_started := Time.get_ticks_usec() if profile_frames else 0
+	_figures.split_torsos = _impacts.split_torsos()
 	_figures.draw_compact(self, _frame.render, visible, _impacts.headless_units(), _vegetation.entries, _selection, _clock.alpha(), attract_mode)
 	var shots_started := Time.get_ticks_usec() if profile_frames else 0
 	SiegeDefenseView.draw_over(self, _frame.get("wall_defense", {}))

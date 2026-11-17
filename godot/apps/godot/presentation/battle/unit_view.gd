@@ -75,6 +75,7 @@ func configure_identities(ids: Dictionary, seed_value := 0, reference_variant :=
 ## Set by the view: a corpse that has finished falling is painted once into the ground bake.
 var on_settled := Callable()
 var _baked: Dictionary = {} # unit id -> [unit, headless]
+var split_torsos: Dictionary = {}
 var _corpses: Dictionary = {} # Owned death-event values, no simulation references.
 
 func advance(dt: float, events: Array[Dictionary]) -> void:
@@ -247,6 +248,8 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 		var rotation: float = _fall_rotations.get(unit.id, 1.55)
 		canvas.draw_set_transform_matrix(Motion.fall_transform(at, elapsed, rotation, sprite_scale))
 		var corpse: Texture2D = appearance.get("corpse_headless" if headless else "corpse", appearance.body)
+		if split_torsos.has(unit.id):
+			corpse = _art.split_torso(unit).lower
 		canvas.draw_texture(corpse, Motion.fall_offset(anchor, elapsed), Color(1, 1, 1, Motion.fall_alpha(elapsed)))
 		canvas.draw_set_transform_matrix(Transform2D.IDENTITY)
 		return
