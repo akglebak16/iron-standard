@@ -49,6 +49,7 @@ var _campaign_ready := false
 var _campaign_start := {}
 var _campaign_hide := ""
 var _campaign_paused := false
+var _slice_us := -1  # world simulation budget per frame, µs (-1 = the game default, 0 = no slicing)
 var _campaign_step_us: Array[int] = []
 var _campaign_hud_us: Array[int] = []
 const Stats = preload("res://tests/performance/battle_benchmark.gd")
@@ -84,6 +85,7 @@ func _ready() -> void:
 		elif arg.begins_with("--campaign-speed="): _campaign_speed = int(arg.trim_prefix("--campaign-speed="))
 		elif arg.begins_with("--campaign-hide="): _campaign_hide = arg.trim_prefix("--campaign-hide=")
 		elif arg == "--campaign-paused": _campaign_paused = true
+		elif arg.begins_with("--slice-us="): _slice_us = int(arg.trim_prefix("--slice-us="))
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), _gpu_timing)
 	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"] or _camera_scope not in ["hero", "near", "wide"]:
 		push_error("Invalid diagnostic parameters (positive population, >61 frames, battle/campaign mode)")
@@ -99,6 +101,7 @@ func _ready() -> void:
 		_world = World.instantiate()
 		_world.cache_static_artwork = _map_cache
 		_world.profile_map_frames = true
+		if _slice_us >= 0: _world.slice_us = _slice_us
 		add_child(_world)
 		return
 	var c := Catalog.new()

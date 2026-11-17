@@ -3,6 +3,7 @@ extends RefCounted
 const WorldMap = preload("res://core/campaign/world/world_map.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const WorldClock = preload("res://core/campaign/world/world_clock.gd")
+const SliceBudget = preload("res://core/campaign/world/slice_budget.gd")
 const PlayerParty = preload("res://core/campaign/world/player_party.gd")
 const PartyRoster = preload("res://core/campaign/world/party_roster.gd")
 const PartyAI = preload("res://core/campaign/world/party_ai.gd")
@@ -69,10 +70,24 @@ var _threat_step := 0         # world steps and hours so far in this session (no
 var _threat_built := -1
 ## Standing still on purpose (G.wait): time passes although the party does not move. Not saved, like in the browser.
 var waiting := false
+## Spreads step() and hour_tick() over frames when the game runs the world through advance_async (see slice_budget.gd).
+var slicer := SliceBudget.new()
+var _async_running := false
+var _dispose_pending := false
 
 ## Release owned subscriptions and the deliberate cross-links between campaign systems.
 ## Called when leaving the campaign; disposing one context must not clear another's data.
 func dispose() -> void:
+	if _async_running:
+		# A sliced step is paused between two frames and still uses the systems: let it finish at once (no more pauses),
+		# the release happens when it is done.
+		slicer.budget_us = 0
+		slicer.active = false
+		_dispose_pending = true
+		return
+	_dispose_now()
+
+func _dispose_now() -> void:
 	for source in [wars, undead, clans, quests, companions, vassals, siege]:
 		if source == null: continue
 		for info in source.get_signal_list():
@@ -137,6 +152,8 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.wars.player = state.player
 	state.wars.threat = func(x: float, y: float, f: String) -> float: return state.threat_map().threat(x, y, state.threat_enemies(f))
 	state.ai = PartyAI.new(state.roster, state.player)
+	state.ai.slicer = state.slicer
+	state.wars.slicer = state.slicer
 	state.undead = WorldUndead.new(state.roster, state.wars)
 	state.undead.init()
 	state.undead.announced.connect(func(t): state.log_world(t, JOURNAL_BAD))
@@ -200,6 +217,26 @@ func advance(real_dt: float) -> int:
 		return 0
 	return clock.advance(real_dt, step, hour_tick)
 
+## advance() for the game: the work of a step or an hour is paused between frames once it has used its budget
+## (slicer.budget_us), and the next step starts when the previous one is done. Call it every frame without awaiting.
+func advance_async(real_dt: float) -> void:
+	if _async_running:
+		if waiting or is_moving():
+			clock.add_time(real_dt)
+		return
+	if not (waiting or is_moving()):
+		return
+	_async_running = true
+	slicer.begin()
+	await clock.advance_async(real_dt, step, hour_tick)
+	slicer.end()
+	_async_running = false
+	if _dispose_pending:
+		_dispose_now()
+
+func sim_busy() -> bool:
+	return _async_running
+
 func is_moving() -> bool:
 	return player.has_route() or player.tid >= 0
 
@@ -242,7 +279,7 @@ func step(dh: float) -> void:
 			if player.enter_id >= 0:
 				enter(map.settlement_by_id(player.enter_id))
 	_meetings()
-	ai.step(dh)
+	await ai.step(dh)
 
 ## A hostile party that reaches the player forces a meeting (stepWorld).
 ## Enters a settlement (townEnter): the party stops, relations with its owner warm up a little.
@@ -278,14 +315,16 @@ func _meetings() -> void:
 func hour_tick() -> void:
 	hours_passed += 1
 	roster.hour_tick(clock.hour)
+	if slicer.due(): await slicer.next_frame()
 	wars.day = clock.day
 	wars.hour = clock.hour
-	wars.war_hour()
+	await wars.war_hour()
 	undead.day = clock.day
 	undead.hour_tick()
 	rel_watch()
 	skirmish.hour_now = wars.now_h()
 	skirmish.hour_tick()
+	if slicer.due(): await slicer.next_frame()
 	if clock.hour == 12:
 		clans.refill()
 	for line in siege.block_hour(player, clock.hour):
@@ -295,6 +334,7 @@ func hour_tick() -> void:
 		var heal := (0.035 if player.inside else (0.006 if player.has_route() else 0.014)) * (1.0 + (float(player.hero.get("int", 1)) - 1.0) * 0.04 + float(player_effects().get("heal", 0.0)))
 		player.hero.hp = minf(1.0, float(player.hero.get("hp", 1.0)) + heal)
 		WorldCompanions.heal(player, heal)
+	if slicer.due(): await slicer.next_frame()
 	if clock.hour == 0:
 		_day_tick()
 	_threat_step += 1

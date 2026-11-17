@@ -79,6 +79,8 @@ var profile_startup := false
 var startup_marks_us := {}
 var _world_job: Thread
 var profile_map_frames := false
+## Time budget (µs) of world simulation per frame; a longer step is continued next frame (0 = no slicing).
+var slice_us := 1800
 var map_step_us := 0
 var map_hud_us := 0
 var map_steps := 0
@@ -641,11 +643,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
-	var started := Time.get_ticks_usec() if profile_map_frames else 0
-	var steps: int = state.advance(delta)
+	state.slicer.budget_us = slice_us
+	state.slicer.now_us = Time.get_ticks_usec
+	state.slicer.frame_signal = func() -> Signal: return get_tree().process_frame
+	state.advance_async(delta)  # not awaited: long world steps rest between frames inside the slice budget
 	if profile_map_frames:
-		map_steps = steps
-		map_step_us = Time.get_ticks_usec() - started
+		map_step_us = state.slicer.take_used_us()
+		map_steps = 1 if map_step_us > 0 else 0
 	_camp_talk()
 	_motion.tick(delta, not state.clock.paused and (state.waiting or state.is_moving()), state.clock.step_fraction(), state.clock.speed)
 	if _autosave.crossed_midnight(state):

@@ -43,6 +43,7 @@ var threat: Callable = Callable() # (x, y, faction) -> enemy strength there on t
 var doomed: Callable = Callable() # () -> {settlement id: mode}: targets of the undead waves (WorldUndead), optional
 var retake: Callable = Callable() # (host, settlement) -> bool: a host storms its ruins held by the dead (WorldUndead), optional
 var ops := CampaignOps.new()
+var slicer: RefCounted = null  # SliceBudget of the world, optional: war_hour() may rest between factions and routes (awaited)
 
 func _init(world_map: WorldMap, party_roster: Roster) -> void:
 	map = world_map
@@ -208,10 +209,16 @@ func war_hour() -> void:
 	_sg_hour()
 	if hour % 2 == 0:
 		for f in factions_alive():
-			_campaign(f)
+			await _campaign(f)
+			await _rest_point()
 		for s in map.settles:
 			if s.get("siege") != null:
 				_siege_tick(s)
+
+## A point where a sliced world step may rest until the next frame (slice_budget.gd).
+func _rest_point() -> void:
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 
 func _party_ids(c: Dictionary) -> Array:
 	return c.army.map(func(id): return roster.party_by_id(id)).filter(func(p): return not p.is_empty() and p.get("army", false))
@@ -249,7 +256,7 @@ func _campaign(f: String) -> void:
 	var enemies := _foes_of(f)
 	var c: Variant = campaigns.get(f)
 	if c != null:
-		_run_campaign(f, c, enemies)
+		await _run_campaign(f, c, enemies)
 		return
 	if hour % 6 != 0:
 		return
@@ -309,9 +316,11 @@ func _campaign(f: String) -> void:
 		p.arrived = false
 		p.hide = false
 		p.wait = 0.0
+	await _rest_point()
 	_go(marshal, best_ms)
 	for p in army:
 		if p != marshal:
+			await _rest_point()
 			_follow(p, marshal)
 	var ruin := ruin_ids.has(best.id)
 	if best.fac == Config.PLAYER_FACTION:
@@ -360,11 +369,13 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 				c.t1 = now_h()
 				_go(marshal, t)
 				for p in followers:
+					await _rest_point()
 					_follow(p, marshal)
 			else:
 				if not at_rally and _idle(marshal):
 					_go(marshal, rally)
 				for p in followers:
+					await _rest_point()
 					_follow(p, marshal)
 		"march":
 			var near := army.filter(func(p): return _dist(p, t) < Config.OP_SIEGE_GATHER)
@@ -382,6 +393,7 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 			elif _idle(marshal):
 				_go(marshal, t)
 			for p in followers:
+				await _rest_point()
 				if close:
 					if _idle(p) and _dist(p, t) >= Config.OP_SIEGE_GATHER:
 						_go(p, t)

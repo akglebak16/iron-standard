@@ -27,6 +27,28 @@ func advance(dt: float, on_step: Callable, on_hour: Callable) -> int:
 			on_hour.call()
 	return steps
 
+## advance() whose callbacks may pause between frames (they are `await`ed): the same loop, the same order.
+func advance_async(dt: float, on_step: Callable, on_hour: Callable) -> int:
+	if paused:
+		return 0
+	_acc += dt * 1.2 * speed
+	var steps := 0
+	while _acc >= STEP and steps < 40:
+		_acc -= STEP
+		steps += 1
+		await on_step.call(STEP)
+		_hour_acc += STEP
+		if _hour_acc >= 1.0:
+			_hour_acc -= 1.0
+			_next_hour()
+			await on_hour.call()
+	return steps
+
+## Time that passes while a sliced run is still busy with the previous step.
+func add_time(dt: float) -> void:
+	if not paused:
+		_acc += dt * 1.2 * speed
+
 ## How far the next step has progressed, 0..1 (drawing interpolates between steps with it).
 func step_fraction() -> float:
 	return clampf(_acc / STEP, 0.0, 1.0)

@@ -24,6 +24,7 @@ var goals := Goals.new()
 var threat_map: Callable = Callable()  # () -> ThreatMap (WorldState.threat_map), optional
 var enemies: Callable = Callable()     # (faction) -> hostile factions on the threat map, optional
 
+var slicer: RefCounted = null  # SliceBudget of the world, optional: lets a step rest between parties (step() is awaited)
 var _map_cache: RefCounted = null
 var _enemy_cache := {}
 var _doom_cache: Variant = null
@@ -105,6 +106,8 @@ func step(dh: float) -> void:
 	for p in roster.parties.duplicate():
 		if p in roster.parties:
 			ai_party(p, dh)
+			if slicer != null and slicer.due():
+				await slicer.next_frame()
 	var list := roster.parties.duplicate()
 	for i in list.size():
 		var a: Dictionary = list[i]
