@@ -16,6 +16,9 @@ const Config = preload("res://core/battle/config.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
+# Cell of the local grids for pursuit and panic: not smaller than MORALE_PURSUIT_RADIUS and MORALE_PANIC_RADIUS, so the
+# 3 x 3 cells around a point hold everyone within either radius. A rout of a dense block must not query every neighbour.
+const CELL := 150.0
 
 static func tick(battle: State) -> void:
 	var motion := battle.motion
@@ -50,6 +53,7 @@ static func tick(battle: State) -> void:
 		very_bad[side] = odds < Config.MORALE_VERY_BAD_ODDS
 		recoveries[side] = Config.MORALE_STRONG_RECOVERY if odds > Config.MORALE_STRONG_ODDS else (Config.MORALE_EVEN_RECOVERY if odds > Config.MORALE_EVEN_ODDS else Config.MORALE_WEAK_RECOVERY)
 	var grouped := battle.groups.size() == 2
+	var pursuers: Array = [] # Lazily: per side, a grid of its live fighters (Morale._pursued).
 	var routed: Array[Unit] = []
 	var rallied := {}
 	# Flags from the columns, not Unit getters: this runs over every fighter once a second.
@@ -64,7 +68,7 @@ static func tick(battle: State) -> void:
 		var kind: int = flags[I.GROUP_KIND * capacity + row]
 		var slot := side * Config.GROUP_KINDS + kind if grouped and kind >= 0 and kind < Config.GROUP_KINDS else -1
 		if flags[I.FLEEING * capacity + row]:
-			if _rout_step(battle, unit, leaders[side], collapsed[side], slot >= 0) and slot >= 0:
+			if _rout_step(battle, unit, leaders[side], collapsed[side], slot >= 0, pursuers) and slot >= 0:
 				rallied[battle.groups[side][kind]] = true
 			continue
 		if bad[side]:
@@ -130,11 +134,13 @@ static func _group_losses(battle: State) -> PackedFloat64Array:
 
 ## A fleeing fighter: recovers unless pursued and turns back once he has recovered enough (only into a group). True when
 ## he rallied.
-static func _rout_step(battle: State, unit: Unit, leaders: PackedVector2Array, collapsed: bool, grouped: bool) -> bool:
+static func _rout_step(battle: State, unit: Unit, leaders: PackedVector2Array, collapsed: bool, grouped: bool, pursuers: Array) -> bool:
 	if unit.rallies >= Config.MORALE_RALLY_LIMIT:
 		return false
 	var at := unit.position
-	if _pursued(battle, unit.side, at):
+	if pursuers.is_empty():
+		pursuers.append_array(_side_grids(battle))
+	if _pursued(battle, pursuers[1 - unit.side], at):
 		return false
 	var recovery := Config.MORALE_ROUT_RECOVERY
 	for leader in leaders:
@@ -152,44 +158,91 @@ static func _rout_step(battle: State, unit: Unit, leaders: PackedVector2Array, c
 	battle.record_unit_notice(Event.Kind.RALLIED, unit)
 	return true
 
-## A ready enemy (not fleeing) within MORALE_PURSUIT_RADIUS.
-static func _pursued(battle: State, side: int, at: Vector2) -> bool:
-	var motion := battle.motion
-	var capacity := motion.capacity
-	var flags := motion.integer_fields
-	var positions := motion.positions
+static func _cell(at: Vector2) -> Vector2i:
+	return Vector2i(floori(at.x / CELL), floori(at.y / CELL))
+
+static func _put(grid: Dictionary, cell: Vector2i, value) -> void:
+	var bucket = grid.get(cell)
+	if bucket == null:
+		grid[cell] = [value]
+	else:
+		bucket.append(value)
+
+## Rows of the live fighters (not dead or gone) of each side by cell; whether one is ready is read when asked.
+static func _side_grids(battle: State) -> Array:
+	var flags := battle.motion.integer_fields
+	var capacity := battle.motion.capacity
+	var positions := battle.motion.positions
 	var I = MotionStore.I
-	var candidates: PackedInt32Array = battle.column_backend.nearby(motion, at, Config.MORALE_PURSUIT_RADIUS) if battle.column_backend != null else PackedInt32Array(range(battle.active_units.size()))
-	for row in candidates:
-		if flags[I.SIDE * capacity + row] == side or flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.FLEEING * capacity + row]:
+	var grids := [{}, {}]
+	for row in battle.active_units.size():
+		if flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row]:
 			continue
-		if positions[row].distance_to(at) < Config.MORALE_PURSUIT_RADIUS:
-			return true
+		_put(grids[flags[I.SIDE * capacity + row]], _cell(positions[row]), row)
+	return grids
+
+## A ready enemy (not fleeing) within MORALE_PURSUIT_RADIUS; `enemies` is the grid of the other side.
+static func _pursued(battle: State, enemies: Dictionary, at: Vector2) -> bool:
+	var flags := battle.motion.integer_fields
+	var capacity := battle.motion.capacity
+	var positions := battle.motion.positions
+	var fleeing: int = MotionStore.I.FLEEING * capacity
+	var center := _cell(at)
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			var bucket = enemies.get(center + Vector2i(dx, dy))
+			if bucket == null:
+				continue
+			for row: int in bucket:
+				if not flags[fleeing + row] and positions[row].distance_to(at) < Config.MORALE_PURSUIT_RADIUS:
+					return true
 	return false
 
 ## Every new flight costs the ready friends within MORALE_PANIC_RADIUS MORALE_PANIC_LOSS, at most MORALE_PANIC_CAP
-## per fighter and check; their own flight, if it comes, waits for the next check.
+## per fighter and check; their own flight, if it comes, waits for the next check. Counted per friend near a flight
+## (cells next to a fugitive's cell), with the same subtractions as one fugitive after another.
 static func _panic(battle: State, routed: Array[Unit]) -> void:
 	if routed.is_empty():
 		return
-	var motion := battle.motion
-	var positions := motion.positions
-	var taken := PackedFloat64Array()
-	taken.resize(battle.active_units.size())
+	var flags := battle.motion.integer_fields
+	var capacity := battle.motion.capacity
+	var positions := battle.motion.positions
+	var I = MotionStore.I
+	var routers := [{}, {}]
+	var near := [{}, {}] # Cells within one cell of a fugitive's cell.
 	for router in routed:
 		var at := router.position
-		var candidates: PackedInt32Array = battle.column_backend.nearby(motion, at, Config.MORALE_PANIC_RADIUS) if battle.column_backend != null else PackedInt32Array(range(battle.active_units.size()))
-		for row in candidates:
-			var unit: Unit = battle.active_units[row]
-			if unit.side != router.side or unit.dead or unit.gone or unit.fleeing or unit.hero or unit.companion or unit.morale_immune:
-				continue
-			if positions[row].distance_to(at) > Config.MORALE_PANIC_RADIUS:
-				continue
-			var loss := minf(Config.MORALE_PANIC_LOSS, Config.MORALE_PANIC_CAP - taken[row])
-			if loss <= 0.0:
-				continue
-			taken[row] += loss
-			unit.morale -= loss
+		var cell := _cell(at)
+		_put(routers[router.side], cell, at)
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				near[router.side][cell + Vector2i(dx, dy)] = true
+	var units := battle.active_units
+	for row in units.size():
+		if flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.FLEEING * capacity + row] or flags[I.HERO * capacity + row]:
+			continue
+		var side: int = flags[I.SIDE * capacity + row]
+		var at := positions[row]
+		var center := _cell(at)
+		if not near[side].has(center):
+			continue
+		var unit: Unit = units[row]
+		if unit.morale_immune or not unit.companion_id.is_empty():
+			continue
+		var taken := 0.0
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				var bucket = routers[side].get(center + Vector2i(dx, dy))
+				if bucket == null:
+					continue
+				for from: Vector2 in bucket:
+					if taken >= Config.MORALE_PANIC_CAP:
+						break
+					if at.distance_to(from) > Config.MORALE_PANIC_RADIUS:
+						continue
+					var loss := minf(Config.MORALE_PANIC_LOSS, Config.MORALE_PANIC_CAP - taken)
+					taken += loss
+					unit.morale -= loss
 
 static func advance(battle: State, dt: float) -> bool:
 	if dt <= 0.0:
