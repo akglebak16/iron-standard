@@ -27,21 +27,21 @@ func _initialize() -> void:
 	root.add_child(tw)
 	await process_frame
 	tw.open_for(s, town)
-	tw.current_tab = "market"
+	tw.current_tab = "goods"
 	tw.render()
 	UiSounds.played.clear()
 	var buy: Button = null
 	for b in tw.body.find_children("", "Button", true, false):
-		if b.text == "Купить" and not b.disabled:
+		if b.text == "+1" and not b.disabled:
 			buy = b
 			break
 	assert(buy != null)
 	buy.pressed.emit()
-	assert(UiSounds.played.size() == 1 and UiSounds.played[0] == "coin", "Buying food rings coins")
+	assert(UiSounds.played.size() == 1 and UiSounds.played[0] == "coin", "Buying goods rings coins")
 	UiSounds.enabled = false
 	buy = null
 	for b in tw.body.find_children("", "Button", true, false):
-		if b.text == "Купить" and not b.disabled:
+		if b.text == "+1" and not b.disabled:
 			buy = b
 			break
 	buy.pressed.emit()

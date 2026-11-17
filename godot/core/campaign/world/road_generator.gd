@@ -60,6 +60,7 @@ func generate(world: Generator, paths: Pathfinder, settles: Array) -> Array:
 		if _dist(b, c) < 380.0:
 			_link(c, b)
 	_bridge_approaches(towns)
+	paths.roads_changed()
 	return roads
 
 func _dist(a: Dictionary, b: Dictionary) -> float:

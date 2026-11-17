@@ -85,7 +85,10 @@ func _initialize() -> void:
 	tw.open_for(s, town)
 	tw.current_tab = "goods"
 	tw.render()
-	assert(tw.body.get_child_count() > 10)
+	assert(tw.body.find_child("GoodsTable", true, false) != null, "the market lists goods")
+	tw._market_view = "gear"
+	tw.render()
+	assert(tw.body.find_child("GearTable", true, false) != null, "the market lists gear")
 	var menu := PauseMenu.new()
 	root.add_child(menu)
 	await process_frame

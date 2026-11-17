@@ -142,14 +142,7 @@ func heading(text: String) -> void:
 
 ## A row: left text (grows), then buttons [{text, disabled, call}].
 func row(text: String, detail: String, buttons: Array = [], portrait := "") -> void:
-	var card := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#20170fe6")
-	style.border_color = Color("#695338")
-	style.set_border_width_all(1)
-	style.border_width_left = 3
-	style.set_content_margin_all(12)
-	card.add_theme_stylebox_override("panel", style)
+	var card := card_panel()
 	var h := HBoxContainer.new()
 	card.add_child(h)
 	h.add_theme_constant_override("separation", 6)
@@ -175,19 +168,35 @@ func row(text: String, detail: String, buttons: Array = [], portrait := "") -> v
 	actions.custom_minimum_size.x = minf(420, preferred_width * 0.4) if not buttons.is_empty() else 0
 	h.add_child(actions)
 	for def in buttons:
-		var b := Button.new()
-		b.text = def.text
-		b.disabled = def.get("disabled", false)
-		b.tooltip_text = def.get("hint", "")
-		b.focus_mode = Control.FOCUS_NONE
-		var action: Callable = def.call
-		var sound: String = def.get("sound", "")
-		b.pressed.connect(func():
-			action.call()
-			if sound != "": UiSounds.play(self, sound)
-			render())
-		actions.add_child(b)
+		actions.add_child(make_button(def))
 	body.add_child(card)
+
+## A button {text, disabled, hint, sound, call}: runs the call, plays the sound and redraws the window.
+func make_button(def: Dictionary) -> Button:
+	var b := Button.new()
+	b.text = def.text
+	b.disabled = def.get("disabled", false)
+	b.tooltip_text = def.get("hint", "")
+	b.focus_mode = Control.FOCUS_NONE
+	var action: Callable = def.call
+	var sound: String = def.get("sound", "")
+	b.pressed.connect(func():
+		action.call()
+		if sound != "": UiSounds.play(self, sound)
+		render())
+	return b
+
+## The card frame rows use: dark panel, thin brass edge, a thicker left edge.
+static func card_panel() -> PanelContainer:
+	var card := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("#20170fe6")
+	style.border_color = Color("#695338")
+	style.set_border_width_all(1)
+	style.border_width_left = 3
+	style.set_content_margin_all(12)
+	card.add_theme_stylebox_override("panel", style)
+	return card
 
 ## The item card (itemDock): name in its tier colour, what it is, figures with ▲/▼ against the worn item,
 ## traits, armour piercing bars and the damage type note, then the action buttons.

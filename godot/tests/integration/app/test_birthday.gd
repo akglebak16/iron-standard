@@ -14,6 +14,13 @@ func _check() -> void:
 	root.add_child(menu)
 	for i in 5: await process_frame
 	var birthday = menu.find_child("VikentyBirthday", true, false)
+	if not preload("res://apps/godot/presentation/birthday/entry.gd").ENABLED:
+		assert(birthday == null, "birthday is switched off")
+		menu.queue_free()
+		for i in 3: await process_frame
+		print("Birthday tests passed (greeting switched off)")
+		quit(0)
+		return
 	assert(birthday != null and birthday._portrait != null)
 	assert(birthday._friends.keys().size() == 2 and birthday._friends.has("glebio") and birthday._friends.has("zahariy"))
 	assert("Викентий Де Будетон" in birthday._greeting.text)

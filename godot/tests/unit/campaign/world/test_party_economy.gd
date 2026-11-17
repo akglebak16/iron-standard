@@ -23,13 +23,12 @@ func _initialize() -> void:
 	var hired := Economy.hire(player, town, troop, 3, fx)
 	assert(hired > 0 and Economy.troop_count(player.troops) == before + hired)
 	assert(player.gold == gold - hired * Economy.hire_cost(troop, fx))
-	# food: grain feeds the party, offers cost gold
+	# food: grain feeds the party; leftover portions of old saves are eaten first
 	assert(Economy.provisions(player) == 60, "10 grain = 60 portions")
 	assert(Economy.eat(player, 10) == 0 and Economy.provisions(player) == 50)
 	assert(Economy.eat(player, 500) > 0 and Economy.provisions(player) == 0)
-	player.gold = 100
-	assert(Economy.buy_food(player, 30, 60) and player.gold == 40 and player.food == 30)
-	assert(not Economy.buy_food(player, 80, 150))
+	player.food = 30  # portions left over from an old save are eaten first
+	assert(Economy.provisions(player) == 30 and Economy.eat(player, 10) == 0 and player.food == 20)
 	# attributes and day upkeep
 	var pts: int = player.hero.pts
 	assert(Economy.spend_attribute(player.hero, "str") and player.hero.pts == pts - 1 and player.hero.str == 2)
