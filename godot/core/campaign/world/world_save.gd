@@ -124,6 +124,16 @@ static func _valid_v1_header(data: Dictionary) -> bool:
 		if not _numbers(fight, ["id", "t0", "a0", "b0"]) or not _number_array(fight.get("A")) or not _number_array(fight.get("B")): return false
 	var crisis: Dictionary = data.get("crisis", {})
 	if not crisis.is_empty() and (not _numbers(crisis, ["day"]) or not _number_array(crisis.get("src")) or not _number_map(crisis.get("left"))): return false
+	if crisis.has("waves") and not _waves(crisis.waves): return false
+	return true
+
+## Waves of the undead invasion (stage 2c, WorldUndead): absent in older saves, then the director picks them anew.
+static func _waves(waves: Variant) -> bool:
+	if not waves is Dictionary: return false
+	for w in waves.values():
+		if not w is Dictionary or not _numbers(w, ["tid", "t0", "tt", "tw", "rx", "ry"]) or not w.get("mode") in ["gather", "attack"]: return false
+		if w.has("sc") and not Checkpoint._number(w.sc): return false
+		if w.has("bad") and not _number_array(w.bad): return false
 	return true
 
 static func _rows(value: Variant) -> bool:
@@ -263,6 +273,12 @@ static func _from_v1(data: Dictionary, europe: EuropeData, definitions: Dictiona
 		crisis.src = src
 		for k in crisis.left:
 			crisis.left[k] = int(crisis.left[k])
+		for w in crisis.get("waves", {}).values():
+			for key in ["tid", "t0", "tt", "tw"]:
+				w[key] = int(w[key])
+			for key in ["rx", "ry", "sc"]:
+				w[key] = float(w.get(key, 0.0))
+			w.bad = w.get("bad", []).map(func(id): return int(id))
 		state.undead.crisis = crisis
 	for c in p.comps:
 		for k in ["lvl", "xp", "pts", "pp", "seed", "str", "vit", "agi", "int", "cha"]:

@@ -162,8 +162,10 @@ const GOAL_PROFILES := {
 		"hunt_ratio": 0.9, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
 	"caravan": {"flee": 1.0, "hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0, "outlaws_only": true,
 		"map_pressure": false},
-	"dead": {"hunt": 1.0, "hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
-	"raid": {"hunt": 1.0, "hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
+	# the dead (stage 2c): armies gather and storm with their wave, raids burn villages ahead of it; neither flees
+	"dead": {"hunt": 0.8, "muster": 0.9, "assault": 1.0, "roam": 0.2,
+		"hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
+	"raid": {"hunt": 1.0, "raid": 0.8, "roam": 0.25, "hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
 }
 const GOAL_PROFILE_OTHER := {"hunt": 1.0, "flee": 1.0, "hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0}
 # The player's retinues (world_vassals.gd MODES): each order is a set of weights over the same goals.
@@ -212,3 +214,39 @@ const OP_RELIEF_MIN_RATIO := 0.6     # relief weaker than this share of the besi
 const OP_RELIEF_MIN_TROOPS := 36     # a relieving lord needs this many men (18 × MK, as before)
 const OP_RELIEF_WAIT_HOURS := 70     # relief that has not gathered by the walls this long goes home (was 40)
 const OP_RELIEF_TRIES := 2           # relief attempts per siege, at least a day apart
+const OP_RUIN_PRIORITY := 300.0      # own ruins held by the dead are campaign targets; their score (distance + defence) drops by this
+const OP_RUIN_DEFENCE := 1.5         # the dead hold their ruins this many times their garrison's strength (WorldUndead.noble_retake)
+
+# Director of the undead invasion (docs/modules/ai/DESIGN.md §5.5, stage 2c). Every barrow sends one wave: it picks a
+# living town or castle, gathers its armies at a rally point short of it and storms it with all of them at once; raids
+# burn the villages ahead. undead_director.gd decides, world_undead.gd carries it out every hour, the armies and raids
+# follow it through their goals (party_goals.gd). Strengths are PartyRules.strength, distances map units, times hours.
+const UNDEAD_TARGET_WORTH := {"town": 1.0, "castle": 0.8} # what a town or castle of the living is worth to the dead
+const UNDEAD_TARGET_RANGE := 1400.0  # distance factor of a target falls from 1 to 1 - falloff at this distance from the wave
+const UNDEAD_DISTANCE_FALLOFF := 0.85
+const UNDEAD_STORM_DEFENCE := 1.3    # walls: a storm meets the garrison and the lords inside this many times (WorldUndead.storm)
+const UNDEAD_FIELD_SHARE := 0.5      # living armies around a target (threat map) count this much towards its defence
+const UNDEAD_WEAK_RATIO := Vector2(0.4, 2.0) # defence in strengths of the wave: weakness factor 1 at x, UNDEAD_WEAK_FLOOR at y
+const UNDEAD_WEAK_FLOOR := 0.1
+const UNDEAD_VILLAGE_RADIUS := 300.0 # living villages this close to a target are prey for the raids ahead of the wave ...
+const UNDEAD_VILLAGE_BONUS := 0.05   # ... each adds this share to the target's score
+const UNDEAD_VILLAGE_BONUS_MAX := 0.3
+const UNDEAD_RETARGET_HOURS := 24    # a gathering wave looks for a better target this often ...
+const UNDEAD_SWITCH_MARGIN := 0.3    # ... and switches only to one scoring this share better
+const UNDEAD_RALLY_DISTANCE := 260.0 # the rally point lies this far short of the target, on the side of the wave
+const UNDEAD_RALLY_RADIUS := 170.0   # an army this close to the rally point (or by the target's walls) has gathered
+const UNDEAD_MIN_GATHER_HOURS := 12  # a wave gathers at least this long after it picked its target: the living hear of it
+const UNDEAD_ATTACK_MARGIN := 1.3    # the wave attacks when its gathered strength is this many times the storm defence ...
+const UNDEAD_GATHER_HOURS := 72      # ... or all its armies have gathered and waited this long with at least ...
+const UNDEAD_ATTACK_MIN := 0.8       # ... this share of the storm defence; after twice as long it attacks with what it has
+const UNDEAD_FALLBACK_SHARE := 0.6   # an attacking wave that fell below this share of the storm defence gathers again
+const UNDEAD_STORM_RADIUS := 110.0   # armies this close to the target storm it together ...
+const UNDEAD_STORM_SHARE := 0.75     # ... once this share of the attacking strength is at the walls ...
+const UNDEAD_STORM_WAIT := 12        # ... or the first army has stood there this long
+const UNDEAD_WALL_WAIT := 2.0        # hours an army at the walls waits between checks of the director
+const UNDEAD_MUSTER_SPREAD := Vector2(10.0, 70.0) # gathering armies stand this far around the rally point
+const UNDEAD_MUSTER_WAIT := 4        # hours an army at the rally point lingers before it looks around again
+const UNDEAD_RAVAGE_RANGE := 700.0   # raids burn villages this far from the front of their wave (its target) ...
+const UNDEAD_RAVAGE_REACH := 900.0   # ... and this far from themselves
+const UNDEAD_ROAM_RANGE := Vector2(60.0, 250.0) # with nothing to do the dead roam this far around their front or barrow
+const UNDEAD_UNKNOWN_GARRISON := 300.0 # strength assumed for a town or castle whose garrison was never raised yet

@@ -5,6 +5,9 @@ extends RefCounted
 ## lords stays home, relief of an own besieged settlement is a defensive operation (one of each kind per faction), a
 ## campaign is called off when its host is spent or home needs it, and the player's holdings are besieged like any
 ## other settlement. campaign_ops.gd decides, this file carries it out.
+## Since stage 2c (DESIGN.md §5.5) the living answer the undead invasion within these operations: a town or castle an
+## undead wave goes for keeps a defender home, and own ruins held by the dead are targets of a campaign even in peace,
+## preferred to enemy towns; the host storms them together (WorldUndead.host_retake) instead of a siege.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const WorldMap = preload("res://core/campaign/world/world_map.gd")
@@ -37,6 +40,8 @@ var clans: RefCounted = null  # WorldClans, optional: rulers, oaths and clan loy
 var player: RefCounted = null # PlayerParty, optional: factions hostile to the player besiege his holdings
 var vassals: RefCounted = null # WorldVassals, optional: a retinue by its fief helps hold a siege of it
 var threat: Callable = Callable() # (x, y, faction) -> enemy strength there on the threat map (WorldState), optional
+var doomed: Callable = Callable() # () -> {settlement id: mode}: targets of the undead waves (WorldUndead), optional
+var retake: Callable = Callable() # (host, settlement) -> bool: a host storms its ruins held by the dead (WorldUndead), optional
 var ops := CampaignOps.new()
 
 func _init(world_map: WorldMap, party_roster: Roster) -> void:
@@ -226,13 +231,30 @@ func hostile_to_player(f: String) -> bool:
 func _threat_at(x: float, y: float, f: String) -> float:
 	return float(threat.call(x, y, f)) if threat.is_valid() else 0.0
 
+## Own towns and castles held by the dead: campaign targets once the dead can be stormed (retake is wired).
+func _own_ruins(f: String) -> Array:
+	return CampaignOps.own_ruins(f, map.settles) if retake.is_valid() else []
+
+static func _is_own_ruin(f: String, t: Dictionary) -> bool:
+	return t.get("fac") == Config.UNDEAD_FACTION and String(t.get("ruinOf", "")) == f
+
+## Strength a host needs to retake ruins: the dead garrison behind the walls (WorldUndead.retake before chance).
+func _ruin_def(t: Dictionary) -> float:
+	return (Rules.strength(garrison_of(t), roster.info) + 4.0) * Config.OP_RUIN_DEFENCE
+
+func _doomed() -> Dictionary:
+	return doomed.call() if doomed.is_valid() else {}
+
 func _campaign(f: String) -> void:
 	var enemies := _foes_of(f)
 	var c: Variant = campaigns.get(f)
 	if c != null:
 		_run_campaign(f, c, enemies)
 		return
-	if enemies.is_empty() or hour % 6 != 0:
+	if hour % 6 != 0:
+		return
+	var ruins := _own_ruins(f)
+	if enemies.is_empty() and ruins.is_empty():
 		return
 	if clans != null and clans.kingless(f):
 		return
@@ -247,7 +269,7 @@ func _campaign(f: String) -> void:
 		return  # home is besieged and the lords at home cannot relieve it: no new campaign until it is relieved or lost
 	# part of the lords stays home: one by each threatened or besieged own town or castle, one while at war
 	var free := lords.filter(func(p): return not p.get("fight", false) and not p.get("army", false) and p.get("relief") == null and _ready(p))
-	var plan := ops.split(free, ops.alerts(f, map.settles, _threat_at))
+	var plan := ops.split(free, ops.alerts(f, map.settles, _threat_at, _doomed()))
 	var army: Array = plan.army
 	total = ops.total(army)
 	if army.is_empty() or (army.size() < 2 and total < 220.0 * MK):
@@ -255,10 +277,14 @@ func _campaign(f: String) -> void:
 	var best := {}
 	var best_ms := {}
 	var best_score := 1e9
+	var ruin_ids := {}
+	for t in ruins:
+		ruin_ids[t.id] = true
 	for t in map.settles:
-		if not t.fac in enemies or t.kind == "camp" or t.kind == "village" or t.get("siege") != null:
+		var ruin := ruin_ids.has(t.id)
+		if not ruin and (not t.fac in enemies or t.kind == "camp" or t.kind == "village" or t.get("siege") != null):
 			continue
-		var def := siege_def(t)
+		var def := _ruin_def(t) if ruin else siege_def(t)
 		if total < def * 0.9:
 			continue
 		var md := 1e9
@@ -268,7 +294,7 @@ func _campaign(f: String) -> void:
 			if d < md:
 				md = d
 				ms = s
-		var score := md + def * 0.6 + roster.rnd(0.0, 120.0)
+		var score := md + def * 0.6 + roster.rnd(0.0, 120.0) - (Config.OP_RUIN_PRIORITY if ruin else 0.0)
 		if score < best_score:
 			best_score = score
 			best = t
@@ -287,11 +313,15 @@ func _campaign(f: String) -> void:
 	for p in army:
 		if p != marshal:
 			_follow(p, marshal)
+	var ruin := ruin_ids.has(best.id)
 	if best.fac == Config.PLAYER_FACTION:
 		holding_news.emit(best, "%s созывает войска: поход на твой %s %s, ведёт %s." % [_name(f), _kind_name(best), best.name, marshal.name], false)
-	_say("%s созывает войска: поход на %s, ведёт %s." % [_name(f), best.name, marshal.name])
-	operation.emit({"what": "start", "f": f, "target": best.id, "army": army.size(), "keep": plan.keep.size(), "marshal": marshal.id})
-	if clans != null and best.fac != Config.PLAYER_FACTION:
+	if ruin:
+		_say("%s созывает войска: отбить у мертвецов %s, ведёт %s." % [_name(f), best.name, marshal.name])
+	else:
+		_say("%s созывает войска: поход на %s, ведёт %s." % [_name(f), best.name, marshal.name])
+	operation.emit({"what": "start", "f": f, "target": best.id, "army": army.size(), "keep": plan.keep.size(), "marshal": marshal.id, "ruin": ruin})
+	if clans != null and best.fac != Config.PLAYER_FACTION and not ruin:
 		clans.on_campaign(f, best)
 
 ## A campaign under way, every 2 hours: retreat when spent or needed at home, then muster, march, siege and rest
@@ -299,7 +329,7 @@ func _campaign(f: String) -> void:
 func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 	var t := map.settlement_by_id(c.tid)
 	var army := _party_ids(c).filter(func(p): return p.fac == f)
-	if t.is_empty() or not t.fac in enemies or army.is_empty():
+	if t.is_empty() or not (t.fac in enemies or _is_own_ruin(f, t)) or army.is_empty():
 		operation.emit({"what": "end", "f": f, "why": "lost" if army.is_empty() else "target", "state": String(c.state), "hours": now_h() - int(c.t0)})
 		_end_campaign(f)
 		return
@@ -340,7 +370,10 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 			var near := army.filter(func(p): return _dist(p, t) < Config.OP_SIEGE_GATHER)
 			if (_dist(marshal, t) < Config.OP_SIEGE_REACH and near.size() >= ceili(army.size() * 0.5)) or now_h() - int(c.t1) > Config.OP_MARCH_HOURS:
 				operation.emit({"what": "siege", "f": f, "near": near.size(), "army": army.size(), "marshal_d": _dist(marshal, t), "busy": t.get("siege") != null, "hours": now_h() - int(c.t1)})
-				_begin_siege(f, t, c)
+				if _is_own_ruin(f, t):
+					_storm_ruin(f, t, c)
+				else:
+					_begin_siege(f, t, c)
 				return
 			var keep_up := followers.filter(func(p): return _dist(p, marshal) < Config.OP_MUSTER_RADIUS).size()
 			var close := _dist(marshal, t) < Config.OP_SIEGE_APPROACH
@@ -444,6 +477,25 @@ func _end_campaign(f: String) -> void:
 				p.state = "travel"
 				roster.path_to(p, homes[0].x, homes[0].y)
 	campaigns.erase(f)
+
+## The host reached its ruins held by the dead: those by the walls storm them together (no siege: the dead do not starve
+## and nobody relieves them), then the campaign rests and ends.
+func _storm_ruin(f: String, t: Dictionary, c: Dictionary) -> void:
+	var army := _party_ids(c)
+	var host := army.filter(func(p): return _dist(p, t) < Config.OP_SIEGE_APPROACH and not p.get("fight", false))
+	c.state = "rest"
+	c.t2 = now_h()
+	for p in army:
+		p.state = "idle"
+		p.path = []
+		p.pi = 0
+		p.arrived = true
+	if host.is_empty() or not retake.is_valid():
+		return
+	var won: bool = retake.call(host, t)
+	operation.emit({"what": "retaken" if won else "repulsed", "f": f, "target": t.id, "host": host.size()})
+	if not won:
+		_say("%s не смогло отбить %s у мертвецов." % ["Войско " + String(roster.factions.get_faction(f).get("gen", f)), t.name])
 
 func _begin_siege(f: String, t: Dictionary, c: Dictionary) -> void:
 	var army := _party_ids(c)

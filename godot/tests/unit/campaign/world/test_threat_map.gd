@@ -8,10 +8,11 @@ const WorldState = preload("res://core/campaign/world/world_state.gd")
 const WorldCheckpoint = preload("res://core/campaign/world/world_checkpoint.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 
-## ADR-023: the map is read only by the goals of map parties (stage 2a) and the operations of factions (world_wars.gd,
-## stage 2b). A new reader is added here with its ADR update.
+## ADR-023: the map is read only by the goals of map parties (stage 2a), the operations of factions (world_wars.gd,
+## stage 2b) and the director of the undead invasion (world_undead.gd and undead_director.gd, stage 2c: living armies
+## around its targets). A new reader is added here with its ADR update.
 const READERS_ALLOWED := ["res://core/campaign/world/world_state.gd", "res://core/campaign/world/threat_map.gd",
-	"res://core/campaign/world/world_wars.gd",
+	"res://core/campaign/world/world_wars.gd", "res://core/campaign/world/world_undead.gd", "res://core/campaign/world/undead_director.gd",
 	"res://core/campaign/world/party_ai.gd", "res://core/campaign/world/party_goals.gd"]
 const READER_TOKENS := ["threat_map.gd", "threat_map(", "threat_enemies(", "threat_sources("]
 
