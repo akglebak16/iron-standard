@@ -57,6 +57,7 @@ func _ready() -> void:
 	headings.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(headings)
 	title_label = Label.new()
+	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	GameSkin.title(title_label)
 	headings.add_child(title_label)
 	sub_label = Label.new()
@@ -105,6 +106,11 @@ func set_tabs(tabs: Array, active: String) -> void:
 	for t in tabs:
 		var b := Button.new()
 		b.text = t[1]
+		var tab_icons := {"troops":"men", "hero":"helm", "gear":"bag", "quests":"flag", "factions":"shield", "comps":"heart", "journal":"book", "recruit":"men", "goods":"sack", "market":"sword", "tavern":"ale", "oath":"shield", "hold":"flag"}
+		if tab_icons.has(t[0]):
+			b.icon = GameSkin.icon(tab_icons[t[0]])
+			b.add_theme_constant_override("icon_max_width", 19)
+		b.add_theme_font_size_override("font_size", 16)
 		b.toggle_mode = true
 		b.button_pressed = t[0] == active
 		b.focus_mode = Control.FOCUS_NONE
@@ -138,29 +144,41 @@ func heading(text: String) -> void:
 func row(text: String, detail: String, buttons: Array = [], portrait := "") -> void:
 	var card := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#00000026")
-	style.border_color = Color("#150f0980")
-	style.border_width_bottom = 1
-	style.set_content_margin_all(8)
+	style.bg_color = Color("#20170fe6")
+	style.border_color = Color("#695338")
+	style.set_border_width_all(1)
+	style.border_width_left = 3
+	style.set_content_margin_all(12)
 	card.add_theme_stylebox_override("panel", style)
 	var h := HBoxContainer.new()
 	card.add_child(h)
 	h.add_theme_constant_override("separation", 6)
 	if portrait != "":
 		h.add_child(OriginalArt.portrait_control(portrait))
+	var text_col := VBoxContainer.new()
+	text_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_col.add_theme_constant_override("separation", 4)
+	h.add_child(text_col)
 	var l := Label.new()
-	l.text = text if detail.is_empty() else text + "\n" + detail
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_color_override("font_color", Color("#e6d9b5"))
-	h.add_child(l)
+	GameSkin.title(l, 20)
+	text_col.add_child(l)
+	if not detail.is_empty():
+		var description := Label.new()
+		description.text = detail
+		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		description.add_theme_color_override("font_color", GameSkin.MUTED)
+		description.add_theme_font_size_override("font_size", 15)
+		text_col.add_child(description)
 	var actions := HFlowContainer.new()
-	actions.custom_minimum_size.x = 180
+	actions.custom_minimum_size.x = minf(420, preferred_width * 0.4) if not buttons.is_empty() else 0
 	h.add_child(actions)
 	for def in buttons:
 		var b := Button.new()
 		b.text = def.text
 		b.disabled = def.get("disabled", false)
+		b.tooltip_text = def.get("hint", "")
 		b.focus_mode = Control.FOCUS_NONE
 		var action: Callable = def.call
 		var sound: String = def.get("sound", "")
