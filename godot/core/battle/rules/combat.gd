@@ -23,6 +23,8 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		return 0
 	if rear:
 		raw *= Config.REAR_DAMAGE_MULTIPLIER
+	if attacker.wavering:
+		raw *= Config.MORALE_WAVER_DAMAGE_MULTIPLIER
 	if attacker.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
 	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.blunt_melee):
@@ -73,7 +75,7 @@ static func _make_projectile(attacker: Unit, aim: Vector2, distance: float, dura
 	var spread: float = Config.SHOT_BASE_SCATTER + distance * attacker.accuracy
 	var impact: Vector2 = aim
 	impact += Vector2((rng.randf() + rng.randf() - 1.0) * spread, (rng.randf() + rng.randf() - 1.0) * spread)
-	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage, "pierce": attacker.pierce, "damage_type": attacker.damage_type, "throwing": attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
+	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage * (Config.MORALE_WAVER_DAMAGE_MULTIPLIER if attacker.wavering else 1.0), "pierce": attacker.pierce, "damage_type": attacker.damage_type, "throwing": attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
 
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
 	var incoming: float = (shot.origin - target.position).angle()

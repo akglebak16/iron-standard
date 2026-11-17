@@ -33,6 +33,11 @@ var doctrine_order: String = "" # Order and backing seen at the last decision: a
 var doctrine_backing: bool = false
 var doctrine_seconds: float = Config.AI_FORMATION_SWITCH_SECONDS # Since the last formation switch (the first one is free), or in the current cavalry phase.
 var contact_seconds: float = 0.0 # Cavalry: riders stuck in foot melee; infantry: a formed line in melee.
+# Stage 1b morale summary (rules/morale.gd), written on every morale check; the debug overlay and a future commander
+# read it, fighters do not.
+var morale_state: int = Config.MORALE_GROUP_STEADY
+var morale_pressure: float = 0.0 # Weighted enemy threat against own strength (field assessment).
+var morale_fleeing_share: float = 0.0
 var _slot_direction := INF
 var _slot_lateral := Vector2.DOWN
 var _slot_forward := Vector2.RIGHT

@@ -9,6 +9,7 @@ const SIDE_NAMES := ["Свои", "Враги"]
 const GROUP_NAMES := ["Пехота", "Стрелки", "Конница"]
 const PROFILES := {"": "приказы игрока", "reference": "эталон"}
 const PLANS := {"": "—", "deploy": "развёртывание", "advance": "сближение", "engage": "бой", "hold_walls": "держать стены", "sortie": "вылазка"}
+const MORALE_STATES := ["стойкие", "колеблются", "бегут"] # Config.MORALE_GROUP_STEADY, _WAVERING, _ROUTED.
 const ORDERS := {"hold": "держать", "follow": "за героем", "charge": "в атаку", "back": "отход"}
 const DECISIONS := {"wait": "ждёт", "advance": "идёт вперёд", "stand": "стоит", "charge": "в атаку", "flank": "обход фланга",
 	"call_off": "отмена погони", "sortie": "вылазка"}
@@ -21,8 +22,9 @@ const REASONS := {"deploying": "строится", "squad_in_reach": "отряд
 const MODE_COLORS := {"": Color(0.6, 0.6, 0.6, 0.8), "slot": Color(0.75, 0.82, 0.9, 0.8), "melee": Color(0.95, 0.2, 0.15, 0.9),
 	"shoot": Color(1.0, 0.85, 0.15, 0.9), "shootslot": Color(1.0, 0.55, 0.1, 0.9), "skirm": Color(0.7, 0.35, 0.95, 0.9),
 	"rank": Color(0.3, 0.5, 0.95, 0.85), "brace": Color(0.2, 0.85, 0.75, 0.9), "fallback": Color(0.55, 0.85, 0.3, 0.9)}
-const MODE_LEGEND := "Режимы: серо-голубой — в строю, красный — ближний бой, жёлтый — стрельба,\nоранжевый — стрельба со строя, фиолетовый — кружение, белый — бегство,\nсиний — ряд строя в атаке, бирюзовый — копья против конницы, зелёный — стрелок отходит"
+const MODE_LEGEND := "Режимы: серо-голубой — в строю, красный — ближний бой, жёлтый — стрельба,\nоранжевый — стрельба со строя, фиолетовый — кружение, белый — бегство,\nсиний — ряд строя в атаке, бирюзовый — копья против конницы, зелёный — стрелок отходит;\nоранжевое кольцо — боец дрогнул"
 const FLEEING_COLOR := Color(1, 1, 1, 0.9)
+const WAVERING_RING := Color(1.0, 0.6, 0.1, 0.95)
 const SIDE_COLORS := [Color(0.35, 0.65, 1.0, 0.85), Color(1.0, 0.4, 0.3, 0.85)]
 const UNIT_MARK_RADIUS := 4.5
 const UNIT_MARK_EDGE := Color(0, 0, 0, 0.7)
@@ -35,6 +37,7 @@ const PANEL_WIDTH := 640.0
 const PANEL_MARGIN := Vector2(12, 76) # Below the top-right buttons.
 const PANEL_BACKGROUND := Color(0, 0, 0, 0.55)
 const FLEEING := 1
+const WAVERING := 4
 
 var enabled := false
 var _debug: Dictionary = {}
@@ -78,6 +81,9 @@ func snapshot() -> Dictionary:
 static func mode_color(mode: String, fleeing: bool) -> Color:
 	return FLEEING_COLOR if fleeing else MODE_COLORS.get(mode, MODE_COLORS[""])
 
+static func morale_state_name(state: int) -> String:
+	return MORALE_STATES[state] if state >= 0 and state < MORALE_STATES.size() else str(state)
+
 static func text(debug: Dictionary) -> String:
 	if debug.is_empty(): return ""
 	var lines: Array[String] = ["ИИ [F3] · %.1f с · оценка поля: тик %d" % [debug.elapsed_seconds, debug.assessment_tick]]
@@ -100,8 +106,10 @@ static func group_line(group: Dictionary, now: float) -> String:
 	var assessment: Dictionary = group.get("assessment", {})
 	if not assessment.is_empty():
 		if assessment.count == 0 and assessment.fleeing == 0: return line + " · нет бойцов"
-		line += " · %d бойц., мораль %d%%, в бою %d%%" % [assessment.count, roundi(assessment.morale_share * 100.0), roundi(assessment.engaged_share * 100.0)]
+		line += " · %d бойц., %s, мораль %d%%, в бою %d%%" % [assessment.count, morale_state_name(group.get("morale_state", 0)), roundi(assessment.morale_share * 100.0), roundi(assessment.engaged_share * 100.0)]
+		if assessment.wavering > 0: line += ", дрогнули %d" % assessment.wavering
 		if assessment.fleeing > 0: line += ", бегут %d" % assessment.fleeing
+		if group.get("morale_pressure", 0.0) >= 0.05: line += ", давление %.2f" % group.morale_pressure
 		if assessment.threat_flank > 0.0 or assessment.threat_rear > 0.0:
 			line += " · угроза фланг %.1f, тыл %.1f" % [assessment.threat_flank, assessment.threat_rear]
 	var last: Dictionary = group.last
@@ -119,6 +127,8 @@ func draw_world(canvas: CanvasItem) -> void:
 		var color := mode_color(names[mode] if mode >= 0 and mode < names.size() else "", (units.flags[index] & FLEEING) != 0)
 		canvas.draw_circle(units.positions[index], UNIT_MARK_RADIUS + 1.0, UNIT_MARK_EDGE)
 		canvas.draw_circle(units.positions[index], UNIT_MARK_RADIUS, color)
+		if units.flags[index] & WAVERING:
+			canvas.draw_arc(units.positions[index], UNIT_MARK_RADIUS + 2.5, 0.0, TAU, 12, WAVERING_RING, 1.5, true)
 	var font := ThemeDB.fallback_font
 	for entry in _debug.sides:
 		var side_color: Color = SIDE_COLORS[entry.side]
@@ -132,7 +142,7 @@ func draw_world(canvas: CanvasItem) -> void:
 				canvas.draw_dashed_line(center, group.waypoint, side_color, LINE_WIDTH, 8.0)
 			if group.order == Config.ORDER_HOLD and group.center.distance_to(center) > GROUP_RING_RADIUS:
 				canvas.draw_dashed_line(center, group.center, side_color, 1.0, 6.0)
-			var title := "%s: %s" % [GROUP_NAMES[group.kind], ORDERS.get(group.order, group.order)]
+			var title := "%s: %s, %s" % [GROUP_NAMES[group.kind], ORDERS.get(group.order, group.order), morale_state_name(group.get("morale_state", 0))]
 			if not group.last.is_empty(): title += " · " + REASONS.get(group.last.reason, group.last.reason)
 			canvas.draw_string_outline(font, center + LABEL_OFFSET, title, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, 4, Color(0, 0, 0, 0.85))
 			canvas.draw_string(font, center + LABEL_OFFSET, title, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, side_color.lightened(0.4))

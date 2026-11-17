@@ -3,9 +3,14 @@ extends RefCounted
 ## arena and the debug overlay. Computed only on request, in one pass over the packed unit columns plus a
 ## pass over the six group summaries. Reads the state, mutates nothing and draws no RNG.
 ##
-## Input: State columns (side, group, flags, mode, health, weight, range, target distance, position) and the
+## Input: State columns (side, group, flags, mode, health, weight, range, target distance, position, facing) and the
 ## unit fields morale, base_morale, tier, anti_cavalry and wavering. Output: detached dictionaries.
-## Frequency: once per commander decision at most (DecisionSchedule). Thread safety: call between ticks.
+## Frequency: once per morale check (rules/morale.gd, stage 1b) and per commander decision. Thread safety: call
+## between ticks.
+##
+## Sectors of the threat are taken against the group's front: its direction while it keeps a formation (holding,
+## following, a formed line, stage 1v), the mean facing of its men in a loose charge, where the group direction is
+## only the heading of the order. Terrain (TERRAIN.md 7) joins the threat here.
 ##
 ## Unit classes come from properties (mounted, attack_range, anti_cavalry), never from troop IDs.
 const Config = preload("res://core/battle/config.gd")
@@ -37,6 +42,7 @@ static func assess(battle: State) -> Dictionary:
 	var lateral_min := PackedFloat64Array(); lateral_min.resize(slots)
 	var lateral_max := PackedFloat64Array(); lateral_max.resize(slots)
 	var laterals := PackedVector2Array(); laterals.resize(slots)
+	var facings := PackedVector2Array(); facings.resize(slots)
 	for slot in slots:
 		lateral_min[slot] = INF
 		lateral_max[slot] = -INF
@@ -76,6 +82,8 @@ static func assess(battle: State) -> Dictionary:
 		if flags[I.MODE * capacity + row] == melee_mode and reals[R.PLAN_DISTANCE * capacity + row] <= Config.AI_FIELD_CONTACT_DISTANCE:
 			engaged[slot] += 1
 		var at := positions[row]
+		var facing: float = reals[R.FACING * capacity + row]
+		facings[slot] += Vector2(cos(facing), sin(facing))
 		position_sum[slot] += at
 		var lateral := at.dot(laterals[slot])
 		lateral_min[slot] = minf(lateral_min[slot], lateral)
@@ -107,11 +115,12 @@ static func assess(battle: State) -> Dictionary:
 			var classes := PackedInt32Array()
 			for klass in Config.AI_CLASSES: classes.append(class_count[slot * Config.AI_CLASSES + klass])
 			var group = _group(battle, side, kind)
-			var threat := _threat(slot, kinds, count, centers, matchups, group.direction if group != null else 0.0)
+			var frame := _frame(group, facings[slot])
+			var threat := _threat(slot, kinds, count, centers, matchups, frame)
 			var ready: int = count[slot]
 			groups.append({"side": side, "kind": kind, "count": ready, "fleeing": fleeing[slot], "wavering": wavering[slot],
 				"strength": power[slot], "classes": classes, "center": centers[slot],
-				"direction": group.direction if group != null else 0.0,
+				"direction": group.direction if group != null else 0.0, "frame": frame,
 				"front_width": lateral_max[slot] - lateral_min[slot] if ready > 0 else 0.0,
 				"engaged_share": float(engaged[slot]) / ready if ready > 0 else 0.0,
 				"engaged": ready > 0 and float(engaged[slot]) / ready >= Config.AI_FIELD_ENGAGED_SHARE,
@@ -125,6 +134,15 @@ static func assess(battle: State) -> Dictionary:
 static func _group(battle: State, side: int, kind: int):
 	if battle.groups.size() <= side or battle.groups[side].size() <= kind: return null
 	return battle.groups[side][kind]
+
+## The front the threat sectors are measured from: the group direction while the group keeps a formation, the mean
+## facing of its ready men in a loose charge.
+static func _frame(group, facing_sum: Vector2) -> float:
+	if group == null:
+		return 0.0
+	if group.order == Config.ORDER_CHARGE and not group.formed and facing_sum != Vector2.ZERO:
+		return facing_sum.angle()
+	return group.direction
 
 ## Own class strengths, each weighted by the matrix against the enemy group's class shares.
 static func _matchup(class_power: PackedFloat64Array, power: PackedFloat64Array, slot: int, foe_slot: int) -> float:
