@@ -1,4 +1,5 @@
 extends Node2D
+const MapCamera = preload("res://apps/godot/presentation/campaign/world_camera.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Settlements on the map: sprites from a sheet drawn once, owner banners and name labels (like drawWorld in src/07_main.js).
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
@@ -53,7 +54,7 @@ func _draw() -> void:
 		var col := 0 if s.kind == "camp" else SettlementArt.CULTURES.find(culture)
 		if col < 0:
 			col = SettlementArt.CULTURES.size() - 1
-		var k := scale_of(s.kind)
+		var k := scale_of(s.kind) * MapCamera.MARKER_SCALE
 		var src := Rect2(Vector2(col * size.x, row * size.y) * SHEET_SCALE, size * SHEET_SCALE)
 		var dest := Rect2(Vector2(s.x, s.y) - SettlementArt.ANCHOR * k, size * k)
 		var tint := Color.WHITE
@@ -75,6 +76,7 @@ func _draw() -> void:
 			var bx: float = 14.0 if s.kind == "castle" else 20.0
 			var by: float = -62.0 if s.kind == "town" else -66.0 if s.kind == "castle" else -28.0
 			EmblemArt.draw_banner(self, s.x + bx * k, s.y + by * k, _factions.get_faction(s.fac), 13.0 * k)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE)
 	_draw_labels()
 
 func _draw_labels() -> void:
@@ -83,7 +85,7 @@ func _draw_labels() -> void:
 	for s in _settles:
 		var size := 13 if s.kind == "village" else 16
 		var color := Color("#ff7a66") if s.kind == "camp" else (Color("#a9b98e") if s.fac == "undead" else Color("#f0e6c8"))
-		entries.append({"text": s.name, "x": s.x, "y": s.y + 22.0, "color": color, "size": size})
+		entries.append({"text": s.name, "x": s.x * MapCamera.MAP_SCALE, "y": s.y * MapCamera.MAP_SCALE + 22.0, "color": color, "size": size})
 	entries.sort_custom(func(a, b): return a.size > b.size)
 	var boxes: Array[Rect2] = []
 	for e in entries:

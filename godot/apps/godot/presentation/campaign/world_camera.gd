@@ -1,7 +1,10 @@
 extends Camera2D
 ## Pan with the right/middle mouse button or WASD/arrows, zoom with the wheel or +/-.
-const MIN_ZOOM := 0.18
-const MAX_ZOOM := 2.5
+## Fold the visual projection into zoom to keep navigation and cached ground in simulation coordinates.
+const MAP_SCALE := 2.0
+const REGIONAL_ZOOM := 0.9 * MAP_SCALE
+const MARKER_SCALE := 1.0 / MAP_SCALE
+const MAX_ZOOM := 2.5 * MAP_SCALE
 const PAN_SPEED := 900.0
 
 var bounds := Rect2(0, 0, 5200, 3400)
@@ -44,6 +47,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var key := (event as InputEventKey).keycode
 		if key == KEY_C:
 			detached = false
+			zoom = Vector2.ONE * REGIONAL_ZOOM
 		elif key == KEY_EQUAL or key == KEY_KP_ADD:
 			_zoom_at(1.25, get_viewport().get_visible_rect().size / 2.0)
 		elif key == KEY_MINUS or key == KEY_KP_SUBTRACT:
@@ -61,7 +65,9 @@ func _process(delta: float) -> void:
 
 func _zoom_at(factor: float, screen_point: Vector2) -> void:
 	var before := _screen_to_world(screen_point)
-	var z := clampf(zoom.x * factor, MIN_ZOOM, MAX_ZOOM)
+	var view := get_viewport_rect().size
+	var overview_zoom := minf(view.x / bounds.size.x, view.y / bounds.size.y)
+	var z := clampf(zoom.x * factor, overview_zoom, MAX_ZOOM)
 	zoom = Vector2(z, z)
 	position += before - _screen_to_world(screen_point)
 	_clamp()
@@ -76,4 +82,9 @@ func fit_all() -> void:
 	position = bounds.get_center()
 
 func _clamp() -> void:
-	position = position.clamp(bounds.position, bounds.end)
+	var margin := (get_viewport_rect().size / (2.0 * zoom.x)).min(bounds.size / 2.0)
+	position = position.clamp(bounds.position + margin, bounds.end - margin)
+
+func follow_party(at: Vector2) -> void:
+	position = at
+	_clamp()

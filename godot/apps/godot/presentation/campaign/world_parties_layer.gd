@@ -1,4 +1,5 @@
 extends Node2D
+const MapCamera = preload("res://apps/godot/presentation/campaign/world_camera.gd")
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Lords, vassals, bandits and caravans on the world map: a figure in faction colours with a small banner (drawWorld in src/07_main.js).
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
@@ -95,6 +96,8 @@ func _draw_party(p: Dictionary) -> void:
 	var at := Vector2(p.x, p.y)
 	if motion != null:
 		at = motion.at(int(p.id), at)
+	draw_set_transform(at, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE)
+	at = Vector2.ZERO
 	var noble: bool = p.kind == "lord" or p.kind == "dead"
 	var variant := 2 if noble else (0 if p.kind == "caravan" else 1)
 	var scale_factor: float = Decals.MARKER_SCALES[variant]

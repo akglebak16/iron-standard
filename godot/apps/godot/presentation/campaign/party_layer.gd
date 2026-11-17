@@ -1,4 +1,5 @@
 extends Node2D
+const MapCamera = preload("res://apps/godot/presentation/campaign/world_camera.gd")
 ## The player's party marker and the dashed route on the world map (drawWorld in src/07_main.js).
 ## A hero sprite replaces the marker when the characters module is hooked into the map.
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
@@ -71,6 +72,8 @@ func _draw() -> void:
 		_dashed(pts, Color(20 / 255.0, 12 / 255.0, 4 / 255.0, 0.8), 5.0)
 		_dashed(pts, Color("#ffe9a0"), 2.6)
 		draw_arc(pts[pts.size() - 1], 9.0, 0.0, TAU, 20, Color("#ffe9a0"), 2.6, true)
+	draw_set_transform(p, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE)
+	p = Vector2.ZERO
 	draw_colored_polygon(Brush.ellipse(p.x + 2, p.y + 3, 24, 8, 16), Color(0, 0, 0, 0.3))
 	draw_arc(p + Vector2(0, 1), 26.0, 0.0, TAU, 28, Color("#ffd86a"), 2.0, true)
 	if gear_catalog != null and _frozen == null:

@@ -267,7 +267,7 @@ func _ready() -> void:
 		camera.zoom = Vector2(focus[2], focus[2])
 	else:
 		camera.detached = false
-		camera.zoom = Vector2(0.9, 0.9)
+		camera.zoom = Vector2.ONE * WorldCamera.REGIONAL_ZOOM
 	if DisplayServer.get_name() != "headless":
 		await map_view.ready_to_show
 	loading.queue_free()
@@ -325,17 +325,24 @@ func _exit_tree() -> void:
 		state.dispose()
 		state = null
 
+## The marker stands on its simulation point and its visible body extends upwards.
+func _pick_map_party(at: Vector2) -> Dictionary:
+	return state.party_near(at.x, at.y + 12.0 * WorldCamera.MARKER_SCALE, 36.0 * WorldCamera.MARKER_SCALE)
+
+func _pick_map_settlement(at: Vector2) -> Dictionary:
+	return state.settlement_near(at.x, at.y + 16.0 * WorldCamera.MARKER_SCALE, 52.0 * WorldCamera.MARKER_SCALE)
+
 func _on_map_click(at: Vector2) -> void:
 	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible:
 		return
 	var p = state.player
 	p.tid = -1
 	state.waiting = false
-	var prey: Dictionary = state.party_near(at.x, at.y, 34.0)
+	var prey := _pick_map_party(at)
 	if not prey.is_empty():
 		state.chase(prey)
 		return
-	var target: Dictionary = state.settlement_near(at.x, at.y, 46.0)
+	var target := _pick_map_settlement(at)
 	if not target.is_empty() and target.kind == "camp":
 		var why: String = state.chase(target)
 		if why != "":
@@ -660,11 +667,11 @@ func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
 	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible or _slots.visible:
 		hud.show_tip({}, screen_pos)
 		return
-	var p: Dictionary = state.party_near(world_pos.x, world_pos.y, 30.0)
+	var p := _pick_map_party(world_pos)
 	if not p.is_empty():
 		hud.show_tip({}, screen_pos, WorldTips.party_tip(state, p, _factions))
 		return
-	var s: Dictionary = state.settlement_near(world_pos.x, world_pos.y, 46.0)
+	var s := _pick_map_settlement(world_pos)
 	hud.show_tip(s, screen_pos, WorldTips.settlement_tip(state, s, _factions) if not s.is_empty() else "")
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -710,7 +717,7 @@ func _process(delta: float) -> void:
 		_pending_dt += delta
 		_motion.tick(delta, true, 0.0, _frozen_speed)
 		if not camera.detached:
-			camera.position = _motion.at(-1, _frozen_at)
+			camera.follow_party(_motion.at(-1, _frozen_at))
 		_log_hitch(delta, 0, 0)
 		map_main_us = 0
 		return
@@ -740,7 +747,7 @@ func _process(delta: float) -> void:
 	if save_due and _sim == null:
 		_autosave.save(state, false)
 	if not camera.detached:
-		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
+		camera.follow_party(_motion.at(-1, Vector2(state.player.x, state.player.y)))
 	started = Time.get_ticks_usec()
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
 	var hud_us := Time.get_ticks_usec() - started
