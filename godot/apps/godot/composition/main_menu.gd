@@ -12,6 +12,11 @@ const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 const Art = preload("res://apps/godot/visuals/original_art.gd")
 const Modal = preload("res://apps/godot/presentation/campaign/modal_window.gd")
 const FaceVariant = preload("res://apps/godot/visuals/face_variant.gd")
+const HeroOrigin = preload("res://core/campaign/world/hero_origin.gd")
+const WorldState = preload("res://core/campaign/world/world_state.gd")
+const PartyEconomy = preload("res://core/campaign/economy/party_economy.gd")
+const CharacterConfig = preload("res://core/characters/config.gd")
+const TroopCatalog = preload("res://core/troops/data/catalog.gd")
 ## Start-screen order, light to dark, and the names shown on hover.
 const SKIN_CHOICES := [["#e8c3a0","Бледная"],["#e2b48c","Светлая"],["#d6a179","Румяная"],["#c98f66","Смуглая"],["#b97d58","Загорелая"]]
 const HAIR_CHOICES := [["#1a1a1a","Чёрные"],["#2a1d14","Тёмные"],["#4a3020","Каштановые"],["#6b4423","Тёмно-русые"],["#8c5a2b","Русые"],
@@ -49,6 +54,11 @@ var _quick_buttons := {}
 var _face := {}
 var _face_buttons := {}
 var _preview: TextureRect
+var _troops := TroopCatalog.new()
+var _origin_buttons := {}
+var _origin_texts := {}
+var _attr_rows := {}
+var _points_label: Label
 
 class BannerSwatch extends Button:
 	var colors: Dictionary
@@ -68,7 +78,7 @@ class ColorSwatch extends Button:
 		if button_pressed or has_focus(): draw_arc(center, 16.5, 0, TAU, 48, GameSkin.BRASS, 2.5, true)
 
 func _ready() -> void:
-	if not (ContentLoader.populate(_factions)):
+	if not (ContentLoader.populate(_factions)) or not ContentLoader.populate(_troops):
 		push_error("Required content failed to load: apps/godot/composition/main_menu.gd")
 		return
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -226,7 +236,7 @@ func _fit_start_dialog(d: CanvasLayer) -> void:
 	d._scroll.add_theme_stylebox_override("panel", padding)
 	await get_tree().process_frame
 	if not is_instance_valid(d) or d != _dialog: return
-	for button in _buttons.values():
+	for button in _buttons.values() + _origin_buttons.values():
 		if is_instance_valid(button) and d.is_ancestor_of(button):
 			button.custom_minimum_size.y = button.get_child(0).get_combined_minimum_size().y
 	await get_tree().process_frame
@@ -318,45 +328,154 @@ func _create() -> void:
 	d.body.add_child(grid)
 	_buttons.clear()
 	for id in CULTURES:
-		var b := _button(grid, "", func(): _pick(id))
-		b.custom_minimum_size = Vector2(190, 148)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.toggle_mode = true
-		b.button_pressed = id == _picked
-		for state in ["normal", "hover", "pressed", "hover_pressed"]:
-			var box := StyleBoxFlat.new()
-			box.bg_color = Color("#b78a3222") if state in ["pressed", "hover_pressed"] else Color("#00000040")
-			box.border_color = GameSkin.BRASS if state in ["pressed", "hover_pressed"] else Color("#00000088")
-			box.set_border_width_all(3)
-			box.set_corner_radius_all(3)
-			b.add_theme_stylebox_override(state, box)
-		var margin := MarginContainer.new()
-		margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_" + side, 15)
-		b.add_child(margin)
-		var col := VBoxContainer.new()
-		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		margin.add_child(col)
-		var title := Label.new()
-		GameSkin.title(title, 19)
-		title.add_theme_font_override("font", GameSkin.css_font(GameSkin.DISPLAY, 19, 24.7, 0.76))
-		title.add_theme_constant_override("line_spacing", 0)
-		title.text = _factions.get_faction(id).name
-		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		col.add_child(title)
-		var detail := Label.new()
-		detail.text = CULTURE_DESCRIPTIONS[id]
-		detail.add_theme_font_size_override("font_size", 14)
-		detail.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 14, 18.2))
-		detail.add_theme_constant_override("line_spacing", 0)
-		detail.add_theme_color_override("font_color", Color("#c9b98f"))
-		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		col.add_child(detail)
-		_buttons[id] = b
+		_buttons[id] = _card(grid, _factions.get_faction(id).name, CULTURE_DESCRIPTIONS[id], func(): _pick(id), id == _picked, 190)[0]
+	_origin_editor(d)
 	_footer(d, [["В путь", _start, true]])
+
+## A choice card: a toggle with a title and a short text. Returns [button, text label].
+func _card(grid: Node, heading: String, text: String, action: Callable, pressed: bool, width: float) -> Array:
+	var b := _button(grid, "", action)
+	b.custom_minimum_size = Vector2(width, 148)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.toggle_mode = true
+	b.button_pressed = pressed
+	for state in ["normal", "hover", "pressed", "hover_pressed"]:
+		var box := StyleBoxFlat.new()
+		box.bg_color = Color("#b78a3222") if state in ["pressed", "hover_pressed"] else Color("#00000040")
+		box.border_color = GameSkin.BRASS if state in ["pressed", "hover_pressed"] else Color("#00000088")
+		box.set_border_width_all(3)
+		box.set_corner_radius_all(3)
+		b.add_theme_stylebox_override(state, box)
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_" + side, 15)
+	b.add_child(margin)
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(col)
+	var title := Label.new()
+	GameSkin.title(title, 19)
+	title.add_theme_font_override("font", GameSkin.css_font(GameSkin.DISPLAY, 19, 24.7, 0.76))
+	title.add_theme_constant_override("line_spacing", 0)
+	title.text = heading
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(title)
+	var detail := Label.new()
+	detail.text = text
+	detail.add_theme_font_size_override("font_size", 14)
+	detail.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 14, 18.2))
+	detail.add_theme_constant_override("line_spacing", 0)
+	detail.add_theme_color_override("font_color", Color("#c9b98f"))
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(detail)
+	return [b, detail]
+
+## Background and the two free start points (#152).
+func _origin_editor(d: CanvasLayer) -> void:
+	if not HeroOrigin.ORIGINS.has(GameOptions.origin):
+		GameOptions.origin = HeroOrigin.ORDER[0]
+	if HeroOrigin.spent_points(GameOptions.attrs) == null:
+		GameOptions.attrs = {}
+	_start_note(d, "Кем ты был", 14)
+	var grid := HFlowContainer.new()
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	d.body.add_child(grid)
+	_origin_buttons.clear()
+	_origin_texts.clear()
+	for id in HeroOrigin.ORDER:
+		var card := _card(grid, HeroOrigin.ORIGINS[id].name, "", func(): _pick_origin(id), id == GameOptions.origin, 150)
+		_origin_buttons[id] = card[0]
+		_origin_texts[id] = card[1]
+	_start_note(d, "Распредели очки", 14)
+	var rows := GridContainer.new()
+	rows.name = "StartPoints"
+	rows.columns = 5
+	rows.add_theme_constant_override("h_separation", 10)
+	rows.add_theme_constant_override("v_separation", 6)
+	d.body.add_child(rows)
+	_attr_rows.clear()
+	for key in CharacterConfig.ATTRIBUTES:
+		var name_label := Label.new()
+		name_label.text = PartyEconomy.ATTRS[key][0]
+		name_label.custom_minimum_size = Vector2(110, 34)
+		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		GameSkin.title(name_label, 17)
+		name_label.add_theme_font_override("font", GameSkin.css_font(GameSkin.DISPLAY, 17, 17, 0.7))
+		rows.add_child(name_label)
+		var minus := _choice_button(rows, "−", _spend.bind(key, -1))
+		minus.toggle_mode = false
+		minus.accessibility_name = "Убрать очко: " + PartyEconomy.ATTRS[key][0]
+		var value := Label.new()
+		value.custom_minimum_size = Vector2(34, 34)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		GameSkin.title(value, 17)
+		rows.add_child(value)
+		var plus := _choice_button(rows, "+", _spend.bind(key, 1))
+		plus.toggle_mode = false
+		plus.accessibility_name = "Добавить очко: " + PartyEconomy.ATTRS[key][0]
+		var hint := Label.new()
+		hint.text = PartyEconomy.ATTRS[key][1]
+		hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		hint.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 14, 18.2))
+		hint.add_theme_font_size_override("font_size", 14)
+		hint.add_theme_color_override("font_color", Color("#c9b98f"))
+		rows.add_child(hint)
+		_attr_rows[key] = {"minus": minus, "plus": plus, "value": value}
+	_points_label = Label.new()
+	_points_label.name = "FreePoints"
+	_points_label.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 15, 19.5))
+	_points_label.add_theme_font_size_override("font_size", 15)
+	_points_label.add_theme_color_override("font_color", Color("#c9b98f"))
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_child(_points_label)
+	d.body.add_child(margin)
+	_sync_origin()
+
+func _origin_text(id: String) -> String:
+	var text: String = HeroOrigin.ORIGINS[id].text
+	var men := HeroOrigin.men_for(id, WorldState.START_TROOPS.get(_picked, []), _troops)
+	if not men.is_empty():
+		text += " С тобой: %s × %d." % [men[0], men[1]]
+	return text
+
+func _pick_origin(id: String) -> void:
+	GameOptions.origin = id
+	_sync_origin()
+
+func _spend(key: String, step: int) -> void:
+	var spent: Dictionary = GameOptions.attrs.duplicate()
+	spent[key] = int(spent.get(key, 0)) + step
+	if spent[key] <= 0: spent.erase(key)
+	if HeroOrigin.spent_points(spent) == null: return
+	GameOptions.attrs = spent
+	_sync_origin()
+
+func _free_points() -> int:
+	var used := 0
+	for value in GameOptions.attrs.values(): used += int(value)
+	return HeroOrigin.START_POINTS - used
+
+func _sync_origin() -> void:
+	for id in _origin_buttons:
+		_origin_buttons[id].set_pressed_no_signal(id == GameOptions.origin)
+		_origin_texts[id].text = _origin_text(id)
+	var bonus: String = HeroOrigin.ORIGINS[GameOptions.origin].attr
+	var free := _free_points()
+	for key in _attr_rows:
+		var spent := int(GameOptions.attrs.get(key, 0))
+		var row: Dictionary = _attr_rows[key]
+		row.value.text = str(1 + (1 if key == bonus else 0) + spent)
+		row.minus.disabled = spent <= 0
+		row.plus.disabled = free <= 0
+	if is_instance_valid(_points_label):
+		_points_label.text = "Свободных очков: %d. Нераспределённые останутся — их можно потратить в окне героя." % free if free > 0 else "Все очки распределены."
 
 ## The hero's face: a live figure on the left, the choices on the right (#151).
 func _look_editor(d: CanvasLayer) -> void:
@@ -541,6 +660,7 @@ func _pick(id: String) -> void:
 	_picked = id
 	for k in _buttons:
 		_buttons[k].button_pressed = k == id
+	if not _origin_buttons.is_empty(): _sync_origin()
 
 func _start() -> void:
 	GameOptions.continue_game = false

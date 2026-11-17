@@ -15,6 +15,7 @@ const WorldCamera = preload("res://apps/godot/presentation/campaign/world_camera
 const PartyLayer = preload("res://apps/godot/presentation/campaign/party_layer.gd")
 const EncounterDialog = preload("res://apps/godot/presentation/campaign/encounter_dialog.gd")
 const GameOptions = preload("res://apps/godot/composition/game_options.gd")
+const HeroOrigin = preload("res://core/campaign/world/hero_origin.gd")
 const SaveSlots = preload("res://adapters/persistence/save_slots.gd")
 const SaveSlotsWindow = preload("res://apps/godot/composition/save_slots_window.gd")
 const WorldMusic = preload("res://apps/godot/presentation/campaign/world_music.gd")
@@ -172,6 +173,8 @@ func _ready() -> void:
 		state.player.hero.banner = GameOptions.banner
 		if not GameOptions.hero_face.is_empty():
 			state.player.hero.face = GameOptions.hero_face.duplicate()
+		if not HeroOrigin.apply(state.player, GameOptions.origin, GameOptions.attrs, WorldState.START_TROOPS[GameOptions.culture], registry.gear, registry.troops):
+			push_warning("The start background was not applied: %s" % GameOptions.origin)
 	var saved_banner = state.player.hero.get("banner", 0)
 	_startup_mark("world_ready")
 	loading.show_stage("Рисуем карту…")

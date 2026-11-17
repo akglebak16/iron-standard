@@ -43,6 +43,24 @@ func _check() -> void:
 		_click(dice)
 		seen[str(Options.hero_face)] = true
 	assert(seen.size() > 1, "«Случайно» changes the look")
+	# background and start points (#152); scroll them into the window, a click goes only where it is seen
+	menu._dialog._scroll.ensure_control_visible(menu._dialog.find_child("FreePoints", true, false))
+	for i in 3: await process_frame
+	_click(menu._origin_buttons["retainer"])
+	assert(Options.origin == "retainer" and menu._origin_buttons["retainer"].button_pressed and not menu._origin_buttons["smith"].button_pressed)
+	assert(menu._origin_texts["retainer"].text.contains("Всадник × 2"), "the khan's men are riders")
+	assert(menu._attr_rows.vit.value.text == "2" and menu._attr_rows.str.value.text == "1")
+	assert(menu._attr_rows.str.minus.disabled)
+	_click(menu._attr_rows.str.plus)
+	_click(menu._attr_rows.cha.plus)
+	assert(Options.attrs == {"str": 1, "cha": 1} and menu._attr_rows.str.plus.disabled, "only two free points")
+	_click(menu._attr_rows.agi.plus)
+	assert(Options.attrs == {"str": 1, "cha": 1})
+	_click(menu._attr_rows.cha.minus)
+	assert(Options.attrs == {"str": 1} and menu._attr_rows.str.value.text == "2" and not menu._attr_rows.agi.plus.disabled)
+	menu._pick("nord")
+	assert(menu._origin_texts["retainer"].text.contains("Копьеносец × 3"))
+	menu._pick("khan")
 	menu._start()
 	assert(Options.culture == "khan" and Options.hero_name == "Проверка" and Options.banner == 2)
 	# reopening the screen keeps the last look
@@ -76,6 +94,8 @@ func _check() -> void:
 	menu.free()
 	Options.banner = 0
 	Options.hero_face = {}
+	Options.origin = "smith"
+	Options.attrs = {}
 	Art.select_player_banner(0)
 	print("Start options tests passed")
 	quit()
