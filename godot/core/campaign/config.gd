@@ -250,3 +250,36 @@ const UNDEAD_RAVAGE_RANGE := 900.0   # raids burn villages this far from the fro
 const UNDEAD_RAVAGE_REACH := 450.0   # ... and this far from themselves (farther ones it would not reach before the front moves)
 const UNDEAD_ROAM_RANGE := Vector2(60.0, 250.0) # with nothing to do the dead roam this far around their front or barrow
 const UNDEAD_UNKNOWN_GARRISON := 300.0 # strength assumed for a town or castle whose garrison was never raised yet
+
+# Faction strategist (docs/modules/ai/DESIGN.md §5.4, stage 2d): war and peace by gain and war weariness.
+# faction_strategist.gd decides, world_wars.gd keeps the weariness and the truces and rolls the remaining noise.
+const STRAT_START_WARS := 0         # wars a state starts the game with at most (from Rules.WAR in table order); 0 = the whole table
+const STRAT_WAR_RATE := 0.1         # daily chance of a declaration at full will to war (a small noise on top of the gain)
+const STRAT_POWER_EDGE := Vector2(0.9, 1.8) # own power / neighbour's: no will to war at x, full at y (the neighbour is weaker)
+const STRAT_PRIZE_REACH := 800.0    # enemy towns and castles this close to an own town or castle are within reach ...
+const STRAT_PRIZE_FULL := 2.0       # ... and this much of their worth (town 1, castle 0.7) is a full prize
+const STRAT_PRIZE_WORTH := {"town": 1.0, "castle": 0.7}
+const STRAT_SECOND_FRONT := 0.2     # will to a war while already at war with someone else; none at STRAT_MAX_WARS wars
+const STRAT_MAX_WARS := 2
+const STRAT_FOE_MAX_WARS := 2       # a neighbour already in this many wars is left alone
+const STRAT_WEARY_WAR := 0.4        # a state this weary starts no war (its will falls to zero on the way)
+const STRAT_WEARY_DAY := 0.004      # weariness a state gains each day of each of its wars ...
+const STRAT_WEARY_LORD := 0.015     # ... each lord it loses while at war (a vassal counts STRAT_WEARY_VASSAL) ...
+const STRAT_WEARY_VASSAL := 0.005
+const STRAT_WEARY_LOSS := {"town": 0.12, "castle": 0.09} # ... each town or castle an enemy state takes from it
+const STRAT_WEARY_REST := 0.015     # weariness a state at peace sheds each day
+const STRAT_WEARY_MAX := 1.0
+const STRAT_STRAIN := 0.3           # will to peace from thin armies: this × the missing share of the lords' full armies
+const STRAT_MIN_WAR_DAYS := 20      # no peace in the first days of a war
+const STRAT_PEACE_AT := 0.65        # peace once both sides want it at least this much ...
+const STRAT_PEACE_CHANCE := Vector2(0.05, 0.5) # ... with this daily chance on the threshold, rising to y ...
+const STRAT_PEACE_SPAN := 0.5       # ... when the lesser will is this much above it
+const STRAT_LOSING := 0.25          # will to peace per town (worth) the enemy took more than it lost in this war, ...
+const STRAT_LOSING_MAX := 0.6
+const STRAT_WAR_AIM := 2.0          # ... a side that took this much more than it lost has what it wanted ...
+                                    #     (part of it: that part of STRAT_CONTENT)
+const STRAT_CONTENT := 0.45         # ... and wants peace this much more
+const STRAT_WEAKER := 0.3           # will to peace per unit of the enemy's power over own beyond STRAT_WEAKER_FROM (up to STRAT_WEAKER)
+const STRAT_WEAKER_FROM := 1.2
+const STRAT_FRONTS := 0.1           # will to peace per war beyond the first
+const STRAT_TRUCE_DAYS := 30        # after a peace the same pair starts no war for this many days

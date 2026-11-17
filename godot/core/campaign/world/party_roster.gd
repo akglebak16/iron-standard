@@ -30,6 +30,8 @@ var factions: FactionCatalog
 var clans_on := false  # houses refill lords themselves (WorldClans.refill)
 var info := {}  # troop id -> {tier, mounted, pw}
 var parties: Array = []
+## (party) -> void, called before a party leaves the map; world_wars counts the lords a state at war loses (stage 2d).
+var on_remove: Callable = Callable()
 var _next_party_id := 1000000  # party ids stay clear of settlement ids
 
 func _init(world_map: WorldMap, seed_value: int, troops: Catalog, faction_definitions: FactionCatalog) -> void:
@@ -61,7 +63,12 @@ func party_by_id(id) -> Dictionary:
 	return {}
 
 func remove(p: Dictionary) -> void:
-	parties.erase(p)
+	var i := parties.find(p)
+	if i < 0:
+		return
+	if on_remove.is_valid():
+		on_remove.call(p)
+	parties.remove_at(i)
 
 var _strength_table := {}  # Rules.strength_table(info), rebuilt when the troop catalogue changes
 

@@ -12,13 +12,17 @@ const FIELDS := {
 		"liege": TYPE_STRING, "oath_day": TYPE_INT, "strikes": TYPE_INT, "summons": -1, "lure_day": TYPE_INT, "vass": TYPE_ARRAY},
 	"map": {"settles": TYPE_ARRAY, "next_id": TYPE_INT},
 	"roster": {"parties": TYPE_ARRAY, "_next_party_id": TYPE_INT, "clans_on": TYPE_BOOL},
-	"wars": {"wars": TYPE_DICTIONARY, "campaigns": TYPE_DICTIONARY, "day": TYPE_INT, "hour": TYPE_INT, "_tally": TYPE_INT},
+	"wars": {"wars": TYPE_DICTIONARY, "campaigns": TYPE_DICTIONARY, "day": TYPE_INT, "hour": TYPE_INT, "_tally": TYPE_INT,
+		"weary": TYPE_DICTIONARY, "truce": TYPE_DICTIONARY},
 	"undead": {"crisis": TYPE_DICTIONARY, "day": TYPE_INT},
 	"quests": {"next_id": TYPE_INT},
 	"clans": {"clans": TYPE_ARRAY, "switched": TYPE_DICTIONARY, "rulers": TYPE_DICTIONARY, "next_id": TYPE_INT},
 	"skirmish": {"fights": TYPE_ARRAY, "next_id": TYPE_INT, "hour_now": TYPE_INT},
 	"companions": {"pos": TYPE_DICTIONARY, "saved": TYPE_DICTIONARY},
 }
+## Fields added to FIELDS after checkpoints were already made (ADR-002): an older checkpoint lacks them and loads with
+## these values. Stage 2d of the AI: war weariness and truces of world_wars.gd.
+const ADDED := {"wars": {"weary": {}, "truce": {}}}
 
 static func capture(state: RefCounted) -> Dictionary:
 	var data := {}
@@ -38,9 +42,12 @@ static func valid(data: Variant) -> bool:
 	for component in FIELDS:
 		if not data.get(component) is Dictionary: return false
 		var values: Dictionary = data[component]
-		if values.size() != FIELDS[component].size(): return false
+		for field in values:
+			if not FIELDS[component].has(field): return false
 		for field in FIELDS[component]:
-			if not values.has(field): return false
+			if not values.has(field):
+				if ADDED.get(component, {}).has(field): continue
+				return false
 			var expected: int = FIELDS[component][field]
 			if expected >= 0 and typeof(values[field]) != expected: return false
 			if expected < 0 and values[field] != null and not values[field] is Dictionary: return false
@@ -67,6 +74,7 @@ static func valid(data: Variant) -> bool:
 	if data.roster._next_party_id <= largest_id: return false
 	for campaign in data.wars.campaigns.values():
 		if not _campaign(campaign): return false
+	if not _diplomacy(data.wars): return false
 	if data.undead.crisis.has("waves") and not _waves(data.undead.crisis.waves): return false
 	ids.clear()
 	largest_id = -1
@@ -90,7 +98,9 @@ static func restore(data: Dictionary, europe: Europe, definitions: Dictionary) -
 	# Every component is already validated before any live object is populated.
 	for component in FIELDS:
 		var target: RefCounted = state if component == "world" else state.get(component)
-		for field in FIELDS[component]: target.set(field, data[component][field])
+		for field in FIELDS[component]:
+			var value: Variant = data[component][field] if data[component].has(field) else ADDED[component][field].duplicate(true)
+			target.set(field, value)
 	state.roster.diplomatic_wars = state.wars.wars
 	state.roster.rng.seed = data.rng.roster.seed
 	state.roster.rng.state = data.rng.roster.state
@@ -137,6 +147,25 @@ static func _campaign(c: Variant) -> bool:
 		if not c.keep is Array: return false
 		for id in c.keep:
 			if not id is int: return false
+	return true
+
+## Wars, weariness and truces of world_wars.gd. Stage 2d added the gain of a war, `weary` and `truce`; older
+## checkpoints lack them: no state is weary, no truce holds and a war has taken nothing yet.
+static func _diplomacy(wars: Dictionary) -> bool:
+	for k in wars.wars:
+		var war: Variant = wars.wars[k]
+		if not k is String or not war is Dictionary or not war.get("since") is int: return false
+		if war.has("gain") and not _number_map(war.gain): return false
+	if wars.has("weary") and not _number_map(wars.weary): return false
+	if wars.has("truce"):
+		for k in wars.truce:
+			if not k is String or not wars.truce[k] is int: return false
+	return true
+
+static func _number_map(map: Variant) -> bool:
+	if not map is Dictionary: return false
+	for k in map:
+		if not k is String or not _number(map[k]): return false
 	return true
 
 ## Waves of the undead invasion (WorldUndead, stage 2c); saves made before it have none and the director picks them anew.

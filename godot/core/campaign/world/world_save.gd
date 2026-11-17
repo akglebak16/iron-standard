@@ -37,7 +37,7 @@ static func to_v1_dict(state: RefCounted) -> Dictionary:
 		"player": {"x": p.x, "y": p.y, "troops": p.troops, "culture": p.culture, "gold": p.gold, "food": p.food, "inv": p.inv,
 			"comps": p.comps, "quests": p.quests, "stats": p.stats, "hero": p.hero, "rel": p.rel,
 			"liege": p.liege, "oath_day": p.oath_day, "strikes": p.strikes, "summons": p.summons, "lure_day": p.lure_day, "vass": p.vass},
-		"wars": state.wars.wars, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "crisis": state.undead.crisis, "clans": state.clans.to_dict(), "skirmish": state.skirmish.to_dict(), "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
+		"wars": state.wars.wars, "weary": state.wars.weary, "truce": state.wars.truce, "campaigns": state.wars.campaigns, "tally": state.wars._tally, "settles": settles, "parties": parties, "journal": state.journal, "quest_id": state.quests.next_id, "crisis": state.undead.crisis, "clans": state.clans.to_dict(), "skirmish": state.skirmish.to_dict(), "companions": state.companions.to_dict(), "next_party_id": state.roster._next_party_id}
 
 ## Rebuilds a world from saved data; returns null for an unknown format.
 static func from_dict(data: Dictionary, europe: EuropeData, definitions: Dictionary) -> RefCounted:
@@ -104,6 +104,10 @@ static func _valid_v1_header(data: Dictionary) -> bool:
 		if not data.get(field, {}) is Dictionary: return false
 	for war in data.get("wars", {}).values():
 		if not war is Dictionary or not _numbers(war, ["since"]): return false
+		# stage 2d: what each side took in the war; absent in older saves
+		if war.has("gain") and not _number_map(war.gain): return false
+	for field in ["weary", "truce"]:
+		if data.has(field) and not _number_map(data[field]): return false
 	for campaign in data.get("campaigns", {}).values():
 		if not campaign is Dictionary or not _numbers(campaign, ["tid", "gid"]) or not _number_array(campaign.get("army")): return false
 		# stage 2b: marshal, strength at the muster and the lords left home; absent in older saves
@@ -287,6 +291,18 @@ static func _from_v1(data: Dictionary, europe: EuropeData, definitions: Dictiona
 	state.wars.wars.clear()
 	for k in data.get("wars", {}):
 		state.wars.wars[k] = {"since": int(data.wars[k].since)}
+		if data.wars[k].has("gain"):
+			var gain := {}
+			for f in data.wars[k].gain:
+				gain[String(f)] = float(data.wars[k].gain[f])
+			state.wars.wars[k]["gain"] = gain
+	# stage 2d: war weariness and truces; older saves have none
+	state.wars.weary.clear()
+	for f in data.get("weary", {}):
+		state.wars.weary[String(f)] = float(data.weary[f])
+	state.wars.truce.clear()
+	for k in data.get("truce", {}):
+		state.wars.truce[String(k)] = int(data.truce[k])
 	state.wars.campaigns.clear()
 	for f in data.get("campaigns", {}):
 		var c: Dictionary = data.campaigns[f]
