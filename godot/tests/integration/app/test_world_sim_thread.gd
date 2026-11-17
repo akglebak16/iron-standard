@@ -69,6 +69,20 @@ func _initialize() -> void:
 	assert(world.state.hours_passed >= hour0 + 3, "time goes on with the thread: %d frames" % frames)
 	assert(not world._sim.given, "reading the world took it back")
 	assert(world._sim.steps_done >= 15)
+	# a mouse move while a step runs does not wait for the step: the tip is answered when the world is back
+	var put_off := false
+	for i in 4000:
+		await process_frame
+		if world._sim.given:
+			world._on_hover(Vector2(1000, 1000), Vector2(10, 10))
+			if not world._hover_pending.is_empty():
+				put_off = true
+				break
+	assert(put_off, "the hover was put off while the step was running")
+	while world._sim.given:
+		await process_frame
+	await process_frame
+	assert(world._hover_pending.is_empty(), "and answered after it")
 	world.state.clock.paused = true
 	var steps: int = world._sim.steps_done
 	for i in 20:
