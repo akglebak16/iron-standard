@@ -3,12 +3,17 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
+const Config = preload("res://core/campaign/config.gd")
 
 func _initialize() -> void:
 	var data := EuropeData.new()
 	assert(ContentLoader.populate(data))
 	var s := WorldState.create(5, data, "emp", ContentLoader.registry())
-	assert(s.wars.wars.size() >= 8, "default wars: %d" % s.wars.wars.size())
+	# The game starts with the table Rules.WAR capped at STRAT_START_WARS wars a state (#158): 6 wars, none with 3.
+	assert(s.wars.wars.keys() == s.wars.opening_wars(Config.STRAT_START_WARS), "default wars: %s" % [s.wars.wars.keys()])
+	assert(s.wars.wars.size() == 6, "default wars: %d" % s.wars.wars.size())
+	for f in Rules.REAL_FACTIONS:
+		assert(s.wars.wars_of(f) <= 2, "%s starts with %d wars" % [f, s.wars.wars_of(f)])
 	assert(s.wars.at_war("emp", "nord") and not s.wars.at_war("emp", "kin"))
 	var emp_before: int = s.wars.hold_of("emp").all
 	var total_before := 0
