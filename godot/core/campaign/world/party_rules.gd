@@ -26,6 +26,23 @@ static func strength(list: Array, info: Dictionary) -> float:
 		total += s.n * (tier * tier * 0.6 + 0.8) * (1.35 if d.mounted else 1.0) * float(d.get("pw", 1.0))
 	return total
 
+## The same strength with the per-type factors read once: `table` is troop id -> [tier part, mounted part, pw], made by
+## strength_table(). The products keep their order, so the result is bit for bit the one of strength().
+static func strength_cached(list: Array, table: Dictionary) -> float:
+	var total := 0.0
+	for s in list:
+		var f: Array = table[s.type]
+		total += s.n * f[0] * f[1] * f[2]
+	return total
+
+static func strength_table(info: Dictionary) -> Dictionary:
+	var table := {}
+	for id in info:
+		var d: Dictionary = info[id]
+		var tier := float(d.tier)
+		table[id] = [tier * tier * 0.6 + 0.8, 1.35 if d.mounted else 1.0, float(d.get("pw", 1.0))]
+	return table
+
 static func add_troops(list: Array, type: String, n: int) -> void:
 	for s in list:
 		if s.type == type:

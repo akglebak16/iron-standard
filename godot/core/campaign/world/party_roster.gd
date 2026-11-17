@@ -63,8 +63,12 @@ func party_by_id(id) -> Dictionary:
 func remove(p: Dictionary) -> void:
 	parties.erase(p)
 
+var _strength_table := {}  # Rules.strength_table(info), rebuilt when the troop catalogue changes
+
 func strength_of(p: Dictionary) -> float:
-	return Rules.strength(p.troops, info)
+	if _strength_table.size() != info.size():
+		_strength_table = Rules.strength_table(info)
+	return Rules.strength_cached(p.troops, _strength_table)
 
 func unit_name(fac: String) -> String:
 	var f := factions.get_faction(fac)

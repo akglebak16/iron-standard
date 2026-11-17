@@ -147,8 +147,12 @@ func _end(sk: Dictionary, a: Array, b: Array, winner: int) -> void:
 ## Friendly strength nearby, weighed when a party decides whether to attack.
 func ally_strength(p: Dictionary) -> float:
 	var s := 0.0
+	var px: float = p.x
+	var py: float = p.y
 	for o in roster.parties:
-		if o != p and o.fac == p.fac and not o.hide and not o.get("fight") and not o.get("army", false) and o.kind != "caravan" and o.kind != "camp" and Vector2(o.x - p.x, o.y - p.y).length() < 150.0:
+		if absf(o.x - px) >= 150.0 or absf(o.y - py) >= 150.0:
+			continue
+		if not is_same(o, p) and o.fac == p.fac and not o.hide and not o.get("fight") and not o.get("army", false) and o.kind != "caravan" and o.kind != "camp" and Vector2(o.x - px, o.y - py).length() < 150.0:
 			s += roster.strength_of(o) * 0.85
 	return s
 
