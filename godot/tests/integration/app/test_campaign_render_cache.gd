@@ -18,6 +18,18 @@ func _initialize() -> void:
 	call_deferred("_check")
 
 func _check() -> void:
+	var layer := preload("res://apps/godot/presentation/campaign/settlement_layer.gd").new()
+	root.add_child(layer)
+	var places := ["Бельмон", "Вентум", "Кастра Нигра", "Остра"]
+	var sites := []
+	for i in places.size():
+		sites.append({"id": i + 1, "name": places[i], "x": 200 * i + 100, "y": 160,
+			"kind": ["town", "town", "castle", "village"][i], "fac": "emp"})
+	layer.build(sites)
+	for site in sites:
+		assert(layer.landmark_at(Vector2(site.x, site.y - 12)) == site.id)
+	assert(layer.landmark_at(Vector2(100, 66)) == -1, "Transparent sky beside the spires")
+	layer.queue_free()
 	var small := Cache.new()
 	root.add_child(small)
 	small.configure(Vector2i(100, 80))

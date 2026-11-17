@@ -75,3 +75,9 @@ func _finish_static_artwork() -> void:
 func refresh_settlements() -> void:
 	if _settlement_layer != null:
 		_settlement_layer.queue_redraw()
+
+func landmark_at(at: Vector2) -> int:
+	return _settlement_layer.landmark_at(at) if _settlement_layer != null else -1
+
+func has_landmark(id: int) -> bool:
+	return _settlement_layer != null and _settlement_layer.has_landmark(id)

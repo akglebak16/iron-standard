@@ -9,11 +9,20 @@ const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
 const KINDS := ["town", "castle", "village", "camp"]
 const SHEET_SCALE := 2.0
+## Width in simulation units and the normalized entrance on each illustration.
+const LANDMARKS := {
+	"Бельмон": [preload("res://apps/godot/presentation/campaign/settlements/belmont.png"), 121.0, Vector2(0.58, 0.97)],
+	"Вентум": [preload("res://apps/godot/presentation/campaign/settlements/ventum.png"), 124.0, Vector2(0.47, 0.97)],
+	"Кастра Нигра": [preload("res://apps/godot/presentation/campaign/settlements/castra_nigra.png"), 64.0, Vector2(0.48, 0.97)],
+	"Остра": [preload("res://apps/godot/presentation/campaign/settlements/ostra.png"), 47.0, Vector2(0.37, 0.92)],
+}
 const KIND_NAMES := {"town": "Город", "castle": "Замок", "village": "Деревня", "camp": "Логово разбойников"}
 const LABEL_OFFSETS := [0, 24, -24, 48, -48, 72, -72, 96, -96]
 
 var _sheet: SubViewport
 var _settles: Array = []
+var _landmarks := {}
+var _front_to_back: Array = []
 var _factions := FactionCatalog.new()
 
 class SheetPainter extends Node2D:
@@ -31,6 +40,17 @@ func build(settles: Array) -> void:
 		return
 	_settles = settles.duplicate()
 	_settles.sort_custom(func(a, b): return a.y < b.y)
+	for s in _settles:
+		var art: Array = LANDMARKS.get(s.get("name0", s.name), [])
+		if art.is_empty():
+			continue
+		var texture: Texture2D = art[0]
+		var dimensions := texture.get_size() * (float(art[1]) / texture.get_width())
+		var entrance: Vector2 = art[2]
+		var mask := BitMap.new()
+		mask.create_from_image_alpha(texture.get_image(), 0.25)
+		_landmarks[s.id] = {"texture": texture, "mask": mask, "rect": Rect2(Vector2(s.x, s.y) - entrance * dimensions, dimensions)}
+		_front_to_back.push_front(s.id)
 	_sheet = SubViewport.new()
 	_sheet.size = Vector2i(SettlementArt.SPRITE_SIZE * Vector2(SettlementArt.CULTURES.size(), KINDS.size()) * SHEET_SCALE)
 	_sheet.transparent_bg = true
@@ -42,6 +62,20 @@ func build(settles: Array) -> void:
 
 static func scale_of(kind: String) -> float:
 	return 0.72 if kind == "town" else 0.7 if kind == "castle" else 0.6
+
+func landmark_at(at: Vector2) -> int:
+	for id in _front_to_back:
+		var art: Dictionary = _landmarks[id]
+		var rect: Rect2 = art.rect
+		if rect.has_point(at):
+			var texture: Texture2D = art.texture
+			var pixel := Vector2i((at - rect.position) / rect.size * texture.get_size())
+			if art.mask.get_bitv(pixel):
+				return id
+	return -1
+
+func has_landmark(id: int) -> bool:
+	return _landmarks.has(id)
 
 func _draw() -> void:
 	if _sheet == null:
@@ -65,7 +99,11 @@ func _draw() -> void:
 		elif int(s.get("burnt", 0)) > 0 or float(s.get("dmg", 0.0)) > 0.3:
 			tint = Color(0.6, 0.5, 0.45)
 		var original := OriginalArt.settlement(s.kind, culture, s.fac)
-		if original != null:
+		if _landmarks.has(s.id):
+			var art: Dictionary = _landmarks[s.id]
+			draw_texture_rect(art.texture, art.rect, false, tint)
+			EmblemArt.draw_banner(self, s.x + 8, s.y, _factions.get_faction(s.fac), 8.0)
+		elif original != null:
 			draw_texture_rect(original, dest, false, tint)
 		else:
 			draw_texture_rect_region(tex, dest, src, tint)

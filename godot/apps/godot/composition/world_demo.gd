@@ -330,7 +330,13 @@ func _pick_map_party(at: Vector2) -> Dictionary:
 	return state.party_near(at.x, at.y + 12.0 * WorldCamera.MARKER_SCALE, 36.0 * WorldCamera.MARKER_SCALE)
 
 func _pick_map_settlement(at: Vector2) -> Dictionary:
-	return state.settlement_near(at.x, at.y + 16.0 * WorldCamera.MARKER_SCALE, 52.0 * WorldCamera.MARKER_SCALE)
+	var landmark_id: int = map_view.landmark_at(at)
+	if landmark_id >= 0:
+		return state.map.settlement_by_id(landmark_id)
+	var nearby: Dictionary = state.settlement_near(at.x, at.y + 16.0 * WorldCamera.MARKER_SCALE, 52.0 * WorldCamera.MARKER_SCALE)
+	if not nearby.is_empty() and map_view.has_landmark(nearby.id):
+		return {}
+	return nearby
 
 func _on_map_click(at: Vector2) -> void:
 	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible:
