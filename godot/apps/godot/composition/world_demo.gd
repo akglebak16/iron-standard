@@ -80,7 +80,7 @@ var startup_marks_us := {}
 var _world_job: Thread
 var profile_map_frames := false
 ## Time budget (µs) of world simulation per frame; a longer step is continued next frame (0 = no slicing).
-var slice_us := 1800
+var slice_us := 600
 var map_step_us := 0
 var map_hud_us := 0
 var map_steps := 0
@@ -643,9 +643,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not _ready_to_play or _battle != null:
 		return
-	state.slicer.budget_us = slice_us
+	# The budget grows when the world falls behind real time (fast speeds), so the game never runs slower than it should.
+	state.slicer.budget_us = 0 if slice_us <= 0 else int(slice_us * minf(4.0, 1.0 + maxf(0.0, state.clock.backlog() - 1.5)))
 	state.slicer.now_us = Time.get_ticks_usec
 	state.slicer.frame_signal = func() -> Signal: return get_tree().process_frame
+	state.slicer.hold = func() -> bool: return _battle != null or not _ready_to_play
 	state.advance_async(delta)  # not awaited: long world steps rest between frames inside the slice budget
 	if profile_map_frames:
 		map_step_us = state.slicer.take_used_us()

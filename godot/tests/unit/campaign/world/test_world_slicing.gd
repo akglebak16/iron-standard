@@ -20,6 +20,24 @@ func _initialize() -> void:
 	for i in CALLS:
 		plain.clock.advance(CALL_SECONDS, plain.step, plain.hour_tick)
 	var frames_before := Engine.get_process_frames()
+	# The searching that rests between frames finds the very routes of the plain one.
+	var paths = plain.map.paths
+	var probe := RandomNumberGenerator.new()
+	probe.seed = 7
+	var probe_slicer = sliced.slicer
+	probe_slicer.budget_us = 100
+	probe_slicer.now_us = Time.get_ticks_usec
+	probe_slicer.frame_signal = func() -> Signal: return (Engine.get_main_loop() as SceneTree).process_frame
+	for i in 6:
+		var x0 := probe.randf_range(100.0, 3000.0)
+		var y0 := probe.randf_range(100.0, 2000.0)
+		var x1 := probe.randf_range(100.0, 3000.0)
+		var y1 := probe.randf_range(100.0, 2000.0)
+		var want = paths.find_path(x0, y0, x1, y1)
+		probe_slicer.begin()
+		var got = await paths.find_path_co(x0, y0, x1, y1, false, probe_slicer)
+		probe_slicer.end()
+		assert(str(want) == str(got), "the same route with and without resting (%d)" % i)
 	sliced.slicer.budget_us = 400
 	sliced.slicer.now_us = Time.get_ticks_usec
 	sliced.slicer.frame_signal = func() -> Signal: return (Engine.get_main_loop() as SceneTree).process_frame

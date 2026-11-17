@@ -27,7 +27,7 @@ func _initialize() -> void:
 	print("Party goals tests passed")
 	quit(0)
 
-func _goals() -> Goals:
+func _goals() -> Variant:
 	var g := Goals.new()
 	g.parties = parties
 	g.settles = settles
@@ -96,22 +96,22 @@ func _check_curves() -> void:
 ## No parties, no settlements, no threat map: nothing to do, and nothing breaks.
 func _check_empty() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var lone := _party("lord", "red", 1000.0, 1000.0, 100)
-	var cands := g.candidates(lone)
+	var cands = g.candidates(lone)
 	assert(cands.is_empty(), "an empty world offers no goals: %s" % [cands])
 	assert(g.choose(lone, cands, RandomNumberGenerator.new()).is_empty())
 	assert(g.risk_at(lone, 1000.0, 1000.0, 100.0) == 0.0, "no threat map: no risk")
-	var t := g.flee_target(lone, Vector2(900.0, 1000.0), [])
+	var t = g.flee_target(lone, Vector2(900.0, 1000.0), [])
 	assert(t.x > lone.x and t.sid == null, "with no haven and no map the party runs straight away")
 
 func _check_hunt_and_flee() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var me := _party("lord", "red", 1000.0, 1000.0, 100)
 	var weak := _party("lord", "blue", 1150.0, 1000.0, 40)
 	_party("lord", "green", 1050.0, 1000.0, 10)  # at peace with red: not prey
-	var cands := g.candidates(me)
+	var cands = g.candidates(me)
 	assert(_best(cands).goal == "hunt" and _best(cands).gid == weak.id, "a weaker enemy in sight is hunted: %s" % [cands])
 	assert(_of(cands, "hunt", 3).is_empty(), "a faction at peace is left alone")
 	weak.x = 1000.0 + Config.GOAL_SIGHT_RADIUS + 10.0
@@ -125,7 +125,7 @@ func _check_hunt_and_flee() -> void:
 	strong.troops[0].n = 110
 	assert(_of(g.candidates(me), "flee").is_empty(), "an enemy just a little stronger is no reason to run")
 	strong.troops[0].n = 300
-	var army := g.candidates(me, {"army": true})
+	var army = g.candidates(me, {"army": true})
 	assert(_of(army, "flee").is_empty(), "a party in a faction campaign does not flee")
 	weak.troops[0].n = 40
 	weak.x = 1000.0 + Config.GOAL_ARMY_HUNT_RADIUS + 20.0
@@ -133,17 +133,17 @@ func _check_hunt_and_flee() -> void:
 
 func _check_crowd_and_speed() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var me := _party("lord", "red", 1000.0, 1000.0, 100)
 	var prey := _party("bandit", "blue", 1100.0, 1000.0, 20)
-	var free := g.candidates(me)
+	var free = g.candidates(me)
 	var alone := float(_of(free, "hunt", prey.id).score)
 	for i in 2:
 		_party("lord", "red", 900.0, 900.0 + i * 10.0, 100, {"goal": "hunt", "gid": prey.id, "state": "hunt"})
 	g.rebuild_claims()
 	var crowded := float(_of(g.candidates(me), "hunt", prey.id).score)
 	assert(crowded < alone * 0.7, "a target two allies already chase is less attractive: %f < %f" % [crowded, alone])
-	var mine := g.goal_key(me)
+	var mine = g.goal_key(me)
 	me.goal = "hunt"
 	me.gid = prey.id
 	g.note(mine, me)
@@ -154,7 +154,7 @@ func _check_crowd_and_speed() -> void:
 	me = _party("lord", "red", 1000.0, 1000.0, 100)
 	var slow := _party("lord", "blue", 1100.0, 1000.0, 30)
 	var fast := _party("lord", "blue", 1100.0, 1010.0, 30, {"spd": 22.0})
-	var cands := g.candidates(me)
+	var cands = g.candidates(me)
 	assert(float(_of(cands, "hunt", fast.id).score) < float(_of(cands, "hunt", slow.id).score), "a faster target is worth less")
 	me.goal = "hunt"
 	me.gid = fast.id
@@ -166,7 +166,7 @@ func _check_crowd_and_speed() -> void:
 
 func _check_hysteresis() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5
 	var me := _party("vassal", "red", 1000.0, 1000.0, 100, {"goal": "patrol", "gid": 7, "ga": 0.5, "state": "roam", "path": [Vector2(1100, 1000)]})
@@ -201,7 +201,7 @@ func _check_hysteresis() -> void:
 
 func _check_kinds() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	_settle("town", "red", 1300.0, 1000.0)
 	_settle("village", "blue", 1100.0, 1300.0)
 	var bandit := _party("bandit", "bandit", 1000.0, 1000.0, 30, {"home": 77})
@@ -210,10 +210,10 @@ func _check_kinds() -> void:
 	var odd := _party("wanderer", "violet", 980.0, 1000.0, 10)
 	var lord := _party("lord", "blue", 1000.0, 1400.0, 400)
 	_map()
-	var cb := g.candidates(bandit)
+	var cb = g.candidates(bandit)
 	assert(not _of(cb, "roam").is_empty() and _of(cb, "rest").is_empty() and _of(cb, "raid").is_empty(), "bandits roam, they do not rest or raid: %s" % [cb])
 	assert(not _of(cb, "hunt", caravan.id).is_empty(), "bandits hunt a weak caravan")
-	var cc := g.candidates(caravan)
+	var cc = g.candidates(caravan)
 	assert(_of(cc, "hunt").is_empty(), "caravans do not hunt")
 	assert(not _of(cc, "flee").is_empty(), "a caravan flees from bandits")
 	bandit.x = 3000.0
@@ -233,19 +233,19 @@ func _check_kinds() -> void:
 	var ret := _party("cvass", "player", 1000.0, 1100.0, 50)
 	var far := _party("bandit", "bandit", 1000.0, 1240.0, 10)  # 140 from the retinue, 240 from the fief
 	var near := _party("bandit", "bandit", 1000.0, 1150.0, 10, {"fight": 3})
-	var guard := g.candidates(ret, {"mode": "guard", "fief": fief})
+	var guard = g.candidates(ret, {"mode": "guard", "fief": fief})
 	assert(_of(guard, "hunt", far.id).is_empty(), "guarding: a target beyond the leash of the fief is ignored")
 	assert(_of(guard, "hunt", near.id).is_empty(), "retinues leave parties already in a fight alone")
 	assert(not _of(guard, "guard", fief.id).is_empty() and _of(guard, "patrol").is_empty() and _of(guard, "follow").is_empty())
-	var patrol := g.candidates(ret, {"mode": "patrol", "fief": fief})
+	var patrol = g.candidates(ret, {"mode": "patrol", "fief": fief})
 	assert(not _of(patrol, "hunt", far.id).is_empty() and not _of(patrol, "patrol", fief.id).is_empty(), "patrol hunts farther and rides around")
-	var follow := g.candidates(ret, {"mode": "follow", "fief": fief, "lead": {"id": -1, "x": 1400.0, "y": 1000.0}, "keep": 70.0})
+	var follow = g.candidates(ret, {"mode": "follow", "fief": fief, "lead": {"id": -1, "x": 1400.0, "y": 1000.0}, "keep": 70.0})
 	assert(not _of(follow, "follow", -1).is_empty() and _of(follow, "guard").is_empty(), "follow mode follows the player")
 	assert(Goals.profile({"kind": "cvass"}, "nonsense") == Config.GOAL_RETINUE_MODES.guard, "an unknown order guards")
 
 func _check_modifiers() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var me := _party("lord", "red", 1000.0, 1000.0, 100)
 	var prey := _party("lord", "blue", 1100.0, 1000.0, 30)
 	_party("lord", "blue", 1110.0, 1100.0, 60)  # guards of the prey: risk at the target
@@ -261,20 +261,20 @@ func _check_modifiers() -> void:
 
 func _check_risk_and_visibility() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var me := _party("lord", "red", 1000.0, 1000.0, 100)
 	var lone := _party("lord", "blue", 1150.0, 1000.0, 30)
 	var guarded := _party("lord", "blue", 850.0, 1000.0, 30)
 	_party("lord", "blue", 800.0, 1060.0, 70)
 	_map()
-	var cands := g.candidates(me)
+	var cands = g.candidates(me)
 	assert(float(_of(cands, "hunt", lone.id).score) > float(_of(cands, "hunt", guarded.id).score), "prey near its friends is riskier")
 	assert(g.risk_at(me, 800.0, 1000.0, 100.0) > 0.5 and g.risk_at(me, 3000.0, 3000.0, 100.0) == 0.0)
 	assert(g.foreign_risk(me, 1000.0 + Config.GOAL_SCOUT_RADIUS + 50.0, 1000.0, 100.0) == Config.GOAL_UNKNOWN_RISK, "beyond scouting range the risk is assumed, not seen")
 
 func _check_plans() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var quiet := _settle("village", "red", 1200.0, 1000.0)
 	var alarmed := _settle("village", "red", 800.0, 1000.0, {"alarm": Config.GOAL_ALARM_HOURS})
 	var town := _settle("town", "red", 1000.0, 1300.0)
@@ -283,7 +283,7 @@ func _check_plans() -> void:
 	var peace := _settle("village", "green", 1000.0, 1450.0)
 	var me := _party("lord", "red", 1000.0, 1000.0, 330)
 	_map()
-	var cands := g.candidates(me)
+	var cands = g.candidates(me)
 	assert(float(_of(cands, "patrol", alarmed.id).score) > float(_of(cands, "patrol", quiet.id).score), "patrols go where enemies were seen lately")
 	assert(not _of(cands, "defend", besieged.id).is_empty() and _of(cands, "defend", quiet.id).is_empty(), "a besieged own settlement is defended")
 	assert(not _of(cands, "raid", enemy.id).is_empty() and _of(cands, "raid", peace.id).is_empty(), "raids only on factions at war")
@@ -299,7 +299,7 @@ func _check_plans() -> void:
 	_party("bandit", "bandit", 1130.0, 1100.0, 20)
 	_map()
 	var vassal := _party("vassal", "red", 1000.0, 1050.0, 100)
-	var cv := g.candidates(vassal, {"lead": {"id": me.id, "x": me.x, "y": me.y}})
+	var cv = g.candidates(vassal, {"lead": {"id": me.id, "x": me.x, "y": me.y}})
 	assert(not _of(cv, "escort", caravan.id).is_empty(), "a vassal escorts an own caravan in danger")
 	assert(_of(cv, "rest", town.id).is_empty(), "vassals stand by villages and castles, not towns")
 	assert(not _of(cv, "follow", me.id).is_empty())
@@ -307,14 +307,14 @@ func _check_plans() -> void:
 
 func _check_flee_target() -> void:
 	_reset()
-	var g := _goals()
+	var g = _goals()
 	var behind := _settle("town", "red", 750.0, 1000.0)
 	var ahead := _settle("town", "red", 1400.0, 1000.0)
 	var me := _party("lord", "red", 1000.0, 1000.0, 50)
 	var foe := _party("lord", "blue", 850.0, 1000.0, 200)
 	_map()
 	var havens := [behind, ahead].map(func(s): return {"id": s.id, "x": s.x, "y": s.y})
-	var t := g.flee_target(me, Vector2(foe.x, foe.y), havens)
+	var t = g.flee_target(me, Vector2(foe.x, foe.y), havens)
 	assert(t.sid == ahead.id, "flight to the own town away from the enemy, not past it: %s" % [t])
 	_party("lord", "blue", 1400.0, 1050.0, 300)
 	_map()

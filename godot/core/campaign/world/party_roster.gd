@@ -30,6 +30,7 @@ var factions: FactionCatalog
 var clans_on := false  # houses refill lords themselves (WorldClans.refill)
 var info := {}  # troop id -> {tier, mounted, pw}
 var parties: Array = []
+var slicer: RefCounted = null  # SliceBudget of the world (optional): lets long route searches rest between frames (path_to_co)
 var _next_party_id := 1000000  # party ids stay clear of settlement ids
 
 func _init(world_map: WorldMap, seed_value: int, troops: Catalog, faction_definitions: FactionCatalog) -> void:
@@ -127,6 +128,19 @@ func spawn_caravan(t: Dictionary):
 	_path_to(p, dst.x, dst.y)
 	return p
 
+## spawn_caravan whose route search may rest between frames (the caller awaits it).
+func spawn_caravan_co(t: Dictionary):
+	if t.is_empty() or not (t.fac in Rules.REAL_FACTIONS):
+		return null
+	var dsts := map.settles.filter(func(s): return s.kind == "town" and s != t and s.fac in Rules.REAL_FACTIONS)
+	if dsts.is_empty():
+		return null
+	var near := dsts.filter(func(s): return Vector2(s.x - t.x, s.y - t.y).length() < 1300.0)
+	var dst: Dictionary = pick(near if not near.is_empty() else dsts)
+	var p := make_party("caravan", t.fac, "Караван", t.x + 10, t.y + 20, gen_troops(t.fac, rint(3, 5), 0.3), {"home": t.id, "sid": dst.id, "state": "travel"})
+	await path_to_co(p, dst.x, dst.y)
+	return p
+
 ## Initial population: lords, vassals, camp garrisons and caravans (newWorld).
 func populate() -> void:
 	for s in map.settles:
@@ -160,19 +174,27 @@ func hour_tick(hour: int) -> void:
 				s.respawn -= 1
 				if s.respawn <= 0:
 					respawn_camp(s)
+					if slicer != null and slicer.due():
+						await slicer.next_frame()
 			continue
 		s.rt += 1
 		if s.rt >= 72:
 			s.rt = 0
 			SettlementRecruits.refresh(s, catalog, rng)
+			if slicer != null and slicer.due():
+				await slicer.next_frame()
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	if hour % 6 == 0:
-		_spawn_bandits_and_caravans()
+		await _spawn_bandits_and_caravans()
 	if hour == 6:
 		for f in Rules.REAL_FACTIONS:
 			var n := parties.filter(func(p): return p.kind == "vassal" and p.fac == f).size()
 			var hs := map.settles.filter(func(s): return s.fac == f and s.kind != "camp")
 			if n < VASSALS_PER_FACTION and not hs.is_empty():
 				spawn_vassal(f, pick(hs), rint(VAS_NEW_MIN, VAS_NEW_MAX))
+			if slicer != null and slicer.due():
+				await slicer.next_frame()
 	if hour == 12 and not clans_on:
 		for f in Rules.REAL_FACTIONS:
 			var n := parties.filter(func(p): return p.kind == "lord" and p.fac == f).size()
@@ -180,6 +202,8 @@ func hour_tick(hour: int) -> void:
 			if n < LORDS_PER_FACTION and not hs.is_empty():
 				var h: Dictionary = pick(hs)
 				make_party("lord", f, lord_name(f), h.x + 10, h.y + 20, gen_troops(f, rint(LORD_NEW_MIN, LORD_NEW_MAX), 0.6), {"home": h.id})
+			if slicer != null and slicer.due():
+				await slicer.next_frame()
 
 func _spawn_bandits_and_caravans() -> void:
 	var bands := parties.filter(func(p): return p.kind == "bandit").size()
@@ -196,7 +220,7 @@ func _spawn_bandits_and_caravans() -> void:
 	if cars < 9 and rng.randf() < 0.5:
 		var towns := map.settles.filter(func(s): return s.kind == "town" and s.fac in Rules.REAL_FACTIONS)
 		if not towns.is_empty():
-			spawn_caravan(pick(towns))
+			await spawn_caravan_co(pick(towns))
 
 ## Walking speed (speedOf): mounted-only parties are faster, bandits slightly so.
 func speed_of(p: Dictionary) -> float:
@@ -248,3 +272,10 @@ func _path_to(p: Dictionary, x: float, y: float) -> bool:
 
 func path_to(p: Dictionary, x: float, y: float) -> bool:
 	return _path_to(p, x, y)
+
+## path_to that may rest between frames while the search runs (the caller awaits it).
+func path_to_co(p: Dictionary, x: float, y: float) -> bool:
+	var found = await map.paths.find_path_co(p.x, p.y, x, y, false, slicer)
+	p.path = found if found != null else []
+	p.pi = 0
+	return found != null

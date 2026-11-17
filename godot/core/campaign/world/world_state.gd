@@ -154,6 +154,8 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.ai = PartyAI.new(state.roster, state.player)
 	state.ai.slicer = state.slicer
 	state.wars.slicer = state.slicer
+	state.roster.slicer = state.slicer
+	state.ai.goals.slicer = state.slicer
 	state.undead = WorldUndead.new(state.roster, state.wars)
 	state.undead.init()
 	state.undead.announced.connect(func(t): state.log_world(t, JOURNAL_BAD))
@@ -279,6 +281,7 @@ func step(dh: float) -> void:
 			if player.enter_id >= 0:
 				enter(map.settlement_by_id(player.enter_id))
 	_meetings()
+	await prepare_threat()
 	await ai.step(dh)
 
 ## A hostile party that reaches the player forces a meeting (stepWorld).
@@ -314,7 +317,7 @@ func _meetings() -> void:
 
 func hour_tick() -> void:
 	hours_passed += 1
-	roster.hour_tick(clock.hour)
+	await roster.hour_tick(clock.hour)
 	if slicer.due(): await slicer.next_frame()
 	wars.day = clock.day
 	wars.hour = clock.hour
@@ -338,8 +341,22 @@ func hour_tick() -> void:
 	if clock.hour == 0:
 		_day_tick()
 	_threat_step += 1
+	await prepare_threat()
 	undead.wave_tick()
 	ai.hour_tick()
+
+## Builds the threat map of the world step that has just begun (a coroutine: with the slice budget the build rests between
+## parties). The AI and the operations of this step read the map as it stood at the step's start.
+func prepare_threat() -> void:
+	if _threat_built == _threat_step:
+		return
+	if threat == null:
+		threat = ThreatMap.new(PartyAI.WW, PartyAI.WH)
+	_threat_built = _threat_step
+	if slicer.due(): await slicer.next_frame()
+	var sources := threat_sources()
+	if slicer.due(): await slicer.next_frame()
+	await threat.rebuild_co(sources, hours_passed, slicer)
 
 ## Threat map of the current world step (DESIGN.md §5.1, ADR-023). The first request after a step or an hour rebuilds
 ## it from the parties, so a loaded world sees exactly the map the saved one would have seen. It spends no RNG and is

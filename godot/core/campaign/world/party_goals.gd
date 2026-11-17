@@ -48,6 +48,7 @@ var _cp: Dictionary = {}
 var _cp_map: ThreatMap = null
 var _cp_foes: Array = []
 var _cp_key := ""
+var slicer: RefCounted = null  # SliceBudget of the world (optional): candidates() may rest between goal kinds (the caller awaits it)
 var _cp_ready := false  # the map and the foes are asked for at the first risk_at, not before: the threat map of a step
 						# is frozen when it is first requested, and that moment must not move
 
@@ -239,21 +240,45 @@ func candidates(p: Dictionary, ctx := {}) -> Array:
 	var me := own_strength(p)
 	var out: Array = []
 	var seen := scan(p, me, prof, ctx)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_hunt(p, me, prof, mods, ctx, seen, out)
 	if bool(ctx.get("army", false)):
 		_sort(out)
 		return out
 	_flee(p, me, prof, mods, seen, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_defend(p, me, prof, mods, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_patrol(p, prof, mods, ctx, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_raid(p, me, prof, mods, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_rest(p, me, prof, mods, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_escort(p, prof, mods, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_follow(p, prof, mods, ctx, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_guard(p, prof, mods, ctx, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_muster(p, prof, mods, ctx, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_assault(p, prof, mods, ctx, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_ravage(p, me, prof, mods, ctx, out)
+	if slicer != null and slicer.due():
+		await slicer.next_frame()
 	_roam(p, prof, mods, ctx, out)
 	_sort(out)
 	return out

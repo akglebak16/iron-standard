@@ -49,6 +49,10 @@ func add_time(dt: float) -> void:
 	if not paused:
 		_acc += dt * 1.2 * speed
 
+## Steps that are due but not run yet (a sliced run that falls behind lets this grow).
+func backlog() -> float:
+	return _acc / STEP
+
 ## How far the next step has progressed, 0..1 (drawing interpolates between steps with it).
 func step_fraction() -> float:
 	return clampf(_acc / STEP, 0.0, 1.0)

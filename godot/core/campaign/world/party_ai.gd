@@ -103,11 +103,17 @@ func _fresh() -> void:
 func step(dh: float) -> void:
 	_fresh()
 	goals.rebuild_claims()
+	var typical := 0.0  # running mean of µs one party takes: a party that would not fit in the budget waits for the next frame
 	for p in roster.parties.duplicate():
 		if p in roster.parties:
-			ai_party(p, dh)
-			if slicer != null and slicer.due():
+			if slicer != null and slicer.active and slicer.due_in(int(typical * 1.5)):
 				await slicer.next_frame()
+			var t0: int = slicer.now() if slicer != null else 0
+			await ai_party(p, dh)
+			if slicer != null and slicer.active:
+				typical = typical * 0.9 + float(slicer.now() - t0) * 0.1
+				if slicer.due():
+					await slicer.next_frame()
 	var list := roster.parties.duplicate()
 	for i in list.size():
 		var a: Dictionary = list[i]
@@ -177,12 +183,12 @@ func ai_party(p: Dictionary, dh: float) -> void:
 	p.ai = float(p.get("ai", 0.0)) - dh
 	if p.ai <= 0.0:
 		p.ai = roster.rnd(Config.GOAL_THINK_HOURS.x, Config.GOAL_THINK_HOURS.y)
-		if _think(p, ctx):
+		if await _think(p, ctx):
 			return
 	if p.state == "hunt":
-		_chase(p, dh)
+		await _chase(p, dh)
 	elif p.get("goal", "") == "escort":
-		_escort(p, dh)
+		await _escort(p, dh)
 	if p.pi < p.path.size():
 		if roster.move_along(p, dh):
 			_arrived(p)
@@ -191,7 +197,7 @@ func ai_party(p: Dictionary, dh: float) -> void:
 		if s.is_empty():
 			roster.remove(p)
 		else:
-			roster.path_to(p, s.x, s.y)
+			await roster.path_to_co(p, s.x, s.y)
 
 ## Resting inside a settlement; on leaving, the party tops up its troops there.
 func _rest_inside(p: Dictionary, dh: float) -> void:
@@ -238,7 +244,7 @@ func _think(p: Dictionary, ctx: Dictionary) -> bool:
 	if p.get("goal", "") != "" and p.state == "idle" and p.pi >= p.path.size() and float(p.get("wait", 0.0)) > 0.0:
 		p.wait = float(p.wait) - Config.GOAL_WAIT_PER_THINK
 	var old_key := Goals.goal_key(p)
-	var cands := goals.candidates(p, ctx)
+	var cands = await goals.candidates(p, ctx)
 	var pick := goals.choose(p, cands, roster.rng)
 	if pick.is_empty():
 		if goals.current_score(p, cands) >= 0.0:
@@ -253,7 +259,7 @@ func _think(p: Dictionary, ctx: Dictionary) -> bool:
 		if p.state == "idle" and p.pi >= p.path.size() and not ctx.army:
 			_idle(p)
 		return false
-	_apply(p, pick, ctx)
+	await _apply(p, pick, ctx)
 	goals.note(old_key, p)
 	return true
 
@@ -288,7 +294,7 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 		p.tpl = false
 		p.sid = t.id
 		p.state = "travel"
-		roster.path_to(p, t.x, t.y)
+		await roster.path_to_co(p, t.x, t.y)
 		return
 	match String(c.goal):
 		"hunt":
@@ -296,13 +302,13 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 			p.tid = null if pl else c.gid
 			p.tpl = pl
 			p.state = "hunt"
-			roster.path_to(p, c.x, c.y)
+			await roster.path_to_co(p, c.x, c.y)
 			if skirmish != null and not pl and not ctx.army:
 				var t := roster.party_by_id(c.gid)
 				if not t.is_empty():
 					skirmish.rally(p, t)
 		"flee":
-			_flee(p, Vector2(c.x, c.y), ctx)
+			await _flee(p, Vector2(c.x, c.y), ctx)
 		"rest", "raid", "assault":
 			var s: Dictionary = roster.map.settlement_by_id(c.gid)
 			p.tid = null
@@ -310,11 +316,11 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 			p.sid = s.id
 			p.state = "travel"
 			if p.kind == "vassal":
-				roster.path_to(p, s.x + roster.rnd(-15, 15), s.y + 24.0)
+				await roster.path_to_co(p, s.x + roster.rnd(-15, 15), s.y + 24.0)
 			else:
-				roster.path_to(p, s.x, s.y)
+				await roster.path_to_co(p, s.x, s.y)
 		"muster":
-			_roam_to(p, c.x, c.y, Config.UNDEAD_MUSTER_SPREAD)
+			await _roam_to(p, c.x, c.y, Config.UNDEAD_MUSTER_SPREAD)
 		"patrol", "defend":
 			var s: Dictionary = roster.map.settlement_by_id(c.gid)
 			var r := Config.GOAL_PATROL_OFFSET
@@ -322,35 +328,35 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 				r = Vector2(Config.GOAL_DEFEND_OFFSET * 0.5, Config.GOAL_DEFEND_OFFSET)
 			elif p.kind == "cvass":
 				r = Config.GOAL_RETINUE_PATROL_RANGE
-			_roam_to(p, s.x, s.y, r)
+			await _roam_to(p, s.x, s.y, r)
 		"escort":
 			p.tid = null
 			p.state = "roam"
-			roster.path_to(p, c.x, c.y)
+			await roster.path_to_co(p, c.x, c.y)
 		"follow":
 			if p.kind == "cvass":
 				if _dist(player, p) > Config.GOAL_RETINUE_FOLLOW_KEEP:
 					p.state = "roam"
-					roster.path_to(p, player.x + roster.rnd(-40, 40), player.y + roster.rnd(20, 50))
+					await roster.path_to_co(p, player.x + roster.rnd(-40, 40), player.y + roster.rnd(20, 50))
 			elif _dist(c, p) > Config.GOAL_FOLLOW_KEEP:
 				var a := roster.rnd(0.0, TAU)
 				var tx := clampf(c.x + cos(a) * Config.GOAL_FOLLOW_OFFSET, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN)
 				var ty := clampf(c.y + sin(a) * Config.GOAL_FOLLOW_OFFSET + 20.0, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN)
-				if roster.path_to(p, tx, ty):
+				if await roster.path_to_co(p, tx, ty):
 					p.state = "roam"
 		"guard":
 			var far := Vector2(c.x - p.x, c.y - p.y).length() > Config.GOAL_RETINUE_GUARD_FAR
 			if far or roster.rng.randf() < Config.GOAL_RETINUE_GUARD_WANDER:
 				var a := roster.rnd(0.0, TAU)
 				var r := 20.0 if far else roster.rnd(Config.GOAL_RETINUE_GUARD_RANGE.x, Config.GOAL_RETINUE_GUARD_RANGE.y)
-				if roster.path_to(p, clampf(c.x + cos(a) * r, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN), clampf(c.y + 22 + sin(a) * r, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN)):
+				if await roster.path_to_co(p, clampf(c.x + cos(a) * r, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN), clampf(c.y + 22 + sin(a) * r, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN)):
 					p.state = "roam"
 		"roam":
 			if p.fac == Config.UNDEAD_FACTION:
-				_roam_to(p, c.x, c.y, Config.UNDEAD_ROAM_RANGE)  # around the front of its barrow
+				await _roam_to(p, c.x, c.y, Config.UNDEAD_ROAM_RANGE)  # around the front of its barrow
 				return
 			var h := roster.map.settlement_by_id(p.home) if p.home != null else {}
-			_roam_to(p, h.x if not h.is_empty() else p.x, h.y if not h.is_empty() else p.y, Config.GOAL_ROAM_RANGE)
+			await _roam_to(p, h.x if not h.is_empty() else p.x, h.y if not h.is_empty() else p.y, Config.GOAL_ROAM_RANGE)
 
 ## Rides to a random passable point at distance r.x..r.y from (x, y); a few tries, then stays.
 func _roam_to(p: Dictionary, x: float, y: float, r: Vector2) -> void:
@@ -362,7 +368,7 @@ func _roam_to(p: Dictionary, x: float, y: float, r: Vector2) -> void:
 		var d := roster.rnd(r.x, r.y)
 		var tx := clampf(x + cos(a) * d, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN)
 		var ty := clampf(y + sin(a) * d, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN)
-		if _passable(Vector2(tx, ty)) and roster.path_to(p, tx, ty):
+		if _passable(Vector2(tx, ty)) and await roster.path_to_co(p, tx, ty):
 			return
 	p.path = []
 	p.pi = 0
@@ -377,10 +383,10 @@ func _flee(p: Dictionary, from: Vector2, ctx: Dictionary) -> void:
 	p.tid = null
 	p.tpl = false
 	p.state = "flee"
-	if roster.path_to(p, t.x, t.y):
+	if await roster.path_to_co(p, t.x, t.y):
 		return
 	var a := atan2(p.y - from.y, p.x - from.x)
-	roster.path_to(p, clampf(p.x + cos(a) * Config.GOAL_FLEE_FALLBACK, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN), clampf(p.y + sin(a) * Config.GOAL_FLEE_FALLBACK, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN))
+	await roster.path_to_co(p, clampf(p.x + cos(a) * Config.GOAL_FLEE_FALLBACK, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN), clampf(p.y + sin(a) * Config.GOAL_FLEE_FALLBACK, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN))
 
 func _chase(p: Dictionary, dh: float) -> void:
 	if p.get("tpl", false):
@@ -392,7 +398,7 @@ func _chase(p: Dictionary, dh: float) -> void:
 			p.rp -= dh
 			if p.rp <= 0.0:
 				p.rp = Config.GOAL_CHASE_REPATH_HOURS
-				roster.path_to(p, player.x, player.y)
+				await roster.path_to_co(p, player.x, player.y)
 	else:
 		var t := roster.party_by_id(p.tid)
 		if t.is_empty() or t.hide:
@@ -402,7 +408,7 @@ func _chase(p: Dictionary, dh: float) -> void:
 			p.rp -= dh
 			if p.rp <= 0.0:
 				p.rp = Config.GOAL_CHASE_REPATH_HOURS
-				roster.path_to(p, t.x, t.y)
+				await roster.path_to_co(p, t.x, t.y)
 
 ## Escort: keeps close to the caravan; the goal ends when the caravan is gone.
 func _escort(p: Dictionary, dh: float) -> void:
@@ -418,7 +424,7 @@ func _escort(p: Dictionary, dh: float) -> void:
 		p.rp = Config.GOAL_CHASE_REPATH_HOURS
 		if _dist(c, p) > Config.GOAL_ESCORT_KEEP:
 			p.state = "roam"
-			roster.path_to(p, c.x, c.y)
+			await roster.path_to_co(p, c.x, c.y)
 
 func _arrived(p: Dictionary) -> void:
 	if p.state == "flee":
