@@ -21,6 +21,8 @@ var _legacy := {}
 var _trade_pick := ""
 ## Market sub-tab: "goods" (trade goods and food) or "gear" (weapons, armour, horses).
 var _market_view := "goods"
+## The result of the last deal, shown under the title once after the redraw.
+var _flash := ""
 
 func _ready() -> void:
 	super()
@@ -46,6 +48,9 @@ func render() -> void:
 	close_button.text = "Покинуть " + {"town": "город", "castle": "замок", "village": "деревню", "camp": "лагерь"}.get(settlement.kind, "поселение")
 	set_crest(settlement.fac)
 	sub_label.text = "%s · %s   ·   золото %d" % [SettlementLayer.KIND_NAMES.get(settlement.kind, ""), _factions.get_faction(settlement.fac).get("name", ""), p.gold]
+	if _flash != "":
+		sub_label.text += "   ·   " + _flash
+		_flash = ""
 	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Рынок"]]
 	if settlement.kind == "town":
 		tabs.append(["tavern", "Таверна"])
@@ -214,10 +219,24 @@ func _goods(p, fx: Dictionary) -> void:
 	if _market_view == "gear":
 		_gear_trade(p, fx, m, men)
 		return
-	note("Проценты — разница с обычной ценой. Зелёное выгодно, красное нет: покупай там, где товар делают, продавай, где его не хватает.")
-	var grid := _trade_table("GoodsTable")
+	note("Проценты — разница с обычной ценой: зелёное выгодно, красное нет. Покупай там, где товар делают, продавай, где его не хватает.")
+	var mine: Array = []
+	var theirs: Array = []
+	var worth := 0
 	for id in market.goods:
-		_goods_line(grid, p, fx, m, men, id)
+		var have := int(p.inv.get(id, 0))
+		if have > 0:
+			mine.append(id)
+			worth += have * int(market.sell_price(p.rel, fx, settlement, m, id))
+		if int(m.stock.get(id, 0)) > 0:
+			theirs.append(id)
+	var sides := _trade_sides("GoodsTable")
+	var cargo := _trade_side(sides, "CargoGoods", "Твой обоз", "всё уйдёт за ≈%d" % worth if worth > 0 else "", "В обозе нет товаров.", mine.size())
+	for id in mine:
+		_goods_sell_line(cargo, p, fx, m, id)
+	var shop := _trade_side(sides, "MerchantGoods", "Торговец", "денег %d" % int(m.gold), "Сегодня товаров нет.", theirs.size())
+	for id in theirs:
+		_goods_buy_line(shop, p, fx, m, men, id)
 
 ## Two sub-tabs of the market: trade goods and gear.
 func _market_switch() -> void:
@@ -242,19 +261,85 @@ func _market_switch() -> void:
 			render())
 		line.add_child(b)
 
-## A card with a compact table: icon, name, merchant's stock, buy, sell, in the cargo, buttons.
-func _trade_table(table_name: String) -> GridContainer:
+## Two cards side by side: what the player can sell on the left, what the merchant sells on the right.
+func _trade_sides(sides_name: String) -> HBoxContainer:
+	var sides := HBoxContainer.new()
+	sides.name = sides_name
+	sides.add_theme_constant_override("separation", 8)
+	body.add_child(sides)
+	return sides
+
+## One side: a card with a header (title and a short sum) and a table icon, name, price, buttons. Returns the table;
+## with nothing to list the card says `empty` instead.
+func _trade_side(sides: HBoxContainer, side_name: String, title: String, detail: String, empty: String, rows: int, extra: Control = null) -> GridContainer:
 	var card := card_panel()
-	card.name = table_name
-	body.add_child(card)
+	card.name = side_name
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sides.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	card.add_child(col)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	col.add_child(head)
+	var t := Label.new()
+	t.text = title
+	GameSkin.title(t, 19)
+	head.add_child(t)
+	var d := _cell(detail, GameSkin.MUTED, 14)
+	d.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(d)
+	if extra != null:
+		head.add_child(extra)
 	var grid := GridContainer.new()
-	grid.columns = 7
-	grid.add_theme_constant_override("h_separation", 14)
-	grid.add_theme_constant_override("v_separation", 3)
-	card.add_child(grid)
-	for title in ["", "Название", "У торговца", "Купить", "Продать", "В обозе", ""]:
-		grid.add_child(_cell(title, GameSkin.MUTED, 14))
+	grid.name = "Table"
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 6)
+	col.add_child(grid)
+	if rows == 0:
+		var e := _cell(empty, GameSkin.MUTED, 15)
+		e.name = "Empty"
+		col.add_child(e)
 	return grid
+
+## Icon, name with a small line under it, price; the caller adds the buttons.
+func _trade_line(grid: GridContainer, icon: Texture2D, name_text: String, name_color: Color, info: String, price: Control, mark := {}) -> void:
+	grid.add_child(_icon(icon, 26))
+	var block := VBoxContainer.new()
+	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	block.add_theme_constant_override("separation", -2)
+	var n := _cell(name_text, name_color, 15)
+	n.add_theme_font_override("font", GameSkin.BODY_BOLD)
+	n.clip_text = true
+	n.tooltip_text = name_text
+	n.mouse_filter = Control.MOUSE_FILTER_PASS
+	block.add_child(n)
+	var under := HBoxContainer.new()
+	under.add_theme_constant_override("separation", 6)
+	if not mark.is_empty():
+		var m := _cell(String(mark.text), mark.color, 12)
+		m.name = "Compare"
+		m.tooltip_text = String(mark.get("hint", ""))
+		m.mouse_filter = Control.MOUSE_FILTER_PASS
+		under.add_child(m)
+	var i := _cell(info, GameSkin.MUTED, 12)
+	i.clip_text = true
+	i.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	under.add_child(i)
+	block.add_child(under)
+	grid.add_child(block)
+	grid.add_child(price)
+
+func _actions(grid: GridContainer, defs: Array) -> void:
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 4)
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	for def in defs:
+		var b := make_button(def)
+		_small(b)
+		actions.add_child(b)
+	grid.add_child(actions)
 
 ## Purse, the merchant's money, cargo and provisions above the goods table.
 func _trade_summary(p, fx: Dictionary, m: Dictionary, men: int) -> void:
@@ -280,45 +365,47 @@ func _chip(parent: Control, icon_name: String, text: String, color := GameSkin.P
 	h.add_child(_cell(text, color, 16))
 	parent.add_child(h)
 
-func _goods_line(grid: GridContainer, p, fx: Dictionary, m: Dictionary, men: int, id: String) -> void:
-	var market = state.market
-	var g: Dictionary = market.goods[id]
-	var buy_p: int = market.buy_price(p.rel, fx, settlement, m, id)
-	var sell_p: int = market.sell_price(p.rel, fx, settlement, m, id)
-	var stock := int(m.stock.get(id, 0))
-	var have := int(p.inv.get(id, 0))
-	var base: float = market.base_price(id)
-	grid.add_child(_icon(GameSkin.icon(GOOD_ICONS.get(id, "sack")), 22))
-	var name_line := HBoxContainer.new()
-	name_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_line.add_theme_constant_override("separation", 8)
-	var title := _cell(String(g.n), GameSkin.PARCH, 16)
-	title.add_theme_font_override("font", GameSkin.BODY_BOLD)
-	name_line.add_child(title)
+func _goods_info(id: String) -> String:
+	var g: Dictionary = state.market.goods[id]
 	var food := int(Economy.FOOD_VALUE.get(id, 0))
-	var info := "вес %s" % str(g.w)
-	if food > 0:
-		info = "еда %d порц. · %s" % [food, info]
-	name_line.add_child(_cell(info, GameSkin.MUTED, 13))
-	grid.add_child(name_line)
-	grid.add_child(_cell(str(stock) if stock > 0 else "нет", GameSkin.PARCH if stock > 0 else GameSkin.MUTED, 15))
-	grid.add_child(_price(buy_p, base * 1.08, false))
-	grid.add_child(_price(sell_p, base * 0.92, true))
-	var have_text := "—"
+	return ("еда %d порц. · вес %s" % [food, str(g.w)]) if food > 0 else "вес %s" % str(g.w)
+
+## A good in the cargo: how many, what it fetches here, sell one or all.
+func _goods_sell_line(grid: GridContainer, p, fx: Dictionary, m: Dictionary, id: String) -> void:
+	var market = state.market
+	var sell_p: int = market.sell_price(p.rel, fx, settlement, m, id)
+	var have := int(p.inv.get(id, 0))
+	_trade_line(grid, GameSkin.icon(GOOD_ICONS.get(id, "sack")), String(market.goods[id].n), GameSkin.PARCH,
+		"×%d · %s" % [have, _goods_info(id)], _price(sell_p, market.base_price(id) * 0.92, true))
+	var can: bool = int(m.gold) >= sell_p
+	var why := "" if can else " — " + Market.WHY.merchant.to_lower()
+	_actions(grid, [
+		{"text": "−1", "hint": "Продать 1 за %d зол.%s" % [sell_p, why], "disabled": not can, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1), "продано")},
+		{"text": "Все", "hint": "Продать все %d за ≈%d зол.%s" % [have, have * sell_p, why], "disabled": not can, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, have), "продано")}])
+
+## A good the merchant has: stock, price, buy one or ten.
+func _goods_buy_line(grid: GridContainer, p, fx: Dictionary, m: Dictionary, men: int, id: String) -> void:
+	var market = state.market
+	var buy_p: int = market.buy_price(p.rel, fx, settlement, m, id)
+	var have := int(p.inv.get(id, 0))
+	var info := "есть %d · %s" % [int(m.stock.get(id, 0)), _goods_info(id)]
 	if have > 0:
-		have_text = "%d  (≈%d)" % [have, have * sell_p]
-	grid.add_child(_cell(have_text, GameSkin.PARCH if have > 0 else GameSkin.MUTED, 15))
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 4)
-	var can_buy: bool = stock > 0 and p.gold >= buy_p
-	var can_sell: bool = have > 0 and int(m.gold) >= sell_p
-	actions.add_child(make_button({"text": "+1", "hint": "Купить 1 за %d зол." % buy_p, "disabled": not can_buy, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men))}))
-	actions.add_child(make_button({"text": "+10", "hint": "Купить до 10, сколько хватит денег и места", "disabled": not can_buy, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 10, men))}))
-	actions.add_child(make_button({"text": "−1", "hint": "Продать 1 за %d зол." % sell_p, "disabled": not can_sell, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))}))
-	actions.add_child(make_button({"text": "Все", "hint": "Продать всё, на что хватит денег торговца", "disabled": not can_sell, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, have))}))
-	for button in actions.get_children():
-		_small(button)
-	grid.add_child(actions)
+		info += " · у тебя %d" % have
+	_trade_line(grid, GameSkin.icon(GOOD_ICONS.get(id, "sack")), String(market.goods[id].n), GameSkin.PARCH, info,
+		_price(buy_p, market.base_price(id) * 1.08, false))
+	var why := _buy_block(p, fx, men, id, buy_p)
+	_actions(grid, [
+		{"text": "+1", "hint": why if why != "" else "Купить 1 за %d зол." % buy_p, "disabled": why != "", "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men), "куплено")},
+		{"text": "+10", "hint": why if why != "" else "Купить до 10, сколько хватит денег и места", "disabled": why != "", "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 10, men), "куплено")}])
+
+## Why one more `id` cannot be bought now, or "".
+func _buy_block(p, fx: Dictionary, men: int, id: String, price: int) -> String:
+	var market = state.market
+	if p.gold < price:
+		return Market.WHY.gold
+	if market.cargo_weight(p.inv) + market.weight(id) > market.cargo_cap(p, fx, men) + 1e-6:
+		return Market.WHY.weight
+	return ""
 
 ## The price and how far it is from the usual one in one line; green when it is a good deal for the player.
 func _price(price: int, usual: float, selling: bool) -> Control:
@@ -376,60 +463,95 @@ func _gear_trade(p, fx: Dictionary, m: Dictionary, men: int) -> void:
 	var market = state.market
 	if _trade_pick != "" and market.is_gear(_trade_pick):
 		var picked: Dictionary = market.gear[_trade_pick]
-		var eq: Dictionary = HeroEquip.ensure(p.hero)
-		var worn: Dictionary = market.gear.get(String(eq.get(picked.slot)), {}) if eq.get(picked.slot) != null else {}
-		item_card(ItemCard.describe(picked, worn, true), [{"text": "Закрыть", "call": func(): _trade_pick = ""}])
-	var ids: Array = []
+		item_card(ItemCard.describe(picked, _worn(p, picked), true), [{"text": "Закрыть", "call": func(): _trade_pick = ""}])
+	var mine: Array = []
+	var theirs: Array = []
+	var worth := 0
+	for id in p.inv:
+		if market.is_gear(id) and int(p.inv[id]) > 0:
+			mine.append(id)
+			worth += int(p.inv[id]) * int(market.sell_price(p.rel, fx, settlement, m, id))
 	for id in m.stock:
 		if market.is_gear(id) and int(m.stock[id]) > 0:
-			ids.append(id)
-	for id in p.inv:
-		if market.is_gear(id) and int(p.inv[id]) > 0 and not id in ids:
-			ids.append(id)
-	if ids.is_empty():
-		note("Сегодня оружейник пуст, а трофеев в обозе нет.")
-		return
-	ids.sort_custom(func(x, y):
-		var a: Dictionary = market.gear[x]
-		var b: Dictionary = market.gear[y]
-		var sa: int = SLOT_ORDER.find(String(a.get("slot", "")))
-		var sb: int = SLOT_ORDER.find(String(b.get("slot", "")))
-		return sa < sb if sa != sb else int(a.get("tier", 0)) < int(b.get("tier", 0)))
-	note("Надетое не продаётся: сначала сними его в окне отряда. «Обзор» показывает вещь рядом с надетой.")
-	var grid := _trade_table("GearTable")
-	for id in ids:
-		_gear_line(grid, p, fx, m, men, id)
+			theirs.append(id)
+	mine.sort_custom(_gear_order)
+	theirs.sort_custom(_gear_order)
+	note("Надетое не продаётся: сначала сними его в окне отряда. ▲/▼ — разница с надетым в том же слоте, «Обзор» — вещь целиком.")
+	var sides := _trade_sides("GearTable")
+	var all_button: Button = null
+	if not mine.is_empty():
+		all_button = make_button({"text": "Продать все", "hint": "Продать все трофеи из обоза за ≈%d зол." % worth, "sound": "", "call": func(): _sell_all(p, fx, mine)})
+		all_button.name = "SellAllGear"
+		_small(all_button)
+	var cargo := _trade_side(sides, "CargoGear", "Твой обоз", "всё уйдёт за ≈%d" % worth if worth > 0 else "", "Трофеев в обозе нет.", mine.size(), all_button)
+	for id in mine:
+		_gear_line(cargo, p, fx, m, men, id, true)
+	var shop := _trade_side(sides, "MerchantGear", "Оружейник", "денег %d" % int(m.gold), "Сегодня оружейник пуст.", theirs.size())
+	for id in theirs:
+		_gear_line(shop, p, fx, m, men, id, false)
 
-func _gear_line(grid: GridContainer, p, fx: Dictionary, m: Dictionary, men: int, id: String) -> void:
+func _gear_order(x: String, y: String) -> bool:
+	var a: Dictionary = state.market.gear[x]
+	var b: Dictionary = state.market.gear[y]
+	var sa: int = SLOT_ORDER.find(String(a.get("slot", "")))
+	var sb: int = SLOT_ORDER.find(String(b.get("slot", "")))
+	return sa < sb if sa != sb else int(a.get("tier", 0)) < int(b.get("tier", 0))
+
+## The item worn in the slot of `item`, or {}.
+func _worn(p, item: Dictionary) -> Dictionary:
+	var eq: Dictionary = HeroEquip.ensure(p.hero)
+	var worn_id = eq.get(item.get("slot"))
+	return state.market.gear.get(String(worn_id), {}) if worn_id != null else {}
+
+## ▲ / ▼ of the main figure (damage, block, speed or armour) against the worn item of that slot.
+func _compare(p, item: Dictionary) -> Dictionary:
+	var worn := _worn(p, item)
+	if worn.is_empty():
+		return {"text": "▲ слот пуст", "color": GOOD_PRICE, "hint": "В этом слоте ничего не надето"}
+	if String(worn.get("id", "")) == String(item.get("id", "-")):
+		return {"text": "надето", "color": GameSkin.MUTED, "hint": "Такая же вещь уже надета"}
+	var d := ItemCard.delta(item, worn, "dmg" if item.has("dmg") else "v")
+	if d.is_empty():
+		return {"text": "=", "color": GameSkin.MUTED, "hint": "Как надетое: %s" % String(worn.get("name", ""))}
+	return {"text": String(d.text), "color": GOOD_PRICE if int(d.trend) > 0 else BAD_PRICE, "hint": "Против надетого: %s" % String(worn.get("name", ""))}
+
+func _gear_line(grid: GridContainer, p, fx: Dictionary, m: Dictionary, men: int, id: String, selling: bool) -> void:
 	var market = state.market
 	var it: Dictionary = market.gear[id]
-	var buy_p: int = market.buy_price(p.rel, fx, settlement, m, id)
-	var sell_p: int = market.sell_price(p.rel, fx, settlement, m, id)
-	var stock := int(m.stock.get(id, 0))
-	var have := int(p.inv.get(id, 0))
-	var base: float = market.base_price(id)
 	var tier: Array = ItemCard.TIERS[clampi(int(it.get("tier", 0)), 0, 3)]
-	grid.add_child(_icon(OriginalArt.item_icon(id), 22))
-	var name_line := HBoxContainer.new()
-	name_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_line.add_theme_constant_override("separation", 8)
-	var title := _cell(String(it.name), Color(tier[1]), 16)
-	title.add_theme_font_override("font", GameSkin.BODY_BOLD)
-	name_line.add_child(title)
-	name_line.add_child(_cell("%s · %s · вес %s" % [_slot(it), _tier(it), str(it.get("w", 0))], GameSkin.MUTED, 13))
-	grid.add_child(name_line)
-	grid.add_child(_cell(str(stock) if stock > 0 else "нет", GameSkin.PARCH if stock > 0 else GameSkin.MUTED, 15))
-	grid.add_child(_price(buy_p, base * 1.25, false))
-	grid.add_child(_price(sell_p, base * 0.5, true))
-	grid.add_child(_cell(str(have) if have > 0 else "—", GameSkin.PARCH if have > 0 else GameSkin.MUTED, 15))
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 4)
-	actions.add_child(make_button({"text": "Обзор", "hint": "Свойства вещи и сравнение с надетой", "call": func(): _trade_pick = id}))
-	actions.add_child(make_button({"text": "+1", "hint": "Купить за %d зол." % buy_p, "disabled": stock < 1 or p.gold < buy_p, "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men))}))
-	actions.add_child(make_button({"text": "−1", "hint": "Продать за %d зол." % sell_p, "disabled": have < 1 or int(m.gold) < sell_p, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1))}))
-	for button in actions.get_children():
-		_small(button)
-	grid.add_child(actions)
+	var count := int(p.inv.get(id, 0)) if selling else int(m.stock.get(id, 0))
+	var info := "%s · %s · вес %s" % [_slot(it), _tier(it), str(it.get("w", 0))]
+	if count > 1:
+		info = ("×%d · " if selling else "есть %d · ") % count + info
+	var base: float = market.base_price(id)
+	var price: int = market.sell_price(p.rel, fx, settlement, m, id) if selling else market.buy_price(p.rel, fx, settlement, m, id)
+	_trade_line(grid, OriginalArt.item_icon(id), String(it.name), Color(tier[1]), info,
+		_price(price, base * (0.5 if selling else 1.25), selling), _compare(p, it))
+	var look := {"text": "Обзор", "hint": "Свойства вещи и сравнение с надетой", "call": func(): _trade_pick = id}
+	if selling:
+		var can: bool = int(m.gold) >= price
+		_actions(grid, [look, {"text": "Продать", "hint": ("Продать за %d зол." % price) if can else Market.WHY.merchant, "disabled": not can, "call": func(): _trade(market.sell(p, fx, settlement, state.clock.day, id, 1), "продано")}])
+	else:
+		var why := _buy_block(p, fx, men, id, price)
+		_actions(grid, [look, {"text": "Купить", "hint": why if why != "" else "Купить за %d зол." % price, "disabled": why != "", "call": func(): _trade(market.buy(p, fx, settlement, state.clock.day, id, 1, men), "куплено")}])
+
+## Sells every piece of gear in the cargo the merchant can pay for.
+func _sell_all(p, fx: Dictionary, ids: Array) -> void:
+	var market = state.market
+	var n := 0
+	var total := 0
+	var why := ""
+	for id in ids:
+		var r: Dictionary = market.sell(p, fx, settlement, state.clock.day, id, int(p.inv.get(id, 0)))
+		n += int(r.n)
+		total += int(r.sum)
+		if String(r.why) != "":
+			why = String(r.why)
+	if n > 0:
+		UiSounds.play(self, "coin")
+		_flash = "продано трофеев: %d за %d зол.%s" % [n, total, (". " + Market.WHY[why]) if why != "" else ""]
+	elif why != "":
+		_flash = Market.WHY[why]
 
 ## Icons of trade goods; the colours match item_card's ▲/▼.
 const GOOD_ICONS := {"grain": "grain", "salt": "sack", "ale": "ale", "iron": "ingot", "leather": "hide", "furs": "pelt", "cloth": "roll", "wine": "bottle", "spice": "jar", "potato": "food", "zurek": "food"}
@@ -445,8 +567,11 @@ static func _tier(it: Dictionary) -> String:
 static func _slot(it: Dictionary) -> String:
 	return SLOT_NAMES.get(it.get("slot", ""), "")
 
-func _trade(result: Dictionary) -> void:
+func _trade(result: Dictionary, verb: String) -> void:
 	if int(result.get("n", 0)) > 0:
 		UiSounds.play(self, "coin")
-	if result.n == 0 and result.why != "":
-		sub_label.text = Market.WHY[result.why]
+	var why := String(result.get("why", ""))
+	if int(result.get("n", 0)) > 0:
+		_flash = "%s %d за %d зол.%s" % [verb, int(result.n), int(result.sum), (" " + Market.WHY[why]) if why != "" else ""]
+	elif why != "":
+		_flash = Market.WHY[why]
