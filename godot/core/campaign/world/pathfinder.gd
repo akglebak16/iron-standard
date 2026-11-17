@@ -85,6 +85,9 @@ func los_clear(x0: float, y0: float, x1: float, y1: float) -> bool:
 	return true
 
 ## Returns an Array of Vector2 points, or null when there is no way. `raw` keeps every cell centre (used for roads).
+## Parties search on the engine's AStarGrid2D (C++, the same costs: terrain, biomes, roads, no corner cutting), so a
+## march across Europe costs a few milliseconds instead of a hundred. The road generator (`raw`) keeps the GDScript
+## search below: the roads of a seed stay exactly what they were.
 func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 	var a := nearest_pass(sx, sy)
 	var b := nearest_pass(tx, ty)
@@ -92,6 +95,8 @@ func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 	var e := b.y * GW + b.x
 	if s == e:
 		return [Vector2(tx, ty)]
+	if not raw:
+		return _grid_path(a, b, sx, sy, tx, ty)
 	_ensure_base()
 	_g.fill(1e9)
 	_closed.fill(0)
@@ -192,6 +197,53 @@ func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 		pts.append(Vector2((k % GW) * GC + GC / 2.0, (k / GW) * GC + GC / 2.0))
 		k = _prev[k]
 	pts.reverse()
+	return _finish(pts, sx, sy, tx, ty, raw)
+
+## Cells of the grid search: AStarGrid2D over the same grid. Costs are scaled so the cheapest cell (a road on plain)
+## costs 1: then the engine's Euclidean estimate is the same admissible estimate as `* 0.55` above, and every path it
+## returns is as cheap as the GDScript search would find.
+var _grid: AStarGrid2D = null
+const ROAD_FACTOR := 0.55
+
+## Roads changed (the road generator): the grid search is set up again on the next request.
+func roads_changed() -> void:
+	_grid = null
+
+func _ensure_grid() -> void:
+	if _grid != null:
+		return
+	_ensure_base()
+	var g := AStarGrid2D.new()
+	g.region = Rect2i(0, 0, GW, GH)
+	g.cell_size = Vector2.ONE
+	g.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	g.default_compute_heuristic = AStarGrid2D.HEURISTIC_EUCLIDEAN
+	g.default_estimate_heuristic = AStarGrid2D.HEURISTIC_EUCLIDEAN
+	g.jumping_enabled = false
+	g.update()
+	for j in GH:
+		for i in GW:
+			var c := cell_cost(j * GW + i)
+			if c == 0.0:
+				g.set_point_solid(Vector2i(i, j), true)
+			else:
+				g.set_point_weight_scale(Vector2i(i, j), c / ROAD_FACTOR)
+	_grid = g
+
+func _grid_path(a: Vector2i, b: Vector2i, sx: float, sy: float, tx: float, ty: float):
+	_ensure_grid()
+	if _grid.is_point_solid(b):
+		return null
+	var ids := _grid.get_id_path(a, b)
+	if ids.is_empty():
+		return null
+	var pts: Array = []
+	pts.resize(ids.size())
+	for i in ids.size():
+		pts[i] = Vector2(ids[i].x * GC + GC / 2.0, ids[i].y * GC + GC / 2.0)
+	return _finish(pts, sx, sy, tx, ty, false)
+
+func _finish(pts: Array, sx: float, sy: float, tx: float, ty: float, raw: bool) -> Array:
 	pts[0] = Vector2(sx, sy)
 	pts[pts.size() - 1] = Vector2(tx, ty)
 	if not passable_type(terr_at(tx, ty)):
