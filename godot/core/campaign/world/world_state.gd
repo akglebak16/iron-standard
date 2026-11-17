@@ -85,6 +85,7 @@ func dispose() -> void:
 		wars.threat = Callable()
 		wars.doomed = Callable()
 		wars.retake = Callable()
+	if roster != null: roster.on_remove = Callable()
 	if undead != null: undead.dispose()
 	if ai != null: ai.dispose()
 	if clans != null: clans.siege = null

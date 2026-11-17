@@ -124,6 +124,12 @@ func _table(rows: Array, meta: Dictionary) -> String:
 	lines.append("Симулятор кампании: %d дн., seed %s, %s%s" % [meta.days, ", ".join(meta.seeds.map(func(s): return str(s))), meta.engine, " (debug)" if meta.debug else ""])
 	lines.append("")
 	var cols := [["seed", "seed"], ["войн объявлено", "wars_declared"], ["миров", "wars_peace"], ["дней войны ср.", "war_days_mean"],
+		["войн одновременно ср.", "wars_at_once_mean"], ["макс.", "wars_at_once_max"], ["в день 1", "wars_day1"], ["в день 50", "wars_day50"],
+		["доля пар соседей в войне ср.", "neighbour_war_share"], ["первые 30 дней", "neighbour_war_share_first30"], ["день 50", "neighbour_war_share_day50"],
+		["дней, когда кто-то воюет со всеми соседями", "all_neighbours_days"], ["больше всего войн у одной", "most_fronts"],
+		["дней, когда у кого-то 3+ войны", "three_fronts_days"], ["последняя стартовая война кончилась, день", "initial_wars_end_day"],
+		["дней мира до новой войны той же пары, ср.", "peace_days_mean"], ["усталость, макс.", "weary_max"],
+		["часовой тик, мкс", "hour_tick_usec"], ["p95", "hour_tick_p95_usec"], ["дневной тик, мкс", "day_tick_usec"], ["p95", "day_tick_p95_usec"],
 		["смен владельца", "owner_changes"], ["из них нежити", "owner_changes_to_undead"], ["пали", "fallen"],
 		["нежить: начало", "undead_start_day"], ["конец", "undead_end_day"], ["пик войск", "undead_peak_troops"],
 		["армий нежити за прогон", "undead_armies"], ["разъездов", "undead_raids"],

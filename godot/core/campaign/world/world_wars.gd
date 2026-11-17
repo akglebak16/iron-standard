@@ -8,11 +8,16 @@ extends RefCounted
 ## Since stage 2c (DESIGN.md §5.5) the living answer the undead invasion within these operations: a town or castle an
 ## undead wave goes for keeps a defender home, and own ruins held by the dead are targets of a campaign even in peace,
 ## preferred to enemy towns; the host storms them together (WorldUndead.host_retake) instead of a siege.
+## Since stage 2d (DESIGN.md §5.4) war and peace are decided by gain, not by a die roll: faction_strategist.gd weighs a
+## weaker neighbour with towns within reach against a second front and war weariness, which this file keeps (`weary`:
+## days of war, lords and settlements lost, shed in peace), together with what each side took in a war (`gain` of a war)
+## and truces after a peace (`truce`). The table Rules.WAR is the start of the game, capped by STRAT_START_WARS.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const WorldMap = preload("res://core/campaign/world/world_map.gd")
 const SettlementRecruits = preload("res://core/campaign/rules/settlement_recruits.gd")
 const CampaignOps = preload("res://core/campaign/world/campaign_ops.gd")
+const Strategist = preload("res://core/campaign/world/faction_strategist.gd")
 const Config = preload("res://core/campaign/config.gd")
 
 signal announced(text: String)
@@ -29,7 +34,13 @@ const DEF_SIEGE_STONES := {"town": 1.55, "castle": 1.7}
 
 var map: WorldMap
 var roster: Roster
-var wars: Dictionary = {}     # "a|b" -> {since}
+## "a|b" -> {since, gain: {faction: worth of the towns and castles it took from the other side in this war}}; gain is
+## absent in wars of saves made before stage 2d.
+var wars: Dictionary = {}
+## Stage 2d: faction -> war weariness (0 fresh .. STRAT_WEARY_MAX); "a|b" -> last day of the truce after their peace.
+## Both are absent in saves made before it: then nobody is weary and no truce holds.
+var weary: Dictionary = {}
+var truce: Dictionary = {}
 ## faction -> offensive campaign {tid, gid, state, t0, t1, t2, army: [ids], marshal: id, s0: strength at the muster,
 ## keep: [ids of lords left home]}; marshal, s0 and keep are absent in saves made before stage 2b.
 var campaigns: Dictionary = {}
@@ -48,16 +59,34 @@ func _init(world_map: WorldMap, party_roster: Roster) -> void:
 	map = world_map
 	roster = party_roster
 	ops.strength = roster.strength_of
+	roster.on_remove = _on_removed
 
 func now_h() -> int:
 	return day * 24 + hour
 
-func start() -> void:
+## Wars at the start of the game: the table Rules.WAR in its order; with STRAT_START_WARS > 0 a pair is skipped once
+## either state already has that many wars.
+func start(cap: int = Config.STRAT_START_WARS) -> void:
+	for k in opening_wars(cap):
+		wars[k] = {"since": 1, "gain": {}}
+	roster.diplomatic_wars = wars
+
+## Keys of the wars the game starts with: pairs of Rules.WAR in table order, each state in at most `cap` of them
+## (0: no cap).
+static func opening_wars(cap: int) -> Array:
+	var keys: Array = []
+	var count := {}
 	for a in Rules.WAR:
 		for b in Rules.WAR[a]:
-			if a != "bandit" and b != "bandit":
-				wars[Rules.war_key(a, b)] = {"since": 1}
-	roster.diplomatic_wars = wars
+			var k := Rules.war_key(a, b)
+			if a == "bandit" or b == "bandit" or k in keys:
+				continue
+			if cap > 0 and (int(count.get(a, 0)) >= cap or int(count.get(b, 0)) >= cap):
+				continue
+			keys.append(k)
+			count[a] = int(count.get(a, 0)) + 1
+			count[b] = int(count.get(b, 0)) + 1
+	return keys
 
 func hold_of(f: String) -> Dictionary:
 	var t := 0
@@ -145,46 +174,62 @@ func garrison_day() -> void:
 
 # ---------- diplomacy: once a day ----------
 
+## Since stage 2d: war and peace by the strategist (faction_strategist.gd). Weariness grows with each day of each war
+## and is shed in peace; a peace starts a truce. A pair rolls the die only when the strategist gives war or peace a
+## chance today.
 func war_day() -> void:
 	var alive_list := factions_alive()
 	for k in wars.keys():
 		var parts: PackedStringArray = k.split("|")
 		if not parts[0] in alive_list or not parts[1] in alive_list:
 			wars.erase(k)
-	var count := func(f: String) -> int:
-		var n := 0
-		for k in wars:
-			if f in k.split("|"):
-				n += 1
-		return n
+	for k in truce.keys():
+		if int(truce[k]) < day:
+			truce.erase(k)
+	var sums := strategy_day(alive_list)
+	for f in alive_list:
+		var w := float(weary.get(f, 0.0))
+		var n: int = sums[f].wars
+		w = w + Config.STRAT_WEARY_DAY * n if n > 0 else w - Config.STRAT_WEARY_REST
+		if w > 0.0:
+			weary[f] = minf(w, Config.STRAT_WEARY_MAX)
+		else:
+			weary.erase(f)
+		sums[f].weary = float(weary.get(f, 0.0))
 	for i in alive_list.size():
 		for j in range(i + 1, alive_list.size()):
 			var a: String = alive_list[i]
 			var b: String = alive_list[j]
 			var k := Rules.war_key(a, b)
-			var pa := power(a)
-			var pb := power(b)
-			var r := maxf(pa, pb) / maxf(1.0, minf(pa, pb))
+			var sa: Dictionary = sums[a]
+			var sb: Dictionary = sums[b]
 			if wars.has(k):
 				var d: int = day - int(wars[k].since)
-				if d < 10:
+				if d < Config.STRAT_MIN_WAR_DAYS:
 					continue
-				var weak := 3.0 if minf(hold_of(a).all, hold_of(b).all) < 9 else 1.0
-				var peace_k: float = clans.ruler_peace(a, b) if clans != null else 1.0
-				if roster.rng.randf() < clampf(0.012 + d * 0.0005, 0.0, 0.07) * (0.35 if r > 1.7 else 1.0) * weak * peace_k:
+				var chance := Strategist.peace_chance(sa, sb, a, b, wars[k].get("gain", {}), d)
+				if chance <= 0.0:
+					continue
+				if roster.rng.randf() < chance:
 					wars.erase(k)
+					truce[k] = day + Config.STRAT_TRUCE_DAYS
+					sa.wars -= 1
+					sb.wars -= 1
 					_say("%s и %s заключили мир." % [_name(a), _name(b)])
 			else:
-				if count.call(a) >= 3 or count.call(b) >= 3 or not borders(a, b):
+				if truce.has(k) or (clans != null and (clans.kingless(a) or clans.kingless(b))):
 					continue
-				if clans != null and (clans.kingless(a) or clans.kingless(b)):
+				if not borders(a, b):
 					continue
-				var lone := (3.0 if count.call(a) == 0 else 1.0) * (2.0 if count.call(b) == 0 else 1.0)
-				var top := (pa if pa > pb else pb) / maxf(1.0, (pa + pb) / 2.0)
-				var war_k: float = clans.ruler_war(a, b) if clans != null else 1.0
-				if roster.rng.randf() < 0.005 * lone * top * war_k:
-					wars[k] = {"since": day}
-					_say("%s объявляет войну: %s." % [_name(a if pa > pb else b), _name(b if pa > pb else a)])
+				var decl := Strategist.declaration(sa, sb)
+				if float(decl.chance) <= 0.0:
+					continue
+				if roster.rng.randf() < float(decl.chance):
+					wars[k] = {"since": day, "gain": {}}
+					sa.wars += 1
+					sb.wars += 1
+					var by := a if int(decl.by) == 0 else b
+					_say("%s объявляет войну: %s." % [_name(by), _name(b if by == a else a)])
 	_tally += 1
 	if _tally % 10 == 0:
 		var best := ""
@@ -198,6 +243,76 @@ func war_day() -> void:
 		if best_n > total * 0.5:
 			_say("%s правит больше половины земель (%d из %d)." % [_name(best), best_n, total])
 	garrison_day()
+
+## Day summaries of the living states for the strategist: {power, wars, weary, strain, war_k, peace_k, core}. One pass
+## over parties and settlements; power is the one of power().
+func strategy_day(alive_list: Array) -> Dictionary:
+	var sums := {}
+	for f in alive_list:
+		var rt: Array = clans.ruler_trait(f) if clans != null else ["", 1.0, 1.0]
+		sums[f] = {"power": 0.0, "wars": 0, "weary": float(weary.get(f, 0.0)), "strain": 0.0, "war_k": float(rt[1]),
+			"peace_k": float(rt[2]), "core": [], "_men": 0, "_full": 0.0}
+	for p in roster.parties:
+		if Rules.is_noble(p) and sums.has(p.fac):
+			var sf: Dictionary = sums[p.fac]
+			sf.power += roster.strength_of(p)
+			sf._men += Rules.troop_count(p.troops)
+			sf._full += (Config.GOAL_LORD_FULL if p.kind == Config.LORD_KIND else Config.GOAL_VASSAL_FULL) * MK
+	var held := {}
+	for s in map.settles:
+		if not sums.has(s.fac):
+			continue
+		var h: Vector3i = held.get(s.fac, Vector3i.ZERO)
+		if s.kind == "town":
+			h.x += 1
+		elif s.kind == "castle":
+			h.y += 1
+		elif s.kind == "village":
+			h.z += 1
+		held[s.fac] = h
+		if s.kind == "town" or s.kind == "castle":
+			sums[s.fac].core.append({"x": s.x, "y": s.y, "kind": s.kind})
+	for f in alive_list:
+		var sf: Dictionary = sums[f]
+		var h: Vector3i = held.get(f, Vector3i.ZERO)
+		sf.power += h.x * 90 + h.y * 70 + h.z * 12
+		sf.strain = 1.0 - clampf(float(sf._men) / sf._full, 0.0, 1.0) if sf._full > 0.0 else 0.0
+		sf.erase("_men")
+		sf.erase("_full")
+	for k in wars:
+		var parts: PackedStringArray = k.split("|")
+		for f in parts:
+			if sums.has(f):
+				sums[f].wars += 1
+	return sums
+
+## Wars state f is in now.
+func wars_of(f: String) -> int:
+	var n := 0
+	for k in wars:
+		if k.begins_with(f + "|") or k.ends_with("|" + f):
+			n += 1
+	return n
+
+## A party left the map (PartyRoster.on_remove): a state at war that loses a lord or a vassal grows wearier.
+func _on_removed(p: Dictionary) -> void:
+	if not Rules.is_noble(p) or not p.get("fac") in Rules.REAL_FACTIONS or wars_of(p.fac) == 0:
+		return
+	_tire(p.fac, Config.STRAT_WEARY_LORD if p.kind == Config.LORD_KIND else Config.STRAT_WEARY_VASSAL)
+
+func _tire(f: String, by: float) -> void:
+	weary[f] = minf(float(weary.get(f, 0.0)) + by, Config.STRAT_WEARY_MAX)
+
+## A town or castle changed hands between two states at war: the taker counts it as its gain in this war, the loser
+## grows wearier.
+func _war_capture(old: String, f: String, kind: String) -> void:
+	var k := Rules.war_key(old, f)
+	if not old in Rules.REAL_FACTIONS or not wars.has(k):
+		return
+	var gain: Dictionary = wars[k].get("gain", {})
+	gain[f] = float(gain.get(f, 0.0)) + Strategist.worth(kind)
+	wars[k]["gain"] = gain
+	_tire(old, float(Config.STRAT_WEARY_LOSS.get(kind, 0.0)))
 
 # ---------- campaigns: muster, march, siege ----------
 
@@ -640,6 +755,7 @@ func _capture(s: Dictionary, f: String, att: Array) -> void:
 	else:
 		_say("%s берёт %s %s (бывший %s)." % [_name(f), "замок" if kind == "castle" else "город", s.name, roster.factions.get_faction(old).get("gen", old)])
 	settlement_changed.emit(s)
+	_war_capture(old, f, kind)
 	_sack_ai(s)
 	if clans != null:
 		clans.on_capture(s, old, f)
@@ -662,6 +778,10 @@ func _fall(old: String, by: String) -> void:
 	for k in wars.keys():
 		if old in k.split("|"):
 			wars.erase(k)
+	for k in truce.keys():
+		if old in k.split("|"):
+			truce.erase(k)
+	weary.erase(old)
 
 
 func start_time(d: int, h: int) -> void:

@@ -95,6 +95,13 @@ func find_path(sx: float, sy: float, tx: float, ty: float, raw := false):
 	var e := b.y * GW + b.x
 	if s == e:
 		return [Vector2(tx, ty)]
+	# Two passable cells on different land masses (comp: 4-connected passable cells; a diagonal step needs both side
+	# cells passable, here and in the grid's DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES, so it joins nothing more): either search
+	# would sweep the whole start mass and fail. The same answer at once: a lord hunting a party it cannot reach
+	# re-plans every 0.7 h.
+	var comps := world.comp
+	if comps.size() == GW * GH and comps[s] >= 0 and comps[e] >= 0 and comps[s] != comps[e]:
+		return null
 	if not raw:
 		return _grid_path(a, b, sx, sy, tx, ty)
 	_ensure_base()
