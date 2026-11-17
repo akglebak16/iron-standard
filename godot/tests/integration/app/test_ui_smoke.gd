@@ -24,7 +24,23 @@ func _initialize() -> void:
 	assert(town.visible and town.body.get_child_count() > 2, "recruit tab lists recruits")
 	town.current_tab = "goods"
 	town.render()
-	assert(town.body.get_child_count() > 10, "goods tab lists goods")
+	assert(town.body.get_child_count() > 3, "goods tab lists goods")
+	var table: Node = town.body.find_child("GoodsTable", true, false)
+	assert(table != null and town.body.find_child("TradeSummary", true, false) != null, "goods table and summary are drawn")
+	var grid: GridContainer = table.get_child(0)
+	assert(grid.get_child_count() == grid.columns * (state.market.goods.size() + 1), "a header and one line per good")
+	for icon in grid.find_children("", "TextureRect", true, false):
+		assert((icon as TextureRect).texture != null, "every good has an icon")
+	var buy_buttons := grid.find_children("", "Button", true, false).filter(func(b): return b.text == "+1")
+	assert(buy_buttons.size() == state.market.goods.size(), "every good can be bought")
+	town._market_view = "gear"
+	town.render()
+	assert(town.body.find_child("GoodsTable", true, false) == null and town.body.find_child("MarketSwitch", true, false) != null, "the gear sub-tab hides goods")
+	var gear_table: Node = town.body.find_child("GearTable", true, false)
+	if gear_table != null:
+		for icon in gear_table.find_children("", "TextureRect", true, false):
+			assert((icon as TextureRect).texture != null, "every item has a picture")
+	town._market_view = "goods"
 	for tab in ["troops", "hero", "journal"]:
 		party.open_for(state, tab)
 		party.current_tab = tab
