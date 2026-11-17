@@ -50,8 +50,15 @@ signal campaign_requested
 ## for that step, so every handler and window sees a whole world. _process never waits: it asks _sim.poll() first.
 var state: RefCounted:
 	get:
-		if _sim != null:
+		if _sim != null and _sim.given:
+			var from := Time.get_ticks_usec()
 			_sim.take()
+			# The main thread stood still for the rest of the step: fine for a click, a freeze if it happens every frame.
+			var waited := Time.get_ticks_usec() - from
+			if waited > 2000 and _hitch_log < 400:
+				_hitch_log += 1
+				var stack := get_stack()
+				print("WORLDWAIT %.1f ms in %s" % [waited / 1000.0, " <- ".join(stack.slice(1, 4).map(func(f): return "%s:%d" % [f.function, f.line]))])
 		return _state
 	set(value):
 		_state = value
@@ -68,6 +75,7 @@ var _pending_dt := 0.0
 var _events: Array = []  # [handler, args] of world signals raised inside a step on the worker; run when the world is back
 var _no_arg := RefCounted.new()
 var _hitch_log := 0
+var _hover_pending: Array = []  # [world_pos, screen_pos] of a mouse move that came while a step was running
 var map_view: Node2D
 var _meeting: Dictionary = {}
 var _dialog: CanvasLayer
@@ -657,6 +665,12 @@ func _open_panel(tab: String) -> void:
 	_party_window.open_for(state, tab)
 
 func _on_hover(world_pos: Vector2, screen_pos: Vector2) -> void:
+	# The mouse moves many times a frame: while a world step runs the tip waits for the world instead of the frame
+	# waiting for the step (_process answers it when the world is back).
+	if _sim != null and not _sim.poll():
+		_hover_pending = [world_pos, screen_pos]
+		return
+	_hover_pending = []
 	if _meeting.size() > 0 or _result.visible or _town.visible or _party_window.visible or _siege.visible or _menu.visible or _slots.visible:
 		hud.show_tip({}, screen_pos)
 		return
@@ -719,6 +733,8 @@ func _process(delta: float) -> void:
 		_thaw()  # runs what the step raised: a meeting or a town may open here
 		if _battle != null:
 			return
+	if not _hover_pending.is_empty():
+		_on_hover(_hover_pending[0], _hover_pending[1])
 	var started := Time.get_ticks_usec()
 	var sim_us := 0
 	if _sim != null:
