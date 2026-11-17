@@ -416,6 +416,12 @@ static func _idle(p: Dictionary) -> bool:
 func _follow(p: Dictionary, marshal: Dictionary) -> void:
 	if p.state == "hunt" or p.get("fight", false) or _dist(p, marshal) <= Config.OP_FOLLOW_KEEP:
 		return
+	# Already riding to where the marshal stands: the route is not planned again. A search for every straggler every
+	# two hours of the muster cost most of the time of the world step and made the map stutter.
+	if p.state == "travel" and p.pi < p.path.size() and p.get("sid") == null and p.get("tid") == null:
+		var route_end: Vector2 = p.path[p.path.size() - 1]
+		if route_end.distance_to(Vector2(marshal.x, marshal.y)) <= Config.OP_FOLLOW_KEEP * 0.75:
+			return
 	p.state = "travel"
 	p.sid = null
 	p.tid = null
