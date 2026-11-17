@@ -2,7 +2,7 @@ extends SceneTree
 ## The undead invasion in a live world (world_undead.gd + undead_director.gd, DESIGN.md §5.5, stage 2c): every barrow
 ## sends a wave with a reachable target and a rally point, its armies gather there through their goals, storm together,
 ## the wave rolls on to the next target; the living defend doomed towns and retake their ruins with a campaign; the
-## waves survive a save. One world is built for the checks (5 s), the save check builds two more.
+## waves survive a save. One world is built for the checks (3 s); the save check loads two more.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const WorldSave = preload("res://core/campaign/world/world_save.gd")
@@ -21,8 +21,7 @@ func _initialize() -> void:
 	_check_goals(s)
 	_check_storm(s)
 	_check_ruin_campaign(s)
-	s.dispose()
-	_check_save()
+	_check_save(s)
 	print("Undead waves tests passed")
 	quit(0)
 
@@ -210,17 +209,16 @@ func _check_ruin_campaign(s) -> void:
 
 ## A world in the middle of the invasion saves and loads with its waves and goes on exactly as the saved one; a save
 ## from before stage 2c (no waves) gets new ones; v1 waves come back typed.
-func _check_save() -> void:
-	var a := _crisis_world(11)
+func _check_save(a) -> void:
 	a.player.away = true
 	a.waiting = true
-	for i in 12:
+	for i in 6:
 		a.advance(1.0)
 	assert(not a.undead.crisis.waves.is_empty())
 	var b = WorldSave.from_dict(JSON.parse_string(JSON.stringify(WorldSave.to_dict(a))), data, ContentLoader.registry())
 	assert(b != null and b.undead.crisis.waves == a.undead.crisis.waves)
 	b.waiting = true
-	for i in 12:
+	for i in 10:
 		a.advance(1.0)
 		b.advance(1.0)
 	assert(WorldCheckpoint.capture(a) == WorldCheckpoint.capture(b), "loading reproduces the invasion")

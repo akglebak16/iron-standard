@@ -449,8 +449,10 @@ func _assault(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary
 		return
 	out.append({"goal": "assault", "gid": wave.tid, "x": float(wave.x), "y": float(wave.y), "score": w})
 
-## Undead raids burn living villages ahead of their wave: near its front (the target) and within reach of the raid.
-func _ravage(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
+## Undead raids burn living villages ahead of their wave: near its front (the target) and within reach of the raid. The
+## dead weigh no risk (they never flee either): the front of a wave is where the living gather, and a raid that feared
+## them would only roam.
+func _ravage(p: Dictionary, _me: float, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "raid")
 	var front: Dictionary = ctx.get("front", {})
 	if w <= 0.0 or String(p.fac) != Config.UNDEAD_FACTION or front.is_empty():
@@ -463,7 +465,7 @@ func _ravage(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, ctx: 
 		if d > Config.UNDEAD_RAVAGE_REACH or df > Config.UNDEAD_RAVAGE_RANGE:
 			continue
 		var score := w * combine([distance_factor(d, Config.UNDEAD_RAVAGE_REACH), distance_factor(df, Config.UNDEAD_RAVAGE_RANGE),
-			risk_factor(foreign_risk(p, s.x, s.y, me), mods), crowd_factor("raid", s.id, p)])
+			crowd_factor("raid", s.id, p)])
 		if score > 0.0:
 			out.append({"goal": "raid", "gid": s.id, "x": s.x, "y": s.y, "score": score})
 
