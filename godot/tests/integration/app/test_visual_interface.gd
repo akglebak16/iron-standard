@@ -39,6 +39,23 @@ func _initialize() -> void:
 	tile.pressed.emit()
 	assert(state.player.hero.eq.head == null and int(state.player.inv.head_nasal) == 1, "double click returns gear to cargo")
 	assert(Art.sprite("n1", "player") != null and Art.crest("emp") != null)
+	# Faction cards must handle nobles without destinations and keep navigation usable.
+	window.open_for(state, "factions")
+	var pick := window.body.find_child("FactionPick_pact", true, false) as Button
+	assert(pick != null and not pick.disabled)
+	pick.pressed.emit()
+	assert(window._faction == "pact", "faction selection switches the inspected state")
+	assert(window.body.find_child("DiplomacyMatrix", true, false) != null)
+	assert(window.body.find_child("FamilyLoyalty", true, false) != null)
+	assert(window.body.find_child("FactionRelation", true, false) != null)
+	var relation := window.body.find_child("FactionRelation", true, false) as ProgressBar
+	assert(is_equal_approx(relation.value, float(state.player.rel.get("pact", 0)) + 100))
+	# A long faction name and a 1280px window must not push content past the right edge.
+	root.size = Vector2i(1280, 720)
+	for i in 6: await process_frame
+	var identity := window.body.find_child("FactionIdentity", true, false) as Control
+	assert(identity.get_global_rect().end.x <= window._panel.get_global_rect().end.x, "long titles stay in the window")
+	assert(window.close_button.get_global_rect().end.y <= root.size.y, "close remains available")
 	window.free()
 	print("Visual interface tests passed")
 	quit()

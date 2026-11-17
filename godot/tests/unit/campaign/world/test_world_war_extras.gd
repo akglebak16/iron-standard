@@ -109,7 +109,8 @@ func _initialize() -> void:
 	root.add_child(pw)
 	await process_frame
 	pw.open_for(s, "factions")
-	assert(pw.body.get_child_count() > 6)
+	assert(pw.body.find_child("FactionLayout", true, false) != null)
+	assert(pw.body.find_child("FactionFamilies", true, false) != null)
 	p.quests.append({"id": 1, "from": town.id, "fac": "emp", "day": 1, "type": "deliver", "sid": town.id, "reward": 100, "dl": 30})
 	pw.open_for(s, "quests")
 	var marks := Marks.new()
