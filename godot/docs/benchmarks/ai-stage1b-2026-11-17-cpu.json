@@ -1,0 +1,5702 @@
+{
+ "stage": "1b",
+ "date": "2026-11-17",
+ "hardware": "AMD Ryzen 7 5700X 8-Core (16 threads), Windows 10 Home 10.0.19045, Godot 4.7.2 Steam, release export via node godot/tools/release.cjs, release-smoke passed",
+ "method": "node godot/tools/benchmark.cjs <exe> --scenario=<s> --n=1000 --ticks=3600 --warmup=120 --seed=4242 --profile-phases --repeat=1 --execution-context=host; 5 runs per build and scenario, one run per call, order base,cur / cur,base alternating; every call waited until no other Godot or game process ran (no waits were needed in this run). Order of scenarios: cavalry, contact, volley, approach, mixed, siege. Headless CPU, not FPS.",
+ "builds": {
+  "base": {
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "note": "main c9e12a1 in a separate git worktree (the arena script of this branch copied in, not part of the measured code path)"
+  },
+  "cur": {
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "note": "branch claude/ai-stage1b-morale-7057fc"
+  }
+ },
+ "runs": [
+  {
+   "scenario": "cavalry",
+   "build": "base",
+   "finished": "12:01:15",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.2647825,
+    "p50_ms": 1.781,
+    "p95_ms": 5.649,
+    "p99_ms": 7.292
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.550154166666667,
+    "p50_ms": 0.474,
+    "p95_ms": 1.157,
+    "p99_ms": 1.475
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.38064361111111,
+     "p50_ms": 1.119,
+     "p95_ms": 3.382,
+     "p99_ms": 4.196
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00686333333333333,
+     "p50_ms": 0.006,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.470955277777778,
+     "p50_ms": 0.347,
+     "p95_ms": 1.309,
+     "p99_ms": 1.408
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0107005555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.018
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0488941666666667,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 1.752
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00433833333333333,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.2843875,
+     "p50_ms": 0.001,
+     "p95_ms": 1.208,
+     "p99_ms": 1.468
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0550263888888889,
+     "p50_ms": 0.036,
+     "p95_ms": 0.189,
+     "p99_ms": 0.229
+    }
+   },
+   "events": {
+    "0": 16387,
+    "1": 3125,
+    "2": 9972,
+    "3": 1841,
+    "12": 1,
+    "19": 55
+   },
+   "live_min": 159,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "cur",
+   "finished": "12:01:28",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3193,
+   "simulation": {
+    "count": 3193,
+    "mean_ms": 2.54012496085186,
+    "p50_ms": 2.16,
+    "p95_ms": 5.852,
+    "p99_ms": 7.413
+   },
+   "snapshot": {
+    "count": 3193,
+    "mean_ms": 0.556888819292202,
+    "p50_ms": 0.508,
+    "p95_ms": 1.079,
+    "p99_ms": 1.141
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3193,
+     "mean_ms": 1.57046038208581,
+     "p50_ms": 1.343,
+     "p95_ms": 3.492,
+     "p99_ms": 4.338
+    },
+    "commands_interpolation": {
+     "count": 3193,
+     "mean_ms": 0.00704008769182587,
+     "p50_ms": 0.007,
+     "p95_ms": 0.01,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3193,
+     "mean_ms": 0.518974318822424,
+     "p50_ms": 0.414,
+     "p95_ms": 1.313,
+     "p99_ms": 1.394
+    },
+    "hero": {
+     "count": 3193,
+     "mean_ms": 0.0088856874412778,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.014
+    },
+    "morale_result_events": {
+     "count": 3193,
+     "mean_ms": 0.0628362041966802,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 2.283
+    },
+    "projectiles": {
+     "count": 3193,
+     "mean_ms": 0.00418540557469464,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3193,
+     "mean_ms": 0.309604447228312,
+     "p50_ms": 0.001,
+     "p95_ms": 1.192,
+     "p99_ms": 1.382
+    },
+    "tactics_siege": {
+     "count": 3193,
+     "mean_ms": 0.0550905104917006,
+     "p50_ms": 0.038,
+     "p95_ms": 0.191,
+     "p99_ms": 0.214
+    }
+   },
+   "events": {
+    "0": 16142,
+    "1": 3132,
+    "2": 9740,
+    "3": 1797,
+    "12": 1,
+    "18": 211,
+    "19": 81,
+    "25": 1
+   },
+   "live_min": 204,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "cur",
+   "finished": "12:01:41",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3193,
+   "simulation": {
+    "count": 3193,
+    "mean_ms": 2.54828562480426,
+    "p50_ms": 2.173,
+    "p95_ms": 5.867,
+    "p99_ms": 7.332
+   },
+   "snapshot": {
+    "count": 3193,
+    "mean_ms": 0.567067021609771,
+    "p50_ms": 0.518,
+    "p95_ms": 1.092,
+    "p99_ms": 1.146
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3193,
+     "mean_ms": 1.57871374882556,
+     "p50_ms": 1.348,
+     "p95_ms": 3.523,
+     "p99_ms": 4.283
+    },
+    "commands_interpolation": {
+     "count": 3193,
+     "mean_ms": 0.00708706545568431,
+     "p50_ms": 0.007,
+     "p95_ms": 0.01,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3193,
+     "mean_ms": 0.518711243344817,
+     "p50_ms": 0.418,
+     "p95_ms": 1.314,
+     "p99_ms": 1.388
+    },
+    "hero": {
+     "count": 3193,
+     "mean_ms": 0.00899592859379893,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3193,
+     "mean_ms": 0.0633391794550579,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 2.26
+    },
+    "projectiles": {
+     "count": 3193,
+     "mean_ms": 0.00430284998434075,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3193,
+     "mean_ms": 0.308779204509865,
+     "p50_ms": 0.001,
+     "p95_ms": 1.185,
+     "p99_ms": 1.344
+    },
+    "tactics_siege": {
+     "count": 3193,
+     "mean_ms": 0.0553479486376448,
+     "p50_ms": 0.038,
+     "p95_ms": 0.193,
+     "p99_ms": 0.218
+    }
+   },
+   "events": {
+    "0": 16142,
+    "1": 3132,
+    "2": 9740,
+    "3": 1797,
+    "12": 1,
+    "18": 211,
+    "19": 81,
+    "25": 1
+   },
+   "live_min": 204,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "base",
+   "finished": "12:01:54",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.25719194444444,
+    "p50_ms": 1.821,
+    "p95_ms": 5.507,
+    "p99_ms": 7.098
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.542253055555556,
+    "p50_ms": 0.486,
+    "p95_ms": 1.138,
+    "p99_ms": 1.19
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.38525944444444,
+     "p50_ms": 1.161,
+     "p95_ms": 3.297,
+     "p99_ms": 4.005
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00665805555555556,
+     "p50_ms": 0.006,
+     "p95_ms": 0.01,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.4692525,
+     "p50_ms": 0.348,
+     "p95_ms": 1.288,
+     "p99_ms": 1.389
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0103141666666667,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0475644444444445,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 1.685
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.004255,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.276918055555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.149,
+     "p99_ms": 1.328
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0540169444444445,
+     "p50_ms": 0.036,
+     "p95_ms": 0.188,
+     "p99_ms": 0.215
+    }
+   },
+   "events": {
+    "0": 16387,
+    "1": 3125,
+    "2": 9972,
+    "3": 1841,
+    "12": 1,
+    "19": 55
+   },
+   "live_min": 159,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "base",
+   "finished": "12:02:07",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.23479194444444,
+    "p50_ms": 1.792,
+    "p95_ms": 5.499,
+    "p99_ms": 6.974
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.538502222222222,
+    "p50_ms": 0.475,
+    "p95_ms": 1.132,
+    "p99_ms": 1.17
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.367545,
+     "p50_ms": 1.124,
+     "p95_ms": 3.306,
+     "p99_ms": 3.996
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00662388888888889,
+     "p50_ms": 0.006,
+     "p95_ms": 0.01,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.467306666666667,
+     "p50_ms": 0.345,
+     "p95_ms": 1.281,
+     "p99_ms": 1.377
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0104194444444444,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0477513888888889,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 1.762
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00418027777777778,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.274255277777778,
+     "p50_ms": 0.001,
+     "p95_ms": 1.15,
+     "p99_ms": 1.298
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0537927777777778,
+     "p50_ms": 0.036,
+     "p95_ms": 0.187,
+     "p99_ms": 0.213
+    }
+   },
+   "events": {
+    "0": 16387,
+    "1": 3125,
+    "2": 9972,
+    "3": 1841,
+    "12": 1,
+    "19": 55
+   },
+   "live_min": 159,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "cur",
+   "finished": "12:02:20",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3193,
+   "simulation": {
+    "count": 3193,
+    "mean_ms": 2.55032289383025,
+    "p50_ms": 2.161,
+    "p95_ms": 5.918,
+    "p99_ms": 7.325
+   },
+   "snapshot": {
+    "count": 3193,
+    "mean_ms": 0.566017851550266,
+    "p50_ms": 0.513,
+    "p95_ms": 1.082,
+    "p99_ms": 1.139
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3193,
+     "mean_ms": 1.57419855934858,
+     "p50_ms": 1.343,
+     "p95_ms": 3.515,
+     "p99_ms": 4.294
+    },
+    "commands_interpolation": {
+     "count": 3193,
+     "mean_ms": 0.00705825242718447,
+     "p50_ms": 0.007,
+     "p95_ms": 0.01,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3193,
+     "mean_ms": 0.520278421547134,
+     "p50_ms": 0.418,
+     "p95_ms": 1.314,
+     "p99_ms": 1.4
+    },
+    "hero": {
+     "count": 3193,
+     "mean_ms": 0.00902568117757595,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3193,
+     "mean_ms": 0.0634613216410899,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 2.248
+    },
+    "projectiles": {
+     "count": 3193,
+     "mean_ms": 0.00433072345756342,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3193,
+     "mean_ms": 0.314075164422173,
+     "p50_ms": 0.001,
+     "p95_ms": 1.206,
+     "p99_ms": 1.367
+    },
+    "tactics_siege": {
+     "count": 3193,
+     "mean_ms": 0.0549213905418102,
+     "p50_ms": 0.037,
+     "p95_ms": 0.19,
+     "p99_ms": 0.211
+    }
+   },
+   "events": {
+    "0": 16142,
+    "1": 3132,
+    "2": 9740,
+    "3": 1797,
+    "12": 1,
+    "18": 211,
+    "19": 81,
+    "25": 1
+   },
+   "live_min": 204,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "cur",
+   "finished": "12:02:33",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3193,
+   "simulation": {
+    "count": 3193,
+    "mean_ms": 2.53429533354212,
+    "p50_ms": 2.174,
+    "p95_ms": 5.85,
+    "p99_ms": 7.211
+   },
+   "snapshot": {
+    "count": 3193,
+    "mean_ms": 0.562043532727842,
+    "p50_ms": 0.509,
+    "p95_ms": 1.082,
+    "p99_ms": 1.154
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3193,
+     "mean_ms": 1.56620889445662,
+     "p50_ms": 1.345,
+     "p95_ms": 3.491,
+     "p99_ms": 4.273
+    },
+    "commands_interpolation": {
+     "count": 3193,
+     "mean_ms": 0.00703163169433135,
+     "p50_ms": 0.007,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3193,
+     "mean_ms": 0.518777325399311,
+     "p50_ms": 0.418,
+     "p95_ms": 1.306,
+     "p99_ms": 1.393
+    },
+    "hero": {
+     "count": 3193,
+     "mean_ms": 0.00886376448481052,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3193,
+     "mean_ms": 0.0620745380519887,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 2.264
+    },
+    "projectiles": {
+     "count": 3193,
+     "mean_ms": 0.00425117444409646,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3193,
+     "mean_ms": 0.308961791418728,
+     "p50_ms": 0.001,
+     "p95_ms": 1.189,
+     "p99_ms": 1.336
+    },
+    "tactics_siege": {
+     "count": 3193,
+     "mean_ms": 0.0551105543376135,
+     "p50_ms": 0.037,
+     "p95_ms": 0.19,
+     "p99_ms": 0.215
+    }
+   },
+   "events": {
+    "0": 16142,
+    "1": 3132,
+    "2": 9740,
+    "3": 1797,
+    "12": 1,
+    "18": 211,
+    "19": 81,
+    "25": 1
+   },
+   "live_min": 204,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "base",
+   "finished": "12:02:47",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.32098027777778,
+    "p50_ms": 1.843,
+    "p95_ms": 5.831,
+    "p99_ms": 7.362
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.569857222222222,
+    "p50_ms": 0.493,
+    "p95_ms": 1.168,
+    "p99_ms": 1.343
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.40897388888889,
+     "p50_ms": 1.146,
+     "p95_ms": 3.419,
+     "p99_ms": 4.179
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00724944444444444,
+     "p50_ms": 0.007,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.475510833333333,
+     "p50_ms": 0.355,
+     "p95_ms": 1.302,
+     "p99_ms": 1.388
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0116877777777778,
+     "p50_ms": 0.011,
+     "p95_ms": 0.017,
+     "p99_ms": 0.021
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0494058333333333,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 1.792
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00474444444444444,
+     "p50_ms": 0.004,
+     "p95_ms": 0.007,
+     "p99_ms": 0.009
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.302975277777778,
+     "p50_ms": 0.001,
+     "p95_ms": 1.281,
+     "p99_ms": 1.527
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0571472222222222,
+     "p50_ms": 0.039,
+     "p95_ms": 0.201,
+     "p99_ms": 0.236
+    }
+   },
+   "events": {
+    "0": 16387,
+    "1": 3125,
+    "2": 9972,
+    "3": 1841,
+    "12": 1,
+    "19": 55
+   },
+   "live_min": 159,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "base",
+   "finished": "12:03:00",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.2644325,
+    "p50_ms": 1.776,
+    "p95_ms": 5.605,
+    "p99_ms": 7.437
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.557636388888889,
+    "p50_ms": 0.478,
+    "p95_ms": 1.172,
+    "p99_ms": 1.728
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.38247,
+     "p50_ms": 1.116,
+     "p95_ms": 3.417,
+     "p99_ms": 4.274
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00682055555555556,
+     "p50_ms": 0.006,
+     "p95_ms": 0.01,
+     "p99_ms": 0.014
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.4708875,
+     "p50_ms": 0.347,
+     "p95_ms": 1.304,
+     "p99_ms": 1.408
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0108019444444444,
+     "p50_ms": 0.011,
+     "p95_ms": 0.014,
+     "p99_ms": 0.022
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0485880555555556,
+     "p50_ms": 0.003,
+     "p95_ms": 0.006,
+     "p99_ms": 1.672
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.0044125,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.01
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.282503055555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.154,
+     "p99_ms": 1.523
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0549152777777778,
+     "p50_ms": 0.036,
+     "p95_ms": 0.188,
+     "p99_ms": 0.227
+    }
+   },
+   "events": {
+    "0": 16387,
+    "1": 3125,
+    "2": 9972,
+    "3": 1841,
+    "12": 1,
+    "19": 55
+   },
+   "live_min": 159,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "cavalry",
+   "build": "cur",
+   "finished": "12:03:13",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3193,
+   "simulation": {
+    "count": 3193,
+    "mean_ms": 2.54482211086752,
+    "p50_ms": 2.154,
+    "p95_ms": 5.875,
+    "p99_ms": 7.488
+   },
+   "snapshot": {
+    "count": 3193,
+    "mean_ms": 0.563704979642969,
+    "p50_ms": 0.513,
+    "p95_ms": 1.092,
+    "p99_ms": 1.163
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3193,
+     "mean_ms": 1.57422768556217,
+     "p50_ms": 1.34,
+     "p95_ms": 3.523,
+     "p99_ms": 4.305
+    },
+    "commands_interpolation": {
+     "count": 3193,
+     "mean_ms": 0.00714938928906984,
+     "p50_ms": 0.007,
+     "p95_ms": 0.01,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3193,
+     "mean_ms": 0.519599749451926,
+     "p50_ms": 0.417,
+     "p95_ms": 1.322,
+     "p99_ms": 1.399
+    },
+    "hero": {
+     "count": 3193,
+     "mean_ms": 0.00898026933917946,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3193,
+     "mean_ms": 0.0634779204509865,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 2.26
+    },
+    "projectiles": {
+     "count": 3193,
+     "mean_ms": 0.0043253993109928,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3193,
+     "mean_ms": 0.308863764484811,
+     "p50_ms": 0.001,
+     "p95_ms": 1.185,
+     "p99_ms": 1.369
+    },
+    "tactics_siege": {
+     "count": 3193,
+     "mean_ms": 0.0552051362355152,
+     "p50_ms": 0.037,
+     "p95_ms": 0.191,
+     "p99_ms": 0.217
+    }
+   },
+   "events": {
+    "0": 16142,
+    "1": 3132,
+    "2": 9740,
+    "3": 1797,
+    "12": 1,
+    "18": 211,
+    "19": 81,
+    "25": 1
+   },
+   "live_min": 204,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "base",
+   "finished": "12:03:25",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.70038527777778,
+    "p50_ms": 1.368,
+    "p95_ms": 3.371,
+    "p99_ms": 5.595
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.944581666666667,
+    "p50_ms": 0.922,
+    "p95_ms": 1.139,
+    "p99_ms": 1.255
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.829805555555556,
+     "p50_ms": 0.767,
+     "p95_ms": 1.505,
+     "p99_ms": 2
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00863694444444444,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.466088333333333,
+     "p50_ms": 0.462,
+     "p95_ms": 0.552,
+     "p99_ms": 0.618
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0110430555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0804405555555556,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.249
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00446111111111111,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.212963888888889,
+     "p50_ms": 0.001,
+     "p95_ms": 1.186,
+     "p99_ms": 1.354
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0839838888888889,
+     "p50_ms": 0.042,
+     "p95_ms": 0.266,
+     "p99_ms": 0.345
+    }
+   },
+   "events": {
+    "0": 5002,
+    "1": 940,
+    "3": 827,
+    "18": 48,
+    "19": 14
+   },
+   "live_min": 1174,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "cur",
+   "finished": "12:03:38",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.79907,
+    "p50_ms": 1.426,
+    "p95_ms": 3.631,
+    "p99_ms": 6.362
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.954130833333333,
+    "p50_ms": 0.912,
+    "p95_ms": 1.251,
+    "p99_ms": 1.709
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.878418333333333,
+     "p50_ms": 0.807,
+     "p95_ms": 1.591,
+     "p99_ms": 2.268
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00903944444444445,
+     "p50_ms": 0.009,
+     "p95_ms": 0.012,
+     "p99_ms": 0.017
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.475030833333333,
+     "p50_ms": 0.476,
+     "p95_ms": 0.562,
+     "p99_ms": 0.659
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0121447222222222,
+     "p50_ms": 0.011,
+     "p95_ms": 0.018,
+     "p99_ms": 0.028
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0904497222222222,
+     "p50_ms": 0.003,
+     "p95_ms": 0.006,
+     "p99_ms": 4.99
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00460972222222222,
+     "p50_ms": 0.004,
+     "p95_ms": 0.007,
+     "p99_ms": 0.01
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.237675,
+     "p50_ms": 0.001,
+     "p95_ms": 1.316,
+     "p99_ms": 1.753
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0884352777777778,
+     "p50_ms": 0.043,
+     "p95_ms": 0.288,
+     "p99_ms": 0.427
+    }
+   },
+   "events": {
+    "0": 4980,
+    "1": 932,
+    "3": 838,
+    "18": 135,
+    "19": 81
+   },
+   "live_min": 1163,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "cur",
+   "finished": "12:03:51",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.82094083333333,
+    "p50_ms": 1.431,
+    "p95_ms": 3.731,
+    "p99_ms": 6.525
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.955036666666667,
+    "p50_ms": 0.92,
+    "p95_ms": 1.277,
+    "p99_ms": 1.729
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.884529722222222,
+     "p50_ms": 0.814,
+     "p95_ms": 1.63,
+     "p99_ms": 2.293
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00930666666666667,
+     "p50_ms": 0.009,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.478191944444444,
+     "p50_ms": 0.477,
+     "p95_ms": 0.573,
+     "p99_ms": 0.684
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0127219444444444,
+     "p50_ms": 0.011,
+     "p95_ms": 0.02,
+     "p99_ms": 0.029
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0939194444444445,
+     "p50_ms": 0.003,
+     "p95_ms": 0.006,
+     "p99_ms": 5.069
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.0048175,
+     "p50_ms": 0.004,
+     "p95_ms": 0.007,
+     "p99_ms": 0.011
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.243925,
+     "p50_ms": 0.001,
+     "p95_ms": 1.346,
+     "p99_ms": 1.822
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0901761111111111,
+     "p50_ms": 0.044,
+     "p95_ms": 0.293,
+     "p99_ms": 0.448
+    }
+   },
+   "events": {
+    "0": 4980,
+    "1": 932,
+    "3": 838,
+    "18": 135,
+    "19": 81
+   },
+   "live_min": 1163,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "base",
+   "finished": "12:04:04",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.78589138888889,
+    "p50_ms": 1.43,
+    "p95_ms": 3.625,
+    "p99_ms": 5.954
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.987427222222222,
+    "p50_ms": 0.966,
+    "p95_ms": 1.305,
+    "p99_ms": 1.712
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.877339722222222,
+     "p50_ms": 0.807,
+     "p95_ms": 1.583,
+     "p99_ms": 2.294
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00926333333333333,
+     "p50_ms": 0.009,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.474247222222222,
+     "p50_ms": 0.471,
+     "p95_ms": 0.566,
+     "p99_ms": 0.644
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0123388888888889,
+     "p50_ms": 0.011,
+     "p95_ms": 0.019,
+     "p99_ms": 0.03
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0834869444444444,
+     "p50_ms": 0.003,
+     "p95_ms": 0.006,
+     "p99_ms": 4.454
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00473916666666667,
+     "p50_ms": 0.004,
+     "p95_ms": 0.007,
+     "p99_ms": 0.011
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.23122,
+     "p50_ms": 0.001,
+     "p95_ms": 1.278,
+     "p99_ms": 1.582
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0899277777777778,
+     "p50_ms": 0.043,
+     "p95_ms": 0.29,
+     "p99_ms": 0.458
+    }
+   },
+   "events": {
+    "0": 5002,
+    "1": 940,
+    "3": 827,
+    "18": 48,
+    "19": 14
+   },
+   "live_min": 1174,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "base",
+   "finished": "12:04:17",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.69920944444444,
+    "p50_ms": 1.368,
+    "p95_ms": 3.396,
+    "p99_ms": 5.493
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.960272222222222,
+    "p50_ms": 0.94,
+    "p95_ms": 1.159,
+    "p99_ms": 1.272
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.831193333333333,
+     "p50_ms": 0.768,
+     "p95_ms": 1.491,
+     "p99_ms": 2.055
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00858111111111111,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.464085555555556,
+     "p50_ms": 0.46,
+     "p95_ms": 0.552,
+     "p99_ms": 0.623
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0110027777777778,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0805727777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.258
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00440222222222222,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.211883333333333,
+     "p50_ms": 0.001,
+     "p95_ms": 1.196,
+     "p99_ms": 1.343
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0845261111111111,
+     "p50_ms": 0.042,
+     "p95_ms": 0.267,
+     "p99_ms": 0.351
+    }
+   },
+   "events": {
+    "0": 5002,
+    "1": 940,
+    "3": 827,
+    "18": 48,
+    "19": 14
+   },
+   "live_min": 1174,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "cur",
+   "finished": "12:04:29",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.72867305555556,
+    "p50_ms": 1.382,
+    "p95_ms": 3.388,
+    "p99_ms": 6.177
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.912528333333333,
+    "p50_ms": 0.887,
+    "p95_ms": 1.098,
+    "p99_ms": 1.27
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.843569722222222,
+     "p50_ms": 0.779,
+     "p95_ms": 1.51,
+     "p99_ms": 2.134
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00859277777777778,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.467567777777778,
+     "p50_ms": 0.47,
+     "p95_ms": 0.553,
+     "p99_ms": 0.624
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0108675,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.017
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0868094444444444,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.816
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00433,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.219822777777778,
+     "p50_ms": 0.001,
+     "p95_ms": 1.196,
+     "p99_ms": 1.427
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0841916666666667,
+     "p50_ms": 0.042,
+     "p95_ms": 0.267,
+     "p99_ms": 0.385
+    }
+   },
+   "events": {
+    "0": 4980,
+    "1": 932,
+    "3": 838,
+    "18": 135,
+    "19": 81
+   },
+   "live_min": 1163,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "cur",
+   "finished": "12:04:42",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.74193055555556,
+    "p50_ms": 1.405,
+    "p95_ms": 3.397,
+    "p99_ms": 6.263
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.949508333333333,
+    "p50_ms": 0.926,
+    "p95_ms": 1.139,
+    "p99_ms": 1.252
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.858324444444444,
+     "p50_ms": 0.798,
+     "p95_ms": 1.524,
+     "p99_ms": 2.054
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00856583333333333,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.469235833333333,
+     "p50_ms": 0.472,
+     "p95_ms": 0.554,
+     "p99_ms": 0.62
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0107919444444444,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0870847222222222,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.921
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00424444444444444,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.216746111111111,
+     "p50_ms": 0.001,
+     "p95_ms": 1.196,
+     "p99_ms": 1.385
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0839916666666667,
+     "p50_ms": 0.042,
+     "p95_ms": 0.267,
+     "p99_ms": 0.332
+    }
+   },
+   "events": {
+    "0": 4980,
+    "1": 932,
+    "3": 838,
+    "18": 135,
+    "19": 81
+   },
+   "live_min": 1163,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "base",
+   "finished": "12:04:55",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.69043361111111,
+    "p50_ms": 1.362,
+    "p95_ms": 3.32,
+    "p99_ms": 5.408
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.946903888888889,
+    "p50_ms": 0.931,
+    "p95_ms": 1.144,
+    "p99_ms": 1.206
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.827413888888889,
+     "p50_ms": 0.768,
+     "p95_ms": 1.491,
+     "p99_ms": 2.061
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00856388888888889,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.463481388888889,
+     "p50_ms": 0.462,
+     "p95_ms": 0.548,
+     "p99_ms": 0.593
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0108802777777778,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0799508333333333,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.173
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00428361111111111,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.209640833333333,
+     "p50_ms": 0.001,
+     "p95_ms": 1.179,
+     "p99_ms": 1.319
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0833266666666667,
+     "p50_ms": 0.042,
+     "p95_ms": 0.264,
+     "p99_ms": 0.322
+    }
+   },
+   "events": {
+    "0": 5002,
+    "1": 940,
+    "3": 827,
+    "18": 48,
+    "19": 14
+   },
+   "live_min": 1174,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "base",
+   "finished": "12:05:07",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.69754888888889,
+    "p50_ms": 1.364,
+    "p95_ms": 3.375,
+    "p99_ms": 5.586
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.953749166666667,
+    "p50_ms": 0.934,
+    "p95_ms": 1.153,
+    "p99_ms": 1.23
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.828777222222222,
+     "p50_ms": 0.764,
+     "p95_ms": 1.484,
+     "p99_ms": 2.057
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00856583333333333,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.463899444444444,
+     "p50_ms": 0.462,
+     "p95_ms": 0.549,
+     "p99_ms": 0.585
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0110280555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0812033333333333,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.288
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00428277777777778,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.212724444444444,
+     "p50_ms": 0.001,
+     "p95_ms": 1.195,
+     "p99_ms": 1.334
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0841111111111111,
+     "p50_ms": 0.042,
+     "p95_ms": 0.266,
+     "p99_ms": 0.371
+    }
+   },
+   "events": {
+    "0": 5002,
+    "1": 940,
+    "3": 827,
+    "18": 48,
+    "19": 14
+   },
+   "live_min": 1174,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "contact",
+   "build": "cur",
+   "finished": "12:05:19",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.71717722222222,
+    "p50_ms": 1.381,
+    "p95_ms": 3.359,
+    "p99_ms": 6.073
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.911656666666667,
+    "p50_ms": 0.893,
+    "p95_ms": 1.104,
+    "p99_ms": 1.187
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.841004722222222,
+     "p50_ms": 0.778,
+     "p95_ms": 1.496,
+     "p99_ms": 2.029
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00847277777777778,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.466206944444444,
+     "p50_ms": 0.468,
+     "p95_ms": 0.55,
+     "p99_ms": 0.604
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0107686111111111,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0858411111111111,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.723
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00430361111111111,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.214719444444444,
+     "p50_ms": 0.001,
+     "p95_ms": 1.188,
+     "p99_ms": 1.341
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0829288888888889,
+     "p50_ms": 0.041,
+     "p95_ms": 0.264,
+     "p99_ms": 0.333
+    }
+   },
+   "events": {
+    "0": 4980,
+    "1": 932,
+    "3": 838,
+    "18": 135,
+    "19": 81
+   },
+   "live_min": 1163,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "base",
+   "finished": "12:05:29",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.17295527777778,
+    "p50_ms": 0.815,
+    "p95_ms": 3.499,
+    "p99_ms": 4.757
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.493706388888889,
+    "p50_ms": 0.351,
+    "p95_ms": 1.38,
+    "p99_ms": 1.69
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.437898611111111,
+     "p50_ms": 0.303,
+     "p95_ms": 1.325,
+     "p99_ms": 1.983
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00582611111111111,
+     "p50_ms": 0.005,
+     "p95_ms": 0.009,
+     "p99_ms": 0.01
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.262326944444444,
+     "p50_ms": 0.106,
+     "p95_ms": 0.545,
+     "p99_ms": 2.56
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0102083333333333,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0302177777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 0.501
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.1662525,
+     "p50_ms": 0.081,
+     "p95_ms": 0.679,
+     "p99_ms": 1.123
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.220635,
+     "p50_ms": 0.001,
+     "p95_ms": 1.044,
+     "p99_ms": 1.245
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0367938888888889,
+     "p50_ms": 0.028,
+     "p95_ms": 0.142,
+     "p99_ms": 0.198
+    }
+   },
+   "events": {
+    "0": 4902,
+    "3": 1238,
+    "5": 7195,
+    "13": 2641,
+    "18": 1260,
+    "19": 933
+   },
+   "live_min": 56,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "cur",
+   "finished": "12:05:35",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 913,
+   "simulation": {
+    "count": 913,
+    "mean_ms": 2.25376451259584,
+    "p50_ms": 1.657,
+    "p95_ms": 4.608,
+    "p99_ms": 10.38
+   },
+   "snapshot": {
+    "count": 913,
+    "mean_ms": 0.966733844468784,
+    "p50_ms": 0.9,
+    "p95_ms": 1.59,
+    "p99_ms": 1.73
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 913,
+     "mean_ms": 0.844626506024096,
+     "p50_ms": 0.654,
+     "p95_ms": 1.851,
+     "p99_ms": 2.192
+    },
+    "commands_interpolation": {
+     "count": 913,
+     "mean_ms": 0.00867031763417306,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 913,
+     "mean_ms": 0.490543263964951,
+     "p50_ms": 0.506,
+     "p95_ms": 0.586,
+     "p99_ms": 0.706
+    },
+    "hero": {
+     "count": 913,
+     "mean_ms": 0.011302300109529,
+     "p50_ms": 0.011,
+     "p95_ms": 0.014,
+     "p99_ms": 0.028
+    },
+    "morale_result_events": {
+     "count": 913,
+     "mean_ms": 0.157180722891566,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 8.669
+    },
+    "projectiles": {
+     "count": 913,
+     "mean_ms": 0.32065717415115,
+     "p50_ms": 0.188,
+     "p95_ms": 1.032,
+     "p99_ms": 1.425
+    },
+    "storage_compaction": {
+     "count": 913,
+     "mean_ms": 0.370007667031763,
+     "p50_ms": 0.001,
+     "p95_ms": 1.219,
+     "p99_ms": 1.407
+    },
+    "tactics_siege": {
+     "count": 913,
+     "mean_ms": 0.0475410733844469,
+     "p50_ms": 0.038,
+     "p95_ms": 0.141,
+     "p99_ms": 0.24
+    }
+   },
+   "events": {
+    "0": 2511,
+    "3": 552,
+    "5": 2874,
+    "12": 1,
+    "13": 733,
+    "18": 1673,
+    "19": 1483,
+    "25": 265
+   },
+   "live_min": 1345,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "cur",
+   "finished": "12:05:41",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 913,
+   "simulation": {
+    "count": 913,
+    "mean_ms": 2.24860898138007,
+    "p50_ms": 1.641,
+    "p95_ms": 4.677,
+    "p99_ms": 10.506
+   },
+   "snapshot": {
+    "count": 913,
+    "mean_ms": 1.02515881708653,
+    "p50_ms": 0.902,
+    "p95_ms": 1.694,
+    "p99_ms": 1.879
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 913,
+     "mean_ms": 0.843276013143483,
+     "p50_ms": 0.634,
+     "p95_ms": 1.888,
+     "p99_ms": 2.286
+    },
+    "commands_interpolation": {
+     "count": 913,
+     "mean_ms": 0.0085881708652793,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 913,
+     "mean_ms": 0.488946330777656,
+     "p50_ms": 0.506,
+     "p95_ms": 0.575,
+     "p99_ms": 0.654
+    },
+    "hero": {
+     "count": 913,
+     "mean_ms": 0.0111303395399781,
+     "p50_ms": 0.011,
+     "p95_ms": 0.014,
+     "p99_ms": 0.017
+    },
+    "morale_result_events": {
+     "count": 913,
+     "mean_ms": 0.158848849945235,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 8.84
+    },
+    "projectiles": {
+     "count": 913,
+     "mean_ms": 0.321066812705367,
+     "p50_ms": 0.186,
+     "p95_ms": 1.075,
+     "p99_ms": 1.429
+    },
+    "storage_compaction": {
+     "count": 913,
+     "mean_ms": 0.366179627601314,
+     "p50_ms": 0.001,
+     "p95_ms": 1.261,
+     "p99_ms": 1.381
+    },
+    "tactics_siege": {
+     "count": 913,
+     "mean_ms": 0.0473855421686747,
+     "p50_ms": 0.037,
+     "p95_ms": 0.142,
+     "p99_ms": 0.246
+    }
+   },
+   "events": {
+    "0": 2511,
+    "3": 552,
+    "5": 2874,
+    "12": 1,
+    "13": 733,
+    "18": 1673,
+    "19": 1483,
+    "25": 265
+   },
+   "live_min": 1345,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "base",
+   "finished": "12:05:51",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.16957611111111,
+    "p50_ms": 0.828,
+    "p95_ms": 3.491,
+    "p99_ms": 4.686
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.49339,
+    "p50_ms": 0.348,
+    "p95_ms": 1.372,
+    "p99_ms": 1.67
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.435960277777778,
+     "p50_ms": 0.313,
+     "p95_ms": 1.275,
+     "p99_ms": 1.869
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00578722222222222,
+     "p50_ms": 0.005,
+     "p95_ms": 0.009,
+     "p99_ms": 0.01
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.261321666666667,
+     "p50_ms": 0.107,
+     "p95_ms": 0.544,
+     "p99_ms": 2.54
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0102894444444444,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.014
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0308938888888889,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 0.581
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.165508888888889,
+     "p50_ms": 0.08,
+     "p95_ms": 0.681,
+     "p99_ms": 1.143
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.21981,
+     "p50_ms": 0.001,
+     "p95_ms": 1.046,
+     "p99_ms": 1.248
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0372475,
+     "p50_ms": 0.028,
+     "p95_ms": 0.143,
+     "p99_ms": 0.204
+    }
+   },
+   "events": {
+    "0": 4902,
+    "3": 1238,
+    "5": 7195,
+    "13": 2641,
+    "18": 1260,
+    "19": 933
+   },
+   "live_min": 56,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "base",
+   "finished": "12:06:00",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.17483916666667,
+    "p50_ms": 0.835,
+    "p95_ms": 3.518,
+    "p99_ms": 4.688
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.496001944444444,
+    "p50_ms": 0.345,
+    "p95_ms": 1.376,
+    "p99_ms": 1.664
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.436130555555556,
+     "p50_ms": 0.303,
+     "p95_ms": 1.311,
+     "p99_ms": 1.925
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00585,
+     "p50_ms": 0.005,
+     "p95_ms": 0.009,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.262325833333333,
+     "p50_ms": 0.106,
+     "p95_ms": 0.548,
+     "p99_ms": 2.499
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.01045,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0307127777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 0.543
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.165982777777778,
+     "p50_ms": 0.08,
+     "p95_ms": 0.674,
+     "p99_ms": 1.122
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.223275,
+     "p50_ms": 0.001,
+     "p95_ms": 1.052,
+     "p99_ms": 1.25
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0372688888888889,
+     "p50_ms": 0.027,
+     "p95_ms": 0.14,
+     "p99_ms": 0.2
+    }
+   },
+   "events": {
+    "0": 4902,
+    "3": 1238,
+    "5": 7195,
+    "13": 2641,
+    "18": 1260,
+    "19": 933
+   },
+   "live_min": 56,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "cur",
+   "finished": "12:06:06",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 913,
+   "simulation": {
+    "count": 913,
+    "mean_ms": 2.21169989047098,
+    "p50_ms": 1.598,
+    "p95_ms": 4.539,
+    "p99_ms": 10.271
+   },
+   "snapshot": {
+    "count": 913,
+    "mean_ms": 0.936360350492881,
+    "p50_ms": 0.822,
+    "p95_ms": 1.558,
+    "p99_ms": 1.695
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 913,
+     "mean_ms": 0.83021139101862,
+     "p50_ms": 0.627,
+     "p95_ms": 1.859,
+     "p99_ms": 2.186
+    },
+    "commands_interpolation": {
+     "count": 913,
+     "mean_ms": 0.00838992332968237,
+     "p50_ms": 0.008,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 913,
+     "mean_ms": 0.483727272727273,
+     "p50_ms": 0.503,
+     "p95_ms": 0.57,
+     "p99_ms": 0.621
+    },
+    "hero": {
+     "count": 913,
+     "mean_ms": 0.0109386637458927,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 913,
+     "mean_ms": 0.154201533406353,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 8.606
+    },
+    "projectiles": {
+     "count": 913,
+     "mean_ms": 0.315093099671413,
+     "p50_ms": 0.183,
+     "p95_ms": 1.044,
+     "p99_ms": 1.45
+    },
+    "storage_compaction": {
+     "count": 913,
+     "mean_ms": 0.360306681270537,
+     "p50_ms": 0.001,
+     "p95_ms": 1.209,
+     "p99_ms": 1.299
+    },
+    "tactics_siege": {
+     "count": 913,
+     "mean_ms": 0.045815991237678,
+     "p50_ms": 0.037,
+     "p95_ms": 0.14,
+     "p99_ms": 0.235
+    }
+   },
+   "events": {
+    "0": 2511,
+    "3": 552,
+    "5": 2874,
+    "12": 1,
+    "13": 733,
+    "18": 1673,
+    "19": 1483,
+    "25": 265
+   },
+   "live_min": 1345,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "cur",
+   "finished": "12:06:13",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 913,
+   "simulation": {
+    "count": 913,
+    "mean_ms": 2.35059693318729,
+    "p50_ms": 1.619,
+    "p95_ms": 5.086,
+    "p99_ms": 10.639
+   },
+   "snapshot": {
+    "count": 913,
+    "mean_ms": 1.05533953997809,
+    "p50_ms": 0.852,
+    "p95_ms": 1.94,
+    "p99_ms": 2.748
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 913,
+     "mean_ms": 0.869985761226725,
+     "p50_ms": 0.645,
+     "p95_ms": 1.986,
+     "p99_ms": 2.479
+    },
+    "commands_interpolation": {
+     "count": 913,
+     "mean_ms": 0.00896276013143483,
+     "p50_ms": 0.008,
+     "p95_ms": 0.012,
+     "p99_ms": 0.017
+    },
+    "contacts": {
+     "count": 913,
+     "mean_ms": 0.494946330777656,
+     "p50_ms": 0.514,
+     "p95_ms": 0.612,
+     "p99_ms": 0.707
+    },
+    "hero": {
+     "count": 913,
+     "mean_ms": 0.0122584884994524,
+     "p50_ms": 0.011,
+     "p95_ms": 0.02,
+     "p99_ms": 0.027
+    },
+    "morale_result_events": {
+     "count": 913,
+     "mean_ms": 0.161821467688938,
+     "p50_ms": 0.003,
+     "p95_ms": 0.007,
+     "p99_ms": 8.581
+    },
+    "projectiles": {
+     "count": 913,
+     "mean_ms": 0.348826944140197,
+     "p50_ms": 0.188,
+     "p95_ms": 1.168,
+     "p99_ms": 1.808
+    },
+    "storage_compaction": {
+     "count": 913,
+     "mean_ms": 0.400692223439211,
+     "p50_ms": 0.001,
+     "p95_ms": 1.399,
+     "p99_ms": 1.975
+    },
+    "tactics_siege": {
+     "count": 913,
+     "mean_ms": 0.0495585980284775,
+     "p50_ms": 0.038,
+     "p95_ms": 0.146,
+     "p99_ms": 0.249
+    }
+   },
+   "events": {
+    "0": 2511,
+    "3": 552,
+    "5": 2874,
+    "12": 1,
+    "13": 733,
+    "18": 1673,
+    "19": 1483,
+    "25": 265
+   },
+   "live_min": 1345,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "base",
+   "finished": "12:06:22",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.16403555555556,
+    "p50_ms": 0.808,
+    "p95_ms": 3.468,
+    "p99_ms": 4.643
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.494424722222222,
+    "p50_ms": 0.349,
+    "p95_ms": 1.356,
+    "p99_ms": 1.665
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.429781111111111,
+     "p50_ms": 0.302,
+     "p95_ms": 1.273,
+     "p99_ms": 1.882
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00596138888888889,
+     "p50_ms": 0.005,
+     "p95_ms": 0.009,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.262277777777778,
+     "p50_ms": 0.104,
+     "p95_ms": 0.544,
+     "p99_ms": 2.58
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0104480555555556,
+     "p50_ms": 0.01,
+     "p95_ms": 0.013,
+     "p99_ms": 0.017
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0306891666666667,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 0.523
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.164031944444444,
+     "p50_ms": 0.08,
+     "p95_ms": 0.661,
+     "p99_ms": 1.079
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.220578055555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.048,
+     "p99_ms": 1.246
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0374361111111111,
+     "p50_ms": 0.027,
+     "p95_ms": 0.147,
+     "p99_ms": 0.205
+    }
+   },
+   "events": {
+    "0": 4902,
+    "3": 1238,
+    "5": 7195,
+    "13": 2641,
+    "18": 1260,
+    "19": 933
+   },
+   "live_min": 56,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "base",
+   "finished": "12:06:31",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.17506305555556,
+    "p50_ms": 0.833,
+    "p95_ms": 3.493,
+    "p99_ms": 4.764
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.498703611111111,
+    "p50_ms": 0.35,
+    "p95_ms": 1.37,
+    "p99_ms": 1.645
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.432599444444444,
+     "p50_ms": 0.304,
+     "p95_ms": 1.293,
+     "p99_ms": 1.9
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00585277777777778,
+     "p50_ms": 0.005,
+     "p95_ms": 0.009,
+     "p99_ms": 0.011
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.264009444444444,
+     "p50_ms": 0.11,
+     "p95_ms": 0.552,
+     "p99_ms": 2.527
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0103761111111111,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.017
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0305888888888889,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 0.511
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.167441944444444,
+     "p50_ms": 0.08,
+     "p95_ms": 0.673,
+     "p99_ms": 1.125
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.223996388888889,
+     "p50_ms": 0.001,
+     "p95_ms": 1.045,
+     "p99_ms": 1.253
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0373752777777778,
+     "p50_ms": 0.027,
+     "p95_ms": 0.143,
+     "p99_ms": 0.198
+    }
+   },
+   "events": {
+    "0": 4902,
+    "3": 1238,
+    "5": 7195,
+    "13": 2641,
+    "18": 1260,
+    "19": 933
+   },
+   "live_min": 56,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "volley",
+   "build": "cur",
+   "finished": "12:06:38",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 913,
+   "simulation": {
+    "count": 913,
+    "mean_ms": 2.27103066812705,
+    "p50_ms": 1.621,
+    "p95_ms": 4.605,
+    "p99_ms": 10.519
+   },
+   "snapshot": {
+    "count": 913,
+    "mean_ms": 0.999062431544359,
+    "p50_ms": 0.872,
+    "p95_ms": 1.691,
+    "p99_ms": 1.93
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 913,
+     "mean_ms": 0.846523548740416,
+     "p50_ms": 0.641,
+     "p95_ms": 1.875,
+     "p99_ms": 2.192
+    },
+    "commands_interpolation": {
+     "count": 913,
+     "mean_ms": 0.00870317634173056,
+     "p50_ms": 0.008,
+     "p95_ms": 0.011,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 913,
+     "mean_ms": 0.492212486308872,
+     "p50_ms": 0.51,
+     "p95_ms": 0.579,
+     "p99_ms": 0.66
+    },
+    "hero": {
+     "count": 913,
+     "mean_ms": 0.0117020810514786,
+     "p50_ms": 0.011,
+     "p95_ms": 0.015,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 913,
+     "mean_ms": 0.161421686746988,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 8.757
+    },
+    "projectiles": {
+     "count": 913,
+     "mean_ms": 0.325513691128149,
+     "p50_ms": 0.19,
+     "p95_ms": 1.066,
+     "p99_ms": 1.455
+    },
+    "storage_compaction": {
+     "count": 913,
+     "mean_ms": 0.373561883899233,
+     "p50_ms": 0.001,
+     "p95_ms": 1.284,
+     "p99_ms": 1.496
+    },
+    "tactics_siege": {
+     "count": 913,
+     "mean_ms": 0.0480635268346112,
+     "p50_ms": 0.039,
+     "p95_ms": 0.158,
+     "p99_ms": 0.24
+    }
+   },
+   "events": {
+    "0": 2511,
+    "3": 552,
+    "5": 2874,
+    "12": 1,
+    "13": 733,
+    "18": 1673,
+    "19": 1483,
+    "25": 265
+   },
+   "live_min": 1345,
+   "live_max": 1894,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "base",
+   "finished": "12:06:51",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.79310055555556,
+    "p50_ms": 1.407,
+    "p95_ms": 3.624,
+    "p99_ms": 7.213
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.03590861111111,
+    "p50_ms": 1.043,
+    "p95_ms": 1.248,
+    "p99_ms": 1.626
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.914958055555556,
+     "p50_ms": 0.803,
+     "p95_ms": 1.659,
+     "p99_ms": 2.413
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00935333333333333,
+     "p50_ms": 0.009,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.463029166666667,
+     "p50_ms": 0.462,
+     "p95_ms": 0.542,
+     "p99_ms": 0.627
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0117377777777778,
+     "p50_ms": 0.011,
+     "p95_ms": 0.016,
+     "p99_ms": 0.024
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.09356,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.277
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00455777777777778,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.009
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.193441666666667,
+     "p50_ms": 0.001,
+     "p95_ms": 1.244,
+     "p99_ms": 1.54
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0993827777777778,
+     "p50_ms": 0.046,
+     "p95_ms": 0.283,
+     "p99_ms": 0.456
+    }
+   },
+   "events": {
+    "0": 4613,
+    "1": 878,
+    "3": 749,
+    "9": 1,
+    "18": 81,
+    "19": 25
+   },
+   "live_min": 1252,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "cur",
+   "finished": "12:07:04",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.78163638888889,
+    "p50_ms": 1.401,
+    "p95_ms": 3.575,
+    "p99_ms": 7.324
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.9824425,
+    "p50_ms": 0.978,
+    "p95_ms": 1.135,
+    "p99_ms": 1.275
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.9156,
+     "p50_ms": 0.805,
+     "p95_ms": 1.641,
+     "p99_ms": 2.415
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00914361111111111,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.458294444444444,
+     "p50_ms": 0.46,
+     "p95_ms": 0.535,
+     "p99_ms": 0.604
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0109316666666667,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0954061111111111,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.363
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00435416666666667,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.187532222222222,
+     "p50_ms": 0.001,
+     "p95_ms": 1.2,
+     "p99_ms": 1.4
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0974455555555556,
+     "p50_ms": 0.045,
+     "p95_ms": 0.276,
+     "p99_ms": 0.387
+    }
+   },
+   "events": {
+    "0": 4606,
+    "1": 882,
+    "3": 747,
+    "9": 1,
+    "18": 128,
+    "19": 66
+   },
+   "live_min": 1254,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "cur",
+   "finished": "12:07:16",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.77561972222222,
+    "p50_ms": 1.403,
+    "p95_ms": 3.52,
+    "p99_ms": 7.141
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.970263888888889,
+    "p50_ms": 0.969,
+    "p95_ms": 1.13,
+    "p99_ms": 1.254
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.916016666666667,
+     "p50_ms": 0.805,
+     "p95_ms": 1.627,
+     "p99_ms": 2.434
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00895861111111111,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.457510555555556,
+     "p50_ms": 0.459,
+     "p95_ms": 0.534,
+     "p99_ms": 0.596
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0108105555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0935672222222222,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.287
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00435055555555556,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.184949444444444,
+     "p50_ms": 0.001,
+     "p95_ms": 1.195,
+     "p99_ms": 1.393
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0965525,
+     "p50_ms": 0.045,
+     "p95_ms": 0.27,
+     "p99_ms": 0.355
+    }
+   },
+   "events": {
+    "0": 4606,
+    "1": 882,
+    "3": 747,
+    "9": 1,
+    "18": 128,
+    "19": 66
+   },
+   "live_min": 1254,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "base",
+   "finished": "12:07:30",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.79947361111111,
+    "p50_ms": 1.405,
+    "p95_ms": 3.637,
+    "p99_ms": 7.209
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.03030416666667,
+    "p50_ms": 1.044,
+    "p95_ms": 1.193,
+    "p99_ms": 1.572
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.914852222222222,
+     "p50_ms": 0.803,
+     "p95_ms": 1.643,
+     "p99_ms": 2.44
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00944944444444444,
+     "p50_ms": 0.009,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.463569444444444,
+     "p50_ms": 0.465,
+     "p95_ms": 0.541,
+     "p99_ms": 0.636
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0116886111111111,
+     "p50_ms": 0.011,
+     "p95_ms": 0.015,
+     "p99_ms": 0.026
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0917163888888889,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.133
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00451305555555556,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.009
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.200200277777778,
+     "p50_ms": 0.001,
+     "p95_ms": 1.287,
+     "p99_ms": 1.508
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.100333333333333,
+     "p50_ms": 0.046,
+     "p95_ms": 0.286,
+     "p99_ms": 0.448
+    }
+   },
+   "events": {
+    "0": 4613,
+    "1": 878,
+    "3": 749,
+    "9": 1,
+    "18": 81,
+    "19": 25
+   },
+   "live_min": 1252,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "base",
+   "finished": "12:07:43",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.77169277777778,
+    "p50_ms": 1.391,
+    "p95_ms": 3.536,
+    "p99_ms": 7.05
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.03448722222222,
+    "p50_ms": 1.016,
+    "p95_ms": 1.252,
+    "p99_ms": 1.487
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.904339722222222,
+     "p50_ms": 0.797,
+     "p95_ms": 1.621,
+     "p99_ms": 2.323
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00921416666666667,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.014
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.461205,
+     "p50_ms": 0.461,
+     "p95_ms": 0.538,
+     "p99_ms": 0.61
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0116122222222222,
+     "p50_ms": 0.011,
+     "p95_ms": 0.015,
+     "p99_ms": 0.022
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0903511111111111,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 4.757
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00447472222222222,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.188910555555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.195,
+     "p99_ms": 1.438
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0985622222222222,
+     "p50_ms": 0.046,
+     "p95_ms": 0.277,
+     "p99_ms": 0.411
+    }
+   },
+   "events": {
+    "0": 4613,
+    "1": 878,
+    "3": 749,
+    "9": 1,
+    "18": 81,
+    "19": 25
+   },
+   "live_min": 1252,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "cur",
+   "finished": "12:07:56",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.77017333333333,
+    "p50_ms": 1.397,
+    "p95_ms": 3.525,
+    "p99_ms": 7.177
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.977236388888889,
+    "p50_ms": 0.967,
+    "p95_ms": 1.132,
+    "p99_ms": 1.306
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.910995277777778,
+     "p50_ms": 0.803,
+     "p95_ms": 1.632,
+     "p99_ms": 2.401
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00900888888888889,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.014
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.458012777777778,
+     "p50_ms": 0.459,
+     "p95_ms": 0.533,
+     "p99_ms": 0.581
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0109488888888889,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.018
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0938058333333333,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.183
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00431138888888889,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.1832225,
+     "p50_ms": 0.001,
+     "p95_ms": 1.177,
+     "p99_ms": 1.353
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0969366666666667,
+     "p50_ms": 0.045,
+     "p95_ms": 0.27,
+     "p99_ms": 0.386
+    }
+   },
+   "events": {
+    "0": 4606,
+    "1": 882,
+    "3": 747,
+    "9": 1,
+    "18": 128,
+    "19": 66
+   },
+   "live_min": 1254,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "cur",
+   "finished": "12:08:08",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.76546972222222,
+    "p50_ms": 1.401,
+    "p95_ms": 3.492,
+    "p99_ms": 7.136
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.964613888888889,
+    "p50_ms": 0.96,
+    "p95_ms": 1.103,
+    "p99_ms": 1.247
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.911680555555555,
+     "p50_ms": 0.806,
+     "p95_ms": 1.641,
+     "p99_ms": 2.357
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00887444444444445,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.455996388888889,
+     "p50_ms": 0.458,
+     "p95_ms": 0.531,
+     "p99_ms": 0.575
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0108255555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0935708333333333,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.243
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.0043675,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.181314722222222,
+     "p50_ms": 0.001,
+     "p95_ms": 1.175,
+     "p99_ms": 1.336
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0959322222222222,
+     "p50_ms": 0.045,
+     "p95_ms": 0.267,
+     "p99_ms": 0.369
+    }
+   },
+   "events": {
+    "0": 4606,
+    "1": 882,
+    "3": 747,
+    "9": 1,
+    "18": 128,
+    "19": 66
+   },
+   "live_min": 1254,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "base",
+   "finished": "12:08:21",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.74645611111111,
+    "p50_ms": 1.379,
+    "p95_ms": 3.45,
+    "p99_ms": 7.083
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.00484361111111,
+    "p50_ms": 1.009,
+    "p95_ms": 1.146,
+    "p99_ms": 1.263
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.895770277777778,
+     "p50_ms": 0.788,
+     "p95_ms": 1.6,
+     "p99_ms": 2.3
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00897305555555556,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.456609166666667,
+     "p50_ms": 0.46,
+     "p95_ms": 0.533,
+     "p99_ms": 0.568
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0107961111111111,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0902975,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.957
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00428888888888889,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.181203055555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.175,
+     "p99_ms": 1.329
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.095615,
+     "p50_ms": 0.045,
+     "p95_ms": 0.267,
+     "p99_ms": 0.339
+    }
+   },
+   "events": {
+    "0": 4613,
+    "1": 878,
+    "3": 749,
+    "9": 1,
+    "18": 81,
+    "19": 25
+   },
+   "live_min": 1252,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "base",
+   "finished": "12:08:34",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.7374875,
+    "p50_ms": 1.376,
+    "p95_ms": 3.454,
+    "p99_ms": 7.061
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.998203611111111,
+    "p50_ms": 0.999,
+    "p95_ms": 1.145,
+    "p99_ms": 1.249
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.887323333333333,
+     "p50_ms": 0.781,
+     "p95_ms": 1.568,
+     "p99_ms": 2.295
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00898611111111111,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.456143611111111,
+     "p50_ms": 0.458,
+     "p95_ms": 0.532,
+     "p99_ms": 0.562
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0108380555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0897966666666667,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.846
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00436861111111111,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.007
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.181529444444444,
+     "p50_ms": 0.001,
+     "p95_ms": 1.171,
+     "p99_ms": 1.335
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0956458333333333,
+     "p50_ms": 0.045,
+     "p95_ms": 0.267,
+     "p99_ms": 0.335
+    }
+   },
+   "events": {
+    "0": 4613,
+    "1": 878,
+    "3": 749,
+    "9": 1,
+    "18": 81,
+    "19": 25
+   },
+   "live_min": 1252,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "approach",
+   "build": "cur",
+   "finished": "12:08:47",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 1.76665527777778,
+    "p50_ms": 1.396,
+    "p95_ms": 3.493,
+    "p99_ms": 7.215
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.970401111111111,
+    "p50_ms": 0.969,
+    "p95_ms": 1.116,
+    "p99_ms": 1.234
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 0.908273888888889,
+     "p50_ms": 0.798,
+     "p95_ms": 1.621,
+     "p99_ms": 2.391
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00897694444444445,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.457481388888889,
+     "p50_ms": 0.459,
+     "p95_ms": 0.532,
+     "p99_ms": 0.585
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0107138888888889,
+     "p50_ms": 0.01,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0943191666666667,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.329
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.0042325,
+     "p50_ms": 0.004,
+     "p95_ms": 0.005,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.183626944444444,
+     "p50_ms": 0.001,
+     "p95_ms": 1.175,
+     "p99_ms": 1.361
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.0962052777777778,
+     "p50_ms": 0.045,
+     "p95_ms": 0.271,
+     "p99_ms": 0.357
+    }
+   },
+   "events": {
+    "0": 4606,
+    "1": 882,
+    "3": 747,
+    "9": 1,
+    "18": 128,
+    "19": 66
+   },
+   "live_min": 1254,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "base",
+   "finished": "12:09:02",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.25556305555556,
+    "p50_ms": 2.079,
+    "p95_ms": 4.035,
+    "p99_ms": 7.051
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.998900277777778,
+    "p50_ms": 1.033,
+    "p95_ms": 1.275,
+    "p99_ms": 1.402
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.11531388888889,
+     "p50_ms": 1.058,
+     "p95_ms": 1.883,
+     "p99_ms": 2.227
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00854694444444444,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.012
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.490436111111111,
+     "p50_ms": 0.508,
+     "p95_ms": 0.707,
+     "p99_ms": 0.739
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0111061111111111,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0792030555555556,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.158
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.162725,
+     "p50_ms": 0.15,
+     "p95_ms": 0.366,
+     "p99_ms": 0.502
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.255718888888889,
+     "p50_ms": 0.001,
+     "p95_ms": 1.152,
+     "p99_ms": 1.288
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.1293825,
+     "p50_ms": 0.047,
+     "p95_ms": 0.365,
+     "p99_ms": 0.636
+    }
+   },
+   "events": {
+    "0": 7953,
+    "1": 3653,
+    "2": 714,
+    "3": 1263,
+    "5": 9674,
+    "9": 5,
+    "13": 3069,
+    "18": 25,
+    "19": 5
+   },
+   "live_min": 738,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "cur",
+   "finished": "12:09:16",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3433,
+   "simulation": {
+    "count": 3433,
+    "mean_ms": 2.31580862219633,
+    "p50_ms": 2.13,
+    "p95_ms": 4.142,
+    "p99_ms": 7.932
+   },
+   "snapshot": {
+    "count": 3433,
+    "mean_ms": 0.96702359452374,
+    "p50_ms": 1.042,
+    "p95_ms": 1.254,
+    "p99_ms": 1.353
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3433,
+     "mean_ms": 1.13694290707836,
+     "p50_ms": 1.073,
+     "p95_ms": 1.955,
+     "p99_ms": 2.267
+    },
+    "commands_interpolation": {
+     "count": 3433,
+     "mean_ms": 0.00866093795514128,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3433,
+     "mean_ms": 0.503507719196038,
+     "p50_ms": 0.518,
+     "p95_ms": 0.707,
+     "p99_ms": 0.759
+    },
+    "hero": {
+     "count": 3433,
+     "mean_ms": 0.010247305563647,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3433,
+     "mean_ms": 0.103964171278765,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.936
+    },
+    "projectiles": {
+     "count": 3433,
+     "mean_ms": 0.159355083017769,
+     "p50_ms": 0.147,
+     "p95_ms": 0.358,
+     "p99_ms": 0.504
+    },
+    "storage_compaction": {
+     "count": 3433,
+     "mean_ms": 0.261642295368482,
+     "p50_ms": 0.001,
+     "p95_ms": 1.167,
+     "p99_ms": 1.308
+    },
+    "tactics_siege": {
+     "count": 3433,
+     "mean_ms": 0.128420040780658,
+     "p50_ms": 0.047,
+     "p95_ms": 0.367,
+     "p99_ms": 0.652
+    }
+   },
+   "events": {
+    "0": 7409,
+    "1": 3211,
+    "2": 714,
+    "3": 1133,
+    "5": 8617,
+    "9": 4,
+    "12": 1,
+    "13": 2659,
+    "18": 434,
+    "19": 485,
+    "25": 44
+   },
+   "live_min": 852,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "cur",
+   "finished": "12:09:30",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3433,
+   "simulation": {
+    "count": 3433,
+    "mean_ms": 2.31157384212059,
+    "p50_ms": 2.121,
+    "p95_ms": 4.145,
+    "p99_ms": 7.904
+   },
+   "snapshot": {
+    "count": 3433,
+    "mean_ms": 0.952090591319546,
+    "p50_ms": 1.014,
+    "p95_ms": 1.228,
+    "p99_ms": 1.392
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3433,
+     "mean_ms": 1.12984386833673,
+     "p50_ms": 1.062,
+     "p95_ms": 1.928,
+     "p99_ms": 2.269
+    },
+    "commands_interpolation": {
+     "count": 3433,
+     "mean_ms": 0.00865132537139528,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3433,
+     "mean_ms": 0.504681036993883,
+     "p50_ms": 0.518,
+     "p95_ms": 0.708,
+     "p99_ms": 0.789
+    },
+    "hero": {
+     "count": 3433,
+     "mean_ms": 0.0102907078357122,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3433,
+     "mean_ms": 0.103044276143315,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.9
+    },
+    "projectiles": {
+     "count": 3433,
+     "mean_ms": 0.159243227497815,
+     "p50_ms": 0.146,
+     "p95_ms": 0.355,
+     "p99_ms": 0.5
+    },
+    "storage_compaction": {
+     "count": 3433,
+     "mean_ms": 0.263365860763181,
+     "p50_ms": 0.001,
+     "p95_ms": 1.179,
+     "p99_ms": 1.334
+    },
+    "tactics_siege": {
+     "count": 3433,
+     "mean_ms": 0.129367899796097,
+     "p50_ms": 0.047,
+     "p95_ms": 0.368,
+     "p99_ms": 0.648
+    }
+   },
+   "events": {
+    "0": 7409,
+    "1": 3211,
+    "2": 714,
+    "3": 1133,
+    "5": 8617,
+    "9": 4,
+    "12": 1,
+    "13": 2659,
+    "18": 434,
+    "19": 485,
+    "25": 44
+   },
+   "live_min": 852,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "base",
+   "finished": "12:09:45",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.26593277777778,
+    "p50_ms": 2.089,
+    "p95_ms": 4.077,
+    "p99_ms": 7.094
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.01303694444444,
+    "p50_ms": 1.056,
+    "p95_ms": 1.292,
+    "p99_ms": 1.376
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.12250083333333,
+     "p50_ms": 1.062,
+     "p95_ms": 1.895,
+     "p99_ms": 2.203
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00866194444444444,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.490474444444444,
+     "p50_ms": 0.511,
+     "p95_ms": 0.706,
+     "p99_ms": 0.741
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0111063888888889,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.016
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0792605555555556,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.155
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.163343611111111,
+     "p50_ms": 0.15,
+     "p95_ms": 0.369,
+     "p99_ms": 0.502
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.256866111111111,
+     "p50_ms": 0.001,
+     "p95_ms": 1.168,
+     "p99_ms": 1.317
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.130610277777778,
+     "p50_ms": 0.047,
+     "p95_ms": 0.369,
+     "p99_ms": 0.648
+    }
+   },
+   "events": {
+    "0": 7953,
+    "1": 3653,
+    "2": 714,
+    "3": 1263,
+    "5": 9674,
+    "9": 5,
+    "13": 3069,
+    "18": 25,
+    "19": 5
+   },
+   "live_min": 738,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "base",
+   "finished": "12:10:00",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.26251888888889,
+    "p50_ms": 2.089,
+    "p95_ms": 4.055,
+    "p99_ms": 6.947
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.998271111111111,
+    "p50_ms": 1.031,
+    "p95_ms": 1.277,
+    "p99_ms": 1.39
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.11885083333333,
+     "p50_ms": 1.058,
+     "p95_ms": 1.884,
+     "p99_ms": 2.232
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00861,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.491410277777778,
+     "p50_ms": 0.512,
+     "p95_ms": 0.707,
+     "p99_ms": 0.754
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0109916666666667,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0794338888888889,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.179
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.163416111111111,
+     "p50_ms": 0.15,
+     "p95_ms": 0.37,
+     "p99_ms": 0.5
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.25629,
+     "p50_ms": 0.001,
+     "p95_ms": 1.157,
+     "p99_ms": 1.309
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.130409444444444,
+     "p50_ms": 0.047,
+     "p95_ms": 0.369,
+     "p99_ms": 0.653
+    }
+   },
+   "events": {
+    "0": 7953,
+    "1": 3653,
+    "2": 714,
+    "3": 1263,
+    "5": 9674,
+    "9": 5,
+    "13": 3069,
+    "18": 25,
+    "19": 5
+   },
+   "live_min": 738,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "cur",
+   "finished": "12:10:14",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3433,
+   "simulation": {
+    "count": 3433,
+    "mean_ms": 2.31355053888727,
+    "p50_ms": 2.124,
+    "p95_ms": 4.144,
+    "p99_ms": 7.9
+   },
+   "snapshot": {
+    "count": 3433,
+    "mean_ms": 0.946023303233324,
+    "p50_ms": 1.014,
+    "p95_ms": 1.227,
+    "p99_ms": 1.333
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3433,
+     "mean_ms": 1.13632828429945,
+     "p50_ms": 1.073,
+     "p95_ms": 1.943,
+     "p99_ms": 2.282
+    },
+    "commands_interpolation": {
+     "count": 3433,
+     "mean_ms": 0.0087215263617827,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3433,
+     "mean_ms": 0.503800466064666,
+     "p50_ms": 0.518,
+     "p95_ms": 0.708,
+     "p99_ms": 0.776
+    },
+    "hero": {
+     "count": 3433,
+     "mean_ms": 0.010305563646956,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3433,
+     "mean_ms": 0.103260122341975,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.878
+    },
+    "projectiles": {
+     "count": 3433,
+     "mean_ms": 0.158507136615205,
+     "p50_ms": 0.146,
+     "p95_ms": 0.354,
+     "p99_ms": 0.493
+    },
+    "storage_compaction": {
+     "count": 3433,
+     "mean_ms": 0.260865423827556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.168,
+     "p99_ms": 1.286
+    },
+    "tactics_siege": {
+     "count": 3433,
+     "mean_ms": 0.128684532478881,
+     "p50_ms": 0.047,
+     "p95_ms": 0.368,
+     "p99_ms": 0.633
+    }
+   },
+   "events": {
+    "0": 7409,
+    "1": 3211,
+    "2": 714,
+    "3": 1133,
+    "5": 8617,
+    "9": 4,
+    "12": 1,
+    "13": 2659,
+    "18": 434,
+    "19": 485,
+    "25": 44
+   },
+   "live_min": 852,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "cur",
+   "finished": "12:10:28",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3433,
+   "simulation": {
+    "count": 3433,
+    "mean_ms": 2.32539877658025,
+    "p50_ms": 2.118,
+    "p95_ms": 4.163,
+    "p99_ms": 8.077
+   },
+   "snapshot": {
+    "count": 3433,
+    "mean_ms": 0.970155840372852,
+    "p50_ms": 1.035,
+    "p95_ms": 1.26,
+    "p99_ms": 1.419
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3433,
+     "mean_ms": 1.13953655694728,
+     "p50_ms": 1.078,
+     "p95_ms": 1.942,
+     "p99_ms": 2.264
+    },
+    "commands_interpolation": {
+     "count": 3433,
+     "mean_ms": 0.00874191669094087,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3433,
+     "mean_ms": 0.505001165161666,
+     "p50_ms": 0.519,
+     "p95_ms": 0.707,
+     "p99_ms": 0.779
+    },
+    "hero": {
+     "count": 3433,
+     "mean_ms": 0.0102834255752986,
+     "p50_ms": 0.011,
+     "p95_ms": 0.013,
+     "p99_ms": 0.018
+    },
+    "morale_result_events": {
+     "count": 3433,
+     "mean_ms": 0.10455228662977,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.822
+    },
+    "projectiles": {
+     "count": 3433,
+     "mean_ms": 0.159552577920186,
+     "p50_ms": 0.148,
+     "p95_ms": 0.356,
+     "p99_ms": 0.501
+    },
+    "storage_compaction": {
+     "count": 3433,
+     "mean_ms": 0.265139236819109,
+     "p50_ms": 0.001,
+     "p95_ms": 1.176,
+     "p99_ms": 1.329
+    },
+    "tactics_siege": {
+     "count": 3433,
+     "mean_ms": 0.129447422079814,
+     "p50_ms": 0.047,
+     "p95_ms": 0.369,
+     "p99_ms": 0.635
+    }
+   },
+   "events": {
+    "0": 7409,
+    "1": 3211,
+    "2": 714,
+    "3": 1133,
+    "5": 8617,
+    "9": 4,
+    "12": 1,
+    "13": 2659,
+    "18": 434,
+    "19": 485,
+    "25": 44
+   },
+   "live_min": 852,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "base",
+   "finished": "12:10:43",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.25733861111111,
+    "p50_ms": 2.087,
+    "p95_ms": 4.054,
+    "p99_ms": 6.891
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.0098925,
+    "p50_ms": 1.055,
+    "p95_ms": 1.29,
+    "p99_ms": 1.357
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.11515972222222,
+     "p50_ms": 1.052,
+     "p95_ms": 1.891,
+     "p99_ms": 2.2
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00865916666666667,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.490742222222222,
+     "p50_ms": 0.512,
+     "p95_ms": 0.705,
+     "p99_ms": 0.757
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0111269444444444,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0785536111111111,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.183
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.163576944444444,
+     "p50_ms": 0.15,
+     "p95_ms": 0.367,
+     "p99_ms": 0.509
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.257134166666667,
+     "p50_ms": 0.001,
+     "p95_ms": 1.163,
+     "p99_ms": 1.277
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.129291388888889,
+     "p50_ms": 0.047,
+     "p95_ms": 0.363,
+     "p99_ms": 0.639
+    }
+   },
+   "events": {
+    "0": 7953,
+    "1": 3653,
+    "2": 714,
+    "3": 1263,
+    "5": 9674,
+    "9": 5,
+    "13": 3069,
+    "18": 25,
+    "19": 5
+   },
+   "live_min": 738,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "base",
+   "finished": "12:10:58",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 2.26051527777778,
+    "p50_ms": 2.082,
+    "p95_ms": 4.041,
+    "p99_ms": 7.025
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 1.00244638888889,
+    "p50_ms": 1.034,
+    "p95_ms": 1.275,
+    "p99_ms": 1.358
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.11983222222222,
+     "p50_ms": 1.062,
+     "p95_ms": 1.877,
+     "p99_ms": 2.231
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00863638888888889,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.491089166666667,
+     "p50_ms": 0.508,
+     "p95_ms": 0.707,
+     "p99_ms": 0.756
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0110755555555556,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.017
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0792469444444444,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 4.237
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.162480555555556,
+     "p50_ms": 0.149,
+     "p95_ms": 0.367,
+     "p99_ms": 0.502
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.255841666666667,
+     "p50_ms": 0.001,
+     "p95_ms": 1.158,
+     "p99_ms": 1.284
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 0.1291775,
+     "p50_ms": 0.047,
+     "p95_ms": 0.367,
+     "p99_ms": 0.647
+    }
+   },
+   "events": {
+    "0": 7953,
+    "1": 3653,
+    "2": 714,
+    "3": 1263,
+    "5": 9674,
+    "9": 5,
+    "13": 3069,
+    "18": 25,
+    "19": 5
+   },
+   "live_min": 738,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "mixed",
+   "build": "cur",
+   "finished": "12:11:12",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3433,
+   "simulation": {
+    "count": 3433,
+    "mean_ms": 2.31710836003495,
+    "p50_ms": 2.132,
+    "p95_ms": 4.138,
+    "p99_ms": 7.897
+   },
+   "snapshot": {
+    "count": 3433,
+    "mean_ms": 0.957094669385377,
+    "p50_ms": 1.022,
+    "p95_ms": 1.237,
+    "p99_ms": 1.349
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3433,
+     "mean_ms": 1.13562540052432,
+     "p50_ms": 1.072,
+     "p95_ms": 1.938,
+     "p99_ms": 2.292
+    },
+    "commands_interpolation": {
+     "count": 3433,
+     "mean_ms": 0.00865161666181183,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3433,
+     "mean_ms": 0.504127002621614,
+     "p50_ms": 0.518,
+     "p95_ms": 0.707,
+     "p99_ms": 0.772
+    },
+    "hero": {
+     "count": 3433,
+     "mean_ms": 0.0102318671715701,
+     "p50_ms": 0.011,
+     "p95_ms": 0.012,
+     "p99_ms": 0.015
+    },
+    "morale_result_events": {
+     "count": 3433,
+     "mean_ms": 0.103165744247014,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.81
+    },
+    "projectiles": {
+     "count": 3433,
+     "mean_ms": 0.160542091465191,
+     "p50_ms": 0.148,
+     "p95_ms": 0.361,
+     "p99_ms": 0.514
+    },
+    "storage_compaction": {
+     "count": 3433,
+     "mean_ms": 0.262570346635596,
+     "p50_ms": 0.001,
+     "p95_ms": 1.165,
+     "p99_ms": 1.293
+    },
+    "tactics_siege": {
+     "count": 3433,
+     "mean_ms": 0.12913486746286,
+     "p50_ms": 0.047,
+     "p95_ms": 0.368,
+     "p99_ms": 0.645
+    }
+   },
+   "events": {
+    "0": 7409,
+    "1": 3211,
+    "2": 714,
+    "3": 1133,
+    "5": 8617,
+    "9": 4,
+    "12": 1,
+    "13": 2659,
+    "18": 434,
+    "19": 485,
+    "25": 44
+   },
+   "live_min": 852,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "base",
+   "finished": "12:11:39",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.60790277777778,
+    "p50_ms": 5.709,
+    "p95_ms": 7.884,
+    "p99_ms": 12.394
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.944067222222222,
+    "p50_ms": 1.036,
+    "p95_ms": 1.212,
+    "p99_ms": 1.331
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.22053333333333,
+     "p50_ms": 1.056,
+     "p95_ms": 2.381,
+     "p99_ms": 2.829
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00921916666666667,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.741853333333333,
+     "p50_ms": 0.657,
+     "p95_ms": 1.266,
+     "p99_ms": 1.299
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0121766666666667,
+     "p50_ms": 0.012,
+     "p95_ms": 0.016,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0866158333333333,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.045
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00470277777777778,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.229979444444444,
+     "p50_ms": 0.001,
+     "p95_ms": 1.16,
+     "p99_ms": 1.302
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.29970472222222,
+     "p50_ms": 2.525,
+     "p95_ms": 6.554,
+     "p99_ms": 7.52
+    }
+   },
+   "events": {
+    "0": 7389,
+    "1": 1147,
+    "3": 1108,
+    "10": 1,
+    "11": 1,
+    "18": 2,
+    "20": 10,
+    "21": 9,
+    "22": 4,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 893,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "cur",
+   "finished": "12:12:06",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.553085,
+    "p50_ms": 5.636,
+    "p95_ms": 7.734,
+    "p99_ms": 11.946
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.916181388888889,
+    "p50_ms": 1.002,
+    "p95_ms": 1.165,
+    "p99_ms": 1.305
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.27501444444444,
+     "p50_ms": 1.161,
+     "p95_ms": 2.422,
+     "p99_ms": 2.921
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00916472222222222,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.754931388888889,
+     "p50_ms": 0.683,
+     "p95_ms": 1.276,
+     "p99_ms": 1.312
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0113988888888889,
+     "p50_ms": 0.011,
+     "p95_ms": 0.016,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0936405555555555,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.456
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00456583333333333,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.229070555555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.154,
+     "p99_ms": 1.303
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.17215694444444,
+     "p50_ms": 2.429,
+     "p95_ms": 6.295,
+     "p99_ms": 7.214
+    }
+   },
+   "events": {
+    "0": 7758,
+    "1": 1278,
+    "3": 1154,
+    "10": 1,
+    "11": 1,
+    "18": 18,
+    "20": 9,
+    "21": 9,
+    "22": 3,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 847,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "cur",
+   "finished": "12:12:33",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.55242388888889,
+    "p50_ms": 5.634,
+    "p95_ms": 7.668,
+    "p99_ms": 11.753
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.918710555555555,
+    "p50_ms": 1.008,
+    "p95_ms": 1.149,
+    "p99_ms": 1.269
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.27861583333333,
+     "p50_ms": 1.17,
+     "p95_ms": 2.43,
+     "p99_ms": 2.958
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00911944444444444,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.753313611111111,
+     "p50_ms": 0.686,
+     "p95_ms": 1.276,
+     "p99_ms": 1.303
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0111594444444444,
+     "p50_ms": 0.011,
+     "p95_ms": 0.014,
+     "p99_ms": 0.019
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0926602777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.497
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00457,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.228488055555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.142,
+     "p99_ms": 1.287
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.17143861111111,
+     "p50_ms": 2.44,
+     "p95_ms": 6.276,
+     "p99_ms": 7.117
+    }
+   },
+   "events": {
+    "0": 7758,
+    "1": 1278,
+    "3": 1154,
+    "10": 1,
+    "11": 1,
+    "18": 18,
+    "20": 9,
+    "21": 9,
+    "22": 3,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 847,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "base",
+   "finished": "12:13:00",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.57969722222222,
+    "p50_ms": 5.693,
+    "p95_ms": 7.808,
+    "p99_ms": 11.919
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.940768055555556,
+    "p50_ms": 1.034,
+    "p95_ms": 1.182,
+    "p99_ms": 1.287
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.21997916666667,
+     "p50_ms": 1.06,
+     "p95_ms": 2.371,
+     "p99_ms": 2.855
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00914861111111111,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.739021111111111,
+     "p50_ms": 0.652,
+     "p95_ms": 1.263,
+     "p99_ms": 1.296
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0117938888888889,
+     "p50_ms": 0.011,
+     "p95_ms": 0.015,
+     "p99_ms": 0.018
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0858558333333333,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.004
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00459194444444444,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.229888055555556,
+     "p50_ms": 0.001,
+     "p95_ms": 1.156,
+     "p99_ms": 1.295
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.27634888888889,
+     "p50_ms": 2.529,
+     "p95_ms": 6.505,
+     "p99_ms": 7.41
+    }
+   },
+   "events": {
+    "0": 7389,
+    "1": 1147,
+    "3": 1108,
+    "10": 1,
+    "11": 1,
+    "18": 2,
+    "20": 10,
+    "21": 9,
+    "22": 4,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 893,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "base",
+   "finished": "12:13:27",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.58427277777778,
+    "p50_ms": 5.682,
+    "p95_ms": 7.824,
+    "p99_ms": 12.497
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.946852222222222,
+    "p50_ms": 1.043,
+    "p95_ms": 1.192,
+    "p99_ms": 1.338
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.22309166666667,
+     "p50_ms": 1.063,
+     "p95_ms": 2.392,
+     "p99_ms": 2.859
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00914222222222222,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.740242777777778,
+     "p50_ms": 0.658,
+     "p95_ms": 1.262,
+     "p99_ms": 1.302
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0121333333333333,
+     "p50_ms": 0.012,
+     "p95_ms": 0.015,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0864111111111111,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.076
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.0046225,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.231110833333333,
+     "p50_ms": 0.001,
+     "p95_ms": 1.164,
+     "p99_ms": 1.315
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.27439805555556,
+     "p50_ms": 2.516,
+     "p95_ms": 6.502,
+     "p99_ms": 7.4
+    }
+   },
+   "events": {
+    "0": 7389,
+    "1": 1147,
+    "3": 1108,
+    "10": 1,
+    "11": 1,
+    "18": 2,
+    "20": 10,
+    "21": 9,
+    "22": 4,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 893,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "cur",
+   "finished": "12:13:54",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.59700583333333,
+    "p50_ms": 5.676,
+    "p95_ms": 7.755,
+    "p99_ms": 11.812
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.919633611111111,
+    "p50_ms": 1.007,
+    "p95_ms": 1.148,
+    "p99_ms": 1.249
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.27632083333333,
+     "p50_ms": 1.164,
+     "p95_ms": 2.427,
+     "p99_ms": 2.958
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00921777777777778,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.7533925,
+     "p50_ms": 0.683,
+     "p95_ms": 1.276,
+     "p99_ms": 1.308
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0113508333333333,
+     "p50_ms": 0.011,
+     "p95_ms": 0.015,
+     "p99_ms": 0.019
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0929627777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.466
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00454555555555556,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.228198611111111,
+     "p50_ms": 0.001,
+     "p95_ms": 1.149,
+     "p99_ms": 1.295
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.21790555555556,
+     "p50_ms": 2.468,
+     "p95_ms": 6.376,
+     "p99_ms": 7.246
+    }
+   },
+   "events": {
+    "0": 7758,
+    "1": 1278,
+    "3": 1154,
+    "10": 1,
+    "11": 1,
+    "18": 18,
+    "20": 9,
+    "21": 9,
+    "22": 3,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 847,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "cur",
+   "finished": "12:14:21",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.57445416666667,
+    "p50_ms": 5.658,
+    "p95_ms": 7.705,
+    "p99_ms": 11.861
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.91215,
+    "p50_ms": 1.001,
+    "p95_ms": 1.147,
+    "p99_ms": 1.286
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.277035,
+     "p50_ms": 1.165,
+     "p95_ms": 2.435,
+     "p99_ms": 2.954
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00912388888888889,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.771180277777778,
+     "p50_ms": 0.698,
+     "p95_ms": 1.304,
+     "p99_ms": 1.344
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0111194444444444,
+     "p50_ms": 0.011,
+     "p95_ms": 0.014,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0925919444444444,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.446
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00457027777777778,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.228452222222222,
+     "p50_ms": 0.001,
+     "p95_ms": 1.158,
+     "p99_ms": 1.292
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.17726666666667,
+     "p50_ms": 2.436,
+     "p95_ms": 6.273,
+     "p99_ms": 7.17
+    }
+   },
+   "events": {
+    "0": 7758,
+    "1": 1278,
+    "3": 1154,
+    "10": 1,
+    "11": 1,
+    "18": 18,
+    "20": 9,
+    "21": 9,
+    "22": 3,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 847,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "base",
+   "finished": "12:14:49",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.62142333333333,
+    "p50_ms": 5.703,
+    "p95_ms": 7.908,
+    "p99_ms": 11.797
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.951017222222222,
+    "p50_ms": 1.039,
+    "p95_ms": 1.214,
+    "p99_ms": 1.342
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.22336722222222,
+     "p50_ms": 1.062,
+     "p95_ms": 2.368,
+     "p99_ms": 2.849
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00917027777777778,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.739884444444444,
+     "p50_ms": 0.657,
+     "p95_ms": 1.261,
+     "p99_ms": 1.292
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0120683333333333,
+     "p50_ms": 0.012,
+     "p95_ms": 0.015,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0872577777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.1
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00463083333333333,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.230114166666667,
+     "p50_ms": 0.001,
+     "p95_ms": 1.159,
+     "p99_ms": 1.303
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.31182694444444,
+     "p50_ms": 2.542,
+     "p95_ms": 6.569,
+     "p99_ms": 7.525
+    }
+   },
+   "events": {
+    "0": 7389,
+    "1": 1147,
+    "3": 1108,
+    "10": 1,
+    "11": 1,
+    "18": 2,
+    "20": 10,
+    "21": 9,
+    "22": 4,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 893,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "base",
+   "finished": "12:15:16",
+   "revision": "c9e12a1a95a1b3005dc7754e8d853f5e0a5c5894",
+   "executable_sha256": "ed2a10ea1f3df96284ab31ca5157e4bf6c724c2ce5197e4d1a345c4f7776f947",
+   "source_sha256": "2bb14f9ee2d5fe92e6c0213aedc1bdb9e9ab8eb6cf490a7cf658d84869b3d78f",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.59532333333333,
+    "p50_ms": 5.696,
+    "p95_ms": 7.83,
+    "p99_ms": 12.32
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.943022222222222,
+    "p50_ms": 1.03,
+    "p95_ms": 1.187,
+    "p99_ms": 1.314
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.22427833333333,
+     "p50_ms": 1.066,
+     "p95_ms": 2.371,
+     "p99_ms": 2.82
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00922222222222222,
+     "p50_ms": 0.009,
+     "p95_ms": 0.011,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.739012222222222,
+     "p50_ms": 0.655,
+     "p95_ms": 1.263,
+     "p99_ms": 1.295
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.01211,
+     "p50_ms": 0.012,
+     "p95_ms": 0.015,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0865902777777778,
+     "p50_ms": 0.003,
+     "p95_ms": 0.005,
+     "p99_ms": 5.072
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00458888888888889,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.230936666666667,
+     "p50_ms": 0.001,
+     "p95_ms": 1.164,
+     "p99_ms": 1.31
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.28545944444444,
+     "p50_ms": 2.521,
+     "p95_ms": 6.513,
+     "p99_ms": 7.54
+    }
+   },
+   "events": {
+    "0": 7389,
+    "1": 1147,
+    "3": 1108,
+    "10": 1,
+    "11": 1,
+    "18": 2,
+    "20": 10,
+    "21": 9,
+    "22": 4,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 893,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  },
+  {
+   "scenario": "siege",
+   "build": "cur",
+   "finished": "12:15:43",
+   "revision": "c305347a36a0285bdbf0636455880583e0e89c99",
+   "executable_sha256": "c9b73e002248b2d0669708fd97d09c942b3bca5b3db13405d459858030fa8e46",
+   "source_sha256": "e69848e6d0c2249e3d74892f4f5ab18097620771ac634293ea063a68c265110c",
+   "measured_ticks": 3600,
+   "simulation": {
+    "count": 3600,
+    "mean_ms": 5.57117555555556,
+    "p50_ms": 5.654,
+    "p95_ms": 7.713,
+    "p99_ms": 11.871
+   },
+   "snapshot": {
+    "count": 3600,
+    "mean_ms": 0.913245555555556,
+    "p50_ms": 1.003,
+    "p95_ms": 1.143,
+    "p99_ms": 1.253
+   },
+   "phase_profile": {
+    "ai_movement_combat": {
+     "count": 3600,
+     "mean_ms": 1.29255083333333,
+     "p50_ms": 1.167,
+     "p95_ms": 2.429,
+     "p99_ms": 2.97
+    },
+    "commands_interpolation": {
+     "count": 3600,
+     "mean_ms": 0.00909638888888889,
+     "p50_ms": 0.009,
+     "p95_ms": 0.01,
+     "p99_ms": 0.013
+    },
+    "contacts": {
+     "count": 3600,
+     "mean_ms": 0.752838611111111,
+     "p50_ms": 0.681,
+     "p95_ms": 1.275,
+     "p99_ms": 1.308
+    },
+    "hero": {
+     "count": 3600,
+     "mean_ms": 0.0110733333333333,
+     "p50_ms": 0.011,
+     "p95_ms": 0.014,
+     "p99_ms": 0.02
+    },
+    "morale_result_events": {
+     "count": 3600,
+     "mean_ms": 0.0927175,
+     "p50_ms": 0.003,
+     "p95_ms": 0.004,
+     "p99_ms": 5.501
+    },
+    "projectiles": {
+     "count": 3600,
+     "mean_ms": 0.00457083333333333,
+     "p50_ms": 0.004,
+     "p95_ms": 0.006,
+     "p99_ms": 0.008
+    },
+    "storage_compaction": {
+     "count": 3600,
+     "mean_ms": 0.230623611111111,
+     "p50_ms": 0.001,
+     "p95_ms": 1.161,
+     "p99_ms": 1.319
+    },
+    "tactics_siege": {
+     "count": 3600,
+     "mean_ms": 3.17461194444444,
+     "p50_ms": 2.442,
+     "p95_ms": 6.288,
+     "p99_ms": 7.117
+    }
+   },
+   "events": {
+    "0": 7758,
+    "1": 1278,
+    "3": 1154,
+    "10": 1,
+    "11": 1,
+    "18": 18,
+    "20": 9,
+    "21": 9,
+    "22": 3,
+    "23": 2,
+    "24": 1
+   },
+   "live_min": 847,
+   "live_max": 2001,
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "debug": false
+  }
+ ]
+}
