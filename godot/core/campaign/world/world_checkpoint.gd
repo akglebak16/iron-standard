@@ -67,6 +67,7 @@ static func valid(data: Variant) -> bool:
 	if data.roster._next_party_id <= largest_id: return false
 	for campaign in data.wars.campaigns.values():
 		if not _campaign(campaign): return false
+	if data.undead.crisis.has("waves") and not _waves(data.undead.crisis.waves): return false
 	ids.clear()
 	largest_id = -1
 	for settlement in data.map.settles:
@@ -135,6 +136,20 @@ static func _campaign(c: Variant) -> bool:
 	if c.has("keep"):
 		if not c.keep is Array: return false
 		for id in c.keep:
+			if not id is int: return false
+	return true
+
+## Waves of the undead invasion (WorldUndead, stage 2c); saves made before it have none and the director picks them anew.
+static func _waves(waves: Variant) -> bool:
+	if not waves is Dictionary: return false
+	for w in waves.values():
+		if not w is Dictionary or not w.get("mode") in ["gather", "attack"]: return false
+		for key in ["tid", "t0", "tt", "tw"]:
+			if not w.get(key) is int: return false
+		for key in ["rx", "ry", "sc"]:
+			if not _number(w.get(key)): return false
+		if not w.get("bad") is Array: return false
+		for id in w.bad:
 			if not id is int: return false
 	return true
 

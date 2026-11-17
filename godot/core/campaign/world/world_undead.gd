@@ -1,11 +1,19 @@
 extends RefCounted
 ## The undead crisis (src/05f_undead.js): between days 40 and 60 one or two bandit lairs become Black Barrows; armies and raids
 ## of the dead march out, burn villages, storm towns and castles into ruins and raise the fallen. Lords retake their ruins,
-## the player destroys barrows. Fields: s.barrow, s.burnt, s.ruinOf, s.ruin, s.name0; state: crisis {day, on, done, src, left}.
+## the player destroys barrows. Fields: s.barrow, s.burnt, s.ruinOf, s.ruin, s.name0; state: crisis {day, on, done, src, left,
+## waves}.
+## Since stage 2c (docs/modules/ai/DESIGN.md §5.5) every barrow sends one wave, steered by undead_director.gd: the armies
+## gather at a rally point short of a living town or castle and storm it together, raids burn the villages ahead.
+## crisis.waves: str(barrow id) -> {tid: target id or -1, mode: gather|attack, t0: hour the mode began, tt: hour the target
+## was chosen or last reconsidered, tw: hour the first army reached the walls or -1, rx, ry: rally point, sc: score of the
+## target, bad: ids of targets the wave cannot reach}. Saves made before stage 2c have no waves: they are chosen anew.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const WorldWars = preload("res://core/campaign/world/world_wars.gd")
 const SettlementRecruits = preload("res://core/campaign/rules/settlement_recruits.gd")
+const Director = preload("res://core/campaign/world/undead_director.gd")
+const Config = preload("res://core/campaign/config.gd")
 
 const MK := 2.0
 const ARMY_MIN := 350
@@ -27,15 +35,32 @@ const MIX := [["z1", 40], ["s1", 28], ["s1a", 15], ["s2", 11], ["s2c", 5], ["s3"
 
 signal announced(text: String)
 signal settlement_changed(settlement: Dictionary)
+## Decisions of the director as they happen, for observers (the campaign simulator):
+## {what: target|attack|gather|storm, src, tid, ...}.
+signal wave(event: Dictionary)
 
 var roster: Roster
 var wars: WorldWars
 var crisis: Dictionary = {}
 var day := 1
+var director := Director.new()
 
 func _init(party_roster: Roster, world_wars: WorldWars) -> void:
 	roster = party_roster
 	wars = world_wars
+	director.strength = roster.strength_of
+	director.defence = storm_defence
+	director.passable = func(c: Vector2) -> bool: return roster.map.paths.passable_type(roster.map.paths.terr_at(c.x, c.y))
+	director.width = WW
+	director.height = WH
+
+## Living armies around a point as the director sees them: (x, y, faction) -> strength (WorldState: threat map, ADR-023).
+func set_field(f: Callable) -> void:
+	director.field = f
+
+## Breaks the links to the world so a disposed campaign is freed.
+func dispose() -> void:
+	director = Director.new()
 
 func _rng() -> RandomNumberGenerator:
 	return roster.rng
@@ -202,7 +227,8 @@ func _cut(list: Array, share: float) -> void:
 	for t in list.duplicate():
 		Rules.remove_troops(list, t.type, roundi(int(t.n) * share))
 
-## The dead reach a settlement: a village burns, a castle or a town is stormed by calculation.
+## The dead reach a settlement: a village burns, a castle or a town is stormed by calculation. An army of a wave that
+## reached the target of its attack waits at the walls for the rest; the director storms with all of them (wave_tick).
 func arrive(p: Dictionary, s: Dictionary) -> void:
 	p.state = "idle"
 	p.path = []
@@ -217,18 +243,47 @@ func arrive(p: Dictionary, s: Dictionary) -> void:
 		announced.emit("Нежить сожгла деревню %s%s." % [s.name, (" и подняла %d мертвецов" % k) if k > 0 else ""])
 		settlement_changed.emit(s)
 		return
+	var w := _wave_of(p)
+	if p.kind == "dead" and not w.is_empty() and int(w.tid) == int(s.id) and String(w.mode) == "attack":
+		p.wait = Config.UNDEAD_WALL_WAIT
+		if int(w.tw) < 0:
+			w.tw = wars.now_h()
+		return
+	storm(s, [p])
+
+## Lords and vassals of the settlement's faction resting inside it: they hold the walls with the garrison.
+func _defenders(s: Dictionary) -> Array:
+	return roster.parties.filter(func(q): return q.hide and q.home == s.id and q.fac == s.fac and Rules.is_noble(q))
+
+## What a storm of `s` has to beat before chance: garrison and lords inside, times the walls. Spends no RNG: a garrison
+## never raised yet counts as UNDEAD_UNKNOWN_GARRISON.
+func storm_defence(s: Dictionary) -> float:
+	var g: Variant = s.get("gar")
+	var ds: float = (Rules.strength(g, roster.info) if g is Array else Config.UNDEAD_UNKNOWN_GARRISON) + 4.0
+	for q in _defenders(s):
+		ds += roster.strength_of(q)
+	return ds * Config.UNDEAD_STORM_DEFENCE
+
+## Armies of the dead storm a town or castle together. On success it becomes ruins of the dead: lords inside fall, the
+## armies leave a share of their men as the garrison and raise the fallen defenders. True when it fell.
+func storm(s: Dictionary, armies: Array) -> bool:
 	var g := wars.garrison_of(s)
-	var lords := roster.parties.filter(func(q): return q.hide and q.home == s.id and q.fac == s.fac and Rules.is_noble(q))
+	var lords := _defenders(s)
 	var def0 := Rules.troop_count(g)
 	var ds := Rules.strength(g, roster.info) + 4.0
 	for q in lords:
 		def0 += Rules.troop_count(q.troops)
 		ds += roster.strength_of(q)
-	var att := roster.strength_of(p) * roster.rnd(0.8, 1.2)
-	var def := ds * 1.3 * roster.rnd(0.8, 1.2)
+	var power := 0.0
+	for p in armies:
+		power += roster.strength_of(p)
+	var att := power * roster.rnd(0.8, 1.2)
+	var def := ds * Config.UNDEAD_STORM_DEFENCE * roster.rnd(0.8, 1.2)
 	var r := minf(att, def) / maxf(att, def)
-	if att > def:
-		_cut(p.troops, r * 0.55)
+	var won := att > def
+	if won:
+		for p in armies:
+			_cut(p.troops, r * 0.55)
 		var names: Array = []
 		for q in lords:
 			names.append(q.name)
@@ -242,13 +297,18 @@ func arrive(p: Dictionary, s: Dictionary) -> void:
 		s.recruits = []
 		s.ruin = 0
 		s.erase("siege")
-		var gn := maxi(25, roundi(Rules.troop_count(p.troops) * 0.2))
-		var total := maxi(1, Rules.troop_count(p.troops))
-		for t in p.troops.duplicate():
-			Rules.remove_troops(p.troops, t.type, roundi(int(t.n) * float(gn) / total))
+		var total := 0
+		for p in armies:
+			total += Rules.troop_count(p.troops)
+		total = maxi(1, total)
+		var gn := maxi(25, roundi(total * 0.2))
+		for p in armies:
+			for t in p.troops.duplicate():
+				Rules.remove_troops(p.troops, t.type, roundi(int(t.n) * float(gn) / total))
 		s.gar = gen(gn, 0)
 		Rules.add_troops(s.gar, "z1", roundi(def0 * RAISE * 0.5))
-		raise(p, def0 * RAISE * 0.5)
+		for p in armies:
+			raise(p, def0 * RAISE * 0.5 / armies.size())
 		var who := ""
 		if not names.is_empty():
 			who = ", %s погиб%s при обороне" % [", ".join(names), "ли" if names.size() > 1 else ""]
@@ -256,32 +316,195 @@ func arrive(p: Dictionary, s: Dictionary) -> void:
 		settlement_changed.emit(s)
 	else:
 		_cut(g, r * 0.4)
-		_cut(p.troops, 0.35 + r * 0.4)
+		for p in armies:
+			_cut(p.troops, 0.35 + r * 0.4)
 		announced.emit("Гарнизон %s отбил натиск мертвецов." % s.name)
-	if Rules.troop_count(p.troops) < 8:
-		roster.remove(p)
+	for p in armies:
+		p.state = "idle"
+		p.path = []
+		p.pi = 0
+		p.wait = maxf(float(p.get("wait", 0.0)), 1.0)
+		if Rules.troop_count(p.troops) < 8:
+			roster.remove(p)
+	return won
 
 ## A lord or vassal of the old faction at the ruins storms them by calculation. True when retaken.
 func noble_retake(p: Dictionary, s: Dictionary) -> bool:
+	return retake([p], s, String(p.name))
+
+## A host of the old faction (a campaign, stage 2c) storms its ruins together. True when retaken.
+func host_retake(host: Array, s: Dictionary) -> bool:
+	if host.is_empty():
+		return false
+	return retake(host, s, "Войско %s" % String(roster.factions.get_faction(String(host[0].fac)).get("gen", host[0].fac)))
+
+func retake(host: Array, s: Dictionary, who: String) -> bool:
 	var g := wars.garrison_of(s)
-	var att := roster.strength_of(p) * roster.rnd(0.8, 1.2)
-	var def := (Rules.strength(g, roster.info) + 4.0) * 1.5 * roster.rnd(0.8, 1.2)
+	var power := 0.0
+	for p in host:
+		power += roster.strength_of(p)
+	var att := power * roster.rnd(0.8, 1.2)
+	var def := (Rules.strength(g, roster.info) + 4.0) * Config.OP_RUIN_DEFENCE * roster.rnd(0.8, 1.2)
 	var r := minf(att, def) / maxf(att, def)
 	if att > def:
-		_cut(p.troops, r * 0.5)
-		s.fac = p.fac
+		for p in host:
+			_cut(p.troops, r * 0.5)
+		s.fac = host[0].fac
 		s.ruin = RUIN_H
-		s.gar = roster.gen_troops(p.fac, 20, 0.5)
+		s.gar = roster.gen_troops(host[0].fac, 20, 0.5)
 		s.recruits = []
-		announced.emit("%s отбил %s у мертвецов." % [p.name, s.name])
+		announced.emit("%s отбил%s %s у мертвецов." % [who, "о" if host.size() > 1 or who.begins_with("Войско") else "", s.name])
 		settlement_changed.emit(s)
 		return true
 	_cut(g, r * 0.4)
-	_cut(p.troops, 0.3 + r * 0.4)
+	for p in host:
+		_cut(p.troops, 0.3 + r * 0.4)
 	return false
 
 func ruins_for(f: String) -> Array:
 	return roster.map.settles.filter(func(s): return s.fac == "undead" and s.kind != "camp" and s.get("ruinOf") == f)
+
+# ---------- the director of the invasion (stage 2c) ----------
+
+## Armies of the dead on the map by barrow: str(src) -> [parties], in roster order.
+func _armies() -> Dictionary:
+	var out := {}
+	for p in roster.parties:
+		if p.kind != "dead" or p.fac != "undead" or p.get("src") == null:
+			continue
+		var key := str(int(p.src))
+		if not out.has(key):
+			out[key] = []
+		out[key].append(p)
+	return out
+
+## Hourly while the crisis is on: every wave keeps or changes its target, gathers or attacks, and its armies at the
+## walls storm together. Waves without armies are forgotten; new armies of their barrow start a new one.
+func wave_tick() -> void:
+	if not crisis.get("on", false):
+		return
+	if not crisis.get("waves") is Dictionary:
+		crisis.waves = {}
+	var by_src := _armies()
+	for key in crisis.waves.keys():
+		if not by_src.has(key):
+			crisis.waves.erase(key)
+	for key in by_src:
+		_wave_tick(String(key), by_src[key])
+
+func _new_wave(now: int) -> Dictionary:
+	return {"tid": -1, "mode": "gather", "t0": now, "tt": now, "tw": -1, "rx": 0.0, "ry": 0.0, "sc": 0.0, "bad": []}
+
+func _wave_tick(key: String, armies: Array) -> void:
+	var now := wars.now_h()
+	if not crisis.waves.has(key):
+		crisis.waves[key] = _new_wave(now)
+	var w: Dictionary = crisis.waves[key]
+	var free := armies.filter(func(p): return not p.get("fight", false))
+	var t := roster.map.settlement_by_id(int(w.tid)) if int(w.tid) >= 0 else {}
+	if t.is_empty() or not Director.is_target(t):
+		t = _retarget(key, w, armies, now, true)
+	elif String(w.mode) == "gather" and now - int(w.tt) >= Config.UNDEAD_RETARGET_HOURS:
+		t = _retarget(key, w, armies, now, false)
+	if t.is_empty():
+		return
+	var m := director.mode(String(w.mode), armies, Vector2(float(w.rx), float(w.ry)), t, float(now - int(w.t0)))
+	if m != String(w.mode):
+		w.mode = m
+		w.t0 = now
+		w.tw = -1
+		wave.emit({"what": m, "src": int(key), "tid": int(t.id), "power": director.total(armies), "need": director.storm_defence(t)})
+	if m != "attack":
+		return
+	var here := Director.at_walls(free, t)
+	if here.is_empty():
+		return
+	if int(w.tw) < 0:
+		w.tw = now
+	if not director.storm_ready(armies, t, float(now - int(w.tw))):
+		for p in here:  # they wait at the walls for the rest of the wave
+			if p.pi >= p.path.size():
+				p.wait = maxf(float(p.get("wait", 0.0)), Config.UNDEAD_WALL_WAIT)
+		return
+	var won := storm(t, here)
+	wave.emit({"what": "storm", "src": int(key), "tid": int(t.id), "armies": here.size(), "won": won})
+	w.mode = "gather"
+	w.t0 = now
+	w.tw = -1
+	if won:
+		_retarget(key, w, _armies().get(key, []), now, true)
+
+## Picks the wave's target: the best one (undead_director.gd), a reachable one; `force` when the old one is no target
+## any more, else it is replaced only by a clearly better one. Returns the target or {}.
+func _retarget(key: String, w: Dictionary, armies: Array, now: int, force: bool) -> Dictionary:
+	var barrow := roster.map.settlement_by_id(int(key))
+	var from := Director.centre(armies, barrow)
+	var power := director.total(armies)
+	var cur := roster.map.settlement_by_id(int(w.tid)) if int(w.tid) >= 0 else {}
+	w.tt = now
+	for i in 3:
+		var cand := director.best_target(from, power, roster.map.settles, w.bad)
+		if cand.is_empty():
+			w.tid = -1
+			return {}
+		if not force and not Director.switch(cur, director.score(cur, from, power, roster.map.settles), cand):
+			return cur
+		var s: Dictionary = cand.s
+		if roster.map.paths.find_path(from.x, from.y, float(s.x), float(s.y)) == null:
+			w.bad.append(int(s.id))  # across the sea: the dead do not go there
+			continue
+		var rally := director.rally_point(from, s)
+		w.tid = int(s.id)
+		w.sc = float(cand.score)
+		w.rx = rally.x
+		w.ry = rally.y
+		w.mode = "gather"
+		w.t0 = now
+		w.tw = -1
+		announced.emit("Армии мертвецов идут на %s %s." % ["город" if s.kind == "town" else "замок", s.name])
+		wave.emit({"what": "target", "src": int(key), "tid": int(s.id), "score": float(cand.score), "dist": from.distance_to(Vector2(s.x, s.y)), "kind": String(s.kind), "fac": String(s.fac)})
+		return s
+	return cur if Director.is_target(cur) else {}
+
+func _wave_of(p: Dictionary) -> Dictionary:
+	if p.get("src") == null or not crisis.get("waves") is Dictionary:
+		return {}
+	return crisis.waves.get(str(int(p.src)), {})
+
+## The wave of an army as its goals see it: {mode, tid, x, y (target), rx, ry (rally point)}; {} without one.
+func wave_of(p: Dictionary) -> Dictionary:
+	if p.get("kind") != "dead":
+		return {}
+	var w := _wave_of(p)
+	if w.is_empty() or int(w.tid) < 0:
+		return {}
+	var t := roster.map.settlement_by_id(int(w.tid))
+	if t.is_empty():
+		return {}
+	return {"mode": String(w.mode), "tid": int(w.tid), "x": float(t.x), "y": float(t.y), "rx": float(w.rx), "ry": float(w.ry)}
+
+## Where the dead of p's barrow strike: the target of its wave, else the barrow itself. {x, y}; {} without a barrow.
+func front_of(p: Dictionary) -> Dictionary:
+	var w := _wave_of(p)
+	if not w.is_empty() and int(w.tid) >= 0:
+		var t := roster.map.settlement_by_id(int(w.tid))
+		if not t.is_empty():
+			return {"x": float(t.x), "y": float(t.y)}
+	var b := roster.map.settlement_by_id(int(p.src)) if p.get("src") != null else {}
+	if b.is_empty() and p.get("home") != null:
+		b = roster.map.settlement_by_id(int(p.home))
+	return {} if b.is_empty() else {"x": float(b.x), "y": float(b.y)}
+
+## Towns and castles of the living the waves are going for: id -> mode (gather|attack). Their factions defend them.
+func doomed() -> Dictionary:
+	var out := {}
+	if not crisis.get("on", false) or not crisis.get("waves") is Dictionary:
+		return out
+	for key in crisis.waves:
+		var w: Dictionary = crisis.waves[key]
+		if int(w.tid) >= 0:
+			out[int(w.tid)] = String(w.mode)
+	return out
 
 ## The player destroyed a barrow: the lair becomes an ordinary one again.
 func barrow_destroyed(p, c: Dictionary) -> void:

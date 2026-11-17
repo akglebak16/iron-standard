@@ -8,6 +8,10 @@ extends RefCounted
 ## Risk and havens come from the threat map; foreign places out of scouting range carry an assumed risk (§5.1).
 ## The evaluator only reads: parties, settlements and services come in through the fields below, so it runs on
 ## synthetic data. It picks a goal; party_ai.gd carries it out. RNG is spent only in choose().
+## Since stage 2c the dead follow the director of the invasion (undead_director.gd, DESIGN.md §5.5): an army gathers at
+## the rally point of its wave (muster) and storms its target with the others (assault); raids burn villages ahead of the
+## wave; with nothing else to do the dead roam around their front. The living defend the towns and castles the waves go
+## for, from the inside (`doomed`).
 const Config = preload("res://core/campaign/config.gd")
 const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
@@ -15,7 +19,7 @@ const Rules = preload("res://core/campaign/world/party_rules.gd")
 ## Goals that react to what a party sees; they may interrupt a plan before its hold time is over.
 const REACTIVE := ["hunt", "flee"]
 ## Goals carried out by riding to a settlement or a point and lingering there.
-const PLANS := ["defend", "patrol", "raid", "rest", "escort", "follow", "roam", "guard"]
+const PLANS := ["defend", "patrol", "raid", "rest", "escort", "follow", "roam", "guard", "muster", "assault"]
 const PLAYER_ID := -1  # gid of a hunt after the player's party
 
 var parties: Array = []                  # live list of map parties (roster.parties)
@@ -31,6 +35,7 @@ var player_target: Callable = Callable() # (party) -> {x, y, strength} when the 
 var ruins: Callable = Callable()         # (faction) -> own former settlements held by the dead
 var modifiers: Callable = Callable()     # (party) -> {goal: multiplier, "risk": exponent}; stage 3: traits, difficulty
 var passable: Callable = Callable()      # (Vector2) -> bool, for threat-map havens
+var doomed: Callable = Callable()        # () -> {settlement id: mode} targets of the undead waves (stage 2c), optional
 var width := 5200.0
 var height := 3400.0
 
@@ -155,7 +160,8 @@ func own_strength(p: Dictionary) -> float:
 
 ## Every goal the party could take now, best first: [{goal, gid, x, y, score}].
 ## ctx: army (bool, a faction campaign), fief (settlement of a retinue), lead ({x, y} of the followed party or player),
-## lord (the vassal's lord party), mode (retinue order), haven_extra ([{id, x, y}] havens besides own settlements).
+## lord (the vassal's lord party), mode (retinue order), haven_extra ([{id, x, y}] havens besides own settlements),
+## wave (an undead army: {mode, tid, x, y, rx, ry} of its wave), front ({x, y} where the dead of its barrow strike).
 func candidates(p: Dictionary, ctx := {}) -> Array:
 	var mods := _mods(p)
 	var prof := profile(p, String(ctx.get("mode", "")))
@@ -174,7 +180,10 @@ func candidates(p: Dictionary, ctx := {}) -> Array:
 	_escort(p, prof, mods, out)
 	_follow(p, prof, mods, ctx, out)
 	_guard(p, prof, mods, ctx, out)
-	_roam(p, prof, mods, out)
+	_muster(p, prof, mods, ctx, out)
+	_assault(p, prof, mods, ctx, out)
+	_ravage(p, me, prof, mods, ctx, out)
+	_roam(p, prof, mods, ctx, out)
 	_sort(out)
 	return out
 
@@ -270,21 +279,25 @@ func own_settlements(fac: String) -> Array:
 		_own[fac] = settles.filter(func(s): return s.fac == fac and s.kind != "camp")
 	return _own[fac]
 
+## Defence of own settlements in danger: besieged, with enemies around, or the target of an undead wave (stage 2c). A
+## town or castle the dead go for is defended from the inside: the lords inside hold the walls with the garrison.
 func _defend(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "defend")
 	if w <= 0.0:
 		return
+	var doom: Dictionary = doomed.call() if doomed.is_valid() else {}
 	for s in own_settlements(String(p.fac)):
 		var d := Vector2(s.x - p.x, s.y - p.y).length()
 		if d > Config.GOAL_DEFEND_RANGE:
 			continue
 		var enemy := risk_at(p, s.x, s.y, me)
-		var urgency := 1.0 if s.get("siege") != null else clamp01(enemy / Config.GOAL_DEFEND_THREAT_SHARE)
+		var dead: bool = doom.has(s.id) and s.kind != Config.SETTLEMENT_VILLAGE
+		var urgency := 1.0 if s.get("siege") != null or dead else clamp01(enemy / Config.GOAL_DEFEND_THREAT_SHARE)
 		if urgency <= 0.0:
 			continue
 		var score := w * combine([urgency, distance_factor(d, Config.GOAL_DEFEND_RANGE), risk_factor(enemy, mods), crowd_factor("defend", s.id, p)])
 		if score > 0.0:
-			out.append({"goal": "defend", "gid": s.id, "x": s.x, "y": s.y, "score": score})
+			out.append({"goal": "defend", "gid": s.id, "x": s.x, "y": s.y, "score": score, "inside": dead})
 
 ## Patrol of own lands, more often where enemies were seen lately (s.alarm hours, kept by party_ai.gd hour_tick).
 func _patrol(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
@@ -313,6 +326,8 @@ func _raid(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 	if full <= 0.0:
 		return
 	var fac := String(p.fac)
+	if fac == Config.UNDEAD_FACTION:
+		return  # the dead burn villages ahead of their wave (_ravage)
 	var targets: Array = []
 	for s in settles:
 		if s.fac == fac or s.kind == "camp" or s.get("siege") != null:
@@ -415,10 +430,53 @@ func _guard(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary, 
 		return
 	out.append({"goal": "guard", "gid": fief.id, "x": fief.x, "y": fief.y, "score": w})
 
-## Bandits roam around their camp.
-func _roam(p: Dictionary, prof: Dictionary, mods: Dictionary, out: Array) -> void:
+## An undead army gathers at the rally point of its wave; less eagerly once it is there, so it still crushes weak
+## enemies that come close (hunt).
+func _muster(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
+	var w := weight(prof, mods, "muster")
+	var wave: Dictionary = ctx.get("wave", {})
+	if w <= 0.0 or wave.is_empty() or String(wave.mode) != "gather":
+		return
+	var d := Vector2(float(wave.rx) - p.x, float(wave.ry) - p.y).length()
+	var far := ramp(d, Config.UNDEAD_RALLY_RADIUS * 0.5, Config.UNDEAD_RALLY_RADIUS * 2.0, 0.4, 1.0)
+	out.append({"goal": "muster", "gid": wave.tid, "x": float(wave.rx), "y": float(wave.ry), "score": w * far})
+
+## An undead army marches on the target of its wave and waits at the walls for the storm.
+func _assault(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
+	var w := weight(prof, mods, "assault")
+	var wave: Dictionary = ctx.get("wave", {})
+	if w <= 0.0 or wave.is_empty() or String(wave.mode) != "attack":
+		return
+	out.append({"goal": "assault", "gid": wave.tid, "x": float(wave.x), "y": float(wave.y), "score": w})
+
+## Undead raids burn living villages ahead of their wave: near its front (the target) and within reach of the raid. The
+## dead weigh no risk (they never flee either): the front of a wave is where the living gather, and a raid that feared
+## them would only roam.
+func _ravage(p: Dictionary, _me: float, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
+	var w := weight(prof, mods, "raid")
+	var front: Dictionary = ctx.get("front", {})
+	if w <= 0.0 or String(p.fac) != Config.UNDEAD_FACTION or front.is_empty():
+		return
+	for s in settles:
+		if s.kind != Config.SETTLEMENT_VILLAGE or s.fac == Config.UNDEAD_FACTION or int(s.get("burnt", 0)) > 0:
+			continue
+		var d := Vector2(s.x - p.x, s.y - p.y).length()
+		var df := Vector2(s.x - float(front.x), s.y - float(front.y)).length()
+		if d > Config.UNDEAD_RAVAGE_REACH or df > Config.UNDEAD_RAVAGE_RANGE:
+			continue
+		var score := w * combine([distance_factor(d, Config.UNDEAD_RAVAGE_REACH), distance_factor(df, Config.UNDEAD_RAVAGE_RANGE),
+			crowd_factor("raid", s.id, p)])
+		if score > 0.0:
+			out.append({"goal": "raid", "gid": s.id, "x": s.x, "y": s.y, "score": score})
+
+## Bandits roam around their camp; the dead with nothing else to do around their front (stage 2c).
+func _roam(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "roam")
 	if w <= 0.0:
+		return
+	var front: Dictionary = ctx.get("front", {})
+	if not front.is_empty():
+		out.append({"goal": "roam", "gid": p.get("home"), "x": float(front.x), "y": float(front.y), "score": w})
 		return
 	out.append({"goal": "roam", "gid": p.get("home"), "x": p.x, "y": p.y, "score": w})
 

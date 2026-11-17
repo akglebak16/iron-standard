@@ -44,17 +44,20 @@ func marshal_of(host: Array) -> Dictionary:
 			best_s = s
 	return best
 
-## Own towns and castles that need a defender: besieged ones, and those with enemy strength `threat` around them
-## (threat: (x, y, faction) -> enemy strength on the threat map). Most urgent first: besieged, then by threat × worth.
-func alerts(f: String, settles: Array, threat: Callable) -> Array:
+## Own towns and castles that need a defender: besieged ones, those an undead wave goes for (`doomed`: id -> mode,
+## stage 2c) and those with enemy strength `threat` around them (threat: (x, y, faction) -> enemy strength on the threat
+## map). Most urgent first: besieged, then doomed, then by threat × worth.
+func alerts(f: String, settles: Array, threat: Callable, doomed := {}) -> Array:
 	var out: Array = []
 	for s in settles:
 		if s.fac != f or (s.kind != Config.SETTLEMENT_TOWN and s.kind != Config.SETTLEMENT_CASTLE):
 			continue
 		var besieged: bool = s.get("siege") != null and String(s.siege.get("f", "")) != f
+		var dead: bool = doomed.has(s.id)
 		var enemy := float(threat.call(s.x, s.y, f)) if threat.is_valid() else 0.0
-		if besieged or enemy >= Config.OP_HOME_THREAT:
-			out.append({"s": s, "threat": enemy, "besieged": besieged, "urgency": (1e9 if besieged else 0.0) + enemy * value(s)})
+		if besieged or dead or enemy >= Config.OP_HOME_THREAT:
+			out.append({"s": s, "threat": enemy, "besieged": besieged, "doomed": dead,
+				"urgency": (1e9 if besieged else (1e8 if dead else 0.0)) + enemy * value(s)})
 	out.sort_custom(func(a, b): return float(a.urgency) > float(b.urgency) or (float(a.urgency) == float(b.urgency) and int(a.s.id) < int(b.s.id)))
 	return out
 
@@ -107,6 +110,10 @@ func relief_host(cands: Array, s: Dictionary, besiegers: float, garrison: float)
 	if host.is_empty() or r < besiegers * Config.OP_RELIEF_MIN_RATIO:
 		return []
 	return host
+
+## Own towns and castles held by the dead (their ruins, `ruinOf` = f): targets of a campaign even in peace (stage 2c).
+static func own_ruins(f: String, settles: Array) -> Array:
+	return settles.filter(func(s): return s.fac == Config.UNDEAD_FACTION and String(s.get("ruinOf", "")) == f and (s.kind == Config.SETTLEMENT_TOWN or s.kind == Config.SETTLEMENT_CASTLE))
 
 ## Whether a campaign has to end because its host is too weak: below OP_RETREAT_SHARE of its strength at the muster.
 static func weak(start_strength: float, now_strength: float) -> bool:
