@@ -656,6 +656,6 @@ func _process(delta: float) -> void:
 		_autosave.save(state, false)
 	if not camera.detached:
 		camera.position = _motion.at(-1, Vector2(state.player.x, state.player.y))
-	if profile_map_frames: started = Time.get_ticks_usec()
+	var started := Time.get_ticks_usec() if profile_map_frames else 0
 	hud.refresh(state, state.settlement_near(state.player.x, state.player.y, 46.0))
 	if profile_map_frames: map_hud_us = Time.get_ticks_usec() - started
