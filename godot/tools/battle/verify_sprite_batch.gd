@@ -63,9 +63,17 @@ func _run() -> void:
 			canvas.impacts._pools.append({"position": Vector2(20 + index % 15 * 60, 30 + index / 15 * 110), "radius": 3.0 + index % 20, "color": Color(0.5, 0.1, 0.1)})
 		for index in 80:
 			var part := {"position": Vector2(25 + index % 16 * 55, 80 + index / 16 * 130), "height": float(index % 3 * 12),
-				"kind": index % 4, "angle": index * 0.3, "mirrored": index % 5 == 0, "scale": 0.43,
+				"kind": index % 6, "angle": index * 0.3, "mirrored": index % 5 == 0, "scale": 0.43,
 				"texture": canvas.figures._art.layers(units[0]).body, "anchor": Vector2(20, 20),
 				"bony": index % 3 == 0, "sleeve": Color(0.1, 0.2, 0.7), "skin": Color(0.7, 0.5, 0.3), "size": 4.5, "color": Color(0.6, 0.7, 0.8)}
+			if part.kind == 4:
+				part.texture = canvas.figures._art.detached_leg(units[0])
+				part.anchor = Vector2(40, 45)
+			elif part.kind == 5:
+				var split: Dictionary = canvas.figures._art.split_torso(units[0])
+				part.texture = split.upper
+				part.anchor = split.anchor
+				part.scale = split.scale
 			if (index / 4) % 2 == 0: canvas.impacts._parts._settled.append(part)
 			else: canvas.impacts._parts._active.append(part)
 		var no_events: Array[Dictionary] = []

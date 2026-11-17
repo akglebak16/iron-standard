@@ -192,6 +192,14 @@ static func layers_for(unit: Dictionary, troop_id := "", variant := 0) -> Dictio
 	_looks[signature] = composed
 	return composed
 
+## Draw the fallen mount without its rider for a severed-rider corpse.
+static func mount_corpse(unit: Dictionary, size: Vector2i) -> Image:
+	var image := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+	var faction: String = unit.faction
+	if not MANIFEST.crests.has(faction): faction = "nord" if unit.side == 0 else "emp"
+	_stamp(image, "horse_corpse|%s|%s" % [faction, unit.look.get("horse", "bay")], Vector2i(2, 26))
+	return image
+
 static func _troop_layers(troop: String, faction: String, look: Dictionary, mounted: bool, variant: int) -> Dictionary:
 	var definition: Dictionary = MANIFEST.troops[troop + "|" + faction]
 	var entry := {"body": sprite(troop, faction, "body", variant), "weapon": sprite(troop, faction, "weapon", variant),

@@ -4990,6 +4990,10 @@
       "source": "ui/shape_brush.gd.uid",
       "destination": "apps/godot/visuals/shape_brush.gd.uid",
       "introduced_revision": "8a97999"
+    },
+    {
+      "source": "tools/battle/benchmark_gore.gd",
+      "destination": "tools/battle/benchmark_gore.gd"
     }
   ]
 }

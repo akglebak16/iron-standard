@@ -1,0 +1,132 @@
+{
+  "engine": "4.7.2-stable (official)",
+  "method": "CPU effects only; 3600 fixed steps, 2000 fatalities, 120 warmup steps, five repeats",
+  "results": [
+    {
+      "casualties": 2000,
+      "implementation": "current",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 529.546388888889,
+      "native": true,
+      "p95_us": 1202,
+      "p99_us": 1438,
+      "repeat": 1
+    },
+    {
+      "casualties": 2000,
+      "implementation": "baseline",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 538.846944444444,
+      "native": true,
+      "p95_us": 1163,
+      "p99_us": 1330,
+      "repeat": 1
+    },
+    {
+      "casualties": 2000,
+      "implementation": "current",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 533.686388888889,
+      "native": true,
+      "p95_us": 1180,
+      "p99_us": 1355,
+      "repeat": 2
+    },
+    {
+      "casualties": 2000,
+      "implementation": "baseline",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 568.255,
+      "native": true,
+      "p95_us": 1265,
+      "p99_us": 1482,
+      "repeat": 2
+    },
+    {
+      "casualties": 2000,
+      "implementation": "current",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 475.248055555556,
+      "native": true,
+      "p95_us": 1024,
+      "p99_us": 1308,
+      "repeat": 3
+    },
+    {
+      "casualties": 2000,
+      "implementation": "baseline",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 422.456111111111,
+      "native": true,
+      "p95_us": 799,
+      "p99_us": 919,
+      "repeat": 3
+    },
+    {
+      "casualties": 2000,
+      "implementation": "current",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 422.997777777778,
+      "native": true,
+      "p95_us": 802,
+      "p99_us": 881,
+      "repeat": 4
+    },
+    {
+      "casualties": 2000,
+      "implementation": "baseline",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 424.948333333333,
+      "native": true,
+      "p95_us": 803,
+      "p99_us": 909,
+      "repeat": 4
+    },
+    {
+      "casualties": 2000,
+      "implementation": "current",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 490.939444444444,
+      "native": true,
+      "p95_us": 1097,
+      "p99_us": 1286,
+      "repeat": 5
+    },
+    {
+      "casualties": 2000,
+      "implementation": "baseline",
+      "maximum_active": 70,
+      "maximum_settled": 600,
+      "mean_us": 486.654166666667,
+      "native": true,
+      "p95_us": 1089,
+      "p99_us": 1333,
+      "repeat": 5
+    }
+  ],
+  "base_revision": "4dea550352c38dbc2edf612be7c49acc6a0cdd39",
+  "dirty": true,
+  "source_sha256": {
+    "godot/apps/godot/presentation/battle/detached_parts.gd": "21bee656d919131ea563569944995319c36536f1bba2d37201ae0a4ac017076d",
+    "godot/apps/godot/presentation/battle/impact_effects.gd": "c3bc94d03762e58651a76fd6daf8883a050849dcf08b0de1804e031ba247f605",
+    "godot/apps/godot/presentation/battle/native/battle_effects.cpp": "9b5ef63c0ba9f7b571fbaaf257272dc2c668ff69b43889864c3563cb93c0bc46",
+    "godot/apps/godot/presentation/battle/unit_art.gd": "82c8e563d65022c96197742b22957070897bf9a026af73a43d7f8e514ca0dcc9",
+    "godot/apps/godot/presentation/battle/unit_view.gd": "f1eee3cc9d144045cafe44890f0898d7b34740317dd6295c8677217c96a101d8",
+    "godot/apps/godot/presentation/battle/view.gd": "8dcf376920dd0f63853c513ac89d8f5eeea049e925f1d257e9f6ce28c96b582a",
+    "godot/apps/godot/visuals/original_art.gd": "a32392f632761664543ff559743e03c86b1a745fb028f1d7d6766adf568a5248",
+    "godot/tests/unit/battle/presentation/test_detached_parts.gd": "4cdc7246dc569fd3cb524b9f31ab84c871f282dc2eb69075aa6ecdedcc776ecd",
+    "godot/tools/battle/verify_sprite_batch.gd": "42b6e39b8f709a6492a69c7d46430b151c63c3d4d24a176e7862b091baa1f22b",
+    "godot/tools/battle/benchmark_gore.gd": "5f6e5a35f8a058331fa7dd92493671cef75f728cc061a79e8d722e02a9ba1bba"
+  },
+  "native_sha256": "10a84de14de64d3594b4f0e6b6a052a66feb216191f4f1afa1c71ffdf21e5242",
+  "engine_sha256": "c8f0a6bc45a19b33541501e57f6f7cd972ab18453743266339d495cbbe846643"
+}

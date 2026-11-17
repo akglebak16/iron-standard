@@ -68,12 +68,9 @@ const POOL_ALPHA := 0.55
 const POOL_SCALE := Vector2(1.0, 0.5)
 const PART_POOL_RADIUS := Vector2(6, 11)
 const HEADLESS_POOL_BONUS := 8.0
-const HEAD_CUT_CHANCE := 0.2
-const HEAD_BLUNT_CHANCE := 0.18
-const ARM_CUT_CHANCE := 0.16
-const ARM_BONUS_SHARE := 0.6
-const HERO_CHANCE_BONUS := 0.25
-const HEAVY_FATAL_CHANCE_BONUS := 0.15
+const DISMEMBER_CHANCE := 0.55
+const CUT_PARTS := [Parts.Part.HEAD, Parts.Part.ARM, Parts.Part.LEG]
+const HEAVY_CUT_PARTS := [Parts.Part.HEAD, Parts.Part.ARM, Parts.Part.LEG, Parts.Part.TORSO]
 const HEAVY_FATAL_THRESHOLD := 0.3
 const FOUNTAIN_DURATION := Vector2(0.6, 1.0)
 const FOUNTAIN_RATE := 120.0
@@ -117,6 +114,7 @@ var _rng := RandomNumberGenerator.new()
 var _parts := Parts.new(_rng)
 var _fountains: Array[Dictionary] = []
 var _headless: Dictionary = {}
+var _split_torsos: Dictionary = {}
 var _particles: Array[Dictionary] = []
 var _ground_marks: Array[Dictionary] = []
 var _pools: Array[Dictionary] = []
@@ -130,6 +128,7 @@ var blood_enabled := true:
 			_parts.clear()
 			_fountains.clear()
 			_headless.clear()
+			_split_torsos.clear()
 			_remove_blood_marks()
 
 func _init() -> void:
@@ -202,6 +201,9 @@ func has_particles() -> bool:
 
 func headless_units() -> Dictionary:
 	return _headless
+
+func split_torsos() -> Dictionary:
+	return _split_torsos
 
 ## Set by the view: marks are painted once into the ground bake instead of every frame.
 var on_mark := Callable()
@@ -292,14 +294,16 @@ func _detach_on_down(event: Dictionary, color: Color) -> bool:
 	var melee_impact: int = event.melee_impact
 	if melee_impact not in [Event.MeleeImpact.CUT, Event.MeleeImpact.BLUNT]:
 		return false
-	var bonus := HERO_CHANCE_BONUS if event.source_hero else 0.0
-	if event.damage_fraction > HEAVY_FATAL_THRESHOLD:
-		bonus += HEAVY_FATAL_CHANCE_BONUS
+	# One gate for all eligible fatalities, independent of attacker and damage.
+	if _rng.randf() >= DISMEMBER_CHANCE:
+		return false
+	var choices: Array = HEAVY_CUT_PARTS if event.damage_fraction > HEAVY_FATAL_THRESHOLD else CUT_PARTS
+	var kind: int = choices[_rng.randi_range(0, choices.size() - 1)] if melee_impact == Event.MeleeImpact.CUT else Parts.Part.HEAD
 	var direction: Vector2 = event.impact_direction
 	var angle := direction.angle() if direction != Vector2.ZERO else _rng.randf_range(0.0, TAU)
 	var head := Parts.head_offset(event.target_visual)
 	var has_blood := color.a > 0.0
-	if melee_impact == Event.MeleeImpact.CUT and _rng.randf() < HEAD_CUT_CHANCE + bonus:
+	if melee_impact == Event.MeleeImpact.CUT and kind == Parts.Part.HEAD:
 		_parts.emit(Parts.Part.HEAD, event, angle, color)
 		if has_blood:
 			_spray(event, color, SEVER_SPRAY_COUNT, head + FOUNTAIN_OFFSET, SEVER_SPRAY_SPEED, SEVER_SPRAY_LIFT)
@@ -311,15 +315,17 @@ func _detach_on_down(event: Dictionary, color: Color) -> bool:
 		else:
 			_parts.emit(Parts.Part.BONE, event, angle, color, HEAD_BONE_COUNT)
 		_headless[event.target_id] = true
-	elif melee_impact == Event.MeleeImpact.BLUNT and _rng.randf() < HEAD_BLUNT_CHANCE + bonus:
+	elif melee_impact == Event.MeleeImpact.BLUNT:
 		if has_blood:
 			_spray(event, color, SHATTER_SPRAY_COUNT, head, SHATTER_SPRAY_SPEED, SHATTER_SPRAY_LIFT)
 			_spray(event, PALE_FRAGMENT_COLOR, HEAD_SHATTER_PALE_COUNT, head, PALE_FRAGMENT_SPEED, PALE_FRAGMENT_LIFT)
 			_parts.emit(Parts.Part.FRAGMENT, event, angle, color, SHATTER_FRAGMENT_COUNT)
 		_parts.emit(Parts.Part.BONE, event, angle, color, HEAD_BONE_COUNT if has_blood else SKELETON_SHATTER_BONE_COUNT)
 		_headless[event.target_id] = true
-	elif melee_impact == Event.MeleeImpact.CUT and _rng.randf() < ARM_CUT_CHANCE + bonus * ARM_BONUS_SHARE:
-		_parts.emit(Parts.Part.ARM, event, angle, color)
+	else:
+		_parts.emit(kind, event, angle, color)
+		if kind == Parts.Part.TORSO:
+			_split_torsos[event.target_id] = true
 		if has_blood:
 			_spray(event, color, ARM_SPRAY_COUNT, ARM_SPRAY_OFFSET, ARM_SPRAY_SPEED, ARM_SPRAY_LIFT)
 	return _headless.has(event.target_id)
