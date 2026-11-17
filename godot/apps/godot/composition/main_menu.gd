@@ -11,6 +11,13 @@ const Preferences = preload("res://apps/godot/composition/presentation_preferenc
 const GameSkin = preload("res://apps/godot/visuals/game_theme.gd")
 const Art = preload("res://apps/godot/visuals/original_art.gd")
 const Modal = preload("res://apps/godot/presentation/campaign/modal_window.gd")
+const FaceVariant = preload("res://apps/godot/visuals/face_variant.gd")
+## Start-screen order, light to dark, and the names shown on hover.
+const SKIN_CHOICES := [["#e8c3a0","Бледная"],["#e2b48c","Светлая"],["#d6a179","Румяная"],["#c98f66","Смуглая"],["#b97d58","Загорелая"]]
+const HAIR_CHOICES := [["#1a1a1a","Чёрные"],["#2a1d14","Тёмные"],["#4a3020","Каштановые"],["#6b4423","Тёмно-русые"],["#8c5a2b","Русые"],
+	["#a8672e","Рыжеватые"],["#7a2e16","Рыжие"],["#dcb860","Светлые"],["#b9b2a5","Седые"]]
+const BEARD_CHOICES := [[0,"Нет"],[1,"Короткая"],[2,"Густая"]]
+const MARK_CHOICES := [["stache","Усы"],["bald","Бритая голова"],["scar","Шрам"]]
 const CULTURES := ["nord", "emp", "khan", "kin", "emi", "dom", "pact"]
 const CULTURE_DESCRIPTIONS := {
 	"nord":"Крепкая пехота, секиры и щиты. Охотники-лучники.",
@@ -39,6 +46,9 @@ var _preferences := Preferences.new()
 var _banner_buttons: Array[Button] = []
 var _quick_options := {"me":"nord", "foe":"emp", "size":50}
 var _quick_buttons := {}
+var _face := {}
+var _face_buttons := {}
+var _preview: TextureRect
 
 class BannerSwatch extends Button:
 	var colors: Dictionary
@@ -48,6 +58,14 @@ class BannerSwatch extends Button:
 		draw_circle(center, 18, Color(colors.c2), true, -1, true)
 		draw_circle(center, 15, Color(colors.c1), true, -1, true)
 		if button_pressed or has_focus(): draw_arc(center, 24.5, 0, TAU, 64, GameSkin.BRASS, 3, true)
+
+class ColorSwatch extends Button:
+	var color: Color
+	func _draw() -> void:
+		var center := size * 0.5
+		draw_circle(center, 14, GameSkin.INK, true, -1, true)
+		draw_circle(center, 11.5, color, true, -1, true)
+		if button_pressed or has_focus(): draw_arc(center, 16.5, 0, TAU, 48, GameSkin.BRASS, 2.5, true)
 
 func _ready() -> void:
 	if not (ContentLoader.populate(_factions)):
@@ -292,6 +310,7 @@ func _create() -> void:
 		b.pressed.connect(_pick_banner.bind(index))
 		swatches.add_child(b)
 		_banner_buttons.append(b)
+	_look_editor(d)
 	_start_note(d, "Откуда ты родом", 14)
 	var grid := HFlowContainer.new()
 	grid.add_theme_constant_override("h_separation", 10)
@@ -339,6 +358,127 @@ func _create() -> void:
 		_buttons[id] = b
 	_footer(d, [["В путь", _start, true]])
 
+## The hero's face: a live figure on the left, the choices on the right (#151).
+func _look_editor(d: CanvasLayer) -> void:
+	_face = FaceVariant.chosen(GameOptions.hero_face)
+	if _face.is_empty():
+		_face = _random_face()
+	_start_note(d, "Внешность", 14)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 18)
+	d.body.add_child(row)
+	var frame := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color("#00000040")
+	box.border_color = Color("#00000088")
+	box.set_border_width_all(3)
+	box.set_corner_radius_all(3)
+	frame.add_theme_stylebox_override("panel", box)
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 8)
+	row.add_child(left)
+	left.add_child(frame)
+	_preview = TextureRect.new()
+	_preview.name = "HeroPreview"
+	_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_preview.custom_minimum_size = Vector2(132, 153)
+	_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(_preview)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 8)
+	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(rows)
+	_face_buttons.clear()
+	for kind in ["skin", "hair"]:
+		var line := _look_line(rows, "Кожа" if kind == "skin" else "Волосы")
+		_face_buttons[kind] = {}
+		for choice in (SKIN_CHOICES if kind == "skin" else HAIR_CHOICES):
+			var b := ColorSwatch.new()
+			b.color = Color(choice[0])
+			b.custom_minimum_size = Vector2(34, 34)
+			b.toggle_mode = true
+			b.tooltip_text = choice[1]
+			b.accessibility_name = choice[1]
+			for state in ["normal","hover","pressed","hover_pressed","focus"]: b.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+			b.pressed.connect(_set_face.bind(kind, choice[0]))
+			line.add_child(b)
+			_face_buttons[kind][choice[0]] = b
+	var beard := _look_line(rows, "Борода")
+	_face_buttons.beard = {}
+	for choice in BEARD_CHOICES:
+		_face_buttons.beard[choice[0]] = _choice_button(beard, choice[1], _set_face.bind("beard", choice[0]))
+	var marks := _look_line(rows, "Приметы")
+	for choice in MARK_CHOICES:
+		var key: String = choice[0]
+		_face_buttons[key] = _choice_button(marks, choice[1], func(): _set_face(key, not bool(_face.get(key))))
+	var dice := _choice_button(left, "Случайно", func(): _face = _random_face(); _sync_face())
+	dice.toggle_mode = false
+	dice.name = "RandomLook"
+	_sync_face()
+
+func _look_line(parent: Node, caption: String) -> HFlowContainer:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
+	parent.add_child(line)
+	var label := Label.new()
+	label.text = caption
+	label.custom_minimum_size = Vector2(84, 34)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 15, 19.5))
+	label.add_theme_font_size_override("font_size", 15)
+	label.add_theme_color_override("font_color", Color("#c9b98f"))
+	line.add_child(label)
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 6)
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(flow)
+	return flow
+
+## A small toggle in the quick-battle style.
+func _choice_button(parent: Node, text: String, action: Callable) -> Button:
+	var b := _button(parent, text, action)
+	b.toggle_mode = true
+	b.add_theme_font_size_override("font_size", 14)
+	b.add_theme_font_override("font", GameSkin.css_font(GameSkin.DISPLAY, 14, 14, 0.7))
+	for state in ["normal","hover","pressed","hover_pressed"]:
+		var style := GameSkin.box("primary" if state in ["pressed","hover_pressed"] else "button", 9)
+		style.content_margin_left = 12
+		style.content_margin_right = 12
+		b.add_theme_stylebox_override(state, style)
+	return b
+
+func _random_face() -> Dictionary:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	return FaceVariant.random_face(rng)
+
+func _set_face(key: String, value: Variant) -> void:
+	_face[key] = value
+	_sync_face()
+
+## Normalise the choice, store it for the new game and redraw the figure and the buttons.
+func _sync_face() -> void:
+	_face = FaceVariant.chosen(_face)
+	GameOptions.hero_face = _face.duplicate()
+	for kind in ["skin", "hair", "beard"]:
+		for value in _face_buttons.get(kind, {}):
+			_face_buttons[kind][value].set_pressed_no_signal(value == _face[kind])
+			_face_buttons[kind][value].queue_redraw()
+	for choice in MARK_CHOICES:
+		if _face_buttons.has(choice[0]):
+			_face_buttons[choice[0]].set_pressed_no_signal(bool(_face[choice[0]]))
+	if _face_buttons.has("stache"):
+		_face_buttons.stache.disabled = int(_face.beard) > 0
+		_face_buttons.stache.tooltip_text = "Только без бороды" if int(_face.beard) > 0 else ""
+	if is_instance_valid(_preview):
+		_preview.texture = Art.compose(preview_look()).portrait
+
+## Bareheaded in a tunic, so the face and hair are seen; the banner colours the tunic.
+func preview_look() -> Dictionary:
+	return {"helm": "none", "armor": "tunic", "weapon": "sword", "shield": "none", "horse": null, "seed": 1, "face": _face.duplicate()}
+
 func _quick() -> void:
 	var d = _new_dialog("Быстрый бой", "Сразу на поле: ты ведёшь своего героя, остальные слушаются приказов")
 	d.set_width(560)
@@ -384,6 +524,8 @@ func _pick_banner(index: int) -> void:
 	for i in _banner_buttons.size():
 		_banner_buttons[i].set_pressed_no_signal(i == index)
 		_banner_buttons[i].queue_redraw()
+	if is_instance_valid(_preview):
+		_preview.texture = Art.compose(preview_look()).portrait
 
 func _help() -> void:
 	var d = _new_dialog("Как играть", "Железный Стяг")

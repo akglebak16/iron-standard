@@ -170,6 +170,8 @@ func _ready() -> void:
 			return
 		state.player.hero.name = GameOptions.hero_name
 		state.player.hero.banner = GameOptions.banner
+		if not GameOptions.hero_face.is_empty():
+			state.player.hero.face = GameOptions.hero_face.duplicate()
 	var saved_banner = state.player.hero.get("banner", 0)
 	_startup_mark("world_ready")
 	loading.show_stage("Рисуем карту…")

@@ -9,7 +9,7 @@ var gear_catalog: RefCounted
 var _appearance_inputs: Dictionary = {}
 var _resolved_look: Dictionary = {}
 var _figure: Dictionary = {}
-const APPEARANCE_FIELDS := ["sel", "armor", "weapon", "shield", "horse", "seed", "beard", "hair"]
+const APPEARANCE_FIELDS := ["sel", "armor", "weapon", "shield", "horse", "seed", "beard", "hair", "face"]
 
 var party: RefCounted
 var look: Dictionary = {}

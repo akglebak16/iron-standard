@@ -19,6 +19,10 @@ func _initialize() -> void:
 	assert(gear.armor == 49.0)
 	assert(gear.block == 0.84)
 	var defaults: Dictionary = HeroGear.resolve({}, catalog)
+	assert(not defaults.look.has("face"), "a hero without a picked face keeps the seed face")
+	var face := {"skin": "#c98f66", "hair": "#dcb860", "beard": 0, "stache": 1, "bald": false, "scar": true}
+	var faced := {"seed": 5, "face": face}
+	assert(HeroGear.resolve(faced, catalog).look.face == face and HeroGear.resolve(faced, catalog).look.seed == 5)
 	assert(defaults.slots.body == "" and defaults.slots.shield == "")
 	assert(defaults.weapon.id == "sword_old")
 	var modern := {"eq": {"head": "head_great", "body": "body_plate", "melee": "tw_hammer", "ranged": "jav_heavy", "shield": "shield_heraldic", "horse": "horse_war"}, "sel": "melee"}
