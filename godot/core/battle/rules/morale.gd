@@ -40,37 +40,53 @@ static func tick(battle: State) -> void:
 		var enemies: float = maxf(Config.MORALE_OPPONENT_FLOOR, active[1 - side])
 		collapsed[side] = friends <= battle.starting_units[side] * Config.MORALE_FORCE_FLEE_START_SHARE and friends < enemies * Config.MORALE_FORCE_FLEE_ENEMY_SHARE and battle.starting_units[side] > Config.MORALE_FORCE_FLEE_MIN_START
 	var group_loss := _group_losses(battle)
+	# Odds of each side, as before stage 1b: the same for every fighter of the side.
+	var bad := [false, false]
+	var very_bad := [false, false]
+	var recoveries := [0.0, 0.0]
+	for side in 2:
+		var odds: float = active[side] / maxf(Config.MORALE_OPPONENT_FLOOR, active[1 - side])
+		bad[side] = odds < Config.MORALE_BAD_ODDS
+		very_bad[side] = odds < Config.MORALE_VERY_BAD_ODDS
+		recoveries[side] = Config.MORALE_STRONG_RECOVERY if odds > Config.MORALE_STRONG_ODDS else (Config.MORALE_EVEN_RECOVERY if odds > Config.MORALE_EVEN_ODDS else Config.MORALE_WEAK_RECOVERY)
+	var grouped := battle.groups.size() == 2
 	var routed: Array[Unit] = []
 	var rallied := {}
-	for unit: Unit in battle.active_units:
-		if unit.dead or unit.gone or unit.hero or unit.companion or unit.morale_immune:
+	# Flags from the columns, not Unit getters: this runs over every fighter once a second.
+	var units := battle.active_units
+	for row in count:
+		if flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.HERO * capacity + row]:
 			continue
-		if unit.fleeing:
-			if _rout_step(battle, unit, leaders[unit.side], collapsed[unit.side]):
-				rallied[battle.groups[unit.side][unit.group_kind]] = true
+		var unit: Unit = units[row]
+		if unit.morale_immune or not unit.companion_id.is_empty():
 			continue
-		var friends: int = active[unit.side]
-		var enemies: float = maxf(Config.MORALE_OPPONENT_FLOOR, active[1 - unit.side])
-		var odds: float = friends / enemies
-		if odds < Config.MORALE_BAD_ODDS:
+		var side: int = flags[I.SIDE * capacity + row]
+		var kind: int = flags[I.GROUP_KIND * capacity + row]
+		var slot := side * Config.GROUP_KINDS + kind if grouped and kind >= 0 and kind < Config.GROUP_KINDS else -1
+		if flags[I.FLEEING * capacity + row]:
+			if _rout_step(battle, unit, leaders[side], collapsed[side], slot >= 0) and slot >= 0:
+				rallied[battle.groups[side][kind]] = true
+			continue
+		if bad[side]:
 			unit.morale -= Config.MORALE_BAD_ODDS_LOSS
-		if odds < Config.MORALE_VERY_BAD_ODDS:
+		if very_bad[side]:
 			unit.morale -= Config.MORALE_VERY_BAD_ODDS_LOSS
-		var slot := _slot(battle, unit)
 		if slot >= 0:
 			unit.morale -= group_loss[slot]
-		var recovery: float = Config.MORALE_STRONG_RECOVERY if odds > Config.MORALE_STRONG_ODDS else (Config.MORALE_EVEN_RECOVERY if odds > Config.MORALE_EVEN_ODDS else Config.MORALE_WEAK_RECOVERY)
-		unit.morale = minf(unit.base_morale, unit.morale + recovery)
-		if unit.wavering:
-			if unit.morale >= unit.base_morale * Config.MORALE_STEADY_SHARE:
-				unit.wavering = false
-		elif unit.morale < unit.base_morale * Config.MORALE_WAVER_SHARE:
-			unit.wavering = true
+		var base: float = unit.base_morale
+		var morale: float = minf(base, unit.morale + recoveries[side])
+		unit.morale = morale
+		var wavering_at: int = I.WAVERING * capacity + row
+		if flags[wavering_at]:
+			if morale >= base * Config.MORALE_STEADY_SHARE:
+				flags[wavering_at] = 0
+		elif morale < base * Config.MORALE_WAVER_SHARE:
+			flags[wavering_at] = 1
 			if not unit.waver_noticed:
 				unit.waver_noticed = true
 				battle.record_unit_notice(Event.Kind.WAVERED, unit)
-		var collapse: bool = collapsed[unit.side] and not unit.leader
-		if unit.morale <= 0.0 or collapse:
+		var collapse: bool = collapsed[side] and not flags[I.LEADER * capacity + row]
+		if morale <= 0.0 or collapse:
 			unit.fleeing = true
 			unit.wavering = false
 			# The flight starts from nothing; a deep rout (a heavy blow) takes longer to recover from, up to a limit.
@@ -112,13 +128,9 @@ static func _group_losses(battle: State) -> PackedFloat64Array:
 			losses[side * Config.GROUP_KINDS + kind] = Config.MORALE_THREAT_LOSS * clampf(pressure - Config.MORALE_THREAT_FREE, 0.0, Config.MORALE_THREAT_CAP) + Config.MORALE_PANIC_SHARE_LOSS * share
 	return losses
 
-static func _slot(battle: State, unit: Unit) -> int:
-	if battle.groups.size() != 2 or unit.group_kind < 0 or unit.group_kind >= mini(Config.GROUP_KINDS, battle.groups[unit.side].size()):
-		return -1
-	return unit.side * Config.GROUP_KINDS + unit.group_kind
-
-## A fleeing fighter: recovers unless pursued and turns back once he has recovered enough. True when he rallied.
-static func _rout_step(battle: State, unit: Unit, leaders: PackedVector2Array, collapsed: bool) -> bool:
+## A fleeing fighter: recovers unless pursued and turns back once he has recovered enough (only into a group). True when
+## he rallied.
+static func _rout_step(battle: State, unit: Unit, leaders: PackedVector2Array, collapsed: bool, grouped: bool) -> bool:
 	if unit.rallies >= Config.MORALE_RALLY_LIMIT:
 		return false
 	var at := unit.position
@@ -130,7 +142,7 @@ static func _rout_step(battle: State, unit: Unit, leaders: PackedVector2Array, c
 			recovery += Config.MORALE_RALLY_LEADER_BONUS
 			break
 	unit.morale = minf(unit.base_morale, unit.morale + recovery)
-	if unit.morale < unit.base_morale * Config.MORALE_RALLY_SHARE or collapsed or _slot(battle, unit) < 0:
+	if unit.morale < unit.base_morale * Config.MORALE_RALLY_SHARE or collapsed or not grouped:
 		return false
 	if at.x < Config.MORALE_RALLY_EDGE or at.x > battle.arena_size.x - Config.MORALE_RALLY_EDGE:
 		return false

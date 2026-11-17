@@ -43,12 +43,14 @@ static func assess(battle: State) -> Dictionary:
 	var lateral_max := PackedFloat64Array(); lateral_max.resize(slots)
 	var laterals := PackedVector2Array(); laterals.resize(slots)
 	var facings := PackedVector2Array(); facings.resize(slots)
+	var loose := PackedByteArray(); loose.resize(slots) # Loose charge: the front is the men's mean facing.
 	for slot in slots:
 		lateral_min[slot] = INF
 		lateral_max[slot] = -INF
 		var group = _group(battle, slot / kinds, slot % kinds)
 		var direction: float = group.direction if group != null else 0.0
 		laterals[slot] = Vector2(-sin(direction), cos(direction))
+		loose[slot] = int(group != null and group.order == Config.ORDER_CHARGE and not group.formed)
 	var motion := battle.motion
 	var capacity := motion.capacity
 	var flags := motion.integer_fields
@@ -71,19 +73,20 @@ static func assess(battle: State) -> Dictionary:
 		var max_hp: float = reals[R.MAX_HP * capacity + row]
 		var health: float = clampf(reals[R.HP * capacity + row] / max_hp, 0.0, 1.0) if max_hp > 0.0 else 0.0
 		var unit_power: float = reals[R.WEIGHT * capacity + row] * health * (1.0 + Config.AI_FIELD_TIER_POWER * unit.tier)
-		var klass := unit_class(bool(flags[I.MOUNTED * capacity + row]), reals[R.ATTACK_RANGE * capacity + row] > 0.0, unit.anti_cavalry)
+		var klass := unit_class(bool(flags[I.MOUNTED * capacity + row]), reals[R.ATTACK_RANGE * capacity + row] > 0.0, bool(flags[I.ANTI_CAVALRY * capacity + row]))
 		count[slot] += 1
 		power[slot] += unit_power
 		class_power[slot * Config.AI_CLASSES + klass] += unit_power
 		class_count[slot * Config.AI_CLASSES + klass] += 1
 		morale[slot] += unit.morale
 		base_morale[slot] += unit.base_morale
-		if unit.wavering: wavering[slot] += 1
+		if flags[I.WAVERING * capacity + row]: wavering[slot] += 1
 		if flags[I.MODE * capacity + row] == melee_mode and reals[R.PLAN_DISTANCE * capacity + row] <= Config.AI_FIELD_CONTACT_DISTANCE:
 			engaged[slot] += 1
 		var at := positions[row]
-		var facing: float = reals[R.FACING * capacity + row]
-		facings[slot] += Vector2(cos(facing), sin(facing))
+		if loose[slot]:
+			var facing: float = reals[R.FACING * capacity + row]
+			facings[slot] += Vector2(cos(facing), sin(facing))
 		position_sum[slot] += at
 		var lateral := at.dot(laterals[slot])
 		lateral_min[slot] = minf(lateral_min[slot], lateral)
