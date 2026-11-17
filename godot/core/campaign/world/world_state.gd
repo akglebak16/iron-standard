@@ -83,6 +83,9 @@ func dispose() -> void:
 		wars.player = null
 		wars.vassals = null
 		wars.threat = Callable()
+		wars.doomed = Callable()
+		wars.retake = Callable()
+	if undead != null: undead.dispose()
 	if ai != null: ai.dispose()
 	if clans != null: clans.siege = null
 	ai = null
@@ -139,6 +142,9 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.undead.announced.connect(func(t): state.log_world(t, JOURNAL_BAD))
 	state.undead.settlement_changed.connect(func(s): state.settlement_changed.emit(s))
 	state.ai.undead = state.undead
+	state.undead.set_field(func(x: float, y: float, f: String) -> float: return state.threat_map().influence(f, x, y))
+	state.wars.doomed = state.undead.doomed
+	state.wars.retake = state.undead.host_retake
 	state.clans = WorldClans.new(state.roster, state.wars, state.player)
 	state.clans.siege = state.siege
 	state.clans.init()
@@ -292,11 +298,14 @@ func hour_tick() -> void:
 	if clock.hour == 0:
 		_day_tick()
 	_threat_step += 1
+	undead.wave_tick()
 	ai.hour_tick()
 
 ## Threat map of the current world step (DESIGN.md §5.1, ADR-023). The first request after a step or an hour rebuilds
 ## it from the parties, so a loaded world sees exactly the map the saved one would have seen. It spends no RNG and is
-## not saved. Party goals (party_ai.gd, party_goals.gd) read it for risk, flight and alarms.
+## not saved. Party goals (party_ai.gd, party_goals.gd) read it for risk, flight and alarms, the operations of factions
+## (world_wars.gd) for threats at home, the director of the undead invasion (world_undead.gd) for living armies around
+## its targets.
 func threat_map() -> ThreatMap:
 	if threat == null:
 		threat = ThreatMap.new(PartyAI.WW, PartyAI.WH)

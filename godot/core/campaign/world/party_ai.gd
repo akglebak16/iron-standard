@@ -4,6 +4,7 @@ extends RefCounted
 ## Since stage 2a (docs/modules/ai/DESIGN.md §5.2, ADR-023) every party picks a goal through party_goals.gd — lords,
 ## faction vassals, the player's retinues (orders of world_vassals.gd are weight sets), bandits, caravans and the dead —
 ## and this file carries the goal out: routes, chases, arrivals. Faction campaigns are operations of world_wars.gd (stage 2b).
+## The dead follow the director of the invasion (stage 2c, world_undead.gd): their wave and front come in the context.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const Config = preload("res://core/campaign/config.gd")
@@ -25,6 +26,7 @@ var enemies: Callable = Callable()     # (faction) -> hostile factions on the th
 
 var _map_cache: RefCounted = null
 var _enemy_cache := {}
+var _doom_cache: Variant = null
 
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
@@ -41,6 +43,7 @@ func _init(r: Roster, p: RefCounted) -> void:
 	goals.passable = _passable
 	goals.threat_map = _threat
 	goals.enemies = _enemies_of
+	goals.doomed = _doomed
 
 ## Breaks the links to the world so a disposed campaign is freed.
 func dispose() -> void:
@@ -49,6 +52,7 @@ func dispose() -> void:
 	enemies = Callable()
 	_map_cache = null
 	_enemy_cache = {}
+	_doom_cache = null
 
 func _at_war(a: String, b: String) -> bool:
 	return Rules.at_war(a, b, roster.diplomatic_wars)
@@ -58,6 +62,12 @@ func _allies(p: Dictionary) -> float:
 
 func _ruins(f: String) -> Array:
 	return undead.ruins_for(f) if undead != null else []
+
+## Towns and castles the undead waves go for (stage 2c); cached per world step like the threat map.
+func _doomed() -> Dictionary:
+	if _doom_cache == null:
+		_doom_cache = undead.doomed() if undead != null else {}
+	return _doom_cache
 
 func _passable(c: Vector2) -> bool:
 	return roster.map.paths.passable_type(roster.map.paths.terr_at(c.x, c.y))
@@ -87,6 +97,7 @@ func _fresh() -> void:
 	goals.reset()
 	_map_cache = null
 	_enemy_cache = {}
+	_doom_cache = null
 
 func step(dh: float) -> void:
 	_fresh()
@@ -123,10 +134,11 @@ func hour_tick() -> void:
 	var m: RefCounted = _threat()
 	if m == null:
 		return
+	var doom := _doomed()
 	for s in roster.map.settles:
 		if s.kind == "camp":
 			continue
-		if m.threat(s.x, s.y, _enemies_of(String(s.fac))) >= Config.GOAL_ALARM_MIN_THREAT:
+		if doom.has(s.id) or m.threat(s.x, s.y, _enemies_of(String(s.fac))) >= Config.GOAL_ALARM_MIN_THREAT:
 			s.alarm = Config.GOAL_ALARM_HOURS
 		elif int(s.get("alarm", 0)) > 0:
 			s.alarm = int(s.alarm) - 1
@@ -210,6 +222,9 @@ func _context(p: Dictionary, ctx: Dictionary) -> Dictionary:
 		var c := roster.map.settlement_by_id(p.home) if p.home != null else {}
 		if not c.is_empty():
 			ctx.havens = [{"id": c.id, "x": c.x, "y": c.y}]
+	elif p.fac == Config.UNDEAD_FACTION and undead != null:
+		ctx.wave = undead.wave_of(p)
+		ctx.front = undead.front_of(p)
 	return ctx
 
 ## Re-evaluates the goal. Returns true when the party took a new goal this tick.
@@ -264,6 +279,14 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 	p.ga = 0.0
 	p.gs = c.score
 	p.wait = 0.0
+	if c.goal == "defend" and c.get("inside", false):
+		var t: Dictionary = roster.map.settlement_by_id(c.gid)  # the dead go for it: hold its walls from the inside
+		p.tid = null
+		p.tpl = false
+		p.sid = t.id
+		p.state = "travel"
+		roster.path_to(p, t.x, t.y)
+		return
 	match String(c.goal):
 		"hunt":
 			var pl: bool = c.gid == Goals.PLAYER_ID
@@ -277,7 +300,7 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 					skirmish.rally(p, t)
 		"flee":
 			_flee(p, Vector2(c.x, c.y), ctx)
-		"rest", "raid":
+		"rest", "raid", "assault":
 			var s: Dictionary = roster.map.settlement_by_id(c.gid)
 			p.tid = null
 			p.tpl = false
@@ -287,6 +310,8 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 				roster.path_to(p, s.x + roster.rnd(-15, 15), s.y + 24.0)
 			else:
 				roster.path_to(p, s.x, s.y)
+		"muster":
+			_roam_to(p, c.x, c.y, Config.UNDEAD_MUSTER_SPREAD)
 		"patrol", "defend":
 			var s: Dictionary = roster.map.settlement_by_id(c.gid)
 			var r := Config.GOAL_PATROL_OFFSET
@@ -318,6 +343,9 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 				if roster.path_to(p, clampf(c.x + cos(a) * r, Config.GOAL_MAP_MARGIN, WW - Config.GOAL_MAP_MARGIN), clampf(c.y + 22 + sin(a) * r, Config.GOAL_MAP_MARGIN, WH - Config.GOAL_MAP_MARGIN)):
 					p.state = "roam"
 		"roam":
+			if p.fac == Config.UNDEAD_FACTION:
+				_roam_to(p, c.x, c.y, Config.UNDEAD_ROAM_RANGE)  # around the front of its barrow
+				return
 			var h := roster.map.settlement_by_id(p.home) if p.home != null else {}
 			_roam_to(p, h.x if not h.is_empty() else p.x, h.y if not h.is_empty() else p.y, Config.GOAL_ROAM_RANGE)
 
@@ -459,6 +487,8 @@ func _arrived(p: Dictionary) -> void:
 				p.wait = float(Config.GOAL_DEFEND_WAIT)
 			"escort":
 				p.wait = Config.GOAL_WAIT_PER_THINK
+			"muster":
+				p.wait = float(Config.UNDEAD_MUSTER_WAIT)
 			_:
 				p.wait = float(roster.rint(2, 6)) if p.kind == "vassal" else 0.0
 
