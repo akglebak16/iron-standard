@@ -1,4 +1,5 @@
 extends RefCounted
+const CampaignConfig = preload("res://core/campaign/config.gd")
 ## Every non-player party on the map: lords, vassals, bandits, caravans and camp garrisons, plus their spawning (newWorld/hourTick in src/05_world.js).
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Generation = preload("res://core/troops/rules/generation.gd")
@@ -219,7 +220,7 @@ func speed_of(p: Dictionary) -> float:
 		m *= 1.3
 	if p.kind == "bandit":
 		m *= 1.04
-	return base * m
+	return base * m * CampaignConfig.OVERLAND_SPEED_MULTIPLIER
 
 func move_along(p: Dictionary, dh: float) -> bool:
 	var rem := speed_of(p) * dh

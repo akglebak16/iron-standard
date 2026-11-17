@@ -21,6 +21,7 @@ func _initialize() -> void:
 	for type in lose.left:
 		assert(lose.left[type] >= 0)
 	assert(AutoBattle.flee_chance(18.0, 18.0, false) == 0.45)
+	assert(is_equal_approx(AutoBattle.flee_chance(14.4, 13.6, false), 0.51))
 	assert(AutoBattle.flee_chance(40.0, 10.0, false) == 0.9)
 	assert(AutoBattle.flee_chance(10.0, 40.0, true) == 0.12)
 	assert(AutoBattle.relative_power(strong, weak, info)[0] == "Мы сильнее")

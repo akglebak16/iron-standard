@@ -1,4 +1,5 @@
 extends RefCounted
+const CampaignConfig = preload("res://core/campaign/config.gd")
 ## The player's party on the world map: position, route and walking speed (speedOf / moveAlong / pathTo in src/05_world.js).
 const Pathfinder = preload("res://core/campaign/world/pathfinder.gd")
 
@@ -44,7 +45,7 @@ func speed_of(paths: Pathfinder) -> float:
 		m *= 0.85
 	if paths.road[k] != 0:
 		m *= 1.3
-	return 18.0 * m
+	return 18.0 * m * CampaignConfig.OVERLAND_SPEED_MULTIPLIER
 
 ## Moves along the route; returns true once it is finished.
 func move_along(paths: Pathfinder, dh: float) -> bool:

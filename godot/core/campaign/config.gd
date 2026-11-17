@@ -1,5 +1,7 @@
 extends RefCounted
 
+const OVERLAND_SPEED_MULTIPLIER := 0.8
+
 const TROOP_GOLD_PER_TIER := 9
 const TROOP_BASE_GOLD := 6
 const BATTLE_GOLD_MIN := 0.7

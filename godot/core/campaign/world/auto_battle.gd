@@ -1,6 +1,7 @@
 extends RefCounted
 ## "Calculate the battle": resolves an encounter without playing it (autoResult in src/05c_logic.js, without companions yet).
 const Rules = preload("res://core/campaign/world/party_rules.gd")
+const CampaignConfig = preload("res://core/campaign/config.gd")
 
 ## Returns the same result shape a played battle produces: win, dead, wounded, left, enemyLeft, heroHp, xp...
 static func resolve(player_troops: Array, hero: Dictionary, enemy_troops: Array, info: Dictionary, rng: RandomNumberGenerator, survival := 0.0, enemy_mult := 1.0, allies := 0.0) -> Dictionary:
@@ -39,7 +40,8 @@ static func resolve(player_troops: Array, hero: Dictionary, enemy_troops: Array,
 
 ## Chance to break away from a hunting party (encFlee).
 static func flee_chance(player_speed: float, enemy_speed: float, is_camp: bool, perk_flee := 0.0) -> float:
-	return clampf(0.45 + (player_speed - enemy_speed) * 0.06 - (0.3 if is_camp else 0.0) + perk_flee, 0.12, 0.9)
+	var mobility_advantage := (player_speed - enemy_speed) / CampaignConfig.OVERLAND_SPEED_MULTIPLIER
+	return clampf(0.45 + mobility_advantage * 0.06 - (0.3 if is_camp else 0.0) + perk_flee, 0.12, 0.9)
 
 ## Relative strength label shown in the meeting dialog (relativePowerOf).
 static func relative_power(player_troops: Array, enemy_troops: Array, info: Dictionary) -> Array:
