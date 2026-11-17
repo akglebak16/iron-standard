@@ -22,7 +22,7 @@ func _process(_d: float) -> bool:
 				d._town.open_for(d.state, d.state.settlement_near(d.state.player.x, d.state.player.y, 80.0))
 			"ui_market":
 				d._town.open_for(d.state, d.state.settlement_near(d.state.player.x, d.state.player.y, 80.0))
-				d._town.current_tab = "market"
+				d._town.current_tab = "goods"
 				d._town.render()
 			"ui_hero":
 				d._party_window.open_for(d.state, "hero")

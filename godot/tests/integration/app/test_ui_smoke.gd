@@ -22,9 +22,6 @@ func _initialize() -> void:
 	var home: Dictionary = state.settlement_near(state.player.x, state.player.y, 80.0)
 	town.open_for(state, home)
 	assert(town.visible and town.body.get_child_count() > 2, "recruit tab lists recruits")
-	town.current_tab = "market"
-	town.render()
-	assert(town.body.get_child_count() > 5, "market lists food and gear")
 	town.current_tab = "goods"
 	town.render()
 	assert(town.body.get_child_count() > 10, "goods tab lists goods")
