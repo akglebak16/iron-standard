@@ -44,7 +44,7 @@ func render() -> void:
 	close_button.text = "Покинуть " + {"town": "город", "castle": "замок", "village": "деревню", "camp": "лагерь"}.get(settlement.kind, "поселение")
 	set_crest(settlement.fac)
 	sub_label.text = "%s · %s   ·   золото %d" % [SettlementLayer.KIND_NAMES.get(settlement.kind, ""), _factions.get_faction(settlement.fac).get("name", ""), p.gold]
-	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Товары"], ["market", "Снабжение"]]
+	var tabs: Array = [["recruit", "Рекруты"], ["goods", "Товары"]]
 	if settlement.kind == "town":
 		tabs.append(["tavern", "Таверна"])
 	if settlement.kind == "town" and settlement.fac in ["nord", "emp", "khan", "kin", "emi", "dom", "pact"]:
@@ -63,8 +63,6 @@ func render() -> void:
 		_tavern(p)
 	elif current_tab == "quests":
 		_quests(p)
-	elif current_tab == "market":
-		_market(p, fx)
 	elif current_tab == "goods":
 		_goods(p, fx)
 	else:
@@ -200,13 +198,6 @@ func _hold(p, fx: Dictionary) -> void:
 			{"sound": "click", "text": "Оставить", "call": func(): siege.gar_move(p, settlement, t.type, 1, true, cap)},
 			{"text": "×5", "call": func(): siege.gar_move(p, settlement, t.type, 5, true, cap)}])
 
-func _market(p, fx: Dictionary) -> void:
-	heading("Провизия")
-	note("В запасе %d порций. Отряду нужна порция на шестерых бойцов в день." % Economy.provisions(p))
-	for offer in Economy.FOOD_OFFERS:
-		row("%d порций" % offer[0], "%d зол." % offer[1], [{"sound": "coin", "text": "Купить", "disabled": p.gold < offer[1], "call": func(): Economy.buy_food(p, offer[0], offer[1])}])
-	note("Оружие, доспехи и коней продают на вкладке «Товары», надевают в окне отряда (вкладка «Снаряжение»).")
-
 func _goods(p, fx: Dictionary) -> void:
 	var market = state.market
 	if not market.has_market(settlement):
@@ -214,7 +205,7 @@ func _goods(p, fx: Dictionary) -> void:
 		return
 	var m: Dictionary = market.market_of(settlement, state.clock.day)
 	var men: int = Economy.troop_count(p.troops)
-	note("Обоз: %s из %d. Деньги торговца: %d." % [str(market.cargo_weight(p.inv)), market.cargo_cap(p, fx, men), m.gold])
+	note("Обоз: %s из %d. Деньги торговца: %d. Провизии в обозе на %d порций: еда, как и прочие товары, покупается здесь, отряду нужна порция на шестерых бойцов в день." % [str(market.cargo_weight(p.inv)), market.cargo_cap(p, fx, men), m.gold, Economy.provisions(p)])
 	_gear_trade(p, fx, m, men)
 	heading("Товары")
 	for id in market.goods:

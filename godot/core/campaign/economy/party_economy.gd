@@ -4,9 +4,9 @@ extends RefCounted
 const Config = preload("res://core/campaign/config.gd")
 
 const MK := 2.0
-## Portions one unit of a food good gives, eaten cheapest first.
+## Portions one unit of a food good gives, eaten cheapest first. `player.food` is only the leftover of an eaten unit
+## (and portions from old saves, where they were bought separately); food is bought as ordinary goods.
 const FOOD_VALUE := {"potato": 6, "grain": 6, "zurek": 12, "ale": 4}
-const FOOD_OFFERS := [[10, 22], [30, 60], [80, 150]]
 const GEAR_SLOTS := {"weapon": "melee", "armor": "body", "shield": "shield", "horse": "horse"}
 const GEAR_LABEL := {"weapon": "Оружие", "armor": "Доспех", "shield": "Щит", "horse": "Конь"}
 const ATTRS := {
@@ -108,13 +108,6 @@ static func eat(player: RefCounted, need: int) -> int:
 		player.food -= need
 		need = 0
 	return need
-
-static func buy_food(player: RefCounted, n: int, price: int) -> bool:
-	if not [n, price] in FOOD_OFFERS or player.gold < price:
-		return false
-	player.gold -= price
-	player.food += n
-	return true
 
 static func gear_next(hero: Dictionary, key: String, legacy: Dictionary, gear_catalog) -> Dictionary:
 	var ids: Array = legacy[key]
