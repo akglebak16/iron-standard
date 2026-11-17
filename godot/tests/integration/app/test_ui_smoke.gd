@@ -33,6 +33,14 @@ func _initialize() -> void:
 		assert((icon as TextureRect).texture != null, "every good has an icon")
 	var buy_buttons := grid.find_children("", "Button", true, false).filter(func(b): return b.text == "+1")
 	assert(buy_buttons.size() == state.market.goods.size(), "every good can be bought")
+	town._market_view = "gear"
+	town.render()
+	assert(town.body.find_child("GoodsTable", true, false) == null and town.body.find_child("MarketSwitch", true, false) != null, "the gear sub-tab hides goods")
+	var gear_table: Node = town.body.find_child("GearTable", true, false)
+	if gear_table != null:
+		for icon in gear_table.find_children("", "TextureRect", true, false):
+			assert((icon as TextureRect).texture != null, "every item has a picture")
+	town._market_view = "goods"
 	for tab in ["troops", "hero", "journal"]:
 		party.open_for(state, tab)
 		party.current_tab = tab
