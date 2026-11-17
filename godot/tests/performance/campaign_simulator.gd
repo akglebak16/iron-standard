@@ -9,6 +9,10 @@ extends RefCounted
 ## Since stage 2c it follows the undead crisis (DESIGN.md §5.5): where and how fast the dead go, what the living lose
 ## and retake, whether the invasion burns out or overruns the world, and how long undead parties stand idle. It listens
 ## to world_undead.announced (storms) and, when present, world_undead.wave (the director of the invasion).
+## Since stage 2d (the faction strategist, DESIGN.md §5.4) it measures diplomacy once a day: wars at once, the share of
+## neighbouring pairs at war (neighbours by world_wars.borders, which only reads the map), states at war with every
+## neighbour, the most fronts of one state and the war weariness when the world keeps it (world_wars.weary). It also
+## times every world hour and every day tick (hour 0: world_wars.war_day among others) as the game runs them.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -66,6 +70,8 @@ var _undead := {"armies": 0, "raids": 0, "party_hours": 0, "idle_hours": 0, "gat
 	"reach_sum": 0.0, "reach_days": 0, "front_max": 0.0, "ruin_campaigns": 0, "ruin_campaigns_won": 0}
 var _undead_seen := {}   # party id -> kind
 var _undead_stand := {}  # party id -> hours standing idle in a row
+var _diplo: Array = []  # a row a day at 12:00: wars, neighbour pairs at war, states at war with all neighbours, weariness
+var _tick_usec := {"hour": [], "day": []}  # cost of WorldState.hour_tick: ordinary hours and the day tick (hour 0)
 var _ops := {"campaigns": 0, "kept": 0, "lords_out": 0, "retreat_weak": 0, "retreat_home": 0, "relief": 0, "march_hours": 0, "march_share": 0.0}
 var heat_cols := 0
 var heat_rows := 0
@@ -99,7 +105,17 @@ static func run(seed_value: int, days: int) -> Dictionary:
 		return {}
 	var sim := new(w)
 	var start := Time.get_ticks_usec()
-	drive(w, days * 24, sim.observe_step, sim.observe_hour)
+	var step_cb := func(dh: float) -> void:
+		w.step(dh)
+		sim.observe_step()
+	var hour_cb := func() -> void:
+		var t0 := Time.get_ticks_usec()
+		var day_tick: bool = int(w.clock.hour) == 0
+		w.hour_tick()
+		sim._tick_usec["day" if day_tick else "hour"].append(Time.get_ticks_usec() - t0)
+		sim.observe_hour()
+	while int(w.hours_passed) < days * 24:
+		w.clock.advance(REAL_SECONDS_PER_CALL, step_cb, hour_cb)
 	sim.wall_usec = Time.get_ticks_usec() - start
 	return {"report": sim.report(seed_value, days), "world": w}
 
@@ -570,6 +586,48 @@ func _observe_day(day: int) -> void:
 		"undead_parties": undead_parties, "undead_troops": undead_troops, "undead_settlements": undead_n,
 		"undead_core_share": float(undead_core) / maxf(1.0, core_total),
 		"front_cells": front_cells, "fronts": fronts})
+	_observe_diplomacy(day)
+
+## Diplomacy once a day (stage 2d). Neighbours are pairs of living states with towns or castles within the reach of
+## world_wars.borders, the same test that allows a declaration of war.
+func _observe_diplomacy(day: int) -> void:
+	var alive: Array = world.wars.factions_alive()
+	var pairs := 0
+	var at_war := 0
+	var neighbours := {}
+	var hostile := {}
+	var fronts := {}
+	for i in alive.size():
+		for j in range(i + 1, alive.size()):
+			var a: String = alive[i]
+			var b: String = alive[j]
+			var war: bool = world.wars.at_war(a, b)
+			if war:
+				fronts[a] = int(fronts.get(a, 0)) + 1
+				fronts[b] = int(fronts.get(b, 0)) + 1
+			if not world.wars.borders(a, b):
+				continue
+			pairs += 1
+			for f in [a, b]:
+				neighbours[f] = int(neighbours.get(f, 0)) + 1
+				if war:
+					hostile[f] = int(hostile.get(f, 0)) + 1
+			if war:
+				at_war += 1
+	var all_out := 0
+	for f in alive:
+		if int(neighbours.get(f, 0)) >= 2 and int(hostile.get(f, 0)) == int(neighbours[f]):
+			all_out += 1
+	var most := 0
+	for f in fronts:
+		most = maxi(most, int(fronts[f]))
+	var weary := {}
+	var tired: Variant = world.wars.get("weary")
+	if tired is Dictionary:
+		for f in tired:
+			weary[f] = snappedf(float(tired[f]), 0.001)
+	_diplo.append({"day": day, "wars": world.wars.wars.size(), "pairs": pairs, "pairs_at_war": at_war,
+		"share": float(at_war) / maxf(1.0, pairs), "all_out": all_out, "most_fronts": most, "weary": weary})
 
 static func _percentile(values: Array, q: float) -> float:
 	if values.is_empty():
@@ -679,12 +737,18 @@ func report(seed_value: int, days: int) -> Dictionary:
 	var no_relief := sieges.filter(func(r): return not r.relief and r.helper_hours >= RELIEF_GRACE_HOURS)
 	var no_help := no_relief.filter(func(r): return not r.get("defended", false))
 	var declared := _war_log.filter(func(w): return not w.get("initial", false) and w.declared > 1)
+	var diplo := _diplo_summary()
 	var jitter := _jitter()
 	var lord_j: Dictionary = jitter.get("lord", {})
 	var summary := {
 		"seed": seed_value, "days": days, "hours": hours, "wall_seconds": wall_usec / 1e6,
 		"wars_declared": declared.size(), "wars_peace": peace.size(), "wars_ended": ended.size(), "war_days_mean": mean_dur,
 		"wars_ongoing": ongoing.size(),
+		"wars_at_once_mean": diplo.wars_mean, "wars_at_once_max": diplo.wars_max, "wars_day1": diplo.wars_day1, "wars_day50": diplo.wars_day50,
+		"neighbour_war_share": diplo.share_mean, "neighbour_war_share_first30": diplo.share_first30, "neighbour_war_share_day50": diplo.share_day50,
+		"all_neighbours_days": diplo.all_out_days, "most_fronts": diplo.most_fronts, "three_fronts_days": diplo.three_fronts_days,
+		"initial_wars_end_day": diplo.initial_end, "peace_days_mean": diplo.peace_mean, "weary_max": diplo.weary_max,
+		"hour_tick_usec": diplo.hour_usec, "hour_tick_p95_usec": diplo.hour_p95, "day_tick_usec": diplo.day_usec, "day_tick_p95_usec": diplo.day_p95,
 		"owner_changes": _owner_log.size(), "owner_changes_to_undead": _owner_log.filter(func(o): return o.to == "undead").size(),
 		"fallen": _fallen.map(func(f): return "%s@%d" % [f.fac, f.day]),
 		"undead_start_day": _crisis.start_day, "undead_end_day": _crisis.end_day, "undead_peak_troops": peak_troops,
@@ -733,6 +797,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"config": {"seed": seed_value, "days": days, "culture": CULTURE, "player": "away", "heat_cell": HEAT_CELL, "edge_margin": EDGE_MARGIN,
 			"jitter_limit_per_day": JITTER_LIMIT_PER_DAY, "relief_scan_radius": RELIEF_SCAN_RADIUS, "relief_grace_hours": RELIEF_GRACE_HOURS},
 		"wars": {"log": _war_log, "ongoing": ongoing},
+		"diplomacy": _diplo,
 		"owners": _owner_log,
 		"fallen": _fallen,
 		"undead": _crisis,
@@ -750,6 +815,67 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"settlements": world.map.settles.filter(func(s): return s.kind == "town" or s.kind == "castle").map(func(s): return {"x": s.x, "y": s.y, "kind": s.kind, "fac": s.fac}),
 		"colors": _colors(),
 	}
+
+## Day rows of _observe_diplomacy and the tick costs folded into summary numbers.
+func _diplo_summary() -> Dictionary:
+	var out := {"wars_mean": 0.0, "wars_max": 0, "wars_day1": 0, "wars_day50": -1, "share_mean": 0.0, "share_first30": 0.0,
+		"share_day50": -1.0, "all_out_days": 0, "most_fronts": 0, "three_fronts_days": 0, "initial_end": -1, "peace_mean": -1.0,
+		"weary_max": 0.0, "hour_usec": 0.0, "hour_p95": 0.0, "day_usec": 0.0, "day_p95": 0.0}
+	var first30 := 0
+	for d in _diplo:
+		out.wars_mean += float(d.wars)
+		out.share_mean += float(d.share)
+		out.wars_max = maxi(out.wars_max, int(d.wars))
+		out.most_fronts = maxi(out.most_fronts, int(d.most_fronts))
+		if int(d.all_out) > 0:
+			out.all_out_days += 1
+		if int(d.most_fronts) >= 3:
+			out.three_fronts_days += 1
+		if int(d.day) == 1:
+			out.wars_day1 = int(d.wars)
+		if int(d.day) == 50:
+			out.wars_day50 = int(d.wars)
+			out.share_day50 = float(d.share)
+		if int(d.day) <= 30:
+			out.share_first30 += float(d.share)
+			first30 += 1
+		for f in d.weary:
+			out.weary_max = maxf(out.weary_max, float(d.weary[f]))
+	out.wars_mean /= maxf(1.0, _diplo.size())
+	out.share_mean /= maxf(1.0, _diplo.size())
+	out.share_first30 /= maxf(1.0, first30)
+	# the last of the wars the world started with ended on this day (or is still on)
+	for w in _war_log:
+		if w.get("initial", false) or int(w.declared) <= 1:
+			out.initial_end = maxi(out.initial_end, int(w.ended) if int(w.ended) >= 0 else _day())
+	for k in _wars:
+		if int(_wars[k]) <= 1:
+			out.initial_end = _day()
+	# days of peace between the end of a war and the next war of the same pair
+	var by_key := {}
+	for w in _war_log:
+		if not by_key.has(w.key):
+			by_key[w.key] = []
+		by_key[w.key].append(w)
+	var gaps := 0
+	var gap_sum := 0.0
+	for k in by_key:
+		var list: Array = by_key[k]
+		list.sort_custom(func(x, y): return int(x.declared) < int(y.declared))
+		for i in range(1, list.size()):
+			if int(list[i - 1].ended) >= 0:
+				gaps += 1
+				gap_sum += float(int(list[i].declared) - int(list[i - 1].ended))
+	if gaps > 0:
+		out.peace_mean = gap_sum / gaps
+	for kind in ["hour", "day"]:
+		var v: Array = _tick_usec[kind]
+		var sum := 0.0
+		for x in v:
+			sum += float(x)
+		out[kind + "_usec"] = sum / maxf(1.0, v.size())
+		out[kind + "_p95"] = _percentile(v, 0.95)
+	return out
 
 func _colors() -> Dictionary:
 	var out := {}
