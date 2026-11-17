@@ -23,6 +23,19 @@ func build(player: RefCounted, player_look: Dictionary, gear: RefCounted = null)
 	_resolved_look.clear()
 	_figure.clear()
 
+var _frozen: Variant = null  # {p, pts} while the simulation thread owns the world (world_sim_thread.gd)
+
+## The world goes to the simulation thread: remember where the player is and his route. Call while owning the world.
+func freeze() -> void:
+	var pts := PackedVector2Array()
+	if party.has_route():
+		for i in range(party.pi, party.path.size()):
+			pts.append(party.path[i])
+	_frozen = {"p": Vector2(party.x, party.y), "pts": pts}
+
+func thaw() -> void:
+	_frozen = null
+
 func _update_figure() -> void:
 	var hero: Dictionary = party.hero
 	var equipment: Variant = hero.get("eq")
@@ -45,19 +58,22 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if party == null:
 		return
-	var p := Vector2(party.x, party.y)
+	var p: Vector2 = _frozen.p if _frozen != null else Vector2(party.x, party.y)
 	if motion != null:
 		p = motion.at(-1, p)
-	if party.has_route():
-		var pts := PackedVector2Array([p])
+	var route: PackedVector2Array = _frozen.pts if _frozen != null else PackedVector2Array()
+	if _frozen == null and party.has_route():
 		for i in range(party.pi, party.path.size()):
-			pts.append(party.path[i])
+			route.append(party.path[i])
+	if not route.is_empty():
+		var pts := PackedVector2Array([p])
+		pts.append_array(route)
 		_dashed(pts, Color(20 / 255.0, 12 / 255.0, 4 / 255.0, 0.8), 5.0)
 		_dashed(pts, Color("#ffe9a0"), 2.6)
 		draw_arc(pts[pts.size() - 1], 9.0, 0.0, TAU, 20, Color("#ffe9a0"), 2.6, true)
 	draw_colored_polygon(Brush.ellipse(p.x + 2, p.y + 3, 24, 8, 16), Color(0, 0, 0, 0.3))
 	draw_arc(p + Vector2(0, 1), 26.0, 0.0, TAU, 28, Color("#ffd86a"), 2.0, true)
-	if gear_catalog != null:
+	if gear_catalog != null and _frozen == null:
 		_update_figure()
 	if not _figure.is_empty():
 		var k := 0.4

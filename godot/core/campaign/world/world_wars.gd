@@ -43,7 +43,6 @@ var threat: Callable = Callable() # (x, y, faction) -> enemy strength there on t
 var doomed: Callable = Callable() # () -> {settlement id: mode}: targets of the undead waves (WorldUndead), optional
 var retake: Callable = Callable() # (host, settlement) -> bool: a host storms its ruins held by the dead (WorldUndead), optional
 var ops := CampaignOps.new()
-var slicer: RefCounted = null  # SliceBudget of the world, optional: war_hour() may rest between factions and routes (awaited)
 
 func _init(world_map: WorldMap, party_roster: Roster) -> void:
 	map = world_map
@@ -209,16 +208,10 @@ func war_hour() -> void:
 	_sg_hour()
 	if hour % 2 == 0:
 		for f in factions_alive():
-			await _campaign(f)
-			await _rest_point()
+			_campaign(f)
 		for s in map.settles:
 			if s.get("siege") != null:
 				_siege_tick(s)
-
-## A point where a sliced world step may rest until the next frame (slice_budget.gd).
-func _rest_point() -> void:
-	if slicer != null and slicer.due():
-		await slicer.next_frame()
 
 func _party_ids(c: Dictionary) -> Array:
 	return c.army.map(func(id): return roster.party_by_id(id)).filter(func(p): return not p.is_empty() and p.get("army", false))
@@ -256,7 +249,7 @@ func _campaign(f: String) -> void:
 	var enemies := _foes_of(f)
 	var c: Variant = campaigns.get(f)
 	if c != null:
-		await _run_campaign(f, c, enemies)
+		_run_campaign(f, c, enemies)
 		return
 	if hour % 6 != 0:
 		return
@@ -316,12 +309,10 @@ func _campaign(f: String) -> void:
 		p.arrived = false
 		p.hide = false
 		p.wait = 0.0
-	await _rest_point()
-	await _go_co(marshal, best_ms)
+	_go(marshal, best_ms)
 	for p in army:
 		if p != marshal:
-			await _rest_point()
-			await _follow(p, marshal)
+			_follow(p, marshal)
 	var ruin := ruin_ids.has(best.id)
 	if best.fac == Config.PLAYER_FACTION:
 		holding_news.emit(best, "%s созывает войска: поход на твой %s %s, ведёт %s." % [_name(f), _kind_name(best), best.name, marshal.name], false)
@@ -367,16 +358,14 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 			if (at_rally and joined >= ceili(followers.size() * Config.OP_MUSTER_SHARE)) or now_h() - int(c.t0) > Config.OP_MUSTER_HOURS:
 				c.state = "march"
 				c.t1 = now_h()
-				await _go_co(marshal, t)
+				_go(marshal, t)
 				for p in followers:
-					await _rest_point()
-					await _follow(p, marshal)
+					_follow(p, marshal)
 			else:
 				if not at_rally and _idle(marshal):
-					await _go_co(marshal, rally)
+					_go(marshal, rally)
 				for p in followers:
-					await _rest_point()
-					await _follow(p, marshal)
+					_follow(p, marshal)
 		"march":
 			var near := army.filter(func(p): return _dist(p, t) < Config.OP_SIEGE_GATHER)
 			if (_dist(marshal, t) < Config.OP_SIEGE_REACH and near.size() >= ceili(army.size() * 0.5)) or now_h() - int(c.t1) > Config.OP_MARCH_HOURS:
@@ -391,14 +380,13 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 			if keep_up < ceili(followers.size() * Config.OP_MARCH_TOGETHER) and not close:
 				_halt(marshal)  # the marshal waits for the host
 			elif _idle(marshal):
-				await _go_co(marshal, t)
+				_go(marshal, t)
 			for p in followers:
-				await _rest_point()
 				if close:
 					if _idle(p) and _dist(p, t) >= Config.OP_SIEGE_GATHER:
-						await _go_co(p, t)
+						_go(p, t)
 				else:
-					await _follow(p, marshal)
+					_follow(p, marshal)
 		"siege":
 			if t.get("siege") == null:
 				c.state = "rest"
@@ -406,7 +394,7 @@ func _run_campaign(f: String, c: Dictionary, enemies: Array) -> void:
 			else:
 				for p in army:  # stragglers join the siege lines
 					if _idle(p) and _dist(p, t) >= 90.0:
-						await _go_co(p, t)
+						_go(p, t)
 		"rest":
 			if now_h() - int(c.t2) > 72:
 				operation.emit({"what": "end", "f": f, "why": "rested", "state": "rest", "hours": now_h() - int(c.t0)})
@@ -438,7 +426,7 @@ func _follow(p: Dictionary, marshal: Dictionary) -> void:
 	p.sid = null
 	p.tid = null
 	p.hide = false
-	if not await roster.path_to_co(p, marshal.x + roster.rnd(-20, 20), marshal.y + roster.rnd(10, 30)):
+	if not roster.path_to(p, marshal.x + roster.rnd(-20, 20), marshal.y + roster.rnd(10, 30)):
 		p.path = []
 
 func _halt(p: Dictionary) -> void:
@@ -462,18 +450,6 @@ func _retreat(f: String, c: Dictionary, t: Dictionary, why: String, home: Dictio
 	_end_campaign(f)
 	if not home.is_empty():
 		_start_relief(home, home.siege, _besiegers(home), Config.OP_RECALL_RANGE)
-
-## _go for the campaign loop (awaited): the route search may rest between frames.
-func _go_co(p: Dictionary, s: Dictionary) -> void:
-	if s.is_empty():
-		return
-	p.state = "travel"
-	p.sid = s.id
-	p.tid = null
-	if not await roster.path_to_co(p, s.x + roster.rnd(-26, 26), s.y + roster.rnd(18, 40)):
-		p.path = []
-	p.arrived = false
-	p.hide = false
 
 func _go(p: Dictionary, s: Dictionary) -> void:
 	if s.is_empty():

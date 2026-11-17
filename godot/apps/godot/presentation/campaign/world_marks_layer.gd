@@ -19,9 +19,12 @@ func build(world_state: RefCounted) -> void:
 func show_quest_target(x: float, y: float) -> void:
 	_quest_mark = {"x": x, "y": y, "t0": _time}
 
+var frozen := false  # the simulation thread owns the world: keep the last picture, read nothing
+
 func _process(delta: float) -> void:
 	_time += delta
-	queue_redraw()
+	if not frozen:
+		queue_redraw()
 
 func _label(text: String, x: float, y: float, color: Color, size: int) -> void:
 	var font := preload("res://apps/godot/visuals/game_theme.gd").BODY_BOLD
@@ -60,7 +63,7 @@ func _route_finish(k: float) -> void:
 	draw_set_transform(Vector2.ZERO)
 
 func _draw() -> void:
-	if state == null:
+	if state == null or frozen:
 		return
 	var zoom: float = get_viewport().get_canvas_transform().get_scale().x
 	var k := 1.0 / maxf(0.2, zoom)

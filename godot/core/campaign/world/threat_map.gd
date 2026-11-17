@@ -51,37 +51,7 @@ func rebuild(list: Array, hour := -1) -> void:
 		layers[f] = grid
 	built_hour = hour
 
-## rebuild() that rests between parties when the world slice budget (slicer, SliceBudget) is spent; the caller awaits it.
-## The layers are swapped in at the end, so nobody sees a half-built map. Keep the two in step with each other.
-func rebuild_co(list: Array, hour: int, slicer) -> void:
-	var by_faction := {}
-	for s in list:
-		if float(s.strength) <= 0.0:
-			continue
-		var f := String(s.fac)
-		if not by_faction.has(f):
-			by_faction[f] = []
-		by_faction[f].append(s)
-	var fresh := {}
-	var cells := 0
-	var count := 0
-	var keys := by_faction.keys()
-	keys.sort()
-	for f in keys:
-		var grid := PackedFloat32Array()
-		grid.resize(cols * rows)
-		for s in by_faction[f]:
-			cells += _stamp(grid, float(s.x), float(s.y), float(s.strength))
-			count += 1
-			if slicer != null and slicer.due():
-				await slicer.next_frame()
-		fresh[f] = grid
-	layers = fresh
-	stamped_cells = cells
-	sources = count
-	built_hour = hour
-
-func _stamp(grid: PackedFloat32Array, x: float, y: float, strength: float) -> int:
+func _stamp(grid: PackedFloat32Array, x: float, y: float, strength: float) -> void:
 	var c0 := maxi(0, floori((x - radius) / cell_size))
 	var c1 := mini(cols - 1, floori((x + radius) / cell_size))
 	var r0 := maxi(0, floori((y - radius) / cell_size))
@@ -92,11 +62,9 @@ func _stamp(grid: PackedFloat32Array, x: float, y: float, strength: float) -> in
 		for cx in range(c0, c1 + 1):
 			var dx := (cx + 0.5) * cell_size - x
 			var d := sqrt(dx * dx + dy * dy)
+			stamped_cells += 1
 			if d < radius:
 				grid[row + cx] += strength * (1.0 - d / radius)
-	var visited := (c1 - c0 + 1) * (r1 - r0 + 1)
-	stamped_cells += visited
-	return visited
 
 func factions() -> Array:
 	var keys := layers.keys()

@@ -154,7 +154,7 @@ func _check_storm() -> void:
 
 ## Goals of undead parties come from their wave and front (party_goals.gd).
 func _check_goals_of_the_dead() -> void:
-	var g: Variant = Goals.new()
+	var g := Goals.new()
 	var settles := [_place(1, "town", "aa", 1000, 0), _place(2, "village", "aa", 900, 100), _place(3, "village", "aa", 3000, 0),
 		_place(4, "village", "aa", 950, 0, {"burnt": 5}), _place(5, "village", DEAD, 1000, 50)]
 	var parties: Array = []
@@ -167,7 +167,7 @@ func _check_goals_of_the_dead() -> void:
 	var army := {"id": 10, "kind": "dead", "fac": DEAD, "s": 1000.0, "x": 0.0, "y": 0.0, "troops": [], "path": [], "pi": 0, "state": "idle", "hide": false}
 	parties.append(army)
 	var wave := {"mode": "gather", "tid": 1, "x": 1000.0, "y": 0.0, "rx": 740.0, "ry": 0.0}
-	var c = g.candidates(army, {"wave": wave, "front": {"x": 1000.0, "y": 0.0}})
+	var c := g.candidates(army, {"wave": wave, "front": {"x": 1000.0, "y": 0.0}})
 	assert(c[0].goal == "muster" and c[0].gid == 1 and is_equal_approx(c[0].x, 740.0), "a gathering army goes to the rally point: %s" % [c])
 	var far_score: float = c[0].score
 	army.x = 740.0
@@ -190,7 +190,7 @@ func _check_goals_of_the_dead() -> void:
 	var raid := {"id": 12, "kind": "raid", "fac": DEAD, "s": 100.0, "x": 800.0, "y": 0.0, "troops": [], "path": [], "pi": 0, "state": "idle", "hide": false}
 	parties.append(raid)
 	c = g.candidates(raid, {"front": {"x": 1000.0, "y": 0.0}})
-	var burns = c.filter(func(x): return x.goal == "raid")
+	var burns := c.filter(func(x): return x.goal == "raid")
 	assert(burns.size() == 1 and burns[0].gid == 2, "raids burn living villages ahead of the wave, not burnt ones, not far ones: %s" % [burns])
 	assert(c.any(func(x): return x.goal == "roam" and is_equal_approx(x.x, 1000.0)), "with nothing better they roam around the front")
 	settles[1].burnt = 3
@@ -201,7 +201,7 @@ func _check_goals_of_the_dead() -> void:
 
 ## The living defend from the inside the towns and castles the dead go for (party_goals.gd _defend, campaign_ops alerts).
 func _check_defence_of_the_living() -> void:
-	var g: Variant = Goals.new()
+	var g := Goals.new()
 	var town := _place(1, "town", "aa", 300, 0)
 	var quiet := _place(2, "town", "aa", 0, 300)
 	var village := _place(3, "village", "aa", 100, 0)
@@ -214,8 +214,8 @@ func _check_defence_of_the_living() -> void:
 	var lord := {"id": 20, "kind": "lord", "fac": "aa", "s": 500.0, "x": 0.0, "y": 0.0, "troops": [{"type": "t", "n": 330}], "path": [], "pi": 0, "state": "idle", "hide": false}
 	assert(not g.candidates(lord).any(func(x): return x.goal == "defend"), "nothing to defend in quiet lands")
 	g.doomed = func(): return {1: "gather", 3: "gather"}
-	var c = g.candidates(lord)
-	var defend = c.filter(func(x): return x.goal == "defend")
+	var c := g.candidates(lord)
+	var defend := c.filter(func(x): return x.goal == "defend")
 	assert(defend.size() == 1 and defend[0].gid == 1 and defend[0].inside, "the doomed town is defended from the inside: %s" % [defend])
 	assert(c[0].goal == "defend", "it outweighs patrols and rest")
 	var ops := Ops.new()
