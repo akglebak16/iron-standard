@@ -7,6 +7,7 @@ void register_column_kernel();
 void register_battle_sprites();
 void register_battle_effects();
 void register_overworld_render_probe();
+void register_overworld_trial();
 void initialize_iron(ModuleInitializationLevel level) {
   if (level != MODULE_INITIALIZATION_LEVEL_SCENE)
     return;
@@ -16,6 +17,7 @@ void initialize_iron(ModuleInitializationLevel level) {
   register_battle_sprites();
   register_battle_effects();
   register_overworld_render_probe();
+  register_overworld_trial();
 }
 void terminate_iron(ModuleInitializationLevel) {}
 } // namespace godot

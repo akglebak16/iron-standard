@@ -27,7 +27,7 @@ async function main() {
  const outputPaths=[]; const queue=[];
  for(const source of inputs){
   const id=crypto.createHash('sha256').update(source).digest('hex').slice(0,16);const out=path.join(objects,id+'.o');outputPaths.push(out);
-  const deps=source.startsWith(root)?[source,...files(path.join(root,'core/battle'),'.hpp'),...files(path.join(root,'runtime'),'.hpp'),...files(path.join(root,'apps/godot'),'.hpp')]:[source];
+  const deps=source.startsWith(root)?[source,...files(path.join(root,'core/battle'),'.hpp'),...files(path.join(root,'core/campaign'),'.hpp'),...files(path.join(root,'runtime'),'.hpp'),...files(path.join(root,'apps/godot'),'.hpp')]:[source];
   const fingerprint=crypto.createHash('sha256').update(generatorHash+flags.join('\0')+deps.map(f=>fs.readFileSync(f)).join('\0')).digest('hex');
   if(!fs.existsSync(out)||!fs.existsSync(out+'.hash')||fs.readFileSync(out+'.hash','utf8')!==fingerprint)queue.push({source,out,fingerprint});
  }

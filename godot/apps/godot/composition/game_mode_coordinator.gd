@@ -11,6 +11,12 @@ var _profile_campaign_start := false
 
 var _last_quick := {}
 func _ready() -> void:
+	if "--overworld-trial" in OS.get_cmdline_user_args():
+		add_child(load("res://apps/godot/presentation/overworld/overworld_trial.tscn").instantiate())
+		return
+	if "--overworld-benchmark" in OS.get_cmdline_user_args():
+		add_child(load("res://tests/performance/overworld_trial_benchmark.gd").new())
+		return
 	if "--view-benchmark" in OS.get_cmdline_user_args():
 		add_child(load("res://tests/performance/view_benchmark.gd").new())
 		return
