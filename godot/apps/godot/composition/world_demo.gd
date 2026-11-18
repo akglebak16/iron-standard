@@ -143,6 +143,8 @@ func _ready() -> void:
 		loading.show_error("Не удалось открыть данные кампании.")
 		return
 	if GameOptions.continue_game:
+		loading.show_stage("Загружаем сохранение…")
+		await get_tree().process_frame
 		var loaded := SaveSlots.load_slot(data, GameOptions.load_slot)
 		state = loaded.state
 		if state == null:
