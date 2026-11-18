@@ -5,7 +5,7 @@
 ## Прочитай перед работой
 1. `shareness/README.md` — как устроена общая память и как её пополнять.
 2. `shareness/lessons.md` — решения владельца и грабли, на которые уже наступали.
-3. Нужный навык из `shareness/skills/*/SKILL.md`: `build-and-test`, `git-flow`, `changelog`, `graphics`, `godot-module-placement`.
+3. Нужный навык из `shareness/skills/*/SKILL.md`: `build-and-test`, `git-flow`, `changelog`, `graphics`, `godot-module-placement`, `unit-parts`.
 4. `godot/docs/README.md`, затем [Blueprint](godot/docs/architecture/BLUEPRINT.md), [план миграции](godot/docs/architecture/MIGRATION.md) и [правила разработки](godot/docs/architecture/DEVELOPMENT.md). Соблюдай границы `modules.json`, требования `requirements.json` и ADR. Изменение архитектурного контракта требует ADR и автоматической проверки.
 
 ## Жёсткие правила
