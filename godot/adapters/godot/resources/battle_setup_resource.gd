@@ -25,6 +25,7 @@ const FACTION_RESERVE_WAVES := ["undead"]
 @export var hero_profile: Dictionary = {} # Empty keeps the existing troop-based preview hero.
 @export var companion_profiles: Array[Dictionary] = [] # All hired companions, including injured ones.
 @export var hero_position : Vector2 = Vector2.ZERO
+@export var terrain: Dictionary = {} # TERRAIN.md 4.1; empty is the open field.
 @export var player_ai_profile: String = Config.AI_PROFILE_PLAYER # ADR-022: empty follows the player's orders.
 @export var enemy_ai_profile: String = Config.AI_PROFILE_REFERENCE
 

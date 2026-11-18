@@ -2,6 +2,7 @@ extends RefCounted
 ## Glue between the world map and the battle: builds a battle for a meeting and applies the outcome to the world.
 const Setup = preload("res://core/battle/data/battle_setup.gd")
 const BattleConfig = preload("res://core/battle/config.gd")
+const BattleTerrainWindow = preload("res://core/campaign/application/battle_terrain_window.gd")
 const Catalog = preload("res://core/troops/data/catalog.gd")
 const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
 const GoodsCatalog = preload("res://core/campaign/data/goods_catalog.gd")
@@ -57,6 +58,8 @@ func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> 
 	var s := Setup.new()
 	s.seed = rng.randi_range(1, 1000000000)
 	s.biome = state.map.terrain.biome_name(state.player.x, state.player.y)
+	var at := Vector2(state.player.x, state.player.y)
+	s.terrain = BattleTerrainWindow.describe(state.map, at, Vector2(float(opponent.get("x", at.x)), float(opponent.get("y", at.y))))
 	s.player_faction = state.player.culture
 	s.enemy_faction = opponent.fac
 	s.player_army.assign(merged(state.player.troops, allies))

@@ -33,3 +33,6 @@ func densest_ready(columns: RefCounted, side: int, low_x: float, high_x: float, 
 
 func projectile_candidates(columns: RefCounted, impacts: PackedVector2Array, arena: Vector2, padding: float, height: float, cell: float) -> Array:
 	return _kernel.projectile_candidates(_values(columns), impacts, arena, padding, height, cell)
+
+func terrain_cells(cover: PackedByteArray, elevation: PackedByteArray, width: int, cell: float, points: PackedVector2Array) -> PackedInt32Array:
+	return _kernel.terrain_cells(cover, elevation, width, cell, points)

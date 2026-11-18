@@ -25,6 +25,7 @@ const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Movement = preload("res://adapters/godot/native/movement.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
+const Templates = preload("res://core/battle/data/terrain_templates.gd")
 
 const VERSION := 5 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0).
 const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears"]
@@ -54,7 +55,7 @@ const CONTACT_ATTACKS := [Event.Attack.MELEE, Event.Attack.CHARGE, Event.Attack.
 static func default_options() -> Dictionary:
 	return {"scenarios": SCENARIOS.duplicate(), "sizes": [100], "runs": 4, "seed": 4242, "max_seconds": 240.0,
 		"profiles": [Config.AI_PROFILE_REFERENCE, Config.AI_PROFILE_REFERENCE], "backend": "native",
-		"mirror": false, "phase_profile": true}
+		"mirror": false, "phase_profile": true, "terrain": ""}
 
 func _initialize() -> void:
 	var options := default_options()
@@ -68,6 +69,7 @@ func _initialize() -> void:
 		elif arg.begins_with("--profiles="): options.profiles = Array(arg.trim_prefix("--profiles=").split(","))
 		elif arg.begins_with("--backend="): options.backend = arg.trim_prefix("--backend=")
 		elif arg == "--mirror": options.mirror = true
+		elif arg.begins_with("--terrain="): options.terrain = arg.trim_prefix("--terrain=") # TERRAIN Р0б: a field template.
 		elif arg == "--no-phase-profile": options.phase_profile = false
 		elif arg.begins_with("--out="): out = arg.trim_prefix("--out=")
 	var problem := validate(options)
@@ -125,7 +127,7 @@ static func run_matrix(options: Dictionary, catalog: Catalog) -> Dictionary:
 		"options": options.duplicate(true), "cells": cells,
 		"note": "Headless arena; AI phase times are diagnostic samples, not the release budget."}
 
-static func setup_for(scenario: String, size: int, seed: int, profiles: Array, swapped: bool) -> Setup:
+static func setup_for(scenario: String, size: int, seed: int, profiles: Array, swapped: bool, options_terrain := "") -> Setup:
 	var setup: Setup = load("res://content/scenarios/demo_siege.tres" if scenario == "siege" else "res://content/scenarios/demo_battle.tres").to_setup()
 	setup.seed = seed
 	setup.hero_profile.clear()
@@ -139,6 +141,7 @@ static func setup_for(scenario: String, size: int, seed: int, profiles: Array, s
 	setup.enemy_army.assign(armies[sides[1]] if scenario != "siege" else armies[1])
 	setup.player_ai_profile = profiles[1 if swapped else 0]
 	setup.enemy_ai_profile = profiles[0 if swapped else 1]
+	setup.terrain = Templates.sample(str(options_terrain)) if scenario != "siege" else {}
 	if scenario == "kite":
 		setup.player_ai_profile = Config.AI_PROFILE_PLAYER
 		setup.enemy_ai_profile = profiles[1]
@@ -169,7 +172,7 @@ static func _armies(scenario: String, size: int) -> Array:
 
 ## One battle to the decision or to max_seconds. Metrics only read the state and the events.
 static func run_battle(scenario: String, size: int, seed: int, options: Dictionary, catalog: Catalog, swapped: bool = false) -> Dictionary:
-	var setup := setup_for(scenario, size, seed, options.profiles, swapped)
+	var setup := setup_for(scenario, size, seed, options.profiles, swapped, str(options.get("terrain", "")))
 	var native: bool = options.backend == "native"
 	var session = Factory.create(setup, catalog, null, null, null, Contacts.create() if native else Callable(),
 		Movement.create() if native else Callable(), Columns.create() if native else null)
@@ -262,7 +265,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		"never_engaged": [float(never[0]) / initial[0], float(never[1]) / initial[1]],
 		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
 		"contact_seconds": contact_at, "stuck": [float(stuck_sides[0]) / initial[0], float(stuck_sides[1]) / initial[1]],
-		"arena_size": [state.arena_size.x, state.arena_size.y],
+		"arena_size": [state.arena_size.x, state.arena_size.y], "terrain": state.terrain_template,
 		"wall_ms": Time.get_ticks_msec() - started}
 	result.doctrine = {"rallies": rallies}
 	for key in DOCTRINE_MODES:
@@ -608,6 +611,7 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		summary[key] = [sums[key][0] / count, sums[key][1] / count]
 	summary.contact_seconds = contact[0] / contact[1] if contact[1] > 0 else -1.0
 	if not runs.is_empty() and runs[0].has("arena_size"): summary.arena_size = runs[0].arena_size
+	if not runs.is_empty(): summary.terrain = runs[0].get("terrain", "open")
 	if doctrine_runs > 0:
 		for key in doctrine:
 			for side in 2: doctrine[key][side] /= doctrine_runs
@@ -641,7 +645,7 @@ static func table(report: Dictionary) -> String:
 			s.losses[0], s.losses[1], s.fled[0], s.fled[1], s.never_engaged[0], s.never_engaged[1],
 			s.idle_time[0], s.idle_time[1], s.duration_seconds, s.ai_phase_mean_ms, s.ai_phase_worst_p95_ms])
 		if s.has("arena_size"):
-			lines.append("  field %dx%d: first melee contact %.1f s, stuck %.3f/%.3f" % [int(s.arena_size[0]), int(s.arena_size[1]), s.contact_seconds, s.stuck[0], s.stuck[1]])
+			lines.append("  field %dx%d %s: first melee contact %.1f s, stuck %.3f/%.3f" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.stuck[0], s.stuck[1]])
 		if s.has("volleys"):
 			var v: Dictionary = s.volleys
 			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])

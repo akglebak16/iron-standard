@@ -16,7 +16,7 @@ const CompanionCatalog = preload("res://core/characters/data/companion_catalog.g
 const CompanionProfile = preload("res://core/characters/rules/companion_profile.gd")
 const CompanionBuilder = preload("res://core/battle/data/companion_builder.gd")
 const SiegeSetup = preload("res://core/battle/data/siege_setup.gd")
-const VegetationSetup = preload("res://core/battle/data/vegetation_setup.gd")
+const TerrainTemplates = preload("res://core/battle/data/terrain_templates.gd")
 const AiProfiles = preload("res://core/battle/simulation/ai/profiles.gd")
 const ArenaLayout = preload("res://core/battle/rules/arena_layout.gd")
 
@@ -44,7 +44,6 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 		return null
 	if setup.siege:
 		SiegeSetup.apply(state, party.siege_skill, setup.wall_damage, setup.wall_defense, setup.castle, setup.seed if setup.seed != 0 else 7)
-	state.set_plants(VegetationSetup.create(state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF))
 	var defender_morale := roundf(Config.SIEGE_DEFENDER_MORALE * (1.0 - state.siege_skill)) if setup.siege else 0.0
 	if not ArmyBuilder.spawn(state, 1, setup.enemy_army, setup.enemy_faction, catalog, rng, enemy_cap, setup.enemy_leader_name, defender_morale, setup.uses_reserve_waves(setup.enemy_faction)):
 		return null
@@ -52,6 +51,7 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	if dialogue == null:
 		return null
 	state.place_units()
+	_lay_terrain(setup, state)
 	var hero := _create_hero(setup, troop, state, gear_catalog, perk_catalog)
 	if hero == null:
 		return null
@@ -98,6 +98,18 @@ static func _spawn_companions(state: State, fit: Array[Dictionary], gear_catalog
 
 ## Builds the player's hero from the preview troop and, when a profile is set, applies its
 ## gear, perks and the morale and damage bonus it gives to allies. Returns null when invalid.
+## TERRAIN.md 4 (stage Р0б): the template of the description fills the field by seed. Laid after the fighters stand,
+## so new trees keep off the formations; it reads no RNG, and an empty description gives VegetationSetup's field.
+static func _lay_terrain(setup: Setup, state: State) -> void:
+	var occupied := PackedVector2Array()
+	if not setup.terrain.is_empty():
+		for unit in state.units:
+			occupied.append(unit.position)
+	var field := TerrainTemplates.build(setup.terrain, state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF, occupied)
+	state.terrain = field.grid
+	state.terrain_template = field.template
+	state.set_plants(field.plants)
+
 ## TERRAIN.md 5 (stage Р0а): the field for the larger army on it. A siege keeps the base field: the walls, gates and
 ## siege placement are laid out for it.
 static func arena_for(setup: Setup, player_cap: int, enemy_cap: int) -> Vector2:
