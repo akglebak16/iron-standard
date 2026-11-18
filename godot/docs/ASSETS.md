@@ -6,6 +6,7 @@
 | --- | --- | --- | --- | --- | --- |
 | `apps/godot/presentation/battle/audio/assets/battle_theme.ogg` | Зацикленная музыка боя, 53 с | Собственная работа, рендерится `tools/battle/render_battle_theme.py` | CC0 | не нужно | да |
 | `apps/godot/presentation/battle/terrain/wall/assets/wall_*.png` | Текстуры осадной стены: камень, зубцы, башня, створка ворот | Собственная работа, рендерится `tools/battle/render_wall_textures.py` | CC0 | не нужно | да |
+| `apps/godot/presentation/campaign/assets/loading_art.png` | Арт экрана загрузки кампании (новая игра и загрузка сейва) | Предоставлен владельцем проекта (Глеб), 2026-11 | Права у команды проекта | не нужно | да |
 
 ## Как добавлять
 
