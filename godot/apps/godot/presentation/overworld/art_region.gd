@@ -6,6 +6,8 @@ const INK := preload("res://apps/godot/presentation/overworld/art/illustration.g
 var surface := ShaderMaterial.new()
 var ink := ShaderMaterial.new()
 var hour := 12.0
+var region_seed := 188
+var region_profile: Vector3
 var terrain_job := Thread.new()
 var figure: Texture2D
 var bridge_art := Sprite2D.new()
@@ -13,9 +15,15 @@ var bridge_art := Sprite2D.new()
 
 func _ready() -> void:
 	super()
-	terrain_job.start(_bake_terrain)
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--region-seed="):
+			region_seed = arg.trim_prefix("--region-seed=").to_int()
+	region_profile = Vector3(LIBRARY.macro_feature_scale, LIBRARY.terrain_relief_strength, LIBRARY.forest_region_cohesion)
+	renderer.set_region_profile(region_seed,region_profile)
+	terrain_job.start(_bake_terrain.bind(region_seed,region_profile))
 	surface.shader = SURFACE
 	surface.set_shader_parameter("meadow", LIBRARY.meadow)
+	surface.set_shader_parameter("foothills", LIBRARY.foothills)
 	ink.shader = INK
 	renderer.material = surface
 	renderer.configure_art(LIBRARY.landmarks.get_rid(), LIBRARY.landforms.get_rid(), LIBRARY.massifs.get_rid(),
@@ -77,8 +85,8 @@ func _exit_tree() -> void:
 	if terrain_job.is_started():
 		terrain_job.wait_to_finish()
 
-func _bake_terrain() -> PackedByteArray:
-	return IronWorldMapRenderer.bake_region_terrain()
+func _bake_terrain(value: int, profile: Vector3) -> PackedByteArray:
+	return IronWorldMapRenderer.bake_region_terrain(value,profile)
 
 func _update_light(value: float) -> void:
 	hour = value

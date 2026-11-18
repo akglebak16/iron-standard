@@ -12,7 +12,8 @@ func _ready() -> void:
 
 func _measure() -> void:
 	var args := OS.get_cmdline_user_args()
-	if args.size() != 2 or args[0] not in ["--region-benchmark","--overworld-benchmark"] or DisplayServer.get_name() == "headless":
+	var with_seed := args.size() == 3 and args[2].begins_with("--region-seed=") and args[2].trim_prefix("--region-seed=").is_valid_int()
+	if (args.size() != 2 and not with_seed) or args[0] not in ["--region-benchmark","--overworld-benchmark"] or DisplayServer.get_name() == "headless":
 		push_error("Run in a window and pass one output path stem after --")
 		get_tree().quit(1)
 		return
@@ -73,6 +74,7 @@ func _measure() -> void:
 	frame_times.sort()
 	var report := {
 		"resolution": [root.size.x, root.size.y],
+		"region_seed": scene.region_seed if artistic else 0,
 		"frames": frame_times.size(),
 		"p50_ms": _percentile(frame_times, 0.50),
 		"p95_ms": _percentile(frame_times, 0.95),

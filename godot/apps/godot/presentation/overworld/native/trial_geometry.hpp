@@ -65,7 +65,7 @@ inline std::vector<Patch> build_chunk(Geography geography, ChunkKey key, bool il
   };
 
   append(Paint::Sea, rectangle(left, top, left + chunk_size, top + chunk_size));
-  constexpr int stride = 16;
+  const int stride = illustrated ? 8 : 16;
   for (int i = 0; i < chunk_size; i += stride) {
     float x = left + i, r = x + stride;
     float a = coast_y(x), b = coast_y(r);
@@ -75,7 +75,7 @@ inline std::vector<Patch> build_chunk(Geography geography, ChunkKey key, bool il
   for (int i = 0; i < chunk_size; i += stride) {
     float y = top + i, b = y + stride;
     float a = river_x(y), z = river_x(b);
-    float wa = 5 + y * 0.017f, wb = 5 + b * 0.017f;
+    float wa = river_width(y), wb = river_width(b);
     const auto ribbon = [&](Paint paint, float m) {
       append(paint, {{a-wa-m,y},{a+wa+m,y},{z+wb+m,b},{z-wb-m,b}});
     };
@@ -88,9 +88,10 @@ inline std::vector<Patch> build_chunk(Geography geography, ChunkKey key, bool il
   }
   // Offshore skerries share the material sequence of the mainland coastline.
   for(int island=0;island<8;++island) {
-    float cx=245+island*284+75*terrain_hash(island,0,17);
-    float cy=coast_y(cx)+66+102*terrain_hash(island,2,91);
-    float width=20+46*terrain_hash(island,1,19);
+    constexpr float skerries[]={325,365,404,1010,1058,1605,1852,1885};
+    float cx=skerries[island];
+    float cy=coast_y(cx)+36+112*terrain_hash(island,2,91);
+    float width=9+36*terrain_hash(island,1,19);
     if(cx+width<left || cx-width>left+chunk_size || cy+width<top || cy-width>top+chunk_size) continue;
     for(int band=0;band<2;++band) {
       for(int i=0;i<16;++i) {
@@ -107,7 +108,7 @@ inline std::vector<Patch> build_chunk(Geography geography, ChunkKey key, bool il
     for (int i = 0; i < chunk_size; i += stride) {
       float x = std::max(from,left+i), r = std::min(to,left+i+stride);
       if (x >= r) continue;
-      auto axis=[route](float at){return route==0?road_y(at):side_road_y(at,route==2);};
+      auto axis=[&](float at){return route==0?road_y(at,geography.region):side_road_y(at,route==2,geography.region);};
       float a = axis(x), b = axis(r);
       const auto ribbon = [&](Paint paint, float width) {
         append(paint, {{x,a-width},{r,b-width},{r,b+width},{x,a+width}});
@@ -123,7 +124,7 @@ inline std::vector<Patch> build_chunk(Geography geography, ChunkKey key, bool il
     }
   };
   road(680,925,1);
-  road(1460,1750,2);
+  road(1460,geography.region.pass+175,2);
   road(west_gate, west_bank,0);
   road(east_bank, east_gate,0);
   if (geography.bridge && !illustrated) {

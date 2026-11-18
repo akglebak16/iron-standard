@@ -73,7 +73,7 @@ class IronWorldMapRenderer final : public Node2D {
       request_.reset();
       lock.unlock();
       auto patches = map::build_chunk(request.geography, request.key,request.illustrated);
-      auto pieces = request.illustrated ? map::landmarks(request.key) : std::vector<map::Landmark>{};
+      auto pieces = request.illustrated ? map::landmarks(request.key,request.geography.region) : std::vector<map::Landmark>{};
       lock.lock();
       completed_ = PreparedChunk{request.key, request.geography.world_id,
                                  request.chunk_revision, std::move(patches), std::move(pieces)};
@@ -144,10 +144,11 @@ class IronWorldMapRenderer final : public Node2D {
     if (shadow_layer.is_valid() && (piece.kind==map::Illustration::Town || piece.kind==map::Illustration::Village ||
         piece.kind==map::Illustration::Wood || piece.kind==map::Illustration::Trees ||
         piece.kind==map::Illustration::Copse)) {
-      server()->canvas_item_add_set_transform(shadow_layer,Transform2D(0,Vector2(piece.x,piece.y-size.y*.095f)));
+      server()->canvas_item_add_set_transform(shadow_layer,Transform2D(0,Vector2(piece.x,piece.y-size.y*.14f)));
       server()->canvas_item_add_texture_rect_region(shadow_layer,dst,texture,source,Color(.65f,1,1,.32));
     }
-    Color tag(1,piece.kind == map::Illustration::Town ? 0.5f : 1.0f,1);
+    const bool landscape = piece.kind!=map::Illustration::Town && piece.kind!=map::Illustration::Village;
+    Color tag(1,piece.kind == map::Illustration::Town ? 0.5f : 1.0f,landscape ? .45f : 1.f);
     server()->canvas_item_add_texture_rect_region(rid,dst,texture,source,tag);
     return rid;
   }
@@ -266,7 +267,8 @@ class IronWorldMapRenderer final : public Node2D {
 
 protected:
   static void _bind_methods() {
-    ClassDB::bind_static_method("IronWorldMapRenderer",D_METHOD("bake_region_terrain"), &IronWorldMapRenderer::bake_region_terrain);
+    ClassDB::bind_method(D_METHOD("set_region_profile","seed","profile"), &IronWorldMapRenderer::set_region_profile);
+    ClassDB::bind_static_method("IronWorldMapRenderer",D_METHOD("bake_region_terrain","seed","profile"), &IronWorldMapRenderer::bake_region_terrain);
     ClassDB::bind_method(D_METHOD("set_company_figure","texture","rect"),&IronWorldMapRenderer::set_company_figure);
     ClassDB::bind_method(D_METHOD("configure_art","atlas","landforms","massifs","ink","regions","second_sheet_start"), &IronWorldMapRenderer::configure_art);
     ClassDB::bind_method(D_METHOD("world_hour"), &IronWorldMapRenderer::world_hour);
@@ -282,7 +284,12 @@ public:
     company_texture_=texture;
     company_rect_=rect;
   }
-  static PackedByteArray bake_region_terrain() {
+  void set_region_profile(int seed,Vector3 profile) {
+    trial_.set_region(map::RegionShape(seed,profile.x,profile.y,profile.z));
+    reload_trial();
+  }
+  static PackedByteArray bake_region_terrain(int seed,Vector3 profile) {
+    const map::RegionShape region(seed,profile.x,profile.y,profile.z);
     constexpr int width=320,height=200;
     PackedByteArray bytes;
     bytes.resize(width*height*4);
@@ -290,9 +297,9 @@ public:
     auto byte=[](float v){return uint8_t(255*std::clamp(v,0.f,1.f));};
     for(int j=0;j<height;++j) for(int i=0;i<width;++i) {
       float x=i*8+4,y=j*8+4;
-      float elevation=map::relief(x,y);
+      float elevation=region.relief(x,y);
       *out++=byte(elevation);
-      *out++=byte(map::woodland(x,y));
+      *out++=byte(region.woodland(x,y));
       *out++=byte(.5f+(map::coast_y(x)-y)/240);
       *out++=byte(map::terrain_noise(x,y,62,129));
     }
@@ -375,6 +382,10 @@ public:
       std::lock_guard<std::mutex> lock(worker_mutex_);
       status["busy"] = building_ || completed_.has_value();
     }
+    const auto region=trial_.snapshot().region;
+    status["pass_x"]=region.pass;
+    status["west_detour"]=region.west_detour;
+    status["east_detour"]=region.east_detour;
     status["company_x"] = trial_.company().x;
     status["bridge"] = trial_.snapshot().bridge;
     return status;
