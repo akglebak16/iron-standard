@@ -2,6 +2,8 @@ extends RefCounted
 ## Dominion troop skins share the existing atlas/pose contract, including hired troops.
 const IDS := ["d1", "d2", "d3", "d2s", "d3s", "d2x", "d3x"]
 const PARTS := ["body", "weapon", "portrait", "headless", "head", "flash", "corpse", "corpse_headless"]
+## Extra rows after PARTS for the shield block: the figure without its painted shield, and the shield.
+const GUARD_PARTS := ["bare", "shield"]
 const PAGES := [
 	preload("res://apps/godot/visuals/assets/dominion_heraldic_0.png"),
 	preload("res://apps/godot/visuals/assets/dominion_heraldic_1.png"),
@@ -21,6 +23,7 @@ static func supports(troop: String, faction: String) -> bool:
 static func sprite(troop: String, part: String, variant: int, banner := -1) -> Texture2D:
 	var column := IDS.find(troop)
 	var row := PARTS.find(part)
+	if row < 0 and GUARD_PARTS.has(part): row = PARTS.size() + GUARD_PARTS.find(part)
 	if column < 0 or row < 0: return null
 	variant = clampi(variant, 0, 3)
 	var key := "%s|%s|%d|%d" % [troop, part, variant, banner]

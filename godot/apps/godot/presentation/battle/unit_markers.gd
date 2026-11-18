@@ -17,9 +17,12 @@ const HERO_WIDTH := 2.2
 const LEADER_WIDTH := 2.6
 const BLOCK_RADIUS := 24.0
 const BLOCK_ORIGIN := Vector2(0, -12)
-const BLOCK_HALF_ANGLE := 1.1
-const BLOCK_COLOR := Color(0.83, 0.90, 1.0, 0.85)
-const BLOCK_WIDTH := 3.5
+## The hero's block: a faint arc over the sector Config.BLOCK_ARC really covers, flaring on a blow taken.
+const BLOCK_COLOR := Color(0.95, 0.86, 0.62)
+const BLOCK_ALPHA := 0.32
+const BLOCK_FLASH_ALPHA := 0.65
+const BLOCK_WIDTH := 1.8
+const BLOCK_FLASH_WIDTH := 1.6
 
 const HEALTH_WIDTH_PER_RADIUS := 1.9
 const HEALTH_HEIGHT := 3.0
@@ -98,9 +101,14 @@ func draw_ring(canvas: CanvasItem, unit: Dictionary, selection: int) -> void:
 	if fill != null: canvas.draw_texture_rect(fill, Rect2(Vector2(unit.position) - fill.get_size() * 0.25, fill.get_size() * 0.5), false, Color(241 / 255.0, 210 / 255.0, 122 / 255.0, 0.15))
 	var ring: Texture2D = assets[0]
 	canvas.draw_texture(ring, Vector2(unit.position) - ring.get_size() * 0.5)
-	if unit.hero and unit.blocking:
-		canvas.draw_arc(Vector2(unit.position) + BLOCK_ORIGIN, BLOCK_RADIUS, unit.facing - BLOCK_HALF_ANGLE,
-			unit.facing + BLOCK_HALF_ANGLE, RING_SEGMENTS, BLOCK_COLOR, BLOCK_WIDTH, true)
+	if unit.hero:
+		var hold: float = unit.get("block_hold", 0.0)
+		var flash: float = unit.get("block_flash", 0.0)
+		if hold > 0.0 or flash > 0.0:
+			var color := BLOCK_COLOR
+			color.a = minf(1.0, BLOCK_ALPHA * maxf(hold, flash) + BLOCK_FLASH_ALPHA * flash)
+			canvas.draw_arc(Vector2(unit.position) + BLOCK_ORIGIN, BLOCK_RADIUS, unit.facing - Config.BLOCK_ARC,
+				unit.facing + Config.BLOCK_ARC, RING_SEGMENTS, color, BLOCK_WIDTH + BLOCK_FLASH_WIDTH * flash, true)
 
 func ring_assets(unit: Dictionary, selection: int) -> Array:
 	var radius: float = unit.radius + (HERO_RING_PADDING if unit.hero else RING_PADDING)

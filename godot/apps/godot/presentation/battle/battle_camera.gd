@@ -52,6 +52,7 @@ func shake(seconds: float) -> void:
 func change_zoom(inward: bool) -> void:
 	var factor := ZOOM_IN_FACTOR if inward else ZOOM_OUT_FACTOR
 	_set_zoom(clampf(zoom.x * factor, min_zoom(), MANUAL_ZOOM_RANGE.y))
+	fit_viewport()
 
 ## Zooming out stops once the whole field is in view (TERRAIN.md 5: the larger field is seen whole), and never
 ## before the old limit.
@@ -60,7 +61,6 @@ func min_zoom() -> float:
 	if _arena_size.x <= 0.0 or _arena_size.y <= 0.0 or view.x <= 0.0 or view.y <= 0.0:
 		return MANUAL_ZOOM_RANGE.x
 	return minf(MANUAL_ZOOM_RANGE.x, minf(view.x / _arena_size.x, view.y / _arena_size.y))
-	fit_viewport()
 
 func fit_viewport() -> void:
 	var half_view := (get_viewport_rect().size / zoom * 0.5).min(_arena_size * 0.5)

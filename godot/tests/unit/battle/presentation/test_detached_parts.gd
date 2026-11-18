@@ -4,6 +4,7 @@ const Event = preload("res://core/battle/combat_event.gd")
 const Parts = preload("res://apps/godot/presentation/battle/detached_parts.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const Heraldic = preload("res://apps/godot/visuals/dominion_heraldic_art.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const STEP := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -85,9 +86,32 @@ func _check_cut() -> void:
 	effects.blood_enabled = false
 	assert(effects.headless_units().is_empty() and effects._parts._settled.is_empty())
 	effects.blood_enabled = true
-	_seed_for(effects, Parts.Part.ARM)
+	# No arms or legs any more (#205): a heavy cut takes the head or cuts the figure in half.
+	assert(not Effects.CUT_PARTS.has(Parts.Part.ARM) and not Effects.HEAVY_CUT_PARTS.has(Parts.Part.LEG))
+	_seed_for(effects, Parts.Part.TORSO)
 	effects.advance(0.0, [event])
-	assert(effects._parts._active[0].kind == Parts.Part.ARM and effects.headless_units().is_empty())
+	assert(effects._parts._active[0].kind == Parts.Part.TORSO and effects.headless_units().is_empty())
+	# A shield-bearer cut in half drops his shield beside him; the halves carry no shield.
+	var shielded := _down(Event.MeleeImpact.CUT)
+	shielded.target_id = 18
+	shielded.target_visual.look = OriginalArt.MANIFEST.troops["e2|emp"].look
+	shielded.target_visual.id = 18
+	var cutter := Effects.new()
+	_seed_for(cutter, Parts.Part.TORSO)
+	cutter.advance(0.0, [shielded])
+	var kinds: Array = cutter._parts._active.map(func(part): return part.kind)
+	assert(kinds == [Parts.Part.TORSO, Parts.Part.SHIELD], "the shield falls off on its own")
+	var dropped: Dictionary = cutter._parts._active[1]
+	assert(dropped.texture != null and dropped.height > 0.0 and dropped.height < 30.0, "it falls from where it hung")
+	# The halves are cut from the figure without its shield: where the shield hung, the lower
+	# half shows the body underneath.
+	var halves := Art.new().split_torso(shielded.target_visual)
+	var guard := OriginalArt.guard_layers(shielded.target_visual)
+	var bare: Image = (guard.layers[0][0] as Texture2D).get_image()
+	var at := Vector2i(guard.shield_center)
+	var lower: Image = halves.lower.get_image()
+	if lower.get_pixelv(at).a > 0.0:
+		assert(lower.get_pixelv(at).is_equal_approx(bare.get_pixelv(at)), "no shield left on the lower half")
 
 func _check_blunt() -> void:
 	var effects := Effects.new()
@@ -130,7 +154,7 @@ func _seed_for(effects: Effects, kind: int, accepted: bool = true) -> void:
 		effects._rng.seed = seed_value
 		var state := effects._rng.state
 		var gate := effects._rng.randf() < Effects.DISMEMBER_CHANCE
-		var choice: int = Effects.HEAVY_CUT_PARTS[effects._rng.randi_range(0, 3)]
+		var choice: int = Effects.HEAVY_CUT_PARTS[effects._rng.randi_range(0, Effects.HEAVY_CUT_PARTS.size() - 1)]
 		if gate == accepted and (kind < 0 or choice == kind):
 			effects._rng.state = state
 			return
@@ -160,6 +184,7 @@ func _check_variety_and_rate() -> void:
 				"The horse's head must stay with the fallen mount, outside the severed rider")
 		assert(art.detached_leg(event.target_visual).get_image().get_used_rect().has_area())
 	event.target_visual.mounted = false
+	_check_split_identity()
 	# Exercise the real death path and its RNG, not a copy of the probability formula.
 	for impact in [Event.MeleeImpact.CUT, Event.MeleeImpact.BLUNT]:
 		for hero in [false, true]:
@@ -183,3 +208,16 @@ func _check_variety_and_rate() -> void:
 	for casualty in 1000: effects.advance(STEP, [event])
 	assert(effects._parts._active.size() <= Parts.MAX_ACTIVE)
 	assert(effects._parts._settled.size() <= Parts.MAX_SETTLED)
+
+## Troops on the same sheet share one texture RID: each must still be cut from its own figure.
+func _check_split_identity() -> void:
+	var art := Art.new()
+	art.configure_identities({1: "n1", 2: "e2", 3: "d1", 4: "d2"}, {1: 0, 2: 0, 3: 0, 4: 0})
+	var halves := {}
+	for id in [1, 2, 3, 4]:
+		var troop: String = {1: "n1|nord", 2: "e2|emp", 3: "d1|dom", 4: "d2|dom"}[id]
+		var look: Dictionary = OriginalArt.MANIFEST.troops[troop].look
+		var unit := {"id": id, "look": look, "faction": troop.get_slice("|", 1), "hero": false, "companion": false, "mounted": false, "side": 0}
+		var data: PackedByteArray = art.split_torso(unit).upper.get_image().get_data()
+		assert(not halves.values().has(data), "%s is cut from its own figure" % troop)
+		halves[id] = data
