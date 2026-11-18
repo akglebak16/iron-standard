@@ -99,12 +99,20 @@ func _check_reactions() -> void:
 	var hero := {"id": 3, "blocking": true, "dead": false, "hero": true, "look": {"helm": "nasal", "armor": "mail", "weapon": "sword", "shield": "kite"},
 		"faction": "player", "companion": false, "mounted": false, "side": 0}
 	view._mark_guard(hero)
-	assert(hero.shield_guard, "the arc gives way to the shield")
 	view.advance(0.05, [])
 	view.advance(0.1, [])
 	assert(view.guard_pose(3).x == 1.0, "held block keeps the shield up")
+	view._mark_guard(hero)
+	assert(hero.block_hold == 1.0 and hero.block_flash == 0.0, "the arc shows the held block")
+	view.advance(0.0, [{"kind": Event.Kind.BLOCK, "target_id": 3}])
+	view.advance(0.05, [])
+	view._mark_guard(hero)
+	assert(hero.block_flash > 0.5, "a blow taken makes the arc flare")
+	view.advance(Motion.BLOCK_FLASH_SECONDS, [])
+	view._mark_guard(hero)
+	assert(hero.block_flash == 0.0)
 	hero.blocking = false
 	view._mark_guard(hero)
 	view.advance(Motion.GUARD_HOLD_LOWER_SECONDS + 0.01, [])
-	view.advance(0.01, [])
+	view.advance(Motion.GUARD_HIT_SECONDS, [])
 	assert(view.guard_pose(3) == Vector2.ZERO)
