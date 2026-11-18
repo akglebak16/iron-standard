@@ -27,7 +27,21 @@ var _market_view := "goods"
 var _flash := ""
 
 func _ready() -> void:
+	fit_height = true
 	super()
+	var wait := Button.new()
+	wait.name = "Wait"
+	wait.text = "Подождать здесь"
+	wait.tooltip_text = "Время идёт, отряд стоит у стен. Любой клик по карте или Z — в путь."
+	wait.icon = GameSkin.icon("hourglass")
+	wait.expand_icon = true
+	wait.add_theme_constant_override("icon_max_width", 20)
+	wait.focus_mode = Control.FOCUS_NONE
+	wait.pressed.connect(func():
+		UiSounds.play(self, "click")
+		wait_requested.emit(settlement)
+		close_window())
+	footer_left.add_child(wait)
 	if not (ContentLoader.populate(_gear) and ContentLoader.populate(_factions)):
 		push_error("Required content failed to load: apps/godot/presentation/campaign/town_window.gd")
 		return
@@ -78,8 +92,7 @@ func render() -> void:
 		_recruits(p, fx)
 		_siege_offer(p)
 
-## «Рекруты»: a summary of purse, room, wages and the next recruits, then one compact table (as on the market) and
-## the waiting card.
+## «Рекруты»: a summary of purse, room, wages and the next recruits, then one compact table (as on the market).
 func _recruits(p, fx: Dictionary) -> void:
 	var catalog = state.roster.catalog
 	var cap := Economy.size_cap(p.hero, fx)
@@ -103,14 +116,6 @@ func _recruits(p, fx: Dictionary) -> void:
 		var grid := TroopList.table(body, "RecruitTable", "Желают вступить", TroopList.men(men), GameSkin.BRASS)
 		for r in stacks:
 			_recruit_line(grid, p, fx, catalog.get_troop(r.type), int(r.n), room)
-	var wait := TroopList.table(body, "WaitCard", "Ожидание", "время идёт, отряд стоит у стен; клик по карте или Z — в путь", GameSkin.MUTED)
-	wait.columns = 2
-	var wait_text := TroopList.cell("Подождать здесь", GameSkin.PARCH, 15)
-	wait_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wait.add_child(wait_text)
-	var wait_button := TroopList.small(make_button({"sound": "click", "text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}))
-	wait_button.name = "Wait"
-	wait.add_child(wait_button)
 
 ## «через 5 ч» / «через 2 дн. 3 ч» until the settlement refreshes its recruits.
 func _next_recruits() -> String:
@@ -173,6 +178,7 @@ func _empty_state(icon_name: String, title: String, detail: String) -> void:
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(d)
 
+## «Таверна»: wandering companions for hire and the innkeeper's rumour.
 func _tavern(p) -> void:
 	var comps = state.companions
 	var here: Array = comps.at(p, settlement)
