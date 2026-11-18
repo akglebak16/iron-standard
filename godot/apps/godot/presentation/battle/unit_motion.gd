@@ -6,6 +6,7 @@ const FALL_SECONDS := 0.34
 const CORPSE_ALPHA := 0.9
 
 static func weapon_kind(weapon: Variant) -> int:
+	if weapon == "heraldic_xbow": return 4
 	if weapon in ["spear", "halberd", "lance"]: return 2
 	if weapon in ["bow", "xbow"]: return 3
 	return 0 if weapon == null or weapon == "" else 1
@@ -16,7 +17,18 @@ static func swing_pose(kind: int, bump: float) -> Vector3:
 	var angle := 0.0
 	var dx := 0.0
 	var dy := 0.0
-	if kind == 3:
+	if kind == 4:
+		# The shot event sets bump to 0.5. Aim settles before it; recoil starts at it.
+		if bump > 0.5:
+			var aim := (bump - 0.5) * 2.0
+			angle = 0.16 * aim * aim
+			dy = 5.0 * aim
+		else:
+			var recoil := bump * 2.0
+			dx = -7.0 * recoil * recoil
+			dy = 1.5 * recoil
+			angle = -0.045 * recoil
+	elif kind == 3:
 		var q := clampf(1.0 - bump * 2.0, 0.0, 1.0)
 		dx = -5.0 * (1.0 - q) * (1.0 - q)
 		angle = -0.12 * (1.0 - q)

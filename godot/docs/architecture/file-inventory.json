@@ -4994,6 +4994,36 @@
     {
       "source": "tools/battle/benchmark_gore.gd",
       "destination": "tools/battle/benchmark_gore.gd"
+    },
+    {
+      "source": "apps/godot/visuals/dominion_heraldic_art.gd",
+      "destination": "apps/godot/visuals/dominion_heraldic_art.gd",
+      "introduced_revision": "local-dominion-heraldic-units"
+    },
+    {
+      "source": "tests/unit/battle/presentation/test_dominion_heraldic.gd",
+      "destination": "tests/unit/battle/presentation/test_dominion_heraldic.gd",
+      "introduced_revision": "local-dominion-heraldic-units"
+    },
+    {
+      "source": "tools/battle/dominion_preview.gd",
+      "destination": "tools/battle/dominion_preview.gd",
+      "introduced_revision": "local-dominion-heraldic-units"
+    },
+    {
+      "source": "apps/godot/visuals/dominion_heraldic_heads.gd",
+      "destination": "apps/godot/visuals/dominion_heraldic_heads.gd",
+      "introduced_revision": "local-dominion-heraldic-units"
+    },
+    {
+      "source": "tools/battle/dominion_head_preview.gd",
+      "destination": "tools/battle/dominion_head_preview.gd",
+      "introduced_revision": "local-dominion-heraldic-units"
+    },
+    {
+      "source": "tools/battle/render_dominion_heraldic.cjs",
+      "destination": "tools/battle/render_dominion_heraldic.cjs",
+      "introduced_revision": "local-dominion-heraldic-units"
     }
   ]
 }

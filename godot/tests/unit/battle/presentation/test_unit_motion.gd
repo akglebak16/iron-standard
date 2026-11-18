@@ -33,8 +33,20 @@ func _initialize() -> void:
 		assert(absf(Motion.fall_alpha(sample.elapsed) - float(sample.call.alpha)) < EPSILON)
 	assert(Motion.weapon_kind("throw") == 1 and Motion.weapon_kind("lance") == 2 and Motion.weapon_kind("xbow") == 3)
 	_check_animation_events()
+	_check_heraldic_crossbow(native)
 	print("Unit motion tests passed")
 	quit()
+
+func _check_heraldic_crossbow(native: RefCounted) -> void:
+	assert(Motion.weapon_kind("heraldic_xbow") == 4)
+	assert(Motion.weapon_kind("xbow") == 3, "unmodified skins keep their original animation")
+	for step in 101:
+		var bump := float(step) / 100.0
+		var pose := Motion.swing_pose(4, bump)
+		assert(pose.distance_to(Vector3(native.sample_swing(4, bump))) < EPSILON, "native/fallback crossbow poses agree")
+	assert(Motion.swing_pose(4, 0) == Vector3.ZERO, "settle exactly at rest")
+	assert(Motion.swing_pose(4, 0.5).y < -6.0, "the shot event produces visible recoil")
+	assert(absf(Motion.swing_pose(4, 0.5).x) < 0.06, "crossbow recoils without a melee swing")
 
 func _check_animation_events() -> void:
 	var view := UnitView.new()

@@ -3,6 +3,7 @@ const Effects = preload("res://apps/godot/presentation/battle/impact_effects.gd"
 const Event = preload("res://core/battle/combat_event.gd")
 const Parts = preload("res://apps/godot/presentation/battle/detached_parts.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
+const Heraldic = preload("res://apps/godot/visuals/dominion_heraldic_art.gd")
 const STEP := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -10,8 +11,54 @@ func _initialize() -> void:
 	_check_blunt()
 	_check_eligibility()
 	_check_variety_and_rate()
+	_check_heraldic_identity()
 	print("Detached parts tests passed")
 	quit(0)
+
+func _check_heraldic_identity() -> void:
+	for variant in 4:
+		var source := Art.new()
+		var ids := {}
+		var variants := {}
+		for i in Heraldic.IDS.size():
+			ids[100 + i] = Heraldic.IDS[i]
+			variants[100 + i] = variant
+		source.configure_identities(ids, variants)
+		var parts := Parts.new(RandomNumberGenerator.new())
+		parts.use_unit_art(source)
+		for id in ids:
+			var event := _down(Event.MeleeImpact.CUT)
+			event.target_id = id
+			var unit: Dictionary = event.target_visual
+			unit.id = id
+			unit.faction = "dom"
+			unit.look = Art.OriginalArt.MANIFEST.troops[ids[id] + "|dom"].look.duplicate(true)
+			var live := source.layers(unit)
+			assert(live.neck_center == Vector2(76, 78), "every new head has a centred neck attachment")
+			assert(live.head_center.x == live.neck_center.x)
+			var region := live.head.get_image().get_used_rect() as Rect2i
+			assert(region.size.x < 95 and region.end.y < 95, "detached heads contain no shoulders or torso")
+			for facing in [0.0, PI]:
+				parts.clear()
+				unit.facing = facing
+				parts.emit(Parts.Part.HEAD, event, 0.0, Color("#773333"))
+				var head: Dictionary = parts._active[0]
+				assert(head.texture == live.head, "the severed head keeps the exact live appearance variant")
+				assert(head.anchor == live.head_center and head.scale == live.scale, "detach without resizing or changing the spin pivot")
+				assert(head.mirrored == (facing == PI))
+				assert(is_equal_approx(head.height, -Parts.head_offset(unit, live).y))
+				assert(parts.neck_offset(unit).is_equal_approx(Vector2(0, -80) * live.scale), "neck effects originate at the cut")
+		var effects := Effects.new()
+		effects.use_unit_art(source)
+		var event := _down(Event.MeleeImpact.CUT)
+		event.target_id = 100
+		event.target_visual.id = 100
+		event.target_visual.faction = "dom"
+		event.target_visual.look = Art.OriginalArt.MANIFEST.troops["d1|dom"].look.duplicate(true)
+		_seed_for(effects, Parts.Part.HEAD)
+		effects.advance(0, [event])
+		assert(effects.headless_units().has(100))
+		assert(effects._parts._active[0].texture == source.layers(event.target_visual).head)
 
 func _check_cut() -> void:
 	var effects := Effects.new()

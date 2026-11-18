@@ -1,5 +1,6 @@
 extends RefCounted
 const AssetPaths = preload("res://apps/godot/visuals/asset_paths.gd")
+const DominionHeraldic = preload("res://apps/godot/visuals/dominion_heraldic_art.gd")
 ## Original Canvas layers shared by the battle and the campaign portraits.
 const MANIFEST = preload("res://apps/godot/visuals/assets/visual_manifest.gd").DATA
 const BANNERS = preload("res://apps/godot/visuals/assets/banner_definitions.gd").DATA
@@ -210,6 +211,14 @@ static func _troop_layers(troop: String, faction: String, look: Dictionary, moun
 		"weapon_kind": look.get("weapon"), "anchor": Vector2(definition.anchor[0], definition.anchor[1]) * 2,
 		"pivot": Vector2(definition.pivot[0], definition.pivot[1]) * 2, "scale": 0.31}
 	entry.head_center = Vector2(43.5, 57) * 2 if mounted else Vector2(39.5, 34) * 2
+	if DominionHeraldic.supports(troop, faction):
+		entry.anchor = Vector2(76, 158)
+		entry.pivot = DominionHeraldic.GRIPS.get(look.get("weapon"), Vector2(125, 116))
+		var head_geometry: Dictionary = DominionHeraldic.HEADS[troop]
+		entry.head_center = Vector2(head_geometry.center[0], head_geometry.center[1])
+		entry.neck_center = Vector2(head_geometry.neck[0], head_geometry.neck[1])
+		# A presentation-only pose key; the gameplay weapon remains xbow.
+		if look.get("weapon") == "xbow": entry.weapon_kind = "heraldic_xbow"
 	return entry
 
 static func settlement(kind: String, culture: String, faction: String) -> Texture2D:
@@ -234,6 +243,8 @@ static func item_icon(id: String) -> Texture2D:
 	return load(path) if not path.is_empty() and ResourceLoader.exists(path) else preload("res://apps/godot/visuals/assets/icon_bag.svg")
 
 static func sprite(troop: String, faction := "player", part := "portrait", variant := 0) -> Texture2D:
+	if DominionHeraldic.supports(troop, faction):
+		return DominionHeraldic.sprite(troop, part, variant, _player_banner if faction == "player" else -1)
 	var key := troop + "|" + faction
 	if not MANIFEST.troops.has(key):
 		key = troop + "|player"

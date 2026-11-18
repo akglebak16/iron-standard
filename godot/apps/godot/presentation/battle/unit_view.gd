@@ -42,6 +42,9 @@ func _init() -> void:
 	_art.atlas = _atlas
 	_markers.atlas = _atlas
 
+func art_source() -> Art:
+	return _art
+
 func prepare_art(units: Array[Dictionary]) -> void:
 	_atlas.begin_prepare()
 	_shadow = _atlas.resolve(SHADOW)
