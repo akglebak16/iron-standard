@@ -10,7 +10,11 @@ const DATA = {
 			76,
 			78
 		],
-		"canonical_facing": 1
+		"canonical_facing": 1,
+		"shield_center": [
+			45.5,
+			126
+		]
 	},
 	"d2": {
 		"center": [
@@ -21,7 +25,11 @@ const DATA = {
 			76,
 			78
 		],
-		"canonical_facing": 1
+		"canonical_facing": 1,
+		"shield_center": [
+			48.4,
+			123.5
+		]
 	},
 	"d3": {
 		"center": [
@@ -32,7 +40,11 @@ const DATA = {
 			76,
 			78
 		],
-		"canonical_facing": 1
+		"canonical_facing": 1,
+		"shield_center": [
+			47.699999999999996,
+			121.875
+		]
 	},
 	"d2s": {
 		"center": [
@@ -43,7 +55,11 @@ const DATA = {
 			76,
 			78
 		],
-		"canonical_facing": 1
+		"canonical_facing": 1,
+		"shield_center": [
+			49.2,
+			127
+		]
 	},
 	"d3s": {
 		"center": [

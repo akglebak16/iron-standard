@@ -65,10 +65,28 @@ func _check_composed_hero() -> void:
 	unarmed.look.erase("shield")
 	assert(Art.guard_layers(unarmed).is_empty(), "no shield, no raised shield")
 	assert(Art.guard_layers(_unit("n2a|nord")).is_empty(), "archers carry no shield")
+	# Heraldic Dominion figures bring their own rows: the shield lies where the figure painted it.
 	for troop in ["d1", "d2", "d3", "d2s"]:
-		var heraldic := _unit(troop + "|dom")
-		if heraldic.look.get("shield") != null:
-			assert(Art.guard_layers(heraldic, troop, 0).is_empty(), "heraldic Dominion art has no shield layer")
+		for faction in ["dom", "player"]:
+			var heraldic := _unit(troop + "|dom")
+			heraldic.faction = faction
+			var heraldic_parts := Art.guard_layers(heraldic, troop, 2)
+			assert(heraldic_parts.layers.size() == 1 and heraldic_parts.shield != null, "heraldic shield " + troop)
+			var painted := _image(Art.layers_for(heraldic, troop, 2).body)
+			var repaint := _image(heraldic_parts.layers[0][0])
+			var raised := _image(heraldic_parts.shield)
+			repaint.blend_rect(raised, Rect2i(Vector2i.ZERO, raised.get_size()), Vector2i.ZERO)
+			var different := 0
+			for y in painted.get_height():
+				for x in painted.get_width():
+					var a := painted.get_pixel(x, y)
+					var b := repaint.get_pixel(x, y)
+					if absf(a.r * a.a - b.r * b.a) + absf(a.g * a.a - b.g * b.a) + absf(a.b * a.a - b.b * b.a) > 0.3: different += 1
+			# Only the 2 px band cleared around the shield may differ from the painted figure.
+			assert(different < 400, "%s %s: bare figure + shield repaint the figure (%d px off)" % [troop, faction, different])
+			assert(_image(heraldic_parts.shield).get_pixelv(Vector2i(heraldic_parts.shield_center)).a > 0.9, "shield centre lies on the shield")
+	for troop in ["d3s", "d2x", "d3x"]:
+		assert(Art.guard_layers(_unit(troop + "|dom"), troop, 0).is_empty(), "no shield, nothing to raise")
 
 func _check_pose() -> void:
 	var body := Motion.body_transform(Vector2(40, 60), 1.3, 0.4, 0.0, false, 0.2, 0.0)
