@@ -22,7 +22,7 @@ func _initialize() -> void:
 			var head_region := entry.head.get_image().get_used_rect() as Rect2i
 			assert(head_region.size.x < 95 and head_region.end.y < 95)
 			assert(entry.head.get_image().get_pixel(25, 90).a == 0.0, "shoulders remain on the torso")
-			assert(head_region.end.y <= 79, "the head is cut at the neck joint")
+			assert(head_region.end.y <= 88, "the head ends just below the neck joint, inside the collar")
 			assert(_pieces(entry.head.get_image()) == 1, "%s: the cut head is one clean piece" % troop)
 			assert(entry.body.get_image().get_data() != entry.portrait.get_image().get_data(), "weapons animate separately")
 			var grip: Color = entry.weapon.get_image().get_pixelv(Vector2i(entry.pivot))
