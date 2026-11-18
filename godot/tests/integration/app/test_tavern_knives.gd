@@ -19,7 +19,10 @@ func _play() -> void:
 		while _view() == null or _view().game.phase != "aim":
 			await process_frame
 		_view().throw()
-		assert(_view().game.phase == "their")
+		assert(_view().game.phase == "flight", "the knife flies first (#221)")
+		while _view() == null or _view().game.phase == "flight":
+			await process_frame
+		assert(_view().game.phase in ["their", "done"])
 		while _view() == null or _view().game.phase == "their":
 			await process_frame
 	for i in 3:

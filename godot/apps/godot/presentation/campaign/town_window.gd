@@ -248,6 +248,7 @@ func _knife_start(p, stake: int) -> void:
 	_knife = {"stake": stake, "mine": [], "theirs": [], "phase": "aim", "t": 0.0, "wait": 0.0, "net": 0,
 		"rng": Knives.rng_for(int(state.seed_value), settlement, day, Knives.played(settlement, day)),
 		"level": Knives.regular_level(settlement), "regular": Knives.regular_name(settlement)}
+	_knife.ph = Knives.aim_phase(_knife.rng)
 
 func _knife_game(p) -> void:
 	var view := KnivesView.new()
