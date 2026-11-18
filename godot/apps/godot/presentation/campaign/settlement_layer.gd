@@ -45,7 +45,7 @@ func build(settles: Array) -> void:
 		if art.is_empty():
 			continue
 		var texture: Texture2D = art[0]
-		var dimensions := texture.get_size() * (float(art[1]) / texture.get_width())
+		var dimensions := texture.get_size() * (float(art[1]) / texture.get_width()) / MapCamera.PROJECTION
 		var entrance: Vector2 = art[2]
 		var mask := BitMap.new()
 		mask.create_from_image_alpha(texture.get_image(), 0.25)
@@ -90,7 +90,7 @@ func _draw() -> void:
 			col = SettlementArt.CULTURES.size() - 1
 		var k := scale_of(s.kind) * MapCamera.MARKER_SCALE
 		var src := Rect2(Vector2(col * size.x, row * size.y) * SHEET_SCALE, size * SHEET_SCALE)
-		var dest := Rect2(Vector2(s.x, s.y) - SettlementArt.ANCHOR * k, size * k)
+		var dest := Rect2(Vector2(s.x, s.y) - SettlementArt.ANCHOR * k / MapCamera.PROJECTION, size * k / MapCamera.PROJECTION)
 		var tint := Color.WHITE
 		if s.get("cleared", false) and s.kind == "camp":
 			tint = Color(1, 1, 1, 0.5)

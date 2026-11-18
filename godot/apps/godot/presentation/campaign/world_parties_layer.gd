@@ -96,7 +96,7 @@ func _draw_party(p: Dictionary) -> void:
 	var at := Vector2(p.x, p.y)
 	if motion != null:
 		at = motion.at(int(p.id), at)
-	draw_set_transform(at, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE)
+	draw_set_transform(at, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE / MapCamera.PROJECTION)
 	at = Vector2.ZERO
 	var noble: bool = p.kind == "lord" or p.kind == "dead"
 	var variant := 2 if noble else (0 if p.kind == "caravan" else 1)

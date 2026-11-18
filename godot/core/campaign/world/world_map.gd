@@ -4,12 +4,14 @@ const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const SettlementGenerator = preload("res://core/campaign/world/settlement_generator.gd")
 const RoadGenerator = preload("res://core/campaign/world/road_generator.gd")
+const RoadNetwork = preload("res://core/campaign/world/road_network.gd")
 const Pathfinder = preload("res://core/campaign/world/pathfinder.gd")
 
 var seed_value := 0
 var terrain: Generator
 var settles: Array = []
 var roads: Array = []
+var road_network := RoadNetwork.new()
 var paths: Pathfinder
 var next_id := 1
 
@@ -24,6 +26,8 @@ static func create(seed_in: int, data: EuropeData) -> RefCounted:
 	map.paths = Pathfinder.new(map.terrain)
 	map.roads = RoadGenerator.new().generate(map.terrain, map.paths, map.settles)
 	map.paths.register_gates(map.settles)
+	map.road_network.build(map.paths, map.roads, map.settles)
+	map.paths.road_edges = map.road_network.neighbours
 	return map
 
 func settlement_by_id(id: int) -> Dictionary:

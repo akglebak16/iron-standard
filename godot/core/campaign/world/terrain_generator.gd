@@ -311,6 +311,9 @@ func field_image() -> Image:
 		all[k * 4 + 3] = _rid_pass[k]
 	return Image.create_from_data(LW, LH, false, Image.FORMAT_RGBAF, all.to_byte_array())
 
+func is_mountain_pass(cell: int) -> bool:
+	return _carve[cell] != 0
+
 func carve_image() -> Image:
 	return Image.create_from_data(GW, GH, false, Image.FORMAT_R8, _carve)
 

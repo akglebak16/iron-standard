@@ -13,6 +13,7 @@ var world: Generator
 var gate_approaches := {}
 var _bridge_axes := {}
 var road := PackedByteArray()
+var road_edges := {}
 var _g := PackedFloat32Array()
 var _prev := PackedInt32Array()
 var _closed := PackedByteArray()
@@ -132,7 +133,11 @@ func _deck_point(point: Vector2) -> Vector2:
 	var axis: Vector2 = _bridge_axes[k]
 	return center + axis * (point - center).dot(axis)
 
-func _grid_path(sx: float, sy: float, tx: float, ty: float, raw: bool):
+## Retain each cell of a road alignment, including its axial entry onto a bridge.
+func road_alignment(a: Vector2, b: Vector2):
+	return _grid_path(a.x, a.y, b.x, b.y, true, true)
+
+func _grid_path(sx: float, sy: float, tx: float, ty: float, raw: bool, align_decks := false):
 	var a := nearest_pass(sx, sy)
 	var b := nearest_pass(tx, ty)
 	var s := a.y * GW + a.x
@@ -204,10 +209,10 @@ func _grid_path(sx: float, sy: float, tx: float, ty: float, raw: bool):
 			var cc: float = base[k]
 			if cc == 0.0:
 				continue
-			if roads[k] != 0:
+			if roads[k] != 0 and (roads[cur] == 0 or road_edges.is_empty() or (road_edges.has(cur) and road_edges[cur].has(k))):
 				cc *= 0.55
 			var diagonal := di != 0 and dj != 0
-			if diagonal and not raw and (world.bridge[k] != 0 or world.bridge[cur] != 0):
+			if diagonal and (not raw or align_decks) and (world.bridge[k] != 0 or world.bridge[cur] != 0):
 				continue
 			if diagonal and (base[cj * GW + ni] == 0.0 or base[nj * GW + ci] == 0.0):
 				continue

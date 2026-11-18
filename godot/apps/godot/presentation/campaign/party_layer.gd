@@ -72,7 +72,7 @@ func _draw() -> void:
 		_dashed(pts, Color(20 / 255.0, 12 / 255.0, 4 / 255.0, 0.8), 5.0)
 		_dashed(pts, Color("#ffe9a0"), 2.6)
 		draw_arc(pts[pts.size() - 1], 9.0, 0.0, TAU, 20, Color("#ffe9a0"), 2.6, true)
-	draw_set_transform(p, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE)
+	draw_set_transform(p, 0.0, Vector2.ONE * MapCamera.MARKER_SCALE / MapCamera.PROJECTION)
 	p = Vector2.ZERO
 	draw_colored_polygon(Brush.ellipse(p.x + 2, p.y + 3, 24, 8, 16), Color(0, 0, 0, 0.3))
 	draw_arc(p + Vector2(0, 1), 26.0, 0.0, TAU, 28, Color("#ffd86a"), 2.0, true)

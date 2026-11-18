@@ -264,10 +264,10 @@ func _ready() -> void:
 	if focus.size() == 3:
 		camera.detached = true
 		camera.position = Vector2(focus[0], focus[1])
-		camera.zoom = Vector2(focus[2], focus[2])
+		camera.zoom = WorldCamera.PROJECTION * focus[2]
 	else:
 		camera.detached = false
-		camera.zoom = Vector2.ONE * WorldCamera.REGIONAL_ZOOM
+		camera.zoom = WorldCamera.PROJECTION * WorldCamera.REGIONAL_ZOOM
 	if DisplayServer.get_name() != "headless":
 		await map_view.ready_to_show
 	loading.queue_free()

@@ -2,7 +2,8 @@ extends Camera2D
 ## Pan with the right/middle mouse button or WASD/arrows, zoom with the wheel or +/-.
 ## Fold the visual projection into zoom to keep navigation and cached ground in simulation coordinates.
 const MAP_SCALE := 2.0
-const REGIONAL_ZOOM := 0.9 * MAP_SCALE
+const REGIONAL_ZOOM := 0.84 * MAP_SCALE
+const PROJECTION := Vector2(1.0, 0.83)
 const MARKER_SCALE := 1.0 / MAP_SCALE
 const MAX_ZOOM := 2.5 * MAP_SCALE
 const PAN_SPEED := 900.0
@@ -40,14 +41,14 @@ func _unhandled_input(event: InputEvent) -> void:
 				_moved = true
 			if _moved:
 				detached = true
-				position -= motion.relative / zoom.x
+				position -= motion.relative / zoom
 				_clamp()
 		map_hovered.emit(_screen_to_world(motion.position), motion.position)
 	elif event is InputEventKey and event.pressed and not event.echo:
 		var key := (event as InputEventKey).keycode
 		if key == KEY_C:
 			detached = false
-			zoom = Vector2.ONE * REGIONAL_ZOOM
+			zoom = PROJECTION * REGIONAL_ZOOM
 		elif key == KEY_EQUAL or key == KEY_KP_ADD:
 			_zoom_at(1.25, get_viewport().get_visible_rect().size / 2.0)
 		elif key == KEY_MINUS or key == KEY_KP_SUBTRACT:
@@ -60,29 +61,29 @@ func _process(delta: float) -> void:
 			move += pair[1]
 	if move != Vector2.ZERO:
 		detached = true
-		position += move.normalized() * PAN_SPEED * delta / zoom.x
+		position += move.normalized() * PAN_SPEED * delta / zoom
 		_clamp()
 
 func _zoom_at(factor: float, screen_point: Vector2) -> void:
 	var before := _screen_to_world(screen_point)
 	var view := get_viewport_rect().size
-	var overview_zoom := minf(view.x / bounds.size.x, view.y / bounds.size.y)
+	var overview_zoom := minf(view.x / bounds.size.x, view.y / (bounds.size.y * PROJECTION.y))
 	var z := clampf(zoom.x * factor, overview_zoom, MAX_ZOOM)
-	zoom = Vector2(z, z)
+	zoom = PROJECTION * z
 	position += before - _screen_to_world(screen_point)
 	_clamp()
 
 func _screen_to_world(p: Vector2) -> Vector2:
-	return position + (p - get_viewport().get_visible_rect().size / 2.0) / zoom.x
+	return position + (p - get_viewport().get_visible_rect().size / 2.0) / zoom
 
 func fit_all() -> void:
 	var view := get_viewport().get_visible_rect().size
-	var z := minf(view.x / bounds.size.x, view.y / bounds.size.y)
-	zoom = Vector2(z, z)
+	var z := minf(view.x / bounds.size.x, view.y / (bounds.size.y * PROJECTION.y))
+	zoom = PROJECTION * z
 	position = bounds.get_center()
 
 func _clamp() -> void:
-	var margin := (get_viewport_rect().size / (2.0 * zoom.x)).min(bounds.size / 2.0)
+	var margin := (get_viewport_rect().size / (2.0 * zoom)).min(bounds.size / 2.0)
 	position = position.clamp(bounds.position + margin, bounds.end - margin)
 
 func follow_party(at: Vector2) -> void:

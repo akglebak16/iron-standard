@@ -5,7 +5,7 @@ const WorldNoise = preload("res://core/campaign/world/noise.gd")
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 
-const CROP := [["#86683d", "#6a4f2b"], ["#b9a24f", "#9a853a"], ["#7f9a45", "#667f34"], ["#9fae56", "#82903f"], ["#78593a", "#5b4128"]]
+const CROP := [["#ad935e", "#887242"], ["#c5ae69", "#9e8c4f"], ["#969a54", "#768044"], ["#a5a65b", "#85894d"], ["#af9566", "#907a4d"]]
 
 var _fields: Array = []   # {x, y, ang, w, h, crop}
 var _houses: Array = []   # {x, y}
@@ -118,17 +118,16 @@ func _draw() -> void:
 	for f in _fields:
 		var crop: Array = CROP[f.crop]
 		draw_set_transform(Vector2(f.x, f.y), f.ang, Vector2.ONE)
-		var w: float = f.w
-		var h: float = f.h
-		draw_rect(Rect2(-w / 2 + 1.5, -h / 2 + 2, w, h), Color(0, 0, 0, 0.14))
-		draw_rect(Rect2(-w / 2, -h / 2, w, h), Color(crop[0]))
+		var w: float = f.w * 0.91
+		var h: float = f.h * 0.91
+		var plot := PackedVector2Array([Vector2(-w * 0.5, -h * 0.42), Vector2(w * 0.39, -h * 0.5), Vector2(w * 0.5, h * 0.36), Vector2(w * 0.31, h * 0.47), Vector2(-w * 0.46, h * 0.5)])
+		draw_colored_polygon(plot, Color(crop[0]))
 		var furrow := Color(crop[1])
-		furrow.a = 0.75
-		var yy := -h / 2 + 3
-		while yy < h / 2:
-			draw_line(Vector2(-w / 2 + 1, yy), Vector2(w / 2 - 1, yy), furrow, 1.0, true)
+		furrow.a = 0.42
+		var yy := -h * 0.35
+		while yy < h * 0.34:
+			draw_line(Vector2(-w * 0.42, yy), Vector2(w * 0.36, yy - 0.6), furrow, 1.0, true)
 			yy += 3.4
-		Brush.stroke_rect(self, -w / 2, -h / 2, w, h, Color(38 / 255.0, 48 / 255.0, 18 / 255.0, 0.5), 1.3)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	for hs in _houses:
 		SettlementArt.house(self, hs.x + 0.0, hs.y + 0.0, 16, 11, Color("#cdbd96"), Color("#9b7d42"))

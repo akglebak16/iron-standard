@@ -32,5 +32,5 @@ func _initialize() -> void:
 		paths.register_gates([{"kind": "town", "x": gate.x, "y": gate.y}])
 		var path: Array = paths.find_path(145, 145, gate.x, gate.y)
 		assert(path[-2] == paths.gate_approaches[gate] and path.back() == gate)
-	print("Bridge and gate routes passed")
+	print("Bridge and gate route tests passed")
 	quit()

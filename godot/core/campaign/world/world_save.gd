@@ -5,6 +5,7 @@ const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
 const Checkpoint = preload("res://core/campaign/world/world_checkpoint.gd")
 const VERSION := 2
+const ROUTE_REVISION := 2
 const MAX_PAYLOAD_BYTES := 16 * 1024 * 1024
 const SETTLEMENT_FIELDS := ["fac", "name", "recruits", "rt", "camp", "cleared", "respawn", "hv", "pros", "market", "gar", "cult", "siege", "ruin", "dmg", "board", "owner", "food", "talkT", "fire", "barrow", "burnt", "ruinOf", "name0", "vass", "blk"]
 const PARTY_INT_KEYS := ["id", "home", "sid", "tid", "lid", "src", "clan", "owner", "relief", "fight", "gid"]
@@ -13,7 +14,7 @@ static func to_dict(state: RefCounted) -> Dictionary:
 	var values := Checkpoint.capture(state)
 	if not Checkpoint.valid(values): return {}
 	var payload := Marshalls.raw_to_base64(var_to_bytes(values))
-	return {"version": VERSION, "route_revision": 1, "encoding": "godot-variant-values-v1", "payload": payload, "sha256": payload.sha256_text()}
+	return {"version": VERSION, "route_revision": ROUTE_REVISION, "encoding": "godot-variant-values-v1", "payload": payload, "sha256": payload.sha256_text()}
 
 ## Retained only as the v1 migration fixture/export contract.
 static func to_v1_dict(state: RefCounted) -> Dictionary:
@@ -53,7 +54,7 @@ static func from_dict(data: Dictionary, europe: EuropeData, definitions: Diction
 	var values = bytes_to_var(bytes)
 	if not values is Dictionary: return null
 	var world := Checkpoint.restore(values, europe, definitions)
-	return world if data.get("route_revision", 0) == 1 else _refresh_old_routes(world)
+	return world if data.get("route_revision", 0) == ROUTE_REVISION else _refresh_old_routes(world)
 
 static func _refresh_old_routes(world: RefCounted) -> RefCounted:
 	if world == null:
@@ -64,18 +65,10 @@ static func _refresh_old_routes(world: RefCounted) -> RefCounted:
 		if traveler.pi >= traveler.path.size():
 			continue
 		var dest: Vector2 = traveler.path.back()
-		var from := Vector2(traveler.x, traveler.y)
-		var reroute: bool = world.map.paths.gate_approaches.has(dest)
-		for i in range(traveler.pi, traveler.path.size()):
-			if reroute: break
-			var to: Vector2 = traveler.path[i]
-			reroute = not world.map.paths.los_clear(from.x, from.y, to.x, to.y, true)
-			from = to
-		if reroute:
-			var route = world.map.paths.find_path(traveler.x, traveler.y, dest.x, dest.y)
-			if route != null:
-				traveler.path = route
-				traveler.pi = 0
+		var route = world.map.paths.find_path(traveler.x, traveler.y, dest.x, dest.y)
+		if route != null:
+			traveler.path = route
+			traveler.pi = 0
 	return world
 
 static func _valid_v1_header(data: Dictionary) -> bool:

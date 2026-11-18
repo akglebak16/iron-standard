@@ -22,9 +22,12 @@ func _initialize() -> void:
 			if s.id != int(e[0]) or s.kind != e[1] or s.fac != e[2] or s.name != e[3] or absf(s.x - float(e[4])) > 0.001 or absf(s.y - float(e[5])) > 0.001:
 				bad_settles += 1
 		var road_cells := Marshalls.base64_to_raw(entry.road)
+		# The frozen browser fixture describes the original links before shared corridors are merged.
+		var legacy_paths := WorldMap.Pathfinder.new(map.terrain)
+		WorldMap.RoadGenerator.new().generate(map.terrain, legacy_paths, map.settles)
 		var bad_road := 0
 		for k in road_cells.size():
-			if road_cells[k] != map.paths.road[k]:
+			if road_cells[k] != legacy_paths.road[k]:
 				bad_road += 1
 		var bad_points := 0
 		var segments_ok: bool = map.roads.size() == entry.roads.size()
