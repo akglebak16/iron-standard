@@ -4,6 +4,7 @@ const Event = preload("res://core/battle/combat_event.gd")
 const Parts = preload("res://apps/godot/presentation/battle/detached_parts.gd")
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const Heraldic = preload("res://apps/godot/visuals/dominion_heraldic_art.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 const STEP := 1.0 / 60.0
 
 func _initialize() -> void:
@@ -160,6 +161,7 @@ func _check_variety_and_rate() -> void:
 				"The horse's head must stay with the fallen mount, outside the severed rider")
 		assert(art.detached_leg(event.target_visual).get_image().get_used_rect().has_area())
 	event.target_visual.mounted = false
+	_check_split_identity()
 	# Exercise the real death path and its RNG, not a copy of the probability formula.
 	for impact in [Event.MeleeImpact.CUT, Event.MeleeImpact.BLUNT]:
 		for hero in [false, true]:
@@ -183,3 +185,16 @@ func _check_variety_and_rate() -> void:
 	for casualty in 1000: effects.advance(STEP, [event])
 	assert(effects._parts._active.size() <= Parts.MAX_ACTIVE)
 	assert(effects._parts._settled.size() <= Parts.MAX_SETTLED)
+
+## Troops on the same sheet share one texture RID: each must still be cut from its own figure.
+func _check_split_identity() -> void:
+	var art := Art.new()
+	art.configure_identities({1: "n1", 2: "e2", 3: "d1", 4: "d2"}, {1: 0, 2: 0, 3: 0, 4: 0})
+	var halves := {}
+	for id in [1, 2, 3, 4]:
+		var troop: String = {1: "n1|nord", 2: "e2|emp", 3: "d1|dom", 4: "d2|dom"}[id]
+		var look: Dictionary = OriginalArt.MANIFEST.troops[troop].look
+		var unit := {"id": id, "look": look, "faction": troop.get_slice("|", 1), "hero": false, "companion": false, "mounted": false, "side": 0}
+		var data: PackedByteArray = art.split_torso(unit).upper.get_image().get_data()
+		assert(not halves.values().has(data), "%s is cut from its own figure" % troop)
+		halves[id] = data
