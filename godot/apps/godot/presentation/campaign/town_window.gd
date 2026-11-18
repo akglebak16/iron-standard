@@ -10,6 +10,8 @@ const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
 const SettlementLayer = preload("res://apps/godot/presentation/campaign/settlement_layer.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const PartyWindowText = preload("res://apps/godot/presentation/campaign/companion_text.gd")
+const TroopList = preload("res://apps/godot/presentation/campaign/troop_list.gd")
+const SettlementRecruits = preload("res://core/campaign/rules/settlement_recruits.gd")
 
 signal wait_requested(settlement: Dictionary)
 var state: RefCounted
@@ -76,23 +78,100 @@ func render() -> void:
 		_recruits(p, fx)
 		_siege_offer(p)
 
+## «Рекруты»: a summary of purse, room, wages and the next recruits, then one compact table (as on the market) and
+## the waiting card.
 func _recruits(p, fx: Dictionary) -> void:
+	var catalog = state.roster.catalog
 	var cap := Economy.size_cap(p.hero, fx)
 	var count: int = Economy.troop_count(p.troops)
-	note("В отряде %d из %d бойцов. Свободных рекрутов: %d. Новые люди приходят каждые три дня." % [count, cap, Economy.troop_count(settlement.recruits)])
-	if settlement.recruits.is_empty():
-		note("Сегодня здесь никто не хочет воевать.")
-	for r in settlement.recruits.duplicate():
-		var troop: Dictionary = state.roster.catalog.get_troop(r.type)
-		var cost := Economy.hire_cost(troop, fx)
-		var can: bool = p.gold >= cost and count < cap
-		row("%s ×%d" % [troop.name, r.n], "ур. %d · %d зол. за бойца" % [troop.tier, cost], [
-			{"sound": "coin", "text": "Нанять", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 1, fx)},
-			{"sound": "coin", "text": "×5", "disabled": not can, "call": func(): Economy.hire(p, settlement, troop, 5, fx)},
-		], r.type)
-	heading("Ожидание")
-	note("Время идёт, а отряд стоит у стен. Любой клик по карте или Z — в путь.")
-	row("Подождать здесь", "", [{"sound": "click", "text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}])
+	var room := maxi(0, cap - count)
+	var line := TroopList.summary(body, "RecruitSummary")
+	TroopList.chip(line, "coin", "Золото %d" % p.gold)
+	TroopList.chip(line, "men", "Отряд %d / %d · свободно %d" % [count, cap, room], TroopList.WARN if room == 0 else GameSkin.PARCH,
+		"Мест нет: лимит растёт с уровнем и харизмой героя." if room == 0 else "Лимит зависит от уровня, харизмы и перков героя.")
+	TroopList.chip(line, "coin", "Жалованье сейчас %d в день" % Economy.wage_day(p.troops, func(t): return float(catalog.get_troop(t).wage), fx))
+	TroopList.chip(line, "hourglass", "Новые люди %s" % _next_recruits())
+	var stacks: Array = settlement.recruits.duplicate()
+	stacks.sort_custom(func(a, b):
+		var ta: Dictionary = catalog.get_troop(a.type)
+		var tb: Dictionary = catalog.get_troop(b.type)
+		return int(ta.tier) > int(tb.tier) if int(ta.tier) != int(tb.tier) else String(ta.name) < String(tb.name))
+	if stacks.is_empty():
+		_empty_state("men", "Сегодня никто не хочет воевать", "Новые люди придут %s." % _next_recruits())
+	else:
+		var men := Economy.troop_count(stacks)
+		var grid := TroopList.table(body, "RecruitTable", "Желают вступить", TroopList.men(men), GameSkin.BRASS)
+		for r in stacks:
+			_recruit_line(grid, p, fx, catalog.get_troop(r.type), int(r.n), room)
+	var wait := TroopList.table(body, "WaitCard", "Ожидание", "время идёт, отряд стоит у стен; клик по карте или Z — в путь", GameSkin.MUTED)
+	wait.columns = 2
+	var wait_text := TroopList.cell("Подождать здесь", GameSkin.PARCH, 15)
+	wait_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	wait.add_child(wait_text)
+	var wait_button := TroopList.small(make_button({"sound": "click", "text": "Ждать", "call": func(): wait_requested.emit(settlement); close_window()}))
+	wait_button.name = "Wait"
+	wait.add_child(wait_button)
+
+## «через 5 ч» / «через 2 дн. 3 ч» until the settlement refreshes its recruits.
+func _next_recruits() -> String:
+	var hours := maxi(1, SettlementRecruits.RECRUIT_HOURS - int(settlement.get("rt", 0)))
+	return "через %d ч" % hours if hours < 24 else "через %d дн. %d ч" % [hours / 24, hours % 24]
+
+func _recruit_line(grid: GridContainer, p, fx: Dictionary, troop: Dictionary, n: int, room: int) -> void:
+	var cost := Economy.hire_cost(troop, fx)
+	var affordable: int = p.gold / cost
+	var why := ""
+	if room == 0:
+		why = "Отряд полон: %d из %d" % [Economy.troop_count(p.troops), Economy.size_cap(p.hero, fx)]
+	elif affordable < 1:
+		why = "Не хватает золота: нужно %d, у тебя %d" % [cost, p.gold]
+	var all := mini(n, mini(affordable, room))
+	var actions: Array = []
+	var price := TroopList.cell("%d за бойца" % cost, GameSkin.BRASS if affordable > 0 else TroopList.WARN, 14)
+	price.name = "Price_" + troop.id
+	price.custom_minimum_size.x = 92
+	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	actions.append(price)
+	for def in [["Hire", "Нанять", 1], ["Hire5", "×5", 5], ["HireAll", "Всех ×%d" % all if all > 1 else "Всех", all]]:
+		var k: int = mini(int(def[2]), all)
+		var b := TroopList.small(make_button({"sound": "coin", "text": def[1], "disabled": k < 1 or why != "",
+			"hint": why if why != "" else "Нанять %d за %d золота" % [k, k * cost],
+			"call": func(): _hire(p, fx, troop, k)}))
+		b.name = "%s_%s" % [def[0], troop.id]
+		actions.append(b)
+	var lines := ["ступень %s · %s · жалованье %d в день" % [TroopList.tier_pips(int(troop.tier)), TroopList.group_name(troop), int(troop.wage)]]
+	var figures := "здоровье %d · броня %d · урон %d" % [int(troop.hp), int(troop.arm), int(troop.dmg)]
+	var ups: Array = troop.get("up", []).map(func(id): return String(state.roster.catalog.get_troop(id).name))
+	if not ups.is_empty():
+		figures += "   ·   дальше: " + ", ".join(PackedStringArray(ups))
+	lines.append(figures)
+	TroopList.row(grid, troop.id, troop.id, "%s ×%d" % [troop.name, n], lines, actions)
+
+func _hire(p, fx: Dictionary, troop: Dictionary, n: int) -> void:
+	var gold: int = p.gold
+	var hired := Economy.hire(p, settlement, troop, n, fx)
+	if hired > 0:
+		_flash = "нанято: %s ×%d (−%d золота)" % [troop.name, hired, gold - int(p.gold)]
+
+## The party window's empty card: a large icon, a title and a muted line.
+func _empty_state(icon_name: String, title: String, detail: String) -> void:
+	var card := card_panel()
+	card.name = "RecruitEmpty"
+	body.add_child(card)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 16)
+	card.add_child(line)
+	line.add_child(TroopList.icon(GameSkin.icon(icon_name), 44))
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.add_child(col)
+	var t := Label.new()
+	t.text = title
+	GameSkin.title(t, 22)
+	col.add_child(t)
+	var d := TroopList.cell(detail, GameSkin.MUTED, 16)
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(d)
 
 func _tavern(p) -> void:
 	var comps = state.companions
