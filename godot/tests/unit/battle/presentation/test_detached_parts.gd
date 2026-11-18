@@ -86,9 +86,32 @@ func _check_cut() -> void:
 	effects.blood_enabled = false
 	assert(effects.headless_units().is_empty() and effects._parts._settled.is_empty())
 	effects.blood_enabled = true
-	_seed_for(effects, Parts.Part.ARM)
+	# No arms or legs any more (#205): a heavy cut takes the head or cuts the figure in half.
+	assert(not Effects.CUT_PARTS.has(Parts.Part.ARM) and not Effects.HEAVY_CUT_PARTS.has(Parts.Part.LEG))
+	_seed_for(effects, Parts.Part.TORSO)
 	effects.advance(0.0, [event])
-	assert(effects._parts._active[0].kind == Parts.Part.ARM and effects.headless_units().is_empty())
+	assert(effects._parts._active[0].kind == Parts.Part.TORSO and effects.headless_units().is_empty())
+	# A shield-bearer cut in half drops his shield beside him; the halves carry no shield.
+	var shielded := _down(Event.MeleeImpact.CUT)
+	shielded.target_id = 18
+	shielded.target_visual.look = OriginalArt.MANIFEST.troops["e2|emp"].look
+	shielded.target_visual.id = 18
+	var cutter := Effects.new()
+	_seed_for(cutter, Parts.Part.TORSO)
+	cutter.advance(0.0, [shielded])
+	var kinds: Array = cutter._parts._active.map(func(part): return part.kind)
+	assert(kinds == [Parts.Part.TORSO, Parts.Part.SHIELD], "the shield falls off on its own")
+	var dropped: Dictionary = cutter._parts._active[1]
+	assert(dropped.texture != null and dropped.height > 0.0 and dropped.height < 30.0, "it falls from where it hung")
+	# The halves are cut from the figure without its shield: where the shield hung, the lower
+	# half shows the body underneath.
+	var halves := Art.new().split_torso(shielded.target_visual)
+	var guard := OriginalArt.guard_layers(shielded.target_visual)
+	var bare: Image = (guard.layers[0][0] as Texture2D).get_image()
+	var at := Vector2i(guard.shield_center)
+	var lower: Image = halves.lower.get_image()
+	if lower.get_pixelv(at).a > 0.0:
+		assert(lower.get_pixelv(at).is_equal_approx(bare.get_pixelv(at)), "no shield left on the lower half")
 
 func _check_blunt() -> void:
 	var effects := Effects.new()
@@ -131,7 +154,7 @@ func _seed_for(effects: Effects, kind: int, accepted: bool = true) -> void:
 		effects._rng.seed = seed_value
 		var state := effects._rng.state
 		var gate := effects._rng.randf() < Effects.DISMEMBER_CHANCE
-		var choice: int = Effects.HEAVY_CUT_PARTS[effects._rng.randi_range(0, 3)]
+		var choice: int = Effects.HEAVY_CUT_PARTS[effects._rng.randi_range(0, Effects.HEAVY_CUT_PARTS.size() - 1)]
 		if gate == accepted and (kind < 0 or choice == kind):
 			effects._rng.state = state
 			return
