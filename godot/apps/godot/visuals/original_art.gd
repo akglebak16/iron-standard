@@ -223,8 +223,9 @@ static func guard_layers(unit: Dictionary, troop_id := "", variant := 0) -> Dict
 		return {}
 	# Heraldic Dominion figures carry their own rows: the figure without the shield and the shield.
 	if not troop_id.is_empty() and DominionHeraldic.supports(troop_id, _faction(unit)):
-		var geometry: Dictionary = DominionHeraldic.HEADS.get(troop_id, {})
-		if not geometry.has("shield_center"):
+		var geometry: Dictionary = DominionHeraldic.geometry(troop_id)
+		# A heraldic rider asked for on foot (cut from his horse) keeps his shield on.
+		if not geometry.has("shield_center") or (DominionHeraldic.is_cavalry(troop_id) and not unit.get("mounted", false)):
 			return {}
 		var banner := _player_banner if _faction(unit) == "player" else -1
 		return {"layers": [[DominionHeraldic.sprite(troop_id, "bare", variant, banner), Vector2.ZERO]],
@@ -298,7 +299,10 @@ static func _region_image(texture: AtlasTexture) -> Image:
 	return (_sheet_images[key] as Image).get_region(Rect2i(texture.region))
 
 ## Draw the fallen mount without its rider for a severed-rider corpse.
-static func mount_corpse(unit: Dictionary, size: Vector2i) -> Image:
+static func mount_corpse(unit: Dictionary, size: Vector2i, troop_id := "") -> Image:
+	if DominionHeraldic.is_cavalry(troop_id) and DominionHeraldic.supports(troop_id, _faction(unit)):
+		var horse := DominionHeraldic.horse(String(unit.look.get("horse", "bay")))
+		if horse.get_size() == size: return horse
 	var image := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	var faction: String = unit.faction
 	if not MANIFEST.crests.has(faction): faction = "nord" if unit.side == 0 else "emp"
@@ -315,10 +319,23 @@ static func _troop_layers(troop: String, faction: String, look: Dictionary, moun
 		"weapon_kind": look.get("weapon"), "anchor": Vector2(definition.anchor[0], definition.anchor[1]) * 2,
 		"pivot": Vector2(definition.pivot[0], definition.pivot[1]) * 2, "scale": 0.31}
 	entry.head_center = Vector2(43.5, 57) * 2 if mounted else Vector2(39.5, 34) * 2
+	if DominionHeraldic.is_cavalry(troop) and DominionHeraldic.supports(troop, faction):
+		var rider: Dictionary = DominionHeraldic.geometry(troop)
+		entry.anchor = DominionHeraldic.CAVALRY_ANCHOR
+		entry.pivot = Vector2(rider.grip[0], rider.grip[1])
+		entry.head_center = Vector2(rider.center[0], rider.center[1])
+		entry.neck_center = Vector2(rider.neck[0], rider.neck[1])
+		if not mounted:
+			# The rider on his own (cut from the saddle): same frame and coordinates, no horse.
+			var alone := sprite(troop, faction, DominionHeraldic.RIDER_PART, variant)
+			entry.body = alone
+			entry.corpse = alone
+			entry.portrait = alone
+		return entry
 	if DominionHeraldic.supports(troop, faction):
 		entry.anchor = Vector2(76, 158)
-		entry.pivot = DominionHeraldic.GRIPS.get(look.get("weapon"), Vector2(125, 116))
-		var head_geometry: Dictionary = DominionHeraldic.HEADS[troop]
+		entry.pivot = DominionHeraldic.pivot(troop, look.get("weapon"))
+		var head_geometry: Dictionary = DominionHeraldic.geometry(troop)
 		entry.head_center = Vector2(head_geometry.center[0], head_geometry.center[1])
 		entry.neck_center = Vector2(head_geometry.neck[0], head_geometry.neck[1])
 		# A presentation-only pose key; the gameplay weapon remains xbow.

@@ -5024,6 +5024,26 @@
       "source": "tools/battle/render_dominion_heraldic.cjs",
       "destination": "tools/battle/render_dominion_heraldic.cjs",
       "introduced_revision": "local-dominion-heraldic-units"
+    },
+    {
+      "source": "apps/godot/visuals/dominion_heraldic_cavalry_geometry.gd",
+      "destination": "apps/godot/visuals/dominion_heraldic_cavalry_geometry.gd",
+      "introduced_revision": "local-dominion-heraldic-cavalry"
+    },
+    {
+      "source": "tools/battle/render_dominion_cavalry.cjs",
+      "destination": "tools/battle/render_dominion_cavalry.cjs",
+      "introduced_revision": "local-dominion-heraldic-cavalry"
+    },
+    {
+      "source": "apps/godot/visuals/nord_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/nord_heraldic_geometry.gd",
+      "introduced_revision": "local-nord-heraldic"
+    },
+    {
+      "source": "tools/battle/render_heraldic_faction.cjs",
+      "destination": "tools/battle/render_heraldic_faction.cjs",
+      "introduced_revision": "local-nord-heraldic"
     }
   ]
 }
