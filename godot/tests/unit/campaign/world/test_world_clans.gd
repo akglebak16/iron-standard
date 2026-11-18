@@ -109,6 +109,6 @@ func _initialize() -> void:
 	tw.open_for(s, emp_town)
 	tw.current_tab = "oath"
 	tw.render()
-	assert(tw.body.get_child_count() > 4)
+	assert(tw.body.find_child("FactionCard", true, false) != null and tw.body.find_child("Powers", true, false) != null, "the service tab renders its cards (#214)")
 	print("Clans tests passed")
 	quit(0)
