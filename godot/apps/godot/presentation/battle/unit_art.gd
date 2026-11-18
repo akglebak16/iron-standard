@@ -91,13 +91,17 @@ func detached_head(unit: Dictionary) -> Texture2D:
 ## Split the existing bust at the waist; retain the horse and lower stump.
 ## Cache by appearance, never by casualty, and keep full-size image coordinates.
 func split_torso(unit: Dictionary) -> Dictionary:
-	var entry := OriginalArt.layers_for(unit)
+	var entry := _original(unit)
 	if entry.is_empty():
 		entry = layers(unit)
 	var body: Texture2D = entry.get("corpse", entry.body)
-	var key := body.get_rid()
+	# A figure with a shield is cut without it: the shield falls off on its own (#205).
+	var bare := OriginalArt.guard_layers(unit, _troop_ids.get(unit.get("id"), ""), int(_variants.get(unit.get("id"), 0)))
+	# Not get_rid(): every cell of a sheet shares the sheet's RID, so all troops on it would
+	# get the halves of whoever was cut first.
+	var key := "split:%d" % body.get_instance_id()
 	if not _severed_cache.has(key):
-		var image := body.get_image()
+		var image := _without_shield(body.get_image(), entry, bare)
 		var anchor: Vector2 = entry.get("anchor", ANCHOR)
 		var scale_value: float = entry.get("scale", SPRITE_SCALE)
 		var lower := Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
@@ -106,9 +110,10 @@ func split_torso(unit: Dictionary) -> Dictionary:
 			# atlas also severs the horse's neck and launches it with the rider.
 			var foot := unit.duplicate()
 			foot.mounted = false
-			var rider := OriginalArt.layers_for(foot)
+			var rider := _original(foot)
 			var offset := Vector2i(Vector2(entry.head_center) - Vector2(rider.head_center))
-			var rider_image: Image = rider.corpse.get_image()
+			var rider_image: Image = _without_shield(rider.corpse.get_image(), rider,
+				OriginalArt.guard_layers(foot, _troop_ids.get(foot.get("id"), ""), int(_variants.get(foot.get("id"), 0))))
 			image = Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
 			image.blit_rect(rider_image, Rect2i(Vector2i.ZERO, rider_image.get_size()), offset)
 			lower = OriginalArt.mount_corpse(unit, image.get_size())
@@ -122,9 +127,9 @@ func split_torso(unit: Dictionary) -> Dictionary:
 	return _severed_cache[key]
 
 func detached_leg(unit: Dictionary) -> Texture2D:
-	var original := OriginalArt.layers_for(unit)
+	var original := _original(unit)
 	var entry := layers(unit) if original.is_empty() else original
-	var key := "leg:" + str(entry.body.get_rid())
+	var key := "leg:%d" % entry.body.get_instance_id()
 	if not _severed_cache.has(key):
 		var skin := skin_color(unit).to_html()
 		var cloth := sleeve_color(unit).to_html()
@@ -135,6 +140,25 @@ func detached_leg(unit: Dictionary) -> Texture2D:
 			shapes = '<path d="M24 44L52 46" stroke="#e2dac4" stroke-width="4"/><circle cx="24" cy="44" r="3"/><circle cx="52" cy="46" r="3"/>'
 		_severed_cache[key] = _texture(shapes)
 	return _severed_cache[key]
+
+## The corpse image repainted from the figure without its shield plus the weapon.
+static func _without_shield(corpse: Image, entry: Dictionary, guard: Dictionary) -> Image:
+	if guard.is_empty():
+		return corpse
+	var image := Image.create(corpse.get_width(), corpse.get_height(), false, Image.FORMAT_RGBA8)
+	var stack: Array = guard.layers.duplicate()
+	if entry.get("weapon") != null:
+		stack.append([entry.weapon, Vector2.ZERO])
+	for layer: Array in stack:
+		var source: Image = (layer[0] as Texture2D).get_image()
+		source.convert(Image.FORMAT_RGBA8)
+		image.blend_rect(source, Rect2i(Vector2i.ZERO, source.get_size()), Vector2i(layer[1]))
+	return image
+
+## The unit's own sheet cell: its troop and appearance variant, as layers() draws it.
+func _original(unit: Dictionary) -> Dictionary:
+	var uid = unit.get("id")
+	return OriginalArt.layers_for(unit, _troop_ids.get(uid, ""), int(_variants.get(uid, 0)))
 
 static func skin_color(unit: Dictionary) -> Color:
 	return Color(SKIN.get(unit.look.get("undead"), DEFAULT_SKIN))

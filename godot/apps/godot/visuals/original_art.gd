@@ -221,9 +221,15 @@ static func guard_layers(unit: Dictionary, troop_id := "", variant := 0) -> Dict
 	var shield_kind = unit.look.get("shield")
 	if shield_kind == null or String(shield_kind) == "":
 		return {}
-	# Heraldic Dominion figures are drawn whole, without component layers to rebuild them from.
+	# Heraldic Dominion figures carry their own rows: the figure without the shield and the shield.
 	if not troop_id.is_empty() and DominionHeraldic.supports(troop_id, _faction(unit)):
-		return {}
+		var geometry: Dictionary = DominionHeraldic.HEADS.get(troop_id, {})
+		if not geometry.has("shield_center"):
+			return {}
+		var banner := _player_banner if _faction(unit) == "player" else -1
+		return {"layers": [[DominionHeraldic.sprite(troop_id, "bare", variant, banner), Vector2.ZERO]],
+			"shield": DominionHeraldic.sprite(troop_id, "shield", variant, banner), "shield_origin": Vector2.ZERO,
+			"shield_center": Vector2(geometry.shield_center[0], geometry.shield_center[1])}
 	var entry := layers_for(unit, troop_id, variant)
 	if entry.is_empty() or entry.get("body") == null:
 		return {}

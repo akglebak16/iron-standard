@@ -173,7 +173,8 @@ public:
       switch (int(part["kind"])) {
       case 0:
       case 4: // severed leg: textured like the head
-      case 5: { // upper torso
+      case 5:   // upper torso
+      case 6: { // the shield a figure cut in half drops
         double scale = part.get("scale", settings["scale"]);
         double direction = bool(part["mirrored"]) ? -1 : 1;
         server->canvas_item_add_set_transform(
