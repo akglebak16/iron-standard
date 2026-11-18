@@ -70,8 +70,8 @@ static func hire(player: RefCounted, settlement: Dictionary, troop: Dictionary, 
 		settlement.recruits.erase(recruit)
 	return count
 
-## Promotes as many men as the purse allows; returns the number promoted.
-static func upgrade(player: RefCounted, troop: Dictionary, up_id: String, fx: Dictionary) -> int:
+## Promotes up to `limit` men (0 = as many as the purse allows); returns the number promoted.
+static func upgrade(player: RefCounted, troop: Dictionary, up_id: String, fx: Dictionary, limit := 0) -> int:
 	if not up_id in troop.up:
 		return 0
 	var stack := {}
@@ -82,6 +82,8 @@ static func upgrade(player: RefCounted, troop: Dictionary, up_id: String, fx: Di
 		return 0
 	var cost := upgrade_cost(troop, fx)
 	var count := mini(int(stack.n), player.gold / cost)
+	if limit > 0:
+		count = mini(count, limit)
 	if count < 1:
 		return 0
 	player.gold -= count * cost
