@@ -20,8 +20,36 @@ func _check() -> void:
 	assert(Options.banner == 2 and Art.palette("player").c1 == Art.BANNERS[2].c1)
 	_click(menu._buttons["khan"])
 	assert(menu._picked == "khan" and menu._name.text == "Проверка")
+	# the look editor (#151): every choice redraws the figure and is kept for the new game
+	var before: PackedByteArray = menu._preview.texture.get_image().get_data()
+	_click(menu._face_buttons.skin["#b97d58"])
+	_click(menu._face_buttons.hair["#dcb860"])
+	_click(menu._face_buttons.beard[2])
+	assert(menu._face_buttons.stache.disabled, "no moustache with a beard")
+	_click(menu._face_buttons.beard[0])
+	assert(not menu._face_buttons.stache.disabled)
+	_click(menu._face_buttons.stache)
+	if not Options.hero_face.scar: _click(menu._face_buttons.scar)
+	if Options.hero_face.bald: _click(menu._face_buttons.bald)
+	assert(Options.hero_face == {"skin": "#b97d58", "hair": "#dcb860", "beard": 0, "stache": 1, "bald": false, "scar": true})
+	assert(menu._face_buttons.skin["#b97d58"].button_pressed and not menu._face_buttons.skin["#e8c3a0"].button_pressed)
+	assert(menu._preview.texture.get_image().get_data() != before)
+	var shown: PackedByteArray = menu._preview.texture.get_image().get_data()
+	_click(menu._face_buttons.bald)
+	assert(Options.hero_face.bald and menu._preview.texture.get_image().get_data() != shown)
+	var dice: Button = menu._dialog.find_child("RandomLook", true, false)
+	var seen := {}
+	for i in 12:
+		_click(dice)
+		seen[str(Options.hero_face)] = true
+	assert(seen.size() > 1, "«Случайно» changes the look")
 	menu._start()
 	assert(Options.culture == "khan" and Options.hero_name == "Проверка" and Options.banner == 2)
+	# reopening the screen keeps the last look
+	var kept: Dictionary = Options.hero_face.duplicate()
+	menu._create()
+	for i in 5: await process_frame
+	assert(menu._face == kept)
 	menu._quick()
 	for i in 10: await process_frame
 	_click(menu._quick_buttons.me["emi"])
@@ -47,6 +75,7 @@ func _check() -> void:
 	assert(QuickSetup.build({"size":{}}) == null)
 	menu.free()
 	Options.banner = 0
+	Options.hero_face = {}
 	Art.select_player_banner(0)
 	print("Start options tests passed")
 	quit()

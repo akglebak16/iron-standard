@@ -49,6 +49,9 @@ static func resolve(profile: Dictionary, catalog: GearCatalog) -> Dictionary:
 		look.beard = profile.get("beard", 1) if profile.get("beard") != null else 1
 		if profile.get("hair") is String:
 			look.hair = profile.hair
+	# The face picked on the start screen (#151) wins over the seed; the art checks the values.
+	if profile.get("face") is Dictionary and not profile.face.is_empty():
+		look.face = profile.face.duplicate()
 	return {"slots": slots, "selection": selection, "weapon": weapon, "shield": shield, "horse": horse, "mounted": not horse.is_empty(), "armor": armor, "block": float(shield.get("v", weapon.get("parry", 0.0))), "look": look,
 		"weapon_names": {MELEE: melee.name, RANGED: ranged.get("name", "")}}
 

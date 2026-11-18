@@ -3,6 +3,8 @@ extends RefCounted
 ## the same random draws in the same order, so a saved hero keeps the face he had in the browser.
 const SKINS := ["#e2b48c", "#d6a179", "#c98f66", "#b97d58", "#e8c3a0"]
 const HAIRS := ["#2a1d14", "#4a3020", "#6b4423", "#8c5a2b", "#a8672e", "#b9b2a5", "#1a1a1a", "#7a2e16"]
+## Hair colours a hero can pick on the start screen: the drawn ones plus the companions' fair hair.
+const HAIR_CHOICES := HAIRS + ["#dcb860"]
 const MASK := 0xFFFFFFFF
 
 ## mulberry32: a closure in JS, a state array here. Returns the next float in [0, 1).
@@ -34,8 +36,33 @@ static func variant(seed_value: int, beard_chance: float, hair: Variant = null, 
 	return {"skin": skin, "hair": String(hair) if hair is String and not String(hair).is_empty() else drawn, "beard": beard,
 		"stache": 1 if stache and beard == 0 else 0, "bald": bald, "scar": scar}
 
-## The face of a look that carries a seed (heroLook: beard defaults to 1), or empty for troops.
+## A face picked on the start screen, normalised to frames the atlas has; empty when it is not a valid choice.
+## Saves pass numbers through JSON as floats, so they are cast back here.
+static func chosen(face: Variant) -> Dictionary:
+	if not face is Dictionary:
+		return {}
+	var skin: Variant = face.get("skin")
+	var hair: Variant = face.get("hair")
+	var beard: Variant = face.get("beard", 0)
+	if not skin in SKINS or not hair in HAIR_CHOICES or not (beard is int or beard is float):
+		return {}
+	var shape := clampi(int(beard), 0, 2)
+	return {"skin": String(skin), "hair": String(hair), "beard": shape,
+		"stache": 1 if shape == 0 and bool(face.get("stache", false)) else 0,
+		"bald": bool(face.get("bald", false)), "scar": bool(face.get("scar", false))}
+
+## A random face for the start screen's "Случайно" button.
+static func random_face(rng: RandomNumberGenerator) -> Dictionary:
+	var beard := rng.randi_range(0, 2)
+	return {"skin": SKINS[rng.randi_range(0, SKINS.size() - 1)], "hair": HAIR_CHOICES[rng.randi_range(0, HAIR_CHOICES.size() - 1)],
+		"beard": beard, "stache": 1 if beard == 0 and rng.randf() < 0.5 else 0, "bald": rng.randf() < 0.15, "scar": rng.randf() < 0.2}
+
+## The face of a look: the one picked on the start screen, else from the seed (heroLook: beard defaults to 1),
+## or empty for troops.
 static func of_look(look: Dictionary) -> Dictionary:
+	var picked := chosen(look.get("face"))
+	if not picked.is_empty():
+		return picked
 	if not look.has("seed"):
 		return {}
 	var beard: Variant = look.get("beard")
