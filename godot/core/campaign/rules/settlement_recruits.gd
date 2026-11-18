@@ -2,6 +2,8 @@ extends RefCounted
 const Catalog = preload("res://core/troops/data/catalog.gd")
 const Generation = preload("res://core/troops/rules/generation.gd")
 const Config = preload("res://core/campaign/config.gd")
+## Hours between two refreshes of a settlement's recruits (counter `rt`, hourly tick in party_roster.gd).
+const RECRUIT_HOURS := 72
 const RECRUIT_COUNTS := {
 	"town": Vector2i(5, 9),
 	"castle": Vector2i(3, 6),

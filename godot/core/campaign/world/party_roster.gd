@@ -169,7 +169,7 @@ func hour_tick(hour: int) -> void:
 					respawn_camp(s)
 			continue
 		s.rt += 1
-		if s.rt >= 72:
+		if s.rt >= SettlementRecruits.RECRUIT_HOURS:
 			s.rt = 0
 			SettlementRecruits.refresh(s, catalog, rng)
 	if hour % 6 == 0:
