@@ -24,10 +24,11 @@ func _ready() -> void:
 	for stroke in [[Color("#755136"),11.0,4.4],[Color("#d4a063"),9.0,3.2],[Color("#f3ce92"),5.8,1.8]]:
 		for lane in lanes: _stroke(lane, stroke[2], stroke[0])
 		_stroke(route, stroke[1], stroke[0])
-	_tag(gates.get_node("Belmont").position + Vector2(-24,9), "Бельмон", true)
-	_tag(gates.get_node("Ventum").position + Vector2(12,10), "Вентум", true)
-	_tag(gates.get_node("SaintRemy").position + Vector2(17,-88), "Сен-Реми", false)
-	_tag(gates.get_node("Ostra").position + Vector2(14,9), "Остра", false)
+	_stroke(route, 1.8, Color("#ca9458"))
+	_tag(gates.get_node("Belmont").position + Vector2(-24,9), "Бельмон", preload("res://apps/godot/visuals/assets/crest_kin.png"))
+	_tag(gates.get_node("Ventum").position + Vector2(12,10), "Вентум", preload("res://apps/godot/visuals/assets/crest_emp.png"))
+	_tag(gates.get_node("SaintRemy").position + Vector2(17,-88), "Сен-Реми")
+	_tag(gates.get_node("Ostra").position + Vector2(14,9), "Остра")
 	_set_marker($Traffic/Army, Art.sprite("d3","dom"), 68)
 	_set_marker($Traffic/Caravan, $Traffic/Caravan.texture, 51)
 	army_distance = route.get_baked_length() * 0.60
@@ -64,7 +65,8 @@ func _stroke(curve: Curve2D, width: float, pigment: Color) -> void:
 	line.end_cap_mode = Line2D.LINE_CAP_ROUND
 	$Roads.add_child(line)
 
-func _tag(at: Vector2, caption: String, city: bool) -> void:
+func _tag(at: Vector2, caption: String, crest: Texture2D = null) -> void:
+	var city := crest != null
 	var tag := Label.new()
 	tag.text = caption
 	tag.add_theme_font_override("font", Style.DISPLAY if city else Style.BODY_BOLD)
@@ -77,12 +79,21 @@ func _tag(at: Vector2, caption: String, city: bool) -> void:
 		plaque.bg_color = Color("#283035")
 		plaque.border_color = Color("#b69658")
 		plaque.set_border_width_all(1)
-		plaque.content_margin_left = 10
+		plaque.content_margin_left = 29
 		plaque.content_margin_right = 10
 		tag.add_theme_stylebox_override("normal", plaque)
 	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	$Labels.add_child(tag)
 	tag.position = at - Vector2(tag.get_minimum_size().x * 0.5, 0)
+	if city:
+		var badge := TextureRect.new()
+		badge.texture = crest
+		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		badge.size = Vector2(21,24)
+		badge.position = Vector2(4,(tag.get_minimum_size().y-24)*0.5)
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tag.add_child(badge)
 
 func _set_marker(marker: Sprite2D, image: Texture2D, width: float) -> void:
 	marker.texture = image

@@ -10,6 +10,11 @@
 
 [ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/sandbox/ridge_and_wood.png" id="8"]
 
+[ext_resource type="Shader" path="res://apps/godot/presentation/campaign/sandbox/coast_pigments.gdshader" id="9"]
+
+[sub_resource type="ShaderMaterial" id="Pigments"]
+shader = ExtResource("9")
+
 [sub_resource type="AtlasTexture" id="Spur"]
 atlas = ExtResource("8")
 region = Rect2(0, 850, 623, 219)
@@ -25,6 +30,7 @@ script = ExtResource("1")
 texture_filter = 2
 
 [node name="Terrain" type="Sprite2D" parent="."]
+material = SubResource("Pigments")
 texture = ExtResource("2")
 centered = false
 
