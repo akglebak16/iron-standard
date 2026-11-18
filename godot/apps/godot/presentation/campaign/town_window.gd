@@ -13,6 +13,8 @@ const PartyWindowText = preload("res://apps/godot/presentation/campaign/companio
 const TroopList = preload("res://apps/godot/presentation/campaign/troop_list.gd")
 const SettlementRecruits = preload("res://core/campaign/rules/settlement_recruits.gd")
 const QuestCard = preload("res://apps/godot/presentation/campaign/quest_card.gd")
+const Knives = preload("res://core/campaign/rules/tavern_knives.gd")
+const KnivesView = preload("res://apps/godot/presentation/campaign/tavern_knives_view.gd")
 
 signal wait_requested(settlement: Dictionary)
 ## A place to mark on the world map (the town of a wanderer, a quest target) — the window closes after it.
@@ -53,6 +55,7 @@ func _ready() -> void:
 func open_for(world_state: RefCounted, s: Dictionary) -> void:
 	_siege_confirm = false
 	_leave_confirm = false
+	_knife = {}
 	state = world_state
 	settlement = s
 	set_tabs([["recruit", "Рекруты"]], "recruit")
@@ -185,6 +188,9 @@ func _empty_state(icon_name: String, title: String, detail: String, node_name :=
 ## «Таверна»: wandering companions for hire as cards (portrait, story, skill, attributes, perks, price) and the
 ## innkeeper's rumour with the town on the map.
 func _tavern(p) -> void:
+	if not _knife.is_empty():
+		_knife_game(p)
+		return
 	var comps = state.companions
 	var here: Array = comps.at(p, settlement)
 	var n: int = p.comps.size()
@@ -200,6 +206,65 @@ func _tavern(p) -> void:
 	var rm: Dictionary = comps.rumor(p, settlement)
 	if not rm.is_empty():
 		_rumor_card(rm)
+	_knife_card(p)
+
+## The running game of «Метание ножей» (#215): the stake is already on the table; closing the window forfeits it.
+var _knife := {}
+
+## «Метание ножей»: who plays here, the rules in one line, games left today and the stakes.
+func _knife_card(p) -> void:
+	var day: int = state.clock.day
+	var left := Knives.games_left(settlement, day)
+	var card := card_panel()
+	card.name = "Knives"
+	body.add_child(card)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 12)
+	card.add_child(line)
+	line.add_child(TroopList.icon(GameSkin.icon("sword"), 34))
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 0)
+	line.add_child(col)
+	var head := TroopList.cell("Метание ножей", GameSkin.BRASS, 16)
+	head.add_theme_font_override("font", GameSkin.BODY_BOLD)
+	col.add_child(head)
+	var text := TroopList.cell("Соперник: %s. По %d броска в мишень, у кого больше очков — забирает ставку. Сегодня ещё партий: %d." % [Knives.regular_name(settlement), Knives.THROWS, left], GameSkin.PARCH, 14)
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(text)
+	for stake in Knives.STAKES:
+		var why := Knives.why_not(int(p.gold), settlement, day, stake)
+		var b := TroopList.small(make_button({"sound": "coin", "text": "Ставка %d" % stake, "disabled": why != "", "hint": why if why != "" else "Сыграть на %d золотых" % stake,
+			"call": func(): _knife_start(p, stake)}))
+		b.name = "Stake_%d" % stake
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		line.add_child(b)
+
+func _knife_start(p, stake: int) -> void:
+	var day: int = state.clock.day
+	if not Knives.start(p, settlement, day, stake):
+		_say(Knives.why_not(int(p.gold), settlement, day, stake))
+		return
+	_knife = {"stake": stake, "mine": [], "theirs": [], "phase": "aim", "t": 0.0, "wait": 0.0, "net": 0,
+		"rng": Knives.rng_for(int(state.seed_value), settlement, day, Knives.played(settlement, day)),
+		"level": Knives.regular_level(settlement), "regular": Knives.regular_name(settlement)}
+
+func _knife_game(p) -> void:
+	var view := KnivesView.new()
+	view.name = "KnivesGame"
+	view.game = _knife
+	view.player = p
+	view.settled.connect(func(net: int):
+		_knife.again_why = Knives.why_not(int(p.gold), settlement, int(state.clock.day), int(_knife.stake))
+		_flash = ("выигрыш в ножи: +%d золота" % net) if net > 0 else ("ничья в ножи" if net == 0 else "проигрыш в ножи: %d золота" % net)
+		render.call_deferred())
+	view.again_requested.connect(func():
+		_knife_start(p, int(_knife.stake))
+		render())
+	view.quit_requested.connect(func():
+		_knife = {}
+		render())
+	body.add_child(view)
 
 func _companion_card(p, c: Dictionary, party_comps: int) -> void:
 	var comps = state.companions
