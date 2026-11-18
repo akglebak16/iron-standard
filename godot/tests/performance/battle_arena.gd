@@ -26,7 +26,7 @@ const Movement = preload("res://adapters/godot/native/movement.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 
-const VERSION := 4 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics.
+const VERSION := 5 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0).
 const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
@@ -43,6 +43,13 @@ const COMBAT_MODES := [2, 3, 4, 5] # MotionStore.MODES: melee, shoot, shootslot,
 const DOCTRINE_MODES := {"rank": 6, "brace": 7, "fallback": 8}
 const VOLLEY_TICKS := 60 # Shots of one side within 1 s form a volley.
 const VOLLEY_MIN_SHOTS := 10 # Shorter windows are stray shots, not volleys.
+# TERRAIN.md 8: a fighter in melee mode whose target stays farther than STUCK_REACH and who does not close in by
+# STUCK_PROGRESS for STUCK_SECONDS is stuck. On the open field these are the back ranks pressing on a crowd.
+const MELEE_MODE := 2 # MotionStore.MODES "melee".
+const STUCK_SECONDS := 5.0
+const STUCK_REACH := 150.0
+const STUCK_PROGRESS := 20.0
+const CONTACT_ATTACKS := [Event.Attack.MELEE, Event.Attack.CHARGE, Event.Attack.COUNTER]
 
 static func default_options() -> Dictionary:
 	return {"scenarios": SCENARIOS.duplicate(), "sizes": [100], "runs": 4, "seed": 4242, "max_seconds": 240.0,
@@ -197,6 +204,9 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var input := HeroInput.new()
 	var volleys := volley_tracker()
 	var morale := morale_tracker(state, initial)
+	var contact_at := -1.0
+	var progress := {}
+	var stuck := {}
 	var started := Time.get_ticks_msec()
 	var tick := 0
 	while tick < max_ticks:
@@ -211,9 +221,12 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 				track_shot(volleys, state, int(event.target_id), tick)
 			elif event.kind in [Event.Kind.WAVERED, Event.Kind.FLED, Event.Kind.DOWN]:
 				track_morale(morale, state, event, tick)
+			if contact_at < 0.0 and event.kind in [Event.Kind.HIT, Event.Kind.BLOCK] and event.attack in CONTACT_ATTACKS:
+				contact_at = tick * TICK_SECONDS
 		advance_volleys(volleys, tick)
 		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
 			_sample_idle(state, engaged, idle_samples, unit_samples, doctrine_samples)
+			sample_stuck(state, progress, stuck, tick * TICK_SECONDS)
 			sample_rallies(morale)
 			for side in 2:
 				var rally: bool = state.groups[side][Config.GROUP_CAVALRY].get("rally") == true # Absent before stage 1v.
@@ -236,6 +249,8 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		if unit.dead: dead[unit.side] += 1
 		elif unit.fleeing or unit.gone: fled[unit.side] += 1
 		if not engaged.has(unit.id): never[unit.side] += 1
+	var stuck_sides := [0, 0]
+	for id in stuck: stuck_sides[stuck[id]] += 1
 	var profile_side := [1, 0] if swapped and not kite else [0, 1] # Side of options.profiles[0] and [1].
 	var result := {"scenario": scenario, "size": size, "seed": seed, "swapped": swapped,
 		"profiles": session.ai_profiles(), "winner": winner,
@@ -246,6 +261,8 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		"fled": [float(fled[0]) / initial[0], float(fled[1]) / initial[1]],
 		"never_engaged": [float(never[0]) / initial[0], float(never[1]) / initial[1]],
 		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
+		"contact_seconds": contact_at, "stuck": [float(stuck_sides[0]) / initial[0], float(stuck_sides[1]) / initial[1]],
+		"arena_size": [state.arena_size.x, state.arena_size.y],
 		"wall_ms": Time.get_ticks_msec() - started}
 	result.doctrine = {"rallies": rallies}
 	for key in DOCTRINE_MODES:
@@ -494,12 +511,38 @@ static func _sample_points(group) -> PackedVector2Array:
 		if not unit.dead and not unit.gone and not unit.fleeing: points.append(unit.position)
 	return points
 
+## Stuck fighters (TERRAIN.md 8), sampled with the idle metric. `progress` maps a unit id to [closest target
+## distance, time it was reached]; `stuck` maps the ids that ever stalled to their side.
+static func sample_stuck(state, progress: Dictionary, stuck: Dictionary, now: float) -> void:
+	var flags: PackedInt64Array = state.motion.integer_fields
+	var capacity: int = state.motion.capacity
+	var I = MotionStore.I
+	var seen := {}
+	for row in state.active_units.size():
+		if flags[I.MODE * capacity + row] != MELEE_MODE or flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.FLEEING * capacity + row] or flags[I.HERO * capacity + row]:
+			continue
+		var target = state.unit_for(flags[I.TARGET_HANDLE * capacity + row])
+		if target == null or target.dead: continue
+		var unit = state.active_units[row]
+		var distance: float = unit.position.distance_to(target.position)
+		seen[unit.id] = true
+		var best: Array = progress.get(unit.id, [INF, now])
+		if distance <= STUCK_REACH or distance < best[0] - STUCK_PROGRESS:
+			progress[unit.id] = [distance, now]
+		elif now - best[1] > STUCK_SECONDS:
+			stuck[unit.id] = unit.side
+		else:
+			progress[unit.id] = best
+	for id in progress.keys():
+		if not seen.has(id): progress.erase(id)
+
 static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var count := runs.size()
 	var wins := [0, 0]
 	var profile_wins := [0, 0]
 	var draws := 0
-	var sums := {"duration_seconds": 0.0, "losses": [0.0, 0.0], "fled": [0.0, 0.0], "never_engaged": [0.0, 0.0], "idle_time": [0.0, 0.0]}
+	var sums := {"duration_seconds": 0.0, "losses": [0.0, 0.0], "fled": [0.0, 0.0], "never_engaged": [0.0, 0.0], "idle_time": [0.0, 0.0], "stuck": [0.0, 0.0]}
+	var contact := [0.0, 0]
 	var ai_mean := 0.0
 	var ai_p95 := 0.0
 	var kite_share := 0.0
@@ -543,8 +586,12 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 			profile_wins[run.winner_profile] += 1
 		else: draws += 1
 		sums.duration_seconds += run.duration_seconds
-		for key in ["losses", "fled", "never_engaged", "idle_time"]:
-			for side in 2: sums[key][side] += run[key][side]
+		if float(run.get("contact_seconds", -1.0)) >= 0.0:
+			contact[0] += float(run.contact_seconds)
+			contact[1] += 1
+		for key in ["losses", "fled", "never_engaged", "idle_time", "stuck"]:
+			if run.has(key):
+				for side in 2: sums[key][side] += run[key][side]
 		if run.has("ai_phase") and not run.ai_phase.is_empty():
 			ai_mean += run.ai_phase.mean_ms
 			ai_p95 = maxf(ai_p95, run.ai_phase.p95_ms)
@@ -557,8 +604,10 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		"win_rate": [float(wins[0]) / count, float(wins[1]) / count],
 		"profile_win_rate": [float(profile_wins[0]) / count, float(profile_wins[1]) / count],
 		"duration_seconds": sums.duration_seconds / count, "ai_phase_mean_ms": ai_mean / count, "ai_phase_worst_p95_ms": ai_p95}
-	for key in ["losses", "fled", "never_engaged", "idle_time"]:
+	for key in ["losses", "fled", "never_engaged", "idle_time", "stuck"]:
 		summary[key] = [sums[key][0] / count, sums[key][1] / count]
+	summary.contact_seconds = contact[0] / contact[1] if contact[1] > 0 else -1.0
+	if not runs.is_empty() and runs[0].has("arena_size"): summary.arena_size = runs[0].arena_size
 	if doctrine_runs > 0:
 		for key in doctrine:
 			for side in 2: doctrine[key][side] /= doctrine_runs
@@ -591,6 +640,8 @@ static func table(report: Dictionary) -> String:
 			cell.scenario, cell.size, s.runs, s.profile_wins[0], s.profile_wins[1], s.draws,
 			s.losses[0], s.losses[1], s.fled[0], s.fled[1], s.never_engaged[0], s.never_engaged[1],
 			s.idle_time[0], s.idle_time[1], s.duration_seconds, s.ai_phase_mean_ms, s.ai_phase_worst_p95_ms])
+		if s.has("arena_size"):
+			lines.append("  field %dx%d: first melee contact %.1f s, stuck %.3f/%.3f" % [int(s.arena_size[0]), int(s.arena_size[1]), s.contact_seconds, s.stuck[0], s.stuck[1]])
 		if s.has("volleys"):
 			var v: Dictionary = s.volleys
 			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])

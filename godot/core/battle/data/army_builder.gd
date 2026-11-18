@@ -30,7 +30,7 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 	for stack_index in stacks.size():
 		var stack: Dictionary = stacks[stack_index]
 		var troop: Dictionary = definitions[stack_index]
-		var count := maxi(1, roundi(int(stack.n) * scale)) if scale < 1.0 else int(stack.n)
+		var count := stack_figures(int(stack.n), scale)
 		var weight := float(stack.n) / count
 		var traits: Dictionary = troop.get("battle_traits", {})
 		for i in count:
@@ -52,6 +52,30 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 			leader.base_morale = Config.LEADER_BASE_MORALE
 			leader.morale = leader.base_morale
 	return true
+
+## Figures a stack of `n` puts on the field when the army is scaled down to its cap.
+static func stack_figures(n: int, scale: float) -> int:
+	return maxi(1, roundi(n * scale)) if scale < 1.0 else n
+
+## Figures `spawn` puts on the field at the start (after the cap; reserve figures wait off the field). Invalid stacks
+## count as nothing: `spawn` refuses them anyway.
+static func field_count(stacks: Array, cap: int, reserve_waves: bool) -> int:
+	var total := 0
+	for stack in stacks:
+		if _valid_stack(stack):
+			total += int(stack.n)
+	if total <= 0 or cap <= 0:
+		return 0
+	if total <= cap:
+		return total
+	if reserve_waves:
+		return cap
+	var scale := minf(1.0, float(cap) / total)
+	var count := 0
+	for stack in stacks:
+		if _valid_stack(stack):
+			count += stack_figures(int(stack.n), scale)
+	return count
 
 ## Shared by the initial spawn and reserve waves (src/03_battle.js mkUnit and the fill/battleWaves callers).
 static func create_unit(battle: State, side: int, troop_id: String, troop: Dictionary, faction: String, at: Vector2, weight: float, rng: RandomNumberGenerator, starting_morale_bonus: float = 0.0) -> Unit:

@@ -18,6 +18,7 @@ const CompanionBuilder = preload("res://core/battle/data/companion_builder.gd")
 const SiegeSetup = preload("res://core/battle/data/siege_setup.gd")
 const VegetationSetup = preload("res://core/battle/data/vegetation_setup.gd")
 const AiProfiles = preload("res://core/battle/simulation/ai/profiles.gd")
+const ArenaLayout = preload("res://core/battle/rules/arena_layout.gd")
 
 static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null, contact_solver := Callable(), movement_solver := Callable(), column_backend: RefCounted = null) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite() or not AiProfiles.valid(setup):
@@ -31,9 +32,10 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	state.contact_solver = contact_solver
 	state.movement_solver = movement_solver
 	state.column_backend = column_backend
-	state.setup_groups()
 	var player_cap := setup.unit_cap(setup.player_faction, setup.player_unit_cap)
 	var enemy_cap := setup.unit_cap(setup.enemy_faction, setup.enemy_unit_cap)
+	state.arena_size = arena_for(setup, player_cap, enemy_cap)
+	state.setup_groups()
 	state.side_factions = [setup.player_faction, setup.enemy_faction]
 	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, player_cap, "", 0.0, setup.uses_reserve_waves(setup.player_faction)):
 		return null
@@ -96,8 +98,18 @@ static func _spawn_companions(state: State, fit: Array[Dictionary], gear_catalog
 
 ## Builds the player's hero from the preview troop and, when a profile is set, applies its
 ## gear, perks and the morale and damage bonus it gives to allies. Returns null when invalid.
+## TERRAIN.md 5 (stage Р0а): the field for the larger army on it. A siege keeps the base field: the walls, gates and
+## siege placement are laid out for it.
+static func arena_for(setup: Setup, player_cap: int, enemy_cap: int) -> Vector2:
+	if setup.siege:
+		return Config.ARENA_SIZE
+	var fighters := maxi(ArmyBuilder.field_count(setup.player_army, player_cap, setup.uses_reserve_waves(setup.player_faction)),
+		ArmyBuilder.field_count(setup.enemy_army, enemy_cap, setup.uses_reserve_waves(setup.enemy_faction)))
+	return ArenaLayout.size_for(fighters)
+
 static func _create_hero(setup: Setup, troop: Dictionary, state: State, gear_catalog: GearCatalog, perk_catalog: PerkCatalog) -> Unit:
-	var hero := Unit.new(state.allocate_unit_id(), 0, setup.hero_position, float(troop.hp), float(troop.arm), int(troop.tier))
+	var at := ArenaLayout.from_base(setup.hero_position, state.arena_size) # hero_position is given for the base field.
+	var hero := Unit.new(state.allocate_unit_id(), 0, at, float(troop.hp), float(troop.arm), int(troop.tier))
 	hero.hero = true
 	hero.appearance = troop.get("look", {}).duplicate(true)
 	# The preview hero's troop definition provides art but does not equip a mount.

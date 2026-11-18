@@ -6,6 +6,7 @@ const Troops = preload("res://core/troops/data/catalog.gd")
 const Factions = preload("res://core/campaign/data/faction_catalog.gd")
 const Generation = preload("res://core/troops/rules/generation.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
+const Config = preload("res://core/battle/config.gd")
 const CULTURES := ["nord", "emp", "khan", "kin", "emi", "dom", "pact"]
 const SIZES := [50, 100, 200, 1000]
 
@@ -32,7 +33,7 @@ static func build(options: Dictionary, seed_value := 0) -> Setup:
 	# Reuse the campaign's faction naming rule without constructing a campaign map.
 	setup.enemy_leader_name = Roster.new(null, setup.seed, troops, factions).lord_name(foe)
 	setup.hero_troop = str(setup.player_army[0].type)
-	setup.hero_position = Vector2(730, 850)
+	setup.hero_position = Config.HERO_START
 	setup.hero_profile = {"name":"Ты", "str":3, "vit":3, "agi":2, "int":2, "cha":2, "perks":[],
 		"eq":{"head":"head_nasal", "body":"body_mail", "hands":"hands_leather", "legs":"legs_boots", "melee":"sword_knight", "ranged":"bow_long", "shield":"shield_banded", "horse":"horse_riding" if own == "khan" else null},
 		"sel":"melee", "hp":1.0, "seed":7}
