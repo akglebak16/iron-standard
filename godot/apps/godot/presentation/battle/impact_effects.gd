@@ -70,8 +70,9 @@ const POOL_SCALE := Vector2(1.0, 0.5)
 const PART_POOL_RADIUS := Vector2(6, 11)
 const HEADLESS_POOL_BONUS := 8.0
 const DISMEMBER_CHANCE := 0.55
-const CUT_PARTS := [Parts.Part.HEAD, Parts.Part.ARM, Parts.Part.LEG]
-const HEAVY_CUT_PARTS := [Parts.Part.HEAD, Parts.Part.ARM, Parts.Part.LEG, Parts.Part.TORSO]
+# No arms or legs: the busts have none to lose (#205). A figure cut in half drops its shield.
+const CUT_PARTS := [Parts.Part.HEAD]
+const HEAVY_CUT_PARTS := [Parts.Part.HEAD, Parts.Part.TORSO]
 const HEAVY_FATAL_THRESHOLD := 0.3
 const FOUNTAIN_DURATION := Vector2(0.6, 1.0)
 const FOUNTAIN_RATE := 120.0
@@ -330,6 +331,7 @@ func _detach_on_down(event: Dictionary, color: Color) -> bool:
 		_parts.emit(kind, event, angle, color)
 		if kind == Parts.Part.TORSO:
 			_split_torsos[event.target_id] = true
+			_parts.emit(Parts.Part.SHIELD, event, angle, color)
 		if has_blood:
 			_spray(event, color, ARM_SPRAY_COUNT, ARM_SPRAY_OFFSET, ARM_SPRAY_SPEED, ARM_SPRAY_LIFT)
 	return _headless.has(event.target_id)

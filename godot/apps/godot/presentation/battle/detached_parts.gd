@@ -2,7 +2,7 @@ extends RefCounted
 
 const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 const Event = preload("res://core/battle/combat_event.gd")
-enum Part { HEAD, ARM, BONE, FRAGMENT, LEG, TORSO }
+enum Part { HEAD, ARM, BONE, FRAGMENT, LEG, TORSO, SHIELD }
 
 const MAX_ACTIVE := 70
 const MAX_SETTLED := 600
@@ -31,6 +31,8 @@ const PROFILES := {
 	Part.FRAGMENT: {"lift": Vector2(60, 160), "speed": Vector2(40, 110), "size": Vector2(2.5, 4), "spread": 0.8},
 	Part.LEG: {"lift": Vector2(90, 160), "speed": Vector2(40, 100), "size": Vector2.ZERO, "spread": 0.0},
 	Part.TORSO: {"lift": Vector2(70, 120), "speed": Vector2(30, 70), "size": Vector2.ZERO, "spread": 0.0},
+	# The shield of a figure cut in half slips off where it hung and falls nearly in place.
+	Part.SHIELD: {"lift": Vector2(15, 45), "speed": Vector2(5, 25), "size": Vector2.ZERO, "spread": 0.6},
 }
 
 var native_enabled := true
@@ -84,10 +86,18 @@ func neck_offset(unit: Dictionary) -> Vector2:
 
 func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int = 1) -> void:
 	var unit: Dictionary = event.target_visual
-	var geometry: Dictionary = _art.layers(unit) if kind == Part.HEAD else {}
-	var offset := Vector2(0, -ARM_HEIGHT) if kind == Part.ARM else head_offset(unit, geometry)
+	var geometry: Dictionary = _art.layers(unit) if kind == Part.HEAD or kind == Part.SHIELD else {}
+	var guard: Dictionary = _art.guard(unit) if kind == Part.SHIELD else {}
+	if kind == Part.SHIELD and guard.is_empty():
+		return
+	var offset := Vector2(0, -ARM_HEIGHT) if kind == Part.ARM else head_offset(unit, geometry) if kind != Part.SHIELD else Vector2.ZERO
 	if kind == Part.LEG: offset = Vector2(0, -5)
 	if kind == Part.TORSO: offset = Vector2(0, -20)
+	var mirrored := cos(float(unit.facing)) < 0.0
+	if kind == Part.SHIELD:
+		var sprite_scale: float = geometry.get("scale", Art.SPRITE_SCALE)
+		offset = (Vector2(guard.shield_center) - Vector2(geometry.get("anchor", Art.ANCHOR))) * sprite_scale
+		offset.x *= -1.0 if mirrored else 1.0
 	var floor_point: Vector2 = event.position + Vector2(offset.x, 0)
 	var profile: Dictionary = PROFILES[kind]
 	for i in count:
@@ -121,6 +131,12 @@ func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int 
 				part.anchor = split.anchor
 				part.scale = split.scale
 				part.mirrored = cos(float(unit.facing)) < 0.0
+			Part.SHIELD:
+				part.texture = guard.shield
+				part.anchor = Vector2(guard.shield_center) - Vector2(guard.shield_origin)
+				part.scale = geometry.get("scale", Art.SPRITE_SCALE)
+				part.mirrored = mirrored
+				part.spin *= 0.3
 		_active.append(part)
 
 func advance(dt: float, splashes: Array[Dictionary]) -> Array[Dictionary]:
