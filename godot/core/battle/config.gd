@@ -12,6 +12,7 @@ const ARENA_TIERS := [
 	[1000, Vector2(4600, 3000), 0.32],
 ]
 const DEFAULT_BIOME := "grass"
+const TERRAIN_CELL := 32.0 # TERRAIN.md 3.4: side of a battle terrain cell (model/terrain_grid.gd, api/native/terrain_grid.hpp).
 const SIEGE_WALL_RIGHT_OFFSET := 980.0
 const SIEGE_WALL_HALF_WIDTH := 22.0
 # siegeSetup in src/03_battle.js: a town has a main gate and two side gates, a castle one heavy gate; [top, bottom, hp]

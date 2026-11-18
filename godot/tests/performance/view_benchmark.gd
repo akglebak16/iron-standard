@@ -12,6 +12,7 @@ const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
 const PerkCatalog = preload("res://core/characters/data/perk_catalog.gd")
 const CompanionCatalog = preload("res://core/characters/data/companion_catalog.gd")
 const Config = preload("res://core/battle/config.gd")
+const Templates = preload("res://core/battle/data/terrain_templates.gd")
 const BattleView = preload("res://apps/godot/presentation/battle/scene.tscn")
 var _view: Node
 var _n := 0
@@ -25,6 +26,7 @@ var _audio := false
 var _native_sprites := true
 var _capture := ""
 var _camera_scope := "hero"
+var _terrain := "" # TERRAIN Р0б: a field template (data/terrain_templates.gd), empty is the open field.
 var _actual_groups := [[], []]
 var _output := ""
 var _world: Node
@@ -73,6 +75,7 @@ func _ready() -> void:
 				return
 			_audio = arg == "--audio=on"
 		elif arg.begins_with("--camera="): _camera_scope = arg.trim_prefix("--camera=")
+		elif arg.begins_with("--terrain="): _terrain = arg.trim_prefix("--terrain=")
 		elif arg == "--sprites=gdscript": _native_sprites = false
 		elif arg.begins_with("--capture="): _capture = arg.trim_prefix("--capture=")
 		elif arg.begins_with("--out="): _output = arg.trim_prefix("--out=")
@@ -118,6 +121,7 @@ func _ready() -> void:
 	setup.companion_profiles.clear()
 	setup.player_unit_cap = _size
 	setup.enemy_unit_cap = _size
+	setup.terrain = Templates.sample(_terrain)
 	var infantry := _size / 2
 	var archers := _size / 3
 	var cavalry := _size - infantry - archers
@@ -244,7 +248,7 @@ func _finish() -> void:
 	report.merge({"native_movement_steps": _session._state.native_movement_steps if _session != null else 0,
 		"native_movement_failures": _session._state.native_movement_failures if _session != null else 0,
 		"measurement_seconds":float(Time.get_ticks_usec() - _measure_start) / 1000000.0,
-		"native_sprites":_native_sprites,"camera_scope":_camera_scope,"camera_route":_camera_route,"video_memory_samples":_memory_samples})
+		"native_sprites":_native_sprites,"camera_scope":_camera_scope,"terrain":_terrain,"camera_route":_camera_route,"video_memory_samples":_memory_samples})
 	var phases := {}
 	for phase in _profile_samples:
 		var samples: Array[int] = []

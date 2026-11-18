@@ -10,3 +10,5 @@ func nearest_ready(_columns: RefCounted, _position: Vector2, _side: int) -> floa
 func densest_ready(_columns: RefCounted, _side: int, _low_x: float, _high_x: float, _half: float, _arena: Vector2, _cell: float) -> PackedInt32Array: return PackedInt32Array()
 
 func projectile_candidates(_columns: RefCounted, _impacts: PackedVector2Array, _arena: Vector2, _padding: float, _height: float, _cell: float) -> Array: return []
+## TERRAIN.md 3.4: the terrain grid read by the native reader at `points` (cover | height << 8); empty without one.
+func terrain_cells(_cover: PackedByteArray, _elevation: PackedByteArray, _width: int, _cell: float, _points: PackedVector2Array) -> PackedInt32Array: return PackedInt32Array()

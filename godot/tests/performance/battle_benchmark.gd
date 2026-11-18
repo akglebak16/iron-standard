@@ -7,10 +7,12 @@ const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Factory = preload("res://core/battle/application/factory.gd")
 const Catalog = preload("res://core/troops/data/catalog.gd")
 const Config = preload("res://core/battle/config.gd")
+const Templates = preload("res://core/battle/data/terrain_templates.gd")
 var size := 1000
 var ticks := 3600
 var warmup := 120
 var scenario := "contact"
+var terrain := "" # TERRAIN Р0б: a field template (data/terrain_templates.gd), empty is the open field.
 var seed_value := 4242
 var output := ""
 var legacy_snapshot := false
@@ -27,6 +29,7 @@ func run(tree: SceneTree) -> void:
 		elif arg.begins_with("--ticks="): ticks = int(arg.trim_prefix("--ticks="))
 		elif arg.begins_with("--warmup="): warmup = int(arg.trim_prefix("--warmup="))
 		elif arg.begins_with("--scenario="): scenario = arg.trim_prefix("--scenario=")
+		elif arg.begins_with("--terrain="): terrain = arg.trim_prefix("--terrain=")
 		elif arg.begins_with("--seed="): seed_value = int(arg.trim_prefix("--seed="))
 		elif arg.begins_with("--out="): output = arg.trim_prefix("--out=")
 		elif arg == "--legacy-snapshot": legacy_snapshot = true
@@ -50,6 +53,7 @@ func run(tree: SceneTree) -> void:
 	setup.player_unit_cap = size
 	setup.enemy_unit_cap = size
 	setup.siege = scenario == "siege"
+	setup.terrain = Templates.sample(terrain)
 	var types := ["n1", "e1"]
 	if scenario == "volley": types = ["n2a", "e2a"]
 	elif scenario == "cavalry": types = ["n3c", "e3c"]
@@ -146,7 +150,7 @@ func run(tree: SceneTree) -> void:
 	for phase in phases: phase_stats[phase] = stats(phases[phase])
 	var report := {"engine": Engine.get_version_info().string, "debug": OS.is_debug_build(),
 		"cpu": OS.get_processor_name(), "logical_processors": OS.get_processor_count(),
-		"scenario": scenario, "seed": seed_value, "requested_per_side": size, "ordinary_initial": initial,
+		"scenario": scenario, "terrain": session._state.terrain_template, "seed": seed_value, "requested_per_side": size, "ordinary_initial": initial,
 		"special_initial": 1, "weight": 1, "warmup_ticks": warmup, "requested_ticks": ticks,
 		"sampling_version": 2, "warmup_snapshots": true, "warmup_events_discarded": true,
 		"measured_ticks": simulation.size(), "live_min": live_min, "live_max": live_max,

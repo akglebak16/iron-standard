@@ -1,4 +1,6 @@
 #include "../../../core/battle/api/native/column_operations.hpp"
+#include "../../../core/battle/api/native/terrain_grid.hpp"
+#include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
@@ -34,6 +36,9 @@ protected:
                          &IronColumnKernel::copy_rows);
     ClassDB::bind_method(D_METHOD("capture", "columns", "previous"),
                          &IronColumnKernel::capture);
+    ClassDB::bind_method(D_METHOD("terrain_cells", "cover", "elevation",
+                                  "width", "cell", "points"),
+                         &IronColumnKernel::terrain_cells);
     ClassDB::bind_method(D_METHOD("summary", "columns"),
                          &IronColumnKernel::summary);
     ClassDB::bind_method(
@@ -91,6 +96,28 @@ public:
     result.push_back(summary.alert);
     result.push_back(summary.defenders);
     return result;
+  }
+  // TERRAIN.md 3.4: reads the battle terrain grid at `points` with the C++ reader; cover | height << 8 per point,
+  // empty on a malformed grid. Used to prove the reader equals core/battle/model/terrain_grid.gd.
+  PackedInt32Array terrain_cells(const PackedByteArray &cover,
+                                 const PackedByteArray &elevation, int width,
+                                 double cell, const PackedVector2Array &points) {
+    PackedInt32Array out;
+    if (width <= 0 || cover.size() == 0 || cover.size() % width != 0 ||
+        elevation.size() != cover.size() || !(cell > 0.0))
+      return out;
+    iron::battle::TerrainGrid grid;
+    grid.width = width;
+    grid.height = int(cover.size() / width);
+    grid.cell = cell;
+    grid.cover = cover.ptr();
+    grid.elevation = elevation.ptr();
+    out.resize(points.size());
+    for (int64_t i = 0; i < points.size(); ++i) {
+      const Vector2 at = points[i];
+      out.set(i, int(grid.cover_at(at.x, at.y)) | int(grid.height_at(at.x, at.y)) << 8);
+    }
+    return out;
   }
   PackedInt32Array densest_ready(const Array &columns, int side, double low_x,
                                  double high_x, double half, Vector2 arena,
