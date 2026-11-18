@@ -52,7 +52,7 @@ var _face := {}
 var _face_buttons := {}
 var _preview: TextureRect
 var _origin_buttons := {}
-var _origin_texts := {}
+var _origin_note: Label
 
 class BannerSwatch extends Button:
 	var colors: Dictionary
@@ -230,7 +230,7 @@ func _fit_start_dialog(d: CanvasLayer) -> void:
 	d._scroll.add_theme_stylebox_override("panel", padding)
 	await get_tree().process_frame
 	if not is_instance_valid(d) or d != _dialog: return
-	for button in _buttons.values() + _origin_buttons.values():
+	for button in _buttons.values():
 		if is_instance_valid(button) and d.is_ancestor_of(button):
 			button.custom_minimum_size.y = button.get_child(0).get_combined_minimum_size().y
 	await get_tree().process_frame
@@ -250,6 +250,9 @@ func _region_style(kind: String) -> StyleBoxTexture:
 	return style
 
 func _start_note(d: CanvasLayer, text: String, top := 4) -> void:
+	_note_in(d.body, text, top)
+
+func _note_in(parent: Node, text: String, top := 4) -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_top", top)
 	margin.add_theme_constant_override("margin_bottom", 10)
@@ -259,7 +262,7 @@ func _start_note(d: CanvasLayer, text: String, top := 4) -> void:
 	label.add_theme_font_size_override("font_size", 15)
 	label.add_theme_color_override("font_color", Color("#c9b98f"))
 	margin.add_child(label)
-	d.body.add_child(margin)
+	parent.add_child(margin)
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if is_instance_valid(_dialog) and _dialog.visible and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
@@ -288,19 +291,44 @@ func _footer(d: CanvasLayer, actions: Array) -> void:
 			style.content_margin_right = 18
 			b.add_theme_stylebox_override(state, style)
 
+## Two columns: the hero himself on the left (figure, name, banner, look), where he comes from on the right (#175).
 func _create() -> void:
 	var d = _new_dialog("Создай героя", "Ты командир наёмного отряда без земли и титула")
-	_start_note(d, "Имя")
+	d.set_width(1180)
+	_face = FaceVariant.chosen(GameOptions.hero_face)
+	if _face.is_empty():
+		_face = _random_face()
+	var columns := HBoxContainer.new()
+	columns.name = "CreateColumns"
+	columns.add_theme_constant_override("separation", 26)
+	d.body.add_child(columns)
+	var left := VBoxContainer.new()
+	left.custom_minimum_size.x = 452
+	left.add_theme_constant_override("separation", 0)
+	columns.add_child(left)
+	var right := VBoxContainer.new()
+	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right.add_theme_constant_override("separation", 0)
+	columns.add_child(right)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 16)
+	left.add_child(top)
+	_figure_panel(top)
+	var identity := VBoxContainer.new()
+	identity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	identity.add_theme_constant_override("separation", 0)
+	top.add_child(identity)
+	_note_in(identity, "Имя")
 	_name = LineEdit.new()
 	_name.placeholder_text = "Имя героя"
 	_name.text = GameOptions.hero_name
 	_name.max_length = 18
-	d.body.add_child(_name)
-	_start_note(d, "Цвета твоего стяга", 14)
+	identity.add_child(_name)
+	_note_in(identity, "Цвета твоего стяга", 14)
 	var swatches := HFlowContainer.new()
-	swatches.add_theme_constant_override("h_separation", 10)
-	swatches.add_theme_constant_override("v_separation", 10)
-	d.body.add_child(swatches)
+	swatches.add_theme_constant_override("h_separation", 6)
+	swatches.add_theme_constant_override("v_separation", 6)
+	identity.add_child(swatches)
 	_banner_buttons.clear()
 	for index in Art.BANNERS.size():
 		var b := BannerSwatch.new()
@@ -314,22 +342,25 @@ func _create() -> void:
 		b.pressed.connect(_pick_banner.bind(index))
 		swatches.add_child(b)
 		_banner_buttons.append(b)
-	_look_editor(d)
-	_start_note(d, "Откуда ты родом", 14)
-	var grid := HFlowContainer.new()
+	_look_editor(left)
+	_origin_editor(left)
+	_note_in(right, "Откуда ты родом")
+	var grid := GridContainer.new()
+	grid.name = "Cultures"
+	# Two cards a row while the window is wide enough for long names, one on small windows.
+	grid.columns = 2 if get_viewport_rect().size.x >= 1240 else 1
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
-	d.body.add_child(grid)
+	right.add_child(grid)
 	_buttons.clear()
 	for id in CULTURES:
-		_buttons[id] = _card(grid, _factions.get_faction(id).name, CULTURE_DESCRIPTIONS[id], func(): _pick(id), id == _picked, 190)[0]
-	_origin_editor(d)
+		_buttons[id] = _card(grid, _factions.get_faction(id).name, CULTURE_DESCRIPTIONS[id], func(): _pick(id), id == _picked, 200, Art.crest(id), 96)[0]
 	_footer(d, [["В путь", _start, true]])
 
 ## A choice card: a toggle with a title and a short text. Returns [button, text label].
-func _card(grid: Node, heading: String, text: String, action: Callable, pressed: bool, width: float) -> Array:
+func _card(grid: Node, heading: String, text: String, action: Callable, pressed: bool, width: float, icon: Texture2D = null, height := 148.0) -> Array:
 	var b := _button(grid, "", action)
-	b.custom_minimum_size = Vector2(width, 148)
+	b.custom_minimum_size = Vector2(width, height)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.toggle_mode = true
 	b.button_pressed = pressed
@@ -343,11 +374,28 @@ func _card(grid: Node, heading: String, text: String, action: Callable, pressed:
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_" + side, 15)
+	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_" + side, 12 if icon != null else 15)
 	b.add_child(margin)
 	var col := VBoxContainer.new()
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.add_child(col)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if icon != null:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 12)
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		margin.add_child(line)
+		var crest := TextureRect.new()
+		crest.name = "Crest"
+		crest.texture = icon
+		crest.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		crest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		crest.custom_minimum_size = Vector2(54, 54)
+		crest.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		crest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.add_child(crest)
+		line.add_child(col)
+	else:
+		margin.add_child(col)
 	var title := Label.new()
 	GameSkin.title(title, 19)
 	title.add_theme_font_override("font", GameSkin.css_font(GameSkin.DISPLAY, 19, 24.7, 0.76))
@@ -368,38 +416,50 @@ func _card(grid: Node, heading: String, text: String, action: Callable, pressed:
 	return [b, detail]
 
 ## The hero's background (#152): it decides where the two free start points go, nothing else.
-func _origin_editor(d: CanvasLayer) -> void:
+func _origin_editor(parent: Node) -> void:
 	if not HeroOrigin.ORIGINS.has(GameOptions.origin):
 		GameOptions.origin = HeroOrigin.ORDER[0]
-	_start_note(d, "Кем ты был", 14)
-	var grid := HFlowContainer.new()
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	d.body.add_child(grid)
+	_note_in(parent, "Кем ты был", 6)
+	var flow := HFlowContainer.new()
+	flow.name = "Origins"
+	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("v_separation", 6)
+	parent.add_child(flow)
 	_origin_buttons.clear()
-	_origin_texts.clear()
+	for id in HeroOrigin.ORDER:
+		_origin_buttons[id] = _choice_button(flow, HeroOrigin.ORIGINS[id].name, _pick_origin.bind(id))
+	_origin_note = Label.new()
+	_origin_note.name = "OriginNote"
+	_origin_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_origin_note.custom_minimum_size.y = 40
+	_origin_note.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 14, 18.2))
+	_origin_note.add_theme_font_size_override("font_size", 14)
+	_origin_note.add_theme_color_override("font_color", Color("#c9b98f"))
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_child(_origin_note)
+	parent.add_child(margin)
+	_pick_origin(GameOptions.origin)
+
+## «Вырос у отцовского горна. Сила +2.»
+func origin_text(id: String) -> String:
 	var names := {}
 	for key in PartyEconomy.ATTRS: names[key] = PartyEconomy.ATTRS[key][0]
-	for id in HeroOrigin.ORDER:
-		var text: String = HeroOrigin.ORIGINS[id].text + " " + HeroOrigin.bonus_text(id, names) + "."
-		var card := _card(grid, HeroOrigin.ORIGINS[id].name, text, func(): _pick_origin(id), id == GameOptions.origin, 150)
-		_origin_buttons[id] = card[0]
-		_origin_texts[id] = card[1]
+	return HeroOrigin.ORIGINS[id].text + " " + HeroOrigin.bonus_text(id, names) + "."
 
 func _pick_origin(id: String) -> void:
 	GameOptions.origin = id
 	for k in _origin_buttons:
 		_origin_buttons[k].set_pressed_no_signal(k == id)
+	if is_instance_valid(_origin_note):
+		_origin_note.text = origin_text(id)
 
 ## The hero's face: a live figure on the left, the choices on the right (#151).
-func _look_editor(d: CanvasLayer) -> void:
-	_face = FaceVariant.chosen(GameOptions.hero_face)
-	if _face.is_empty():
-		_face = _random_face()
-	_start_note(d, "Внешность", 14)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
-	d.body.add_child(row)
+## The hero's figure in a frame with the «Случайно» button under it (#151).
+func _figure_panel(parent: Node) -> void:
+	var figure := VBoxContainer.new()
+	figure.add_theme_constant_override("separation", 8)
+	parent.add_child(figure)
 	var frame := PanelContainer.new()
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color("#00000040")
@@ -407,21 +467,25 @@ func _look_editor(d: CanvasLayer) -> void:
 	box.set_border_width_all(3)
 	box.set_corner_radius_all(3)
 	frame.add_theme_stylebox_override("panel", box)
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 8)
-	row.add_child(left)
-	left.add_child(frame)
+	figure.add_child(frame)
 	_preview = TextureRect.new()
 	_preview.name = "HeroPreview"
 	_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_preview.custom_minimum_size = Vector2(132, 153)
+	_preview.custom_minimum_size = Vector2(140, 162)
 	_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.add_child(_preview)
+	var dice := _choice_button(figure, "Случайно", func(): _face = _random_face(); _sync_face())
+	dice.toggle_mode = false
+	dice.name = "RandomLook"
+
+## The face choices: skin, hair, beard and marks, one line each (#151).
+func _look_editor(parent: Node) -> void:
+	_note_in(parent, "Внешность", 10)
 	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 8)
+	rows.add_theme_constant_override("separation", 4)
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(rows)
+	parent.add_child(rows)
 	_face_buttons.clear()
 	for kind in ["skin", "hair"]:
 		var line := _look_line(rows, "Кожа" if kind == "skin" else "Волосы")
@@ -429,7 +493,7 @@ func _look_editor(d: CanvasLayer) -> void:
 		for choice in (SKIN_CHOICES if kind == "skin" else HAIR_CHOICES):
 			var b := ColorSwatch.new()
 			b.color = Color(choice[0])
-			b.custom_minimum_size = Vector2(34, 34)
+			b.custom_minimum_size = Vector2(33, 34)
 			b.toggle_mode = true
 			b.tooltip_text = choice[1]
 			b.accessibility_name = choice[1]
@@ -445,9 +509,6 @@ func _look_editor(d: CanvasLayer) -> void:
 	for choice in MARK_CHOICES:
 		var key: String = choice[0]
 		_face_buttons[key] = _choice_button(marks, choice[1], func(): _set_face(key, not bool(_face.get(key))))
-	var dice := _choice_button(left, "Случайно", func(): _face = _random_face(); _sync_face())
-	dice.toggle_mode = false
-	dice.name = "RandomLook"
 	_sync_face()
 
 func _look_line(parent: Node, caption: String) -> HFlowContainer:
@@ -456,14 +517,14 @@ func _look_line(parent: Node, caption: String) -> HFlowContainer:
 	parent.add_child(line)
 	var label := Label.new()
 	label.text = caption
-	label.custom_minimum_size = Vector2(84, 34)
+	label.custom_minimum_size = Vector2(76, 34)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", GameSkin.css_font(GameSkin.BODY, 15, 19.5))
 	label.add_theme_font_size_override("font_size", 15)
 	label.add_theme_color_override("font_color", Color("#c9b98f"))
 	line.add_child(label)
 	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 6)
+	flow.add_theme_constant_override("h_separation", 4)
 	flow.add_theme_constant_override("v_separation", 6)
 	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(flow)
