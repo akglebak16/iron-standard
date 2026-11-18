@@ -12,6 +12,7 @@ const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 const PartyWindowText = preload("res://apps/godot/presentation/campaign/companion_text.gd")
 const TroopList = preload("res://apps/godot/presentation/campaign/troop_list.gd")
 const SettlementRecruits = preload("res://core/campaign/rules/settlement_recruits.gd")
+const QuestCard = preload("res://apps/godot/presentation/campaign/quest_card.gd")
 
 signal wait_requested(settlement: Dictionary)
 ## A place to mark on the world map (the town of a wanderer, a quest target) — the window closes after it.
@@ -347,19 +348,158 @@ func _pill(text: String, color: Color, hint: String) -> PanelContainer:
 	pill.add_child(l)
 	return pill
 
+## «Задания»: the town's board as cards (kind, task, distance, deadline, reward, «Взять», «Показать на карте») and the
+## player's own errands in short lines with progress and what is handed in here.
 func _quests(p) -> void:
 	var q = state.quests
+	var bonus := float(state.player_effects().get("quest", 0.0))
 	var board: Array = settlement.get("board", [])
-	note("Заказы города. Награду выплачивают сразу, как дело сделано.")
+	var mine: Array = p.quests.filter(func(x): return not state.map.settlement_by_id(x.sid).is_empty() and not state.map.settlement_by_id(x.from).is_empty())
+	mine.sort_custom(func(a, b): return int(a.dl) < int(b.dl))
+	var total := 0
+	for x in mine:
+		total += roundi(float(x.reward) * (1.0 + bonus))
+	var full: bool = p.quests.size() >= q.MAX_QUESTS
+	var line := TroopList.summary(body, "QuestSummary")
+	TroopList.chip(line, "book", "Твои задания %d / %d" % [p.quests.size(), q.MAX_QUESTS], TroopList.WARN if full else GameSkin.PARCH,
+		"Журнал полон: сначала сдай или заверши задание." if full else "Одновременно можно вести до %d заданий." % q.MAX_QUESTS)
+	TroopList.chip(line, "coin", "Награды в журнале %d" % total)
+	TroopList.chip(line, "flag", "Доска пополняется каждый день", GameSkin.PARCH, "Заказ висит на доске %d дней, на его место встаёт новый." % q.BOARD_DAYS)
+	_section_title("Доска заказов", "награду платят сразу, как дело сделано")
 	if board.is_empty():
-		note("Доска пуста.")
+		_empty_state("flag", "Заказов пока нет", "Новые заказы появятся завтра: город вывешивает их каждый день.", "BoardEmpty")
 	for item in board.duplicate():
-		row(q.text(item), "Срок: до дня %d · %s · награда %d" % [item.dl, q.detail(item, settlement), item.reward],
-			[{"sound": "order", "text": "Взять", "disabled": p.quests.size() >= q.MAX_QUESTS, "call": func(): _say(q.accept(p, settlement, int(item.id)))}])
-	if not p.quests.is_empty():
-		heading("Твои задания")
-		for item in p.quests:
-			row(q.text(item), "До дня %d · награда %d" % [item.dl, item.reward])
+		_board_card(p, item, bonus, full)
+	if mine.is_empty():
+		_section_title("Твои задания", "пока нет")
+		note("Возьми заказ с доски: доставка, поставка, разведка или охота на разбойников.")
+	else:
+		var grid := TroopList.table(body, "MyQuests", "Твои задания", "%d из %d · по ближайшему сроку" % [mine.size(), q.MAX_QUESTS], GameSkin.BRASS)
+		grid.columns = 4
+		for x in mine:
+			_my_quest_line(grid, QuestCard.describe(x, state, _factions, bonus), x)
+
+func _section_title(title: String, detail: String) -> void:
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
+	body.add_child(line)
+	var t := Label.new()
+	t.text = title
+	GameSkin.title(t, 19)
+	line.add_child(t)
+	line.add_child(TroopList.cell(detail, GameSkin.MUTED, 14))
+
+func _board_card(p, item: Dictionary, bonus: float, full: bool) -> void:
+	var card_info: Dictionary = QuestCard.describe(item, state, _factions, bonus)
+	var days := int(item.dl) - int(state.clock.day)
+	var card := card_panel()
+	card.name = "Board_%d" % int(item.id)
+	body.add_child(card)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 12)
+	card.add_child(line)
+	var symbol := TroopList.icon(GameSkin.icon(card_info.icon), 36)
+	symbol.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	line.add_child(symbol)
+	var main := VBoxContainer.new()
+	main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main.add_theme_constant_override("separation", 2)
+	line.add_child(main)
+	var kind := TroopList.cell(String(card_info.type).to_upper(), GameSkin.BRASS, 12)
+	kind.name = "Kind"
+	main.add_child(kind)
+	var title := TroopList.cell(card_info.title, GameSkin.PARCH, 17)
+	title.name = "Task"
+	title.add_theme_font_override("font", GameSkin.BODY_BOLD)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	main.add_child(title)
+	main.add_child(TroopList.cell(String(state.quests.detail(item, settlement)), GameSkin.MUTED, 14))
+	if not card_info.progress.is_empty() and item.type in ["supply", "muster"]:
+		main.add_child(TroopList.cell("%s: %d из %d" % [card_info.progress[2], card_info.progress[0], card_info.progress[1]], GameSkin.MUTED, 14))
+	if card_info.warning != "" and days >= 0:
+		var warn := TroopList.cell("!  " + String(card_info.warning), Color("#f09b7d"), 14)
+		warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		main.add_child(warn)
+	var side := VBoxContainer.new()
+	side.custom_minimum_size.x = 176
+	side.add_theme_constant_override("separation", 3)
+	line.add_child(side)
+	var prize := HBoxContainer.new()
+	prize.alignment = BoxContainer.ALIGNMENT_END
+	side.add_child(prize)
+	prize.add_child(TroopList.icon(GameSkin.icon("coin"), 22))
+	var reward := Label.new()
+	reward.name = "Reward"
+	reward.text = str(card_info.reward)
+	GameSkin.title(reward, 23)
+	prize.add_child(reward)
+	var deadline := TroopList.cell("срок %s · до дня %d" % [QuestCard.days(days), int(item.dl)], TroopList.WARN if days <= 3 else GameSkin.MUTED, 13)
+	deadline.name = "Deadline"
+	deadline.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	side.add_child(deadline)
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	buttons.add_theme_constant_override("separation", 6)
+	side.add_child(buttons)
+	var target: Dictionary = QuestCard.target(item, state.map)
+	if not target.is_empty():
+		var go := TroopList.small(make_button({"sound": "click", "text": "На карте", "hint": "Показать цель на карте: %s" % target.get("name", ""),
+			"call": func(): map_target.emit(float(target.x), float(target.y)); close_window()}))
+		go.name = "Map_%d" % int(item.id)
+		go.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		buttons.add_child(go)
+	var take := make_button({"sound": "order", "text": "Взять", "disabled": full, "hint": "Журнал полон: не больше %d заданий" % state.quests.MAX_QUESTS if full else "Взять задание",
+		"call": func():
+			var fail: String = state.quests.accept(p, settlement, int(item.id))
+			if fail != "":
+				_say(fail)
+			else:
+				_flash = "взято задание: " + String(card_info.title)})
+	take.name = "Take_%d" % int(item.id)
+	GameSkin.primary(take)
+	buttons.add_child(take)
+	if full:
+		var why := TroopList.cell("журнал полон", TroopList.WARN, 12)
+		why.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		side.add_child(why)
+
+## One of the player's errands: kind icon, task with progress, days left and «сдаётся здесь» / «готово к сдаче», map.
+func _my_quest_line(grid: GridContainer, info: Dictionary, q: Dictionary) -> void:
+	grid.add_child(TroopList.icon(GameSkin.icon(info.icon), 26))
+	var block := VBoxContainer.new()
+	block.name = "Mine_%d" % int(q.id)
+	block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	block.add_theme_constant_override("separation", 0)
+	var title := TroopList.cell(info.title, GameSkin.PARCH, 15)
+	title.add_theme_font_override("font", GameSkin.BODY_BOLD)
+	title.clip_text = true
+	title.tooltip_text = info.title
+	title.mouse_filter = Control.MOUSE_FILTER_PASS
+	block.add_child(title)
+	var tags: Array = []
+	for tag in info.tags:
+		tags.append(tag[0])
+	var target: Dictionary = QuestCard.target(q, state.map)
+	if not target.is_empty() and int(target.get("id", -1)) == int(settlement.id) and q.type != "camp":
+		tags.append("сдаётся здесь")
+	var under := "%s · %s" % [info.type, info.deadline]
+	if not info.progress.is_empty():
+		under += " · %s %d / %d" % [String(info.progress[2]).to_lower(), info.progress[0], info.progress[1]]
+	if not tags.is_empty():
+		under += " · " + " · ".join(PackedStringArray(tags))
+	var sub := TroopList.cell(under, Color("#a5c77b") if tags.has("готово к сдаче") or tags.has("сдаётся здесь") else (TroopList.WARN if info.blocked or tags.has("срочно") else GameSkin.MUTED), 12)
+	sub.clip_text = true
+	block.add_child(sub)
+	grid.add_child(block)
+	var reward := TroopList.cell("%d зол." % int(info.reward), GameSkin.BRASS, 14)
+	grid.add_child(reward)
+	if not info.target.is_empty():
+		var t: Dictionary = info.target
+		var go := TroopList.small(make_button({"sound": "click", "text": "На карте", "hint": "Показать цель на карте: %s" % t.get("name", ""),
+			"call": func(): map_target.emit(float(t.x), float(t.y)); close_window()}))
+		grid.add_child(go)
+	else:
+		grid.add_child(Control.new())
 
 func _oath(p) -> void:
 	var clans = state.clans
