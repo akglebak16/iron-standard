@@ -9,6 +9,7 @@ description: Где лежит графика и звук Godot-версии (а
 - `godot/apps/godot/presentation/battle/` — бой: `unit_art.gd`, `unit_motion.gd` (дыхание, замах, падение), `impact_effects.gd` и `detached_parts.gd` (кровь и части), `terrain/` (земля, деревья, стена), `hud/`, `audio/` (звуки и музыка боя).
 - `godot/apps/godot/presentation/campaign/` — карта, окна города, отряда, осады, звуки окон (`ui_sounds.gd`).
 - Источники и лицензии — `godot/docs/ASSETS.md`, визуальный паритет — `godot/docs/modules/VISUAL_PARITY.md`.
+- Стиль юнитов, эталоны до и после разделения слоёв и критерии визуальной приёмки — [гайд по юнитам](../../../godot/docs/art/UNIT_STYLE.md).
 
 ## Правила
 - Не менять пропорции бюстов (торс без рук) и общий облик без согласования с Глебом. Стиль — «бережная полировка»: контур, дерево и латунь сохраняем.

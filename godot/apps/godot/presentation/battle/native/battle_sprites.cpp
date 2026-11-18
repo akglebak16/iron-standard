@@ -43,7 +43,18 @@ class IronBattleSprites : public RefCounted {
     auto mix = [](double from, double to, double weight) {
       return from + (to - from) * weight;
     };
-    if (kind == 3) {
+    if (kind == 4) {
+      if (bump > .5) {
+        double aim = (bump - .5) * 2;
+        a = .16 * aim * aim;
+        y = 5 * aim;
+      } else {
+        double recoil = bump * 2;
+        x = -7 * recoil * recoil;
+        y = 1.5 * recoil;
+        a = -.045 * recoil;
+      }
+    } else if (kind == 3) {
       double q = std::clamp(1 - bump * 2, 0.0, 1.0);
       x = -5 * (1 - q) * (1 - q);
       a = -.12 * (1 - q);
@@ -175,7 +186,8 @@ public:
       l.scale = art.get("scale", .43);
       l.phase = entry["phase"];
       String weapon = art.get("weapon_kind", "");
-      l.kind = weapon == "bow" || weapon == "xbow" ? 3
+      l.kind = weapon == "heraldic_xbow" ? 4
+               : weapon == "bow" || weapon == "xbow" ? 3
                : weapon == "spear" || weapon == "halberd" || weapon == "lance"
                    ? 2
                : weapon.is_empty() ? 0

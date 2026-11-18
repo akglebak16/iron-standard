@@ -55,12 +55,16 @@ func clear() -> void:
 	_settled.clear()
 	_next = 0
 
+func use_unit_art(source: Art) -> void:
+	# Share identity/variant caches with the live figures, including reserve waves.
+	_art = source
+
 func has_active() -> bool:
 	return not _active.is_empty()
 
-static func head_offset(unit: Dictionary) -> Vector2:
+static func head_offset(unit: Dictionary, geometry: Dictionary = {}) -> Vector2:
 	var direction := -1.0 if cos(float(unit.facing)) < 0.0 else 1.0
-	var geometry := Art.OriginalArt.layers_for(unit)
+	if geometry.is_empty(): geometry = Art.OriginalArt.layers_for(unit)
 	if geometry.has("head_center"):
 		var offset: Vector2 = geometry.head_center - geometry.anchor
 		offset.x *= direction
@@ -71,9 +75,17 @@ static func head_offset(unit: Dictionary) -> Vector2:
 		offset.y -= Art.MOUNT_RIDER_RISE
 	return offset * Art.SPRITE_SCALE
 
+func neck_offset(unit: Dictionary) -> Vector2:
+	var geometry: Dictionary = _art.layers(unit)
+	if not geometry.has("neck_center"): return head_offset(unit, geometry)
+	var offset: Vector2 = geometry.neck_center - geometry.anchor
+	offset.x *= -1.0 if cos(float(unit.facing)) < 0.0 else 1.0
+	return offset * float(geometry.scale)
+
 func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int = 1) -> void:
 	var unit: Dictionary = event.target_visual
-	var offset := Vector2(0, -ARM_HEIGHT) if kind == Part.ARM else head_offset(unit)
+	var geometry: Dictionary = _art.layers(unit) if kind == Part.HEAD else {}
+	var offset := Vector2(0, -ARM_HEIGHT) if kind == Part.ARM else head_offset(unit, geometry)
 	if kind == Part.LEG: offset = Vector2(0, -5)
 	if kind == Part.TORSO: offset = Vector2(0, -20)
 	var floor_point: Vector2 = event.position + Vector2(offset.x, 0)
@@ -89,7 +101,6 @@ func emit(kind: Part, event: Dictionary, angle: float, color: Color, count: int 
 		match kind:
 			Part.HEAD:
 				part.texture = _art.detached_head(unit)
-				var geometry := _art.layers(unit)
 				part.anchor = geometry.get("head_center", Art.HEAD_CENTER)
 				part.scale = geometry.get("scale", Art.SPRITE_SCALE)
 				part.mirrored = cos(float(unit.facing)) < 0.0

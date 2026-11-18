@@ -1,6 +1,7 @@
 extends RefCounted
 const Event = preload("res://core/battle/combat_event.gd")
 const Parts = preload("res://apps/godot/presentation/battle/detached_parts.gd")
+const Art = preload("res://apps/godot/presentation/battle/unit_art.gd")
 
 enum Particle { BLOOD, SPARK, DUST }
 
@@ -134,6 +135,9 @@ var blood_enabled := true:
 func _init() -> void:
 	if ClassDB.class_exists("IronBattleEffects"): _native = ClassDB.instantiate("IronBattleEffects")
 	_rng.randomize()
+
+func use_unit_art(source: Art) -> void:
+	_parts.use_unit_art(source)
 
 func advance(dt: float, events: Array[Dictionary]) -> Array[Dictionary]:
 	_advance_pools(dt)
@@ -301,7 +305,7 @@ func _detach_on_down(event: Dictionary, color: Color) -> bool:
 	var kind: int = choices[_rng.randi_range(0, choices.size() - 1)] if melee_impact == Event.MeleeImpact.CUT else Parts.Part.HEAD
 	var direction: Vector2 = event.impact_direction
 	var angle := direction.angle() if direction != Vector2.ZERO else _rng.randf_range(0.0, TAU)
-	var head := Parts.head_offset(event.target_visual)
+	var head := _parts.neck_offset(event.target_visual)
 	var has_blood := color.a > 0.0
 	if melee_impact == Event.MeleeImpact.CUT and kind == Parts.Part.HEAD:
 		_parts.emit(Parts.Part.HEAD, event, angle, color)

@@ -81,6 +81,7 @@ func configure(session: Session, effects_enabled: bool = true, music_enabled: bo
 		terrain_seed: int = 0, biome: String = Config.DEFAULT_BIOME, execution: Simulation = null) -> void:
 	assert(not is_inside_tree(), "Configure battle before adding it to the tree")
 	_session = session
+	_impacts.use_unit_art(_figures.art_source())
 	_figure_seed = terrain_seed
 	_figures.biome = biome
 	_simulation = execution if execution != null else Simulation.new(session)
