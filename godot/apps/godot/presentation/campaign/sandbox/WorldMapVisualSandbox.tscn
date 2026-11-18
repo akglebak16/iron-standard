@@ -1,0 +1,77 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://apps/godot/presentation/campaign/sandbox/visual_region.gd" id="1"]
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/sandbox/belmont_coast.png" id="2"]
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/settlements/belmont.png" id="3"]
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/settlements/ventum.png" id="4"]
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/sandbox/saint_remy.png" id="5"]
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/settlements/ostra.png" id="6"]
+[ext_resource type="Texture2D" path="res://apps/godot/visuals/assets/caravan.png" id="7"]
+
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/campaign/sandbox/ridge_and_wood.png" id="8"]
+
+[sub_resource type="AtlasTexture" id="Spur"]
+atlas = ExtResource("8")
+region = Rect2(0, 850, 623, 219)
+filter_clip = true
+
+[sub_resource type="AtlasTexture" id="Wood"]
+atlas = ExtResource("8")
+region = Rect2(631, 838, 623, 215)
+filter_clip = true
+
+[node name="WorldMapVisualSandbox" type="Node2D"]
+script = ExtResource("1")
+texture_filter = 2
+
+[node name="Terrain" type="Sprite2D" parent="."]
+texture = ExtResource("2")
+centered = false
+
+[node name="Foothill" type="Sprite2D" parent="."]
+position = Vector2(1060,312)
+scale = Vector2(0.32,0.32)
+texture = SubResource("Spur")
+
+[node name="WoodMargin" type="Sprite2D" parent="."]
+position = Vector2(199,497)
+scale = Vector2(0.23,0.23)
+texture = SubResource("Wood")
+
+[node name="Roads" type="Node2D" parent="."]
+[node name="Landmarks" type="Node2D" parent="."]
+[node name="Belmont" type="Sprite2D" parent="Landmarks"]
+position = Vector2(370,434)
+scale = Vector2(0.49,0.49)
+offset = Vector2(-334,-485)
+centered = false
+texture = ExtResource("3")
+
+[node name="Ventum" type="Sprite2D" parent="Landmarks"]
+position = Vector2(1350,649)
+scale = Vector2(0.49,0.49)
+offset = Vector2(-272,-433)
+centered = false
+texture = ExtResource("4")
+
+[node name="SaintRemy" type="Sprite2D" parent="Landmarks"]
+position = Vector2(765,302)
+scale = Vector2(0.115,0.115)
+offset = Vector2(-565,-785)
+centered = false
+texture = ExtResource("5")
+
+[node name="Ostra" type="Sprite2D" parent="Landmarks"]
+position = Vector2(1460,766)
+scale = Vector2(0.24,0.24)
+offset = Vector2(-184,-213)
+centered = false
+texture = ExtResource("6")
+
+[node name="Traffic" type="Node2D" parent="."]
+[node name="Army" type="Sprite2D" parent="Traffic"]
+[node name="Caravan" type="Sprite2D" parent="Traffic"]
+texture = ExtResource("7")
+[node name="Labels" type="Node2D" parent="."]
+[node name="Camera" type="Camera2D" parent="."]
+[node name="Controls" type="CanvasLayer" parent="."]
