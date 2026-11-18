@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://apps/godot/presentation/overworld/overworld_trial.tscn" id="1"]
+[ext_resource type="Script" path="res://apps/godot/presentation/overworld/art_region.gd" id="2"]
+
+[node name="ArtRegion" instance=ExtResource("1")]
+script = ExtResource("2")
+
+[node name="Hour" type="Button" parent="Controls/Panel/Content/Actions" index="2"]
+unique_name_in_owner = true
+focus_mode = 0
+
+[node name="Loading" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="Backdrop" type="ColorRect" parent="Loading"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.10,0.13,0.13,1)
+
+[node name="Message" type="Label" parent="Loading/Backdrop"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Подготовка карты…"

@@ -2,6 +2,7 @@ extends Node
 ## Run with a window and -- --overworld-benchmark <output stem>. Writes .json and .png.
 
 const TRIAL := preload("res://apps/godot/presentation/overworld/overworld_trial.tscn")
+const REGION := preload("res://apps/godot/presentation/overworld/art_region.tscn")
 const DURATION_MS := 12000
 
 
@@ -11,7 +12,7 @@ func _ready() -> void:
 
 func _measure() -> void:
 	var args := OS.get_cmdline_user_args()
-	if args.size() != 2 or args[0] != "--overworld-benchmark" or DisplayServer.get_name() == "headless":
+	if args.size() != 2 or args[0] not in ["--region-benchmark","--overworld-benchmark"] or DisplayServer.get_name() == "headless":
 		push_error("Run in a window and pass one output path stem after --")
 		get_tree().quit(1)
 		return
@@ -19,11 +20,13 @@ func _measure() -> void:
 	var root := tree.root
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
-	var scene := TRIAL.instantiate()
+	var artistic := args[0] == "--region-benchmark"
+	var scene := (REGION if artistic else TRIAL).instantiate()
 	root.add_child(scene)
 	var camera := scene.get_node("Camera2D") as Camera2D
 	var renderer := scene.get_node("WorldMap") as IronWorldMapRenderer
 	var bridge := scene.get_node("%Bridge") as CheckButton
+	bridge.button_pressed = false
 	var frame_times: Array[float] = []
 	var started := Time.get_ticks_usec()
 	var previous := started
@@ -31,11 +34,20 @@ func _measure() -> void:
 	var ready_ms := -1.0
 	var edited := false
 	var reloaded := false
+	var peak_ms := 0.0
+	var peak_at_ms := 0.0
+	var after_first_load_max_ms := 0.0
 	while true:
 		await tree.process_frame
 		var now := Time.get_ticks_usec()
 		var elapsed_ms := (now - started) / 1000.0
 		frame_times.append((now - previous) / 1000.0)
+		var frame_ms: float = frame_times.back()
+		if frame_ms > peak_ms:
+			peak_ms = frame_ms
+			peak_at_ms = elapsed_ms
+		if ready_ms >= 0:
+			after_first_load_max_ms = maxf(after_first_load_max_ms,frame_ms)
 		previous = now
 		if elapsed_ms >= DURATION_MS:
 			break
@@ -66,6 +78,8 @@ func _measure() -> void:
 		"p95_ms": _percentile(frame_times, 0.95),
 		"p99_ms": _percentile(frame_times, 0.99),
 		"max_ms": frame_times.back(),
+		"peak_at_ms": peak_at_ms,
+		"after_first_load_max_ms": after_first_load_max_ms,
 		"first_upload_ms": first_upload_ms,
 		"initial_queue_drained_ms": ready_ms,
 		"chunks": renderer.trial_status(),
@@ -77,6 +91,19 @@ func _measure() -> void:
 		return
 	file.store_string(JSON.stringify(report, "\t"))
 	file.close()
+	if artistic:
+		camera.position = Vector2(1280,650)
+		camera.zoom = Vector2.ONE * 0.88
+		scene.get_node("Controls").hide()
+		for frame in 90:
+			await tree.process_frame
+		for hour in [6,12,22]:
+			scene.set_hour(hour)
+			await RenderingServer.frame_post_draw
+			if root.get_texture().get_image().save_png(args[1] + "-%02d.png" % hour) != OK:
+				tree.quit(1)
+				return
+		scene.set_hour(12)
 	await RenderingServer.frame_post_draw
 	tree.quit(root.get_texture().get_image().save_png(args[1] + ".png"))
 

@@ -65,36 +65,38 @@ inline std::vector<Patch> build_chunk(Geography geography, ChunkKey key) {
   };
 
   append(Paint::Sea, rectangle(left, top, left + chunk_size, top + chunk_size));
-  // Monotone coastline in X. Draw trapezoids so clipping preserves convexity.
-  constexpr std::array<Point, 9> coast{{
-      {0, 1070}, {320, 977}, {640, 1026}, {960, 1113}, {1280, 1048},
-      {1600, 1215}, {1920, 1110}, {2240, 1220}, {2560, 1130}}};
-  const Point a = coast[key.x];
-  const Point b = coast[key.x + 1];
-  append(Paint::Shore, {{a.x, 0}, {b.x, 0}, {b.x, b.y}, {a.x, a.y}});
-  append(Paint::Land, {{a.x, 0}, {b.x, 0}, {b.x, b.y - 9}, {a.x, a.y - 9}});
-
-  // Shared bank coordinates at each junction keep the segments continuous.
-  constexpr std::array<Point, 7> river{{
-      {1150, 0}, {1130, 240}, {1250, 430}, {1280, 650},
-      {1280, 800}, {1210, 910}, {1280, 1048}}};
-  constexpr std::array<float, 7> widths{{13, 18, 24, 31, 32, 33, 36}};
-  for (std::size_t i = 1; i < river.size(); ++i) {
-    const Point start = river[i - 1];
-    const Point end = river[i];
-    const auto ribbon = [&](Paint paint, float margin) {
-      const float start_width = widths[i - 1] + margin;
-      const float end_width = widths[i] + margin;
-      append(paint, {{start.x - start_width, start.y}, {start.x + start_width, start.y},
-                     {end.x + end_width, end.y}, {end.x - end_width, end.y}});
+  constexpr int stride = 16;
+  for (int i = 0; i < chunk_size; i += stride) {
+    float x = left + i, r = x + stride;
+    float a = coast_y(x), b = coast_y(r);
+    append(Paint::Shore, {{x,0},{r,0},{r,b},{x,a}});
+    append(Paint::Land, {{x,0},{r,0},{r,b-5},{x,a-5}});
+  }
+  for (int i = 0; i < chunk_size; i += stride) {
+    float y = top + i, b = y + stride;
+    float a = river_x(y), z = river_x(b);
+    float wa = 5 + y * 0.017f, wb = 5 + b * 0.017f;
+    const auto ribbon = [&](Paint paint, float m) {
+      append(paint, {{a-wa-m,y},{a+wa+m,y},{z+wb+m,b},{z-wb-m,b}});
     };
-    ribbon(Paint::Shore, 4);
+    ribbon(Paint::Shore, 2.5f);
     ribbon(Paint::River, 0);
   }
-
+  for (int i = 0; i < chunk_size; i += stride) {
+    float x = left + i, r = x + stride;
+    append(Paint::Sea, {{x,coast_y(x)},{r,coast_y(r)},{r,rows*chunk_size},{x,rows*chunk_size}});
+  }
   const auto road = [&](float from, float to) {
-    append(Paint::Verge, rectangle(from, crossing_y - 10, to, crossing_y + 10));
-    append(Paint::Road, rectangle(from, crossing_y - 6, to, crossing_y + 6));
+    for (int i = 0; i < chunk_size; i += stride) {
+      float x = std::max(from,left+i), r = std::min(to,left+i+stride);
+      if (x >= r) continue;
+      float a = road_y(x), b = road_y(r);
+      const auto ribbon = [&](Paint paint, float width) {
+        append(paint, {{x,a-width},{r,b-width},{r,b+width},{x,a+width}});
+      };
+      ribbon(Paint::Verge, 9);
+      ribbon(Paint::Road, 6);
+    }
   };
   road(west_gate, west_bank);
   road(east_bank, east_gate);
