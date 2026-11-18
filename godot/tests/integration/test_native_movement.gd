@@ -10,6 +10,8 @@ const Config = preload("res://core/battle/config.gd")
 const KITE_CENTER := Vector2(1250, 850)
 const KITE_RADIUS := 220.0
 const VOLLEY_LONE_AHEAD := 170.0
+const LARGE_FIELD := Vector2(3600, 2400) # Config.ARENA_TIERS: 201..500 a side.
+const LARGE_TICKS := 600 # The approach and the first clash; the full battle would double the test time.
 # Stage 1v: every doctrine must decide something in the compared battle, or the equal columns prove nothing.
 const DOCTRINE_RULES := ["formed", "rank", "brace", "screen", "fallback", "rally", "rally_end", "shield", "spear"]
 # Shield and spear priorities, proven by distance ratios the older multipliers cannot explain (see _check_doctrine).
@@ -22,7 +24,7 @@ func _initialize() -> void:
 	var catalog := Catalog.new()
 	assert(Loader.populate(catalog))
 	assert(Movement.create().is_valid())
-	for scenario in ["field", "siege", "castle", "breach", "mixed", "kite", "volley", "doctrine", "morale"]:
+	for scenario in ["field", "siege", "castle", "breach", "mixed", "kite", "volley", "doctrine", "morale", "large"]:
 		var siege: bool = scenario in ["siege", "castle", "breach"]
 		var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 		setup.siege = siege
@@ -47,6 +49,10 @@ func _initialize() -> void:
 			# Stage 1b (DESIGN.md 4.5): the player's side charges loose with a shaken half and a few men about to run.
 			setup.player_army.assign([{"type": "n1", "n": 40}, {"type": "n2a", "n": 16}, {"type": "n3c", "n": 10}])
 			setup.enemy_army.assign([{"type": "e1", "n": 36}, {"type": "e2a", "n": 16}, {"type": "e3c", "n": 12}])
+		if scenario == "large":
+			# TERRAIN Р0а: more than 200 a side stand on the larger field; the kernel must take its bounds, not the base field.
+			setup.player_army.assign([{"type": "n1", "n": 120}, {"type": "n2a", "n": 60}, {"type": "n3c", "n": 50}])
+			setup.enemy_army.assign([{"type": "e1", "n": 120}, {"type": "e2a", "n": 60}, {"type": "e3c", "n": 50}])
 		if scenario == "mixed":
 			setup.player_army.assign([{"type": "n1", "n": 35}, {"type": "n2a", "n": 20}, {"type": "n3c", "n": 15}])
 			setup.enemy_army.assign([{"type": "k1", "n": 30}, {"type": "k2a", "n": 20}, {"type": "k2c", "n": 20}])
@@ -57,6 +63,11 @@ func _initialize() -> void:
 		for key in DOCTRINE_RULES: fired[key] = false
 		for key in MORALE_RULES: fired[key] = false
 		var rider_timers := {}
+		if scenario == "large":
+			var beyond := false
+			for unit in a._state.units:
+				if unit.position.x > Config.ARENA_SIZE.x or unit.position.y > Config.ARENA_SIZE.y: beyond = true
+			assert(a._state.arena_size == LARGE_FIELD and b._state.arena_size == LARGE_FIELD and beyond, "The large battle must use the larger field")
 		for battle in [a, b]:
 			if scenario == "volley":
 				_place(battle._state, battle._state.groups[0][Config.GROUP_ARCHERS], Vector2(900, 850), 0.0)
@@ -116,7 +127,7 @@ func _initialize() -> void:
 					if unit.hero: continue
 					unit.position = Vector2(1200 + unit.side * 100 + (unit.id % 6) * 18, 550 + (unit.id % 12) * 22)
 				for group in battle._state.groups[1]: group.order = "charge"
-		for tick in 1200:
+		for tick in (LARGE_TICKS if scenario == "large" else 1200):
 			if siege and tick == 300:
 				for battle in [a, b]: battle._state.wall.open_main_gate()
 			if siege and tick == 600:

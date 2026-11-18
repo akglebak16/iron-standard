@@ -10,6 +10,7 @@ const Plant = preload("res://core/battle/model/plant.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 const Equipment = preload("res://core/equipment/config.gd")
 const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
+const ArenaLayout = preload("res://core/battle/rules/arena_layout.gd")
 const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
 const PhaseProfiler = preload("res://runtime/diagnostics/phase_profiler.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
@@ -177,11 +178,14 @@ func setup_groups(cavalry_flank: int = 1) -> void:
 	for side in 2:
 		var forward := -1.0 if side == 1 else 1.0
 		var facing := PI if side == 1 else 0.0
-		var x := arena_size.x - Config.FRONT_X if side == 1 else Config.FRONT_X
+		var front := ArenaLayout.front_x(arena_size)
+		var x := arena_size.x - front if side == 1 else front
+		var center_y := ArenaLayout.center_y(arena_size)
+		var grow := ArenaLayout.scale(arena_size) # (1, 1) on the base field: the browser numbers stay exact.
 		groups.append([
-			Group.new(side, Config.GROUP_INFANTRY, Vector2(x, Config.CENTER_Y), facing),
-			Group.new(side, Config.GROUP_ARCHERS, Vector2(x - forward * Config.ARCHER_REAR_OFFSET, Config.CENTER_Y), facing),
-			Group.new(side, Config.GROUP_CAVALRY, Vector2(x - forward * Config.CAVALRY_REAR_OFFSET, Config.CENTER_Y + cavalry_flank * Config.CAVALRY_FLANK_OFFSET), facing),
+			Group.new(side, Config.GROUP_INFANTRY, Vector2(x, center_y), facing),
+			Group.new(side, Config.GROUP_ARCHERS, Vector2(x - forward * Config.ARCHER_REAR_OFFSET * grow.x, center_y), facing),
+			Group.new(side, Config.GROUP_CAVALRY, Vector2(x - forward * Config.CAVALRY_REAR_OFFSET * grow.x, center_y + cavalry_flank * Config.CAVALRY_FLANK_OFFSET * grow.y), facing),
 		])
 
 func add_grouped_unit(unit: Unit, kind: int) -> void:

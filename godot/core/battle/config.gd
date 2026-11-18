@@ -2,7 +2,15 @@ extends RefCounted
 
 ## Balance values copied from the browser battle. Change them here, then run Godot tests.
 const TroopConfig = preload("res://core/troops/config.gd")
-const ARENA_SIZE := Vector2(2600, 1700)
+const ARENA_SIZE := Vector2(2600, 1700) # The base field: battles up to ARENA_TIERS[0] fighters a side and every siege.
+## TERRAIN.md 5 (stage Р0а): the field grows with the larger army on it (figures a side at the start, after the cap).
+## [fighters a side up to, field size, side 0 infantry front as a share of the width]; above the last row the last
+## field is used. The first row is the base field with the browser placement (FRONT_X). Sizes change only here.
+const ARENA_TIERS := [
+	[200, Vector2(2600, 1700), 640.0 / 2600.0],
+	[500, Vector2(3600, 2400), 0.29],
+	[1000, Vector2(4600, 3000), 0.32],
+]
 const DEFAULT_BIOME := "grass"
 const SIEGE_WALL_RIGHT_OFFSET := 980.0
 const SIEGE_WALL_HALF_WIDTH := 22.0
@@ -97,8 +105,10 @@ const SIEGE_INFANTRY_FORCE_CHARGE_SECONDS := 150.0
 const SIEGE_CAVALRY_FORCE_CHARGE_SECONDS := 170.0
 const SPATIAL_CELL_SIZE := 64.0 # Broad-phase cell; changing it must not change battle results.
 const SPATIAL_MIN_UNITS := 64 # Small battles avoid index construction overhead.
+# Placement on the base field; on a larger field rules/arena_layout.gd turns it into shares (offsets grow with the field).
 const FRONT_X := 640.0
 const CENTER_Y := 850.0
+const HERO_START := Vector2(730, 850) # startBattle: mkUnit(0, hd, 'player', 730, H / 2), on the base field.
 const ARCHER_REAR_OFFSET := 105.0
 const CAVALRY_REAR_OFFSET := 20.0
 const CAVALRY_FLANK_OFFSET := 380.0

@@ -88,7 +88,7 @@ func _ready() -> void:
 		elif arg == "--campaign-paused": _campaign_paused = true
 		elif arg == "--sim-thread=off": _sim_thread = false
 	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), _gpu_timing)
-	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"] or _camera_scope not in ["hero", "near", "wide"]:
+	if _size < 1 or _frames <= 61 or _mode not in ["battle", "campaign"] or _camera_scope not in ["hero", "near", "wide", "field"]:
 		push_error("Invalid diagnostic parameters (positive population, >61 frames, battle/campaign mode)")
 		get_tree().quit(1)
 		return
@@ -168,6 +168,7 @@ func _ready() -> void:
 		_view.camera.follow_enabled = false
 		_view.camera.position = session._state.arena_size * 0.5
 		_view.camera.zoom = Vector2.ONE * (0.55 if _camera_scope == "wide" else 1.35)
+		if _camera_scope == "field": _view.camera.zoom = Vector2.ONE * _view.camera.min_zoom() # The whole field (TERRAIN Р0а).
 		_view.camera.fit_viewport()
 
 func _prepare_campaign() -> void:

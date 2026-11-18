@@ -22,12 +22,13 @@ static func release(battle: State, active: Array, rng: RandomNumberGenerator, fa
 		if count <= 0:
 			continue
 		var edge_x: float = battle.arena_size.x - Config.RESERVE_EDGE_OFFSET if side == 1 else Config.RESERVE_EDGE_OFFSET
+		var spread: float = Config.RESERVE_SPAWN_Y_SPREAD * battle.arena_size.y / Config.ARENA_SIZE.y # TERRAIN Р0а: grows with the field.
 		var touched := {}
 		var factions_seen := {}
 		for troop_id in waiting.slice(0, count):
 			var troop: Dictionary = battle.reserve_definitions[troop_id]
 			var at := Vector2(edge_x + rng.randf_range(-Config.RESERVE_SPAWN_X_JITTER, Config.RESERVE_SPAWN_X_JITTER),
-				battle.arena_size.y / 2.0 + rng.randf_range(-Config.RESERVE_SPAWN_Y_SPREAD, Config.RESERVE_SPAWN_Y_SPREAD))
+				battle.arena_size.y / 2.0 + rng.randf_range(-spread, spread))
 			var unit: Unit = ArmyBuilder.create_unit(battle, side, troop_id, troop, str(factions[side]), at, 1.0, rng)
 			battle.add_grouped_unit(unit, int(troop.grp))
 			touched[unit.group_kind] = true

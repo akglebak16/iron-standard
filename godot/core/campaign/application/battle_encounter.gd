@@ -1,6 +1,7 @@
 extends RefCounted
 ## Glue between the world map and the battle: builds a battle for a meeting and applies the outcome to the world.
 const Setup = preload("res://core/battle/data/battle_setup.gd")
+const BattleConfig = preload("res://core/battle/config.gd")
 const Catalog = preload("res://core/troops/data/catalog.gd")
 const GearCatalog = preload("res://core/equipment/data/gear_catalog.gd")
 const GoodsCatalog = preload("res://core/campaign/data/goods_catalog.gd")
@@ -63,7 +64,7 @@ func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> 
 	s.hero_troop = hero_troop(state.player.culture)
 	s.hero_profile = state.player.hero.duplicate(true)
 	s.enemy_leader_name = opponent.name if Rules.is_noble(opponent) else ""
-	s.hero_position = Vector2(730, 850) # startBattle: mkUnit(0, hd, 'player', 730, H / 2)
+	s.hero_position = BattleConfig.HERO_START # On the base field; a larger field moves it with the army (TERRAIN Р0а).
 	s.companion_profiles.assign(state.player.comps.duplicate(true))
 	if opponent.get("kind") == "siege":
 		s.siege = true

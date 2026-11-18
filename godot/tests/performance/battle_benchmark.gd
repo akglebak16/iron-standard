@@ -92,7 +92,10 @@ func run(tree: SceneTree) -> void:
 		if scenario in ["contact", "cavalry", "volley"]:
 			var ordinal: int = initial[unit.side] - 1
 			var front := 12.0 if scenario == "contact" else 180.0
-			unit.position = Vector2(1300.0 + (front + (ordinal / 50) * 24.0) * (-1.0 if unit.side == 0 else 1.0), 200.0 + (ordinal % 50) * 26.0)
+			# The dense block stands in the middle of the field (TERRAIN Р0а: 1000 a side fight on a larger field); on the
+			# base field these are the old coordinates.
+			var middle: Vector2 = (session._state.arena_size - Config.ARENA_SIZE) * 0.5
+			unit.position = Vector2(1300.0 + middle.x + (front + (ordinal / 50) * 24.0) * (-1.0 if unit.side == 0 else 1.0), 200.0 + middle.y + (ordinal % 50) * 26.0)
 	if scenario == "cavalry" and mounted != [size, size] or scenario == "volley" and ranged != [size, size]:
 		fail("Scenario composition does not match its name")
 		return

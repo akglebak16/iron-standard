@@ -1,6 +1,7 @@
 extends RefCounted
 
 const Plant = preload("res://core/battle/model/plant.gd")
+const Config = preload("res://core/battle/config.gd")
 const TREE_ATTEMPTS := {"steppe": 5, "arid": 7}
 const DEFAULT_TREE_ATTEMPTS := 15
 const BUSH_ATTEMPTS := 16
@@ -20,6 +21,8 @@ static func create(size: Vector2, seed_value: int, biome: String, wall_x: float 
 	var plants: Array[Plant] = []
 	var state := seed_value & UINT32_MASK
 	var tree_count: int = TREE_ATTEMPTS.get(biome, DEFAULT_TREE_ATTEMPTS)
+	# The clear band where the armies stand grows with the field (TERRAIN Р0а); exactly the browser band on the base field.
+	var clear := Vector2(FORMATION_CLEARANCE, FORMATION_CLEARANCE) * size / Config.ARENA_SIZE
 	for i in tree_count + BUSH_ATTEMPTS:
 		state = (state + MULBERRY_STEP) & UINT32_MASK
 		var x := _mulberry_value(state)
@@ -28,7 +31,7 @@ static func create(size: Vector2, seed_value: int, biome: String, wall_x: float 
 		var tree := i < tree_count
 		if point.x >= wall_x - SIEGE_CLEARANCE:
 			continue
-		if tree and absf(point.y - size.y * 0.5) < FORMATION_CLEARANCE and point.x > FORMATION_CLEARANCE and point.x < size.x - FORMATION_CLEARANCE:
+		if tree and absf(point.y - size.y * 0.5) < clear.y and point.x > clear.x and point.x < size.x - clear.x:
 			continue
 		plants.append(Plant.new(point, TRUNK_RADIUS if tree else 0.0, i % (TREE_VARIANTS if tree else BUSH_VARIANTS)))
 	return plants

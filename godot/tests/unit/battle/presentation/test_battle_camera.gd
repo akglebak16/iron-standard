@@ -51,12 +51,23 @@ func _check_zoom_and_bounds(camera: Camera, viewport: SubViewport) -> void:
 	assert(camera.position == half_view)
 	camera.advance(1.0, ARENA, true, Vector2.ZERO, [])
 	assert(camera.position == ARENA - half_view)
-	for i in 30:
+	# Zooming out stops when the whole field is in view (TERRAIN Р0а), never before the old limit.
+	var whole := minf(VIEWPORT.x / ARENA.x, VIEWPORT.y / ARENA.y)
+	assert(is_equal_approx(camera.min_zoom(), minf(Camera.MANUAL_ZOOM_RANGE.x, whole)))
+	for i in 40:
 		camera.change_zoom(false)
-	assert(is_equal_approx(camera.zoom.x, Camera.MANUAL_ZOOM_RANGE.x))
+	assert(is_equal_approx(camera.zoom.x, camera.min_zoom()))
+	assert(Vector2(VIEWPORT) / camera.zoom >= ARENA - Vector2.ONE, "The whole field fits the view")
 	viewport.size = Vector2i(1800, 1100)
 	camera.fit_viewport()
 	assert(camera.position == ARENA * 0.5)
+	# A larger field: the limit follows it.
+	camera.configure(Vector2(4600, 3000), HERO)
+	assert(is_equal_approx(camera.min_zoom(), minf(1800.0 / 4600.0, 1100.0 / 3000.0)))
+	camera.configure(ARENA, HERO)
+	for i in 40:
+		camera.change_zoom(false)
+	camera.fit_viewport()
 
 func _check_shake(camera: Camera) -> void:
 	var before := camera.screen_to_world(Vector2(300, 250))
