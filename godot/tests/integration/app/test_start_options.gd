@@ -43,6 +43,13 @@ func _check() -> void:
 		_click(dice)
 		seen[str(Options.hero_face)] = true
 	assert(seen.size() > 1, "«Случайно» changes the look")
+	# background (#152): it only places the start points, the card says where
+	menu._dialog._scroll.ensure_control_visible(menu._origin_buttons["merchant"])
+	for i in 3: await process_frame
+	_click(menu._origin_buttons["retainer"])
+	assert(Options.origin == "retainer" and menu._origin_buttons["retainer"].button_pressed and not menu._origin_buttons["smith"].button_pressed)
+	assert(menu._origin_texts["retainer"].text.contains("Сила +1, Стойкость +1"))
+	assert(menu._dialog.find_child("StartPoints", true, false) == null, "no separate point split")
 	menu._start()
 	assert(Options.culture == "khan" and Options.hero_name == "Проверка" and Options.banner == 2)
 	# reopening the screen keeps the last look
@@ -76,6 +83,7 @@ func _check() -> void:
 	menu.free()
 	Options.banner = 0
 	Options.hero_face = {}
+	Options.origin = "smith"
 	Art.select_player_banner(0)
 	print("Start options tests passed")
 	quit()
