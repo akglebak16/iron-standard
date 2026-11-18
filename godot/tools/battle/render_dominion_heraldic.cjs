@@ -20,13 +20,39 @@ async function stamp(buffer,width,height,left,top){
 async function frame(overlays){return sharp({create:{width:W,height:H,channels:4,background:'#00000000'}}).composite(overlays).png().toBuffer();}
 async function raw(buffer){return sharp(buffer).ensureAlpha().raw().toBuffer();}
 function png(data){return sharp(data,{raw:{width:W,height:H,channels:4}}).png().toBuffer();}
-function inside(x,y,polygon){
- let value=false;
- for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
-  const a=polygon[i],b=polygon[j];
-  if((a[1]>y)!==(b[1]>y) && x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])value=!value;
+// Head cut: a bowl symmetric about the shared neck joint, so the head (mirrored back to face
+// forward) fills exactly the hole it leaves in the torso: no gaps, no overlaps.
+function bowl(spec){
+ const xs=spec.head_polygon.map(p=>Math.abs(p[0]-spec.neck[0]));
+ const top=Math.max(...xs);
+ const shoulders=Math.min(...spec.head_polygon.filter(p=>Math.abs(p[0]-spec.neck[0])>=top-1).map(p=>p[1]).filter(y=>y>20));
+ const bottom=spec.head_polygon.filter(p=>p[1]>=spec.neck[1]-1).map(p=>Math.abs(p[0]-spec.neck[0]));
+ const neck=Math.max(7,Math.min(11,bottom.length?Math.max(...bottom):9));
+ return {top,shoulders:shoulders+(spec.neck[1]-shoulders)*.15,neck};
+}
+function inBowl(x,y,shape,joint){
+ const dx=Math.abs(x+.5-joint[0]),cy=y+.5;
+ if(cy>joint[1])return false;
+ if(cy<=shape.shoulders)return dx<shape.top;
+ const t=(cy-shape.shoulders)/(joint[1]-shape.shoulders);
+ return dx<shape.neck+(shape.top-shape.neck)*Math.sqrt(Math.max(0,1-t*t));
+}
+// Keeps only pieces of at least `min` pixels (8-connected); returns the cleaned buffer.
+function dropSpecks(data,min,keepLargest){
+ // Near-invisible haze (alpha < 12) only links specks to the figure; clear it first.
+ for(let p=0;p<data.length;p+=4)if(data[p+3]<12)data.fill(0,p,p+4);
+ const seen=new Int32Array(W*H).fill(-1),groups=[];
+ for(let start=0;start<W*H;start++){
+  if(seen[start]>=0||data[start*4+3]===0)continue;
+  const stack=[start],members=[];seen[start]=groups.length;
+  while(stack.length){const i=stack.pop();members.push(i);const x=i%W,y=(i/W)|0;
+   for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const nx=x+ox,ny=y+oy;if(nx<0||ny<0||nx>=W||ny>=H)continue;const j=ny*W+nx;
+    if(seen[j]<0&&data[j*4+3]>0){seen[j]=groups.length;stack.push(j);}}}
+  groups.push(members);
  }
- return value;
+ const largest=groups.reduce((a,g)=>Math.max(a,g.length),0);
+ for(const g of groups)if(g.length<min||(keepLargest&&g.length<largest*.05))for(const i of g)data.fill(0,i*4,i*4+4);
+ return data;
 }
 async function main(){
  const heads=JSON.parse(fs.readFileSync(path.join(dir,'heraldic_source/head-layout.json'),'utf8'));
@@ -45,29 +71,29 @@ async function main(){
    let sprite=await sharp(bodies[i]).resize(116,140).png().toBuffer();
    // Shields belong on the non-weapon side. All source busts are mirrored consistently.
    if(i<4)sprite=await sharp(sprite).flop().png().toBuffer();
-   let body=await raw(await frame([{input:sprite,left:18,top:18}]));
+   // The whole bust moves so its neck sits on the shared joint; head and torso stay together.
+   const spec=heads[ids[i]],shiftX=neckJoint[0]-spec.neck[0],shiftY=neckJoint[1]-spec.neck[1];
+   let body=await raw(await frame([{input:sprite,left:18+shiftX,top:18+shiftY}]));
    // Four subtle complexion variants, preserving the selected silhouette/equipment.
    for(let y=20;y<88;y++)for(let x=36;x<116;x++){
     const p=(y*W+x)*4,r=body[p],g=body[p+1],b=body[p+2];
     if(body[p+3]>0 && r>g*1.17 && g>b*1.12){const k=[1,.92,1.035,.97][variant];for(let c=0;c<3;c++)body[p+c]=Math.min(255,Math.round(body[p+c]*k));}
    }
-   // Isolate only helmet/face/hair at the neck, keeping shoulder cloth on the torso.
-   const spec=heads[ids[i]],head=Buffer.alloc(W*H*4);
+   // One cut line for both parts: the head keeps everything inside the bowl, the torso the rest.
+   const shape=bowl(spec),head=Buffer.alloc(W*H*4);
    let torso=Buffer.from(body);
-   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(inside(x+.5,y+.5,spec.polygon)){
+   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(inBowl(x,y,shape,neckJoint)){
     const p=(y*W+x)*4;
-    const targetX=(spec.mirror?2*spec.neck[0]-x:x)+neckJoint[0]-spec.neck[0];
-    const targetY=y+neckJoint[1]-spec.neck[1];
-    if(inside(x+.5,y+.5,spec.head_polygon) && targetX>=0 && targetX<W && targetY>=0 && targetY<H)body.copy(head,(targetY*W+targetX)*4,p,p+4);
+    // Mirrored about the joint, the bowl maps onto itself.
+    const targetX=spec.mirror?2*neckJoint[0]-1-x:x;
+    body.copy(head,(y*W+targetX)*4,p,p+4);
     torso[p+3]=0;
    }
-   // Extend the existing garment into the neck join; no empty seam under the head.
-   const collarMask=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="6"><path d="M0 6Q1 0 10 0Q19 0 20 6Z" fill="white"/></svg>');
-   const collar=await sharp(await png(body)).extract({left:spec.neck[0]-10,top:91,width:20,height:4}).resize(20,6).composite([{input:collarMask,blend:'dest-in'}]).png().toBuffer();
-   torso=await raw(await frame([{input:await png(torso),left:0,top:0},{input:collar,left:66,top:74}]));
-   // Only the head is unmirrored and aligned at the shared neck attachment.
+   dropSpecks(head,1,true);
+   dropSpecks(torso,24,false);
    body=await raw(await frame([{input:await png(torso),left:0,top:0},{input:await png(head),left:0,top:0}]));
-   const headless=await raw(await frame([{input:await png(torso),left:0,top:0},await stamp(neckCap,16,6,68,75)]));
+   const cap=Math.round(shape.neck*2+2);
+   const headless=await raw(await frame([{input:await png(torso),left:0,top:0},await stamp(neckCap,cap,6,neckJoint[0]-cap/2|0,neckJoint[1]-4)]));
    const c=config[i],meta=await sharp(weapons[c.w]).metadata();
    const width=Math.round(c.h*meta.width/meta.height);
    const left=c.w===4?72:Math.min(125-Math.round(width*c.grip),W-width-2);

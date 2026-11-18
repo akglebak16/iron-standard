@@ -22,6 +22,8 @@ func _initialize() -> void:
 			var head_region := entry.head.get_image().get_used_rect() as Rect2i
 			assert(head_region.size.x < 95 and head_region.end.y < 95)
 			assert(entry.head.get_image().get_pixel(25, 90).a == 0.0, "shoulders remain on the torso")
+			assert(head_region.end.y <= 79, "the head is cut at the neck joint")
+			assert(_pieces(entry.head.get_image()) == 1, "%s: the cut head is one clean piece" % troop)
 			assert(entry.body.get_image().get_data() != entry.portrait.get_image().get_data(), "weapons animate separately")
 			var grip: Color = entry.weapon.get_image().get_pixelv(Vector2i(entry.pivot))
 			assert(grip.a > 0.5, "the animation pivots through the gripping glove")
@@ -63,3 +65,28 @@ func _visible_bytes(texture: Texture2D) -> PackedByteArray:
 			bytes[p + 1] = 0
 			bytes[p + 2] = 0
 	return bytes
+
+## Separate opaque pieces (8-connected): stray specks around a cut show up as extra pieces.
+func _pieces(image: Image) -> int:
+	var w := image.get_width()
+	var h := image.get_height()
+	var seen := PackedByteArray()
+	seen.resize(w * h)
+	var count := 0
+	for start in w * h:
+		if seen[start] == 1 or image.get_pixel(start % w, start / w).a < 12.0 / 255.0: continue
+		count += 1
+		var stack := [start]
+		seen[start] = 1
+		while not stack.is_empty():
+			var i: int = stack.pop_back()
+			for oy in range(-1, 2):
+				for ox in range(-1, 2):
+					var x := i % w + ox
+					var y := i / w + oy
+					if x < 0 or y < 0 or x >= w or y >= h: continue
+					var j := y * w + x
+					if seen[j] == 0 and image.get_pixel(x, y).a >= 12.0 / 255.0:
+						seen[j] = 1
+						stack.append(j)
+	return count
