@@ -253,7 +253,7 @@ const UNDEAD_UNKNOWN_GARRISON := 300.0 # strength assumed for a town or castle w
 
 # Faction strategist (docs/modules/ai/DESIGN.md §5.4, stage 2d): war and peace by gain and war weariness.
 # faction_strategist.gd decides, world_wars.gd keeps the weariness and the truces and rolls the remaining noise.
-const STRAT_START_WARS := 0         # wars a state starts the game with at most (from Rules.WAR in table order); 0 = the whole table
+const STRAT_START_WARS := 2         # wars a state starts the game with at most (from Rules.WAR in table order); 0 = the whole table
 const STRAT_WAR_RATE := 0.1         # daily chance of a declaration at full will to war (a small noise on top of the gain)
 const STRAT_POWER_EDGE := Vector2(0.9, 1.8) # own power / neighbour's: no will to war at x, full at y (the neighbour is weaker)
 const STRAT_PRIZE_REACH := 800.0    # enemy towns and castles this close to an own town or castle are within reach ...
