@@ -52,6 +52,7 @@ func _ready() -> void:
 
 func open_for(world_state: RefCounted, s: Dictionary) -> void:
 	_siege_confirm = false
+	_leave_confirm = false
 	state = world_state
 	settlement = s
 	set_tabs([["recruit", "Рекруты"]], "recruit")
@@ -501,36 +502,216 @@ func _my_quest_line(grid: GridContainer, info: Dictionary, q: Dictionary) -> voi
 	else:
 		grid.add_child(Control.new())
 
+## «Служба»: the faction card (crest, ruler, relations bar, your status), then the oath with its requirements, benefits
+## and costs, or your service (pay, no-shows, the current summons, leaving with a second click), and the balance of
+## power as a table with the enemies' crests.
 func _oath(p) -> void:
 	var clans = state.clans
 	var f: String = settlement.fac
-	note("Фракция: %s. Отношения: %d. %s" % [_factions.get_faction(f).name, roundi(float(p.rel.get(f, 0))), ("Ты служишь: %s." % _factions.get_faction(p.liege).name) if p.liege != "" else "Ты вольный наёмник."])
+	var faction: Dictionary = _factions.get_faction(f)
+	var rel := roundi(float(p.rel.get(f, 0)))
+	var card := card_panel()
+	card.name = "FactionCard"
+	body.add_child(card)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 14)
+	card.add_child(line)
+	line.add_child(TroopList.icon(OriginalArt.crest(f), 56))
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 2)
+	line.add_child(col)
+	var title := Label.new()
+	title.text = faction.get("name", f)
+	GameSkin.title(title, 21)
+	col.add_child(title)
+	var rl: Dictionary = clans.ruler_of(f)
+	col.add_child(TroopList.cell("Правитель: %s" % (rl.name if not rl.is_empty() else ("междуцарствие" if clans.kingless(f) else "—")), GameSkin.MUTED, 14))
+	var status := "Ты вассал %s" % faction.get("gen", f) if p.liege == f else ("Ты служишь: %s" % _factions.get_faction(p.liege).get("name", p.liege) if p.liege != "" else "Ты вольный наёмник")
+	col.add_child(TroopList.cell(status, GameSkin.PARCH, 15))
+	var rel_box := VBoxContainer.new()
+	rel_box.custom_minimum_size.x = 220
+	rel_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_child(rel_box)
+	var rel_label := TroopList.cell("Отношения: %d · %s" % [rel, _relation_word(rel)], _relation_color(rel), 15)
+	rel_label.name = "Relation"
+	rel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	rel_box.add_child(rel_label)
+	rel_box.add_child(_bar("RelationBar", (rel + 100) / 200.0, _relation_color(rel), "От −100 до 100. Растут от заданий и побед над врагами фракции."))
 	if p.liege == f:
-		var rl: Dictionary = clans.ruler_of(f)
-		heading("Ты вассал %s" % _factions.get_faction(f).gen)
-		if not rl.is_empty():
-			note("Сюзерен: %s." % rl.name)
-		note("Жалованье: %d золота в день. Враги сюзерена — твои враги. Когда он созывает войска, будь рядом с осаждаемым городом: это награда и шанс получить лен. Неявок: %d из 3." % [clans.pay(), p.strikes])
-		if p.summons is Dictionary:
-			note("Зов: %s%s." % [state.map.settlement_by_id(p.summons.tid).get("name", "?"), " (ты участвовал)" if p.summons.joined else ", срок до дня %d" % ceili(p.summons.until / 24.0)])
-		row("Оставить службу", "Отношения с фракцией ухудшатся.", [{"sound": "click", "text": "Уйти", "call": func(): clans.leave()}])
+		_service_card(p, f)
 	elif p.liege == "":
-		var why: String = clans.oath_why(f)
-		heading("Принести присягу")
-		note("Нужен %d уровень героя и отношения от %d. Сюзерен платит жалованье и награждает за походы, но враги фракции станут твоими." % [clans.OATH_LVL, clans.OATH_REL])
-		row("Присягнуть", why, [{"sound": "order", "text": "Присягнуть", "disabled": why != "", "call": func(): _say(clans.swear(f))}])
+		_oath_card(p, f)
 	else:
-		note("Сначала оставь службу у %s." % _factions.get_faction(p.liege).gen)
-	heading("Мир")
+		var other := card_panel()
+		other.name = "ServeElsewhere"
+		body.add_child(other)
+		var t := TroopList.cell("Ты уже служишь %s. Чтобы присягнуть здесь, сначала оставь ту службу в любом городе %s." % [_factions.get_faction(p.liege).get("gen", p.liege), _factions.get_faction(p.liege).get("gen", p.liege)], GameSkin.PARCH, 15)
+		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		other.add_child(t)
+	_powers(p, f)
+
+static func _relation_word(rel: int) -> String:
+	if rel < -20: return "враждебны"
+	if rel < 0: return "холодно"
+	if rel < 20: return "ровно"
+	if rel < 50: return "дружны"
+	return "близки"
+
+static func _relation_color(rel: int) -> Color:
+	if rel < -20: return Color("#e0705a")
+	if rel < 0: return Color("#d9a35a")
+	if rel < 20: return GameSkin.PARCH
+	return Color("#a5c77b")
+
+## A thin bar 0..1 in the game's colours.
+func _bar(node_name: String, value: float, color: Color, hint: String) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.name = node_name
+	bar.show_percentage = false
+	bar.min_value = 0.0
+	bar.max_value = 1.0
+	bar.value = clampf(value, 0.0, 1.0)
+	bar.custom_minimum_size = Vector2(0, 8)
+	bar.tooltip_text = hint
+	var back := StyleBoxFlat.new()
+	back.bg_color = Color("#140f0a")
+	back.border_color = Color("#ffffff22")
+	back.set_border_width_all(1)
+	back.set_corner_radius_all(3)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = color
+	fill.set_corner_radius_all(3)
+	bar.add_theme_stylebox_override("background", back)
+	bar.add_theme_stylebox_override("fill", fill)
+	return bar
+
+## Not serving anyone: what the oath needs (✓/✗), what it gives, what it costs, and the button.
+func _oath_card(p, f: String) -> void:
+	var clans = state.clans
+	var gen: String = _factions.get_faction(f).get("gen", f)
+	var grid := TroopList.table(body, "OathCard", "Присяга", "служба %s" % gen, GameSkin.BRASS)
+	grid.columns = 1
+	var lvl := int(p.hero.get("lvl", 1))
+	var rel := roundi(float(p.rel.get(f, 0)))
+	var needs := [
+		["Уровень героя %d, нужен %d" % [lvl, clans.OATH_LVL], lvl >= clans.OATH_LVL, "Опыт дают бои и задания."],
+		["Отношения %d, нужно от %d" % [rel, clans.OATH_REL], rel >= clans.OATH_REL, "Выполняй задания этой фракции и бей её врагов."],
+		["Идёт война: сюзерену нужны воины", not state.wars.wars.is_empty(), "В мирное время присягу не принимают."],
+	]
+	for i in needs.size():
+		var need: Array = needs[i]
+		var mark := TroopList.cell(("✓  " if need[1] else "✗  ") + String(need[0]), Color("#a5c77b") if need[1] else TroopList.WARN, 15)
+		mark.name = "Need%d" % i
+		mark.tooltip_text = need[2]
+		mark.mouse_filter = Control.MOUSE_FILTER_PASS
+		grid.add_child(mark)
+	var gives := TroopList.cell("Даёт: жалованье %d золота в день, награды за походы сюзерена, шанс получить лен." % clans.pay(), GameSkin.PARCH, 14)
+	gives.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	grid.add_child(gives)
+	var costs := TroopList.cell("Требует: враги %s станут твоими; на зов сюзерена надо являться, после трёх неявок — изгнание." % gen, GameSkin.MUTED, 14)
+	costs.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	grid.add_child(costs)
+	var why: String = clans.oath_why(f)
+	var swear := make_button({"sound": "order", "text": "Присягнуть", "disabled": why != "", "hint": why if why != "" else "Принести присягу %s" % gen,
+		"call": func(): _say(clans.swear(f))})
+	swear.name = "Swear"
+	GameSkin.primary(swear)
+	swear.size_flags_horizontal = Control.SIZE_SHRINK_END
+	grid.add_child(swear)
+	_stretch(grid)
+
+## A one-column table: let its lines take the card's width (buttons keep to the right edge).
+static func _stretch(grid: GridContainer) -> void:
+	for c in grid.get_children():
+		if c is Control:
+			(c as Control).size_flags_horizontal = (Control.SIZE_EXPAND | Control.SIZE_SHRINK_END) if c is Button else Control.SIZE_EXPAND_FILL
+
+var _leave_confirm := false
+
+## Serving this faction: liege, pay, no-shows bar, the current summons with the map, and leaving with confirmation.
+func _service_card(p, f: String) -> void:
+	var clans = state.clans
+	var grid := TroopList.table(body, "ServiceCard", "Служба", "ты вассал %s" % _factions.get_faction(f).get("gen", f), Color("#a5c77b"))
+	grid.columns = 1
+	grid.add_child(TroopList.cell("Жалованье: %d золота в день" % clans.pay(), GameSkin.PARCH, 15))
+	var strikes := int(p.strikes)
+	var miss := TroopList.cell("Неявки на зов: %d из 3%s" % [strikes, " — ещё одна, и сюзерен изгонит" if strikes == 2 else ""], TroopList.WARN if strikes >= 2 else GameSkin.PARCH, 15)
+	miss.name = "Strikes"
+	grid.add_child(miss)
+	grid.add_child(_bar("StrikesBar", strikes / 3.0, TroopList.WARN if strikes >= 2 else Color("#d9a35a"), "После трёх неявок сюзерен изгоняет со службы."))
+	if p.summons is Dictionary:
+		var t: Dictionary = state.map.settlement_by_id(p.summons.tid)
+		var call := HBoxContainer.new()
+		call.name = "Summons"
+		call.add_theme_constant_override("separation", 8)
+		grid.add_child(call)
+		var text := TroopList.cell("Зов: %s%s" % [t.get("name", "?"), " — ты участвовал" if p.summons.joined else ", явиться до дня %d" % ceili(p.summons.until / 24.0)], Color("#a5c77b") if p.summons.joined else GameSkin.BRASS, 15)
+		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		call.add_child(text)
+		if not t.is_empty():
+			var go := TroopList.small(make_button({"sound": "click", "text": "На карте", "hint": "Показать %s на карте" % t.get("name", ""),
+				"call": func(): map_target.emit(float(t.x), float(t.y)); close_window()}))
+			go.name = "SummonsMap"
+			call.add_child(go)
+	else:
+		grid.add_child(TroopList.cell("Зова нет. Когда сюзерен соберёт войско, приходи к осаждаемому городу: это награда и шанс на лен.", GameSkin.MUTED, 14))
+	var leave := make_button({"sound": "click", "text": "Точно уйти? Отношения −20" if _leave_confirm else "Оставить службу",
+		"hint": "Отношения с фракцией ухудшатся на 20",
+		"call": func():
+			if _leave_confirm:
+				_leave_confirm = false
+				clans.leave()
+			else:
+				_leave_confirm = true})
+	leave.name = "Leave"
+	leave.size_flags_horizontal = Control.SIZE_SHRINK_END
+	grid.add_child(leave)
+	_stretch(grid)
+
+## «Расклад сил»: a row per living faction — crest, name and ruler, holdings, clans and the crests of its enemies.
+func _powers(p, here: String) -> void:
+	var clans = state.clans
+	var grid := TroopList.table(body, "Powers", "Расклад сил", "кто с кем воюет", GameSkin.MUTED)
+	grid.columns = 5
+	for head in ["", "Фракция", "Владений", "Родов", "Воюет с"]:
+		grid.add_child(TroopList.cell(head, GameSkin.MUTED, 12))
 	for x in state.wars.factions_alive():
-		var foes: Array = []
+		var faction: Dictionary = _factions.get_faction(x)
+		grid.add_child(TroopList.icon(OriginalArt.crest(x), 26))
+		var block := VBoxContainer.new()
+		block.name = "Power_" + x
+		block.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		block.add_theme_constant_override("separation", -2)
+		var name_text := String(faction.get("name", x)) + ("  · твой сюзерен" if x == p.liege else ("  · этот город" if x == here else ""))
+		var n := TroopList.cell(name_text, Color("#a5c77b") if x == p.liege else (GameSkin.BRASS if x == here else GameSkin.PARCH), 15)
+		n.add_theme_font_override("font", GameSkin.BODY_BOLD)
+		block.add_child(n)
+		var rl: Dictionary = clans.ruler_of(x)
+		block.add_child(TroopList.cell(rl.name if not rl.is_empty() else ("междуцарствие" if clans.kingless(x) else "—"), GameSkin.MUTED, 12))
+		grid.add_child(block)
+		var holds := TroopList.cell(str(state.wars.hold_of(x).all), GameSkin.PARCH, 15)
+		holds.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		grid.add_child(holds)
+		var houses := TroopList.cell(str(clans.of_faction(x).size()), GameSkin.PARCH, 15)
+		houses.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		grid.add_child(houses)
+		var foes := HBoxContainer.new()
+		foes.name = "Foes_" + x
+		foes.add_theme_constant_override("separation", 4)
+		foes.custom_minimum_size.x = 150
 		for k in state.wars.wars:
 			var parts: PackedStringArray = k.split("|")
 			if x in parts:
-				foes.append(_factions.get_faction(parts[1] if parts[0] == x else parts[0]).name)
-		var rl: Dictionary = clans.ruler_of(x)
-		var head: String = rl.name if not rl.is_empty() else ("междуцарствие" if clans.kingless(x) else "")
-		row("%s · владений %d" % [_factions.get_faction(x).name, state.wars.hold_of(x).all], "%s%sвоюет с: %s · родов %d" % [head, " · " if head != "" else "", ", ".join(foes) if not foes.is_empty() else "мир", clans.of_faction(x).size()])
+				var foe: String = parts[1] if parts[0] == x else parts[0]
+				var crest := TroopList.icon(OriginalArt.crest(foe), 24)
+				crest.name = "Foe_" + foe
+				crest.tooltip_text = _factions.get_faction(foe).get("name", foe)
+				crest.mouse_filter = Control.MOUSE_FILTER_STOP
+				foes.add_child(crest)
+		if foes.get_child_count() == 0:
+			foes.add_child(TroopList.cell("мир", Color("#a5c77b"), 14))
+		grid.add_child(foes)
 
 var _siege_confirm := false
 
