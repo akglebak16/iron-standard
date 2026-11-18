@@ -1,13 +1,16 @@
-[gd_resource type="Resource" load_steps=5 format=3]
+[gd_resource type="Resource" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://apps/godot/presentation/overworld/art/region_library.gd" id="1"]
 [ext_resource type="Texture2D" path="res://apps/godot/presentation/overworld/art/region_atlas.png" id="2"]
 [ext_resource type="Texture2D" path="res://apps/godot/presentation/overworld/art/landforms.png" id="3"]
 [ext_resource type="Texture2D" path="res://apps/godot/presentation/overworld/art/meadow.png" id="4"]
 
+[ext_resource type="Texture2D" path="res://apps/godot/presentation/overworld/art/massifs.png" id="5"]
+
 [resource]
 script = ExtResource("1")
 landmarks = ExtResource("2")
 landforms = ExtResource("3")
+massifs = ExtResource("5")
 meadow = ExtResource("4")
-regions = Array[Rect2]([Rect2(18,118,481,294),Rect2(543,120,460,290),Rect2(1045,158,474,223),Rect2(16,550,480,405),Rect2(546,630,444,271),Rect2(1150,610,287,280),Rect2(8,182,498,286),Rect2(513,119,511,354),Rect2(1025,125,509,345),Rect2(8,649,498,255),Rect2(594,622,335,271),Rect2(1031,656,496,235)])
+regions = Array[Rect2]([Rect2(18,118,481,294),Rect2(543,120,460,290),Rect2(1045,158,474,223),Rect2(16,550,480,405),Rect2(546,630,444,271),Rect2(1150,610,287,280),Rect2(8,182,498,286),Rect2(513,119,511,354),Rect2(1025,125,509,345),Rect2(8,649,498,255),Rect2(594,622,335,271),Rect2(1031,656,496,235),Rect2(0,95,766,392),Rect2(771,92,765,393),Rect2(0,620,766,314),Rect2(771,620,765,314)])

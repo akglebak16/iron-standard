@@ -13,6 +13,11 @@ func _run() -> void:
 			break
 		await process_frame
 	assert(not scene.get_node("Loading").visible)
+	assert(scene.surface.get_shader_parameter("terrain") is ImageTexture)
+	assert(scene.bridge_art.visible)
+	scene.get_node("%Bridge").button_pressed = false
+	assert(not scene.bridge_art.visible)
+	scene.get_node("%Bridge").button_pressed = true
 	assert(renderer.trial_status().bridge)
 	scene.set_process(false)
 	var initial_x: float = renderer.trial_status().company_x

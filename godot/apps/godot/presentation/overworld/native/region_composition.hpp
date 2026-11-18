@@ -2,38 +2,52 @@
 #include "trial_geometry.hpp"
 
 namespace iron::overworld {
-enum class Illustration { Ridge, Wood, Hill, Town, Village, Company, Spur, Peak, Saddle, Copse, Trees, Fields };
+enum class Illustration { Ridge, Wood, Hill, Town, Village, Company, Spur, Peak, Saddle, Copse, Trees, Fields, Range, Summit, Pasture, Bluff };
 struct Landmark { Illustration kind; float x, y, width; };
 
 inline std::vector<Landmark> landmarks(ChunkKey key) {
   std::vector<Landmark> pieces;
   auto place = [&](Illustration kind, float x, float y, float width) {
-    if (int(x) / chunk_size == key.x && int(y) / chunk_size == key.y)
-      pieces.push_back({kind,x,y,width});
+    if (int(x) / chunk_size != key.x || int(y) / chunk_size != key.y) return;
+    const float footprint=width*.37f;
+    if (y>std::min({coast_y(x),coast_y(x-footprint),coast_y(x+footprint)})-4) return;
+    pieces.push_back({kind,x,y,width});
   };
-  // Two connected arms of one ridge leave a saddle at x=1740.
-  for (int i = 0; i < 12; ++i) {
-    float x = 1380 + i * 92.f;
-    if (i == 4 || i == 5) continue;
-    float y = 385 + 75 * std::sin(i * .68f) + i * 8;
-    place(i % 3 == 0 ? Illustration::Hill : Illustration::Spur, x - 54, y + 80, 195 + 40*std::cos(i));
-    constexpr Illustration summits[] = {Illustration::Spur,Illustration::Saddle,Illustration::Peak,Illustration::Ridge};
-    place(summits[i%4], x, y, 240 + 100 * std::sin(i * 1.3f));
+  // Build overlapping spurs up the gradient. The pass is a low saddle in the
+  // same field used by the ground material and by the woodland distribution.
+  for (int rank=0;rank<3;++rank) for (int i=0;i<10;++i) {
+    float x=1150+i*150.f+rank*38;
+    float y=ridge_axis(x)+(rank-1)*82+37*std::sin(i*.91f+rank);
+    float strength=massif(x,y);
+    if(strength<.13f || std::abs(x-river_x(y))<144 || std::abs(x-1750)<81) continue;
+    const float variation=terrain_hash(i,rank,91);
+    auto peak=variation>.5f ? Illustration::Range : Illustration::Summit;
+    if(rank==0 && variation>.65f) peak=Illustration::Saddle;
+    if(rank==2 || strength<.28f) peak=variation<.55f ? Illustration::Spur : Illustration::Bluff;
+    float pass_clearance=2*(std::abs(x-1750)-34);
+    place(peak,x,y,std::min(pass_clearance,145+strength*(rank==2?158:270)+58*variation));
   }
-  // Each woodland has a dense interior and a broken outer edge.
-  constexpr Point groves[] = {{310,360},{810,430},{1030,580},{1530,565},
-      {2150,640},{530,890},{1630,860},{2310,930},{920,205},{1950,210}};
-  for (const Point center : groves) {
-    for (int i = 0; i < 15; ++i) {
-      const float angle = i * 2.4f + center.x * .01f;
-      const float radius = std::sqrt(float(i)) * 28;
-      float x = center.x + radius * std::cos(angle);
-      float y = center.y + radius * .55f * std::sin(angle);
-      if (y > coast_y(x)-50 || std::abs(x-river_x(y)) < 110 ||
-          std::abs(y-road_y(x)) < 65) continue;
-      const auto kind = i < 5 ? Illustration::Wood : (i%3 ? Illustration::Copse : Illustration::Trees);
-      place(kind,x,y,106 - 3*i + 23*std::cos(angle));
-    }
+  // Jitter a world lattice once per chunk. Thresholding the continuous habitat
+  // field gives shared forest margins across chunk boundaries.
+  constexpr int spacing=40;
+  for(int j=key.y*8;j<(key.y+1)*8;++j) for(int i=key.x*8;i<(key.x+1)*8;++i) {
+    float x=(i+.12f+.76f*terrain_hash(i,j,4))*spacing;
+    float y=(j+.12f+.76f*terrain_hash(i,j,5))*spacing;
+    float w=woodland(x,y), h=massif(x,y), r=terrain_hash(i,j,19);
+    if(y>coast_y(x)-26 || std::abs(x-river_x(y))<40 ||
+       std::abs(y-road_y(x))<46 || h>.67f ||
+       (x>=680 && x<=925 && std::abs(y-side_road_y(x,false))<33) ||
+       (x>=1460 && x<=1750 && std::abs(y-side_road_y(x,true))<36) ||
+       (x>260 && x<625 && std::abs(y-road_y(west_gate))<145) ||
+       (x>1880 && x<2110 && std::abs(y-road_y(east_gate))<85)) continue;
+    if(w>.59f && r<(w-.48f)*2.9f)
+      place(w>.70f?Illustration::Wood:Illustration::Copse,x,y,36+62*w+22*r);
+    else if(w>.47f && r>.92f)
+      place(Illustration::Trees,x,y,31+17*w);
+    else if(h>.14f && h<.48f && r>.89f)
+      place(Illustration::Bluff,x,y,64+140*h);
+    else if(w<.48f && r>.967f && relief(x,y)>.19f && std::abs(y-road_y(x))>76)
+      place(i%3?Illustration::Pasture:Illustration::Bluff,x,y,68+82*r);
   }
   // Project the illustrated gate onto the simulation endpoint. Both anchors are
   // measured inside the trimmed atlas rectangle (town 480x405, village 444x271).
@@ -42,6 +56,8 @@ inline std::vector<Landmark> landmarks(ChunkKey key) {
   place(Illustration::Village,east_gate-(.21f-.5f)*157,
         road_y(east_gate)+(1.f-.90f)*157*271/444,157);
   place(Illustration::Fields,east_gate+120,road_y(east_gate)+22,120);
+  place(Illustration::Fields,949,540,112);
+  place(Illustration::Village,922,537,103);
   place(Illustration::Fields,west_gate-202,road_y(west_gate)-30,108);
   constexpr Point outskirts[] = {{670,640},{850,673},{730,827},{1520,704},
       {1840,610},{2050,788},{1160,885},{990,858},{490,605},{1680,932}};

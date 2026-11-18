@@ -21,6 +21,7 @@ class IronWorldMapRenderer final : public Node2D {
 
   struct ResidentChunk {
     RID canvas;
+    RID shadows;
     std::vector<RID> illustrations;
     std::uint64_t requested_revision = 0;
     std::uint64_t applied_revision = 0;
@@ -49,9 +50,10 @@ class IronWorldMapRenderer final : public Node2D {
   bool stopping_ = false;
   bool building_ = false;
   std::thread worker_;
-  RID company_canvas_;
-  RID atlas_, landforms_, ink_;
-  std::array<Rect2,static_cast<int>(map::Illustration::Fields)+1> regions_{};
+  RID company_canvas_, company_texture_;
+  Rect2 company_rect_;
+  RID atlas_, landforms_, massifs_, ink_;
+  std::array<Rect2,static_cast<int>(map::Illustration::Bluff)+1> regions_{};
   int second_sheet_start_ = 0;
   int uploads_ = 0;
   int evictions_ = 0;
@@ -70,7 +72,7 @@ class IronWorldMapRenderer final : public Node2D {
       const auto request = *request_;
       request_.reset();
       lock.unlock();
-      auto patches = map::build_chunk(request.geography, request.key);
+      auto patches = map::build_chunk(request.geography, request.key,request.illustrated);
       auto pieces = request.illustrated ? map::landmarks(request.key) : std::vector<map::Landmark>{};
       lock.lock();
       completed_ = PreparedChunk{request.key, request.geography.world_id,
@@ -88,6 +90,10 @@ class IronWorldMapRenderer final : public Node2D {
       return;
     for (auto rid : entry.illustrations) server()->free_rid(rid);
     entry.illustrations.clear();
+    if (entry.shadows.is_valid()) {
+      server()->free_rid(entry.shadows);
+      entry.shadows=RID();
+    }
     server()->free_rid(entry.canvas);
     entry.canvas = RID();
     ++evictions_;
@@ -120,11 +126,12 @@ class IronWorldMapRenderer final : public Node2D {
     }
   }
 
-  RID illustration(map::Landmark piece) {
+  RID illustration(map::Landmark piece,RID shadow_layer=RID()) {
     // Tight source rectangles keep the contact point at the foot of each silhouette.
     const int index = static_cast<int>(piece.kind);
     auto source = regions_[index];
-    RID texture = index < second_sheet_start_ ? atlas_ : landforms_;
+    RID texture = index < second_sheet_start_ ? atlas_ :
+                  index < static_cast<int>(map::Illustration::Range) ? landforms_ : massifs_;
     Vector2 size = source.size * (piece.width/source.size.x);
     Rect2 dst(Vector2(-size.x/2,-size.y),size);
     RID rid = server()->canvas_item_create();
@@ -132,7 +139,14 @@ class IronWorldMapRenderer final : public Node2D {
     server()->canvas_item_set_material(rid,ink_);
     server()->canvas_item_set_transform(rid,Transform2D(0,Vector2(piece.x,piece.y)));
     server()->canvas_item_set_z_index(rid,2+int(piece.y));
-    server()->canvas_item_add_texture_rect_region(rid,dst,texture,source,Color(1,1,1,.32));
+    // Only upright silhouettes cast projected shadows. Terrain illumination
+    // accounts for ridges and fields, which have broad bases touching the ground.
+    if (shadow_layer.is_valid() && (piece.kind==map::Illustration::Town || piece.kind==map::Illustration::Village ||
+        piece.kind==map::Illustration::Wood || piece.kind==map::Illustration::Trees ||
+        piece.kind==map::Illustration::Copse)) {
+      server()->canvas_item_add_set_transform(shadow_layer,Transform2D(0,Vector2(piece.x,piece.y-size.y*.095f)));
+      server()->canvas_item_add_texture_rect_region(shadow_layer,dst,texture,source,Color(.65f,1,1,.32));
+    }
     Color tag(1,piece.kind == map::Illustration::Town ? 0.5f : 1.0f,1);
     server()->canvas_item_add_texture_rect_region(rid,dst,texture,source,tag);
     return rid;
@@ -158,9 +172,14 @@ class IronWorldMapRenderer final : public Node2D {
     for (const auto &patch : result.patches)
       append_patch(patch,points,indices,colors);
     server()->canvas_item_add_triangle_array(entry.canvas,indices,points,colors);
-    if (entry.illustrations.empty())
+    if (entry.illustrations.empty() && !result.landmarks.empty()) {
+      entry.shadows=server()->canvas_item_create();
+      server()->canvas_item_set_parent(entry.shadows,get_canvas_item());
+      server()->canvas_item_set_z_index(entry.shadows,1);
+      server()->canvas_item_set_material(entry.shadows,ink_);
       for (auto piece : result.landmarks)
-        entry.illustrations.push_back(illustration(piece));
+        entry.illustrations.push_back(illustration(piece,entry.shadows));
+    }
     entry.applied_revision = result.revision;
     ++uploads_;
   }
@@ -223,6 +242,13 @@ class IronWorldMapRenderer final : public Node2D {
   }
 
   void draw_company(Vector2 position) {
+    if (company_texture_.is_valid() && !company_canvas_.is_valid()) {
+      company_canvas_=server()->canvas_item_create();
+      server()->canvas_item_set_parent(company_canvas_,get_canvas_item());
+      server()->canvas_item_set_material(company_canvas_,ink_);
+      server()->canvas_item_add_texture_rect(company_canvas_,company_rect_,company_texture_,false,Color(1,1,1,.32));
+      server()->canvas_item_add_texture_rect(company_canvas_,company_rect_,company_texture_);
+    }
     if (atlas_.is_valid() && !company_canvas_.is_valid())
       company_canvas_ = illustration({map::Illustration::Company,position.x,position.y,56});
     if (!company_canvas_.is_valid()) {
@@ -240,7 +266,9 @@ class IronWorldMapRenderer final : public Node2D {
 
 protected:
   static void _bind_methods() {
-    ClassDB::bind_method(D_METHOD("configure_art","atlas","landforms","ink","regions","second_sheet_start"), &IronWorldMapRenderer::configure_art);
+    ClassDB::bind_static_method("IronWorldMapRenderer",D_METHOD("bake_region_terrain"), &IronWorldMapRenderer::bake_region_terrain);
+    ClassDB::bind_method(D_METHOD("set_company_figure","texture","rect"),&IronWorldMapRenderer::set_company_figure);
+    ClassDB::bind_method(D_METHOD("configure_art","atlas","landforms","massifs","ink","regions","second_sheet_start"), &IronWorldMapRenderer::configure_art);
     ClassDB::bind_method(D_METHOD("world_hour"), &IronWorldMapRenderer::world_hour);
     ClassDB::bind_method(D_METHOD("set_world_hour","value"), &IronWorldMapRenderer::set_world_hour);
     ClassDB::bind_method(D_METHOD("update_trial", "visible", "seconds"), &IronWorldMapRenderer::update_trial);
@@ -250,7 +278,27 @@ protected:
   }
 
 public:
-  void configure_art(RID atlas, RID landforms, RID ink, Array regions, int second_sheet_start) {
+  void set_company_figure(RID texture, Rect2 rect) {
+    company_texture_=texture;
+    company_rect_=rect;
+  }
+  static PackedByteArray bake_region_terrain() {
+    constexpr int width=320,height=200;
+    PackedByteArray bytes;
+    bytes.resize(width*height*4);
+    uint8_t *out=bytes.ptrw();
+    auto byte=[](float v){return uint8_t(255*std::clamp(v,0.f,1.f));};
+    for(int j=0;j<height;++j) for(int i=0;i<width;++i) {
+      float x=i*8+4,y=j*8+4;
+      float elevation=map::relief(x,y);
+      *out++=byte(elevation);
+      *out++=byte(map::woodland(x,y));
+      *out++=byte(.5f+(map::coast_y(x)-y)/240);
+      *out++=byte(map::terrain_noise(x,y,62,129));
+    }
+    return bytes;
+  }
+  void configure_art(RID atlas, RID landforms, RID massifs, RID ink, Array regions, int second_sheet_start) {
     ERR_FAIL_COND(regions.size() != static_cast<int>(regions_.size()));
     ERR_FAIL_COND(second_sheet_start < 0 || second_sheet_start > regions.size());
     for (int i = 0; i < regions.size(); ++i) {
@@ -260,6 +308,7 @@ public:
     }
     atlas_ = atlas;
     landforms_ = landforms;
+    massifs_ = massifs;
     ink_ = ink;
     second_sheet_start_ = second_sheet_start;
   }

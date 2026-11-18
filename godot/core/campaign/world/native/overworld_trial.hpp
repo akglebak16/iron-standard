@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cmath>
+#include "region_terrain.hpp"
 
 namespace iron::overworld {
 struct Point {
@@ -21,17 +22,28 @@ inline constexpr float east_gate = 1970;
 
 inline float road_y(float x) {
   const float offset = x - std::clamp(x, west_bank, east_bank);
-  return crossing_y + 45 * std::sin(offset / 140) + 14 * std::sin(offset / 63);
+  return crossing_y + 63 * std::sin(offset / 151) + 26 * std::sin(offset / 59)
+         + 28*(terrain_noise(x,410,120,15)-.5f)*std::min(std::abs(offset)/80,1.f);
 }
 
 inline float coast_y(float x) {
-  return 1030 + 114 * std::sin(x / 201) + 61 * std::cos(x / 112)
-      + 18 * std::sin(x / 33) + 6 * std::cos(x / 11);
+  return 1025 + 156 * std::sin(x / 201) + 78 * std::cos(x / 112)
+      + 40*(terrain_noise(x,730,56,222)-.5f)
+      + 13*(terrain_noise(x,730,19,301)-.5f);
 }
 
 inline float river_x(float y) {
   const float offset = y - std::clamp(y, crossing_y - 30, crossing_y + 30);
   return 1280 + 66 * std::sin(offset / 117) + 18 * std::sin(offset / 48);
+}
+
+// Farm access and the saddle trail share their first tangent with the trunk.
+inline float side_road_y(float x, bool pass) {
+  float from=pass?1460.f:680.f, to=pass?1750.f:925.f;
+  float t=std::clamp((x-from)/(to-from),0.f,1.f);
+  float blend=t*t*(3-2*t);
+  return (1-blend)*road_y(x)+blend*(pass?ridge_axis(to)+58:542.f)
+      + 18*std::sin(t*7)*std::sin(t*3.14159f);
 }
 
 struct Geography {
