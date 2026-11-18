@@ -224,6 +224,10 @@ func _ready() -> void:
 	add_child(_town)
 	_town.wait_requested.connect(func(s: Dictionary): state.clock.paused = false; state.waiting = true; hud.show_notice("Ждём: %s. Любой клик по карте или Z — в путь" % s.name))
 	_town.closed.connect(func(): state.clock.paused = false)
+	_town.map_target.connect(func(x: float, y: float):
+		_marks.show_quest_target(x, y)
+		camera.detached = true
+		camera.position = Vector2(x, y))
 	_party_window = PartyWindow.new()
 	_party_window.stat_preview = HeroStats.preview
 	add_child(_party_window)

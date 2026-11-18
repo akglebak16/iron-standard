@@ -14,6 +14,8 @@ const TroopList = preload("res://apps/godot/presentation/campaign/troop_list.gd"
 const SettlementRecruits = preload("res://core/campaign/rules/settlement_recruits.gd")
 
 signal wait_requested(settlement: Dictionary)
+## A place to mark on the world map (the town of a wanderer, a quest target) — the window closes after it.
+signal map_target(x: float, y: float)
 var state: RefCounted
 var settlement: Dictionary = {}
 var _gear := GearCatalog.new()
@@ -159,9 +161,9 @@ func _hire(p, fx: Dictionary, troop: Dictionary, n: int) -> void:
 		_flash = "нанято: %s ×%d (−%d золота)" % [troop.name, hired, gold - int(p.gold)]
 
 ## The party window's empty card: a large icon, a title and a muted line.
-func _empty_state(icon_name: String, title: String, detail: String) -> void:
+func _empty_state(icon_name: String, title: String, detail: String, node_name := "RecruitEmpty") -> void:
 	var card := card_panel()
-	card.name = "RecruitEmpty"
+	card.name = node_name
 	body.add_child(card)
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override("separation", 16)
@@ -178,24 +180,172 @@ func _empty_state(icon_name: String, title: String, detail: String) -> void:
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(d)
 
-## «Таверна»: wandering companions for hire and the innkeeper's rumour.
+## «Таверна»: wandering companions for hire as cards (portrait, story, skill, attributes, perks, price) and the
+## innkeeper's rumour with the town on the map.
 func _tavern(p) -> void:
 	var comps = state.companions
 	var here: Array = comps.at(p, settlement)
 	var n: int = p.comps.size()
-	note("Наёмники-одиночки сидят по тавернам и переходят из города в город. Спутник сражается рядом с тобой, растёт в уровнях и даёт отряду своё умение. Спутников в отряде: %d из %d." % [n, comps.COMP_MAX])
+	var line := TroopList.summary(body, "TavernSummary")
+	TroopList.chip(line, "heart", "Спутники %d / %d" % [n, comps.COMP_MAX], TroopList.WARN if n >= comps.COMP_MAX else GameSkin.PARCH,
+		"Спутник бьётся рядом с тобой, растёт в уровнях и даёт отряду своё умение.")
+	TroopList.chip(line, "coin", "Жалованье спутников %d в день" % comps.wage(p))
+	TroopList.chip(line, "coin", "Золото %d" % p.gold)
 	if here.is_empty():
-		note("Сегодня здесь только местные пьяницы и игроки в кости.")
+		_empty_state("ale", "За столами одни местные", "Наёмники-одиночки переходят из города в город раз в несколько дней. Загляни позже или спроси трактирщика, где их видели.", "TavernEmpty")
 	for c in here:
-		var d: Dictionary = state.companion_catalog.get_companion(c.id)
-		var price := int(d.price)
-		var can: bool = p.gold >= price and n < comps.COMP_MAX
-		var cost := ("%d зол., жалованье %d/день" % [price, d.wage]) if price > 0 else "бесплатно, служит за честь"
-		row("%s · %s%s" % [c.name, d.role, (" · ур. %d" % c.lvl) if int(c.lvl) > 1 else ""], "«%s»\n%s: %s\n%s" % [d.story, d.skn, PartyWindowText.skill_text(d, c), cost],
-			[{"sound": "coin", "text": "Нанять", "disabled": not can, "call": func(): _say(comps.hire(p, settlement, c.id))}])
+		_companion_card(p, c, n)
 	var rm: Dictionary = comps.rumor(p, settlement)
 	if not rm.is_empty():
-		note("Трактирщик шепчет: «%s (%s) сейчас в %s. Ищет, к кому бы пристать»." % [rm.c.name, String(rm.c.role).to_lower(), rm.t.name])
+		_rumor_card(rm)
+
+func _companion_card(p, c: Dictionary, party_comps: int) -> void:
+	var comps = state.companions
+	var d: Dictionary = state.companion_catalog.get_companion(c.id)
+	var price := int(d.price)
+	var why := ""
+	if party_comps >= comps.COMP_MAX:
+		why = "Отряд спутников полон: %d из %d" % [party_comps, comps.COMP_MAX]
+	elif p.gold < price:
+		why = "Не хватает %d золота" % (price - p.gold)
+	var card := card_panel()
+	card.name = "Companion_" + c.id
+	body.add_child(card)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 14)
+	card.add_child(line)
+	var portrait := TroopList.icon(OriginalArt.compose(HeroGear.resolve(c, state.gear).look).portrait, 96)
+	portrait.name = "Portrait"
+	portrait.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	line.add_child(portrait)
+	var main := VBoxContainer.new()
+	main.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main.add_theme_constant_override("separation", 3)
+	line.add_child(main)
+	var title := Label.new()
+	title.text = c.name
+	GameSkin.title(title, 21)
+	main.add_child(title)
+	var who := HBoxContainer.new()
+	who.add_theme_constant_override("separation", 6)
+	main.add_child(who)
+	who.add_child(TroopList.icon(OriginalArt.crest(d.fac), 18))
+	who.add_child(TroopList.cell("%s · %s%s" % [d.role, _factions.get_faction(d.fac).get("name", ""), (" · ур. %d" % c.lvl) if int(c.lvl) > 1 else ""], GameSkin.MUTED, 14))
+	var story := TroopList.cell("«%s»" % d.story, Color("#d8c8a0"), 14)
+	story.name = "Story"
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var slant := FontVariation.new()
+	slant.base_font = GameSkin.BODY
+	slant.variation_transform = Transform2D(Vector2(1, 0), Vector2(0.18, 1), Vector2.ZERO)
+	story.add_theme_font_override("font", slant)
+	main.add_child(story)
+	var skill := HBoxContainer.new()
+	skill.name = "Skill"
+	skill.add_theme_constant_override("separation", 6)
+	main.add_child(skill)
+	skill.add_child(TroopList.icon(GameSkin.icon("flag"), 18))
+	var skill_name := TroopList.cell(String(d.skn) + ":", GameSkin.BRASS, 14)
+	skill_name.add_theme_font_override("font", GameSkin.BODY_BOLD)
+	skill.add_child(skill_name)
+	var skill_text := TroopList.cell(PartyWindowText.skill_text(d, c), GameSkin.PARCH, 14)
+	skill_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	skill_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skill.add_child(skill_text)
+	var stats := HFlowContainer.new()
+	stats.name = "Attributes"
+	stats.add_theme_constant_override("h_separation", 6)
+	stats.add_theme_constant_override("v_separation", 4)
+	main.add_child(stats)
+	for key in ["str", "vit", "agi", "int", "cha"]:
+		stats.add_child(_pill("%s %d" % [Economy.ATTRS[key][0], int(c.get(key, 0))], GameSkin.PARCH, Economy.ATTRS[key][1]))
+	var ranks := {}
+	for id in c.get("perks", []):
+		ranks[id] = int(ranks.get(id, 0)) + 1
+	for id in ranks:
+		var perk: Dictionary = state.perks.get_perk(id)
+		if not perk.is_empty():
+			stats.add_child(_pill("%s %s" % [perk.n, "◆".repeat(mini(3, ranks[id]))], GameSkin.BRASS, OriginalArt.MANIFEST.perks.get(id, perk.n)))
+	var side := VBoxContainer.new()
+	side.custom_minimum_size.x = 168
+	side.add_theme_constant_override("separation", 4)
+	line.add_child(side)
+	var prize := HBoxContainer.new()
+	prize.alignment = BoxContainer.ALIGNMENT_END
+	side.add_child(prize)
+	prize.add_child(TroopList.icon(GameSkin.icon("coin"), 24))
+	var price_label := Label.new()
+	price_label.name = "Price"
+	price_label.text = str(price) if price > 0 else "даром"
+	GameSkin.title(price_label, 24)
+	price_label.add_theme_color_override("font_color", TroopList.WARN if p.gold < price else GameSkin.BRASS)
+	prize.add_child(price_label)
+	var wage := TroopList.cell("жалованье %d в день" % int(d.wage) if price > 0 else "служит за честь", GameSkin.MUTED, 13)
+	wage.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	side.add_child(wage)
+	var hire := make_button({"sound": "coin", "text": "Нанять", "disabled": why != "", "hint": why if why != "" else "Нанять за %d золота" % price,
+		"call": func():
+			var gold: int = p.gold
+			var fail: String = comps.hire(p, settlement, c.id)
+			if fail != "":
+				_say(fail)
+			else:
+				_flash = "нанят спутник: %s (−%d золота)" % [c.name, gold - int(p.gold)]})
+	hire.name = "Hire_" + c.id
+	GameSkin.primary(hire)
+	hire.size_flags_horizontal = Control.SIZE_SHRINK_END
+	side.add_child(hire)
+	if why != "":
+		var reason := TroopList.cell(why, TroopList.WARN, 13)
+		reason.name = "Why"
+		reason.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		reason.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		side.add_child(reason)
+
+## The innkeeper's whisper: who is the nearest wanderer and where; the town can be shown on the map.
+func _rumor_card(rm: Dictionary) -> void:
+	var card := card_panel()
+	card.name = "Rumor"
+	body.add_child(card)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 12)
+	card.add_child(line)
+	line.add_child(TroopList.icon(GameSkin.icon("ale"), 34))
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 0)
+	line.add_child(col)
+	var head := TroopList.cell("Трактирщик шепчет", GameSkin.BRASS, 15)
+	head.add_theme_font_override("font", GameSkin.BODY_BOLD)
+	col.add_child(head)
+	var text := TroopList.cell("«%s, %s, сейчас в %s. Ищет, к кому бы пристать»." % [rm.c.name, String(rm.c.role).to_lower(), rm.t.name], GameSkin.PARCH, 14)
+	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	col.add_child(text)
+	var t: Dictionary = rm.t
+	var go := TroopList.small(make_button({"sound": "click", "text": "Показать на карте", "hint": "Отметить %s на карте" % t.name,
+		"call": func(): map_target.emit(float(t.x), float(t.y)); close_window()}))
+	go.name = "RumorMap"
+	go.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.add_child(go)
+
+## A small rounded label with a tooltip: an attribute or a perk on a companion card.
+func _pill(text: String, color: Color, hint: String) -> PanelContainer:
+	var pill := PanelContainer.new()
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color("#2a2016")
+	box.border_color = Color(color, 0.45)
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(9)
+	box.content_margin_left = 8
+	box.content_margin_right = 8
+	box.content_margin_top = 1
+	box.content_margin_bottom = 1
+	pill.add_theme_stylebox_override("panel", box)
+	pill.tooltip_text = hint
+	pill.mouse_filter = Control.MOUSE_FILTER_STOP
+	var l := TroopList.cell(text, color, 12)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pill.add_child(l)
+	return pill
 
 func _quests(p) -> void:
 	var q = state.quests
