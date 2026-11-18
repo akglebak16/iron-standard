@@ -48,10 +48,15 @@ func _check() -> void:
 	for i in 3: await process_frame
 	_click(menu._origin_buttons["retainer"])
 	assert(Options.origin == "retainer" and menu._origin_buttons["retainer"].button_pressed and not menu._origin_buttons["smith"].button_pressed)
-	assert(menu._origin_texts["retainer"].text.contains("Сила +1, Стойкость +1"))
+	assert(menu._origin_note.text.contains("Сила +1, Стойкость +1"))
 	assert(menu._dialog.find_child("StartPoints", true, false) == null, "no separate point split")
 	menu._start()
 	assert(Options.culture == "khan" and Options.hero_name == "Проверка" and Options.banner == 2)
+	# the screen in two columns: the hero on the left, the factions with their crests on the right (#175)
+	var crest: TextureRect = menu._buttons["khan"].find_child("Crest", true, false)
+	assert(crest != null and crest.texture == Art.crest("khan"))
+	for id in menu._buttons:
+		assert(menu._buttons[id].find_child("Crest", true, false).texture != null, id)
 	# reopening the screen keeps the last look
 	var kept: Dictionary = Options.hero_face.duplicate()
 	menu._create()
