@@ -66,7 +66,7 @@ func _initialize() -> void:
 	town.recruits = []
 	window.render()
 	assert(window.body.find_child("RecruitTable", true, false) == null and window.body.find_child("RecruitEmpty", true, false) != null)
-	assert(window.body.find_child("Wait", true, false) != null)
+	assert(window.footer_left.find_child("Wait", true, false) != null, "waiting stays available in the footer (#211)")
 	# 1280×720: the table stays inside the window
 	town.recruits = [{"type": "e1", "n": 8}, {"type": "e3c", "n": 1}, {"type": "e2a", "n": 2}]
 	p.troops = [{"type": "e1", "n": 10}]

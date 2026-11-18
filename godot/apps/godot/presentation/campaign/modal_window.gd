@@ -19,6 +19,10 @@ var _scroll: ScrollContainer
 var _body_tab := ""
 var preferred_width := WIDTH
 var close_button: Button
+## The footer's left side for the window's own buttons (the settlement puts «Подождать здесь» there).
+var footer_left: HBoxContainer
+## When true the panel sticks to the top and is as tall as its content (up to the screen) instead of filling it.
+var fit_height := false
 
 func _ready() -> void:
 	layer = 9
@@ -83,12 +87,37 @@ func _ready() -> void:
 	GameSkin.primary(close)
 	close.focus_mode = Control.FOCUS_NONE
 	close.pressed.connect(close_window)
-	col.add_child(close)
+	var footer := HBoxContainer.new()
+	footer.name = "Footer"
+	footer.add_theme_constant_override("separation", 8)
+	col.add_child(footer)
+	footer_left = HBoxContainer.new()
+	footer_left.name = "FooterLeft"
+	footer_left.add_theme_constant_override("separation", 8)
+	footer_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_left.alignment = BoxContainer.ALIGNMENT_BEGIN
+	footer.add_child(footer_left)
+	footer.add_child(close)
 	get_viewport().size_changed.connect(_fit)
+	body.minimum_size_changed.connect(_fit_height_later)
 	_fit()
 
 func _fit() -> void:
 	_panel.custom_minimum_size.x = minf(preferred_width, get_viewport().get_visible_rect().size.x - 24)
+	_fit_height()
+
+func _fit_height_later() -> void:
+	if fit_height:
+		_fit_height.call_deferred()
+
+## fit_height: the scroll is as tall as the body, but the whole panel never taller than the screen between the margins.
+func _fit_height() -> void:
+	if not fit_height or _panel == null:
+		return
+	_panel.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	var room := get_viewport().get_visible_rect().size.y - 48.0 - 18.0
+	var chrome := _panel.get_combined_minimum_size().y - _scroll.custom_minimum_size.y
+	_scroll.custom_minimum_size.y = clampf(body.get_combined_minimum_size().y, 0.0, maxf(0.0, room - chrome))
 
 func set_width(width: float) -> void:
 	preferred_width = width
