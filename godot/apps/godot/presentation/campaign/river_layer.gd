@@ -4,31 +4,41 @@ const Generator = preload("res://core/campaign/world/terrain_generator.gd")
 const Brush = preload("res://apps/godot/presentation/campaign/map_brush.gd")
 
 var _world: Generator
+var _channels: Array = []
 
 func build(world: Generator) -> void:
 	_world = world
+	for river in world.rivers:
+		var line := PackedVector2Array()
+		for sample in river.p:
+			var point := Vector2(sample[0], sample[1])
+			if world.terrain_at(point.x, point.y) != 0:
+				line.append(point)
+			elif not line.is_empty():
+				var bank := line[-1]
+				var sea := point
+				for step in 6:
+					var mid := bank.lerp(sea, 0.5)
+					if world.terrain_at(mid.x, mid.y) == 0: sea = mid
+					else: bank = mid
+				line.append(sea)
+				_channels.append({"line": line, "width": river.w})
+				line = PackedVector2Array()
+		if line.size() > 1:
+			_channels.append({"line": line, "width": river.w})
 	queue_redraw()
 
 func _draw() -> void:
 	if _world == null:
 		return
-	var passes := [[Color(36 / 255.0, 52 / 255.0, 40 / 255.0, 0.55), 4.4], [Color("#4a82a0"), 0.0], [Color(190 / 255.0, 226 / 255.0, 236 / 255.0, 0.45), -0.62]]
-	for pass_def in passes:
-		for river in _world.rivers:
-			var pts: Array = river.p
-			var i := 0
-			while i < pts.size() - 1:
-				var last := mini(pts.size() - 1, i + 7)
-				var line := PackedVector2Array()
-				for k in range(i, last + 1):
-					line.append(Vector2(pts[k][0], pts[k][1]))
-				var width: float = float(river.w) * (0.5 + 0.5 * i / pts.size())
-				var add: float = pass_def[1]
-				width = width * -add if add < 0.0 else width + add
-				draw_polyline(line, pass_def[0], width, true)
-				draw_circle(line[0], width / 2.0, pass_def[0])  # round joints between pieces
-				draw_circle(line[line.size() - 1], width / 2.0, pass_def[0])
-				i += 6
+	for style in [[Color("#9d9469"), 1.7], [Color("#417975"), 0.0]]:
+		for channel in _channels:
+			var points: PackedVector2Array = channel.line
+			for i in range(points.size() - 1):
+				var width: float = channel.width * lerpf(0.32, 1.0, float(i) / (points.size() - 1)) + style[1]
+				draw_line(points[i], points[i+1], style[0], width, true)
+				if i > 0:
+					draw_circle(points[i], width * 0.5, style[0])
 	for b in _world.bridges:
 		_bridge(b)
 
