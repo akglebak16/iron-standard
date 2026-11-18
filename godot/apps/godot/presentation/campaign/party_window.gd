@@ -9,6 +9,7 @@ const HeroEquip = preload("res://core/equipment/rules/hero_equip.gd")
 const QuestCard = preload("res://apps/godot/presentation/campaign/quest_card.gd")
 const ItemCard = preload("res://apps/godot/presentation/campaign/item_card.gd")
 const GearComparison = preload("res://apps/godot/presentation/campaign/gear_comparison.gd")
+const TroopList = preload("res://apps/godot/presentation/campaign/troop_list.gd")
 const SLOT_NAMES := {"head": "Голова", "body": "Тело", "hands": "Руки", "legs": "Ноги", "melee": "Оружие", "ranged": "Стрелковое", "shield": "Щит", "horse": "Конь"}
 var _who := ""
 var _selected_gear := ""
@@ -26,6 +27,10 @@ var _fcat := FactionCatalog.new()
 var _fcat_loaded := false
 var _confirm := ""
 var _pick := ""
+## «Отряд»: promote "one" man per click or "all" the purse allows.
+var _promote_mode := "one"
+## The last promotion, shown under the title once after the redraw.
+var _flash := ""
 var state: RefCounted
 ## HeroStats.preview(profile, gear, effects) -> Dictionary, set by composition.
 var stat_preview := Callable()
@@ -44,6 +49,9 @@ func render() -> void:
 	var fx: Dictionary = state.player_effects()
 	title_label.text = p.hero.name
 	sub_label.text = "Уровень %d · золото %d · порций %d" % [p.hero.lvl, p.gold, Economy.provisions(p)]
+	if _flash != "":
+		sub_label.text += "   ·   " + _flash
+		_flash = ""
 	set_tabs(TABS, current_tab if current_tab != "" else "troops")
 	clear_body()
 	match current_tab:
@@ -62,28 +70,90 @@ func render() -> void:
 		_:
 			_troops(p, fx)
 
+## «Отряд»: a one-line summary, then the troops in compact tables, those ready for promotion always first.
 func _troops(p, fx: Dictionary) -> void:
-	var overview := HBoxContainer.new()
-	overview.add_theme_constant_override("separation", 10)
-	body.add_child(overview)
+	var catalog = state.roster.catalog
 	var count := Economy.troop_count(p.troops)
 	var cap := Economy.size_cap(p.hero, fx)
-	_stat_tile(overview, "men", "Численность отряда", "%d / %d" % [count, cap], "бойцов под твоим командованием", "Лимит зависит от героя и его перков", float(count) / maxf(1, cap))
-	_stat_tile(overview, "coin", "Жалованье", str(Economy.wage_day(p.troops, func(t): return float(state.roster.catalog.get_troop(t).wage), fx)), "золота в день")
-	_stat_tile(overview, "food", "Провизия", str(Economy.provisions(p)), "порций в обозе")
-	_section(body, "helm", "Состав отряда", "Повышай опытных бойцов")
-	var list: Array = p.troops.duplicate()
-	list.sort_custom(func(a, b): return state.roster.info[a.type].tier > state.roster.info[b.type].tier)
-	for s in list:
-		var troop: Dictionary = state.roster.catalog.get_troop(s.type)
-		var buttons: Array = []
-		for up_id in troop.up:
-			var up: Dictionary = state.roster.catalog.get_troop(up_id)
-			var cost := Economy.upgrade_cost(troop, fx)
-			buttons.append({"sound": "coin", "text": "→ %s (%d)" % [up.name, cost], "disabled": p.gold < cost, "hint": "Нужно %d золота. У тебя %d." % [cost, p.gold] if p.gold < cost else "Повысить одного бойца за %d золота" % cost, "call": func(): Economy.upgrade(p, troop, up_id, fx)})
-		if Economy.troop_count(p.troops) > 1:
-			buttons.append({"text": "Распустить", "call": func(): Economy.remove_troops(p.troops, s.type, 1)})
-		row("%s ×%d" % [troop.name, s.n], "ур. %d · жалованье %d" % [troop.tier, troop.wage], buttons, s.type)
+	var portions := Economy.provisions(p)
+	var daily := maxi(1, ceili(count / 6.0))
+	var line := TroopList.summary(body, "TroopSummary")
+	TroopList.chip(line, "men", "Отряд %d / %d" % [count, cap], TroopList.WARN if count > cap else GameSkin.PARCH,
+		"Отряд больше лимита: новых бойцов не нанять. Лимит растёт с уровнем и харизмой героя." if count > cap else "Лимит зависит от уровня, харизмы и перков героя.")
+	TroopList.chip(line, "coin", "Жалованье %d в день" % Economy.wage_day(p.troops, func(t): return float(catalog.get_troop(t).wage), fx))
+	TroopList.chip(line, "food", "Провизия %d порц., на %d дн." % [portions, portions / daily], TroopList.WARN if portions < daily * 3 else GameSkin.PARCH)
+	TroopList.chip(line, "helm", TroopList.composition(p.troops, catalog), GameSkin.PARCH, "Группы для приказов в бою")
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
+	body.add_child(head)
+	_section(head, "helm", "Состав отряда")
+	head.get_child(0).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	TroopList.switch(head, "PromoteMode", "Повышать:", [["one", "по одному", "Одна кнопка — один боец: так рекрутов можно развести по разным веткам"], ["all", "всех", "Одна кнопка — все бойцы этого типа, на кого хватит золота"]], _promote_mode,
+		func(mode: String): _promote_mode = mode; render())
+	if p.troops.is_empty():
+		_empty_state(body, "men", "В отряде никого", "Нанимай людей в городах, замках и деревнях.")
+		return
+	var groups := {"ready": [], "poor": [], "top": []}
+	for s in p.troops:
+		var troop: Dictionary = catalog.get_troop(s.type)
+		groups[_promotion_group(troop, p.gold, fx)].append(s)
+	for key in groups:
+		groups[key].sort_custom(func(a, b): return _troop_order(catalog.get_troop(a.type), int(a.n), catalog.get_troop(b.type), int(b.n)))
+	var titles := {"ready": ["Готовы к повышению", TroopList.GOOD], "poor": ["Не хватает золота на повышение", Color("#d9a35a")], "top": ["Высшая ступень", GameSkin.MUTED]}
+	for key in ["ready", "poor", "top"]:
+		if groups[key].is_empty():
+			continue
+		var men := 0
+		for s in groups[key]: men += int(s.n)
+		var grid := TroopList.table(body, "TroopGroup_" + key, titles[key][0], TroopList.men(men), titles[key][1])
+		for s in groups[key]:
+			_troop_line(grid, p, fx, catalog.get_troop(s.type), int(s.n), count)
+
+## "ready": can grow and the purse pays for one; "poor": can grow, no gold; "top": nowhere to grow.
+static func _promotion_group(troop: Dictionary, gold: int, fx: Dictionary) -> String:
+	if troop.get("up", []).is_empty():
+		return "top"
+	return "ready" if gold >= Economy.upgrade_cost(troop, fx) else "poor"
+
+## Higher tier first, then the bigger stack, then the name.
+static func _troop_order(a: Dictionary, an: int, b: Dictionary, bn: int) -> bool:
+	if int(a.tier) != int(b.tier):
+		return int(a.tier) > int(b.tier)
+	if an != bn:
+		return an > bn
+	return String(a.name) < String(b.name)
+
+func _troop_line(grid: GridContainer, p, fx: Dictionary, troop: Dictionary, n: int, party_count: int) -> void:
+	var actions: Array = []
+	var cost := Economy.upgrade_cost(troop, fx)
+	for up_id in troop.get("up", []):
+		var up: Dictionary = state.roster.catalog.get_troop(up_id)
+		var k := mini(n, p.gold / cost) if _promote_mode == "all" else mini(1, p.gold / cost)
+		var def := {"sound": "coin", "disabled": k < 1, "call": func(): _promote(p, fx, troop, up, k)}
+		if _promote_mode == "all" and k > 0:
+			def.text = "→ %s ×%d · %d" % [up.name, k, k * cost]
+			def.hint = "Повысить %d из %d за %d золота" % [k, n, k * cost]
+		else:
+			def.text = "→ %s · %d" % [up.name, cost]
+			def.hint = "Повысить одного бойца за %d золота" % cost
+		if k < 1:
+			def.hint = "Нужно %d золота, у тебя %d" % [cost, p.gold]
+		var b := TroopList.small(make_button(def))
+		b.name = "Promote_%s_%s" % [troop.id, up_id]
+		actions.append(b)
+	var dismiss := TroopList.small(make_button({"text": "Распустить", "disabled": party_count <= 1,
+		"hint": "Отпустить одного бойца" if party_count > 1 else "Последнего бойца не распустить",
+		"call": func(): Economy.remove_troops(p.troops, troop.id, 1)}))
+	dismiss.name = "Dismiss_" + troop.id
+	actions.append(dismiss)
+	TroopList.row(grid, troop.id, troop.id, "%s ×%d" % [troop.name, n],
+		["ступень %s · %s · жалованье %d" % [TroopList.tier_pips(int(troop.tier)), TroopList.group_name(troop), int(troop.wage)]], actions)
+
+func _promote(p, fx: Dictionary, troop: Dictionary, up: Dictionary, k: int) -> void:
+	var gold: int = p.gold
+	var done := Economy.upgrade(p, troop, up.id, fx, k)
+	if done > 0:
+		_flash = "Повышен: %s → %s ×%d (−%d золота)" % [troop.name, up.name, done, gold - int(p.gold)]
 
 func _hero(p) -> void:
 	var h: Dictionary = p.hero

@@ -23,6 +23,16 @@ func _initialize() -> void:
 	var hired := Economy.hire(player, town, troop, 3, fx)
 	assert(hired > 0 and Economy.troop_count(player.troops) == before + hired)
 	assert(player.gold == gold - hired * Economy.hire_cost(troop, fx))
+	# promotion: `limit` caps how many men go up, 0 promotes as many as the purse allows
+	player.troops = [{"type": "e1", "n": 5}]
+	player.gold = 1000
+	var up_cost := Economy.upgrade_cost(e1, fx)
+	assert(Economy.upgrade(player, e1, "e2a", fx, 1) == 1 and player.gold == 1000 - up_cost, "one man per click")
+	assert(Economy.upgrade(player, e1, "e2", fx, 2) == 2)
+	player.gold = up_cost
+	assert(Economy.upgrade(player, e1, "e2s", fx) == 1 and player.gold == 0, "0 = as many as the purse allows")
+	assert(Economy.upgrade(player, e1, "e2s", fx) == 0)
+	player.troops = [{"type": "e1", "n": 10}]
 	# food: grain feeds the party; leftover portions of old saves are eaten first
 	assert(Economy.provisions(player) == 60, "10 grain = 60 portions")
 	assert(Economy.eat(player, 10) == 0 and Economy.provisions(player) == 50)
