@@ -4,10 +4,10 @@ const Skins = preload("res://apps/godot/visuals/dominion_heraldic_art.gd")
 const Motion = preload("res://apps/godot/presentation/battle/unit_motion.gd")
 
 func _initialize() -> void:
-	for troop in Skins.IDS:
-		var old: Dictionary = Art.MANIFEST.troops[troop + "|dom"]
+	for troop in Skins.IDS + Skins.NORD_IDS:
+		var old: Dictionary = Art.MANIFEST.troops[troop + "|" + Skins.home_of(troop)]
 		var look: Dictionary = old.look.duplicate(true)
-		var unit := {"id": 1, "look": look, "faction": "dom", "hero": false, "companion": false, "mounted": false, "side": 0}
+		var unit := {"id": 1, "look": look, "faction": Skins.home_of(troop), "hero": false, "companion": false, "mounted": false, "side": 0}
 		for variant in 4:
 			var entry := Art.layers_for(unit, troop, variant)
 			assert(entry.anchor == Vector2(76, 158))
@@ -15,7 +15,7 @@ func _initialize() -> void:
 			for part in Skins.PARTS:
 				var texture: Texture2D = entry[part]
 				assert(texture != null and texture.get_size() == Vector2(152, 176), "%s %s" % [troop, part])
-				assert(texture.atlas == Skins.PAGES[variant], "every state uses the same new skin")
+				assert(texture.atlas == Skins.pages(troop)[variant], "every state uses the same new skin")
 			var body := entry.body.get_image() as Image
 			var headless := entry.headless.get_image() as Image
 			assert(body.get_pixel(76, 48).a > 0.0 and headless.get_pixel(76, 48).a == 0.0)
@@ -34,8 +34,37 @@ func _initialize() -> void:
 				assert(entry.weapon_kind == "heraldic_xbow" and Motion.weapon_kind(entry.weapon_kind) == 4)
 				assert(look.weapon == "xbow", "pose keys never mutate gameplay equipment")
 			else: assert(entry.weapon_kind == look.weapon)
-	# Other factions and Dominion cavalry still use the original sheets.
-	for pair in [["n3", "nord"], ["e2a", "emp"], ["d2c", "dom"], ["d3c", "dom"]]:
+	# Dominion cavalry: heraldic horse and rider in the old mounted frame and anchor.
+	for troop in Skins.CAVALRY_IDS + Skins.NORD_CAVALRY_IDS:
+		var old: Dictionary = Art.MANIFEST.troops[troop + "|" + Skins.home_of(troop)]
+		var look: Dictionary = old.look.duplicate(true)
+		var unit := {"id": 2, "look": look, "faction": Skins.home_of(troop), "hero": false, "companion": false, "mounted": true, "side": 0}
+		for variant in 4:
+			var entry := Art.layers_for(unit, troop, variant)
+			assert(entry.anchor == Vector2(112, 264), "cavalry keeps its battle placement")
+			for part in Skins.PARTS:
+				var texture: Texture2D = entry[part]
+				assert(texture != null and texture.get_size() == Vector2(240, 244), "%s %s" % [troop, part])
+				assert(texture.atlas == Skins.pages(troop)[variant])
+			var body := entry.body.get_image() as Image
+			var head: Vector2i = Vector2i(entry.head_center)
+			assert(body.get_pixelv(head).a > 0.0 and entry.headless.get_image().get_pixelv(head).a == 0.0)
+			assert(_pieces(entry.head.get_image()) == 1, "%s: the cut head is one clean piece" % troop)
+			assert(entry.weapon.get_image().get_pixelv(Vector2i(entry.pivot)).a > 0.5, "%s: the weapon pivots in the hand" % troop)
+			assert(_visible_bytes(entry.corpse) == _visible_bytes(entry.portrait))
+			assert(entry.weapon_kind == look.weapon)
+			var guard := Art.guard_layers(unit, troop, variant)
+			assert(not guard.is_empty() and guard.shield.get_size() == Vector2(240, 244), "%s blocks with its shield" % troop)
+		# Cut from the saddle: the rider alone, and the horse lying on its own.
+		var foot := unit.duplicate(true)
+		foot.mounted = false
+		var alone := Art.layers_for(foot, troop, 0)
+		var rider := alone.corpse.get_image() as Image
+		assert(rider.get_size() == Vector2i(240, 244) and rider.get_pixel(225, 150).a == 0.0, "%s: no horse under the rider" % troop)
+		var horse := Art.mount_corpse(unit, Vector2i(240, 244), troop)
+		assert(horse.get_used_rect().size.x > 200 and horse.get_pixel(80, 60).a == 0.0, "%s: the horse lies without its rider" % troop)
+	# Other factions still use the original sheets.
+	for pair in [["e2a", "emp"], ["k1", "khan"]]:
 		assert(not Skins.supports(pair[0], pair[1]))
 		assert(Art.sprite(pair[0], pair[1]).atlas == Art.SHEETS.portrait[0])
 	# Hired Dominion troops use new silhouettes and the player's chosen banner.
@@ -51,9 +80,12 @@ func _initialize() -> void:
 	for channel in 4:
 		assert(absf(ui_glove[channel] - battle_glove[channel]) <= 2.0 / 255.0, "banner dye preserves glove materials in both UI and battle")
 	assert(Art.sprite("d2", "player").get_image().get_pixel(76, 48) == Art.sprite("d2", "dom").get_image().get_pixel(76, 48), "dye preserves faces and helmets")
+	# Hired Nordmark troops follow the banner too: the blue cloth takes its colour.
+	var blue := Art.sprite("n2", "player").get_image().get_data()
 	Art.select_player_banner(0)
+	assert(Art.sprite("n2", "player").get_image().get_data() != blue, "Nordmark cloth follows the banner")
 	assert(Art.sprite("d2", "player").get_image().get_data() == amber, "banner cache must not go stale")
-	print("Dominion heraldic tests passed: seven troops, four variants, all death states and banners")
+	print("Heraldic tests passed: Dominion and Nordmark foot and mounted troops, four variants, all death states and banners")
 	quit()
 
 func _visible_bytes(texture: Texture2D) -> PackedByteArray:

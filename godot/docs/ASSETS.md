@@ -61,3 +61,27 @@ OpenAI права на результат принадлежат пользов�
 `banner_*` — разреженные замены пикселей из шести BANNERS оригинала (выгружены из JS-версии, ныне удалённой); `input.png`, `modal_header.png`, `modal_footer.png` — снимки исходного CSS. Это производные собственной графики проекта с теми же правами.
 
 Праздничный модуль: apps/godot/presentation/birthday/happy_birthday.wav — собственная синтезированная запись мелодии Happy Birthday to You, без сторонней фонограммы; генератор tools/birthday/render_music.cjs. Праздничный рисунок и конфетти создаются кодом поверх существующего облика Викентия. Условия исходного репозитория сохраняются.
+
+### Конница Доминиона (d2c Дружинник, d3c Боярин)
+
+`apps/godot/visuals/assets/dominion_heraldic_cavalry_0.png` … `_3.png` (2 бойца × 11 состояний,
+кадр 240×244, якорь (112, 264) как у прежних конных) и `dominion_heraldic_horses.png` (7 мастей коня
+без всадника). Части нарисованы генератором картинок OpenAI (ChatGPT) по промптам из
+`tools/battle/heraldic_source/horses-prompts.md`: `horses.png` (длинные низкие кони без ног),
+`riders-torsos.png`, `riders-heads.png`, `riders-shields.png` (с нуля по пехотным листам), `lance.png`.
+Сборка: `node godot/tools/battle/render_dominion_cavalry.cjs` (sharp); голова лежит поверх торса и
+заходит на кольчужный воротник на 3 px ниже переднего края выреза. Геометрия —
+`apps/godot/visuals/dominion_heraldic_cavalry_geometry.gd`. 11-я строка — всадник без коня
+(разрубленный падает отдельно, конь — из `dominion_heraldic_horses.png`).
+
+### Нордмарк (n1 Бонд, n2 Секироносец, n3 Хускарл, n2s Копьеносец, n2a Охотник, n3a Следопыт, n3c Дружинник)
+
+`apps/godot/visuals/assets/nord_heraldic_0.png` … `_3.png` (6 пеших × 10 состояний, 152×176) и
+`nord_heraldic_cavalry_0.png` … `_3.png` (конный, 11 состояний, 240×244). Части нарисованы генератором
+картинок OpenAI (ChatGPT) с нуля по листам Доминиона по промптам `tools/battle/heraldic_source/nord-prompts.md`
+(шаблоны — `shareness/skills/unit-parts/PROMPTS.md`): `nord-torsos.png`, `nord-heads.png`, `nord-shields.png`,
+`bow.png`; кони — общий `horses.png`, меч/топор/копьё — `weapons.png`. Сборка:
+`node godot/tools/battle/render_heraldic_faction.cjs nord` (sharp), геометрия — `nord_heraldic_geometry.gd`.
+Под знаменем игрока синее сукно перекрашивается в цвет знамени (`dominion_heraldic_art.gd`, `FACTIONS`).
+Эталоны теста палитр знамени перенесены на e3 (`tests/unit/visuals/fixtures/banner_*_e3.png`): вырезаны из
+`portrait.png` с наложением `banner_N_portrait_v0.png`, как это делает игра.

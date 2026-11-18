@@ -116,7 +116,7 @@ func split_torso(unit: Dictionary) -> Dictionary:
 				OriginalArt.guard_layers(foot, _troop_ids.get(foot.get("id"), ""), int(_variants.get(foot.get("id"), 0))))
 			image = Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
 			image.blit_rect(rider_image, Rect2i(Vector2i.ZERO, rider_image.get_size()), offset)
-			lower = OriginalArt.mount_corpse(unit, image.get_size())
+			lower = OriginalArt.mount_corpse(unit, image.get_size(), _troop_ids.get(unit.get("id"), ""))
 		var cut := clampi(roundi(Vector2(entry.get("head_center", HEAD_CENTER)).y + 22.0 / scale_value), 1, image.get_height() - 1)
 		var upper := Image.create(image.get_width(), image.get_height(), false, Image.FORMAT_RGBA8)
 		upper.blit_rect(image, Rect2i(0, 0, image.get_width(), cut), Vector2i.ZERO)
