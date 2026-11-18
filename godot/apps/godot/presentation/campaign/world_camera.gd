@@ -9,6 +9,7 @@ var detached := false              ## true once the player moved the view; C ret
 var _dragging := false
 var _press_pos := Vector2.ZERO
 var _moved := false
+var _left_down := false            ## the left press came to the map, not to a window: only then its release is a map click
 
 signal map_clicked(world_pos: Vector2)
 signal map_hovered(world_pos: Vector2, screen_pos: Vector2)
@@ -27,8 +28,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			if button.pressed:
 				_press_pos = button.position
 				_moved = false
-			elif button.button_index == MOUSE_BUTTON_LEFT and not _moved:
-				map_clicked.emit(_screen_to_world(button.position))
+				if button.button_index == MOUSE_BUTTON_LEFT:
+					_left_down = true
+			elif button.button_index == MOUSE_BUTTON_LEFT:
+				# A button that closes its window on release (town «Ждать», ×) lets the release fall through to the map:
+				# its press went to the window, so it is not a click on the map.
+				if _left_down and not _moved:
+					map_clicked.emit(_screen_to_world(button.position))
+				_left_down = false
 			_dragging = button.pressed
 	elif event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion

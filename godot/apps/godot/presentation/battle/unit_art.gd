@@ -67,6 +67,21 @@ func layers(unit: Dictionary, headless: bool = false) -> Dictionary:
 		entry.headless = _body(look, palette, unit.mounted, true)
 	return entry
 
+var _guard_by_unit: Dictionary = {}
+
+## Bare body and separate shield for the block animation; empty for figures without a shield.
+func guard(unit: Dictionary) -> Dictionary:
+	var uid = unit.get("id")
+	var cacheable: bool = uid != null and not unit.get("hero", false)
+	if cacheable and _guard_by_unit.has(uid):
+		return _guard_by_unit[uid]
+	# Kept out of the battle atlas: packing them pushes bodies onto extra pages (measured 182 -> 226
+	# draw calls), while separate textures cost only the few figures guarding this frame (~196).
+	var parts := OriginalArt.guard_layers(unit, _troop_ids.get(uid, ""), int(_variants.get(uid, 0)))
+	if cacheable:
+		_guard_by_unit[uid] = parts
+	return parts
+
 func detached_head(unit: Dictionary) -> Texture2D:
 	var entry := layers(unit)
 	if not entry.has("head"):

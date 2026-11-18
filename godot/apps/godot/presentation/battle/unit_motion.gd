@@ -4,6 +4,17 @@ extends RefCounted
 const BUMP_DECAY := 4.2
 const FALL_SECONDS := 0.34
 const CORPSE_ALPHA := 0.9
+## Shield block: raise towards the front of the bust, in 2x canvas pixels before the world scale.
+const GUARD_RAISE := Vector2(30, -13)
+const GUARD_TILT := -0.14
+const GUARD_GROW := 0.07
+const GUARD_RECOIL := Vector2(-8, 2)
+const GUARD_RECOIL_TILT := 0.12
+const GUARD_HIT_SECONDS := 0.55
+const GUARD_HOLD_RAISE_SECONDS := 0.1
+const GUARD_HOLD_LOWER_SECONDS := 0.16
+## The hero's block arc flares this long after a blow is taken.
+const BLOCK_FLASH_SECONDS := 0.2
 
 static func weapon_kind(weapon: Variant) -> int:
 	if weapon == "heraldic_xbow": return 4
@@ -97,3 +108,26 @@ static func fall_offset(anchor: Vector2, elapsed: float) -> Vector2:
 
 static func fall_alpha(elapsed: float) -> float:
 	return CORPSE_ALPHA if fall_progress(elapsed) >= 1.0 else 1.0
+
+## A successful block: snap the shield up, take the blow, then lower it.
+## progress runs 0 -> 1 over GUARD_HIT_SECONDS; returns x = raise, y = recoil.
+static func guard_hit(progress: float) -> Vector2:
+	var p := clampf(progress, 0.0, 1.0)
+	var raise := 1.0
+	if p < 0.1:
+		raise = p / 0.1
+	elif p > 0.6:
+		raise = 1.0 - (p - 0.6) / 0.4
+	var recoil := 0.0
+	if p > 0.06 and p < 0.36:
+		recoil = sin((p - 0.06) / 0.3 * PI)
+	return Vector2(raise, recoil)
+
+## Shield transform in the body's space: centre of the shield moved by the raise, tilted and grown.
+static func guard_transform(body: Transform2D, anchor: Vector2, center: Vector2, raise: float, recoil: float) -> Transform2D:
+	var lift := clampf(raise, 0.0, 1.0)
+	lift = lift * lift * (3.0 - 2.0 * lift)
+	var kick := clampf(recoil, 0.0, 1.0)
+	var offset := GUARD_RAISE * lift + GUARD_RECOIL * kick
+	var grow := 1.0 + GUARD_GROW * lift
+	return body * Transform2D(GUARD_TILT * lift + GUARD_RECOIL_TILT * kick, Vector2(grow, grow), 0.0, center - anchor + offset)
