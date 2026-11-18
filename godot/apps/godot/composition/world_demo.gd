@@ -173,7 +173,7 @@ func _ready() -> void:
 		state.player.hero.banner = GameOptions.banner
 		if not GameOptions.hero_face.is_empty():
 			state.player.hero.face = GameOptions.hero_face.duplicate()
-		if not HeroOrigin.apply(state.player, GameOptions.origin, GameOptions.attrs, WorldState.START_TROOPS[GameOptions.culture], registry.gear, registry.troops):
+		if not HeroOrigin.apply(state.player.hero, GameOptions.origin):
 			push_warning("The start background was not applied: %s" % GameOptions.origin)
 	var saved_banner = state.player.hero.get("banner", 0)
 	_startup_mark("world_ready")

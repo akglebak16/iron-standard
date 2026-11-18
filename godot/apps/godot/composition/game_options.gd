@@ -9,6 +9,5 @@ static var continue_game := false
 ## Which save slot to continue from; "" = the most recent one.
 static var load_slot := ""
 static var banner := 0
-## The hero's background (hero_origin.gd) and the start points spent on the start screen: attribute -> points.
+## The hero's background (hero_origin.gd): where his two free start points go.
 static var origin := "smith"
-static var attrs := {}
