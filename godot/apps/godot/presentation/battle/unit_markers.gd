@@ -98,7 +98,8 @@ func draw_ring(canvas: CanvasItem, unit: Dictionary, selection: int) -> void:
 	if fill != null: canvas.draw_texture_rect(fill, Rect2(Vector2(unit.position) - fill.get_size() * 0.25, fill.get_size() * 0.5), false, Color(241 / 255.0, 210 / 255.0, 122 / 255.0, 0.15))
 	var ring: Texture2D = assets[0]
 	canvas.draw_texture(ring, Vector2(unit.position) - ring.get_size() * 0.5)
-	if unit.hero and unit.blocking:
+	# With a shield the figure raises it (unit_view); the arc stays for a hero blocking with his weapon.
+	if unit.hero and unit.blocking and not unit.get("shield_guard", false):
 		canvas.draw_arc(Vector2(unit.position) + BLOCK_ORIGIN, BLOCK_RADIUS, unit.facing - BLOCK_HALF_ANGLE,
 			unit.facing + BLOCK_HALF_ANGLE, RING_SEGMENTS, BLOCK_COLOR, BLOCK_WIDTH, true)
 
