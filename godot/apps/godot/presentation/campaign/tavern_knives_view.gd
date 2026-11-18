@@ -42,7 +42,7 @@ class Board extends Control:
 			_knife(c + view.game.theirs[i] * r, i * 2 + 1, Color("#3b2a1c"))
 		for i in view.game.mine.size():
 			_knife(c + view.game.mine[i] * r, i * 2, GameSkin.BRASS)
-		if view.game.phase == "aim":
+		if view.game.phase in ["aim", "flight"]:
 			var at: Vector2 = c + view.aim_point() * r
 			draw_arc(at, 11.0, 0.0, TAU, 24, Color(1, 1, 1, 0.85), 2.0, true)
 			for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
@@ -86,7 +86,7 @@ func _ready() -> void:
 	_refresh()
 
 func aim_point() -> Vector2:
-	return Knives.aim(float(game.t), Knives.sway(int(player.hero.get("agi", 1))))
+	return Knives.aim(float(game.t), Knives.sway(int(player.hero.get("agi", 1))), float(game.get("ph", 0.0)))
 
 func _process(delta: float) -> void:
 	if game.is_empty() or not is_visible_in_tree():
@@ -94,6 +94,12 @@ func _process(delta: float) -> void:
 	match game.phase:
 		"aim":
 			game.t = float(game.t) + delta
+			_board.queue_redraw()
+		"flight":
+			game.t = float(game.t) + delta
+			game.wait = float(game.wait) - delta
+			if game.wait <= 0.0:
+				_land()
 			_board.queue_redraw()
 		"their":
 			game.wait = float(game.wait) - delta
@@ -112,10 +118,16 @@ func _input(event: InputEvent) -> void:
 		throw()
 		get_viewport().set_input_as_handled()
 
-## The player's throw at the current aim; then the regular's turn.
+## The player lets go: the knife flies for Knives.FLIGHT while the aim keeps swaying, then lands (#221).
 func throw() -> void:
 	if game.phase != "aim":
 		return
+	game.phase = "flight"
+	game.wait = Knives.FLIGHT
+	_refresh()
+
+## The knife lands where the aim is now; then the regular's turn.
+func _land() -> void:
 	game.mine.append(Knives.player_throw(game.rng, aim_point()))
 	UiSounds.play(self, "order")
 	game.phase = "their"
@@ -150,7 +162,9 @@ func _refresh() -> void:
 		c.queue_free()
 	match game.phase:
 		"aim":
-			_hint.text = "Бросок %d из %d. Ставка %d. Лови момент: ЛКМ по мишени или Пробел." % [game.mine.size() + 1, Knives.THROWS, int(game.stake)]
+			_hint.text = "Бросок %d из %d. Ставка %d. ЛКМ по мишени или Пробел. Нож летит долю секунды — бросай с упреждением." % [game.mine.size() + 1, Knives.THROWS, int(game.stake)]
+		"flight":
+			_hint.text = "Нож летит…"
 		"their":
 			_hint.text = "Бросает %s…" % game.regular
 		"done":

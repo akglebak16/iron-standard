@@ -6,6 +6,34 @@ const Knives = preload("res://core/campaign/rules/tavern_knives.gd")
 class Purse:
 	var gold := 0
 
+## A bot over many games: it waits until the aim (as seen, or as it will be when the knife lands with `lead`) comes
+## within 0.08 of the bull, reacts after 0.17 s, and the knife lands Knives.FLIGHT later.
+func _bot_throw(rng: RandomNumberGenerator, lead: bool, amp: float, phase: float) -> Vector2:
+	var t := rng.randf_range(0.0, 5.0)
+	var react := 0.0 if lead else 0.17
+	for i in 600:
+		var now := t + i * 0.01
+		var seen := Knives.aim(now + (Knives.FLIGHT if lead else 0.0), amp, phase)
+		if seen.length() < 0.08:
+			return Knives.player_throw(rng, Knives.aim(now + react + Knives.FLIGHT, amp, phase))
+	return Knives.player_throw(rng, Knives.aim(t + 6.0 + Knives.FLIGHT, amp, phase))
+
+func _win_rate(lead: bool, agility: int, level: int) -> float:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2210 + int(lead)
+	var wins := 0
+	var games := 1200
+	for g in games:
+		var phase := Knives.aim_phase(rng)
+		var mine: Array = []
+		var theirs: Array = []
+		for k in Knives.THROWS:
+			mine.append(_bot_throw(rng, lead, Knives.sway(agility), phase))
+			theirs.append(Knives.regular_throw(rng, level))
+		if Knives.total(mine) > Knives.total(theirs):
+			wins += 1
+	return float(wins) / games
+
 func _initialize() -> void:
 	# rings: bull 10, then 7, 5, 3, 1, past the rim 0
 	assert(Knives.score(Vector2.ZERO) == 10 and Knives.score(Vector2(0.1, 0.1)) == 10)
@@ -30,9 +58,10 @@ func _initialize() -> void:
 	# the most a day can bring from one tavern stays small
 	assert(Knives.STAKES.max() * Knives.GAMES_PER_DAY <= 75)
 	# agility steadies the hand but never fully
-	assert(Knives.sway(1) > Knives.sway(5) and Knives.sway(5) > Knives.sway(9) and Knives.sway(30) >= 0.2)
+	assert(Knives.sway(1) > Knives.sway(5) and Knives.sway(5) > Knives.sway(9) and Knives.sway(30) >= 0.3)
 	for t in [0.0, 0.7, 3.3, 10.0]:
-		assert(Knives.aim(t, 0.3).length() <= 0.3 * sqrt(2.0) + 0.001)
+		assert(Knives.aim(t, 0.3, 1.2).length() <= 0.3 * sqrt(2.0) + 0.001)
+	assert(Knives.aim(1.0, 0.4, 0.0) != Knives.aim(1.0, 0.4, 2.0), "each game sways its own way")
 	# the regular: level 1..3 per town, the same throws for the same town, day and game
 	for id in range(20):
 		assert(Knives.regular_level({"id": id}) in [1, 2, 3])
@@ -47,5 +76,11 @@ func _initialize() -> void:
 		for i in 400:
 			sums[level - 1] += Knives.score(Knives.regular_throw(rng, level))
 	assert(sums[0] < sums[1] and sums[1] < sums[2], "skill shows: %s" % [sums])
+	assert(sums[2] / 400.0 * Knives.THROWS > 20.0, "the best regular scores over 20 in three throws: %s" % [sums[2] / 400.0 * Knives.THROWS])
+	# #221: clicking when the aim crosses the bull no longer wins by itself; leading the knife does more often than not
+	var naive := _win_rate(false, 5, 2)
+	var lead := _win_rate(true, 5, 2)
+	assert(naive < 0.5, "a click on the bull loses more often than not: %s" % naive)
+	assert(lead > 0.5 and lead < 0.95, "a well-led throw wins more often but not always: %s" % lead)
 	print("Tavern knives tests passed")
 	quit()

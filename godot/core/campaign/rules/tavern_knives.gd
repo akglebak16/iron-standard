@@ -8,10 +8,14 @@ const THROWS := 3
 ## [outer radius, points] from the bull outwards; past the last ring the knife misses.
 const RINGS := [[0.15, 10], [0.35, 7], [0.55, 5], [0.75, 3], [1.0, 1]]
 ## Spread of the regular's throws by level 1..3 (σ in radii).
-const REGULAR_SPREAD := [0.42, 0.32, 0.24]
+const REGULAR_SPREAD := [0.33, 0.25, 0.18]
 const REGULAR_NAMES := ["подвыпивший возчик", "старый наёмник", "местный ловкач"]
 ## The hand still trembles after the aim: σ in radii.
-const HAND_JITTER := 0.05
+const HAND_JITTER := 0.08
+## The knife flies this long (seconds): it lands where the swaying aim is by then, so a throw needs a lead (#221).
+const FLIGHT := 0.12
+## How fast the aim sways.
+const AIM_SPEED := 1.35
 
 static func score(at: Vector2) -> int:
 	var r := at.length()
@@ -83,11 +87,18 @@ static func regular_throw(rng: RandomNumberGenerator, level: int) -> Vector2:
 
 ## How far the aim sways (radii): less with agility, never steady.
 static func sway(agility: int) -> float:
-	return clampf(0.62 - 0.05 * float(agility), 0.2, 0.62)
+	return clampf(0.70 - 0.04 * float(agility), 0.3, 0.70)
 
-## The aim at time `t` (seconds): a slow Lissajous figure of size `amp`.
-static func aim(t: float, amp: float) -> Vector2:
-	return Vector2(amp * sin(1.9 * t + 0.6), amp * sin(2.7 * t))
+## The aim at time `t` (seconds), size `amp`: on each axis a main swing and a smaller quick tremble, shifted by the
+## game's `phase` so the path cannot be learnt by heart.
+static func aim(t: float, amp: float, phase := 0.0) -> Vector2:
+	var k := AIM_SPEED * t
+	return Vector2(amp * (0.72 * sin(1.9 * k + 0.6 + phase) + 0.28 * sin(5.3 * k + 1.1 + 2.0 * phase)),
+		amp * (0.72 * sin(2.7 * k + 0.7 * phase) + 0.28 * sin(4.3 * k + 2.0 + phase)))
+
+## The random phase of one game's aim.
+static func aim_phase(rng: RandomNumberGenerator) -> float:
+	return rng.randf_range(0.0, TAU)
 
 ## Where the player's knife lands when thrown at `aim_point`.
 static func player_throw(rng: RandomNumberGenerator, aim_point: Vector2) -> Vector2:
