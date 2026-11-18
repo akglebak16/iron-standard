@@ -13,6 +13,8 @@ const GUARD_RECOIL_TILT := 0.12
 const GUARD_HIT_SECONDS := 0.55
 const GUARD_HOLD_RAISE_SECONDS := 0.1
 const GUARD_HOLD_LOWER_SECONDS := 0.16
+## The hero's block arc flares this long after a blow is taken.
+const BLOCK_FLASH_SECONDS := 0.2
 
 static func weapon_kind(weapon: Variant) -> int:
 	if weapon == "heraldic_xbow": return 4

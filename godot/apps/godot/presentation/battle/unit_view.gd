@@ -255,12 +255,16 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 			_corpses.erase(unit.id)
 			_falls.erase(unit.id)
 
-## Who holds block now (only the hero steers it) and whether his figure has a shield to raise.
+## Who holds block now (only the hero steers it), and for the hero's arc: how far it is raised
+## and how bright the flare of a blow just taken is.
 func _mark_guard(unit: Dictionary) -> void:
 	var blocking: bool = unit.get("blocking", false) and not unit.get("dead", false)
 	if blocking or _guard_wanted.has(unit.id):
 		_guard_wanted[unit.id] = blocking
-	unit.shield_guard = blocking and not _art.guard(unit).is_empty()
+	if unit.get("hero", false):
+		unit.block_hold = _guard_holds.get(unit.id, 0.0)
+		var since: float = _guard_hits[unit.id] * Motion.GUARD_HIT_SECONDS if _guard_hits.has(unit.id) else INF
+		unit.block_flash = clampf(1.0 - since / Motion.BLOCK_FLASH_SECONDS, 0.0, 1.0)
 
 func _draw_polish(canvas: CanvasItem, unit: Dictionary) -> void:
 	var phase: float = _phases.get(unit.id, float(unit.id) * PHASE_STEP)
