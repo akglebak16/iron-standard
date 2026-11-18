@@ -22,8 +22,10 @@ class IronBattleSprites : public RefCounted {
   GDCLASS(IronBattleSprites, RefCounted)
   static constexpr double PI = 3.14159265358979323846;
   struct Look {
-    Ref<Texture2D> body, weapon, flash;
-    Vector2 anchor, pivot;
+    Ref<Texture2D> body, weapon, flash, shield;
+    Vector2 anchor, pivot, shield_origin, shield_center;
+    // Figure without its resting shield, painted layer by layer while it guards.
+    std::vector<std::pair<Ref<Texture2D>, Vector2>> bare;
     double scale, phase;
     int kind;
     std::array<Ref<Texture2D>, 4> rings, fills;
@@ -116,6 +118,18 @@ class IronBattleSprites : public RefCounted {
     return Transform2D(x, y, at + offset);
   }
 
+  // Mirrors UnitMotion.guard_transform.
+  static Transform2D guard_pose(const Transform2D &body, Vector2 anchor,
+                                Vector2 center, double raise, double recoil) {
+    double lift = std::clamp(raise, 0.0, 1.0);
+    lift = lift * lift * (3 - 2 * lift);
+    double kick = std::clamp(recoil, 0.0, 1.0);
+    Vector2 offset = Vector2(30, -13) * float(lift) + Vector2(-8, 2) * float(kick);
+    float grow = float(1 + .07 * lift);
+    return body * Transform2D(float(-.14 * lift + .12 * kick), Size2(grow, grow),
+                              0.0f, center - anchor + offset);
+  }
+
 protected:
   static void _bind_methods() {
     ClassDB::bind_method(D_METHOD("draw_minimap", "canvas", "positions",
@@ -127,13 +141,16 @@ protected:
     ClassDB::bind_method(D_METHOD("draw", "canvas", "columns", "visible",
                                   "vegetation", "time", "interpolation",
                                   "selection", "demo", "bumps", "flashes",
-                                  "fallback", "snow"),
+                                  "fallback", "snow", "guards"),
                          &IronBattleSprites::draw);
     ClassDB::bind_method(D_METHOD("sample_body", "at", "time", "phase", "speed",
                                   "mounted", "facing", "bump", "scale"),
                          &IronBattleSprites::sample_body);
     ClassDB::bind_method(D_METHOD("sample_swing", "kind", "bump"),
                          &IronBattleSprites::sample_swing);
+    ClassDB::bind_method(D_METHOD("sample_guard", "body", "anchor", "center",
+                                  "raise", "recoil"),
+                         &IronBattleSprites::sample_guard);
   }
 
 public:
@@ -170,6 +187,10 @@ public:
     return body_pose(at, time, phase, speed, mounted, facing, bump, scale);
   }
   Vector3 sample_swing(int kind, double bump) { return swing(kind, bump); }
+  Transform2D sample_guard(const Transform2D &body, Vector2 anchor,
+                           Vector2 center, double raise, double recoil) {
+    return guard_pose(body, anchor, center, raise, recoil);
+  }
   void configure(const Array &entries, const Ref<Texture2D> &p_shadow,
                  const Ref<Texture2D> &p_white) {
     shadow = p_shadow;
@@ -185,6 +206,17 @@ public:
       l.pivot = art.get("pivot", Vector2(53, 52));
       l.scale = art.get("scale", .43);
       l.phase = entry["phase"];
+      Dictionary guard = entry.get("guard", Dictionary());
+      if (!guard.is_empty()) {
+        Array layers = guard["layers"];
+        for (int k = 0; k < layers.size(); ++k) {
+          Array layer = layers[k];
+          l.bare.emplace_back(Ref<Texture2D>(layer[0]), Vector2(layer[1]));
+        }
+        l.shield = guard["shield"];
+        l.shield_origin = guard["shield_origin"];
+        l.shield_center = guard["shield_center"];
+      }
       String weapon = art.get("weapon_kind", "");
       l.kind = weapon == "heraldic_xbow" ? 4
                : weapon == "bow" || weapon == "xbow" ? 3
@@ -204,7 +236,8 @@ public:
   void draw(const RID &canvas, const Array &columns, const Rect2 &visible,
             const Array &vegetation, double time, double interpolation,
             int selection, bool demo, Dictionary bumps,
-            const Dictionary &flashes, const Callable &fallback, bool snow) {
+            const Dictionary &flashes, const Callable &fallback, bool snow,
+            const Dictionary &guards) {
     if (columns.size() != 7 || selection < 0 || selection > 3 ||
         shadow.is_null() || white.is_null())
       return;
@@ -361,8 +394,18 @@ public:
       Transform2D body =
           body_pose(at, time, l.phase, d[3], mounted, d[2], bump, l.scale);
       server->canvas_item_add_set_transform(canvas, body);
+      Vector2 guard;
+      if (!guards.is_empty() && !l.bare.empty() && l.shield.is_valid()) {
+        Variant pose = guards.get(id, Variant());
+        if (pose.get_type() == Variant::VECTOR2)
+          guard = pose;
+      }
+      const bool guarding = guard != Vector2();
       if (flashing && l.flash.is_valid())
         l.flash->draw(canvas, -l.anchor, tint);
+      else if (guarding)
+        for (const auto &layer : l.bare)
+          layer.first->draw(canvas, layer.second - l.anchor, tint);
       else
         l.body->draw(canvas, -l.anchor, tint);
       if (!(flashing && l.flash.is_valid()) && l.weapon.is_valid()) {
@@ -380,6 +423,11 @@ public:
           }
         } else
           l.weapon->draw(canvas, -l.anchor, tint);
+      }
+      if (guarding && !(flashing && l.flash.is_valid())) {
+        server->canvas_item_add_set_transform(
+            canvas, guard_pose(body, l.anchor, l.shield_center, guard.x, guard.y));
+        l.shield->draw(canvas, l.shield_origin - l.shield_center, tint);
       }
       server->canvas_item_add_set_transform(canvas, Transform2D());
       if (!demo) {

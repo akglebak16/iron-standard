@@ -13,6 +13,7 @@ const SHADOW = preload("res://apps/godot/visuals/assets/contact_shadow.png")
 const FLEEING_OPACITY := 0.75
 
 const Atlas = preload("res://apps/godot/presentation/battle/battle_atlas.gd")
+const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
 var _atlas := Atlas.new()
 var _shadow: Texture2D = SHADOW
 var native_enabled := true
@@ -25,6 +26,12 @@ var _falls: Dictionary = {}
 var _flashes: Dictionary = {}
 var _bumps: Dictionary = {}
 var _windups: Dictionary = {}
+## Shield block: id -> progress of a block reaction, id -> held raise (hero), id -> whether he holds block.
+var _guard_hits: Dictionary = {}
+var _guard_holds: Dictionary = {}
+var _guard_wanted: Dictionary = {}
+## id -> Vector2(raise, recoil) for this frame, shared with the native renderer.
+var _guards: Dictionary = {}
 var _fall_rotations: Dictionary = {}
 var _fall_positions: Dictionary = {}
 var _visual_rng := RandomNumberGenerator.new()
@@ -47,15 +54,18 @@ func art_source() -> Art:
 
 func prepare_art(units: Array[Dictionary]) -> void:
 	_atlas.begin_prepare()
+	OriginalArt.begin_batch()
 	_shadow = _atlas.resolve(SHADOW)
 	var entries: Array = []
 	for unit in units:
 		var appearance := _art.layers(unit)
+		var guard := _art.guard(unit)
 		if _native != null and not unit.hero and not unit.companion and not unit.leader:
 			var rings: Array = []
 			for selection in 4: rings.append(_markers.ring_assets(unit, selection))
-			entries.append({"id": unit.id, "art": appearance, "rings": rings, "phase": _phases.get(unit.id, float(unit.id) * PHASE_STEP)})
+			entries.append({"id": unit.id, "art": appearance, "guard": guard, "rings": rings, "phase": _phases.get(unit.id, float(unit.id) * PHASE_STEP)})
 	var white := _markers.white_texture()
+	OriginalArt.end_batch()
 	_atlas.end_prepare()
 	if _native != null:
 		_native.configure(entries, _shadow, white)
@@ -88,6 +98,7 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 	for id in _bumps.keys():
 		_bumps[id] = maxf(0.0, float(_bumps[id]) - dt * Motion.BUMP_DECAY)
 		if _bumps[id] <= 0.0: _bumps.erase(id)
+	_advance_guards(dt, events)
 	for event in events:
 		match event.kind:
 			Event.Kind.HIT:
@@ -105,6 +116,35 @@ func advance(dt: float, events: Array[Dictionary]) -> void:
 					_fall_rotations[event.target_id] = _visual_rng.randf_range(1.2, 1.9) * (-1.0 if _visual_rng.randf() < 0.5 else 1.0)
 					if event.has("target_visual"):
 						_corpses[event.target_id] = event.target_visual.duplicate(true)
+
+func _advance_guards(dt: float, events: Array[Dictionary]) -> void:
+	for id in _guard_hits.keys():
+		_guard_hits[id] = float(_guard_hits[id]) + dt / Motion.GUARD_HIT_SECONDS
+		if _guard_hits[id] >= 1.0: _guard_hits.erase(id)
+	for event in events:
+		if event.kind == Event.Kind.BLOCK:
+			_guard_hits[event.target_id] = 0.0
+	for id in _guard_wanted.keys():
+		var held: float = _guard_holds.get(id, 0.0)
+		if _guard_wanted[id]:
+			held = minf(1.0, held + dt / Motion.GUARD_HOLD_RAISE_SECONDS)
+		else:
+			held = maxf(0.0, held - dt / Motion.GUARD_HOLD_LOWER_SECONDS)
+		if held > 0.0: _guard_holds[id] = held
+		else:
+			_guard_holds.erase(id)
+			if not _guard_wanted[id]: _guard_wanted.erase(id)
+	_guards.clear()
+	for id in _guard_holds:
+		_guards[id] = Vector2(_guard_holds[id], 0.0)
+	for id in _guard_hits:
+		var hit := Motion.guard_hit(_guard_hits[id])
+		var pose: Vector2 = _guards.get(id, Vector2.ZERO)
+		_guards[id] = Vector2(maxf(pose.x, hit.x), hit.y)
+
+## Current shield pose of a unit: x = raise, y = recoil (zero when the shield rests).
+func guard_pose(id: int) -> Vector2:
+	return _guards.get(id, Vector2.ZERO)
 
 ## JS starts bump at windup, not at impact. Observe detached snapshots without changing simulation.
 func observe_units(units: Array[Dictionary]) -> void:
@@ -139,12 +179,13 @@ func draw_compact(canvas: CanvasItem, frame: RenderSnapshot, visible: Rect2, hea
 			func(row: int, direction: Vector2):
 				var unit := frame.unit_at(row, interpolation)
 				unit.visual_direction = direction
+				_mark_guard(unit)
 				_draw_shadow(canvas, unit)
 				if not demo_mode:
 					_markers.draw_ring(canvas, unit, selection)
 					_draw_polish(canvas, unit)
 				_draw_unit(canvas, unit, false)
-				if not demo_mode: _markers.draw_status(canvas, unit, _time), biome == "snow")
+				if not demo_mode: _markers.draw_status(canvas, unit, _time), biome == "snow", _guards)
 		var corpses: Array[Dictionary] = []
 		for corpse: Dictionary in _corpses.values():
 			if visible.has_point(corpse.position): corpses.append(corpse)
@@ -194,6 +235,7 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 		while plant_index < vegetation.size() and vegetation[plant_index].position.y < unit.position.y:
 			_draw_plant(canvas, vegetation[plant_index], visible)
 			plant_index += 1
+		_mark_guard(unit)
 		_draw_shadow(canvas, unit)
 		if not demo_mode:
 			_markers.draw_ring(canvas, unit, selection)
@@ -212,6 +254,13 @@ func draw(canvas: CanvasItem, frame: Array[Dictionary], visible: Rect2, headless
 			on_settled.call(unit, headless)
 			_corpses.erase(unit.id)
 			_falls.erase(unit.id)
+
+## Who holds block now (only the hero steers it) and whether his figure has a shield to raise.
+func _mark_guard(unit: Dictionary) -> void:
+	var blocking: bool = unit.get("blocking", false) and not unit.get("dead", false)
+	if blocking or _guard_wanted.has(unit.id):
+		_guard_wanted[unit.id] = blocking
+	unit.shield_guard = blocking and not _art.guard(unit).is_empty()
 
 func _draw_polish(canvas: CanvasItem, unit: Dictionary) -> void:
 	var phase: float = _phases.get(unit.id, float(unit.id) * PHASE_STEP)
@@ -261,10 +310,16 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 	var body := Motion.body_transform(unit.position, _time, phase, unit.speed, unit.mounted, unit.facing, bump, sprite_scale)
 	var tint := Color(1, 1, 1, FLEEING_OPACITY if unit.fleeing else 1.0)
 	canvas.draw_set_transform_matrix(body)
+	var guard_pose: Vector2 = _guards.get(unit.id, Vector2.ZERO)
+	var guard := {} if guard_pose == Vector2.ZERO else _art.guard(unit)
 	if _flashes.has(unit.id) and appearance.has("flash"):
 		canvas.draw_texture(appearance.flash, -anchor, tint)
 	else:
-		canvas.draw_texture(appearance.body, -anchor, tint)
+		if guard.is_empty():
+			canvas.draw_texture(appearance.body, -anchor, tint)
+		else:
+			for layer: Array in guard.layers:
+				canvas.draw_texture(layer[0], Vector2(layer[1]) - anchor, tint)
 		if appearance.weapon != null:
 			var kind := Motion.weapon_kind(appearance.weapon_kind)
 			if bump > 0.0 and kind > 0:
@@ -277,4 +332,7 @@ func _draw_unit(canvas: CanvasItem, unit: Dictionary, fallen: bool, headless: bo
 					canvas.draw_texture(appearance.weapon, -pivot, Color(1, 1, 1, tint.a * 0.35))
 			else:
 				canvas.draw_texture(appearance.weapon, -anchor, tint)
+		if not guard.is_empty():
+			canvas.draw_set_transform_matrix(Motion.guard_transform(body, anchor, guard.shield_center, guard_pose.x, guard_pose.y))
+			canvas.draw_texture(guard.shield, Vector2(guard.shield_origin) - Vector2(guard.shield_center), tint)
 	canvas.draw_set_transform_matrix(Transform2D.IDENTITY)

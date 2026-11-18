@@ -23,6 +23,11 @@ static var _component_pages := {}
 static var _face_pages := {}
 static var _banner_sheets := {}
 static var _player_banner := 0
+static var _guards := {}
+static var _sheet_images := {}
+static var _batching := false
+const GUARD_DILATE := 2
+const GUARD_PAD := 2
 
 ## Appearance preference only. Call at mode preparation, before constructing the new views.
 static func select_player_banner(index: int) -> void:
@@ -34,6 +39,7 @@ static func select_player_banner(index: int) -> void:
 	_component_pages.clear()
 	_face_pages.clear()
 	_banner_sheets.clear()
+	_guards.clear()
 
 static func _banner_image(source: Image, key: String) -> Image:
 	if _player_banner == 0: return source
@@ -127,7 +133,13 @@ static func compose(look: Dictionary, faction := "player") -> Dictionary:
 		_stamp(head, "head" + prefix + String(look.get("helm", "none")) + "|" + String(look.get("undead", "")), rider)
 	body.blend_rect(head, Rect2i(Vector2i.ZERO, size), Vector2i.ZERO)
 	corpse.blend_rect(head, Rect2i(Vector2i.ZERO, size), Vector2i.ZERO)
+	var bare: Image = null
+	var shield_layer: Image = null
 	if look.get("shield") != null:
+		bare = Image.new()
+		bare.copy_from(body)
+		shield_layer = Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+		_stamp(shield_layer, "shield" + prefix + String(look.shield), rider)
 		_stamp(body, "shield" + prefix + String(look.shield), rider)
 		_stamp(headless, "shield" + prefix + String(look.shield), rider)
 		_stamp(corpse, "shield" + prefix + String(look.shield), rider)
@@ -140,7 +152,7 @@ static func compose(look: Dictionary, faction := "player") -> Dictionary:
 	var corpse_headless := Image.new()
 	corpse_headless.copy_from(headless)
 	corpse_headless.blend_rect(weapon, Rect2i(Vector2i.ZERO, size), Vector2i.ZERO)
-	return {"body": ImageTexture.create_from_image(body), "headless": ImageTexture.create_from_image(headless),
+	var result := {"body": ImageTexture.create_from_image(body), "headless": ImageTexture.create_from_image(headless),
 		"weapon": ImageTexture.create_from_image(weapon), "head": ImageTexture.create_from_image(head),
 		"flash": _white_texture(portrait), "corpse": ImageTexture.create_from_image(corpse),
 		"corpse_headless": ImageTexture.create_from_image(corpse_headless),
@@ -148,6 +160,10 @@ static func compose(look: Dictionary, faction := "player") -> Dictionary:
 		"anchor": Vector2(112, 264) if mounted else Vector2(76, 158),
 		"head_center": (Vector2(37.5, 29) + Vector2(rider)) * 2,
 		"pivot": (Vector2(54.5, 50.5) + Vector2(rider)) * 2, "scale": 0.31}
+	if bare != null:
+		# Kept as images: the battle splits the shield off only for figures that fight.
+		result.guard_source = [bare, shield_layer]
+	return result
 
 static func _white_texture(image: Image) -> ImageTexture:
 	var bytes := image.get_data()
@@ -165,8 +181,7 @@ static func layers_for(unit: Dictionary, troop_id := "", variant := 0) -> Dictio
 	elif not unit.mounted and look.get("horse"):
 		look = look.duplicate()
 		look.horse = null
-	var faction: String = "player" if unit.hero or unit.companion else unit.faction
-	if not MANIFEST.crests.has(faction): faction = "nord" if unit.side == 0 else "emp"
+	var faction := _faction(unit)
 	var signature := str([faction, unit.mounted, look, troop_id, variant])
 	if _looks.has(signature):
 		return _looks[signature]
@@ -192,6 +207,86 @@ static func layers_for(unit: Dictionary, troop_id := "", variant := 0) -> Dictio
 	var composed := compose(look, faction)
 	_looks[signature] = composed
 	return composed
+
+static func _faction(unit: Dictionary) -> String:
+	var faction: String = "player" if unit.get("hero", false) or unit.get("companion", false) else String(unit.get("faction", ""))
+	if not MANIFEST.crests.has(faction): faction = "nord" if int(unit.get("side", 0)) == 0 else "emp"
+	return faction
+
+## Raised-shield layers for the battle block animation, built once per look. "layers" paint the figure
+## without its resting shield (texture and offset in body-image pixels); "shield" is drawn separately
+## around "shield_center". Troops keep their sheet pixels: only the shield and a GUARD_DILATE px rim
+## around it are replaced by what the components paint under it.
+static func guard_layers(unit: Dictionary, troop_id := "", variant := 0) -> Dictionary:
+	var shield_kind = unit.look.get("shield")
+	if shield_kind == null or String(shield_kind) == "":
+		return {}
+	var entry := layers_for(unit, troop_id, variant)
+	if entry.is_empty() or entry.get("body") == null:
+		return {}
+	var key: int = (entry.body as Texture2D).get_instance_id()
+	if _guards.has(key):
+		return _guards[key]
+	var parts := {}
+	if entry.has("guard_source"):
+		parts = _guard_parts(entry.guard_source[0], entry.guard_source[1])
+	elif entry.body is AtlasTexture and entry.get("head") is AtlasTexture:
+		var body := _region_image(entry.body)
+		var size := body.get_size()
+		var mounted: bool = unit.get("mounted", false)
+		var faction := _faction(unit)
+		var prefix := "|" + faction + "|"
+		var offset := Vector2i(2, 26) if mounted else Vector2i(2, 5)
+		var rider := offset + (Vector2i(4, 2) if mounted else Vector2i.ZERO)
+		var horse = unit.look.get("horse")
+		var under := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+		_stamp(under, "horse" + prefix + String(horse if horse else "bay") if mounted else "base|" + faction, offset)
+		_stamp(under, "torso" + prefix + String(unit.look.get("armor", "tunic")), rider)
+		var head := _region_image(entry.head)
+		under.blend_rect(head, Rect2i(Vector2i.ZERO, head.get_size()), Vector2i.ZERO)
+		var shield := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
+		_stamp(shield, "shield" + prefix + String(shield_kind), rider)
+		var used := shield.get_used_rect()
+		if used.size.x > 0 and used.size.y > 0:
+			var area := used.grow(GUARD_DILATE).intersection(Rect2i(Vector2i.ZERO, size))
+			var mask := Image.create(area.size.x, area.size.y, false, Image.FORMAT_RGBA8)
+			for dy in range(-GUARD_DILATE, GUARD_DILATE + 1):
+				for dx in range(-GUARD_DILATE, GUARD_DILATE + 1):
+					if absi(dx) + absi(dy) <= GUARD_DILATE:
+						mask.blend_rect(shield, area, Vector2i(dx, dy))
+			body.blit_rect_mask(under.get_region(area), mask, Rect2i(Vector2i.ZERO, area.size), area.position)
+			parts = _guard_parts(body, shield)
+	if not _batching:
+		_sheet_images.clear()
+	_guards[key] = parts
+	return parts
+
+static func _guard_parts(bare: Image, shield: Image) -> Dictionary:
+	var used := shield.get_used_rect()
+	if used.size.x <= 0 or used.size.y <= 0:
+		return {}
+	var rect := used.grow(GUARD_PAD).intersection(Rect2i(Vector2i.ZERO, shield.get_size()))
+	return {"layers": [[ImageTexture.create_from_image(bare), Vector2.ZERO]],
+		"shield": ImageTexture.create_from_image(shield.get_region(rect)), "shield_origin": Vector2(rect.position),
+		"shield_center": Vector2(used.position) + Vector2(used.size) * 0.5}
+
+## Batch guard_layers calls while a battle prepares: each troop sheet is read once, then dropped.
+static func begin_batch() -> void:
+	_batching = true
+
+static func end_batch() -> void:
+	_batching = false
+	_sheet_images.clear()
+
+## Pixels of one cell of a troop sheet (a fresh copy).
+static func _region_image(texture: AtlasTexture) -> Image:
+	var key := texture.atlas.get_instance_id()
+	if not _sheet_images.has(key):
+		var image := texture.atlas.get_image()
+		if image.is_compressed(): image.decompress()
+		image.convert(Image.FORMAT_RGBA8)
+		_sheet_images[key] = image
+	return (_sheet_images[key] as Image).get_region(Rect2i(texture.region))
 
 ## Draw the fallen mount without its rider for a severed-rider corpse.
 static func mount_corpse(unit: Dictionary, size: Vector2i) -> Image:
