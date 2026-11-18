@@ -221,6 +221,9 @@ static func guard_layers(unit: Dictionary, troop_id := "", variant := 0) -> Dict
 	var shield_kind = unit.look.get("shield")
 	if shield_kind == null or String(shield_kind) == "":
 		return {}
+	# Heraldic Dominion figures are drawn whole, without component layers to rebuild them from.
+	if not troop_id.is_empty() and DominionHeraldic.supports(troop_id, _faction(unit)):
+		return {}
 	var entry := layers_for(unit, troop_id, variant)
 	if entry.is_empty() or entry.get("body") == null:
 		return {}

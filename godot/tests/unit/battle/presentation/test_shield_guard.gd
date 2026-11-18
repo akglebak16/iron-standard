@@ -65,6 +65,10 @@ func _check_composed_hero() -> void:
 	unarmed.look.erase("shield")
 	assert(Art.guard_layers(unarmed).is_empty(), "no shield, no raised shield")
 	assert(Art.guard_layers(_unit("n2a|nord")).is_empty(), "archers carry no shield")
+	for troop in ["d1", "d2", "d3", "d2s"]:
+		var heraldic := _unit(troop + "|dom")
+		if heraldic.look.get("shield") != null:
+			assert(Art.guard_layers(heraldic, troop, 0).is_empty(), "heraldic Dominion art has no shield layer")
 
 func _check_pose() -> void:
 	var body := Motion.body_transform(Vector2(40, 60), 1.3, 0.4, 0.0, false, 0.2, 0.0)
