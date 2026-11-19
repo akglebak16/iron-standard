@@ -12,7 +12,9 @@ const output=outIndex>=0?path.resolve(args[outIndex+1]):path.resolve(__dirname,'
 const geometryOut=outIndex>=0?output:path.resolve(output,'..');
 
 const W=152,H=176,NECK=[76,78],TORSO_WIDTH=108,HEAD_HEIGHT=64;
-const RIDER=[4,23],HW=240,HH=244;
+// The rider sits deeper and further forward than the troops (4, 23): the hero's torsos are shorter, and at
+// (4, 23) his belt hung above the saddle.
+const RIDER=[10,42],HW=240,HH=244;
 // Sheet → part names in reading order ('-' skips a blob that another sheet replaces).
 const SHEETS={
  'hero-torsos-a.png':['torso:tunic','torso:fur','-','torso:padded','-','-'],
