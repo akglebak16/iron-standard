@@ -54,12 +54,12 @@ const DATA = {
 	},
 	"mounted_grip": {
 		"spear": [
-			135,
-			158
+			131,
+			150
 		],
 		"lance": [
-			135,
-			158
+			131,
+			150
 		]
 	},
 	"shield_center": {
@@ -82,7 +82,7 @@ const DATA = {
 	},
 	"head_center": [
 		76,
-		51
+		55
 	],
 	"neck": [
 		76,
@@ -90,12 +90,12 @@ const DATA = {
 	],
 	"scar": [
 		[
-			83,
-			51
+			82,
+			55
 		],
 		[
-			86,
-			60
+			85,
+			63
 		]
 	],
 	"frames": {
@@ -336,7 +336,7 @@ const DATA = {
 		"turban"
 	],
 	"rider": [
-		10,
-		42
+		6,
+		34
 	]
 }

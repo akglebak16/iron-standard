@@ -11,10 +11,12 @@ const args=process.argv.slice(2),outIndex=args.indexOf('--out');
 const output=outIndex>=0?path.resolve(args[outIndex+1]):path.resolve(__dirname,'../../apps/godot/visuals/assets');
 const geometryOut=outIndex>=0?output:path.resolve(output,'..');
 
-const W=152,H=176,NECK=[76,78],TORSO_WIDTH=108,HEAD_HEIGHT=64;
-// The rider sits deeper and further forward than the troops (4, 23): the hero's torsos are shorter, and at
-// (4, 23) his belt hung above the saddle.
-const RIDER=[10,42],HW=240,HH=244;
+// The bare head is 56 px tall, so a helmeted head comes out about 64 px like the troops' heads.
+const W=152,H=176,NECK=[76,78],TORSO_WIDTH=108,HEAD_HEIGHT=56;
+// Riders of every faction sit at one height: the bottom of the torso (the belt) on row MOUNTED_BELT_Y of the
+// 240×244 mounted frame, as the faction cavalry (shareness/skills/unit-parts/SKILL.md). The hero's rider
+// offset is worked out from his tunic so his belt lands there too.
+const MOUNTED_BELT_Y=182,RIDER_DX=6,RIDER=[RIDER_DX,0],HW=240,HH=244;
 // Sheet → part names in reading order ('-' skips a blob that another sheet replaces).
 const SHEETS={
  'hero-torsos-a.png':['torso:tunic','torso:fur','-','torso:padded','-','-'],
@@ -119,6 +121,7 @@ async function main(){
   if(armor==='tunic')geometry.opening={rx:o.rx*k,ry:o.ry*k};
  }
  const bottom=bottoms.tunic;
+ {const {data}=await pixels(frames['torso:tunic']);let low=0;for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(data[(y*W+x)*4+3]>128)low=y;RIDER[1]=MOUNTED_BELT_Y-low;}
  for(const armor of ARMORS)geometry.torso_head_dy[armor]=bottoms[armor]-bottom;
  // Heads, hair and beards: placed as the bare head is, then moved by their face registration.
  const bald=parts['head:none'],bm=await sharp(bald).metadata(),k=HEAD_HEIGHT/bm.height,baldPixels=await pixels(bald);
