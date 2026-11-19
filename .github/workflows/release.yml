@@ -76,6 +76,8 @@ jobs:
         if: steps.need.outputs.release == 'true'
         with:
           name: release-notes
+          # Нужны только до публикации релиза (#234).
+          retention-days: 1
           path: notes.md
 
   build:
@@ -148,6 +150,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: game
+          # Архив и так попадает в Releases; артефакт нужен только задаче publish (#234).
+          retention-days: 1
           path: IronStandard-v${{ needs.notes.outputs.ver }}-windows.zip
 
   publish:
