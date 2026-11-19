@@ -12,6 +12,14 @@ func _buttons(node: Node) -> Array:
 		out.append_array(_buttons(c))
 	return out
 
+func _labels(node: Node) -> Array:
+	var out: Array = []
+	for c in node.get_children():
+		if c is Label:
+			out.append((c as Label).text)
+		out.append_array(_labels(c))
+	return out
+
 func _texts(node: Node) -> Array:
 	return _buttons(node).map(func(b): return (b as Button).text)
 
@@ -53,7 +61,10 @@ func _initialize() -> void:
 	assert(dialog.visible and dialog._title.text == "Идёт сражение")
 	var labels: Array = _texts(dialog)
 	assert(labels.has("Не вмешиваться") and labels.filter(func(t): return t.begins_with("Помочь: ")).size() == 2, str(labels))
-	assert("против" in dialog._sub.text and "испортятся отношения" in dialog._sub.text, "the dialog warns that helping attacks the other state")
+	var cards: Node = dialog.find_child("FightSides", true, false)
+	assert(cards != null and cards.get_child_count() == 3, "two sides with «против» between them")
+	var shown: String = " ".join(_labels(cards))
+	assert("Испортятся отношения" in shown and "С тобой:" in shown and "Проба Левая" in shown and "Проба Правая" in shown, shown)
 	# take the left side: the right one becomes the enemy, the left one fights with the player
 	_press(dialog, "Помочь: ")
 	await process_frame

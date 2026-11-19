@@ -443,26 +443,35 @@ static func _men(list: Array, skip: Array) -> int:
 func _fight_talk(fight: Dictionary) -> void:
 	_meeting_fight = fight
 	var both: Array = state.skirmish.sides(fight)
-	var rows: Array = []
-	var labels: Array = []
-	for side in both:
+	var cards: Array = []
+	var actions: Array = [{"id": "fight_leave", "text": "Не вмешиваться"}]
+	for i in 2:
+		var side: Array = both[i]
 		var names: Array = []
+		var parties: Array = []
+		var troops: Array = state.player.troops.duplicate(true)
 		for q in side:
 			var fname: String = _factions.get_faction(q.fac).get("name", q.fac)
 			if not fname in names:
 				names.append(fname)
-			rows.append({"name": "%s · %s" % [q.name, fname], "n": Rules.troop_count(q.troops)})
-		labels.append(", ".join(names))
-	var sub := "%s (%d) против: %s (%d)" % [labels[0], _men(both[0], []), labels[1], _men(both[1], [])]
-	var actions: Array = [{"id": "fight_leave", "text": "Не вмешиваться"}]
-	for i in 2:
-		if both[i].is_empty() or both[i].any(func(q): return Rules.hostile_to_player(q, state.player.rel)):
-			continue # bandits, the dead or the player's enemies get no help from him
-		var against: Array = WorldSkirmish.peaceful(both[1 - i], state.player.rel)
-		actions.append({"id": "fight_help_%d" % i, "text": "Помочь: %s" % labels[i], "primary": against.is_empty()})
-		if not against.is_empty():
-			sub += "\nЕсли помочь стороне «%s», испортятся отношения: %s." % [labels[i], ", ".join(against.map(func(q): return _factions.get_faction(q.fac).get("name", q.fac)))]
-	_dialog.open("Идёт сражение", sub, ["", Color.WHITE], rows, actions)
+			parties.append({"name": q.name, "n": Rules.troop_count(q.troops)})
+			for t in q.troops:
+				Rules.add_troops(troops, t.type, int(t.n))
+		var label := ", ".join(names)
+		var card := {"fac": side[0].fac if not side.is_empty() else "", "label": label, "men": _men(side, []), "parties": parties}
+		if side.is_empty() or side.any(func(q): return Rules.hostile_to_player(q, state.player.rel)):
+			card.note = "Враждебны тебе: помогать им ты не станешь."
+		else:
+			var others: Array = []
+			for q in both[1 - i]:
+				others.append_array(q.troops)
+			card.power = AutoBattle.relative_power(troops, others, state.roster.info)
+			var against: Array = WorldSkirmish.peaceful(both[1 - i], state.player.rel)
+			if not against.is_empty():
+				card.note = "Испортятся отношения: %s." % ", ".join(against.map(func(q): return _factions.get_faction(q.fac).get("name", q.fac)))
+			actions.append({"id": "fight_help_%d" % i, "text": "Помочь: %s" % label, "primary": against.is_empty()})
+		cards.append(card)
+	_dialog.open_fight("Идёт сражение", "Отряды сцепились у тебя на пути. Можно встать на одну из сторон или проехать мимо.", cards, actions)
 
 func _on_encounter_choice(action: String) -> void:
 	var p := _meeting
