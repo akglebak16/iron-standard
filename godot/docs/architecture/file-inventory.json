@@ -5069,6 +5069,16 @@
       "source": "apps/godot/visuals/hero_heraldic_geometry.gd",
       "destination": "apps/godot/visuals/hero_heraldic_geometry.gd",
       "introduced_revision": "local-hero-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/settlement_heraldic_art.gd",
+      "destination": "apps/godot/visuals/settlement_heraldic_art.gd",
+      "introduced_revision": "local-settlements-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/settlements_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/settlements_heraldic_geometry.gd",
+      "introduced_revision": "local-settlements-heraldic"
     }
   ]
 }

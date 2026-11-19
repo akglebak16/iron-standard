@@ -382,6 +382,7 @@ const PATHS = {
 	"portrait_v3": "res://apps/godot/visuals/assets/portrait_v3.png",
 	"primary": "res://apps/godot/visuals/assets/primary.png",
 	"settlements": "res://apps/godot/visuals/assets/settlements.png",
+	"settlements_heraldic": "res://apps/godot/visuals/assets/settlements_heraldic.png",
 	"square": "res://apps/godot/visuals/assets/square.png",
 	"tile": "res://apps/godot/visuals/assets/tile.png",
 	"timer": "res://apps/godot/visuals/assets/timer.png",

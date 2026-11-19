@@ -3,6 +3,7 @@ const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 ## Settlements on the map: sprites from a sheet drawn once, owner banners and name labels (like drawWorld in src/07_main.js).
 const SettlementArt = preload("res://apps/godot/presentation/campaign/settlement_art.gd")
 const OriginalArt = preload("res://apps/godot/visuals/original_art.gd")
+const SettlementHeraldic = preload("res://apps/godot/visuals/settlement_heraldic_art.gd")
 const EmblemArt = preload("res://apps/godot/presentation/campaign/emblem_art.gd")
 const FactionCatalog = preload("res://core/campaign/data/faction_catalog.gd")
 
@@ -14,6 +15,8 @@ const LABEL_OFFSETS := [0, 24, -24, 48, -48, 72, -72, 96, -96]
 var _sheet: SubViewport
 var _settles: Array = []
 var _factions := FactionCatalog.new()
+## Owner colours by faction, looked up once per build rather than on every redraw.
+var _owners := {}
 
 class SheetPainter extends Node2D:
 	func _draw() -> void:
@@ -29,6 +32,7 @@ func build(settles: Array) -> void:
 		push_error("Required content failed to load: apps/godot/presentation/campaign/settlement_layer.gd")
 		return
 	_settles = settles.duplicate()
+	_owners.clear()
 	_settles.sort_custom(func(a, b): return a.y < b.y)
 	_sheet = SubViewport.new()
 	_sheet.size = Vector2i(SettlementArt.SPRITE_SIZE * Vector2(SettlementArt.CULTURES.size(), KINDS.size()) * SHEET_SCALE)
@@ -63,19 +67,42 @@ func _draw() -> void:
 			tint = Color(0.55, 0.62, 0.5)
 		elif int(s.get("burnt", 0)) > 0 or float(s.get("dmg", 0.0)) > 0.3:
 			tint = Color(0.6, 0.5, 0.45)
+		# Heraldic pictures (#254) with the owner's banner on a pole; the old sheets otherwise.
+		var heraldic := SettlementHeraldic.texture(s.kind, culture)
+		if heraldic != null:
+			draw_texture_rect(heraldic, Rect2(Vector2(s.x, s.y) - SettlementHeraldic.ANCHOR * k, SettlementHeraldic.FRAME * k), false, tint)
+			if s.kind != "camp":
+				var pole := SettlementHeraldic.flag(s.kind, culture) * k
+				EmblemArt.draw_banner(self, s.x + pole.x, s.y + pole.y, _owner(String(s.fac)), 13.0 * k)
+			_draw_smoke(s, k)
+			continue
 		var original := OriginalArt.settlement(s.kind, culture, s.fac)
 		if original != null:
 			draw_texture_rect(original, dest, false, tint)
 		else:
 			draw_texture_rect_region(tex, dest, src, tint)
-		if int(s.get("burnt", 0)) > 0 or int(s.get("fire", 0)) > 0:
-			for i in 3:
-				draw_circle(Vector2(s.x + (i - 1) * 9.0 * k, s.y - 30.0 * k - i * 6.0), (7.0 + i * 3.0) * k, Color(0.3, 0.28, 0.26, 0.45))
+		_draw_smoke(s, k)
 		if s.kind != "camp" and original == null:
 			var bx: float = 14.0 if s.kind == "castle" else 20.0
 			var by: float = -62.0 if s.kind == "town" else -66.0 if s.kind == "castle" else -28.0
 			EmblemArt.draw_banner(self, s.x + bx * k, s.y + by * k, _factions.get_faction(s.fac), 13.0 * k)
 	_draw_labels()
+
+func _owner(faction: String) -> Dictionary:
+	if not _owners.has(faction):
+		var look := _factions.get_faction(faction)
+		if faction == "player":
+			# The player's own banner colours, as picked on the start screen.
+			var colors := OriginalArt.palette("player")
+			look.c1 = colors.c1
+			look.c2 = colors.c2
+		_owners[faction] = look
+	return _owners[faction]
+
+func _draw_smoke(s: Dictionary, k: float) -> void:
+	if int(s.get("burnt", 0)) > 0 or int(s.get("fire", 0)) > 0:
+		for i in 3:
+			draw_circle(Vector2(s.x + (i - 1) * 9.0 * k, s.y - 30.0 * k - i * 6.0), (7.0 + i * 3.0) * k, Color(0.3, 0.28, 0.26, 0.45))
 
 func _draw_labels() -> void:
 	var font := preload("res://apps/godot/visuals/game_theme.gd").BODY
