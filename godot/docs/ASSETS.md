@@ -103,3 +103,10 @@ OpenAI права на результат принадлежат пользов�
 `khan-torsos.png`, `khan-heads.png`, `khan-shields.png` (малые круглые), `sabre.png`. Кони — общий `horses.png`.
 Сборка: `node godot/tools/battle/render_heraldic_faction.cjs khan`, геометрия — `khan_heraldic_geometry.gd`.
 Под знаменем игрока бирюзовое сукно перекрашивается в цвет знамени.
+
+### Нежить (z1 Мертвец, s1 Скелет, s1a Скелет-лучник, s2 Мёртвый воин, s2c Мёртвый всадник, s3 Умертвие)
+
+`apps/godot/visuals/assets/undead_heraldic_0.png` … `_3.png` (5 пеших) и `undead_heraldic_cavalry_0.png` … `_3.png`
+(всадник на костяном коне из общего `horses.png`). Части — генератор картинок OpenAI (ChatGPT) по шаблонам
+`shareness/skills/unit-parts/PROMPTS.md`: `undead-torsos.png`, `undead-heads.png` (у Скелета шея в тряпке, чтобы
+не просвечивал вырез), `undead-shields.png`, `club.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs undead`.
