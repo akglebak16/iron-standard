@@ -18,6 +18,9 @@ const SHEETS=[
  ['castles.png',CULTURES.map(c=>'castle|'+c),140],
  ['villages.png',[...CULTURES.map(c=>'village|'+c),'camp'],125],
 ];
+// Redrawn cells laid over the sheets above: each takes the ground width of the picture it replaces.
+// The Dominion was red brick like the Pact; it is now whitewashed stone, dark timber and gold.
+const REDRAWN=[['dominion.png',['town|dom','castle|dom','village|dom']]];
 
 async function blobs(file){
  const {data,info}=await sharp(path.join(src,file)).ensureAlpha().raw().toBuffer({resolveWithObject:true});
@@ -42,22 +45,28 @@ async function ground(buffer){
 }
 
 async function main(){
- const frames={},flags={};
+ const frames={},flags={},groundWidth={},parts={};
  for(const [file,names,width] of SHEETS){
   const list=await blobs(file);
   if(list.length!==names.length)throw Error(`${file}: ${list.length} parts, expected ${names.length}`);
   const info=await Promise.all(list.map(ground));
   // One scale per sheet, so the cultures keep their sizes relative to each other.
   const widths=info.map(g=>g.width).sort((a,b)=>a-b),k=width/widths[widths.length>>1];
-  for(let i=0;i<list.length;i++){
-   const m=await sharp(list[i]).metadata(),g=info[i],w=Math.round(m.width*k),h=Math.round(m.height*k);
-   const left=Math.round(ANCHOR[0]-g.cx*k),top=Math.round(ANCHOR[1]-g.y*k);
-   if(left<0||top<0||left+w>FRAME[0]||top+h>FRAME[1])throw Error(`${names[i]} does not fit the frame: ${left},${top} ${w}×${h}`);
-   frames[names[i]]=await sharp({create:{width:FRAME[0],height:FRAME[1],channels:4,background:'#00000000'}})
-    .composite([{input:await sharp(list[i]).resize(w,h).png().toBuffer(),left,top}]).png().toBuffer();
-   // The banner pole stands just right of the highest point (offset from the anchor, frame pixels).
-   flags[names[i]]=[Math.round(left+g.top[0]*k+3-ANCHOR[0]),Math.round(top+g.top[1]*k+10-ANCHOR[1])];
-  }
+  names.forEach((n,i)=>{parts[n]={buffer:list[i],g:info[i],k};groundWidth[n]=info[i].width*k;});
+ }
+ for(const [file,names] of REDRAWN){
+  const list=await blobs(file);
+  if(list.length!==names.length)throw Error(`${file}: ${list.length} parts, expected ${names.length}`);
+  for(let i=0;i<list.length;i++){const g=await ground(list[i]);parts[names[i]]={buffer:list[i],g,k:groundWidth[names[i]]/g.width};}
+ }
+ for(const [name,{buffer,g,k}] of Object.entries(parts)){
+  const m=await sharp(buffer).metadata(),w=Math.round(m.width*k),h=Math.round(m.height*k);
+  const left=Math.round(ANCHOR[0]-g.cx*k),top=Math.round(ANCHOR[1]-g.y*k);
+  if(left<0||top<0||left+w>FRAME[0]||top+h>FRAME[1])throw Error(`${name} does not fit the frame: ${left},${top} ${w}×${h}`);
+  frames[name]=await sharp({create:{width:FRAME[0],height:FRAME[1],channels:4,background:'#00000000'}})
+   .composite([{input:await sharp(buffer).resize(w,h).png().toBuffer(),left,top}]).png().toBuffer();
+  // The banner pole stands just right of the highest point (offset from the anchor, frame pixels).
+  flags[name]=[Math.round(left+g.top[0]*k+3-ANCHOR[0]),Math.round(top+g.top[1]*k+10-ANCHOR[1])];
  }
  const names=Object.keys(frames),columns=CULTURES.length,rows=Math.ceil(names.length/columns);
  await sharp({create:{width:FRAME[0]*columns,height:FRAME[1]*rows,channels:4,background:'#00000000'}})

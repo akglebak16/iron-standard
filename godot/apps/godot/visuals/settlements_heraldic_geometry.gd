@@ -121,8 +121,8 @@ const DATA = {
 			-109
 		],
 		"town|dom": [
-			7,
-			-100
+			20,
+			-122
 		],
 		"town|pact": [
 			13,
@@ -149,8 +149,8 @@ const DATA = {
 			-100
 		],
 		"castle|dom": [
-			3,
-			-106
+			9,
+			-115
 		],
 		"castle|pact": [
 			4,
@@ -177,8 +177,8 @@ const DATA = {
 			-59
 		],
 		"village|dom": [
-			26,
-			-51
+			23,
+			-57
 		],
 		"village|pact": [
 			11,

@@ -15,3 +15,7 @@
    SAME overall size»), старые иконки вторым. «A castle is a military stronghold, NOT a town: no houses and no church».
 3. `villages.png` — вложения те же. «NOT fortified: no walls, no towers», «about two thirds of the width of a town»;
    восьмая клетка — логово разбойников: «three ragged dark canvas tents, a crude palisade of sharpened stakes, a campfire».
+4. `dominion.png` — Доминион перерисован отдельно (в первом заходе вышел красным кирпичом, как Пакт): вложения
+   `towns.png`, `castles.png`, `villages.png`, «redraw ONLY the sixth culture … NO red brick at all», белёный камень,
+   тёмное дерево, золотистая солома и гонт. Урок: каждой культуре в промпте давать свои материалы и цвета, не
+   повторяя соседей (цвета стяга фракции — хорошая подсказка).
