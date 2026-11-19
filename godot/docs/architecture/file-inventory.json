@@ -5049,6 +5049,11 @@
       "source": "apps/godot/visuals/emp_heraldic_geometry.gd",
       "destination": "apps/godot/visuals/emp_heraldic_geometry.gd",
       "introduced_revision": "local-emp-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/khan_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/khan_heraldic_geometry.gd",
+      "introduced_revision": "local-khan-heraldic"
     }
   ]
 }
