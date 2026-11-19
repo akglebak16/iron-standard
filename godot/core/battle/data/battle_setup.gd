@@ -20,6 +20,9 @@ var enemy_unit_cap: int = DEFAULT_UNIT_CAP_OVERRIDE
 var enemy_leader_name: String = "" # Empty means no named leader.
 var player_army: Array[Dictionary] = []
 var enemy_army: Array[Dictionary] = []
+## The player's allies (#243): they fight on his side under their own commander and share his side's unit cap.
+var ally_army: Array[Dictionary] = []
+var ally_faction: String = ""
 var hero_troop: String = ""
 var hero_profile: Dictionary = {} # Empty keeps the existing troop-based preview hero.
 var companion_profiles: Array[Dictionary] = [] # All hired companions, including injured ones.
@@ -36,7 +39,7 @@ func unit_cap(faction: String, override: int) -> int:
 func uses_reserve_waves(faction: String) -> bool:
 	return quick or faction in FACTION_RESERVE_WAVES
 
-const FIELDS := ["seed","biome","siege","quick","wall_damage","castle","wall_defense","player_faction","enemy_faction","player_unit_cap","enemy_unit_cap","enemy_leader_name","player_army","enemy_army","hero_troop","hero_profile","companion_profiles","hero_position","terrain","player_ai_profile","enemy_ai_profile"]
+const FIELDS := ["seed","biome","siege","quick","wall_damage","castle","wall_defense","player_faction","enemy_faction","player_unit_cap","enemy_unit_cap","enemy_leader_name","player_army","enemy_army","ally_army","ally_faction","hero_troop","hero_profile","companion_profiles","hero_position","terrain","player_ai_profile","enemy_ai_profile"]
 
 func duplicate(deep: bool = true) -> RefCounted:
 	var values := new()

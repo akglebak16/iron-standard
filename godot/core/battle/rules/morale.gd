@@ -52,7 +52,7 @@ static func tick(battle: State) -> void:
 		bad[side] = odds < Config.MORALE_BAD_ODDS
 		very_bad[side] = odds < Config.MORALE_VERY_BAD_ODDS
 		recoveries[side] = Config.MORALE_STRONG_RECOVERY if odds > Config.MORALE_STRONG_ODDS else (Config.MORALE_EVEN_RECOVERY if odds > Config.MORALE_EVEN_ODDS else Config.MORALE_WEAK_RECOVERY)
-	var grouped := battle.groups.size() == 2
+	var grouped := battle.groups.size() >= 2
 	var pursuers: Array = [] # Lazily: per side, a grid of its live fighters (Morale._pursued).
 	var routed: Array[Unit] = []
 	var rallied := {}
@@ -69,7 +69,7 @@ static func tick(battle: State) -> void:
 		var slot := side * Config.GROUP_KINDS + kind if grouped and kind >= 0 and kind < Config.GROUP_KINDS else -1
 		if flags[I.FLEEING * capacity + row]:
 			if _rout_step(battle, unit, leaders[side], collapsed[side], slot >= 0, pursuers) and slot >= 0:
-				rallied[battle.groups[side][kind]] = true
+				rallied[battle.groups[flags[I.COMMAND * capacity + row]][kind]] = true
 			continue
 		if bad[side]:
 			unit.morale -= Config.MORALE_BAD_ODDS_LOSS
@@ -103,10 +103,11 @@ static func tick(battle: State) -> void:
 
 ## Every morale check: per group (side * GROUP_KINDS + kind) the morale every ready fighter loses this check to the
 ## threat around it and to the flight of its own men; also writes the group's morale summary for the debug overlay.
+## The player's allies (#243) share the pressure of the player's group of their kind: they stand on the same side.
 static func _group_losses(battle: State) -> PackedFloat64Array:
 	var losses := PackedFloat64Array()
 	losses.resize(2 * Config.GROUP_KINDS)
-	if battle.groups.size() != 2:
+	if battle.groups.size() < 2:
 		return losses
 	var sides: Array = FieldAssessment.assess(battle).sides
 	for side in 2:

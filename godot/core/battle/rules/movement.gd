@@ -51,7 +51,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		unit.charge_cooldown -= dt
 		if rng != null:
 			unit.attack_cooldown -= dt
-		var group: Group = battle.groups[unit.side][unit.group_kind]
+		var group: Group = battle.group_of(unit)
 		var destination: Vector2 = group.slot_position(unit, battle.arena_size)
 		var velocity_scale := 1.0
 		var ai_face := unit.facing
@@ -65,7 +65,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 			target = Targeting.refresh(battle, unit, dt, rng, index)
 			if sampled: probe = battle.profiler.probe("sample_target", probe)
 			var range_scale := TerrainRules.range_scale(terrain, unit.position, target.position) if terrain != null and target != null and unit.attack_range > 0.0 else 1.0
-			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.side * 3 + unit.group_kind], dt, battle.formation_centers[unit.side * 3 + Config.GROUP_INFANTRY], wall_x, range_scale)
+			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.command * 3 + unit.group_kind], dt, battle.formation_centers[unit.command * 3 + Config.GROUP_INFANTRY], wall_x, range_scale)
 			if sampled: probe = battle.profiler.probe("sample_plan", probe)
 			destination = unit.plan_destination
 			velocity_scale = unit.plan_speed
@@ -122,15 +122,16 @@ static func _prepare_ai(battle: State) -> void:
 		flags[attackers + row] = 0
 		flags[aimers + row] = 0
 	var sums := PackedFloat64Array()
-	sums.resize(12)
+	sums.resize(18)
 	var counts := PackedInt32Array()
-	counts.resize(6)
+	counts.resize(9)
 	for row in count:
 		if flags[fields.DEAD * capacity + row] or flags[fields.GONE * capacity + row] or flags[fields.HERO * capacity + row] or flags[fields.FLEEING * capacity + row]:
 			continue
 		var side: int = flags[fields.SIDE * capacity + row]
-		var slot: int = side * 3 + flags[fields.GROUP_KIND * capacity + row]
-		var group: Group = battle.groups[side][slot - side * 3]
+		var command: int = flags[fields.COMMAND * capacity + row]
+		var slot: int = command * 3 + flags[fields.GROUP_KIND * capacity + row]
+		var group: Group = battle.groups[command][slot - command * 3]
 		var fitted := group.implied_center(vectors[motion.V.SLOT_OFFSET * capacity + row], positions[row])
 		sums[slot * 2] += fitted.x
 		sums[slot * 2 + 1] += fitted.y
@@ -138,7 +139,7 @@ static func _prepare_ai(battle: State) -> void:
 		var target := battle.unit_for(flags[fields.TARGET_HANDLE * capacity + row])
 		if target != null and target.side != side and not target.dead and not target.gone:
 			flags[(attackers if reals[motion.R.ATTACK_RANGE * capacity + row] <= 0.0 else aimers) + target.battle_index] += 1
-	for slot in 6:
+	for slot in 9:
 		battle.formation_centers[slot] = Vector2(sums[slot * 2] / counts[slot], sums[slot * 2 + 1] / counts[slot]) if counts[slot] > 0 else Vector2.INF
 
 static func _steer(unit: Unit, position: Vector2, velocity: Vector2, destination: Vector2, speed: float, dt: float, terrain = null) -> Vector2:
