@@ -83,5 +83,15 @@ OpenAI права на результат принадлежат пользов�
 `bow.png`; кони — общий `horses.png`, меч/топор/копьё — `weapons.png`. Сборка:
 `node godot/tools/battle/render_heraldic_faction.cjs nord` (sharp), геометрия — `nord_heraldic_geometry.gd`.
 Под знаменем игрока синее сукно перекрашивается в цвет знамени (`dominion_heraldic_art.gd`, `FACTIONS`).
-Эталоны теста палитр знамени перенесены на e3 (`tests/unit/visuals/fixtures/banner_*_e3.png`): вырезаны из
+Эталоны теста палитр знамени перенесены на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`): вырезаны из
 `portrait.png` с наложением `banner_N_portrait_v0.png`, как это делает игра.
+
+### Аурелийская империя (e1 Рекрут, e2 Легионер, e3 Триарий, e2s Пикинёр, e3s Алебардист, e2a Арбалетчик, e3a Стрелок-ветеран, e3c Катафракт)
+
+`apps/godot/visuals/assets/emp_heraldic_0.png` … `_3.png` (7 пеших) и `emp_heraldic_cavalry_0.png` … `_3.png`
+(Катафракт, 12 строк: десять обычных, всадник без коня и конь без всадника). Части — генератор картинок OpenAI
+(ChatGPT) по `tools/battle/heraldic_source/emp-prompts.md`: `emp-torsos.png`, `emp-heads.png`, `emp-shields.png`,
+`emp-horse.png` (свой бардированный конь: багряная попона с золотыми солнцами). Оружие — общее (`weapons.png`, `lance.png`).
+Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emp`, геометрия — `emp_heraldic_geometry.gd`.
+Под знаменем игрока багряное сукно перекрашивается в цвет знамени; срез шеи не трогается (кровь того же оттенка).
+Эталоны теста палитр знамени теперь на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`).

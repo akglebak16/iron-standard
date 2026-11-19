@@ -15,8 +15,13 @@ const geometryOut=outIndex>=0?output:path.resolve(output,'..');
 const WEAPONS={
  sword:{art:['weapons.png',0,0,2,3],h:102,y:28,grip:.5},
  axe:{art:['weapons.png',1,0,2,3],h:80,y:48,grip:.15},
- spear:{art:['weapons.png',0,1,2,3],h:146,y:3,grip:.5},
- lance:{art:['lance.png',0,0,1,1],h:206,y:0,grip:.5,gripY:.77},
+ // On horseback the spear is held low on the shaft (75 % down) so it rises well above the head.
+ spear:{art:['weapons.png',0,1,2,3],h:146,y:3,grip:.5,mountedGripY:.75},
+ halberd:{art:['weapons.png',1,1,2,3],h:146,y:3,grip:.4},
+ // Crossbow as the Dominion's: stock across the body, rear fist at the trigger, other hand under the fore-end.
+ xbow:{art:['weapons.png',0,2,2,3],h:63,y:88,left:72,hand:96,support:[115,116],pivotY:128},
+ // 172 px: the point stays inside the 244 px mounted frame (206 cut it off at the top).
+ lance:{art:['lance.png',0,0,1,1],h:172,y:0,grip:.5,gripY:.77},
  // The bow is held out at the right edge of the bust, so its string clears the face and chest.
  // Held low on the stave (70 % down), so the bow rises well above the fist.
  bow:{art:['bow.png',0,0,1,1],h:104,grip:.72,gripY:.7,hand:132},
@@ -35,13 +40,27 @@ const FACTIONS={
   ],
  },
 };
+FACTIONS.emp={
+ // The cataphract rides a horse with the faction's own caparison (crimson, gold suns).
+ troops:[
+  {id:'e1',weapon:'sword',shield:'kite',steel:false},
+  {id:'e2',weapon:'sword',shield:'kite',steel:true},
+  {id:'e3',weapon:'sword',shield:'kite',steel:true,headHeight:72},
+  {id:'e2s',weapon:'spear',shield:'kite',steel:false},
+  {id:'e3s',weapon:'halberd',shield:false,steel:true},
+  {id:'e2a',weapon:'xbow',shield:false,steel:false},
+  {id:'e3a',weapon:'xbow',shield:false,steel:true},
+  {id:'e3c',weapon:'lance',shield:'kite',steel:true,horse:'barded',horseArt:'emp-horse.png',headHeight:73},
+ ],
+};
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];
 const FOOT={W:152,H:176},HORSE={W:240,H:244};
 const RIDER=[4,23];
 const TORSO_WIDTH=108,HEAD_HEIGHT=64,HEAD_OVERLAP=3;
 const HORSE_BOX={left:5,right:235,bottom:232};
-// Where a round shield rests on the foot bust (frame pixels): [cx, cy, r], as the Dominion's.
-const ROUND_SHIELD=[45.5,126,34.6];
+// Where a shield rests on the foot bust (frame pixels), as the Dominion's: a circle [cx, cy, r] or a
+// kite [left x, left y, right x, right y, tip x, tip y, top bulge]. `shield: true` means round.
+const SHIELDS={round:{round:[45.5,126,34.6]},small:{round:[45.5,126,26]},kite:{kite:[18.4,86,78.8,86,48,161,4]}};
 
 async function cell(file,col,row,cols,rows){
  const meta=await sharp(file).metadata();
@@ -76,11 +95,17 @@ async function neckHole(buffer){
  while(r<w-1&&dark(data,(row*w+r+1)*4))r++;
  return {hole:[(l+r+1)/2,cy+.5,r-l+1,bottom-top+1]};
 }
+// Horizontal centre of a head part: the middle of its outline across the face band (35–80 % of the
+// height), so a knot or scarf at the bottom and a crest or plume on top do not pull it sideways.
 async function neckBottom(buffer){
  const {data,info}=await sharp(buffer).ensureAlpha().raw().toBuffer({resolveWithObject:true});
- const w=info.width,y=info.height-4;let l=-1,r=-1;
- for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>128){if(l<0)l=x;r=x;}
- return [(l+r+1)/2,r-l+1];
+ const w=info.width,h=info.height;let sum=0,n=0;
+ for(let y=Math.round(h*.35);y<Math.round(h*.8);y++){
+  let l=-1,r=-1;
+  for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>128){if(l<0)l=x;r=x;}
+  if(l>=0){sum+=(l+r+1)/2;n++;}
+ }
+ return [sum/n,0];
 }
 const BLOOD=[110,24,32],BLOOD_LIGHT=[158,52,52];
 function woundSvg(o){
@@ -99,14 +124,29 @@ function bloodyNeck(head,bottom,size){
  }
  return out;
 }
-async function horseStamp(buffer){
+// Repaint the shared ochre caparison in a faction colour, keeping shading. Its speckled texture
+// reaches down to hue 0.085; the brass bridle fittings on the head (top third) keep their colour.
+async function recolour(buffer,hex){
+ const {data,info}=await sharp(buffer).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+ const target=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+ for(let p=0;p<data.length;p+=4){
+  if(!data[p+3])continue;
+  const r=data[p]/255,g=data[p+1]/255,b=data[p+2]/255,max=Math.max(r,g,b),min=Math.min(r,g,b),v=max,s=max?(max-min)/max:0;
+  let h=0;if(max>min){h=max===r?((g-b)/(max-min))%6:max===g?(b-r)/(max-min)+2:(r-g)/(max-min)+4;h=(h/6+1)%1;}
+  if(p/4/info.width<info.height*.3)continue;
+  if(h>.085&&h<.16&&s>.4){const k=Math.min(1.35,Math.max(.45,v/.68));for(let c=0;c<3;c++)data[p+c]=Math.min(255,Math.round(target[c]*k));}
+ }
+ return sharp(data,{raw:info}).png().toBuffer();
+}
+async function horseStamp(buffer,caparison){
+ if(caparison)buffer=await recolour(buffer,caparison);
  const m=await sharp(buffer).metadata();
  const scale=(HORSE_BOX.right-HORSE_BOX.left)/m.width,w=Math.round(m.width*scale),h=Math.round(m.height*scale);
  return {input:await sharp(buffer).resize(w,h).png().toBuffer(),left:HORSE_BOX.left,top:HORSE_BOX.bottom-h};
 }
 
 // One figure (foot or mounted): every layer placed in its frame, plus its geometry.
-async function figure(spec,index,sheets,art){
+async function figure(spec,index,sheets,art,caparison){
  const mounted=!!spec.horse,size=mounted?HORSE:FOOT,frame=frameOf(size);
  const [ox,oy]=mounted?RIDER:[0,0];
  const neck=[76+ox,78+oy];
@@ -115,7 +155,8 @@ async function figure(spec,index,sheets,art){
  const headPart=await cell(sheets.heads,col,row,3,3);
  const t=await sharp(torsoPart).metadata(),h=await sharp(headPart).metadata();
  const {hole}=await neckHole(torsoPart);
- const torsoScale=TORSO_WIDTH/t.width,headScale=HEAD_HEIGHT/h.height;
+ // A crest or plume adds height only: such heads set their own height so the helmet keeps its size.
+ const torsoScale=TORSO_WIDTH/t.width,headScale=(spec.headHeight||HEAD_HEIGHT)/h.height;
  const torso={input:await sharp(torsoPart).resize(Math.round(t.width*torsoScale),Math.round(t.height*torsoScale)).png().toBuffer(),
   left:Math.round(neck[0]-hole[0]*torsoScale),top:Math.round(neck[1]-hole[1]*torsoScale)};
  const opening={rx:hole[2]*torsoScale/2,ry:hole[3]*torsoScale/2};
@@ -132,27 +173,49 @@ async function figure(spec,index,sheets,art){
  let shield=null;
  if(spec.shield){
   const s=await cell(sheets.shields,col,row,3,3),sm=await sharp(s).metadata();
-  const [cx,cy,r]=[ROUND_SHIELD[0]+ox,ROUND_SHIELD[1]+oy,ROUND_SHIELD[2]];
-  const k=Math.min(r*2/sm.width,r*2/sm.height),ow=Math.round(sm.width*k),oh=Math.round(sm.height*k);
-  shield={input:await sharp(s).resize(ow,oh).png().toBuffer(),left:Math.round(cx-ow/2),top:Math.round(cy-oh/2)};
-  geometry.shield_center=[Math.round(cx),Math.round(cy)];
+  const shape=SHIELDS[spec.shield===true?'round':spec.shield];
+  let ow,oh,left,top;
+  if(shape.round){
+   const [cx,cy,r]=[shape.round[0]+ox,shape.round[1]+oy,shape.round[2]];
+   const k=Math.min(r*2/sm.width,r*2/sm.height);ow=Math.round(sm.width*k);oh=Math.round(sm.height*k);
+   left=Math.round(cx-ow/2);top=Math.round(cy-oh/2);
+   geometry.shield_center=[Math.round(cx),Math.round(cy)];
+  }else{
+   const [xl,yl,xr,yr,xt,yt,bulge]=shape.kite;
+   const sw=xr-xl,sh=yt-Math.min(yl,yr)+bulge,k=Math.min(sw/sm.width,sh/sm.height);
+   ow=Math.round(sm.width*k);oh=Math.round(sm.height*k);
+   left=Math.round((xl+xr+xt)/3+ox-ow/2);top=Math.round(Math.min(yl,yr)-bulge+oy);
+  }
+  shield={input:await sharp(s).resize(ow,oh).png().toBuffer(),left,top};
+  if(!geometry.shield_center)geometry.shield_center=[Math.round(left+ow/2),Math.round(top+oh/2)];
  }
  // Weapon with its gripping glove; the cavalry lance is gripped below the vamplate.
  const w=WEAPONS[spec.weapon],weapon=art[spec.weapon],wm=await sharp(weapon).metadata();
  const glove=art[spec.steel?'steelGlove':'leatherGlove'];
  const wh=w.h,ww=Math.round(wh*wm.width/wm.height);
  let left,top,handX,handY=105+oy;
- if(w.hand){handX=w.hand+ox;left=handX-Math.round(ww*w.grip);top=Math.round(handY+11-wh*w.gripY);}
+ if(w.support){
+  left=w.left+ox;top=w.y+oy;handX=w.hand+ox;
+  const weaponLayer=[await stamp(glove,20,22,83+ox,117+oy),await stamp(art[spec.steel?'steelSupport':'leatherSupport'],20,22,w.support[0]+ox,w.support[1]+oy),await stamp(weapon,ww,wh,left,top)];
+  geometry.grip=[handX,w.pivotY+oy];
+  return finish(weaponLayer);
+ }
+ if(mounted&&w.mountedGripY){handX=125+ox;left=handX-Math.round(ww/2);top=Math.round(handY+11-wh*w.mountedGripY);}
+ else if(w.hand){handX=w.hand+ox;left=handX-Math.round(ww*w.grip);top=Math.round(handY+11-wh*w.gripY);}
  else if(w.gripY){handX=125+ox;left=handX-Math.round(ww/2);top=Math.round(handY+11-wh*w.gripY);}
  else{left=Math.min(125-Math.round(ww*w.grip),FOOT.W-ww-2)+ox;handX=left+Math.round(ww*w.grip);top=w.y+oy;}
- const weaponLayer=[await stamp(weapon,ww,wh,left,top),await stamp(glove,20,22,handX-13,handY)];
  geometry.grip=[handX,handY+11];
- const horse=mounted?await horseStamp(await cell(path.join(src,'horses.png'),COATS.indexOf(spec.horse)%3,Math.floor(COATS.indexOf(spec.horse)/3),3,3)):null;
- return {spec,size,frame,png:pngOf(size),torso,head,shield,weaponLayer,horse,opening,neck,tuck,geometry};
+ return finish([await stamp(weapon,ww,wh,left,top),await stamp(glove,20,22,handX-13,handY)]);
+ async function finish(weaponLayer){
+  const coat=COATS.indexOf(spec.horse);
+  const horseArt=spec.horseArt?await cell(path.join(src,spec.horseArt),0,0,1,1):mounted?await cell(path.join(src,'horses.png'),coat%3,Math.floor(coat/3),3,3):null;
+  const horse=mounted?await horseStamp(horseArt,spec.horse==='barded'&&!spec.horseArt?caparison:null):null;
+  return {spec,size,frame,png:pngOf(size),torso,head,shield,weaponLayer,horse,opening,neck,tuck,geometry};
+ }
 }
 
 // The ten rows of the foot atlas (body, weapon, portrait, headless, head, flash, corpse,
-// corpse_headless, bare, shield); the cavalry adds an 11th: the rider alone without his horse.
+// corpse_headless, bare, shield); the cavalry adds the rider alone and the horse alone.
 async function rows(f,variant){
  const {frame,png,size}=f;
  const headImage=await raw(await frame([f.head]));
@@ -173,7 +236,11 @@ async function rows(f,variant){
  const flash=Buffer.from(portrait);for(let p=0;p<flash.length;p+=4)flash[p]=flash[p+1]=flash[p+2]=255;
  const out=[await png(body),await png(weapon),await png(portrait),await png(headless),await png(severed),await png(flash),await png(portrait),corpseHeadless,
   await png(f.shield?bare:Buffer.alloc(size.W*size.H*4)),await png(shieldLayer)];
- if(f.horse)out.push(await frame([f.torso,{input:await png(headImage),left:0,top:0},...(f.shield?[f.shield]:[]),{input:await png(weapon),left:0,top:0}]));
+ if(f.horse){
+  out.push(await frame([f.torso,{input:await png(headImage),left:0,top:0},...(f.shield?[f.shield]:[]),{input:await png(weapon),left:0,top:0}]));
+  // Row 12: the horse alone, lying on after its rider is cut from the saddle.
+  out.push(await frame([f.horse]));
+ }
  return out;
 }
 
@@ -185,12 +252,14 @@ async function main(){
  for(const [kind,w] of Object.entries(WEAPONS))if(fs.existsSync(path.join(src,w.art[0])))art[kind]=await cell(path.join(src,w.art[0]),...w.art.slice(1));
  art.steelGlove=await cell(path.join(src,'gloves.png'),0,0,2,2);
  art.leatherGlove=await cell(path.join(src,'gloves.png'),1,0,2,2);
+ art.steelSupport=await cell(path.join(src,'gloves.png'),0,1,2,2);
+ art.leatherSupport=await cell(path.join(src,'gloves.png'),1,1,2,2);
  const figures=[];
- for(let i=0;i<config.troops.length;i++)figures.push(await figure(config.troops[i],i,sheets,art));
+ for(let i=0;i<config.troops.length;i++)figures.push(await figure(config.troops[i],i,sheets,art,config.caparison));
  const foot=figures.filter(f=>!f.spec.horse),cavalry=figures.filter(f=>f.spec.horse);
  const geometry=Object.fromEntries(figures.map(f=>[f.spec.id,f.geometry]));
  fs.writeFileSync(path.join(geometryOut,`${faction}_heraldic_geometry.gd`),'extends RefCounted\n## Generated by tools/battle/render_heraldic_faction.cjs from heraldic_source parts.\nconst DATA = '+JSON.stringify(geometry,null,'\t')+'\n');
- for(const [list,size,name,count] of [[foot,FOOT,`${faction}_heraldic`,10],[cavalry,HORSE,`${faction}_heraldic_cavalry`,11]]){
+ for(const [list,size,name,count] of [[foot,FOOT,`${faction}_heraldic`,10],[cavalry,HORSE,`${faction}_heraldic_cavalry`,12]]){
   if(!list.length)continue;
   for(let variant=0;variant<4;variant++){
    const overlays=[];
