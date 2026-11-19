@@ -171,6 +171,70 @@ func rally(p: Dictionary, tgt: Dictionary) -> void:
 		o.ga = 0.0
 		roster.path_to(o, tgt.x, tgt.y)
 
+# ---------- the player joins a fight between map parties ----------
+
+## The running fight a party takes part in, or {}.
+func fight_of(p: Dictionary) -> Dictionary:
+	var id = p.get("fight")
+	if id == null:
+		return {}
+	for sk in fights:
+		if sk.id == id:
+			return sk
+	return {}
+
+## Both sides of a fight as party lists: [A, B].
+func sides(sk: Dictionary) -> Array:
+	return [_side(sk, sk.A), _side(sk, sk.B)]
+
+## The player sides with `side` (0 = A, 1 = B): the map fight ends and becomes the player's battle.
+## Returns {"foe": the strongest party of the other side, "foes": the rest of it, "friends": the side the player helps}.
+func join(sk: Dictionary, side: int) -> Dictionary:
+	var both := sides(sk)
+	var friends: Array = both[side]
+	var other: Array = both[1 - side]
+	if friends.is_empty() or other.is_empty():
+		return {}
+	fights.erase(sk)
+	for p in friends + other:
+		p.fight = null
+		p.state = "idle"
+		p.path = []
+		p.pi = 0
+		p.tid = null
+	var foe: Dictionary = other[0]
+	for p in other:
+		if roster.strength_of(p) > roster.strength_of(foe):
+			foe = p
+	return {"foe": foe, "foes": other.filter(func(p): return not is_same(p, foe)), "friends": friends}
+
+## One party per faction the player is at peace with: helping against them is an attack on that faction.
+static func peaceful(parties: Array, rel: Dictionary) -> Array:
+	var seen := {}
+	var out: Array = []
+	for p in parties:
+		if not Rules.hostile_to_player(p, rel) and not seen.has(p.fac):
+			seen[p.fac] = true
+			out.append(p)
+	return out
+
+# ---------- the player's allies in his battle ----------
+
+## Parties at peace with the player that are at war with his enemy join on his side (Bannerlord-style).
+## Vassal retinues are gathered by WorldVassals.helpers.
+func allies(player, enemy: Dictionary) -> Array:
+	if enemy.kind in ["camp", "siege", "caravan"]:
+		return []
+	var out: Array = []
+	for o in roster.parties:
+		if is_same(o, enemy) or o.hide or o.get("fight") or o.get("lock", false) or o.kind in ["camp", "siege", "caravan", "cvass", "bandit"] or o.fac == "undead":
+			continue
+		if Rules.hostile_to_player(o, player.rel) or not roster.hostile(o, enemy) or Rules.troop_count(o.troops) < 1:
+			continue
+		if minf(Vector2(o.x - enemy.x, o.y - enemy.y).length(), Vector2(o.x - player.x, o.y - player.y).length()) < HELP_RADIUS:
+			out.append(o)
+	return out
+
 # ---------- allies of the enemy in the player's battle ----------
 
 func helpers(player, enemy: Dictionary) -> Array:

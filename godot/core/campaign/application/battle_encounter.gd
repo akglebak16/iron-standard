@@ -234,10 +234,13 @@ var _encounter_pending_world: RefCounted
 var _encounter_pending_opponent: Dictionary = {}
 var _encounter_pending_allies: Array = []
 
-func begin(state: RefCounted, opponent: Dictionary) -> RefCounted:
+## `friends`/`foes`: the sides of a map fight the player joined (WorldSkirmish.join); they come on top of
+## the parties nearby that join on their own.
+func begin(state: RefCounted, opponent: Dictionary, friends: Array = [], foes: Array = []) -> RefCounted:
 	if _encounter_pending_ticket != null or _encounter_applying or state == null or opponent.is_empty(): return null
-	state.skirmish.merge(opponent, state.skirmish.helpers(state.player, opponent))
-	_encounter_pending_allies = snapshot(state.vassals.helpers(opponent))
+	state.skirmish.merge(opponent, _unique(foes + state.skirmish.helpers(state.player, opponent), [opponent]))
+	var near: Array = state.vassals.helpers(opponent) + state.skirmish.allies(state.player, opponent)
+	_encounter_pending_allies = snapshot(_unique(friends + near, [opponent]).filter(func(h): return h in state.roster.parties))
 	_encounter_pending_world = state
 	_encounter_pending_opponent = opponent
 	_encounter_pending_ticket = RefCounted.new()
@@ -273,7 +276,7 @@ func complete(ticket: RefCounted, result: Dictionary) -> Dictionary:
 	else:
 		state.log_world("Ты потерпел поражение от «%s»." % opponent.get("name", ""), state.JOURNAL_BAD)
 		if raised > 0: state.log_world("Мертвецы подняли твоих павших: +%d в их строю." % raised, state.JOURNAL_BAD)
-	if not _encounter_pending_allies.is_empty(): state.log_world("Дружины вассалов бились рядом с тобой.")
+	_journal_allies(state, _encounter_pending_allies, bool(summary.win))
 	var loot_id := -1
 	if not town.is_empty():
 		_encounter_apply_siege(state, town, resolved)
@@ -288,6 +291,39 @@ func complete(ticket: RefCounted, result: Dictionary) -> Dictionary:
 	resolved.loot_settlement_id = loot_id
 	# apply assigns dictionaries into live state; the reply must detach them again.
 	return resolved.duplicate(true)
+
+## Who fought at the player's side; a shared victory warms the allied factions a little.
+static func _journal_allies(state: RefCounted, allies: Array, win: bool) -> void:
+	var vassals := false
+	var names: Array = []
+	var factions := {}
+	for a in allies:
+		var h: Dictionary = a.party
+		if h.kind == "cvass":
+			vassals = true
+			continue
+		names.append("«%s»" % h.get("name", ""))
+		if h.fac in Rules.REAL_FACTIONS:
+			factions[h.fac] = true
+	if vassals: state.log_world("Дружины вассалов бились рядом с тобой.")
+	if not names.is_empty(): state.log_world("Рядом с тобой бились: %s." % ", ".join(names))
+	if not win or factions.is_empty(): return
+	for fac in factions:
+		state.player.rel[fac] = minf(100.0, float(state.player.rel.get(fac, 0)) + Config.ALLY_WIN_RELATION)
+		state.log_world("Отношения %s к тебе улучшились: ты бился на их стороне." % _faction_gen(state, fac), state.JOURNAL_GOOD)
+	state.rel_watch()
+
+static func _faction_gen(state: RefCounted, fac: String) -> String:
+	return String(state.roster.factions.get_faction(fac).get("gen", fac))
+
+## Parties in order without repeats and without `skip`.
+static func _unique(list: Array, skip: Array) -> Array:
+	var out: Array = []
+	for p in list:
+		if skip.any(func(x): return is_same(x, p)) or out.any(func(x): return is_same(x, p)):
+			continue
+		out.append(p)
+	return out
 
 ## Companion growth and the hero's new level (compsAfter, applyBattleResult).
 static func _journal_progress(state: RefCounted, summary: Dictionary) -> void:

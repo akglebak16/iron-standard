@@ -52,7 +52,10 @@ func _initialize() -> void:
 	var won: Dictionary = bridge.calculate(ticket)
 	assert(won.summary.win)
 	assert(_has(s, "Победа над отрядом «Шайка». Добыча: %d золота." % int(won.summary.loot)))
-	# a lost one too
+	# a lost one too, far from everyone: lords at war with Нордмарк would ride to help (#238)
+	var lonely := _lonely_spot(s)
+	s.player.x = lonely.x
+	s.player.y = lonely.y
 	s.player.troops = [{"type": "e1", "n": 2}]
 	var lord: Dictionary = s.roster.make_party("lord", "nord", "Лорд", s.player.x, s.player.y, [{"type": "n1", "n": 90}])
 	var lost: Dictionary = bridge.calculate(bridge.begin(s, lord))
@@ -72,3 +75,12 @@ func _initialize() -> void:
 	s.dispose()
 	print("World time and journal tests passed")
 	quit(0)
+
+## A map point with no party within reach of a battle (WorldSkirmish.HELP_RADIUS and more).
+static func _lonely_spot(s) -> Vector2:
+	for gy in range(200, 3400, 150):
+		for gx in range(200, 5200, 150):
+			var at := Vector2(gx, gy)
+			if s.roster.parties.all(func(q): return q.hide or Vector2(q.x, q.y).distance_to(at) > 450.0):
+				return at
+	return Vector2(s.player.x, s.player.y)
