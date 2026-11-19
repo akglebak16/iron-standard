@@ -1,10 +1,12 @@
 extends RefCounted
-## Port of the native campaign world kernel (ADR-025): the threat-map stamp and the contact pairs of the world step.
+## Port of the native campaign world kernel (ADR-025): the threat-map stamp, the contact pairs and the box queries
+## of the world step (world_index.gd).
 ## create() returns null without the library; the GDScript code (ThreatMap.rebuild, PartyAI.step) stays the reference.
 ## Counters let benchmarks and tests prove the native path ran and never fell back.
 var _kernel: RefCounted
 var stamps := 0
 var pair_calls := 0
+var box_calls := 0
 var failures := 0
 
 static func create() -> RefCounted:
@@ -27,3 +29,8 @@ func stamp(xs: PackedFloat64Array, ys: PackedFloat64Array, strengths: PackedFloa
 func contact_pairs(xs: PackedFloat64Array, ys: PackedFloat64Array, reach: float) -> PackedInt32Array:
 	pair_calls += 1
 	return _kernel.contact_pairs(xs, ys, reach)
+
+## Indices (ascending) of the points within the box around (x, y).
+func box(xs: PackedFloat64Array, ys: PackedFloat64Array, x: float, y: float, half: float) -> PackedInt32Array:
+	box_calls += 1
+	return _kernel.box(xs, ys, x, y, half)

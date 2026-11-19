@@ -6,6 +6,7 @@ extends RefCounted
 ## and this file carries the goal out: routes, chases, arrivals. Faction campaigns are operations of world_wars.gd (stage 2b).
 ## The dead follow the director of the invasion (stage 2c, world_undead.gd): their wave and front come in the context.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
+const WorldIndex = preload("res://core/campaign/world/world_index.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const Config = preload("res://core/campaign/config.gd")
 const Goals = preload("res://core/campaign/world/party_goals.gd")
@@ -24,6 +25,7 @@ var skirmish: RefCounted = null # WorldSkirmish, optional: fights lasting hours,
 var goals := Goals.new()
 var threat_map: Callable = Callable()  # () -> ThreatMap (WorldState.threat_map), optional
 var native: RefCounted = null          # optional port of the native world kernel (ADR-025): contact pairs
+var index := WorldIndex.new()          # parties and settlements near a point for the goal evaluator (ADR-025)
 var enemies: Callable = Callable()     # (faction) -> hostile factions on the threat map, optional
 
 var _map_cache: RefCounted = null
@@ -34,6 +36,7 @@ func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
 	player = p
 	goals.width = WW
+	goals.index = index
 	goals.height = WH
 	goals.strength = roster.strength_of
 	goals.speed = roster.speed_of
@@ -104,9 +107,12 @@ func _fresh() -> void:
 func step(dh: float) -> void:
 	_fresh()
 	goals.rebuild_claims()
+	index.begin(roster.parties, roster.map.settles, dh)
 	for p in roster.parties.duplicate():
 		if p in roster.parties:
 			ai_party(p, dh)
+			index.moved(p)
+	index.finish()
 	var list := roster.parties.duplicate()
 	if native != null:
 		_contacts_native(list)

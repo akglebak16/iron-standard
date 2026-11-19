@@ -36,12 +36,14 @@ var ruins: Callable = Callable()         # (faction) -> own former settlements h
 var modifiers: Callable = Callable()     # (party) -> {goal: multiplier, "risk": exponent}; stage 3: traits, difficulty
 var passable: Callable = Callable()      # (Vector2) -> bool, for threat-map havens
 var doomed: Callable = Callable()        # () -> {settlement id: mode} targets of the undead waves (stage 2c), optional
+var index: RefCounted = null             # WorldIndex: parties and settlements near a point (ADR-025), optional
 var width := 5200.0
 var height := 3400.0
 
 ## goal|gid|faction -> number of parties of the faction pursuing it; kept by note()/rebuild_claims().
 var claims := {}
 var _own := {}  # faction -> own settlements, until reset()
+var _own_cols := {}  # faction -> WorldIndex.columns() of _own, for the indexed loops
 var _foes := {}  # faction -> Array hostile to it on the threat map, until reset(); "!" + faction: only the outlaws among them
 # The party candidates() works on, with what risk_at/crowd_factor would otherwise recompute for every settlement.
 var _cp: Dictionary = {}
@@ -54,6 +56,7 @@ var _cp_ready := false  # the map and the foes are asked for at the first risk_a
 ## Forgets per-step caches; call when parties or settlements may have changed (every world step).
 func reset() -> void:
 	_own = {}
+	_own_cols = {}
 	_foes = {}
 	_cp = {}
 	_cp_map = null
@@ -277,7 +280,7 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 	var look := maxf(sight, flee_sight)
 	var px: float = p.x
 	var py: float = p.y
-	for o in parties:
+	for o in _parties_near(px, py, look):
 		# Distant parties are rejected before their flags are read (the checks are pure, so their order does not matter).
 		if absf(o.x - px) > look or absf(o.y - py) > look:
 			continue
@@ -355,6 +358,21 @@ func own_settlements(fac: String) -> Array:
 		_own[fac] = settles.filter(func(s): return s.fac == fac and s.kind != "camp")
 	return _own[fac]
 
+## Own settlements that may lie in the box around (x, y), in the order of own_settlements().
+func _own_near(fac: String, x: float, y: float, half: float) -> Array:
+	var own := own_settlements(fac)
+	if index == null or not index.active():
+		return own
+	if not _own_cols.has(fac):
+		_own_cols[fac] = index.columns(own)
+	return index.list_near(own, _own_cols[fac], x, y, half)
+
+func _parties_near(x: float, y: float, half: float) -> Array:
+	return parties if index == null or not index.active() else index.parties_near(x, y, half)
+
+func _settles_near(x: float, y: float, half: float) -> Array:
+	return settles if index == null or not index.active() else index.settles_near(x, y, half)
+
 ## Defence of own settlements in danger: besieged, with enemies around, or the target of an undead wave (stage 2c). A
 ## town or castle the dead go for is defended from the inside: the lords inside hold the walls with the garrison.
 func _defend(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Array) -> void:
@@ -363,7 +381,7 @@ func _defend(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: 
 		return
 	var doom: Dictionary = doomed.call() if doomed.is_valid() else {}
 	var defend_range := Config.GOAL_DEFEND_RANGE
-	for s in own_settlements(String(p.fac)):
+	for s in _own_near(String(p.fac), p.x, p.y, defend_range):
 		if absf(s.x - p.x) > defend_range or absf(s.y - p.y) > defend_range:
 			continue
 		var d := Vector2(s.x - p.x, s.y - p.y).length()
@@ -386,7 +404,7 @@ func _patrol(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary,
 	var fief: Dictionary = ctx.get("fief", {})
 	var centre := Vector2(p.x, p.y) if fief.is_empty() else Vector2(fief.x, fief.y)
 	var reach := Config.GOAL_PATROL_RANGE if fief.is_empty() else Config.GOAL_RETINUE_PATROL_RANGE.y
-	for s in own_settlements(String(p.fac)):
+	for s in _own_near(String(p.fac), centre.x, centre.y, reach):
 		if absf(s.x - centre.x) > reach or absf(s.y - centre.y) > reach:
 			continue
 		var d := Vector2(s.x - centre.x, s.y - centre.y).length()
@@ -411,7 +429,7 @@ func _raid(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 		return  # the dead burn villages ahead of their wave (_ravage)
 	var targets: Array = []
 	var reach := Config.GOAL_RAID_RANGE
-	for s in settles:
+	for s in _settles_near(p.x, p.y, reach):
 		if absf(s.x - p.x) > reach or absf(s.y - p.y) > reach:
 			continue  # beyond the raid range (settlements, the player's villages): not a target, no need to ask about wars
 		if s.fac == fac or s.kind == "camp" or s.get("siege") != null:
@@ -467,7 +485,7 @@ func _rest(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 	var need := ramp(1.0 - n / full_strength_count(p), Config.GOAL_REST_NEED.x, Config.GOAL_REST_NEED.y, Config.GOAL_REST_BASE, 1.0)
 	var vassal: bool = p.kind == "vassal"
 	var rest_range := Config.GOAL_REST_RANGE
-	for s in own_settlements(String(p.fac)):
+	for s in _own_near(String(p.fac), p.x, p.y, rest_range):
 		if absf(s.x - p.x) > rest_range or absf(s.y - p.y) > rest_range:
 			continue
 		if vassal and s.kind == Config.SETTLEMENT_TOWN:
@@ -485,7 +503,7 @@ func _escort(p: Dictionary, prof: Dictionary, mods: Dictionary, out: Array) -> v
 	var w := weight(prof, mods, "escort")
 	if w <= 0.0 or _map() == null:
 		return
-	for c in parties:
+	for c in _parties_near(p.x, p.y, Config.GOAL_ESCORT_RANGE):
 		if c.kind != "caravan" or c.fac != p.fac or c.hide:
 			continue
 		var d := Vector2(c.x - p.x, c.y - p.y).length()
@@ -544,7 +562,7 @@ func _ravage(p: Dictionary, _me: float, prof: Dictionary, mods: Dictionary, ctx:
 	var front: Dictionary = ctx.get("front", {})
 	if w <= 0.0 or String(p.fac) != Config.UNDEAD_FACTION or front.is_empty():
 		return
-	for s in settles:
+	for s in _settles_near(p.x, p.y, Config.UNDEAD_RAVAGE_REACH):
 		if s.kind != Config.SETTLEMENT_VILLAGE or s.fac == Config.UNDEAD_FACTION or int(s.get("burnt", 0)) > 0:
 			continue
 		var d := Vector2(s.x - p.x, s.y - p.y).length()

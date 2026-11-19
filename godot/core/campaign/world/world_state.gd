@@ -173,6 +173,7 @@ static func create(seed_value: int, data: EuropeData, player_culture: String, de
 	state.skirmish.clans = state.clans
 	state.skirmish.undead = state.undead
 	state.ai.skirmish = state.skirmish
+	state.skirmish.index = state.ai.index
 	state.ai.threat_map = state.threat_map
 	state.ai.enemies = state.threat_enemies
 	state.rel_watch()
@@ -324,6 +325,7 @@ func hour_tick() -> void:
 func use_native(port: RefCounted) -> void:
 	native = port
 	ai.native = port
+	ai.index.native = port
 	if threat != null:
 		threat.native = port
 

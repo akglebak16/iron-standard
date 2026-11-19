@@ -17,6 +17,7 @@ protected:
                          &IronWorldKernel::stamp);
     ClassDB::bind_method(D_METHOD("contact_pairs", "xs", "ys", "reach"),
                          &IronWorldKernel::contact_pairs);
+    ClassDB::bind_method(D_METHOD("box", "xs", "ys", "x", "y", "half"), &IronWorldKernel::box);
   }
 
 public:
@@ -59,6 +60,21 @@ public:
     int32_t *w = out.ptrw();
     for (size_t i = 0; i < pairs.size(); ++i)
       w[i] = pairs[i];
+    return out;
+  }
+
+  // Indices of the points within the box, ascending; empty when the columns disagree.
+  PackedInt32Array box(const PackedFloat64Array &xs, const PackedFloat64Array &ys, double x, double y,
+                       double half) {
+    PackedInt32Array out;
+    if (xs.size() != ys.size() || !(half >= 0.0))
+      return out;
+    std::vector<int32_t> hit =
+        iron::campaign::box_query(xs.ptr(), ys.ptr(), static_cast<int>(xs.size()), x, y, half);
+    out.resize(static_cast<int64_t>(hit.size()));
+    int32_t *w = out.ptrw();
+    for (size_t i = 0; i < hit.size(); ++i)
+      w[i] = hit[i];
     return out;
   }
 };

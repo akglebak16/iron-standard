@@ -74,4 +74,15 @@ inline std::vector<int32_t> contact_pairs(const double *xs, const double *ys, in
   return pairs;
 }
 
+// world_index.gd: indices (ascending) of the points with |x - cx| <= half and |y - cy| <= half. The callers keep
+// their own exact checks, so the box only has to hold every point they would accept.
+inline std::vector<int32_t> box_query(const double *xs, const double *ys, int count, double cx, double cy,
+                                      double half) {
+  std::vector<int32_t> out;
+  for (int i = 0; i < count; ++i)
+    if (std::fabs(xs[i] - cx) <= half && std::fabs(ys[i] - cy) <= half)
+      out.push_back(i);
+  return out;
+}
+
 } // namespace iron::campaign

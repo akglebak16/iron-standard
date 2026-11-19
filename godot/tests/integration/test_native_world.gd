@@ -15,6 +15,11 @@ func _initialize() -> void:
 	assert(kernel.stamp(PackedFloat64Array([1.0]), PackedFloat64Array(), PackedFloat64Array([1.0]), PackedInt32Array([0]), 1, 10, 10, 30.0, 90.0).is_empty())
 	assert(kernel.stamp(PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array(), PackedInt32Array(), 0, 0, 10, 30.0, 90.0).is_empty())
 	assert(kernel.contact_pairs(PackedFloat64Array([1.0, 2.0]), PackedFloat64Array([1.0]), 15.0).is_empty())
+	assert(kernel.box(PackedFloat64Array([1.0, 2.0]), PackedFloat64Array([1.0]), 0.0, 0.0, 5.0).is_empty())
+	# the box holds its edges, in index order (#242)
+	var bx := PackedFloat64Array([0.0, 10.0, -10.0, 10.0000001, 3.0])
+	var by := PackedFloat64Array([0.0, -10.0, 10.0, 0.0, 9.0])
+	assert(port.box(bx, by, 0.0, 0.0, 10.0) == PackedInt32Array([0, 1, 2, 4]))
 	_stamp_parity(port)
 	_pair_parity(port)
 	_teleport_parity()
@@ -110,12 +115,15 @@ func _campaign_parity() -> void:
 	var fast: RefCounted = Sim.create_world(11)
 	var port: RefCounted = WorldNative.create()
 	fast.use_native(port)
+	fast.ai.index.verify = true  # every index answer is checked against the full scan (#242)
 	assert(WorldSave.to_dict(ref).sha256 == WorldSave.to_dict(fast).sha256)
 	for day in range(1, 16):
 		Sim.drive(ref, day * 24, func(): pass, func(): pass)
 		Sim.drive(fast, day * 24, func(): pass, func(): pass)
 		assert(ref.roster.rng.state == fast.roster.rng.state, "RNG on day %d" % day)
 		assert(WorldSave.to_dict(ref).sha256 == WorldSave.to_dict(fast).sha256, "the world on day %d" % day)
-	assert(int(port.stamps) > 100 and int(port.pair_calls) > 100 and int(port.failures) == 0, "the native path ran: %d stamps, %d pair calls" % [port.stamps, port.pair_calls])
+		if day == 5:
+			fast.ai.index.verify = false  # the rest only compares the worlds, at full speed
+	assert(int(port.stamps) > 100 and int(port.pair_calls) > 100 and int(port.box_calls) > 10000 and int(port.failures) == 0, "the native path ran: %d stamps, %d pair calls, %d boxes" % [port.stamps, port.pair_calls, port.box_calls])
 	ref.dispose()
 	fast.dispose()
