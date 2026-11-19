@@ -13,6 +13,7 @@ const Goals = preload("res://core/campaign/world/party_goals.gd")
 const WW := 5200.0
 const WH := 3400.0
 
+const CONTACT_REACH := 15.0 # parties closer than this meet on the map (fight if hostile)
 var roster: Roster
 var player: RefCounted  # PlayerParty: x, y, troops, rel, busy, inside, away
 
@@ -22,6 +23,7 @@ var vassals: RefCounted = null  # WorldVassals, optional: the player's retinues
 var skirmish: RefCounted = null # WorldSkirmish, optional: fights lasting hours, rallying neighbours
 var goals := Goals.new()
 var threat_map: Callable = Callable()  # () -> ThreatMap (WorldState.threat_map), optional
+var native: RefCounted = null          # optional port of the native world kernel (ADR-025): contact pairs
 var enemies: Callable = Callable()     # (faction) -> hostile factions on the threat map, optional
 
 var _map_cache: RefCounted = null
@@ -106,6 +108,13 @@ func step(dh: float) -> void:
 		if p in roster.parties:
 			ai_party(p, dh)
 	var list := roster.parties.duplicate()
+	if native != null:
+		_contacts_native(list)
+	else:
+		_contacts(list)
+
+## The contact phase: parties closer than CONTACT_REACH fight if hostile, each at most once per step (the reference).
+func _contacts(list: Array) -> void:
 	for i in list.size():
 		var a: Dictionary = list[i]
 		if _skip_fight(a) or not (a in roster.parties):
@@ -117,7 +126,7 @@ func step(dh: float) -> void:
 			# Reject distant pairs before reading flags and searching the roster.
 			# Potential contacts keep the original distance and iteration order.
 			var dx: float = ax - b.x
-			if absf(dx) >= 15.0 or not (Vector2(dx, ay - b.y).length() < 15.0):
+			if absf(dx) >= CONTACT_REACH or not (Vector2(dx, ay - b.y).length() < CONTACT_REACH):
 				continue
 			if _skip_fight(b) or not (b in roster.parties):
 				continue
@@ -127,6 +136,54 @@ func step(dh: float) -> void:
 				else:
 					auto_fight(a, b)
 				break
+
+## The contact phase with the pairs found by the native kernel: the same pairs, checks and order as the loop in step.
+func _contacts_native(list: Array) -> void:
+	var n := list.size()
+	var xs := PackedFloat64Array()
+	var ys := PackedFloat64Array()
+	xs.resize(n)
+	ys.resize(n)
+	for i in n:
+		xs[i] = list[i].x
+		ys[i] = list[i].y
+	var pairs: PackedInt32Array = native.contact_pairs(xs, ys, CONTACT_REACH)
+	var k := 0
+	var count := pairs.size()
+	while k < count:
+		var i := pairs[k]
+		var a: Dictionary = list[i]
+		var open := not _skip_fight(a) and a in roster.parties
+		while k < count and pairs[k] == i:
+			var b: Dictionary = list[pairs[k + 1]]
+			k += 2
+			if not open or _skip_fight(b) or not (b in roster.parties):
+				continue
+			if roster.hostile(a, b):
+				if skirmish != null:
+					skirmish.contact(a, b, auto_fight)
+				else:
+					auto_fight(a, b)
+				open = false
+				# A fight settled on the spot may send a beaten ruler home (clans.ruler_home): the reference loop sees
+				# him there in the next rows, so the pairs of those rows are searched again from the new positions.
+				if _moved(list, xs, ys):
+					pairs = native.contact_pairs(xs, ys, CONTACT_REACH)
+					count = pairs.size()
+					k = 0
+					while k < count and pairs[k] <= i:
+						k += 2
+
+## Whether a party of `list` stands elsewhere than in the columns; the columns are brought up to date.
+static func _moved(list: Array, xs: PackedFloat64Array, ys: PackedFloat64Array) -> bool:
+	var moved := false
+	for j in list.size():
+		var q: Dictionary = list[j]
+		if xs[j] != q.x or ys[j] != q.y:
+			xs[j] = q.x
+			ys[j] = q.y
+			moved = true
+	return moved
 
 ## Hourly: settlements remember enemies seen around them (s.alarm, saved with the settlement); patrols go there.
 func hour_tick() -> void:

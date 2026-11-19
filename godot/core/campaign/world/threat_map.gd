@@ -17,6 +17,7 @@ var layers: Dictionary = {}  # faction -> PackedFloat32Array(cols * rows)
 var stamped_cells := 0       # cells visited by the last rebuild
 var sources := 0             # parties stamped by the last rebuild
 var built_hour := -1         # world hour of the last rebuild, -1 before the first
+var native: RefCounted = null # optional port of the native world kernel (ADR-025): stamps the same grids
 
 func _init(map_width := 5200.0, map_height := 3400.0, cell := Config.THREAT_CELL_SIZE, fade_radius := Config.THREAT_RADIUS) -> void:
 	width = map_width
@@ -42,6 +43,9 @@ func rebuild(list: Array, hour := -1) -> void:
 	sources = 0
 	var keys := by_faction.keys()
 	keys.sort()
+	if native != null and _stamp_native(list, keys):
+		built_hour = hour
+		return
 	for f in keys:
 		var grid := PackedFloat32Array()
 		grid.resize(cols * rows)
@@ -50,6 +54,36 @@ func rebuild(list: Array, hour := -1) -> void:
 			sources += 1
 		layers[f] = grid
 	built_hour = hour
+
+## The same stamp in the native kernel: sources in list order, each into the layer of its faction.
+func _stamp_native(list: Array, keys: Array) -> bool:
+	var index := {}
+	for i in keys.size():
+		index[keys[i]] = i
+	var n := list.size()
+	var xs := PackedFloat64Array()
+	var ys := PackedFloat64Array()
+	var strengths := PackedFloat64Array()
+	var layer := PackedInt32Array()
+	xs.resize(n)
+	ys.resize(n)
+	strengths.resize(n)
+	layer.resize(n)
+	for i in n:
+		var s: Dictionary = list[i]
+		xs[i] = float(s.x)
+		ys[i] = float(s.y)
+		strengths[i] = float(s.strength)
+		layer[i] = int(index.get(String(s.fac), -1))
+	var out: Array = native.stamp(xs, ys, strengths, layer, keys.size(), cols, rows, cell_size, radius)
+	if out.is_empty():
+		return false
+	var grids: Array = out[0]
+	for i in keys.size():
+		layers[keys[i]] = grids[i]
+	stamped_cells = int(out[1])
+	sources = int(out[2])
+	return true
 
 func _stamp(grid: PackedFloat32Array, x: float, y: float, strength: float) -> void:
 	var c0 := maxi(0, floori((x - radius) / cell_size))
