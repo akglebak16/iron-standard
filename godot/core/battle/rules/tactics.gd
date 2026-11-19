@@ -41,23 +41,26 @@ const REASON_ATTACKERS_INSIDE := "attackers_inside"
 ## AI_KITE_SECONDS is called off: the group re-forms and marches on the nearest squad, the archers first
 ## when the side is losing men to missiles, and charges again only at contact (DESIGN.md 1.4, step 1). With no squads on the field the old
 ## nearest-fighter rule is kept, except for a group that has already called off a hopeless chase.
-static func enemy_step(battle: State, side: int, elapsed: float, dt: float) -> void:
+## `command` (#243): whose groups the brain leads — the enemy, the player's side in an AI-driven battle, or the
+## player's allies (Config.COMMAND_ALLY), who fight on side 0 under their own commander.
+static func enemy_step(battle: State, command: int, elapsed: float, dt: float) -> void:
+	var side := State.side_of(command)
 	var foe := battle.centroid(1 - side)
 	var own := battle.centroid(side)
 	if foe == Vector2.INF or own == Vector2.INF:
 		return
-	var groups: Array = battle.groups[side]
-	var foe_groups: Array = battle.groups[1 - side]
+	var groups: Array = battle.groups[command]
+	var foe_groups: Array = battle.foe_groups(command)
 	var infantry: Group = groups[Config.GROUP_INFANTRY]
 	var archers: Group = groups[Config.GROUP_ARCHERS]
 	var cavalry: Group = groups[Config.GROUP_CAVALRY]
-	var trace := battle.ai_trace
+	var trace := battle.ai_trace if command != Config.COMMAND_ALLY else null # the debug trace is kept per side
 	if trace != null:
 		trace.set_plan(side, _field_plan(groups, elapsed))
-	battle.ai_scan_timers[side] -= dt
-	if battle.ai_scan_timers[side] <= 0.0:
-		battle.ai_scan_timers[side] = Config.AI_SQUAD_SCAN_SECONDS
-		_scan(battle, side)
+	battle.ai_scan_timers[command] -= dt
+	if battle.ai_scan_timers[command] <= 0.0:
+		battle.ai_scan_timers[command] = Config.AI_SQUAD_SCAN_SECONDS
+		_scan(battle, command)
 	var squads := _has_squads(foe_groups)
 	var has_infantry := infantry.has_active_units()
 	if infantry.order != Config.ORDER_CHARGE:
@@ -195,15 +198,16 @@ static func relayout(battle: State, dt: float) -> void:
 ## Refreshes the enemy squad picture, the missile-loss memory and the kite check of charging groups.
 ## Every group is sampled with a fixed stride, at most AI_SQUAD_SAMPLE_LIMIT fighters, so the cost does
 ## not grow with the army size.
-static func _scan(battle: State, side: int) -> void:
+static func _scan(battle: State, command: int) -> void:
+	var side := State.side_of(command)
 	battle.missile_losses[side] *= exp(-Config.AI_SQUAD_SCAN_SECONDS / Config.AI_MISSILE_LOSS_MEMORY_SECONDS)
-	var foe_groups: Array = battle.groups[1 - side]
+	var foe_groups: Array = battle.foe_groups(command)
 	for group: Group in foe_groups:
 		_sample_squad(battle, group)
 	for kind in [Config.GROUP_INFANTRY, Config.GROUP_ARCHERS]:
-		var group: Group = battle.groups[side][kind]
+		var group: Group = battle.groups[command][kind]
 		if group.order == Config.ORDER_CHARGE:
-			_check_kite(battle, group, side)
+			_check_kite(battle, group, command)
 		else:
 			group.squad_distance = _squad_distance(group.center, foe_groups)
 
@@ -254,7 +258,7 @@ static func _objective(group: Group, foe_groups: Array, foe: Vector2) -> Vector2
 
 ## A charge is hopeless when most sampled fighters chase faster targets out of reach and the mean gap
 ## has not shrunk by AI_KITE_PROGRESS_DISTANCE for AI_KITE_SECONDS.
-static func _check_kite(battle: State, group: Group, side: int) -> void:
+static func _check_kite(battle: State, group: Group, command: int) -> void:
 	var count := group.units.size()
 	var stride := maxi(1, ceili(float(count) / Config.AI_SQUAD_SAMPLE_LIMIT))
 	var ready := 0
@@ -283,11 +287,12 @@ static func _check_kite(battle: State, group: Group, side: int) -> void:
 		return
 	group.kite_seconds += Config.AI_SQUAD_SCAN_SECONDS
 	if group.kite_seconds >= Config.AI_KITE_SECONDS:
-		_call_off_charge(battle, group, side)
+		_call_off_charge(battle, group, command)
 
 ## Back into formation where the men stand, facing the squad to march on.
-static func _call_off_charge(battle: State, group: Group, side: int) -> void:
-	var foe_groups: Array = battle.groups[1 - side]
+static func _call_off_charge(battle: State, group: Group, command: int) -> void:
+	var side := State.side_of(command)
+	var foe_groups: Array = battle.foe_groups(command)
 	group.order = Config.ORDER_HOLD
 	group.kited = true
 	group.kite_seconds = 0.0
@@ -309,7 +314,7 @@ static func _call_off_charge(battle: State, group: Group, side: int) -> void:
 		group.direction = (objective - group.center).angle()
 	group.squad_distance = _squad_distance(group.center, foe_groups)
 	group.layout()
-	if battle.ai_trace != null:
+	if battle.ai_trace != null and command != Config.COMMAND_ALLY:
 		battle.ai_trace.record(side, group.kind, DECISION_CALL_OFF, REASON_HOPELESS_CHASE, {"focus_kind": group.focus_kind, "missile_losses": battle.missile_losses[side]})
 
 ## Plan label of the reference brain for the debug trace: it has no plans, only the stage of its timer script.

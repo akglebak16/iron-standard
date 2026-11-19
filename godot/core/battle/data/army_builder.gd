@@ -6,9 +6,17 @@ const Catalog = preload("res://core/troops/data/catalog.gd")
 const Event = preload("res://core/battle/combat_event.gd")
 const IMPACT_BY_APPEARANCE := {"skel": Event.ImpactStyle.DUST, "zombie": Event.ImpactStyle.DARK_BLOOD}
 
-static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator, cap: int = Config.SOLO_UNIT_CAP, leader_name: String = "", starting_morale_bonus: float = 0.0, reserve_waves: bool = false) -> bool:
-	if side < 0 or side > 1 or battle.groups.size() != 2 or cap <= 0:
+## `command` (#243): COMMAND_ALLY puts the army on side 0 under the allied commander; by default the command is the side.
+## Allies have no reserve waves: State.reserve belongs to the sides, and waves join the player's groups.
+static func spawn(battle: State, side: int, stacks: Array, faction: String, catalog: Catalog, rng: RandomNumberGenerator, cap: int = Config.SOLO_UNIT_CAP, leader_name: String = "", starting_morale_bonus: float = 0.0, reserve_waves: bool = false, command: int = -1) -> bool:
+	if command < 0:
+		command = side
+	if side < 0 or side > 1 or battle.groups.size() < 2 or cap <= 0:
 		return false
+	if command != side and not (command == Config.COMMAND_ALLY and side == 0 and battle.has_allies()):
+		return false
+	if command == Config.COMMAND_ALLY:
+		reserve_waves = false
 	var total := 0
 	var definitions: Array[Dictionary] = []
 	for stack in stacks:
@@ -35,9 +43,10 @@ static func spawn(battle: State, side: int, stacks: Array, faction: String, cata
 		var traits: Dictionary = troop.get("battle_traits", {})
 		for i in count:
 			var kind: int = troop.grp
-			var center: Vector2 = battle.groups[side][kind].center
+			var center: Vector2 = battle.groups[command][kind].center
 			var jitter := Vector2(rng.randf_range(-Config.SPAWN_JITTER, Config.SPAWN_JITTER), rng.randf_range(-Config.SPAWN_JITTER, Config.SPAWN_JITTER))
 			var unit := create_unit(battle, side, str(stack.type), troop, faction, center + jitter, weight, rng, starting_morale_bonus)
+			unit.command = command
 			battle.add_grouped_unit(unit, kind)
 			if not leader_name.is_empty() and (leader == null or unit.tier > leader.tier):
 				leader = unit
