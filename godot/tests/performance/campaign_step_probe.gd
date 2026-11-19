@@ -1,16 +1,27 @@
 extends SceneTree
 ## Step cost of the world through the undead crisis, per day (headless, no player):
 ##   godot --headless --path godot --script res://tests/performance/campaign_step_probe.gd -- --seed=11 --days=80 --from=50
+## `--native`: the step runs with the native world kernel (ADR-025); the probe fails if the library is missing.
 const Sim = preload("res://tests/performance/campaign_simulator.gd")
+const WorldNative = preload("res://adapters/godot/native/world.gd")
 func _initialize() -> void:
 	var seed_value := 11
 	var days := 90
 	var from_day := 0
+	var native := false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seed="): seed_value = int(a.trim_prefix("--seed="))
 		if a.begins_with("--days="): days = int(a.trim_prefix("--days="))
 		if a.begins_with("--from="): from_day = int(a.trim_prefix("--from="))
+		if a == "--native": native = true
 	var w: RefCounted = Sim.create_world(seed_value)
+	if native:
+		var port: RefCounted = WorldNative.create()
+		if port == null:
+			push_error("--native: the native world kernel is not loaded")
+			quit(1)
+			return
+		w.use_native(port)
 	w.threat_map()
 	var cur := {"step_us": 0, "step_max": 0, "steps": 0, "hour_max": 0, "over20": 0}
 	var all := {"max": 0, "over20": 0, "over40": 0, "steps": 0, "sum": 0}
@@ -51,6 +62,8 @@ func _initialize() -> void:
 			all.max = maxi(all.max, full)
 			if full > 20000: all.over20 += 1
 			if full > 40000: all.over40 += 1
+	if w.native != null:
+		print("native: %d stamps, %d pair calls, %d failures" % [w.native.stamps, w.native.pair_calls, w.native.failures])
 	print("TOTAL steps %d avg %.2f ms max %.1f ms, >20ms %d, >40ms %d" % [all.steps, all.sum / 1000.0 / maxi(1, all.steps), all.max / 1000.0, all.over20, all.over40])
 	quit(0)
 

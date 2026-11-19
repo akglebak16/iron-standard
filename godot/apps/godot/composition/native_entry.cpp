@@ -6,6 +6,7 @@ void register_movement_kernel();
 void register_column_kernel();
 void register_battle_sprites();
 void register_battle_effects();
+void register_world_kernel();
 void initialize_iron(ModuleInitializationLevel level) {
   if (level != MODULE_INITIALIZATION_LEVEL_SCENE)
     return;
@@ -14,6 +15,7 @@ void initialize_iron(ModuleInitializationLevel level) {
   register_column_kernel();
   register_battle_sprites();
   register_battle_effects();
+  register_world_kernel();
 }
 void terminate_iron(ModuleInitializationLevel) {}
 } // namespace godot
