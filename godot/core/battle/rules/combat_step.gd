@@ -6,6 +6,7 @@ const Unit = preload("res://core/battle/model/unit.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
 const Targeting = preload("res://core/battle/rules/targeting.gd")
 const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 
 static func step(battle: State, dt: float, rng: RandomNumberGenerator, index: SpatialIndex = null) -> void:
 	if dt <= 0.0:
@@ -39,7 +40,7 @@ static func advance_unit(battle: State, unit: Unit, target: Unit, distance: floa
 			unit.ai_windup = Config.AI_MELEE_WINDUP_SECONDS
 			unit.ai_wind_target_handle = target.unit_handle
 			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_MELEE_COOLDOWN_MIN, Config.AI_MELEE_COOLDOWN_MAX)
-		elif _can_shoot(unit, distance):
+		elif unit.attack_range > 0.0 and _can_shoot(unit, distance, TerrainRules.range_scale(battle.terrain_rules, unit.position, target.position)):
 			battle.launch_projectile(Combat.shoot(unit, target, rng))
 			unit.attack_cooldown = unit.attack_interval * rng.randf_range(Config.AI_SHOOT_COOLDOWN_MIN, Config.AI_SHOOT_COOLDOWN_MAX)
 	if unit.ai_mode != Config.AI_MODE_UNASSIGNED:
@@ -103,8 +104,9 @@ static func resolve_projectiles(battle: State, dt: float, rng: RandomNumberGener
 				"position": shot.impact, "trajectory": shot.impact - shot.origin, "throwing": shot.get("throwing", false),
 			})
 
-static func _can_shoot(unit: Unit, distance: float) -> bool:
-	if unit.attack_range <= 0.0 or distance >= unit.attack_range:
+## `range_scale`: the terrain's multiplier of the range (TerrainRules.range_scale), as in AiDecision.plan_into.
+static func _can_shoot(unit: Unit, distance: float, range_scale := 1.0) -> bool:
+	if unit.attack_range <= 0.0 or distance >= unit.attack_range * range_scale:
 		return false
 	if unit.ai_mode == Config.AI_MODE_SKIRMISH:
 		return true

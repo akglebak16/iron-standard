@@ -5,6 +5,7 @@
 #include <godot_cpp/godot.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/packed_float64_array.hpp>
 #include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
@@ -14,6 +15,7 @@ class IronMovementKernel : public RefCounted {
   GDCLASS(IronMovementKernel, RefCounted)
   iron::battle::MovementKernel kernel;
   bool ready = false, active = false;
+  PackedByteArray terrain_cover, terrain_height; // Owned for the kernel's TerrainGrid pointers.
   static void read_vectors(const PackedVector2Array &in,
                            std::vector<iron::Vec2> &out) {
     out.resize(in.size());
@@ -111,6 +113,30 @@ public:
       read_vectors(context.get("gaps", PackedVector2Array()), kernel.gaps);
       read_vectors(context.get("all_gaps", PackedVector2Array()),
                    kernel.all_gaps);
+      // TERRAIN.md 4.4 (State.terrain_context): the grid of the terrain rules, absent on an open, flat field. The
+      // arrays are kept here so the kernel's pointers stay valid for the whole tick.
+      terrain_cover = context.get("terrain_cover", PackedByteArray());
+      terrain_height = context.get("terrain_height", PackedByteArray());
+      PackedFloat64Array speeds = context.get("terrain_speed", PackedFloat64Array());
+      int64_t terrain_width = context.get("terrain_width", 0);
+      kernel.terrain = {};
+      kernel.relief = false;
+      if (terrain_width > 0 && !terrain_cover.is_empty() &&
+          terrain_cover.size() == terrain_height.size() &&
+          terrain_cover.size() % terrain_width == 0 &&
+          speeds.size() == COVER_COUNT) {
+        kernel.terrain.width = int(terrain_width);
+        kernel.terrain.height = int(terrain_cover.size() / terrain_width);
+        kernel.terrain.cell = kernel.parameters[TERRAIN_CELL];
+        kernel.inverse_cell = 1.0 / kernel.terrain.cell;
+        kernel.terrain.cover = terrain_cover.ptr();
+        kernel.terrain.elevation = terrain_height.ptr();
+        kernel.relief = bool(context.get("terrain_relief", false));
+        for (int n = 0; n < COVER_COUNT; ++n)
+          kernel.cover_speed[n] = speeds[n];
+      } else if (context.has("terrain_cover")) {
+        return {};
+      }
       kernel.groups.resize(6);
       for (int n = 0; n < 6; ++n) {
         const double *g = group.ptr() + n * GROUP_FIELDS;

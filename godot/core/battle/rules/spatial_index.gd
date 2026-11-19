@@ -5,6 +5,7 @@ extends RefCounted
 const Config = preload("res://core/battle/config.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const MotionStore = preload("res://runtime/simulation/motion_store.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 
 
 var _units: Array[Unit]
@@ -16,6 +17,8 @@ var _target_best: Array = [-1, INF]
 var _far_cells: Array[Vector2i] = []
 var _far_gaps := PackedFloat64Array()
 var _spare_buckets: Array[Array] = []
+## State.terrain_rules for best_target (TERRAIN.md 4.4: a shooter does not see far into the forest); null in the open.
+var terrain = null
 
 func _init(units: Array[Unit], arena: Vector2 = Config.ARENA_SIZE, motion: MotionStore = null) -> void:
 	_units = units
@@ -99,7 +102,7 @@ func nearest_enemy(unit: Unit) -> Unit:
 
 ## Same choice as Targeting.choose (weighted distance, lowest index on ties) without scanning far cells.
 ## The stage 1a melee and ranged weights only raise distances, so the bounds below (the smallest older multiplier)
-## still hold.
+## still hold; so does skipping an enemy hidden in the forest (stage Р1а), checked only for a candidate that would win.
 func best_target(unit: Unit, previous: Unit) -> Unit:
 	var at := unit.position
 	var other_side := 1 - unit.side
@@ -117,7 +120,7 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 	var state := _target_best # One synchronous query at a time in this context.
 	state[0] = -1
 	state[1] = INF
-	if previous != null and not previous.dead and not previous.gone:
+	if previous != null and not previous.dead and not previous.gone and (melee or terrain == null or not TerrainRules.hidden(terrain, previous.position, at.distance_to(previous.position))):
 		var raw := at.distance_to(previous.position)
 		var d := raw
 		if previous.fleeing:
@@ -253,7 +256,7 @@ func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, 
 			distance = melee_weight(distance, raw, at, own_speed, enemy, enemy_position, enemy == previous, melee_cavalry)
 		else:
 			distance = ranged_weight(distance, own_id, own_damage, enemy, enemy == previous)
-		if distance < best or distance == best and index < best_index:
+		if (distance < best or distance == best and index < best_index) and (melee or terrain == null or not TerrainRules.hidden(terrain, enemy_position, raw)):
 			best = distance
 			best_index = index
 	state[0] = best_index

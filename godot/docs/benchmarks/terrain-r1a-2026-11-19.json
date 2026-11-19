@@ -1,0 +1,1058 @@
+{
+ "date": "2026-11-19",
+ "issue": 236,
+ "machine": "AMD Ryzen 7 5700X, NVIDIA GeForce RTX 3060, Windows 10, Godot 4.7.2 (Steam)",
+ "main": "250f7f4",
+ "arena_mirror": {
+  "mixed-100-open": {
+   "runs": 40,
+   "wins": [
+    16,
+    24
+   ],
+   "profile_wins": [
+    6,
+    34
+   ],
+   "contact_seconds": 10.2041666666667,
+   "stuck": [
+    0.0,
+    0.0
+   ],
+   "duration_seconds": 43.9,
+   "losses": [
+    0.7475,
+    0.727
+   ]
+  },
+  "archers-100-open": {
+   "runs": 40,
+   "wins": [
+    17,
+    23
+   ],
+   "profile_wins": [
+    35,
+    5
+   ],
+   "contact_seconds": 18.3925,
+   "stuck": [
+    0.0,
+    0.0
+   ],
+   "duration_seconds": 59.625,
+   "losses": [
+    0.8595,
+    0.8325
+   ]
+  },
+  "infantry_cavalry-100-open": {
+   "runs": 40,
+   "wins": [
+    20,
+    20
+   ],
+   "profile_wins": [
+    0,
+    40
+   ],
+   "contact_seconds": 11.87375,
+   "stuck": [
+    0.00625,
+    0.01275
+   ],
+   "duration_seconds": 26.75,
+   "losses": [
+    0.431,
+    0.45
+   ]
+  },
+  "mixed-100-edge": {
+   "runs": 40,
+   "wins": [
+    18,
+    22
+   ],
+   "profile_wins": [
+    10,
+    30
+   ],
+   "contact_seconds": 10.20875,
+   "stuck": [
+    0.00125,
+    0.00225
+   ],
+   "duration_seconds": 46.875,
+   "losses": [
+    0.77475,
+    0.74525
+   ]
+  },
+  "archers-100-edge": {
+   "runs": 40,
+   "wins": [
+    14,
+    26
+   ],
+   "profile_wins": [
+    32,
+    8
+   ],
+   "contact_seconds": 18.3925,
+   "stuck": [
+    0.0,
+    0.0
+   ],
+   "duration_seconds": 58.875,
+   "losses": [
+    0.8595,
+    0.8165
+   ]
+  },
+  "infantry_cavalry-100-edge": {
+   "runs": 40,
+   "wins": [
+    20,
+    20
+   ],
+   "profile_wins": [
+    0,
+    40
+   ],
+   "contact_seconds": 11.9041666666667,
+   "stuck": [
+    0.00525,
+    0.015
+   ],
+   "duration_seconds": 27.3,
+   "losses": [
+    0.45875,
+    0.4635
+   ]
+  },
+  "mixed-100-center_hill": {
+   "runs": 40,
+   "wins": [
+    19,
+    21
+   ],
+   "profile_wins": [
+    5,
+    35
+   ],
+   "contact_seconds": 10.2675,
+   "stuck": [
+    0.001,
+    0.0
+   ],
+   "duration_seconds": 42.975,
+   "losses": [
+    0.73225,
+    0.7405
+   ]
+  },
+  "archers-100-center_hill": {
+   "runs": 40,
+   "wins": [
+    25,
+    15
+   ],
+   "profile_wins": [
+    31,
+    9
+   ],
+   "contact_seconds": 18.4733333333333,
+   "stuck": [
+    0.0,
+    0.0
+   ],
+   "duration_seconds": 63.2,
+   "losses": [
+    0.8505,
+    0.88925
+   ]
+  },
+  "infantry_cavalry-100-center_hill": {
+   "runs": 40,
+   "wins": [
+    20,
+    20
+   ],
+   "profile_wins": [
+    0,
+    40
+   ],
+   "contact_seconds": 12.0783333333333,
+   "stuck": [
+    0.0085,
+    0.0085
+   ],
+   "duration_seconds": 25.95,
+   "losses": [
+    0.42275,
+    0.4495
+   ]
+  },
+  "mixed-100-river": {
+   "runs": 40,
+   "wins": [
+    17,
+    23
+   ],
+   "profile_wins": [
+    9,
+    31
+   ],
+   "contact_seconds": 10.4683333333333,
+   "stuck": [
+    0.0015,
+    0.00075
+   ],
+   "duration_seconds": 48.675,
+   "losses": [
+    0.77725,
+    0.73975
+   ]
+  },
+  "archers-100-river": {
+   "runs": 40,
+   "wins": [
+    15,
+    25
+   ],
+   "profile_wins": [
+    29,
+    11
+   ],
+   "contact_seconds": 18.6133333333333,
+   "stuck": [
+    0.0,
+    0.0
+   ],
+   "duration_seconds": 60.675,
+   "losses": [
+    0.85775,
+    0.82875
+   ]
+  },
+  "infantry_cavalry-100-river": {
+   "runs": 40,
+   "wins": [
+    20,
+    20
+   ],
+   "profile_wins": [
+    0,
+    40
+   ],
+   "contact_seconds": 12.2108333333333,
+   "stuck": [
+    0.00875,
+    0.01275
+   ],
+   "duration_seconds": 28.125,
+   "losses": [
+    0.458,
+    0.44475
+   ]
+  },
+  "mixed-500-open": {
+   "runs": 6,
+   "wins": [
+    1,
+    5
+   ],
+   "profile_wins": [
+    2,
+    4
+   ],
+   "contact_seconds": 11.25,
+   "stuck": [
+    0.007,
+    0.00633333333333333
+   ],
+   "duration_seconds": 64.1666666666667,
+   "losses": [
+    0.789,
+    0.716333333333333
+   ]
+  },
+  "mixed-500-edge": {
+   "runs": 6,
+   "wins": [
+    4,
+    2
+   ],
+   "profile_wins": [
+    1,
+    5
+   ],
+   "contact_seconds": 11.3222222222222,
+   "stuck": [
+    0.0136666666666667,
+    0.005
+   ],
+   "duration_seconds": 69.0,
+   "losses": [
+    0.749,
+    0.786333333333333
+   ]
+  },
+  "mixed-500-center_hill": {
+   "runs": 6,
+   "wins": [
+    4,
+    2
+   ],
+   "profile_wins": [
+    1,
+    5
+   ],
+   "contact_seconds": 11.25,
+   "stuck": [
+    0.00933333333333333,
+    0.00766666666666667
+   ],
+   "duration_seconds": 54.0,
+   "losses": [
+    0.577666666666667,
+    0.731
+   ]
+  },
+  "mixed-500-river": {
+   "runs": 6,
+   "wins": [
+    4,
+    2
+   ],
+   "profile_wins": [
+    1,
+    5
+   ],
+   "contact_seconds": 11.5111111111111,
+   "stuck": [
+    0.000333333333333333,
+    0.0223333333333333
+   ],
+   "duration_seconds": 80.8333333333333,
+   "losses": [
+    0.783,
+    0.767333333333333
+   ]
+  }
+ },
+ "equal_hill": {
+  "open": {
+   "battles": 192,
+   "side_wins": [
+    72,
+    120
+   ],
+   "contact_seconds": 10.21,
+   "stuck": [
+    0.0,
+    0.0
+   ]
+  },
+  "step4_left": {
+   "battles": 192,
+   "side_wins": [
+    110,
+    82
+   ],
+   "contact_seconds": 10.23,
+   "stuck": [
+    0.0003,
+    0.0
+   ]
+  },
+  "step4_right": {
+   "battles": 192,
+   "side_wins": [
+    44,
+    148
+   ],
+   "contact_seconds": 10.24,
+   "stuck": [
+    0.0008,
+    0.0001
+   ]
+  },
+  "step6_left": {
+   "battles": 192,
+   "side_wins": [
+    92,
+    100
+   ],
+   "contact_seconds": 10.23,
+   "stuck": [
+    0.0001,
+    0.0
+   ]
+  },
+  "step6_right": {
+   "battles": 192,
+   "side_wins": [
+    42,
+    150
+   ],
+   "contact_seconds": 10.24,
+   "stuck": [
+    0.0001,
+    0.0001
+   ]
+  },
+  "step8_left": {
+   "battles": 64,
+   "side_wins": [
+    22,
+    42
+   ],
+   "contact_seconds": 10.23,
+   "stuck": [
+    0.0,
+    0.0
+   ]
+  },
+  "step8_right": {
+   "battles": 64,
+   "side_wins": [
+    14,
+    50
+   ],
+   "contact_seconds": 10.24,
+   "stuck": [
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "ab_main_branch": [
+  {
+   "scenario": "cavalry",
+   "terrain": "open",
+   "build": "main",
+   "tick_p95": 5.749,
+   "tick_mean": 2.806,
+   "move_mean": 1.76,
+   "move_p95": 3.404,
+   "p95_all": [
+    5.76,
+    5.69,
+    5.71,
+    5.75,
+    5.77
+   ],
+   "events": {
+    "0": 15600,
+    "1": 3615,
+    "2": 8088,
+    "3": 1676,
+    "12": 1,
+    "18": 218,
+    "19": 137,
+    "25": 1
+   },
+   "terrain_template": "open"
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "open",
+   "build": "branch",
+   "tick_p95": 5.812,
+   "tick_mean": 2.825,
+   "move_mean": 1.783,
+   "move_p95": 3.475,
+   "p95_all": [
+    5.85,
+    5.78,
+    5.87,
+    5.81,
+    5.77
+   ],
+   "events": {
+    "0": 15600,
+    "1": 3615,
+    "2": 8088,
+    "3": 1676,
+    "12": 1,
+    "18": 218,
+    "19": 137,
+    "25": 1
+   },
+   "terrain_template": "open"
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "open",
+   "build": "branch",
+   "tick_p95": 4.216,
+   "tick_mean": 2.234,
+   "move_mean": 1.133,
+   "move_p95": 2.061,
+   "p95_all": [
+    4.21,
+    4.22,
+    4.22,
+    4.25,
+    4.18
+   ],
+   "events": {
+    "0": 6714,
+    "1": 2572,
+    "2": 752,
+    "3": 1052,
+    "5": 8021,
+    "9": 2,
+    "13": 3351,
+    "18": 404,
+    "19": 467,
+    "25": 9
+   },
+   "terrain_template": "open"
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "open",
+   "build": "main",
+   "tick_p95": 4.105,
+   "tick_mean": 2.177,
+   "move_mean": 1.086,
+   "move_p95": 2.01,
+   "p95_all": [
+    4.42,
+    4.12,
+    4.11,
+    4.09,
+    4.08
+   ],
+   "events": {
+    "0": 6714,
+    "1": 2572,
+    "2": 752,
+    "3": 1052,
+    "5": 8021,
+    "9": 2,
+    "13": 3351,
+    "18": 404,
+    "19": 467,
+    "25": 9
+   },
+   "terrain_template": "open"
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "forest",
+   "build": "main",
+   "tick_p95": 5.505,
+   "tick_mean": 2.276,
+   "move_mean": 1.428,
+   "move_p95": 3.292,
+   "p95_all": [
+    5.53,
+    5.55,
+    5.5,
+    5.5,
+    5.5
+   ],
+   "events": {
+    "0": 16528,
+    "1": 4216,
+    "2": 8210,
+    "3": 1812,
+    "18": 138,
+    "19": 86,
+    "25": 1
+   },
+   "terrain_template": "forest"
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "forest",
+   "build": "branch",
+   "tick_p95": 5.538,
+   "tick_mean": 2.545,
+   "move_mean": 1.619,
+   "move_p95": 3.319,
+   "p95_all": [
+    5.57,
+    5.54,
+    5.48,
+    5.49,
+    5.61
+   ],
+   "events": {
+    "0": 16118,
+    "1": 5492,
+    "2": 5328,
+    "3": 1708,
+    "18": 50
+   },
+   "terrain_template": "forest"
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "forest",
+   "build": "branch",
+   "tick_p95": 4.253,
+   "tick_mean": 2.383,
+   "move_mean": 1.254,
+   "move_p95": 2.084,
+   "p95_all": [
+    4.25,
+    4.24,
+    4.21,
+    4.65,
+    4.7
+   ],
+   "events": {
+    "0": 7265,
+    "1": 3197,
+    "2": 329,
+    "3": 1176,
+    "5": 9228,
+    "9": 3,
+    "13": 3779,
+    "18": 148,
+    "19": 25,
+    "25": 1
+   },
+   "terrain_template": "forest"
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "forest",
+   "build": "main",
+   "tick_p95": 4.473,
+   "tick_mean": 2.492,
+   "move_mean": 1.238,
+   "move_p95": 2.118,
+   "p95_all": [
+    4.42,
+    4.54,
+    4.47,
+    4.48,
+    4.47
+   ],
+   "events": {
+    "0": 7066,
+    "1": 2895,
+    "2": 777,
+    "3": 1120,
+    "5": 8435,
+    "9": 3,
+    "12": 1,
+    "13": 3327,
+    "18": 310,
+    "19": 389
+   },
+   "terrain_template": "forest"
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "center_hill",
+   "build": "branch",
+   "tick_p95": 6.077,
+   "tick_mean": 3.022,
+   "move_mean": 1.946,
+   "move_p95": 3.733,
+   "p95_all": [
+    6.08,
+    6.31,
+    6.13,
+    5.85,
+    5.83
+   ],
+   "events": {
+    "0": 15914,
+    "1": 4288,
+    "2": 7651,
+    "3": 1728,
+    "12": 1,
+    "18": 132,
+    "19": 100,
+    "25": 2
+   },
+   "terrain_template": "hills"
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "center_hill",
+   "build": "branch",
+   "tick_p95": 4.325,
+   "tick_mean": 2.468,
+   "move_mean": 1.284,
+   "move_p95": 2.113,
+   "p95_all": [
+    4.33,
+    4.37,
+    5.22,
+    4.24,
+    4.28
+   ],
+   "events": {
+    "0": 7111,
+    "1": 2966,
+    "2": 679,
+    "3": 1103,
+    "5": 9396,
+    "9": 3,
+    "13": 3890,
+    "18": 226,
+    "19": 117,
+    "25": 5
+   },
+   "terrain_template": "hills"
+  }
+ ],
+ "rule_cost_neutral": [
+  {
+   "scenario": "cavalry",
+   "terrain": "open",
+   "tick_p95": 5.815,
+   "tick_mean": 2.851,
+   "move_mean": 1.793,
+   "move_p95": 3.474,
+   "p95_all": [
+    5.82,
+    5.85,
+    5.81,
+    5.78,
+    5.89
+   ],
+   "events": 29336
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "neutral",
+   "tick_p95": 5.927,
+   "tick_mean": 2.901,
+   "move_mean": 1.84,
+   "move_p95": 3.56,
+   "p95_all": [
+    5.98,
+    6.68,
+    5.93,
+    5.89,
+    5.87
+   ],
+   "events": 29336
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "neutral",
+   "tick_p95": 4.37,
+   "tick_mean": 2.277,
+   "move_mean": 1.154,
+   "move_p95": 2.119,
+   "p95_all": [
+    4.4,
+    4.19,
+    4.37,
+    4.2,
+    4.4
+   ],
+   "events": 23344
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "open",
+   "tick_p95": 4.223,
+   "tick_mean": 2.239,
+   "move_mean": 1.125,
+   "move_p95": 2.085,
+   "p95_all": [
+    4.22,
+    4.3,
+    4.16,
+    4.22,
+    4.25
+   ],
+   "events": 23344
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "neutral",
+   "tick_p95": 6.156,
+   "tick_mean": 2.996,
+   "move_mean": 1.888,
+   "move_p95": 3.63,
+   "p95_all": [
+    5.92,
+    6.25,
+    5.92,
+    6.16,
+    6.47
+   ],
+   "events": 29336
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "open",
+   "tick_p95": 6.151,
+   "tick_mean": 2.928,
+   "move_mean": 1.836,
+   "move_p95": 3.618,
+   "p95_all": [
+    6.04,
+    6.29,
+    6.15,
+    6.16,
+    5.99
+   ],
+   "events": 29336
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "open",
+   "tick_p95": 4.201,
+   "tick_mean": 2.237,
+   "move_mean": 1.125,
+   "move_p95": 2.06,
+   "p95_all": [
+    4.25,
+    4.14,
+    4.27,
+    4.2,
+    4.2
+   ],
+   "events": 23344
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "neutral",
+   "tick_p95": 4.313,
+   "tick_mean": 2.281,
+   "move_mean": 1.156,
+   "move_p95": 2.116,
+   "p95_all": [
+    4.64,
+    4.37,
+    4.28,
+    4.31,
+    4.28
+   ],
+   "events": 23344
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "open",
+   "tick_p95": 5.861,
+   "tick_mean": 2.856,
+   "move_mean": 1.802,
+   "move_p95": 3.48,
+   "p95_all": [
+    5.86,
+    5.82,
+    5.81,
+    5.9,
+    5.89
+   ],
+   "events": 29336
+  },
+  {
+   "scenario": "cavalry",
+   "terrain": "neutral",
+   "tick_p95": 5.95,
+   "tick_mean": 2.908,
+   "move_mean": 1.844,
+   "move_p95": 3.575,
+   "p95_all": [
+    5.95,
+    5.98,
+    6.44,
+    5.8,
+    5.87
+   ],
+   "events": 29336
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "neutral",
+   "tick_p95": 4.227,
+   "tick_mean": 2.253,
+   "move_mean": 1.148,
+   "move_p95": 2.101,
+   "p95_all": [
+    4.23,
+    4.3,
+    4.26,
+    4.2,
+    4.17
+   ],
+   "events": 23344
+  },
+  {
+   "scenario": "mixed",
+   "terrain": "open",
+   "tick_p95": 4.16,
+   "tick_mean": 2.217,
+   "move_mean": 1.113,
+   "move_p95": 2.048,
+   "p95_all": [
+    4.16,
+    4.15,
+    4.27,
+    4.16,
+    4.61
+   ],
+   "events": 23344
+  }
+ ],
+ "view": [
+  {
+   "order": 1,
+   "build": "main",
+   "terrain": "forest",
+   "camera": "wide",
+   "frame_mean_ms": 5.803,
+   "frame_p95_ms": 8.385,
+   "gpu_mean_ms": 1.417,
+   "render_cpu_mean_ms": 2.036,
+   "draw_calls": 468.4
+  },
+  {
+   "order": 2,
+   "build": "branch",
+   "terrain": "forest",
+   "camera": "wide",
+   "frame_mean_ms": 5.646,
+   "frame_p95_ms": 8.448,
+   "gpu_mean_ms": 1.41,
+   "render_cpu_mean_ms": 2.031,
+   "draw_calls": 468.9
+  },
+  {
+   "order": 3,
+   "build": "branch",
+   "terrain": "forest",
+   "camera": "field",
+   "frame_mean_ms": 7.018,
+   "frame_p95_ms": 10.387,
+   "gpu_mean_ms": 1.187,
+   "render_cpu_mean_ms": 2.427,
+   "draw_calls": 572.3
+  },
+  {
+   "order": 4,
+   "build": "main",
+   "terrain": "forest",
+   "camera": "field",
+   "frame_mean_ms": 6.359,
+   "frame_p95_ms": 8.831,
+   "gpu_mean_ms": 1.277,
+   "render_cpu_mean_ms": 2.315,
+   "draw_calls": 580.7
+  },
+  {
+   "order": 5,
+   "build": "main",
+   "terrain": "open",
+   "camera": "wide",
+   "frame_mean_ms": 5.521,
+   "frame_p95_ms": 8.419,
+   "gpu_mean_ms": 1.355,
+   "render_cpu_mean_ms": 1.831,
+   "draw_calls": 376.7
+  },
+  {
+   "order": 6,
+   "build": "branch",
+   "terrain": "open",
+   "camera": "wide",
+   "frame_mean_ms": 5.817,
+   "frame_p95_ms": 9.125,
+   "gpu_mean_ms": 1.315,
+   "render_cpu_mean_ms": 1.888,
+   "draw_calls": 376.0
+  },
+  {
+   "order": 7,
+   "build": "branch",
+   "terrain": "forest",
+   "camera": "wide",
+   "frame_mean_ms": 5.627,
+   "frame_p95_ms": 8.372,
+   "gpu_mean_ms": 1.391,
+   "render_cpu_mean_ms": 2.047,
+   "draw_calls": 470.3
+  },
+  {
+   "order": 8,
+   "build": "main",
+   "terrain": "forest",
+   "camera": "wide",
+   "frame_mean_ms": 5.768,
+   "frame_p95_ms": 8.346,
+   "gpu_mean_ms": 1.422,
+   "render_cpu_mean_ms": 2.033,
+   "draw_calls": 468.2
+  },
+  {
+   "order": 9,
+   "build": "main",
+   "terrain": "forest",
+   "camera": "field",
+   "frame_mean_ms": 6.372,
+   "frame_p95_ms": 8.879,
+   "gpu_mean_ms": 1.302,
+   "render_cpu_mean_ms": 2.318,
+   "draw_calls": 578.4
+  },
+  {
+   "order": 10,
+   "build": "branch",
+   "terrain": "forest",
+   "camera": "field",
+   "frame_mean_ms": 6.175,
+   "frame_p95_ms": 8.718,
+   "gpu_mean_ms": 1.384,
+   "render_cpu_mean_ms": 2.315,
+   "draw_calls": 574.6
+  },
+  {
+   "order": 11,
+   "build": "branch",
+   "terrain": "open",
+   "camera": "wide",
+   "frame_mean_ms": 5.385,
+   "frame_p95_ms": 8.493,
+   "gpu_mean_ms": 1.34,
+   "render_cpu_mean_ms": 1.827,
+   "draw_calls": 377.9
+  },
+  {
+   "order": 12,
+   "build": "main",
+   "terrain": "open",
+   "camera": "wide",
+   "frame_mean_ms": 5.593,
+   "frame_p95_ms": 8.483,
+   "gpu_mean_ms": 1.376,
+   "render_cpu_mean_ms": 1.842,
+   "draw_calls": 379.9
+  },
+  {
+   "order": 13,
+   "build": "main",
+   "terrain": "forest",
+   "camera": "field",
+   "frame_mean_ms": 6.324,
+   "frame_p95_ms": 8.715,
+   "gpu_mean_ms": 1.338,
+   "render_cpu_mean_ms": 2.309,
+   "draw_calls": 578.3
+  },
+  {
+   "order": 14,
+   "build": "branch",
+   "terrain": "forest",
+   "camera": "field",
+   "frame_mean_ms": 6.207,
+   "frame_p95_ms": 8.794,
+   "gpu_mean_ms": 1.322,
+   "render_cpu_mean_ms": 2.314,
+   "draw_calls": 573.9
+  }
+ ]
+}

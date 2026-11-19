@@ -2,6 +2,7 @@
 #include "../../../../runtime/simulation/native/contact_solver.hpp"
 #include "../../simulation/native/movement_parameters.hpp"
 #include "../../simulation/native/unit_columns.hpp"
+#include "terrain_grid.hpp"
 #include <functional>
 #include <unordered_map>
 namespace iron::battle {
@@ -29,11 +30,58 @@ public:
   double dt = 0, width = 0, height = 0, wall_x = INFINITY, wall_half = 0;
   std::function<double()> random;
   std::function<double(Vec2)> angle;
+  // TERRAIN.md 4.4 (stage Р1а): the grid the terrain rules read, as rules/terrain_rules.gd; invalid (width 0) on an
+  // open, flat field, where every rule is skipped. `relief`: some height byte is set. `cover_speed`: speed by cover.
+  TerrainGrid terrain;
+  bool relief = false;
+  double inverse_cell = 1.0 / 32.0; // 1 / terrain.cell, set with the grid.
+  double cover_speed[COVER_COUNT] = {};
 
 private:
   int cursor = 0, stage = 0, target = -1;
   Vec2 destination;
   double velocity_scale = 1, face = 0, distance = INFINITY;
+  double shot_range = 0; // The row's shooting range with the terrain's range_scale, set by plan().
+  // TerrainRules.speed_scale: cover times the slope along `delta` (`d` = its length), not below TERRAIN_MIN_SPEED.
+  double terrain_speed(Vec2 at, Vec2 delta, double d) const {
+    // x / cell as GDScript computes it: TERRAIN_CELL is a power of two, so the product by its inverse is exact.
+    const int x = static_cast<int>(std::clamp(std::floor(at.x * inverse_cell), 0.0, double(terrain.width - 1)));
+    const int y = static_cast<int>(std::clamp(std::floor(at.y * inverse_cell), 0.0, double(terrain.height - 1)));
+    const int w = terrain.width;
+    const uint8_t cover = terrain.cover[y * w + x];
+    double scale = cover < COVER_COUNT ? cover_speed[cover] : p(TERRAIN_MIN_SPEED);
+    if (relief) {
+      const uint8_t *h = terrain.elevation;
+      const int gx = int(h[y * w + std::min(x + 1, w - 1)]) - int(h[y * w + std::max(x - 1, 0)]);
+      const int gy = int(h[std::min(y + 1, terrain.height - 1) * w + x]) - int(h[std::max(y - 1, 0) * w + x]);
+      const double along = double(gx) * double(delta.x) + double(gy) * double(delta.y);
+      const double step = p(TERRAIN_SLOPE_STEP) * d;
+      if (along >= step)
+        scale *= p(TERRAIN_UPHILL_SPEED);
+      else if (along <= -step)
+        scale *= p(TERRAIN_DOWNHILL_SPEED);
+    }
+    return std::max(p(TERRAIN_MIN_SPEED), scale);
+  }
+  // TerrainRules.no_charge: no charge from the forest, a ford or water.
+  bool no_charge(Vec2 at) const {
+    if (!terrain.valid())
+      return false;
+    const uint8_t cover = terrain.cover_at(at.x, at.y);
+    return cover == FOREST || cover == FORD || cover == WATER;
+  }
+  // TerrainRules.range_scale: a shooter higher than his target shoots farther.
+  double range_scale(Vec2 at, Vec2 enemy) const {
+    if (!terrain.valid() || !relief)
+      return 1.0;
+    return int(terrain.height_at(at.x, at.y)) - int(terrain.height_at(enemy.x, enemy.y)) >= p(TERRAIN_HIGHER_STEP)
+               ? p(TERRAIN_HIGH_RANGE_MULTIPLIER)
+               : 1.0;
+  }
+  // TerrainRules.hidden: a shooter does not see an enemy in the forest farther than TERRAIN_FOREST_SIGHT.
+  bool hidden(Vec2 enemy, double raw) const {
+    return terrain.valid() && raw > p(TERRAIN_FOREST_SIGHT) && terrain.cover_at(enemy.x, enemy.y) == FOREST;
+  }
   struct Cell {
     int x, y;
     std::vector<int> units;
@@ -147,7 +195,9 @@ private:
           d *= p(TARGET_SHIELDED_MULTIPLIER);
         d *= 1.0 + p(TARGET_FRONT_SPREAD) * front_share(own_id, i(I_ID, e));
       }
-      if (d < score || (d == score && (best < 0 || e < best))) {
+      // Sight (stage Р1а) only for a candidate that would win: the same choice, fewer grid reads.
+      if ((d < score || (d == score && (best < 0 || e < best))) &&
+          (melee || !hidden(positions[e], raw))) {
         score = d;
         best = e;
       }
@@ -199,6 +249,9 @@ private:
     int mode = SLOT;
     bool mounted = i(I_MOUNTED, row);
     double range = r(R_ATTACK_RANGE, row);
+    if (range > 0 && target >= 0)
+      range *= range_scale(at, enemy);
+    shot_range = range;
     // Stage 1v (AiDecision.plan_into): formed infantry line and rallying shock cavalry.
     bool formed = g.charge && g.formed;
     bool rallying = g.charge && g.rally && mounted;
@@ -516,6 +569,7 @@ public:
           if (i(I_MODE, row) == MELEE && target >= 0 && i(I_MOUNTED, row) &&
               r(R_ATTACK_RANGE, row) <= 0 && r(R_CHARGE_COOLDOWN, row) <= 0 &&
               velocities[row].length() > p(CHARGE_MIN_SPEED) &&
+              !no_charge(positions[row]) &&
               distance < r(R_COLLISION_RADIUS, row) +
                              r(R_COLLISION_RADIUS, target) +
                              r(R_MELEE_REACH, row) + p(CHARGE_EXTRA_REACH)) {
@@ -537,8 +591,11 @@ public:
         destination = route(row, destination);
         Vec2 delta = destination - positions[row], desired;
         double d = delta.length(), speed = r(R_SPEED, row) * velocity_scale;
-        if (d > p(ARRIVAL_DISTANCE) && speed > 0)
+        if (d > p(ARRIVAL_DISTANCE) && speed > 0) {
+          if (terrain.valid())
+            speed *= terrain_speed(positions[row], delta, d);
           desired = delta / d * std::min(speed, d * p(ARRIVAL_BRAKE));
+        }
         float weight =
             float(std::min(1.0, p(i(I_MOUNTED, row) ? HORSE_STEERING_RATE
                                                     : FOOT_STEERING_RATE) *
@@ -564,7 +621,7 @@ public:
                          r(R_AI_WINDUP, row) < 0;
             bool shoot =
                 ready && r(R_ATTACK_RANGE, row) > 0 &&
-                distance < r(R_ATTACK_RANGE, row) &&
+                distance < shot_range &&
                 (i(I_MODE, row) == SKIRMISH ||
                  ((i(I_MODE, row) == SHOOT || i(I_MODE, row) == SHOOT_SLOT) &&
                   velocities[row].length() < p(SHOOT_MOVE_SPEED_LIMIT)));

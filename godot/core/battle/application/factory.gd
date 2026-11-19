@@ -100,13 +100,14 @@ static func _spawn_companions(state: State, fit: Array[Dictionary], gear_catalog
 ## gear, perks and the morale and damage bonus it gives to allies. Returns null when invalid.
 ## TERRAIN.md 4 (stage Р0б): the template of the description fills the field by seed. Laid after the fighters stand,
 ## so new trees keep off the formations; it reads no RNG, and an empty description gives VegetationSetup's field.
+## The terrain rules (stage Р1а) read the grid; the templates lay only what is drawn (TerrainTemplates.build).
 static func _lay_terrain(setup: Setup, state: State) -> void:
 	var occupied := PackedVector2Array()
 	if not setup.terrain.is_empty():
 		for unit in state.units:
 			occupied.append(unit.position)
 	var field := TerrainTemplates.build(setup.terrain, state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF, occupied)
-	state.terrain = field.grid
+	state.set_terrain(field.grid)
 	state.terrain_template = field.template
 	state.set_plants(field.plants)
 

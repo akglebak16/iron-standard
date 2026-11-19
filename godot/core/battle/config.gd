@@ -13,6 +13,24 @@ const ARENA_TIERS := [
 ]
 const DEFAULT_BIOME := "grass"
 const TERRAIN_CELL := 32.0 # TERRAIN.md 3.4: side of a battle terrain cell (model/terrain_grid.gd, api/native/terrain_grid.hpp).
+## TERRAIN.md 4.4 (stage Р1а): rules of the terrain grid, rules/terrain_rules.gd and movement_kernel.hpp. Starting numbers
+## of the table, by the recommendation to question 5 (no answer from Gleb yet); the arena checks them (TERRAIN.md 8).
+## Speed by cover, in TerrainGrid.Cover order: open, brush, forest, field, road, ford, bridge, water, rock. Deep water
+## and rocks become impassable with path finding (Р2); until then they are the slowest ground.
+const TERRAIN_COVER_SPEED := [1.0, 0.9, 0.75, 0.9, 1.1, 0.5, 1.0, 0.35, 0.35]
+const TERRAIN_MIN_SPEED := 0.35 # Cover and slope multiply; the product never goes below this.
+const TERRAIN_UPHILL_SPEED := 0.85
+const TERRAIN_DOWNHILL_SPEED := 1.05
+## A slope: the height bytes of the two neighbour cells along the way differ by at least this per two cells.
+const TERRAIN_SLOPE_STEP := 4.0
+## "Higher than the target": the height bytes of the two cells differ by at least this.
+const TERRAIN_HIGHER_STEP := 4
+const TERRAIN_HIGH_RANGE_MULTIPLIER := 1.15 # A shooter higher than his target shoots this much farther.
+const TERRAIN_HIGH_STRIKE_MULTIPLIER := 1.1 # A melee blow or a charge from higher ground.
+const TERRAIN_BANK_DEFENSE := 1.15 # A man on the bank against one wading in a ford (or water) takes damage / this.
+const TERRAIN_FOREST_HIT_CHANCE := 0.6 # An arrow that lands on a man in the forest hits him with this chance...
+const TERRAIN_BRUSH_HIT_CHANCE := 0.85 # ...in the brush with this one; the trees catch the rest.
+const TERRAIN_FOREST_SIGHT := 250.0 # A shooter does not pick a target in the forest farther than this.
 const SIEGE_WALL_RIGHT_OFFSET := 980.0
 const SIEGE_WALL_HALF_WIDTH := 22.0
 # siegeSetup in src/03_battle.js: a town has a main gate and two side gates, a castle one heavy gate; [top, bottom, hp]

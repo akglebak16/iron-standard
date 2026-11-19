@@ -5,9 +5,13 @@ const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const Block = preload("res://core/battle/rules/block.gd")
 const Event = preload("res://core/battle/combat_event.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 
-static func can_hit(attacker: Unit, target: Unit) -> bool:
+## `terrain` is State.terrain_rules: no charge from the forest, a ford or water (TERRAIN.md 4.4).
+static func can_hit(attacker: Unit, target: Unit, terrain = null) -> bool:
 	if not attacker.mounted or attacker.attack_range > 0.0 or attacker.charge_cooldown > 0.0 or attacker.velocity.length() <= Config.CHARGE_MIN_SPEED:
+		return false
+	if TerrainRules.no_charge(terrain, attacker.position):
 		return false
 	if target == null or target.side == attacker.side or target.dead or target.gone:
 		return false
@@ -19,6 +23,8 @@ static func hit(battle: State, attacker: Unit, target: Unit, rng: RandomNumberGe
 	var damage: float = attacker.damage * (Config.CHARGE_BASE_DAMAGE + speed / Config.CHARGE_SPEED_DAMAGE_DIVISOR)
 	if attacker.wavering:
 		damage *= Config.MORALE_WAVER_DAMAGE_MULTIPLIER
+	if battle.terrain_rules != null:
+		damage *= TerrainRules.strike_scale(battle.terrain_rules, attacker.position, target.position)
 	var incoming := (attacker.position - target.position).angle()
 	var front := absf(wrapf(incoming - target.facing, -PI, PI)) < Config.CHARGE_FRONT_ARC
 	# Stage 1b: the charge shakes its victim, unless a spearman meets it face on.

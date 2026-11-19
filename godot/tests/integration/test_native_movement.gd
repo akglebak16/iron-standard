@@ -7,6 +7,8 @@ const Contacts = preload("res://adapters/godot/native/contacts.gd")
 const Movement = preload("res://adapters/godot/native/movement.gd")
 const HeroInput = preload("res://core/battle/application/hero_input.gd")
 const Config = preload("res://core/battle/config.gd")
+const TerrainGrid = preload("res://core/battle/model/terrain_grid.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 const KITE_CENTER := Vector2(1250, 850)
 const KITE_RADIUS := 220.0
 const VOLLEY_LONE_AHEAD := 170.0
@@ -20,11 +22,15 @@ const SPEAR_PROOF_RATIO := 1.25
 # Stage 1b: a wavering fighter stands against a far enemy and closes in slower; a fugitive nobody pursues rallies.
 const MORALE_RULES := ["standing", "slowed", "rallied", "fled"]
 const MORALE_LOW_BASE := 30.0 # Base morale of the shaken half: never back above MORALE_STEADY_SHARE of it.
+# TERRAIN.md 4.4 (stage Р1а): every fighter-level terrain rule must decide something in the compared battle, and the
+# battle must differ from the same battle on the open field (otherwise equal columns would prove nothing).
+const TERRAIN_RULES := ["speed", "no_charge", "hidden", "range", "differs"]
+const TERRAIN_TICKS := 720 # The approach and the clash, where every rule fires; the rest of the battle adds only time.
 func _initialize() -> void:
 	var catalog := Catalog.new()
 	assert(Loader.populate(catalog))
 	assert(Movement.create().is_valid())
-	for scenario in ["field", "siege", "castle", "breach", "mixed", "kite", "volley", "doctrine", "morale", "large"]:
+	for scenario in ["field", "siege", "castle", "breach", "mixed", "kite", "volley", "doctrine", "morale", "large", "terrain"]:
 		var siege: bool = scenario in ["siege", "castle", "breach"]
 		var setup = load("res://content/scenarios/demo_battle.tres").to_setup()
 		setup.siege = siege
@@ -53,22 +59,39 @@ func _initialize() -> void:
 			# TERRAIN Р0а: more than 200 a side stand on the larger field; the kernel must take its bounds, not the base field.
 			setup.player_army.assign([{"type": "n1", "n": 120}, {"type": "n2a", "n": 60}, {"type": "n3c", "n": 50}])
 			setup.enemy_army.assign([{"type": "e1", "n": 120}, {"type": "e2a", "n": 60}, {"type": "e3c", "n": 50}])
+		if scenario == "terrain":
+			# Stage Р1а: archers on a hill, cavalry in a forest, a ford and water across the way, brush on a flank.
+			setup.player_army.assign([{"type": "n1", "n": 30}, {"type": "n2a", "n": 24}, {"type": "n3c", "n": 14}])
+			setup.enemy_army.assign([{"type": "k1", "n": 30}, {"type": "k2a", "n": 20}, {"type": "k2c", "n": 18}])
 		if scenario == "mixed":
 			setup.player_army.assign([{"type": "n1", "n": 35}, {"type": "n2a", "n": 20}, {"type": "n3c", "n": 15}])
 			setup.enemy_army.assign([{"type": "k1", "n": 30}, {"type": "k2a", "n": 20}, {"type": "k2c", "n": 20}])
 		var a := Factory.create(setup, catalog, null, null, null, Contacts.create())
 		var b := Factory.create(setup, catalog, null, null, null, Contacts.create(), Movement.create(), NativeColumns.create())
+		var open = Factory.create(setup, catalog, null, null, null, Contacts.create()) if scenario == "terrain" else null
 		var input := HeroInput.new()
 		var fired := {"crowd": false, "wait": false, "leashed": false, "overkill": false, "front": false}
 		for key in DOCTRINE_RULES: fired[key] = false
 		for key in MORALE_RULES: fired[key] = false
+		for key in TERRAIN_RULES: fired[key] = false
 		var rider_timers := {}
 		if scenario == "large":
 			var beyond := false
 			for unit in a._state.units:
 				if unit.position.x > Config.ARENA_SIZE.x or unit.position.y > Config.ARENA_SIZE.y: beyond = true
 			assert(a._state.arena_size == LARGE_FIELD and b._state.arena_size == LARGE_FIELD and beyond, "The large battle must use the larger field")
-		for battle in [a, b]:
+		for battle in ([a, b, open] if open != null else [a, b]):
+			if scenario == "terrain":
+				var state = battle._state
+				_place(state, state.groups[0][Config.GROUP_INFANTRY], Vector2(1050, 800), 0.0)
+				_place(state, state.groups[0][Config.GROUP_ARCHERS], Vector2(900, 800), 0.0)
+				_place(state, state.groups[0][Config.GROUP_CAVALRY], Vector2(900, 1350), 0.0)
+				_place(state, state.groups[1][Config.GROUP_INFANTRY], Vector2(1800, 800), PI)
+				_place(state, state.groups[1][Config.GROUP_ARCHERS], Vector2(1950, 650), PI)
+				_place(state, state.groups[1][Config.GROUP_CAVALRY], Vector2(1800, 1350), PI)
+				battle.issue_order("charge", Vector2.ZERO, 3)
+				if battle != open: state.set_terrain(_terrain_grid(state.arena_size))
+				continue
 			if scenario == "volley":
 				_place(battle._state, battle._state.groups[0][Config.GROUP_ARCHERS], Vector2(900, 850), 0.0)
 				_place(battle._state, battle._state.groups[0][Config.GROUP_INFANTRY], Vector2(1000, 850), 0.0)
@@ -127,7 +150,7 @@ func _initialize() -> void:
 					if unit.hero: continue
 					unit.position = Vector2(1200 + unit.side * 100 + (unit.id % 6) * 18, 550 + (unit.id % 12) * 22)
 				for group in battle._state.groups[1]: group.order = "charge"
-		for tick in (LARGE_TICKS if scenario == "large" else 1200):
+		for tick in (LARGE_TICKS if scenario == "large" else TERRAIN_TICKS if scenario == "terrain" else 1200):
 			if siege and tick == 300:
 				for battle in [a, b]: battle._state.wall.open_main_gate()
 			if siege and tick == 600:
@@ -152,8 +175,13 @@ func _initialize() -> void:
 				_check_doctrine(a._state, fired, tick, rider_timers)
 			if scenario == "morale":
 				_check_morale(a._state, fired)
+			if scenario == "terrain":
+				_check_terrain(a._state, fired)
+				if tick == 900: open._state.kill(open._hero)
+				open.step()
 			a.step()
 			b.step()
+			if open != null and a._state.motion.positions != open._state.motion.positions: fired.differs = true
 			assert(a._rng.state == b._rng.state, "RNG tick %d siege %s" % [tick, siege])
 			assert(a.take_events() == b.take_events(), "Events tick %d siege %s" % [tick, siege])
 			if tick % 30 == 0:
@@ -175,8 +203,59 @@ func _initialize() -> void:
 			for key in DOCTRINE_RULES: assert(fired[key], "the stage 1v rule %s must fire in the compared battle: %s" % [key, fired])
 		if scenario == "morale":
 			for key in MORALE_RULES: assert(fired[key], "the stage 1b rule %s must fire in the compared battle: %s" % [key, fired])
+		if scenario == "terrain":
+			for key in TERRAIN_RULES: assert(fired[key], "the stage Р1а rule %s must fire in the compared battle: %s" % [key, fired])
 	print("Native movement parity tests passed")
 	quit(0)
+
+## The field of the terrain scenario: a hill under the player's archers, forest along the lower edge, brush on the
+## enemy's flank and a river across the way with a ford in its upper half.
+static func _terrain_grid(arena: Vector2):
+	var grid = TerrainGrid.create(arena)
+	for y in grid.height:
+		for x in grid.width:
+			var center: Vector2 = grid.cell_center(x, y)
+			var k: int = y * grid.width + x
+			if center.y > 1150.0: grid.cover[k] = TerrainGrid.Cover.FOREST
+			elif center.y > 1000.0 and center.x > 1700.0: grid.cover[k] = TerrainGrid.Cover.BRUSH
+			if center.x >= 1500.0 and center.x < 1600.0 and center.y <= 1150.0:
+				grid.cover[k] = TerrainGrid.Cover.FORD if center.y < 700.0 else TerrainGrid.Cover.WATER
+			var d := center.distance_to(Vector2(950, 800)) / 450.0
+			grid.elevation[k] = clampi(roundi(220.0 * exp(-d * d * 2.0)), 0, 255)
+	return grid
+
+## Proof that the stage Р1а fighter rules decided something (the parity of the columns proves both backends apply
+## them alike; "differs" in the caller proves they change the battle). Speed: a fighter walking on ground that is not
+## open and flat. No charge: a rider ready to charge his target from the forest or a ford. Hidden: a shooter whose
+## nearest enemy stands deep in the forest and who aims at someone else. Range: a shooter shooting from higher ground
+## at a target beyond his plain range.
+static func _check_terrain(state, fired: Dictionary) -> void:
+	var grid = state.terrain_rules
+	assert(grid != null)
+	for unit in state.active_units:
+		if unit.dead or unit.gone or unit.hero or unit.fleeing: continue
+		var way: Vector2 = unit.plan_destination - unit.position
+		if way.length() > Config.ARRIVAL_DISTANCE and unit.velocity.length() > 1.0 and TerrainRules.speed_scale(grid, unit.position, way, way.length()) != 1.0:
+			fired.speed = true
+		var target = state.unit_for(unit.target_handle)
+		if target == null or target.dead or target.gone: continue
+		var distance: float = unit.position.distance_to(target.position)
+		if unit.mounted and unit.attack_range <= 0.0 and unit.ai_mode == Config.AI_MODE_MELEE and unit.charge_cooldown <= 0.0 and unit.velocity.length() > Config.CHARGE_MIN_SPEED \
+				and distance < unit.collision_radius + target.collision_radius + unit.melee_reach + Config.CHARGE_EXTRA_REACH and TerrainRules.no_charge(grid, unit.position):
+			fired.no_charge = true
+		if unit.attack_range <= 0.0: continue
+		if unit.ai_mode in [Config.AI_MODE_SHOOT, Config.AI_MODE_SHOOT_SLOT] and distance >= unit.attack_range and TerrainRules.range_scale(grid, unit.position, target.position) > 1.0 and distance < unit.attack_range * Config.TERRAIN_HIGH_RANGE_MULTIPLIER:
+			fired.range = true
+		var nearest = null
+		var best := INF
+		for enemy in state.active_units:
+			if enemy.side == unit.side or enemy.dead or enemy.gone: continue
+			var d: float = unit.position.distance_to(enemy.position)
+			if d < best:
+				best = d
+				nearest = enemy
+		if nearest != null and nearest != target and TerrainRules.hidden(grid, nearest.position, best):
+			fired.hidden = true
 
 static func _place(state, group, at: Vector2, facing: float) -> void:
 	group.center = at

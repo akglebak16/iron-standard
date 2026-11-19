@@ -27,8 +27,8 @@ const Combat = preload("res://core/battle/rules/combat.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 const Templates = preload("res://core/battle/data/terrain_templates.gd")
 
-const VERSION := 5 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0).
-const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears"]
+const VERSION := 6 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table.
+const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears", "equal"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
 const SAMPLE_TICKS := 30 # Idle sampling every 0.5 s.
@@ -69,7 +69,8 @@ func _initialize() -> void:
 		elif arg.begins_with("--profiles="): options.profiles = Array(arg.trim_prefix("--profiles=").split(","))
 		elif arg.begins_with("--backend="): options.backend = arg.trim_prefix("--backend=")
 		elif arg == "--mirror": options.mirror = true
-		elif arg.begins_with("--terrain="): options.terrain = arg.trim_prefix("--terrain=") # TERRAIN Р0б: a field template.
+		# TERRAIN Р0б: a field template; Р1а scenarios (TERRAIN.md 8): edge (forest on a flank), center_hill, river.
+		elif arg.begins_with("--terrain="): options.terrain = arg.trim_prefix("--terrain=")
 		elif arg == "--no-phase-profile": options.phase_profile = false
 		elif arg.begins_with("--out="): out = arg.trim_prefix("--out=")
 	var problem := validate(options)
@@ -157,6 +158,10 @@ static func _armies(scenario: String, size: int) -> Array:
 		"kite":
 			var foot := size / 2
 			return [[{"type": "n1", "n": foot}, {"type": "n2a", "n": size - foot}], [{"type": "e1", "n": size}]]
+		"equal":
+			# TERRAIN.md 8 (stage Р1а): the same mixed army on both sides, so the wins by side measure the ground alone.
+			var army := [{"type": "n1", "n": size / 2}, {"type": "n2a", "n": size / 3}, {"type": "n3c", "n": size - size / 2 - size / 3}]
+			return [army, army.duplicate(true)]
 		"spears":
 			# Stage 1v: foot with spearmen and archers against shock cavalry with foot.
 			var spears := roundi(size * 0.3)
@@ -177,6 +182,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var session = Factory.create(setup, catalog, null, null, null, Contacts.create() if native else Callable(),
 		Movement.create() if native else Callable(), Columns.create() if native else null)
 	if session == null: return {"error": "cannot create battle"}
+	Benchmark.lay_undrawn(session, setup)
 	var state = session._state
 	var hero = session._hero
 	var initial := [0, 0]
@@ -645,7 +651,8 @@ static func table(report: Dictionary) -> String:
 			s.losses[0], s.losses[1], s.fled[0], s.fled[1], s.never_engaged[0], s.never_engaged[1],
 			s.idle_time[0], s.idle_time[1], s.duration_seconds, s.ai_phase_mean_ms, s.ai_phase_worst_p95_ms])
 		if s.has("arena_size"):
-			lines.append("  field %dx%d %s: first melee contact %.1f s, stuck %.3f/%.3f" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.stuck[0], s.stuck[1]])
+			# Wins by side: side 0 stands on the left (on the hill of center_hill) whichever army it is (--mirror).
+			lines.append("  field %dx%d %s: first melee contact %.1f s, stuck %.3f/%.3f, wins by side %d/%d" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.stuck[0], s.stuck[1], s.wins[0], s.wins[1]])
 		if s.has("volleys"):
 			var v: Dictionary = s.volleys
 			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])

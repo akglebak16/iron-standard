@@ -12,7 +12,7 @@ var size := 1000
 var ticks := 3600
 var warmup := 120
 var scenario := "contact"
-var terrain := "" # TERRAIN Р0б: a field template (data/terrain_templates.gd), empty is the open field.
+var terrain := "" # TERRAIN Р0б: a field template (data/terrain_templates.gd), empty is the open field. Р1а: also center_hill, river, neutral.
 var seed_value := 4242
 var output := ""
 var legacy_snapshot := false
@@ -80,6 +80,8 @@ func run(tree: SceneTree) -> void:
 	if session == null:
 		fail("Cannot create benchmark battle")
 		return
+	lay_undrawn(session, setup)
+	if terrain == "neutral": lay_neutral(session)
 	if profile_phases: session._state.profiler.clock = Time.get_ticks_usec
 	session._state.profiler.detailed = profile_details
 	var initial := [0, 0]
@@ -202,3 +204,20 @@ static func stats(samples: Array[int]) -> Dictionary:
 func fail(message: String) -> void:
 	push_error(message)
 	_tree.quit(1)
+
+## TERRAIN Р1а: hills and the river have no graphics yet, so a battle never gets them (TerrainTemplates.build); the
+## benchmarks and the arena lay them over the battle's field to measure their rules. The plants stay the same.
+static func lay_undrawn(session, setup) -> void:
+	if Templates.pick(setup.terrain) not in Templates.UNDRAWN:
+		return
+	var state = session._state
+	var field := Templates.build(setup.terrain, state.arena_size, setup.seed, setup.biome, state.wall.x if state.wall != null else INF, PackedVector2Array(), true)
+	state.set_terrain(field.grid)
+
+## TERRAIN Р1а: the price of the rule code alone. Every rule runs (open cover, one height everywhere: the slope and
+## height checks read the grid too) and changes nothing, so the battle is bit for bit the open one.
+static func lay_neutral(session) -> void:
+	var state = session._state
+	var grid = state.terrain
+	grid.elevation.fill(1)
+	state.set_terrain(grid)
