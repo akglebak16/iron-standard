@@ -18,6 +18,8 @@ const WEAPONS={
  // On horseback the spear is held low on the shaft (75 % down) so it rises well above the head.
  spear:{art:['weapons.png',0,1,2,3],h:146,y:3,grip:.5,mountedGripY:.75},
  halberd:{art:['weapons.png',1,1,2,3],h:146,y:3,grip:.4},
+ // Sabre like the sword; its hilt sits a third of the way across the curved blade's width.
+ sabre:{art:['sabre.png',0,0,1,1],h:102,y:28,grip:.31},
  // Crossbow as the Dominion's: stock across the body, rear fist at the trigger, other hand under the fore-end.
  xbow:{art:['weapons.png',0,2,2,3],h:63,y:88,left:72,hand:96,support:[115,116],pivotY:128},
  // 172 px: the point stays inside the 244 px mounted frame (206 cut it off at the top).
@@ -51,6 +53,16 @@ FACTIONS.emp={
   {id:'e2a',weapon:'xbow',shield:false,steel:false},
   {id:'e3a',weapon:'xbow',shield:false,steel:true},
   {id:'e3c',weapon:'lance',shield:'kite',steel:true,horse:'barded',horseArt:'emp-horse.png',headHeight:73},
+ ],
+};
+FACTIONS.khan={
+ troops:[
+  {id:'k1',weapon:'sabre',shield:'small',steel:false},
+  {id:'k2',weapon:'spear',shield:'small',steel:true,headHeight:68},
+  {id:'k2a',weapon:'bow',shield:false,steel:false},
+  {id:'k2c',weapon:'sabre',shield:'small',steel:true,horse:'dun',riderDx:6,riderDy:5},
+  {id:'k3h',weapon:'bow',shield:false,steel:true,horse:'dun',headHeight:68,riderDy:7},
+  {id:'k3c',weapon:'lance',shield:'small',steel:true,horse:'black',headHeight:74,riderDy:5},
  ],
 };
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];
@@ -148,7 +160,9 @@ async function horseStamp(buffer,caparison){
 // One figure (foot or mounted): every layer placed in its frame, plus its geometry.
 async function figure(spec,index,sheets,art,caparison){
  const mounted=!!spec.horse,size=mounted?HORSE:FOOT,frame=frameOf(size);
- const [ox,oy]=mounted?RIDER:[0,0];
+ // A rider can be nudged in the saddle: `riderDx` forward, `riderDy` down (a quiver widens a torso,
+ // which then comes out shorter and sits too high).
+ const [ox,oy]=mounted?[RIDER[0]+(spec.riderDx||0),RIDER[1]+(spec.riderDy||0)]:[0,0];
  const neck=[76+ox,78+oy];
  const col=index%3,row=Math.floor(index/3);
  const torsoPart=await cell(sheets.torsos,col,row,3,3);

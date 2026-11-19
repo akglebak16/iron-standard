@@ -95,3 +95,11 @@ OpenAI права на результат принадлежат пользов�
 Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emp`, геометрия — `emp_heraldic_geometry.gd`.
 Под знаменем игрока багряное сукно перекрашивается в цвет знамени; срез шеи не трогается (кровь того же оттенка).
 Эталоны теста палитр знамени теперь на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`).
+
+### Кеширское ханство (k1 Кочевник, k2 Степной копейщик, k2a Степной стрелок, k2c Всадник, k3h Конный лучник, k3c Нукер)
+
+`apps/godot/visuals/assets/khan_heraldic_0.png` … `_3.png` (3 пеших) и `khan_heraldic_cavalry_0.png` … `_3.png`
+(3 конных, 12 строк). Части — генератор картинок OpenAI (ChatGPT) по шаблонам `shareness/skills/unit-parts/PROMPTS.md`:
+`khan-torsos.png`, `khan-heads.png`, `khan-shields.png` (малые круглые), `sabre.png`. Кони — общий `horses.png`.
+Сборка: `node godot/tools/battle/render_heraldic_faction.cjs khan`, геометрия — `khan_heraldic_geometry.gd`.
+Под знаменем игрока бирюзовое сукно перекрашивается в цвет знамени.
