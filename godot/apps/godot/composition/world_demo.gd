@@ -37,6 +37,7 @@ const BattleSetup = preload("res://core/battle/data/battle_setup.gd")
 const PresentationPreferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
+const WorldSkirmish = preload("res://core/campaign/world/world_skirmish.gd")
 const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_parties_layer.gd")
 const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
 const CompanionRemarks = preload("res://apps/godot/presentation/campaign/companion_remarks.gd")
@@ -79,6 +80,8 @@ var _hitch_log := 0
 var _hover_pending: Array = []  # [world_pos, screen_pos] of a mouse move that came while a step was running
 var map_view: Node2D
 var _meeting: Dictionary = {}
+var _meeting_fight: Dictionary = {} # the map fight the player rode up to (WorldSkirmish)
+var _join: Dictionary = {}          # the side of that fight the player took: {foe, foes, friends}
 var _dialog: CanvasLayer
 var _town: CanvasLayer
 var _autosave := Autosave.new()
@@ -377,7 +380,11 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	if party.kind == "cvass":
 		_vassal_talk(party)
 		return
-	var hostile: bool = Rules.hostile_to_player(party, state.player.rel) or party.kind == "camp"
+	var fight: Dictionary = state.skirmish.fight_of(party)
+	if not fight.is_empty() and _join.is_empty():
+		_fight_talk(fight)
+		return
+	var hostile: bool = Rules.hostile_to_player(party, state.player.rel) or party.kind == "camp" or not _join.is_empty()
 	var rows: Array = []
 	var sorted: Array = party.troops.duplicate()
 	sorted.sort_custom(func(a, b): return state.roster.info[a.type].tier > state.roster.info[b.type].tier)
@@ -391,13 +398,25 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 	elif party.kind == "bandit":
 		title = "Крупная банда" if party.get("big", false) else "Разбойники"
 	var sub: String = "%s · %d бойцов" % [_factions.get_faction(party.fac).get("name", party.fac), Rules.troop_count(party.troops)]
+	var power: Array = AutoBattle.relative_power(state.player.troops, party.troops, state.roster.info)
 	if hostile:
-		var help: Array = state.skirmish.helpers(state.player, party)
-		if not help.is_empty():
-			var extra := 0
-			for h in help:
-				extra += Rules.troop_count(h.troops)
+		var help: Array = _join.get("foes", []) + state.skirmish.helpers(state.player, party)
+		var friends: Array = _join.get("friends", []) + state.vassals.helpers(party) + state.skirmish.allies(state.player, party)
+		var extra := _men(help, [party])
+		if extra > 0:
 			sub += " · на помощь идут ещё %d" % extra
+		var ours := _men(friends, [party] + help)
+		if ours > 0:
+			sub += " · с тобой ещё %d" % ours
+		var mine: Array = state.player.troops.duplicate(true)
+		for h in friends:
+			for t in h.troops:
+				Rules.add_troops(mine, t.type, int(t.n))
+		var theirs: Array = party.troops.duplicate(true)
+		for h in help:
+			for t in h.troops:
+				Rules.add_troops(theirs, t.type, int(t.n))
+		power = AutoBattle.relative_power(mine, theirs, state.roster.info)
 	var actions: Array = []
 	if hostile:
 		actions = [{"id": "flee", "text": "Бежать"}, {"id": "auto", "text": "Рассчитать бой"}, {"id": "fight", "text": "В бой!", "primary": true}]
@@ -407,7 +426,52 @@ func _on_party_met(party: Dictionary, _forced: bool) -> void:
 		var house: Dictionary = state.clans.clan_of(party)
 		sub += " · %s" % house.name
 		actions.push_front({"id": "parley", "text": "Переговоры с родом"})
-	_dialog.open(title, sub, AutoBattle.relative_power(state.player.troops, party.troops, state.roster.info), rows, actions)
+	_dialog.open(title, sub, power, rows, actions)
+
+## Soldiers in distinct parties of `list` that are not in `skip`.
+static func _men(list: Array, skip: Array) -> int:
+	var seen: Array = skip.duplicate()
+	var n := 0
+	for h in list:
+		if seen.any(func(x): return is_same(x, h)):
+			continue
+		seen.append(h)
+		n += Rules.troop_count(h.troops)
+	return n
+
+## A fight between map parties: who is against whom, and which side the player may take.
+func _fight_talk(fight: Dictionary) -> void:
+	_meeting_fight = fight
+	var both: Array = state.skirmish.sides(fight)
+	var cards: Array = []
+	var actions: Array = [{"id": "fight_leave", "text": "Не вмешиваться"}]
+	for i in 2:
+		var side: Array = both[i]
+		var names: Array = []
+		var parties: Array = []
+		var troops: Array = state.player.troops.duplicate(true)
+		for q in side:
+			var fname: String = _factions.get_faction(q.fac).get("name", q.fac)
+			if not fname in names:
+				names.append(fname)
+			parties.append({"name": q.name, "n": Rules.troop_count(q.troops)})
+			for t in q.troops:
+				Rules.add_troops(troops, t.type, int(t.n))
+		var label := ", ".join(names)
+		var card := {"fac": side[0].fac if not side.is_empty() else "", "label": label, "men": _men(side, []), "parties": parties}
+		if side.is_empty() or side.any(func(q): return Rules.hostile_to_player(q, state.player.rel)):
+			card.note = "Враждебны тебе: помогать им ты не станешь."
+		else:
+			var others: Array = []
+			for q in both[1 - i]:
+				others.append_array(q.troops)
+			card.power = AutoBattle.relative_power(troops, others, state.roster.info)
+			var against: Array = WorldSkirmish.peaceful(both[1 - i], state.player.rel)
+			if not against.is_empty():
+				card.note = "Испортятся отношения: %s." % ", ".join(against.map(func(q): return _factions.get_faction(q.fac).get("name", q.fac)))
+			actions.append({"id": "fight_help_%d" % i, "text": "Помочь: %s" % label, "primary": against.is_empty()})
+		cards.append(card)
+	_dialog.open_fight("Идёт сражение", "Отряды сцепились у тебя на пути. Можно встать на одну из сторон или проехать мимо.", cards, actions)
 
 func _on_encounter_choice(action: String) -> void:
 	var p := _meeting
@@ -421,6 +485,20 @@ func _on_encounter_choice(action: String) -> void:
 			_end_meeting(3.0)
 		else:
 			_vassal_talk(p)
+		return
+	if action == "fight_leave":
+		_end_meeting(3.0)
+		return
+	if action.begins_with("fight_help_"):
+		var j: Dictionary = state.skirmish.join(_meeting_fight, int(action.trim_prefix("fight_help_")))
+		_meeting_fight = {}
+		if j.is_empty():
+			_end_meeting(3.0)
+			return
+		for q in WorldSkirmish.peaceful([j.foe] + j.foes, state.player.rel):
+			state.attack(q)
+		_join = j
+		_on_party_met(j.foe, false)
 		return
 	match action:
 		"parley":
@@ -492,6 +570,8 @@ func _open_parley(p: Dictionary) -> void:
 
 func _end_meeting(cooldown: float) -> void:
 	_siege_hold = false
+	_join = {}
+	_meeting_fight = {}
 	_meeting.cd = cooldown
 	_meeting = {}
 	state.player.busy = ""
@@ -552,7 +632,8 @@ func _on_assault(s: Dictionary, calculate: bool) -> void:
 		_start_battle(opp)
 
 func _finish_auto(p: Dictionary) -> void:
-	_battle_ticket = _bridge.begin(state, p)
+	_battle_ticket = _bridge.begin(state, p, _join.get("friends", []), _join.get("foes", []))
+	_join = {}
 	var resolved: Dictionary = _bridge.calculate(_battle_ticket)
 	if resolved.is_empty():
 		_bridge.cancel(_battle_ticket)
@@ -580,7 +661,8 @@ func _after_auto_report() -> void:
 		_offer_loot(town, true)
 
 func _start_battle(p: Dictionary) -> void:
-	_battle_ticket = _bridge.begin(state, p)
+	_battle_ticket = _bridge.begin(state, p, _join.get("friends", []), _join.get("foes", []))
+	_join = {}
 	var setup: BattleSetup = _bridge.battle_setup(_battle_ticket)
 	if setup == null: return
 	var session = BattleFactory.create(setup, _bridge.troops, _bridge.gear, _bridge.perks, _bridge.companions, Contacts.create(), NativeMovement.create(), NativeColumns.create())

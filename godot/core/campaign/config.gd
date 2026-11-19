@@ -8,6 +8,7 @@ const LOW_LOOT_GOLD_MULTIPLIER := 0.2
 const CAMP_GOLD := 120
 const DEFEAT_GOLD_SHARE := 0.25
 const OPPONENT_DEFEAT_COOLDOWN := 10
+const ALLY_WIN_RELATION := 3.0 # relation gained with a faction whose parties won a battle at the player's side
 const PARTY_IDLE := "idle"
 const SETTLEMENT_TOWN := "town"
 const SETTLEMENT_VILLAGE := "village"
