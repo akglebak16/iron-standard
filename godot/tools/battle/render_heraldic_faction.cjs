@@ -20,6 +20,8 @@ const WEAPONS={
  halberd:{art:['weapons.png',1,1,2,3],h:146,y:3,grip:.4},
  // Sabre like the sword; its hilt sits a third of the way across the curved blade's width.
  sabre:{art:['sabre.png',0,0,1,1],h:102,y:28,grip:.31},
+ // Club like a short axe: thick end up, held near the bottom of its grip.
+ club:{art:['club.png',0,0,1,1],h:86,y:40,grip:.5},
  // Crossbow as the Dominion's: stock across the body, rear fist at the trigger, other hand under the fore-end.
  xbow:{art:['weapons.png',0,2,2,3],h:63,y:88,left:72,hand:96,support:[115,116],pivotY:128},
  // 172 px: the point stays inside the 244 px mounted frame (206 cut it off at the top).
@@ -63,6 +65,16 @@ FACTIONS.khan={
   {id:'k2c',weapon:'sabre',shield:'small',steel:true,horse:'dun',riderDx:6,riderDy:5},
   {id:'k3h',weapon:'bow',shield:false,steel:true,horse:'dun',headHeight:68,riderDy:7},
   {id:'k3c',weapon:'lance',shield:'small',steel:true,horse:'black',headHeight:74,riderDy:5},
+ ],
+};
+FACTIONS.undead={
+ troops:[
+  {id:'z1',weapon:'club',shield:false,steel:false},
+  {id:'s1',weapon:'sword',shield:'round',steel:false},
+  {id:'s1a',weapon:'bow',shield:false,steel:false},
+  {id:'s2',weapon:'axe',shield:'round',steel:true},
+  {id:'s2c',weapon:'spear',shield:false,steel:false,horse:'bone'},
+  {id:'s3',weapon:'sword',shield:'kite',steel:true},
  ],
 };
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];

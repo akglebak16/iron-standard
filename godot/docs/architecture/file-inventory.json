@@ -5054,6 +5054,11 @@
       "source": "apps/godot/visuals/khan_heraldic_geometry.gd",
       "destination": "apps/godot/visuals/khan_heraldic_geometry.gd",
       "introduced_revision": "local-khan-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/undead_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/undead_heraldic_geometry.gd",
+      "introduced_revision": "local-undead-heraldic"
     }
   ]
 }

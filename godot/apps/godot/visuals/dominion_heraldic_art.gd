@@ -1,5 +1,5 @@
 extends RefCounted
-## Heraldic troop skins (Dominion, Nordmark, Empire, Khanate) share the existing atlas/pose contract, including hired troops.
+## Heraldic troop skins (Dominion, Nordmark, Empire, Khanate, Undead) share the existing atlas/pose contract, including hired troops.
 ## Each faction brings foot atlases (152×176 frames) and cavalry atlases (240×244, one more row).
 const IDS := ["d1", "d2", "d3", "d2s", "d3s", "d2x", "d3x"]
 ## Mounted troops: a heraldic horse carrying a rider built from the same kind of parts.
@@ -10,6 +10,8 @@ const EMP_IDS := ["e1", "e2", "e3", "e2s", "e3s", "e2a", "e3a"]
 const EMP_CAVALRY_IDS := ["e3c"]
 const KHAN_IDS := ["k1", "k2", "k2a"]
 const KHAN_CAVALRY_IDS := ["k2c", "k3h", "k3c"]
+const UNDEAD_IDS := ["z1", "s1", "s1a", "s2", "s3"]
+const UNDEAD_CAVALRY_IDS := ["s2c"]
 const PARTS := ["body", "weapon", "portrait", "headless", "head", "flash", "corpse", "corpse_headless"]
 ## Extra rows after PARTS for the shield block: the figure without its painted shield, and the shield.
 const GUARD_PARTS := ["bare", "shield"]
@@ -65,6 +67,18 @@ const KHAN_CAVALRY_PAGES := [
 	preload("res://apps/godot/visuals/assets/khan_heraldic_cavalry_2.png"),
 	preload("res://apps/godot/visuals/assets/khan_heraldic_cavalry_3.png"),
 ]
+const UNDEAD_PAGES := [
+	preload("res://apps/godot/visuals/assets/undead_heraldic_0.png"),
+	preload("res://apps/godot/visuals/assets/undead_heraldic_1.png"),
+	preload("res://apps/godot/visuals/assets/undead_heraldic_2.png"),
+	preload("res://apps/godot/visuals/assets/undead_heraldic_3.png"),
+]
+const UNDEAD_CAVALRY_PAGES := [
+	preload("res://apps/godot/visuals/assets/undead_heraldic_cavalry_0.png"),
+	preload("res://apps/godot/visuals/assets/undead_heraldic_cavalry_1.png"),
+	preload("res://apps/godot/visuals/assets/undead_heraldic_cavalry_2.png"),
+	preload("res://apps/godot/visuals/assets/undead_heraldic_cavalry_3.png"),
+]
 ## The seven coats as single 240×244 frames, in this order (shared by every faction).
 const HORSES = preload("res://apps/godot/visuals/assets/dominion_heraldic_horses.png")
 const HORSE_COATS := ["bay", "chestnut", "dun", "black", "grey", "barded", "bone"]
@@ -77,6 +91,7 @@ const CAVALRY = preload("res://apps/godot/visuals/dominion_heraldic_cavalry_geom
 const NORD = preload("res://apps/godot/visuals/nord_heraldic_geometry.gd").DATA
 const EMP = preload("res://apps/godot/visuals/emp_heraldic_geometry.gd").DATA
 const KHAN = preload("res://apps/godot/visuals/khan_heraldic_geometry.gd").DATA
+const UNDEAD = preload("res://apps/godot/visuals/undead_heraldic_geometry.gd").DATA
 ## Dominion foot figures predate the stored grips; newer factions record theirs in the geometry.
 const GRIPS := {"axe": Vector2(115, 116), "halberd": Vector2(118, 116), "xbow": Vector2(96, 128)}
 const BANNERS = preload("res://apps/godot/visuals/assets/banner_definitions.gd").DATA
@@ -97,6 +112,9 @@ const FACTIONS := {
 	# Khanate teal; gold, fur and felt keep their colours.
 	"khan": {"foot": KHAN_IDS, "cavalry": KHAN_CAVALRY_IDS, "pages": KHAN_PAGES, "cavalry_pages": KHAN_CAVALRY_PAGES,
 		"hue": [0.42, 0.53], "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true},
+	# Undead moss-green rags; bone, rust and the walking dead's grey-green skin keep their colours.
+	"undead": {"foot": UNDEAD_IDS, "cavalry": UNDEAD_CAVALRY_IDS, "pages": UNDEAD_PAGES, "cavalry_pages": UNDEAD_CAVALRY_PAGES,
+		"hue": [0.17, 0.30], "min_value": 0.2, "trim": false, "skip_rows": [1, 4, 5], "neck_line": 0, "mount_row": true},
 }
 static var _sprites := {}
 static var _banner_pages := {}
@@ -123,6 +141,7 @@ static func geometry(troop: String) -> Dictionary:
 		"nord": return NORD.get(troop, {})
 		"emp": return EMP.get(troop, {})
 		"khan": return KHAN.get(troop, {})
+		"undead": return UNDEAD.get(troop, {})
 	return {}
 
 ## Where the weapon turns: the glove holding it.
