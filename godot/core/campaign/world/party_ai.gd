@@ -110,7 +110,11 @@ func step(dh: float) -> void:
 	var list := roster.parties.duplicate()
 	if native != null:
 		_contacts_native(list)
-		return
+	else:
+		_contacts(list)
+
+## The contact phase: parties closer than CONTACT_REACH fight if hostile, each at most once per step (the reference).
+func _contacts(list: Array) -> void:
 	for i in list.size():
 		var a: Dictionary = list[i]
 		if _skip_fight(a) or not (a in roster.parties):
@@ -161,6 +165,25 @@ func _contacts_native(list: Array) -> void:
 				else:
 					auto_fight(a, b)
 				open = false
+				# A fight settled on the spot may send a beaten ruler home (clans.ruler_home): the reference loop sees
+				# him there in the next rows, so the pairs of those rows are searched again from the new positions.
+				if _moved(list, xs, ys):
+					pairs = native.contact_pairs(xs, ys, CONTACT_REACH)
+					count = pairs.size()
+					k = 0
+					while k < count and pairs[k] <= i:
+						k += 2
+
+## Whether a party of `list` stands elsewhere than in the columns; the columns are brought up to date.
+static func _moved(list: Array, xs: PackedFloat64Array, ys: PackedFloat64Array) -> bool:
+	var moved := false
+	for j in list.size():
+		var q: Dictionary = list[j]
+		if xs[j] != q.x or ys[j] != q.y:
+			xs[j] = q.x
+			ys[j] = q.y
+			moved = true
+	return moved
 
 ## Hourly: settlements remember enemies seen around them (s.alarm, saved with the settlement); patrols go there.
 func hour_tick() -> void:
