@@ -2,15 +2,15 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/banner_3_e3.png-ac511897e22605e15a6e4fcdabf0947f.ctex"
+path="res://.godot/imported/banner_2_f3.png-62fd42c1fc1d222f6290d6e7a199a73c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://tests/unit/visuals/fixtures/banner_3_e3.png"
-dest_files=["res://.godot/imported/banner_3_e3.png-ac511897e22605e15a6e4fcdabf0947f.ctex"]
+source_file="res://tests/unit/visuals/fixtures/banner_2_f3.png"
+dest_files=["res://.godot/imported/banner_2_f3.png-62fd42c1fc1d222f6290d6e7a199a73c.ctex"]
 
 [params]
 

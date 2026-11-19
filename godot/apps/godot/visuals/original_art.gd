@@ -301,7 +301,10 @@ static func _region_image(texture: AtlasTexture) -> Image:
 ## Draw the fallen mount without its rider for a severed-rider corpse.
 static func mount_corpse(unit: Dictionary, size: Vector2i, troop_id := "") -> Image:
 	if DominionHeraldic.is_cavalry(troop_id) and DominionHeraldic.supports(troop_id, _faction(unit)):
-		var horse := DominionHeraldic.horse(String(unit.look.get("horse", "bay")))
+		# The faction's own horse when its atlas carries one, otherwise the shared coat.
+		var own := DominionHeraldic.sprite(troop_id, DominionHeraldic.MOUNT_PART, 0, _player_banner if _faction(unit) == "player" else -1)
+		var horse: Image = own.get_image() if own != null else DominionHeraldic.horse(String(unit.look.get("horse", "bay")))
+		horse.convert(Image.FORMAT_RGBA8)
 		if horse.get_size() == size: return horse
 	var image := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	var faction: String = unit.faction

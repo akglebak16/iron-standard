@@ -2,16 +2,15 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://df12fytwbw4gp"
-path="res://.godot/imported/banner_2_n3.png-47846bae68b66b52fd436da1edfd0c8d.ctex"
+path="res://.godot/imported/emp_heraldic_cavalry_0.png-350b55287b78adcdc17f44420013c7de.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://tests/unit/visuals/fixtures/banner_2_n3.png"
-dest_files=["res://.godot/imported/banner_2_n3.png-47846bae68b66b52fd436da1edfd0c8d.ctex"]
+source_file="res://apps/godot/visuals/assets/emp_heraldic_cavalry_0.png"
+dest_files=["res://.godot/imported/emp_heraldic_cavalry_0.png-350b55287b78adcdc17f44420013c7de.ctex"]
 
 [params]
 
