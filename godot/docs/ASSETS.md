@@ -119,3 +119,9 @@ OpenAI права на результат принадлежат пользов�
 `hero-heads-a.png`, `hero-heads-b.png`, `hero-hair.png`, `hero-shields.png`. Нарисованы ключевыми цветами, игра
 перекрашивает их под стяг, кожу и волосы (`hero_heraldic_art.gd`). Сборка: `node godot/tools/battle/render_heraldic_hero.cjs`.
 
+### Поселения карты (#254)
+
+`apps/godot/visuals/assets/settlements_heraldic.png` — города, замки и деревни семи культур и логово разбойников.
+Генератор картинок OpenAI (ChatGPT) по `godot/tools/map/settlement_source/prompts.md`: `towns.png`, `castles.png`,
+`villages.png`. Сборка: `node godot/tools/map/render_heraldic_settlements.cjs`.
+
