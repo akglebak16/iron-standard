@@ -14,9 +14,9 @@ const geometryOut=outIndex>=0?output:path.resolve(output,'..');
 // The bare head is 56 px tall, so a helmeted head comes out about 64 px like the troops' heads.
 const W=152,H=176,NECK=[76,78],TORSO_WIDTH=108,HEAD_HEIGHT=56;
 // Riders of every faction sit at one height: the bottom of the torso (the belt) on row MOUNTED_BELT_Y of the
-// 240×244 mounted frame, as the faction cavalry (shareness/skills/unit-parts/SKILL.md). The hero's rider
+// 240×244 mounted frame (shareness/skills/unit-parts/SKILL.md; the hero, at Gleb's word, 8 px higher). His rider
 // offset is worked out from his tunic so his belt lands there too.
-const MOUNTED_BELT_Y=182,RIDER_DX=6,RIDER=[RIDER_DX,0],HW=240,HH=244;
+const MOUNTED_BELT_Y=174,RIDER_DX=6,RIDER=[RIDER_DX,0],HW=240,HH=244;
 // Sheet → part names in reading order ('-' skips a blob that another sheet replaces).
 const SHEETS={
  'hero-torsos-a.png':['torso:tunic','torso:fur','-','torso:padded','-','-'],

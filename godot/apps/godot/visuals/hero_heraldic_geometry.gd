@@ -55,11 +55,11 @@ const DATA = {
 	"mounted_grip": {
 		"spear": [
 			131,
-			150
+			142
 		],
 		"lance": [
 			131,
-			150
+			142
 		]
 	},
 	"shield_center": {
@@ -337,6 +337,6 @@ const DATA = {
 	],
 	"rider": [
 		6,
-		34
+		26
 	]
 }
