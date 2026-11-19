@@ -94,6 +94,13 @@ var hero: bool:
 	set(value):
 		if _motion == null: _detached_hero = value
 		else: _motion.integer_fields[MotionStore.I.HERO * _motion.capacity + battle_index] = int(value)
+## Who commands the fighter (#243): Config.COMMAND_PLAYER, COMMAND_ENEMY (= side) or COMMAND_ALLY (allies on side 0).
+var _detached_command: int = -1
+var command: int:
+	get: return (_detached_side if _detached_command < 0 else _detached_command) if _motion == null else _motion.integer_fields[MotionStore.I.COMMAND * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_command = value
+		else: _motion.integer_fields[MotionStore.I.COMMAND * _motion.capacity + battle_index] = value
 var _detached_group_kind: int = 0
 var group_kind: int:
 	get: return _detached_group_kind if _motion == null else _motion.integer_fields[MotionStore.I.GROUP_KIND * _motion.capacity + battle_index]
@@ -349,6 +356,7 @@ func bind_motion(store: MotionStore) -> void:
 	store.integer_fields[MotionStore.I.ID * store.capacity + battle_index] = _detached_id
 	store.integer_fields[MotionStore.I.SIDE * store.capacity + battle_index] = _detached_side
 	store.integer_fields[MotionStore.I.GROUP_KIND * store.capacity + battle_index] = _detached_group_kind
+	store.integer_fields[MotionStore.I.COMMAND * store.capacity + battle_index] = _detached_side if _detached_command < 0 else _detached_command
 	store.integer_fields[MotionStore.I.TARGET_HANDLE * store.capacity + battle_index] = _detached_target_handle
 	store.integer_fields[MotionStore.I.AI_WIND_TARGET_HANDLE * store.capacity + battle_index] = _detached_ai_wind_target_handle
 	store.integer_fields[MotionStore.I.UNIT_HANDLE * store.capacity + battle_index] = _detached_unit_handle
@@ -403,6 +411,7 @@ func detach_motion() -> void:
 	_detached_id = id
 	_detached_side = side
 	_detached_group_kind = group_kind
+	_detached_command = command
 	_detached_target_handle = target_handle
 	_detached_ai_wind_target_handle = ai_wind_target_handle
 	_detached_unit_handle = unit_handle

@@ -41,7 +41,7 @@
     "leashed",
     "aimers",
     "anti_cavalry",
-    "wavering"
+    "wavering", "command"
   ],
   "vector": [
     "slot_offset",

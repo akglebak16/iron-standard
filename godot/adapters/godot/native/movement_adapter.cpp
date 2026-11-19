@@ -85,6 +85,10 @@ public:
     if (!begin && (!active || kernel.capacity != capacity ||
                    int64_t(kernel.positions.size()) != count))
       return {};
+    // Groups the kernel will index: 6 (two sides), or 9 with the player's allies (#243).
+    const int64_t groups_known =
+        begin ? PackedFloat64Array(context.get("groups", PackedFloat64Array())).size() / 15
+              : int64_t(kernel.groups.size());
     // Validate indices before the engine-independent kernel dereferences them.
     for (int row = 0; row < count; ++row) {
       if (integers[I_UNIT_HANDLE * capacity + row] <= 0 ||
@@ -94,6 +98,10 @@ public:
           integers[I_SIDE * capacity + row] > 1 ||
           integers[I_GROUP_KIND * capacity + row] < 0 ||
           integers[I_GROUP_KIND * capacity + row] > 2 ||
+          // #243: the command is the side, or 2 for the player's allies on side 0.
+          (integers[I_COMMAND * capacity + row] != integers[I_SIDE * capacity + row] &&
+           !(integers[I_COMMAND * capacity + row] == 2 && integers[I_SIDE * capacity + row] == 0)) ||
+          integers[I_COMMAND * capacity + row] * 3 + 2 >= groups_known ||
           !positions[row].is_finite() || !velocities[row].is_finite())
         return {};
     }
@@ -102,7 +110,8 @@ public:
       Vector2 arena = context.get("arena", Vector2());
       // Movement._step_batch: per group frame, order flags and the stage 1v doctrine.
       constexpr int GROUP_FIELDS = 15;
-      if (group.size() != 6 * GROUP_FIELDS || !arena.is_finite() ||
+      const int64_t group_count = group.size() / GROUP_FIELDS;
+      if ((group.size() != 6 * GROUP_FIELDS && group.size() != 9 * GROUP_FIELDS) || !arena.is_finite() ||
           arena.x < 2 * kernel.parameters[SLOT_EDGE] ||
           arena.y < 2 * kernel.parameters[SLOT_EDGE])
         return {};
@@ -137,8 +146,8 @@ public:
       } else if (context.has("terrain_cover")) {
         return {};
       }
-      kernel.groups.resize(6);
-      for (int n = 0; n < 6; ++n) {
+      kernel.groups.resize(group_count);
+      for (int n = 0; n < group_count; ++n) {
         const double *g = group.ptr() + n * GROUP_FIELDS;
         kernel.groups[n] = {{float(g[0]), float(g[1])},
                             {float(g[2]), float(g[3])},

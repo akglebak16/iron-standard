@@ -34,10 +34,13 @@ static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = n
 	state.column_backend = column_backend
 	var player_cap := setup.unit_cap(setup.player_faction, setup.player_unit_cap)
 	var enemy_cap := setup.unit_cap(setup.enemy_faction, setup.enemy_unit_cap)
+	var caps := side_caps(setup, player_cap)
 	state.arena_size = arena_for(setup, player_cap, enemy_cap)
-	state.setup_groups()
+	state.setup_groups(1, not setup.ally_army.is_empty())
 	state.side_factions = [setup.player_faction, setup.enemy_faction]
-	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, player_cap, "", 0.0, setup.uses_reserve_waves(setup.player_faction)):
+	if not ArmyBuilder.spawn(state, 0, setup.player_army, setup.player_faction, catalog, rng, caps[0], "", 0.0, setup.uses_reserve_waves(setup.player_faction)):
+		return null
+	if state.has_allies() and not ArmyBuilder.spawn(state, 0, setup.ally_army, setup.ally_faction if not setup.ally_faction.is_empty() else setup.player_faction, catalog, rng, caps[1], "", 0.0, false, Config.COMMAND_ALLY):
 		return null
 	var party := _resolve_companions(setup, companion_catalog)
 	if party.is_empty():
@@ -111,13 +114,32 @@ static func _lay_terrain(setup: Setup, state: State) -> void:
 	state.terrain_template = field.template
 	state.set_plants(field.plants)
 
+## The unit cap of the player's side split between his own army and his allies' (#243) by their head counts: the side
+## puts as many fighters on the field as one merged army would. [own cap, allied cap]; without allies the whole cap.
+static func side_caps(setup: Setup, player_cap: int) -> Array[int]:
+	if setup.ally_army.is_empty():
+		return [player_cap, 0]
+	var own := 0
+	var allied := 0
+	for stack in setup.player_army:
+		own += maxi(0, int(stack.get("n", 0)))
+	for stack in setup.ally_army:
+		allied += maxi(0, int(stack.get("n", 0)))
+	if own + allied <= player_cap:
+		return [maxi(1, own), maxi(1, allied)]
+	var mine := clampi(roundi(float(player_cap) * own / maxf(1.0, own + allied)), 1, maxi(1, player_cap - 1))
+	return [mine, maxi(1, player_cap - mine)]
+
 ## TERRAIN.md 5 (stage Р0а): the field for the larger army on it. A siege keeps the base field: the walls, gates and
 ## siege placement are laid out for it.
 static func arena_for(setup: Setup, player_cap: int, enemy_cap: int) -> Vector2:
 	if setup.siege:
 		return Config.ARENA_SIZE
-	var fighters := maxi(ArmyBuilder.field_count(setup.player_army, player_cap, setup.uses_reserve_waves(setup.player_faction)),
-		ArmyBuilder.field_count(setup.enemy_army, enemy_cap, setup.uses_reserve_waves(setup.enemy_faction)))
+	var caps := side_caps(setup, player_cap)
+	var player_side := ArmyBuilder.field_count(setup.player_army, caps[0], setup.uses_reserve_waves(setup.player_faction))
+	if not setup.ally_army.is_empty():
+		player_side += ArmyBuilder.field_count(setup.ally_army, caps[1], false)
+	var fighters := maxi(player_side, ArmyBuilder.field_count(setup.enemy_army, enemy_cap, setup.uses_reserve_waves(setup.enemy_faction)))
 	return ArenaLayout.size_for(fighters)
 
 static func _create_hero(setup: Setup, troop: Dictionary, state: State, gear_catalog: GearCatalog, perk_catalog: PerkCatalog) -> Unit:

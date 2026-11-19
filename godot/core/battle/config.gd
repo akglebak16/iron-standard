@@ -131,8 +131,13 @@ const HERO_START := Vector2(730, 850) # startBattle: mkUnit(0, hd, 'player', 730
 const ARCHER_REAR_OFFSET := 105.0
 const CAVALRY_REAR_OFFSET := 20.0
 const CAVALRY_FLANK_OFFSET := 380.0
+const ALLY_FLANK_OFFSET := 380.0 # allied line beside the player's, on the flank away from his cavalry (#243)
 const GROUP_KINDS := TroopConfig.GROUP_KINDS
 const ALL_GROUPS := TroopConfig.GROUP_KINDS
+## Commands on the field (#243): each has its own groups in State.groups and its own commander.
+const COMMAND_PLAYER := 0
+const COMMAND_ENEMY := 1
+const COMMAND_ALLY := 2  # the player's allies: side 0, their own commander
 const GROUP_INFANTRY := TroopConfig.GROUP_INFANTRY
 const GROUP_ARCHERS := TroopConfig.GROUP_ARCHERS
 const GROUP_CAVALRY := TroopConfig.GROUP_CAVALRY

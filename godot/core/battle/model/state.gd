@@ -81,10 +81,11 @@ var reserve_caps := [0, 0]
 var reserve_lost := [0, 0]
 var active_counts := [0, 0] # Combat-ready units at the latest morale check.
 var missile_losses := [0.0, 0.0] # Fighters lost to missiles, decayed over AI_MISSILE_LOSS_MEMORY_SECONDS by tactics.
-var ai_scan_timers := [0.0, 0.0]
+var ai_scan_timers := [0.0, 0.0, 0.0] # per command (#243)
 # Formation centre fitted to each group at the start of the GDScript movement tick (side * 3 + kind), the anchor
 # of the charge leash; Vector2.INF without ready fighters. The native kernel keeps its own copy.
-var formation_centers := PackedVector2Array([Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF])
+# Per group, command * 3 + kind: the player, the enemy, the player's allies (#243).
+var formation_centers := PackedVector2Array([Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF, Vector2.INF])
 ## Observation port (ADR-022): brains write decision records here only while the session traces them.
 ## No rule reads it; it is not part of snapshots or results.
 var ai_trace: DecisionTrace = null
@@ -190,7 +191,9 @@ func take_events() -> Array[Dictionary]:
 	_events = []
 	return batch
 
-func setup_groups(cavalry_flank: int = 1) -> void:
+## Groups per command: [player, enemy] and, with `allies`, the allied command on the player's side (#243), which
+## stands on the flank away from the player's cavalry.
+func setup_groups(cavalry_flank: int = 1, allies: bool = false) -> void:
 	groups.clear()
 	for side in 2:
 		var forward := -1.0 if side == 1 else 1.0
@@ -204,12 +207,38 @@ func setup_groups(cavalry_flank: int = 1) -> void:
 			Group.new(side, Config.GROUP_ARCHERS, Vector2(x - forward * Config.ARCHER_REAR_OFFSET * grow.x, center_y), facing),
 			Group.new(side, Config.GROUP_CAVALRY, Vector2(x - forward * Config.CAVALRY_REAR_OFFSET * grow.x, center_y + cavalry_flank * Config.CAVALRY_FLANK_OFFSET * grow.y), facing),
 		])
+	if allies:
+		var front := ArenaLayout.front_x(arena_size)
+		var grow := ArenaLayout.scale(arena_size)
+		var ally_y := ArenaLayout.center_y(arena_size) - cavalry_flank * Config.ALLY_FLANK_OFFSET * grow.y
+		groups.append([
+			Group.new(0, Config.GROUP_INFANTRY, Vector2(front, ally_y), 0.0),
+			Group.new(0, Config.GROUP_ARCHERS, Vector2(front - Config.ARCHER_REAR_OFFSET * grow.x, ally_y), 0.0),
+			Group.new(0, Config.GROUP_CAVALRY, Vector2(front - Config.CAVALRY_REAR_OFFSET * grow.x, ally_y - cavalry_flank * Config.CAVALRY_FLANK_OFFSET * 0.5 * grow.y), 0.0),
+		])
+
+## The group a fighter stands in: the groups of its command (#243), by its kind.
+func group_of(unit: Unit) -> Group:
+	return groups[unit.command][unit.group_kind]
+
+## Groups of the other side as seen by `command`: the enemy sees the player's and the allied groups.
+func foe_groups(command: int) -> Array:
+	if command == Config.COMMAND_ENEMY:
+		return groups[0] + groups[Config.COMMAND_ALLY] if groups.size() > Config.COMMAND_ALLY else groups[0]
+	return groups[Config.COMMAND_ENEMY]
+
+## The side a command fights on.
+static func side_of(command: int) -> int:
+	return 1 if command == Config.COMMAND_ENEMY else 0
+
+func has_allies() -> bool:
+	return groups.size() > Config.COMMAND_ALLY
 
 func add_grouped_unit(unit: Unit, kind: int) -> void:
 	if unit == null or kind < 0 or kind >= Config.GROUP_KINDS or groups.is_empty(): return
 	if not add_unit(unit): return
 	unit.group_kind = kind
-	groups[unit.side][kind].units.append(unit)
+	groups[unit.command][kind].units.append(unit)
 
 func place_units() -> void:
 	for side_groups in groups:
@@ -360,8 +389,8 @@ func hurt(target: Unit, raw_damage: float, source: Unit = null, pierce: float = 
 ## facing in a loose charge; the sectors are those of the field assessment (AI_FIELD_FRONT_ARC, AI_FIELD_REAR_ARC).
 func hit_morale_multiplier(target: Unit, from: Vector2) -> float:
 	var facing := target.facing
-	if target.side < groups.size() and target.group_kind >= 0 and target.group_kind < groups[target.side].size():
-		var group: Group = groups[target.side][target.group_kind]
+	if target.command < groups.size() and target.group_kind >= 0 and target.group_kind < groups[target.command].size():
+		var group: Group = groups[target.command][target.group_kind]
 		if group.order != Config.ORDER_CHARGE or group.formed:
 			facing = group.direction
 	var offset := from - target.position

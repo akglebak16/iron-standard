@@ -62,7 +62,11 @@ func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> 
 	s.terrain = BattleTerrainWindow.describe(state.map, at, Vector2(float(opponent.get("x", at.x)), float(opponent.get("y", at.y))))
 	s.player_faction = state.player.culture
 	s.enemy_faction = opponent.fac
-	s.player_army.assign(merged(state.player.troops, allies))
+	# The allies fight beside the player under their own commander (#243); the result counts the side as one army
+	# (party_dict merges them back) and _split hands the survivors back by troop type.
+	s.player_army.assign(state.player.troops.duplicate(true))
+	s.ally_army.assign(merged([], allies))
+	s.ally_faction = _main_faction(allies)
 	s.enemy_army.assign(opponent.troops.duplicate(true))
 	s.hero_troop = hero_troop(state.player.culture)
 	s.hero_profile = state.player.hero.duplicate(true)
@@ -75,6 +79,17 @@ func make_setup(state: RefCounted, opponent: Dictionary, allies: Array = []) -> 
 		s.wall_defense = opponent.get("wall_defense", {}).duplicate()
 		s.castle = bool(opponent.get("castle", false))
 	return s
+
+## Faction of the strongest allied party: its colours carry the allied command on the field.
+static func _main_faction(allies: Array) -> String:
+	var best := ""
+	var most := -1
+	for a in allies:
+		var n := Rules.troop_count(a.troops)
+		if n > most:
+			most = n
+			best = String(a.party.fac)
+	return "" if best == "player" else best
 
 func party_dict(state: RefCounted, allies: Array = []) -> Dictionary:
 	var p: RefCounted = state.player

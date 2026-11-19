@@ -138,6 +138,8 @@ func advance(dt: float) -> void:
 		SiegeDefense.step(_state, dt, _rng)
 	if _brains[0] != null:
 		_brains[0].enemy_step(_state, 0, _elapsed_seconds, dt)
+	if _state.has_allies():
+		Tactics.enemy_step(_state, Config.COMMAND_ALLY, _elapsed_seconds, dt) # the allies' own commander (#243)
 	Tactics.follow_hero(_state, _hero)
 	SquadDoctrine.step(_state, dt)
 	Tactics.relayout(_state, dt)
@@ -318,7 +320,7 @@ func snapshot(compact: bool = false) -> Dictionary:
 						enemy_strength += unit.weight
 					else:
 						ally_strength += unit.weight
-						if not unit.hero and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
+						if not unit.hero and unit.command == Config.COMMAND_PLAYER and unit.group_kind >= 0 and unit.group_kind < Config.GROUP_KINDS:
 							group_strength[unit.group_kind] += unit.weight
 	if not compact:
 		for unit: Unit in _state.units: units.append(_unit_values(unit))
