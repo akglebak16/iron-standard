@@ -81,6 +81,11 @@ ONE upright <ОРУЖИЕ> in the center of a square canvas: <форма, дре
 ```
 Пример удачного: лэнс — «long straight wooden shaft painted in ochre #AD883A and charcoal #343329 spiral bands, narrow steel point at the top, a small round steel vamplate (hand guard) near the lower third, short butt below it».
 
+## Герой: ключевые цвета
+Для частей, которые игра перекрашивает (герой, спутники): ткань чистым красным #C62828 и зелёным #2E7D32, кожа только
+оттенками #E2B48C, волосы и бороды чистым синим #1E5AC8, «Do NOT use red, green or blue anywhere else». Подробно —
+`godot/tools/battle/heraldic_source/hero-prompts.md`.
+
 ## Что не сработало (не повторять)
 - Правка цельного бюста (`riders-body.png` → торсы/головы правкой): стоячий воротник, голая шея,
   бармица обрезана у скул, щит другой формы, чем на бюсте.
