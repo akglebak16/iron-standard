@@ -13,7 +13,7 @@ func _initialize() -> void:
 	for arena in [Config.ARENA_SIZE, Vector2(4600, 3000)]:
 		# A forest with hills: every cover and height byte below is something a template really writes.
 		var forest := Templates.build({"forest": 0.8, "biome": "grass"}, arena, 11, "grass")
-		var hills := Templates.build({"hills": 0.6, "relief": 0.2, "high": Vector2(0.6, 0.8), "biome": "grass"}, arena, 11, "grass")
+		var hills := Templates.build({"hills": 0.6, "relief": 0.2, "high": Vector2(0.6, 0.8), "biome": "grass"}, arena, 11, "grass", INF, PackedVector2Array(), true)
 		var grid = forest.grid
 		grid.elevation = hills.grid.elevation
 		var tail: int = grid.cover.size() - 1

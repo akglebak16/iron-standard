@@ -109,3 +109,7 @@ node godot/tools/compare_view.cjs dist/godot/toolchain/Godot_v4.7.2-stable_win64
 
 Этап Р0б: сетка местности, описание из окна карты и шаблоны поля; цена шаблона «лес» в симуляции и отрисовке
 1000×1000 — [terrain-r0b-2026-11-18.md](terrain-r0b-2026-11-18.md).
+
+Этап Р1а: правила местности в ядре боя — цена кода (`battle_benchmark.gd --terrain=neutral`: правила включены и ничего
+не меняют), A/B против `main`, отрисовка и арена с победами на холме при равных силах (`--scenarios=equal`,
+`--terrain=center_hill` и `center_hill_right`) — [terrain-r1a-2026-11-19.md](terrain-r1a-2026-11-19.md).

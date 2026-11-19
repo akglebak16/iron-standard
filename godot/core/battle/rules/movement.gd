@@ -9,6 +9,7 @@ const Charge = preload("res://core/battle/rules/charge.gd")
 const AiDecision = preload("res://core/battle/rules/ai_decision.gd")
 const CombatStep = preload("res://core/battle/rules/combat_step.gd")
 const CollisionGrid = preload("res://core/battle/rules/collision_grid.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 
 const COLLISION_SLACK := Config.CONTACT_QUERY_SLACK
 
@@ -33,12 +34,14 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		else:
 			battle.movement_index.synchronize()
 		index = battle.movement_index
+		index.terrain = battle.terrain_rules
 	if rng != null:
 		_prepare_ai(battle)
 	battle.profiler.mark("movement_index")
 	var positions := battle.motion.positions
 	var velocities := battle.motion.velocities
 	var wall_x: float = battle.wall.x if battle.wall != null else INF
+	var terrain = battle.terrain_rules # TERRAIN.md 4.4 (stage Р1а): null on an open, flat field.
 	for unit_index in battle.active_units.size():
 		var unit: Unit = battle.active_units[unit_index]
 		if unit.dead or unit.gone or unit.hero:
@@ -61,13 +64,14 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		elif rng != null:
 			target = Targeting.refresh(battle, unit, dt, rng, index)
 			if sampled: probe = battle.profiler.probe("sample_target", probe)
-			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.side * 3 + unit.group_kind], dt, battle.formation_centers[unit.side * 3 + Config.GROUP_INFANTRY], wall_x)
+			var range_scale := TerrainRules.range_scale(terrain, unit.position, target.position) if terrain != null and target != null and unit.attack_range > 0.0 else 1.0
+			AiDecision.plan_into(unit, group, target, battle.arena_size, destination, battle.formation_centers[unit.side * 3 + unit.group_kind], dt, battle.formation_centers[unit.side * 3 + Config.GROUP_INFANTRY], wall_x, range_scale)
 			if sampled: probe = battle.profiler.probe("sample_plan", probe)
 			destination = unit.plan_destination
 			velocity_scale = unit.plan_speed
 			ai_face = unit.plan_face
 			target_distance = unit.plan_distance
-			if unit.ai_mode == Config.AI_MODE_MELEE and target != null and Charge.can_hit(unit, target):
+			if unit.ai_mode == Config.AI_MODE_MELEE and target != null and Charge.can_hit(unit, target, terrain):
 				unit.facing = ai_face
 				Charge.hit(battle, unit, target, rng)
 				if destination != unit.position:
@@ -81,7 +85,7 @@ static func _step(battle: State, dt: float, rng: RandomNumberGenerator, keep_ind
 		if battle.wall != null:
 			destination = battle.wall.route(unit, destination)
 		if sampled: probe = battle.profiler.probe("sample_charge_route", probe)
-		velocities[unit_index] = _steer(unit, positions[unit_index], velocities[unit_index], destination, unit.speed * velocity_scale, dt)
+		velocities[unit_index] = _steer(unit, positions[unit_index], velocities[unit_index], destination, unit.speed * velocity_scale, dt, terrain)
 		if sampled: probe = battle.profiler.probe("sample_steer", probe)
 		if unit.fleeing:
 			unit.facing = unit.velocity.angle()
@@ -137,11 +141,13 @@ static func _prepare_ai(battle: State) -> void:
 	for slot in 6:
 		battle.formation_centers[slot] = Vector2(sums[slot * 2] / counts[slot], sums[slot * 2 + 1] / counts[slot]) if counts[slot] > 0 else Vector2.INF
 
-static func _steer(unit: Unit, position: Vector2, velocity: Vector2, destination: Vector2, speed: float, dt: float) -> Vector2:
+static func _steer(unit: Unit, position: Vector2, velocity: Vector2, destination: Vector2, speed: float, dt: float, terrain = null) -> Vector2:
 	var delta: Vector2 = destination - position
 	var distance := delta.length()
 	var desired := Vector2.ZERO
 	if distance > Config.ARRIVAL_DISTANCE and speed > 0.0:
+		if terrain != null:
+			speed *= TerrainRules.speed_scale(terrain, position, delta, distance)
 		desired = delta / distance * minf(speed, distance * Config.ARRIVAL_BRAKE)
 	var rate := Config.HORSE_STEERING_RATE if unit.mounted else Config.FOOT_STEERING_RATE
 	var next_velocity := velocity.lerp(desired, minf(1.0, rate * dt))
@@ -297,6 +303,8 @@ static func _step_batch(battle: State, dt: float, rng: RandomNumberGenerator) ->
 		"wall_half": battle.wall.half_width if battle.wall != null else 0.0,
 		"gaps": PackedVector2Array(battle.wall.gaps()) if battle.wall != null else PackedVector2Array(),
 		"all_gaps": PackedVector2Array(battle.wall.all_gaps()) if battle.wall != null else PackedVector2Array()}
+	if battle.terrain_rules != null:
+		context.merge(battle.terrain_context) # TERRAIN.md 4.4: the grid the kernel's terrain rules read.
 	var begin := true
 	while true:
 		var result: Array = battle.movement_solver.call(battle.motion, context, rng, dt, begin)

@@ -1,9 +1,11 @@
 extends RefCounted
 ## Field templates (TERRAIN.md 4.2, stage Р0б): a terrain description picks a template, the template fills the field
-## by `seed`. Stage Р0 fills only trees and bushes, as the browser battle did, plus the terrain grid (cover and height
-## bytes); rules that read the grid come in Р1, rivers, roads, fields and rocks with their rules and graphics.
-## An empty description, and every template without its own filling yet, gives exactly VegetationSetup's field, so
-## the battle stays bit for bit the same. Nothing here touches the battle RNG.
+## by `seed`: trees and bushes, as the browser battle did, plus the terrain grid (cover and height bytes) that the
+## terrain rules read (rules/terrain_rules.gd, stage Р1а). A battle gets only what is drawn: the forest of a forest
+## strip and the brush under its bushes. Hills and the river with its fords have no graphics yet (Р1б): build() lays
+## them only with `undrawn` (the arena and the tests). Roads, fields and rocks come with their graphics later.
+## An empty description, and every template without its own filling, gives exactly VegetationSetup's field on an open
+## grid, so the battle stays bit for bit the same. Nothing here touches the battle RNG.
 const Config = preload("res://core/battle/config.gd")
 const Plant = preload("res://core/battle/model/plant.gd")
 const TerrainGrid = preload("res://core/battle/model/terrain_grid.gd")
@@ -15,7 +17,7 @@ const EDGE := "edge" # forest 25-60% of the window: a forest strip along one fla
 const FOREST := "forest" # forest above 60%: forest on both flanks with glades, the middle stays clear for the armies.
 const HILLS := "hills" # one or two hills where the map is higher.
 const MOUNTAINS := "mountains" # mountains near: a high ridge along the edge; rocks come in Р2.
-const RIVER := "river" # a river across the field: water, fords and a bridge come in Р1-Р2.
+const RIVER := "river" # a river across the field with two fords (undrawn until Р1б); a bridge comes in Р2.
 const ROAD := "road" # a road across the field: comes in Р1.
 const TEMPLATES := [OPEN, VILLAGE, EDGE, FOREST, HILLS, MOUNTAINS, RIVER, ROAD]
 
@@ -38,6 +40,13 @@ const GLADES := 2 # Glades in a forest, per strip.
 const GLADE_RADIUS := 260.0
 const UNIT_CLEARANCE := 1 # Cells around a placed fighter that stay free of trees.
 const HILL_RADIUS_SHARE := 0.32 # Hill radius, share of the smaller field side.
+const RIVER_WIDTH := 3 # Cells of water across the river.
+const FORD_LENGTH := 4 # Cells of a ford along the river.
+const FORDS := [0.3, 0.7] # Fords along the river, share of the field height (shifted a little by the seed).
+const FORD_JITTER := 0.08
+const CENTER_HILL := "center_hill" # Arena only (TERRAIN.md 8): one hill in the middle, a little towards side 0...
+const CENTER_HILL_RIGHT := "center_hill_right" # ...or towards side 1: the two cancel out the engine's own side bias.
+const UNDRAWN := [HILLS, MOUNTAINS, RIVER] # Templates whose filling has no graphics yet: laid only with `undrawn`.
 const SALT := 0x5bd1e995 # Template samples are their own stream next to VegetationSetup's.
 
 ## A description that picks `template`, for the arena and the benchmarks (`--terrain=`); {} for "open" or unknown.
@@ -47,6 +56,10 @@ static func sample(template: String) -> Dictionary:
 		FOREST: return {"forest": 0.8, "plain": 0.2}
 		HILLS: return {"hills": 0.6, "plain": 0.4, "relief": 0.2, "high": Vector2.RIGHT}
 		MOUNTAINS: return {"mountains": 0.2, "hills": 0.4, "plain": 0.4, "relief": 0.3, "high": Vector2.UP}
+		RIVER: return {"river": true, "plain": 0.8, "forest": 0.1}
+		# The hill top stands at 0.425 of the width: side 0 meets the enemy from the higher ground (TERRAIN.md 8).
+		CENTER_HILL: return {"hills": 0.6, "plain": 0.4, "relief": 0.2, "high": Vector2(-0.25, 0.0), "single_hill": true}
+		CENTER_HILL_RIGHT: return {"hills": 0.6, "plain": 0.4, "relief": 0.2, "high": Vector2(0.25, 0.0), "single_hill": true}
 	return {}
 
 ## The template for a description (TERRAIN.md 4.2). Order matters: a river crosses whatever is around it.
@@ -71,12 +84,16 @@ static func pick(description: Dictionary) -> String:
 	return OPEN
 
 ## The field: {"template": String, "plants": Array[Plant], "grid": TerrainGrid}. `occupied` are the fighters' start
-## positions: new trees keep off them. `wall_x` is the siege wall (INF without one).
-static func build(description: Dictionary, arena: Vector2, seed_value: int, biome: String, wall_x: float = INF, occupied := PackedVector2Array()) -> Dictionary:
+## positions: new trees keep off them. `wall_x` is the siege wall (INF without one). `undrawn` also lays what has no
+## graphics yet (hills, the river): for the arena and the tests only, never for a battle the player sees.
+static func build(description: Dictionary, arena: Vector2, seed_value: int, biome: String, wall_x: float = INF, occupied := PackedVector2Array(), undrawn := false) -> Dictionary:
 	var template := pick(description)
 	var plants := VegetationSetup.create(arena, seed_value, biome, wall_x)
 	var grid = TerrainGrid.create(arena)
 	var sampler := [(seed_value ^ SALT) & VegetationSetup.UINT32_MASK]
+	if template in UNDRAWN and not undrawn:
+		grid.refresh()
+		return {"template": template, "plants": plants, "grid": grid}
 	match template:
 		EDGE:
 			var below := _strip_side(description, sampler)
@@ -88,7 +105,38 @@ static func build(description: Dictionary, arena: Vector2, seed_value: int, biom
 			_hills(grid, arena, description, sampler, false)
 		MOUNTAINS:
 			_hills(grid, arena, description, sampler, true)
+		RIVER:
+			_river(grid, arena, sampler, wall_x)
+	if template in [EDGE, FOREST]:
+		_brush(grid, plants)
+	grid.refresh()
 	return {"template": template, "plants": plants, "grid": grid}
+
+## Brush under the bushes that are drawn, where the cell is not forest already (TERRAIN.md 4.4 "кусты, подлесок").
+static func _brush(grid, plants: Array[Plant]) -> void:
+	for plant in plants:
+		if plant.trunk_radius > 0.0:
+			continue
+		var cell: int = grid.index(plant.position)
+		if grid.cover[cell] == TerrainGrid.Cover.OPEN:
+			grid.cover[cell] = TerrainGrid.Cover.BRUSH
+
+## A river across the field between the armies (along y, in the middle of the width) with two fords. Water stays
+## passable, as the slowest ground, until path finding (Р2) makes it a barrier.
+static func _river(grid, arena: Vector2, sampler: Array, wall_x: float) -> void:
+	var middle := clampi(floori(arena.x * 0.5 / Config.TERRAIN_CELL), 0, grid.width - 1)
+	var left := maxi(0, middle - RIVER_WIDTH / 2)
+	var fords: Array[int] = []
+	for share in FORDS:
+		fords.append(floori((share + (_next(sampler) - 0.5) * 2.0 * FORD_JITTER) * grid.height))
+	for y in grid.height:
+		var ford := false
+		for start in fords:
+			if y >= start - FORD_LENGTH / 2 and y < start - FORD_LENGTH / 2 + FORD_LENGTH:
+				ford = true
+		for x in range(left, mini(grid.width, left + RIVER_WIDTH)):
+			if grid.cell_center(x, y).x < wall_x - VegetationSetup.SIEGE_CLEARANCE:
+				grid.cover[y * grid.width + x] = TerrainGrid.Cover.FORD if ford else TerrainGrid.Cover.WATER
 
 ## Depth a strip may take from the field edge before the band kept clear for the armies.
 static func _strip_limit(arena: Vector2) -> float:
@@ -173,7 +221,7 @@ static func _hills(grid, arena: Vector2, description: Dictionary, sampler: Array
 	else:
 		centers.append(arena * 0.5 + Vector2(high.x * arena.x, high.y * arena.y) * 0.3)
 		tops.append(peak)
-		if _next(sampler) < 0.5:
+		if _next(sampler) < 0.5 and not bool(description.get("single_hill", false)):
 			# A lower second hill on the other flank.
 			var flank := -signf(high.y) if high.y != 0.0 else 1.0
 			centers.append(arena * 0.5 + Vector2(high.x * arena.x * 0.1, flank * arena.y * 0.3))

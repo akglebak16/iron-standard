@@ -7,6 +7,7 @@ const EquipmentConfig = preload("res://core/equipment/config.gd")
 const Block = preload("res://core/battle/rules/block.gd")
 const DamageType = preload("res://core/equipment/rules/damage_type.gd")
 const Event = preload("res://core/battle/combat_event.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 const MELEE_BLOCK_CONTACT := 10.0
 const HERO_BLOCK_CONTACT := 8.0
 const PROJECTILE_BLOCK_CONTACT_X := 9.0
@@ -27,6 +28,8 @@ static func strike(battle: State, attacker: Unit, target: Unit, rng: RandomNumbe
 		raw *= Config.MORALE_WAVER_DAMAGE_MULTIPLIER
 	if attacker.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
+	if battle.terrain_rules != null:
+		raw *= TerrainRules.strike_scale(battle.terrain_rules, attacker.position, target.position)
 	if attacker.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT or (attacker.damage_type.is_empty() and attacker.blunt_melee):
 		raw *= target.blunt_melee_damage_multiplier
 	if attacker.damage_type.is_empty():
@@ -51,6 +54,8 @@ static func hero_strike(battle: State, hero: Unit, target: Unit, previous_hits: 
 		raw *= float(weapon.get("fall", Config.HERO_FOLLOWUP_DAMAGE))
 	if hero.anti_cavalry and target.mounted:
 		raw *= Config.ANTI_CAVALRY_MULTIPLIER
+	if battle.terrain_rules != null:
+		raw *= TerrainRules.strike_scale(battle.terrain_rules, hero.position, target.position)
 	if hero.damage_type == EquipmentConfig.DAMAGE_TYPE_BLUNT:
 		raw *= target.blunt_melee_damage_multiplier
 	if hero.damage_type.is_empty():
@@ -78,6 +83,14 @@ static func _make_projectile(attacker: Unit, aim: Vector2, distance: float, dura
 	return {"side": attacker.side, "source": attacker, "origin": attacker.position - Vector2(0.0, Config.PROJECTILE_START_HEIGHT), "impact": impact, "damage": attacker.damage * (Config.MORALE_WAVER_DAMAGE_MULTIPLIER if attacker.wavering else 1.0), "pierce": attacker.pierce, "damage_type": attacker.damage_type, "throwing": attacker.weapon_kind == Config.PROJECTILE_THROW_WEAPON, "crossbow": attacker.weapon_kind == Config.PROJECTILE_CROSSBOW_WEAPON, "time": 0.0, "duration": duration}
 
 static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: RandomNumberGenerator) -> int:
+	# TERRAIN.md 4.4: the trees and the brush catch part of the arrows that land on a man inside them.
+	if battle.terrain_rules != null:
+		var chance := TerrainRules.hit_chance(battle.terrain_rules, target.position)
+		if chance < 1.0 and rng.randf() >= chance:
+			battle.record_notice(Event.Kind.PROJECTILE_MISSED, {
+				"position": shot.impact, "trajectory": shot.impact - shot.origin, "throwing": shot.get("throwing", false),
+			})
+			return 0
 	var incoming: float = (shot.origin - target.position).angle()
 	if Block.check(target, incoming, true, rng):
 		battle.record_event(Event.Kind.BLOCK, target, shot.source, Event.Attack.PROJECTILE, 0, Vector2(cos(incoming) * PROJECTILE_BLOCK_CONTACT_X, 0))

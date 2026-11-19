@@ -8,6 +8,9 @@
 
 namespace iron::battle {
 
+// TerrainGrid.Cover in core/battle/model/terrain_grid.gd: the byte stored per cell. Append, never reorder.
+enum Cover : uint8_t { OPEN, BRUSH, FOREST, FIELD, ROAD, FORD, BRIDGE, WATER, ROCK, COVER_COUNT };
+
 struct TerrainGrid {
     int width = 0;
     int height = 0;

@@ -60,6 +60,11 @@ var _contact_arena := Vector2.ZERO
 var _contact_wall_shape := Vector2.INF
 var static_obstacles := StaticObstacleIndex.new()
 var terrain := TerrainGrid.new() # TERRAIN.md 3.4: cover and height per cell; set by the factory (stage Р0б).
+## The grid the terrain rules read (rules/terrain_rules.gd, stage Р1а), or null on an open, flat field: there the rules
+## are skipped and the battle is bit for bit the one without terrain. set_terrain() keeps both in step.
+var terrain_rules: TerrainGrid = null
+## The grid for the native movement kernel (Movement._step_batch context), built once in set_terrain(); empty without rules.
+var terrain_context := {}
 var terrain_template := "open" # data/terrain_templates.gd: the template the field was filled by.
 var arena_size := Config.ARENA_SIZE
 var groups: Array = []
@@ -110,6 +115,15 @@ func contact_geometry() -> Dictionary:
 	_contact_wall_revision = wall_revision
 	_contact_arena = arena_size
 	return _contact_geometry
+
+func set_terrain(grid: TerrainGrid) -> void:
+	terrain = grid
+	grid.refresh()
+	terrain_rules = null if grid.is_open() else grid
+	terrain_context = {}
+	if terrain_rules != null:
+		terrain_context = {"terrain_cover": grid.cover, "terrain_height": grid.elevation, "terrain_width": grid.width,
+			"terrain_relief": grid.relief, "terrain_speed": PackedFloat64Array(Config.TERRAIN_COVER_SPEED)}
 
 func set_plants(layout: Array[Plant]) -> void:
 	plants = layout

@@ -11,13 +11,15 @@ static func plan(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2) -> 
 ## Same decision without allocating: the result goes to unit.ai_mode and unit.plan_*.
 ## `center` is the formation centre fitted to the group this tick (State.formation_centers); with Vector2.INF
 ## the charge leash is off, as in direct calls from tests. `cover` is the fitted centre of the own infantry (an
-## archer falls back only towards it) and `wall_x` the siege wall line (INF without a wall).
-static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2, slot: Vector2, center := Vector2.INF, dt := 0.0, cover := Vector2.INF, wall_x := INF) -> void:
+## archer falls back only towards it) and `wall_x` the siege wall line (INF without a wall). `range_scale` is the
+## terrain's multiplier of the shooting range (TerrainRules.range_scale: 1, or more from higher ground).
+static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2, slot: Vector2, center := Vector2.INF, dt := 0.0, cover := Vector2.INF, wall_x := INF, range_scale := 1.0) -> void:
 	var position := unit.position
 	var enemy_position := enemy.position if enemy != null else Vector2.ZERO
 	var slot_distance := position.distance_to(slot)
 	var distance := position.distance_to(enemy_position) if enemy != null else INF
 	var reach := unit.collision_radius + (enemy.collision_radius if enemy != null else 0.0) + unit.melee_reach
+	var attack_range := unit.attack_range * range_scale
 	var mode := Config.AI_MODE_SLOT
 	var mounted := unit.mounted
 	var charge := group.order == Config.ORDER_CHARGE
@@ -32,7 +34,7 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 		pass
 	elif unit.attack_range > 0.0:
 		if mounted:
-			if enemy != null and (charge or distance < unit.attack_range * Config.AI_MOUNTED_SKIRMISH_TRIGGER):
+			if enemy != null and (charge or distance < attack_range * Config.AI_MOUNTED_SKIRMISH_TRIGGER):
 				mode = Config.AI_MODE_SKIRMISH
 		elif enemy != null and distance < reach + Config.AI_ARCHER_MELEE_BUFFER:
 			mode = Config.AI_MODE_MELEE
@@ -40,7 +42,7 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 			mode = Config.AI_MODE_FALLBACK
 		elif enemy != null and charge:
 			mode = Config.AI_MODE_SHOOT
-		elif enemy != null and distance < unit.attack_range and slot_distance < Config.AI_ARCHER_SLOT_DISTANCE:
+		elif enemy != null and distance < attack_range and slot_distance < Config.AI_ARCHER_SLOT_DISTANCE:
 			mode = Config.AI_MODE_SHOOT_SLOT
 	elif enemy != null:
 		if charge and not formed and not rallying:
@@ -87,14 +89,14 @@ static func plan_into(unit: Unit, group: Group, enemy: Unit, arena_size: Vector2
 	elif mode == Config.AI_MODE_SHOOT or mode == Config.AI_MODE_SHOOT_SLOT:
 		face = (enemy_position - position).angle()
 		if mode == Config.AI_MODE_SHOOT:
-			destination = enemy_position if distance > unit.attack_range * Config.AI_SHOOT_APPROACH_RANGE else position
+			destination = enemy_position if distance > attack_range * Config.AI_SHOOT_APPROACH_RANGE else position
 	elif mode == Config.AI_MODE_SKIRMISH:
 		face = (enemy_position - position).angle()
 		var away := (position - enemy_position).normalized()
 		var side := 1.0 if unit.id % 2 else -1.0
-		if distance < unit.attack_range * Config.AI_SKIRMISH_CLOSE_RANGE:
+		if distance < attack_range * Config.AI_SKIRMISH_CLOSE_RANGE:
 			destination = position + away * Config.AI_SKIRMISH_BACK_OFFSET + Vector2(-away.y, away.x) * Config.AI_SKIRMISH_LATERAL_OFFSET * side
-		elif distance > unit.attack_range * Config.AI_SKIRMISH_APPROACH_RANGE:
+		elif distance > attack_range * Config.AI_SKIRMISH_APPROACH_RANGE:
 			destination = enemy_position
 		else:
 			destination = position + Vector2(-away.y, away.x) * Config.AI_SKIRMISH_ORBIT_OFFSET * side

@@ -6,6 +6,7 @@ const Config = preload("res://core/battle/config.gd")
 const Combat = preload("res://core/battle/rules/combat.gd")
 const Charge = preload("res://core/battle/rules/charge.gd")
 const Event = preload("res://core/battle/combat_event.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 
 ## Input keys: move (Vector2), face (float), sprint, block, attack (bool).
 static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: RandomNumberGenerator) -> void:
@@ -27,6 +28,9 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 		speed *= Config.HERO_BLOCK_SPEED_MULTIPLIER
 	if hero.swing_timer > 0.0 and not hero.mounted:
 		speed *= Config.HERO_SWING_SPEED_MULTIPLIER
+	# TERRAIN.md 4.4: the same ground slows the hero as everyone else.
+	if battle.terrain_rules != null and move != Vector2.ZERO:
+		speed *= TerrainRules.speed_scale(battle.terrain_rules, hero.position, move, move.length())
 	var steering: float = Config.HERO_HORSE_STEERING_RATE if move.length() > 0.0 else Config.HERO_HORSE_IDLE_STEERING_RATE
 	if not hero.mounted:
 		steering = Config.HERO_FOOT_STEERING_RATE
@@ -49,7 +53,7 @@ static func step(battle: State, hero: Unit, input: Dictionary, dt: float, rng: R
 	hero.position += hero.velocity * dt
 
 static func _charge(battle: State, hero: Unit, rng: RandomNumberGenerator) -> void:
-	if not hero.mounted or hero.charge_cooldown > 0.0:
+	if not hero.mounted or hero.charge_cooldown > 0.0 or TerrainRules.no_charge(battle.terrain_rules, hero.position):
 		return
 	var speed := hero.velocity.length()
 	if speed <= Config.HERO_CHARGE_MIN_SPEED:

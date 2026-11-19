@@ -1,6 +1,7 @@
 extends SceneTree
 ## TERRAIN.md 3.4, 4.1, 4.2, stage Р0б: the terrain grid, map window -> description -> template on made-up cells, the
-## same field for the same seed, and the open field of an empty description.
+## same field for the same seed, and the open field of an empty description. Stage Р1а: a battle gets only what is
+## drawn (forest and brush); hills and the river are laid only for the arena and the tests (`undrawn`).
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://core/troops/data/catalog.gd")
 const Factory = preload("res://core/battle/application/factory.gd")
@@ -22,6 +23,7 @@ func _initialize() -> void:
 	_check_window_to_template()
 	_check_directions()
 	_check_same_field_by_seed()
+	_check_only_drawn()
 	_check_empty_is_open_field()
 	_check_forest_keeps_off_formations()
 	print("Terrain template tests passed")
@@ -116,9 +118,9 @@ func _check_same_field_by_seed() -> void:
 	for window in [_window(C.FOREST), _window(C.PLAIN, {}, Vector2(0.03, 0.01)), _window(C.PLAIN, {0: C.MOUNTAINS, 1: C.MOUNTAINS, 2: C.MOUNTAINS, 3: C.MOUNTAINS, 4: C.MOUNTAINS})]:
 		var description := Description.from_window(window)
 		for arena in [Config.ARENA_SIZE, Vector2(4600, 3000)]:
-			var a := Templates.build(description, arena, 77, "grass")
-			var b := Templates.build(description, arena, 77, "grass")
-			var c := Templates.build(description, arena, 78, "grass")
+			var a := Templates.build(description, arena, 77, "grass", INF, PackedVector2Array(), true)
+			var b := Templates.build(description, arena, 77, "grass", INF, PackedVector2Array(), true)
+			var c := Templates.build(description, arena, 78, "grass", INF, PackedVector2Array(), true)
 			assert(a.template == b.template and a.grid.cover == b.grid.cover and a.grid.elevation == b.grid.elevation)
 			assert(_plants(a.plants) == _plants(b.plants), "The same seed gives the same field")
 			assert(_plants(a.plants) != _plants(c.plants) or a.grid.elevation != c.grid.elevation, "Another seed gives another field")
@@ -129,6 +131,35 @@ func _check_same_field_by_seed() -> void:
 				var base := VegetationSetup.create(arena, 77, "grass")
 				var trunks: int = a.plants.filter(func(p): return p.trunk_radius > 0.0).size()
 				assert(trunks > base.filter(func(p): return p.trunk_radius > 0.0).size() * 3, "A forest has many more trees")
+
+## Stage Р1а: hills and the river have no graphics yet, so a battle gets VegetationSetup's field on an open grid for
+## them (no rule reads anything); the arena gets them with `undrawn`. A forest marks brush under its drawn bushes.
+func _check_only_drawn() -> void:
+	for template in [Templates.HILLS, Templates.MOUNTAINS, Templates.RIVER]:
+		var description := Templates.sample(template)
+		assert(Templates.pick(description) == template)
+		var shown := Templates.build(description, Config.ARENA_SIZE, 4242, "grass")
+		assert(shown.template == template and shown.grid.is_open(), "%s lays nothing undrawn in a battle" % template)
+		assert(_plants(shown.plants) == _plants(VegetationSetup.create(Config.ARENA_SIZE, 4242, "grass")))
+		var arena := Templates.build(description, Config.ARENA_SIZE, 4242, "grass", INF, PackedVector2Array(), true)
+		assert(not arena.grid.is_open(), "%s is laid for the arena" % template)
+	var river := Templates.build(Templates.sample(Templates.RIVER), Config.ARENA_SIZE, 4242, "grass", INF, PackedVector2Array(), true)
+	var water: int = river.grid.count(TerrainGrid.Cover.WATER)
+	var fords: int = river.grid.count(TerrainGrid.Cover.FORD)
+	assert(fords == Templates.FORDS.size() * Templates.FORD_LENGTH * Templates.RIVER_WIDTH, "Two fords across the whole river")
+	assert(water + fords == river.grid.height * Templates.RIVER_WIDTH, "The river crosses the field")
+	var hill := Templates.build(Templates.sample(Templates.CENTER_HILL), Config.ARENA_SIZE, 4242, "grass", INF, PackedVector2Array(), true)
+	var top := 0
+	for k in hill.grid.elevation.size():
+		if hill.grid.elevation[k] > hill.grid.elevation[top]: top = k
+	var top_x: float = hill.grid.cell_center(top % hill.grid.width, 0).x
+	assert(absf(top_x - Config.ARENA_SIZE.x * 0.425) < Config.TERRAIN_CELL * 2.0 and hill.grid.relief, "One hill a little towards side 0")
+	for template in [Templates.EDGE, Templates.FOREST]:
+		var field := Templates.build(Templates.sample(template), Config.ARENA_SIZE, 4242, "grass")
+		for plant in field.plants:
+			if plant.trunk_radius <= 0.0:
+				assert(field.grid.cover_at(plant.position) in [TerrainGrid.Cover.BRUSH, TerrainGrid.Cover.FOREST], "Brush under a drawn bush")
+		assert(field.grid.count(TerrainGrid.Cover.BRUSH) > 0)
 
 func _plants(plants: Array) -> Array:
 	return plants.map(func(p): return [p.position, p.trunk_radius, p.variant])

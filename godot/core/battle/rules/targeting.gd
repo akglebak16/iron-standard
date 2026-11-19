@@ -3,6 +3,7 @@ const Config = preload("res://core/battle/config.gd")
 const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const SpatialIndex = preload("res://core/battle/rules/spatial_index.gd")
+const TerrainRules = preload("res://core/battle/rules/terrain_rules.gd")
 
 static func nearest_enemy(battle: State, unit: Unit, index: SpatialIndex = null) -> Unit:
 	if index != null:
@@ -31,6 +32,7 @@ static func choose(battle: State, unit: Unit, index: SpatialIndex = null) -> Uni
 	var melee_cavalry := unit.mounted and unit.attack_range <= 0.0
 	var melee := unit.attack_range <= 0.0
 	var at := unit.position
+	var terrain = battle.terrain_rules
 	for enemy: Unit in battle.active_units:
 		if enemy.side == unit.side or enemy.dead or enemy.gone:
 			continue
@@ -47,7 +49,8 @@ static func choose(battle: State, unit: Unit, index: SpatialIndex = null) -> Uni
 			distance = SpatialIndex.melee_weight(distance, raw, at, unit.speed, enemy, enemy_position, enemy == previous, melee_cavalry)
 		else:
 			distance = SpatialIndex.ranged_weight(distance, unit.id, unit.damage, enemy, enemy == previous)
-		if distance < best_distance:
+		# TERRAIN.md 4.4: a shooter does not see far into the forest (checked only for a candidate that would win).
+		if distance < best_distance and (melee or terrain == null or not TerrainRules.hidden(terrain, enemy_position, raw)):
 			best_distance = distance
 			best = enemy
 	return best
