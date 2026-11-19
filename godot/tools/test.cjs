@@ -20,6 +20,8 @@ const timeouts = {
   // Сравнение native-ядра с эталонным GDScript: худший замер в CI 106 с.
   'tests/integration/test_native_movement.gd': 300000,
   'tests/integration/test_native_contacts.gd': 300000,
+  // Кампания 15 дней дважды (с native и без) плюс сравнение сеток: локально 31 с.
+  'tests/integration/test_native_world.gd': 300000,
   // Four 900-tick battles compare indexed and exhaustive loops: худший замер в CI 112 с.
   'tests/unit/battle/rules/test_spatial_full_battle.gd': 300000,
   // Multiple world constructions, continuation and recovery from a torn generation: до 80 с.

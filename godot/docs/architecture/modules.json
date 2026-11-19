@@ -45,7 +45,7 @@
       "owner": "Content I/O, persistence and engine integration",
       "prefix": "adapters/",
       "allowed": ["battle", "campaign", "troops", "equipment", "characters", "runtime", "gameplay-content"],
-      "public": ["adapters/content/", "adapters/godot/resources/", "adapters/godot/battle_worker.gd", "adapters/godot/native/contacts.gd", "adapters/godot/native/movement.gd", "adapters/godot/native/columns.gd", "adapters/persistence/"]
+      "public": ["adapters/content/", "adapters/godot/resources/", "adapters/godot/battle_worker.gd", "adapters/godot/native/contacts.gd", "adapters/godot/native/movement.gd", "adapters/godot/native/columns.gd", "adapters/godot/native/world.gd", "adapters/persistence/"]
     },
     {
       "name": "gameplay-content",

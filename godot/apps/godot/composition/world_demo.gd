@@ -38,6 +38,7 @@ const PresentationPreferences = preload("res://apps/godot/composition/presentati
 const AutoBattle = preload("res://core/campaign/world/auto_battle.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const WorldSkirmish = preload("res://core/campaign/world/world_skirmish.gd")
+const WorldNative = preload("res://adapters/godot/native/world.gd")
 const WorldPartiesLayer = preload("res://apps/godot/presentation/campaign/world_parties_layer.gd")
 const WorldMotion = preload("res://apps/godot/presentation/campaign/world_motion.gd")
 const CompanionRemarks = preload("res://apps/godot/presentation/campaign/companion_remarks.gd")
@@ -180,6 +181,7 @@ func _ready() -> void:
 			state.player.hero.face = GameOptions.hero_face.duplicate()
 		if not HeroOrigin.apply(state.player.hero, GameOptions.origin):
 			push_warning("The start background was not applied: %s" % GameOptions.origin)
+	state.use_native(WorldNative.create())  # C++ world kernel when the library is there (ADR-025)
 	var saved_banner = state.player.hero.get("banner", 0)
 	_startup_mark("world_ready")
 	loading.show_stage("Рисуем карту…")

@@ -64,6 +64,7 @@ var companion_catalog := CompanionCatalog.new()
 var gear: GearCatalog
 var journal: Array = []  # [{day, text}]
 var ai: PartyAI
+var native: RefCounted = null  # port of the native world kernel (ADR-025), set by the composition root; never saved
 var threat: ThreatMap = null  # derived from parties (ADR-023): rebuilt on the first request after each step or hour; never saved
 var _threat_step := 0         # world steps and hours so far in this session (not saved): the map is rebuilt when it changes
 var _threat_built := -1
@@ -318,9 +319,18 @@ func hour_tick() -> void:
 ## not saved. Party goals (party_ai.gd, party_goals.gd) read it for risk, flight and alarms, the operations of factions
 ## (world_wars.gd) for threats at home, the director of the undead invasion (world_undead.gd) for living armies around
 ## its targets.
+## The native world kernel (adapters/godot/native/world.gd) takes the threat stamp and the contact pairs; null
+## returns the step to the GDScript reference. The campaign is the same either way (ADR-025).
+func use_native(port: RefCounted) -> void:
+	native = port
+	ai.native = port
+	if threat != null:
+		threat.native = port
+
 func threat_map() -> ThreatMap:
 	if threat == null:
 		threat = ThreatMap.new(PartyAI.WW, PartyAI.WH)
+		threat.native = native
 	if _threat_built != _threat_step:
 		_threat_built = _threat_step
 		threat.rebuild(threat_sources(), hours_passed)
