@@ -94,7 +94,8 @@ struct Summary {
     else {
       ally += c.r(R_WEIGHT, row);
       int group = int(c.i(I_GROUP_KIND, row));
-      if (!c.i(I_HERO, row) && group >= 0 && group < 3)
+      // The player's own groups only: allies (command 2, #243) follow their commander, not his orders.
+      if (!c.i(I_HERO, row) && c.i(I_COMMAND, row) == 0 && group >= 0 && group < 3)
         groups[group] += c.r(R_WEIGHT, row);
     }
   }

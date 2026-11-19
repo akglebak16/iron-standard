@@ -91,8 +91,11 @@ private:
   std::vector<int64_t> slot_handles;
   std::vector<int> slot_rows;
   std::vector<int> locations;
-  // Formation centre fitted to each group at begin() (side * 3 + kind); INFINITY without ready fighters.
-  Vec2 centers[6];
+  // Formation centre fitted to each group at begin() (command * 3 + kind: the player, the enemy, the player's
+  // allies, #243); INFINITY without ready fighters.
+  static constexpr int MAX_GROUPS = 9;
+  Vec2 centers[MAX_GROUPS];
+  int slot_of(int row) { return int(i(I_COMMAND, row) * 3 + i(I_GROUP_KIND, row)); }
   double &r(R f, int row) { return reals[int(f) * capacity + row]; }
   int64_t &i(I f, int row) { return integers[int(f) * capacity + row]; }
   Vec2 &v(V f, int row) { return vectors[int(f) * capacity + row]; }
@@ -469,12 +472,12 @@ private:
       i(I_ATTACKERS, row) = 0;
       i(I_AIMERS, row) = 0;
     }
-    double sums[12] = {};
-    int counts[6] = {};
+    double sums[MAX_GROUPS * 2] = {};
+    int counts[MAX_GROUPS] = {};
     for (int row = 0; row < count; ++row) {
       if (!live(row) || i(I_HERO, row) || i(I_FLEEING, row))
         continue;
-      int slot = int(i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row));
+      int slot = slot_of(row);
       const Group &g = groups[slot];
       Vec2 fitted = positions[row] - g.lateral * v(V_SLOT_OFFSET, row).x -
                     g.forward * v(V_SLOT_OFFSET, row).y;
@@ -485,8 +488,9 @@ private:
       if (t >= 0 && i(I_SIDE, t) != i(I_SIDE, row))
         i(r(R_ATTACK_RANGE, row) <= 0 ? I_ATTACKERS : I_AIMERS, t) += 1;
     }
-    for (int slot = 0; slot < 6; ++slot)
+    for (int slot = 0; slot < MAX_GROUPS; ++slot)
       centers[slot] =
+          slot >= int(groups.size()) ? Vec2{float(INFINITY), float(INFINITY)} :
           counts[slot] > 0
               ? Vec2{float(sums[slot * 2] / counts[slot]),
                      float(sums[slot * 2 + 1] / counts[slot])}
@@ -524,7 +528,7 @@ public:
           continue;
         r(R_CHARGE_COOLDOWN, row) -= dt;
         r(R_ATTACK_COOLDOWN, row) -= dt;
-        const Group &g = groups[i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row)];
+        const Group &g = groups[slot_of(row)];
         Vec2 slot = g.center + g.lateral * v(V_SLOT_OFFSET, row).x +
                     g.forward * v(V_SLOT_OFFSET, row).y;
         slot.x = std::clamp(slot.x, float(p(SLOT_EDGE)),
@@ -564,8 +568,8 @@ public:
                 target >= 0 ? i(I_UNIT_HANDLE, target) : 0;
           }
           plan(row, g, slot,
-               centers[i(I_SIDE, row) * 3 + i(I_GROUP_KIND, row)],
-               centers[i(I_SIDE, row) * 3]);
+               centers[slot_of(row)],
+               centers[i(I_COMMAND, row) * 3]);
           if (i(I_MODE, row) == MELEE && target >= 0 && i(I_MOUNTED, row) &&
               r(R_ATTACK_RANGE, row) <= 0 && r(R_CHARGE_COOLDOWN, row) <= 0 &&
               velocities[row].length() > p(CHARGE_MIN_SPEED) &&

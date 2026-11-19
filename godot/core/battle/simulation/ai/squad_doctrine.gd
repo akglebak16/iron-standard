@@ -61,11 +61,11 @@ class Sample:
 		return position_sum / ready - Vector2(-sin(direction), cos(direction)) * offset.x - Vector2(cos(direction), sin(direction)) * offset.y
 
 static func step(battle: State, dt: float) -> void:
-	if battle.groups.size() != 2:
+	if battle.groups.size() < 2:
 		return
-	for side in 2:
-		for kind in battle.groups[side].size():
-			var group: Group = battle.groups[side][kind]
+	for command in battle.groups.size(): # the player, the enemy and the player's allies (#243)
+		for kind in battle.groups[command].size():
+			var group: Group = battle.groups[command][kind]
 			group.doctrine_seconds += dt
 			group.doctrine_timer -= dt
 			var changed := group.order != group.doctrine_order or group.backing != group.doctrine_backing
@@ -77,16 +77,16 @@ static func step(battle: State, dt: float) -> void:
 			group.doctrine_order = group.order
 			group.doctrine_backing = group.backing
 			match kind:
-				Config.GROUP_INFANTRY: _infantry(battle, group, side)
+				Config.GROUP_INFANTRY: _infantry(battle, group, command)
 				Config.GROUP_CAVALRY: _cavalry(battle, group)
 
-static func _infantry(battle: State, group: Group, side: int) -> void:
+static func _infantry(battle: State, group: Group, command: int) -> void:
 	if group.order != Config.ORDER_CHARGE or group.backing:
 		group.formed = false
 		group.mingled = false
 		group.contact_seconds = 0.0
 		group.doctrine_seconds = maxf(group.doctrine_seconds, Config.AI_FORMATION_SWITCH_SECONDS)
-		_screen(battle, group, side)
+		_screen(battle, group, command)
 		return
 	group.screen = Vector2.INF
 	var sample := sample_group(battle, group)
@@ -109,7 +109,7 @@ static func _infantry(battle: State, group: Group, side: int) -> void:
 		group.contact_seconds = 0.0
 		if wanted:
 			# Re-form where the men stand, facing the enemy squad to fight.
-			var aim := _line_aim(battle, group, side, sample)
+			var aim := _line_aim(battle, group, command, sample)
 			var fitted := sample.fitted(group.direction)
 			if aim != Vector2.INF and aim != fitted:
 				group.direction = (aim - fitted).angle()
@@ -117,7 +117,7 @@ static func _infantry(battle: State, group: Group, side: int) -> void:
 			group.center = _fitted_center(group)
 			return
 	if group.formed:
-		_march(group, sample, _line_aim(battle, group, side, sample))
+		_march(group, sample, _line_aim(battle, group, command, sample))
 
 ## Loose by order, mingled in a long melee, near a siege wall or with the targets across it, in a pursuit and with too
 ## few fighters; formed otherwise.
@@ -138,11 +138,11 @@ static func formed_wanted(battle: State, group: Group, sample: Sample) -> bool:
 ## The line marches on the nearest enemy squad (AI_SQUAD_MIN_UNITS ready fighters; a lone hero or companions are no
 ## squad, as in the stage K decisions of tactics.gd), at the cluster of that squad nearest to it; without squads, on the
 ## cluster of its fighters' targets.
-static func _line_aim(battle: State, group: Group, side: int, sample: Sample) -> Vector2:
+static func _line_aim(battle: State, group: Group, command: int, sample: Sample) -> Vector2:
 	var middle := sample.mean_position()
 	var best := Vector2.INF
 	var best_distance := INF
-	for foe: Group in battle.groups[1 - side]:
+	for foe: Group in battle.foe_groups(command):
 		var squad := sample_group(battle, foe, false, true)
 		if squad.ready < Config.AI_SQUAD_MIN_UNITS:
 			continue
@@ -164,11 +164,11 @@ static func _march(group: Group, sample: Sample, aim: Vector2) -> void:
 	group.center = sample.fitted(group.direction) + Vector2(cos(group.direction), sin(group.direction)) * lead
 
 ## Spearmen of a holding infantry group cover the own archers when enemy riders close in on them.
-static func _screen(battle: State, group: Group, side: int) -> void:
+static func _screen(battle: State, group: Group, command: int) -> void:
 	group.screen = Vector2.INF
 	# Cheapest checks first: most decisions end here without sampling (no archers, no riders, no infantry).
-	var archer_group: Group = battle.groups[side][Config.GROUP_ARCHERS]
-	var rider_group: Group = battle.groups[1 - side][Config.GROUP_CAVALRY]
+	var archer_group: Group = battle.groups[command][Config.GROUP_ARCHERS]
+	var rider_group: Group = battle.foe_groups(command)[Config.GROUP_CAVALRY]
 	if group.units.is_empty() or archer_group.units.is_empty() or rider_group.units.is_empty():
 		return
 	var archers := sample_group(battle, archer_group, false)
