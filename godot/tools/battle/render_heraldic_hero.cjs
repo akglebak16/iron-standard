@@ -42,6 +42,13 @@ function clearBackground(data,w,h){
  for(let x=0;x<w;x++)stack.push(x,(h-1)*w+x);for(let y=0;y<h;y++)stack.push(y*w,y*w+w-1);
  while(stack.length){const i=stack.pop();if(seen[i]||!light(i))continue;seen[i]=1;data[i*4+3]=0;const x=i%w;
   if(x>0)stack.push(i-1);if(x<w-1)stack.push(i+1);if(i>=w)stack.push(i-w);if(i<w*(h-1))stack.push(i+w);}
+ // The anti-aliased rim between the outline and the white background stays pale: peel pale, grey
+ // pixels off the edge until the dark outline is reached.
+ const pale=i=>{const p=i*4,mn=Math.min(data[p],data[p+1],data[p+2]),mx=Math.max(data[p],data[p+1],data[p+2]);return data[p+3]>0&&mn>90&&mx-mn<50;};
+ for(let pass=0;pass<4;pass++){const peel=[];
+  for(let i=0;i<w*h;i++){if(!pale(i))continue;const x=i%w;
+   if((x>0&&!data[(i-1)*4+3])||(x<w-1&&!data[(i+1)*4+3])||(i>=w&&!data[(i-w)*4+3])||(i<w*(h-1)&&!data[(i+w)*4+3]))peel.push(i);}
+  if(!peel.length)break;for(const i of peel)data[i*4]=data[i*4+1]=data[i*4+2]=data[i*4+3]=0;}
 }
 // Blobs in reading order: bands of opaque rows, then opaque columns inside each band.
 async function blobs(file){
