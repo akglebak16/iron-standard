@@ -17,6 +17,7 @@ func _initialize() -> void:
 	assert(kernel.contact_pairs(PackedFloat64Array([1.0, 2.0]), PackedFloat64Array([1.0]), 15.0).is_empty())
 	_stamp_parity(port)
 	_pair_parity(port)
+	_teleport_parity()
 	_campaign_parity()
 	print("Native world tests passed")
 	quit(0)
@@ -65,6 +66,43 @@ func _pair_parity(port: RefCounted) -> void:
 				expect.append(j)
 		assert(expect.size() > 20, "the round has contacts")
 		assert(port.contact_pairs(xs, ys, PartyAI.CONTACT_REACH) == expect, "the same pairs in the same order (round %d)" % round)
+
+## A fight settled on the spot that moves a party (a beaten ruler goes home) changes the pairs of the later rows:
+## the native phase searches them again, so both phases fight the same pairs in the same order.
+class TeleportAI extends PartyAI:
+	var log: Array = []
+	var spot := Vector2.ZERO
+	func auto_fight(a: Dictionary, b: Dictionary) -> void:
+		log.append([a.id, b.id])
+		if log.size() == 1:
+			b.x = spot.x  # stays visible: the reference loop meets it at the new place
+			b.y = spot.y
+
+func _teleport_parity() -> void:
+	var w: RefCounted = Sim.create_world(3)
+	var logs: Array = []
+	for use_native in [false, true]:
+		var ai := TeleportAI.new(w.roster, w.player)
+		ai.skirmish = null
+		ai.native = WorldNative.create() if use_native else null
+		ai.spot = Vector2(3000.0, 1000.0)
+		var list: Array = [
+			_party(1, "bandit", 1000.0, 1000.0), _party(2, "lord", 1005.0, 1000.0),  # fight; 2 is sent to the spot
+			_party(3, "bandit", 3004.0, 1000.0),  # meets 2 only at its new place
+			_party(4, "bandit", 1500.0, 1500.0), _party(5, "lord", 1510.0, 1500.0),
+		]
+		w.roster.parties.assign(list)
+		if use_native:
+			ai._contacts_native(list)
+		else:
+			ai._contacts(list)
+		logs.append(ai.log)
+	assert(logs[0] == [[1, 2], [2, 3], [4, 5]], "the reference meets the moved party at its new place: %s" % str(logs[0]))
+	assert(logs[1] == logs[0], "native: %s" % str(logs[1]))
+	w.dispose()
+
+static func _party(id: int, kind: String, x: float, y: float) -> Dictionary:
+	return {"id": id, "kind": kind, "fac": "bandit" if kind == "bandit" else "emp", "x": x, "y": y, "hide": false, "troops": [{"type": "b1", "n": 5}], "state": "idle", "path": [], "pi": 0}
 
 ## The same seed with and without the native kernel: equal saves and RNG every day, the crisis included.
 func _campaign_parity() -> void:
