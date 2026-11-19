@@ -102,7 +102,8 @@ func nearest_enemy(unit: Unit) -> Unit:
 
 ## Same choice as Targeting.choose (weighted distance, lowest index on ties) without scanning far cells.
 ## The stage 1a melee and ranged weights only raise distances, so the bounds below (the smallest older multiplier)
-## still hold; so does skipping an enemy hidden in the forest (stage Р1а), checked only for a candidate that would win.
+## still hold; so do the terrain weights of stage Р3 (they only raise, too) and skipping an enemy hidden in the forest
+## (stage Р1а), checked only for a candidate that would win.
 func best_target(unit: Unit, previous: Unit) -> Unit:
 	var at := unit.position
 	var other_side := 1 - unit.side
@@ -129,9 +130,9 @@ func best_target(unit: Unit, previous: Unit) -> Unit:
 			d *= Config.CAVALRY_ARCHER_TARGET_MULTIPLIER
 		d *= Config.CURRENT_TARGET_MULTIPLIER
 		if melee:
-			d = melee_weight(d, raw, at, own_speed, previous, previous.position, true, melee_cavalry)
+			d = melee_weight(d, raw, at, own_speed, previous, previous.position, true, melee_cavalry, terrain)
 		else:
-			d = ranged_weight(d, own_id, own_damage, previous, true)
+			d = ranged_weight(d, own_id, own_damage, previous, true, at, previous.position, terrain)
 		state[0] = previous.battle_index
 		state[1] = d
 	# Rings of cells around the unit while the next ring could still hold something closer; a far enemy
@@ -186,14 +187,21 @@ const RING_LIMIT := 3
 ## counted) and one receding faster than the fighter can run look farther away. `raw` is the plain distance.
 ## Stage 1v (DESIGN.md 4.3): for a melee rider, a spearman facing him (within CHARGE_FRONT_ARC) looks
 ## TARGET_SPEAR_FRONT_MULTIPLIER farther, so cavalry takes a flank or another target instead of his points.
-static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: float, enemy: Unit, enemy_position: Vector2, own_target: bool, rider := false) -> float:
+## Stage Р3 (TERRAIN.md 7): on a field with terrain (`grid`, State.terrain_rules) the fighter's own speed in "I will not
+## catch him" is the speed of his cell towards the enemy (TerrainRules.speed_scale), as he will actually run there.
+static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: float, enemy: Unit, enemy_position: Vector2, own_target: bool, rider := false, grid = null) -> float:
 	var crowd := float(enemy.attackers) - (1.0 if own_target else 0.0) - Config.TARGET_CROWD_FREE_ATTACKERS
 	if crowd > 0.0:
 		weighted *= 1.0 + Config.TARGET_CROWD_MULTIPLIER * crowd
 	if own_speed > 0.0 and raw > 0.0:
-		var excess := enemy.velocity.dot(enemy_position - at) / raw - own_speed
+		var toward := enemy.velocity.dot(enemy_position - at) / raw
+		var speed := own_speed
+		# A cell never slows below TERRAIN_MIN_SPEED: a target slower than that is caught anywhere, no grid read.
+		if grid != null and toward > own_speed * Config.TERRAIN_MIN_SPEED:
+			speed = own_speed * TerrainRules.speed_scale(grid, at, enemy_position - at, raw)
+		var excess := toward - speed
 		if excess > 0.0:
-			weighted *= 1.0 + Config.TARGET_OUTRUN_MULTIPLIER * excess / own_speed
+			weighted *= 1.0 + Config.TARGET_OUTRUN_MULTIPLIER * excess / speed
 	if rider and enemy.anti_cavalry and not enemy.mounted and not enemy.fleeing and raw > 0.0:
 		var turn := (at - enemy_position).angle() - enemy.facing
 		if turn > PI:
@@ -210,14 +218,19 @@ static func melee_weight(weighted: float, raw: float, at: Vector2, own_speed: fl
 ## each add TARGET_OVERKILL_MULTIPLIER. Front ranks: a fixed share up to TARGET_FRONT_SPREAD from both ids.
 ## Stage 1v (DESIGN.md 4.4): a shielded enemy who is not a shooter looks TARGET_SHIELDED_MULTIPLIER farther, so
 ## shooters and men without shields come first (troop data "shb", not ids).
-static func ranged_weight(weighted: float, own_id: int, own_damage: float, enemy: Unit, own_target: bool) -> float:
+## Stage Р3 (TERRAIN.md 7): on a field with terrain (`grid`) the shooter prefers a target he hits better
+## (TerrainRules.aim_weight: not in the forest or the brush, lower than himself); `at` and `enemy_position` count only then.
+static func ranged_weight(weighted: float, own_id: int, own_damage: float, enemy: Unit, own_target: bool, at := Vector2.ZERO, enemy_position := Vector2.ZERO, grid = null) -> float:
 	if own_damage > 0.0:
 		var surplus := float(enemy.aimers) - (1.0 if own_target else 0.0) + 1.0 - enemy.hp / (own_damage * Config.TARGET_VOLLEY_HIT_SHARE)
 		if surplus > 0.0:
 			weighted *= 1.0 + Config.TARGET_OVERKILL_MULTIPLIER * surplus
 	if enemy.attack_range <= 0.0 and enemy.shield_block > 0.0:
 		weighted *= Config.TARGET_SHIELDED_MULTIPLIER
-	return weighted * (1.0 + Config.TARGET_FRONT_SPREAD * front_share(own_id, enemy.id))
+	weighted *= 1.0 + Config.TARGET_FRONT_SPREAD * front_share(own_id, enemy.id)
+	if grid != null:
+		weighted = TerrainRules.aim_weight(grid, at, enemy_position, weighted)
+	return weighted
 
 ## A fixed number in [0, 1) for a shooter and a target: integer mixing of both ids, the same in C++ (front_share in
 ## movement_kernel.hpp). Every step stays below 2^53, so 64-bit GDScript ints and int64_t agree.
@@ -253,9 +266,9 @@ func _scan_cell(cells: Dictionary, cell: Vector2i, at: Vector2, previous: Unit, 
 		if enemy == previous:
 			distance *= Config.CURRENT_TARGET_MULTIPLIER
 		if melee:
-			distance = melee_weight(distance, raw, at, own_speed, enemy, enemy_position, enemy == previous, melee_cavalry)
+			distance = melee_weight(distance, raw, at, own_speed, enemy, enemy_position, enemy == previous, melee_cavalry, terrain)
 		else:
-			distance = ranged_weight(distance, own_id, own_damage, enemy, enemy == previous)
+			distance = ranged_weight(distance, own_id, own_damage, enemy, enemy == previous, at, enemy_position, terrain)
 		if (distance < best or distance == best and index < best_index) and (melee or terrain == null or not TerrainRules.hidden(terrain, enemy_position, raw)):
 			best = distance
 			best_index = index

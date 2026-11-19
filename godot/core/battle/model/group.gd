@@ -33,6 +33,10 @@ var doctrine_order: String = "" # Order and backing seen at the last decision: a
 var doctrine_backing: bool = false
 var doctrine_seconds: float = Config.AI_FORMATION_SWITCH_SECONDS # Since the last formation switch (the first one is free), or in the current cavalry phase.
 var contact_seconds: float = 0.0 # Cavalry: riders stuck in foot melee; infantry: a formed line in melee.
+# Stage Р3 doctrines with the terrain (squad_doctrine.gd, TERRAIN.md 7).
+var post: Vector2 = Vector2.INF # AI archers: the high ground or forest edge the doctrine moved the centre to.
+var post_anchor: Vector2 = Vector2.INF # The centre seen at the last decision: a post is sought once it stands still.
+var open_waypoint: Vector2 = Vector2.INF # AI cavalry: the flank waypoint after the open-ground check.
 # Stage 1b morale summary (rules/morale.gd), written on every morale check; the debug overlay and a future commander
 # read it, fighters do not.
 var morale_state: int = Config.MORALE_GROUP_STEADY

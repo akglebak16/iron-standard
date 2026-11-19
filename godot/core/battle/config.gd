@@ -425,6 +425,30 @@ const AI_CAVALRY_RALLY_DISTANCE := 320.0
 const AI_CAVALRY_RALLY_EDGE := 120.0
 const AI_CAVALRY_REFORM_DISTANCE := 70.0
 const AI_CAVALRY_RALLY_SECONDS := 7.0
+# Stage Р3 (TERRAIN.md 7, DESIGN.md decisions 43+): the AI uses the terrain, on a field with terrain rules only
+# (State.terrain_rules); the open field is untouched. Group decisions of simulation/ai/squad_doctrine.gd, on the group
+# schedule above; the fighter's part is TerrainRules.aim_weight and the cell speed in "I will not catch him".
+# An infantry charge goes loose (every man for himself) while this share of its sampled men stand in the forest.
+const AI_TERRAIN_FOREST_LOOSE_SHARE := 0.25
+# Shock cavalry rallies where its run-up is open: the way away from the targets turned by these angles (radians), the
+# first whose rally point and straight run-up to the targets cross no forest, ford or water; none: the plain way away.
+const AI_TERRAIN_RALLY_TURNS := [0.0, 0.5, -0.5, 1.0, -1.0]
+# The flank waypoint of an AI cavalry group moves towards the field middle, a cell at a time and up to this many cells,
+# until it and the run-up of AI_CAVALRY_CHARGE_DISTANCE towards the enemy cross no forest, ford or water.
+const AI_TERRAIN_WAYPOINT_SHIFTS := 12
+# AI archers standing in range of the enemy (squad distance between AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE and
+# AI_ARCHER_ADVANCE_DISTANCE, where the reference brain neither advances nor charges) step within this radius onto the
+# nearest cell higher than the nearest enemy by TERRAIN_HIGHER_STEP, else onto the nearest forest edge (a forest cell
+# next to open ground). The player's archers stand where he ordered: the point is his decision.
+const AI_TERRAIN_POST_RADIUS := 160.0
+# Field survey (field_assessment.gd, the terrain layer for the commander, stage 1g): hill tops are local maxima at
+# least this height byte, at most AI_TERRAIN_SURVEY_TOPS of them, AI_TERRAIN_SURVEY_TOP_SPACING apart; forests and
+# crossings (fords, bridges) are patches of at least AI_TERRAIN_SURVEY_PATCH cells, the largest AI_TERRAIN_SURVEY_PATCHES.
+const AI_TERRAIN_SURVEY_HILL := 16
+const AI_TERRAIN_SURVEY_TOPS := 8
+const AI_TERRAIN_SURVEY_TOP_SPACING := 320.0
+const AI_TERRAIN_SURVEY_PATCH := 4
+const AI_TERRAIN_SURVEY_PATCHES := 8
 const AI_MODE_UNASSIGNED := ""
 const AI_MODE_SLOT := "slot"
 const AI_MODE_MELEE := "melee"
