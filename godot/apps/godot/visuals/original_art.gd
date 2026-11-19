@@ -7,6 +7,7 @@ const BANNERS = preload("res://apps/godot/visuals/assets/banner_definitions.gd")
 ## Hero and companion faces, helms by banner and neck stumps (exported once from the removed JS version).
 const FACES = preload("res://apps/godot/visuals/assets/face_manifest.gd").DATA
 const FaceVariant = preload("res://apps/godot/visuals/face_variant.gd")
+const HeroHeraldic = preload("res://apps/godot/visuals/hero_heraldic_art.gd")
 const SHEETS = {
 	"body": [preload("res://apps/godot/visuals/assets/body.png"), preload("res://apps/godot/visuals/assets/body_v1.png"), preload("res://apps/godot/visuals/assets/body_v2.png"), preload("res://apps/godot/visuals/assets/body_v3.png")],
 	"weapon": [preload("res://apps/godot/visuals/assets/wpn.png"), preload("res://apps/godot/visuals/assets/wpn_v1.png"), preload("res://apps/godot/visuals/assets/wpn_v2.png"), preload("res://apps/godot/visuals/assets/wpn_v3.png")],
@@ -40,6 +41,7 @@ static func select_player_banner(index: int) -> void:
 	_face_pages.clear()
 	_banner_sheets.clear()
 	_guards.clear()
+	HeroHeraldic.clear_cache()
 
 static func _banner_image(source: Image, key: String) -> Image:
 	if _player_banner == 0: return source
@@ -102,6 +104,11 @@ static func _stamp_own_head(image: Image, helm: String, face: Dictionary, offset
 	return true
 
 static func compose(look: Dictionary, faction := "player") -> Dictionary:
+	# The hero and companions in the heraldic style, painted in the player's banner (#232).
+	if faction == "player" and HeroHeraldic.supports(look):
+		var own_face := FaceVariant.of_look(look)
+		if not own_face.is_empty():
+			return HeroHeraldic.compose(look, own_face, BANNERS[_player_banner])
 	var mounted: bool = look.get("horse") != null and look.get("horse") != ""
 	var size := Vector2i(240, 244) if mounted else Vector2i(152, 176)
 	var offset := Vector2i(2, 26) if mounted else Vector2i(2, 5)
@@ -300,6 +307,10 @@ static func _region_image(texture: AtlasTexture) -> Image:
 
 ## Draw the fallen mount without its rider for a severed-rider corpse.
 static func mount_corpse(unit: Dictionary, size: Vector2i, troop_id := "") -> Image:
+	if (unit.get("hero", false) or unit.get("companion", false)) and HeroHeraldic.supports(unit.look) and size == HeroHeraldic.MOUNTED_FRAME:
+		var coat := DominionHeraldic.horse(String(unit.look.get("horse", "bay")))
+		coat.convert(Image.FORMAT_RGBA8)
+		return coat
 	if DominionHeraldic.is_cavalry(troop_id) and DominionHeraldic.supports(troop_id, _faction(unit)):
 		# The faction's own horse when its atlas carries one, otherwise the shared coat.
 		var own := DominionHeraldic.sprite(troop_id, DominionHeraldic.MOUNT_PART, 0, _player_banner if _faction(unit) == "player" else -1)

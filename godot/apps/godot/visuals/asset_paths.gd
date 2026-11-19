@@ -228,6 +228,8 @@ const PATHS = {
 	"headless_v1": "res://apps/godot/visuals/assets/headless_v1.png",
 	"headless_v2": "res://apps/godot/visuals/assets/headless_v2.png",
 	"headless_v3": "res://apps/godot/visuals/assets/headless_v3.png",
+	"hero_heraldic_mounted": "res://apps/godot/visuals/assets/hero_heraldic_mounted.png",
+	"hero_heraldic_parts": "res://apps/godot/visuals/assets/hero_heraldic_parts.png",
 	"icon_ale": "res://apps/godot/visuals/assets/icon_ale.svg",
 	"icon_axe": "res://apps/godot/visuals/assets/icon_axe.svg",
 	"icon_b_habit": "res://apps/godot/visuals/assets/icon_b_habit.svg",

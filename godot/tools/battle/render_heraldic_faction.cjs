@@ -295,4 +295,5 @@ async function main(){
  }
  console.log(`Built ${faction}: ${foot.length} foot and ${cavalry.length} mounted troops, 4 variants`);
 }
-main().catch(e=>{console.error(e);process.exitCode=1;});
+if(require.main===module)main().catch(e=>{console.error(e);process.exitCode=1;});
+module.exports={WEAPONS,SHIELDS,cell,neckHole,woundSvg,dark,src};
