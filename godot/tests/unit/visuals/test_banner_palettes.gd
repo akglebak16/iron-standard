@@ -1,11 +1,11 @@
 extends SceneTree
 const Art = preload("res://apps/godot/visuals/original_art.gd")
 const REFERENCES := [
-	preload("res://tests/unit/visuals/fixtures/banner_1_e3.png"),
-	preload("res://tests/unit/visuals/fixtures/banner_2_e3.png"),
-	preload("res://tests/unit/visuals/fixtures/banner_3_e3.png"),
-	preload("res://tests/unit/visuals/fixtures/banner_4_e3.png"),
-	preload("res://tests/unit/visuals/fixtures/banner_5_e3.png"),
+	preload("res://tests/unit/visuals/fixtures/banner_1_f3.png"),
+	preload("res://tests/unit/visuals/fixtures/banner_2_f3.png"),
+	preload("res://tests/unit/visuals/fixtures/banner_3_f3.png"),
+	preload("res://tests/unit/visuals/fixtures/banner_4_f3.png"),
+	preload("res://tests/unit/visuals/fixtures/banner_5_f3.png"),
 ]
 
 func _initialize() -> void:
@@ -13,7 +13,7 @@ func _initialize() -> void:
 	var baseline := _sprite_image()
 	var enemy: AtlasTexture = Art.sprite("e1", "emp")
 	var enemy_data := enemy.atlas.get_image().get_region(Rect2i(enemy.region)).get_data()
-	var look: Dictionary = Art.MANIFEST.troops["e3|player"].look
+	var look: Dictionary = Art.MANIFEST.troops["f3|player"].look
 	var original_hero: PackedByteArray = Art.compose(look).portrait.get_image().get_data()
 	for index in range(1, 6):
 		Art.select_player_banner(index)
@@ -41,6 +41,6 @@ func _initialize() -> void:
 	quit()
 
 func _sprite_image() -> Image:
-	# A troop still drawn from the original sheets (Nordmark and Dominion use heraldic skins).
-	var texture: AtlasTexture = Art.sprite("e3", "player")
+	# A troop still drawn from the original sheets (Dominion, Nordmark and Empire use heraldic skins).
+	var texture: AtlasTexture = Art.sprite("f3", "player")
 	return texture.atlas.get_image().get_region(Rect2i(texture.region))

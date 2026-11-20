@@ -83,5 +83,45 @@ OpenAI права на результат принадлежат пользов�
 `bow.png`; кони — общий `horses.png`, меч/топор/копьё — `weapons.png`. Сборка:
 `node godot/tools/battle/render_heraldic_faction.cjs nord` (sharp), геометрия — `nord_heraldic_geometry.gd`.
 Под знаменем игрока синее сукно перекрашивается в цвет знамени (`dominion_heraldic_art.gd`, `FACTIONS`).
-Эталоны теста палитр знамени перенесены на e3 (`tests/unit/visuals/fixtures/banner_*_e3.png`): вырезаны из
+Эталоны теста палитр знамени перенесены на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`): вырезаны из
 `portrait.png` с наложением `banner_N_portrait_v0.png`, как это делает игра.
+
+### Аурелийская империя (e1 Рекрут, e2 Легионер, e3 Триарий, e2s Пикинёр, e3s Алебардист, e2a Арбалетчик, e3a Стрелок-ветеран, e3c Катафракт)
+
+`apps/godot/visuals/assets/emp_heraldic_0.png` … `_3.png` (7 пеших) и `emp_heraldic_cavalry_0.png` … `_3.png`
+(Катафракт, 12 строк: десять обычных, всадник без коня и конь без всадника). Части — генератор картинок OpenAI
+(ChatGPT) по `tools/battle/heraldic_source/emp-prompts.md`: `emp-torsos.png`, `emp-heads.png`, `emp-shields.png`,
+`emp-horse.png` (свой бардированный конь: багряная попона с золотыми солнцами). Оружие — общее (`weapons.png`, `lance.png`).
+Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emp`, геометрия — `emp_heraldic_geometry.gd`.
+Под знаменем игрока багряное сукно перекрашивается в цвет знамени; срез шеи не трогается (кровь того же оттенка).
+Эталоны теста палитр знамени теперь на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`).
+
+### Кеширское ханство (k1 Кочевник, k2 Степной копейщик, k2a Степной стрелок, k2c Всадник, k3h Конный лучник, k3c Нукер)
+
+`apps/godot/visuals/assets/khan_heraldic_0.png` … `_3.png` (3 пеших) и `khan_heraldic_cavalry_0.png` … `_3.png`
+(3 конных, 12 строк). Части — генератор картинок OpenAI (ChatGPT) по шаблонам `shareness/skills/unit-parts/PROMPTS.md`:
+`khan-torsos.png`, `khan-heads.png`, `khan-shields.png` (малые круглые), `sabre.png`. Кони — общий `horses.png`.
+Сборка: `node godot/tools/battle/render_heraldic_faction.cjs khan`, геометрия — `khan_heraldic_geometry.gd`.
+Под знаменем игрока бирюзовое сукно перекрашивается в цвет знамени.
+
+### Нежить (z1 Мертвец, s1 Скелет, s1a Скелет-лучник, s2 Мёртвый воин, s2c Мёртвый всадник, s3 Умертвие)
+
+`apps/godot/visuals/assets/undead_heraldic_0.png` … `_3.png` (5 пеших) и `undead_heraldic_cavalry_0.png` … `_3.png`
+(всадник на костяном коне из общего `horses.png`). Части — генератор картинок OpenAI (ChatGPT) по шаблонам
+`shareness/skills/unit-parts/PROMPTS.md`: `undead-torsos.png`, `undead-heads.png` (у Скелета шея в тряпке, чтобы
+не просвечивал вырез), `undead-shields.png`, `club.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs undead`.
+
+### Главный герой и спутники (#232)
+
+`apps/godot/visuals/assets/hero_heraldic_parts.png` (торсы 11 доспехов, 15 голов в шлемах, волосы, бороды, щиты,
+оружие с перчаткой) и `hero_heraldic_mounted.png` (копьё и лэнс в седле). Части — генератор картинок OpenAI (ChatGPT)
+по `godot/tools/battle/heraldic_source/hero-prompts.md`: `hero-torsos-a.png`, `hero-mail.png`, `hero-torsos-b.png`,
+`hero-heads-a.png`, `hero-heads-b.png`, `hero-hair.png`, `hero-shields.png`. Нарисованы ключевыми цветами, игра
+перекрашивает их под стяг, кожу и волосы (`hero_heraldic_art.gd`). Сборка: `node godot/tools/battle/render_heraldic_hero.cjs`.
+
+### Поселения карты (#254)
+
+`apps/godot/visuals/assets/settlements_heraldic.png` — города, замки и деревни семи культур и логово разбойников.
+Генератор картинок OpenAI (ChatGPT) по `godot/tools/map/settlement_source/prompts.md`: `towns.png`, `castles.png`,
+`villages.png`. Сборка: `node godot/tools/map/render_heraldic_settlements.cjs`.
+

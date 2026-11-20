@@ -5044,6 +5044,41 @@
       "source": "tools/battle/render_heraldic_faction.cjs",
       "destination": "tools/battle/render_heraldic_faction.cjs",
       "introduced_revision": "local-nord-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/emp_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/emp_heraldic_geometry.gd",
+      "introduced_revision": "local-emp-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/khan_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/khan_heraldic_geometry.gd",
+      "introduced_revision": "local-khan-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/undead_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/undead_heraldic_geometry.gd",
+      "introduced_revision": "local-undead-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/hero_heraldic_art.gd",
+      "destination": "apps/godot/visuals/hero_heraldic_art.gd",
+      "introduced_revision": "local-hero-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/hero_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/hero_heraldic_geometry.gd",
+      "introduced_revision": "local-hero-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/settlement_heraldic_art.gd",
+      "destination": "apps/godot/visuals/settlement_heraldic_art.gd",
+      "introduced_revision": "local-settlements-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/settlements_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/settlements_heraldic_geometry.gd",
+      "introduced_revision": "local-settlements-heraldic"
     }
   ]
 }

@@ -140,7 +140,9 @@ async function main(){
   geometry[id].shield_center=[Math.round(cx),Math.round(top+oh/2)];
   // Spear like the infantry spearman's, the lance longer and gripped below its vamplate.
   const kind=TROOPS[id].weapon,art=kind==='lance'?lance:spear,am=await sharp(art).metadata();
-  const wh=kind==='lance'?206:146,ww=Math.round(wh*am.width/am.height),grip=kind==='lance'?.77:.5;
+  // The lance is 172 px so its point stays inside the frame (206 cut it off at the top).
+  // The spear is held low on the shaft so it rises well above the rider's head.
+  const wh=kind==='lance'?172:146,ww=Math.round(wh*am.width/am.height),grip=kind==='lance'?.77:.75;
   const handY=105+RIDER[1],handX=125+RIDER[0];
   const wy=Math.round(handY+11-wh*grip);
   part.weapon=[await stamp(art,ww,wh,handX-Math.round(ww/2),wy),await stamp(glove,20,22,handX-13,handY)];
