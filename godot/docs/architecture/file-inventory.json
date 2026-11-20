@@ -5079,6 +5079,26 @@
       "source": "apps/godot/visuals/settlements_heraldic_geometry.gd",
       "destination": "apps/godot/visuals/settlements_heraldic_geometry.gd",
       "introduced_revision": "local-settlements-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/kin_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/kin_heraldic_geometry.gd",
+      "introduced_revision": "local-kin-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/emi_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/emi_heraldic_geometry.gd",
+      "introduced_revision": "local-heraldic-factions"
+    },
+    {
+      "source": "apps/godot/visuals/pact_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/pact_heraldic_geometry.gd",
+      "introduced_revision": "local-heraldic-factions"
+    },
+    {
+      "source": "apps/godot/visuals/bandit_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/bandit_heraldic_geometry.gd",
+      "introduced_revision": "local-heraldic-factions"
     }
   ]
 }

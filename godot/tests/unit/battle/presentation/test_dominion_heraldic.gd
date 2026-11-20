@@ -4,7 +4,7 @@ const Skins = preload("res://apps/godot/visuals/dominion_heraldic_art.gd")
 const Motion = preload("res://apps/godot/presentation/battle/unit_motion.gd")
 
 func _initialize() -> void:
-	for troop in Skins.IDS + Skins.NORD_IDS + Skins.EMP_IDS + Skins.KHAN_IDS + Skins.UNDEAD_IDS:
+	for troop in Skins.IDS + Skins.NORD_IDS + Skins.EMP_IDS + Skins.KHAN_IDS + Skins.KIN_IDS + Skins.EMI_IDS + Skins.PACT_IDS + Skins.BANDIT_IDS + Skins.UNDEAD_IDS:
 		var old: Dictionary = Art.MANIFEST.troops[troop + "|" + Skins.home_of(troop)]
 		var look: Dictionary = old.look.duplicate(true)
 		var unit := {"id": 1, "look": look, "faction": Skins.home_of(troop), "hero": false, "companion": false, "mounted": false, "side": 0}
@@ -35,7 +35,7 @@ func _initialize() -> void:
 				assert(look.weapon == "xbow", "pose keys never mutate gameplay equipment")
 			else: assert(entry.weapon_kind == look.weapon)
 	# Dominion cavalry: heraldic horse and rider in the old mounted frame and anchor.
-	for troop in Skins.CAVALRY_IDS + Skins.NORD_CAVALRY_IDS + Skins.EMP_CAVALRY_IDS + Skins.KHAN_CAVALRY_IDS + Skins.UNDEAD_CAVALRY_IDS:
+	for troop in Skins.CAVALRY_IDS + Skins.NORD_CAVALRY_IDS + Skins.EMP_CAVALRY_IDS + Skins.KHAN_CAVALRY_IDS + Skins.KIN_CAVALRY_IDS + Skins.EMI_CAVALRY_IDS + Skins.PACT_CAVALRY_IDS + Skins.BANDIT_CAVALRY_IDS + Skins.UNDEAD_CAVALRY_IDS:
 		var old: Dictionary = Art.MANIFEST.troops[troop + "|" + Skins.home_of(troop)]
 		var look: Dictionary = old.look.duplicate(true)
 		var unit := {"id": 2, "look": look, "faction": Skins.home_of(troop), "hero": false, "companion": false, "mounted": true, "side": 0}
@@ -69,10 +69,10 @@ func _initialize() -> void:
 		if Skins.FACTIONS[Skins.home_of(troop)].get("mount_row", false):
 			assert(Skins.sprite(troop, Skins.MOUNT_PART, 0) != null, "%s: the faction's own horse lies on" % troop)
 		assert(horse.get_used_rect().size.x > 200 and horse.get_pixel(80, 60).a == 0.0, "%s: the horse lies without its rider" % troop)
-	# Other factions still use the original sheets.
-	for pair in [["f2a", "kin"], ["p1", "pact"]]:
-		assert(not Skins.supports(pair[0], pair[1]))
-		assert(Art.sprite(pair[0], pair[1]).atlas == Art.SHEETS.portrait[0])
+	# A heraldic troop is drawn so only for its own side or for the player who hired it.
+	for pair in [["m2a", "emi"], ["p1", "pact"], ["b1", "bandit"], ["f1", "kin"]]:
+		assert(Skins.supports(pair[0], pair[1]) and Skins.supports(pair[0], "player"))
+		assert(not Skins.supports(pair[0], "nord"))
 	# Hired Dominion troops use new silhouettes and the player's chosen banner.
 	Art.select_player_banner(0)
 	var amber := Art.sprite("d2", "player").get_image().get_data()

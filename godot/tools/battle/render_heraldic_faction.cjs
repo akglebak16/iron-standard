@@ -22,6 +22,7 @@ const WEAPONS={
  sabre:{art:['sabre.png',0,0,1,1],h:102,y:28,grip:.31},
  // Club like a short axe: thick end up, held near the bottom of its grip.
  club:{art:['club.png',0,0,1,1],h:86,y:40,grip:.5},
+ mace:{art:['mace.png',0,0,1,1],h:86,y:40,grip:.5},
  // Crossbow as the Dominion's: stock across the body, rear fist at the trigger, other hand under the fore-end.
  xbow:{art:['weapons.png',0,2,2,3],h:63,y:88,left:72,hand:96,support:[115,116],pivotY:128},
  // 172 px: the point stays inside the 244 px mounted frame (206 cut it off at the top).
@@ -75,6 +76,53 @@ FACTIONS.undead={
   {id:'s2',weapon:'axe',shield:'round',steel:true},
   {id:'s2c',weapon:'spear',shield:false,steel:false,horse:'bone'},
   {id:'s3',weapon:'sword',shield:'kite',steel:true},
+ ],
+};
+FACTIONS.kin={
+ troops:[
+  {id:'f1',weapon:'sword',shield:'round',steel:false},
+  {id:'f2',weapon:'sword',shield:'kite',steel:true},
+  {id:'f3',weapon:'sword',shield:'kite',steel:true},
+  {id:'f2s',weapon:'spear',shield:'round',steel:false},
+  {id:'f3s',weapon:'halberd',shield:false,steel:true},
+  {id:'f2a',weapon:'bow',shield:false,steel:false},
+  {id:'f3a',weapon:'bow',shield:false,steel:true},
+  {id:'f2c',weapon:'sword',shield:'kite',steel:true,horse:'chestnut'},
+  {id:'f3c',weapon:'lance',shield:'kite',steel:true,horse:'grey'},
+ ],
+};
+FACTIONS.emi={
+ troops:[
+  {id:'m1',weapon:'sabre',shield:'small',steel:false},
+  {id:'m2',weapon:'sabre',shield:'round',steel:false},
+  {id:'m3',weapon:'sabre',shield:'round',steel:true},
+  {id:'m2s',weapon:'spear',shield:'small',steel:false},
+  {id:'m2a',weapon:'bow',shield:false,steel:false},
+  {id:'m2c',weapon:'sabre',shield:'small',steel:false,horse:'dun',riderDy:7},
+  {id:'m3h',weapon:'bow',shield:false,steel:true,horse:'dun',riderDy:4},
+  {id:'m3c',weapon:'lance',shield:'small',steel:true,horse:'black',riderDy:6},
+ ],
+};
+FACTIONS.pact={
+ troops:[
+  {id:'p1',weapon:'sword',shield:'round',steel:false},
+  {id:'p2',weapon:'sword',shield:'kite',steel:true},
+  {id:'p3',weapon:'sword',shield:'kite',steel:true},
+  {id:'p2s',weapon:'spear',shield:'kite',steel:false},
+  {id:'p3s',weapon:'halberd',shield:false,steel:true},
+  {id:'p2a',weapon:'bow',shield:false,steel:false},
+  {id:'p3a',weapon:'bow',shield:false,steel:true},
+  {id:'p2c',weapon:'lance',shield:'kite',steel:true,horse:'bay'},
+  {id:'p3c',weapon:'lance',shield:'kite',steel:true,horse:'grey'},
+ ],
+};
+FACTIONS.bandit={
+ troops:[
+  {id:'b1',weapon:'club',shield:false,steel:false},
+  {id:'b2',weapon:'axe',shield:'round',steel:false},
+  {id:'b1a',weapon:'bow',shield:false,steel:false},
+  {id:'b3',weapon:'mace',shield:'round',steel:true},
+  {id:'b2c',weapon:'sword',shield:false,steel:false,horse:'bay',riderDy:8},
  ],
 };
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];

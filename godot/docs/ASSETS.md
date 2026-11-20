@@ -125,3 +125,27 @@ OpenAI права на результат принадлежат пользов�
 Генератор картинок OpenAI (ChatGPT) по `godot/tools/map/settlement_source/prompts.md`: `towns.png`, `castles.png`,
 `villages.png`. Сборка: `node godot/tools/map/render_heraldic_settlements.cjs`.
 
+### Королевство Галлия (f1 Ополченец, f2 Сержант, f3 Латник, f2s Копейщик, f3s Протазанщик, f2a Лучник, f3a Йомен, f2c Конный сержант, f3c Рыцарь)
+
+`apps/godot/visuals/assets/kin_heraldic_0.png` … `_3.png` (7 пеших) и `kin_heraldic_cavalry_0.png` … `_3.png` (2 всадника
+на общих конях). Части — генератор картинок OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/kin-prompts.md`:
+`kin-torsos.png`, `kin-heads.png`, `kin-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs kin`.
+
+### Эмират Хайрат (m1 Воин пустыни, m2 Гулям, m3 Страж эмира, m2s Копейщик-бербер, m2a Лучник пустыни, m2c Лёгкий всадник, m3h Конный лучник, m3c Мамлюк)
+
+`apps/godot/visuals/assets/emi_heraldic_0.png` … `_3.png` (5 пеших) и `emi_heraldic_cavalry_0.png` … `_3.png` (3 всадника).
+Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/emi-prompts.md`: `emi-torsos.png`, `emi-heads.png`,
+`emi-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emi`.
+
+### Варшавско-Познаньский пакт (p1 Ополченец, p2 Пехотинец, p3 Кнехт, p2s Пикинёр, p3s Ландскнехт, p2a Лучник, p3a Стрелок, p2c Панцирный всадник, p3c Гусар)
+
+`apps/godot/visuals/assets/pact_heraldic_0.png` … `_3.png` (7 пеших) и `pact_heraldic_cavalry_0.png` … `_3.png` (2 всадника).
+Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/pact-prompts.md`: `pact-torsos.png`, `pact-heads.png`,
+`pact-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs pact`.
+
+### Разбойники (b1 Грабитель, b2 Разбойник, b1a Браконьер, b3 Головорез, b2c Конный налётчик)
+
+`apps/godot/visuals/assets/bandit_heraldic_0.png` … `_3.png` (4 пеших) и `bandit_heraldic_cavalry_0.png` … `_3.png` (налётчик).
+Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/bandit-prompts.md`: `bandit-torsos.png`,
+`bandit-heads.png`, `bandit-shields.png`, булава `mace.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs bandit`.
+
