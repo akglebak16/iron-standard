@@ -102,6 +102,19 @@ FACTIONS.emi={
   {id:'m3c',weapon:'lance',shield:'small',steel:true,horse:'black'},
  ],
 };
+FACTIONS.pact={
+ troops:[
+  {id:'p1',weapon:'sword',shield:'round',steel:false},
+  {id:'p2',weapon:'sword',shield:'kite',steel:true},
+  {id:'p3',weapon:'sword',shield:'kite',steel:true},
+  {id:'p2s',weapon:'spear',shield:'kite',steel:false},
+  {id:'p3s',weapon:'halberd',shield:false,steel:true},
+  {id:'p2a',weapon:'bow',shield:false,steel:false},
+  {id:'p3a',weapon:'bow',shield:false,steel:true},
+  {id:'p2c',weapon:'lance',shield:'kite',steel:true,horse:'bay'},
+  {id:'p3c',weapon:'lance',shield:'kite',steel:true,horse:'grey'},
+ ],
+};
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];
 const FOOT={W:152,H:176},HORSE={W:240,H:244};
 const RIDER=[4,23];
