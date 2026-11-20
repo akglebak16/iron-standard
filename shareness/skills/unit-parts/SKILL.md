@@ -7,7 +7,7 @@ description: Когда нужны новые или перерисованны�
 Боец в бою — это набор кадров 152×176: `body`, `weapon`, `portrait`, `headless`, `head`, `flash`,
 `corpse`, `corpse_headless`, `bare` (без щита) и `shield`. Рисовать их по отдельности не нужно:
 рисуются только **части**, а все кадры собирает скрипт. Образец — пехота Доминиона
-(`godot/tools/battle/render_dominion_heraldic.cjs`, `heraldic_source/`).
+(`godot/tools/battle/render_heraldic_faction.cjs dominion`, `heraldic_source/`).
 
 ## Что генерировать (и только это)
 1. `torsos.png` — туловища без головы и без щита, с вырезом воротника.
@@ -25,10 +25,10 @@ description: Когда нужны новые или перерисованны�
 
 ## Как собрать
 1. Положи части в `heraldic_source/` (PNG 1254×1254, прозрачный фон, сетка 3×3 в порядке `ids`).
-2. Новая фракция: скопируй `render_dominion_heraldic.cjs` и её модуль кожи
-   (`dominion_heraldic_art.gd`), поменяй `ids`, `SHIELDS` (где лежит щит: круг `[cx, cy, r]` или
-   капля), оружие (`config`).
-3. `NODE_PATH=<node_modules с sharp> node godot/tools/battle/render_dominion_heraldic.cjs`,
+2. Новая фракция: добавь её в `FACTIONS` сборщика `render_heraldic_faction.cjs` (бойцы в порядке клеток,
+   оружие, щит: `round`/`small`/`kite` или своя форма `{round:[cx, cy, r]}` / `{kite:[…]}`) и в модуль кожи
+   (`dominion_heraldic_art.gd`).
+3. `NODE_PATH=<node_modules с sharp> node godot/tools/battle/render_heraldic_faction.cjs <фракция>`,
    затем импорт Godot (`godot --headless --path godot --import`).
 4. Правила слоёв, масштабы и проверка — `heraldic_source/assembly-rules.md`. Коротко:
    туловище → голова → передняя половина воротника → щит (так собрана пехота Доминиона; для новых
@@ -50,7 +50,7 @@ description: Когда нужны новые или перерисованны�
 
 ## Правила по опыту (Доминион, 2026-11-18)
 
-Образцы: пехота — `render_dominion_heraldic.cjs`; конница — `render_dominion_cavalry.cjs`,
+Образцы: все фракции, пехота и конница — `render_heraldic_faction.cjs` (`FACTIONS`),
 промпты — `heraldic_source/horses-prompts.md`, `nord-prompts.md`.
 
 ### Генерация
@@ -89,7 +89,7 @@ description: Когда нужны новые или перерисованны�
 3. Древковое у конных (решение Глеба, 2026-11-19): **лэнс короткий — 172 px** (206 обрезал наконечник
    верхним краем кадра), хват на 77 % длины; **копьё держат низко на древке — хват на 75 %**, чтобы оно
    поднималось над шлемом. Наконечник всегда целиком в кадре (проверять bbox строки оружия: верх ≥ 5 px).
-   Числа зашиты в `render_heraldic_faction.cjs` (`WEAPONS`) и `render_dominion_cavalry.cjs`.
+   Числа зашиты в `render_heraldic_faction.cjs` (`WEAPONS`).
 4. Посадку всадника правят числами в таблице бойцов сборщика: `riderDx` (вперёд), `riderDy` (ниже в седло);
    высоту головы с гребнем/плюмажем — `headHeight`. Глеб смотрит превью и называет, кого сдвинуть.
    **Стандарт высоты всадника (решение Глеба, 2026-11-20):** низ торса (пояс) — на строке **y = 182** кадра

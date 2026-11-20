@@ -21,7 +21,16 @@ public:
     bool formed = false, rally = false;
     Vec2 screen{float(INFINITY), float(INFINITY)}, screen_lateral{0, 1};
   };
-  std::vector<Vec2> positions, velocities, vectors, gaps, all_gaps;
+  // A vector column borrowed from the caller for one call, like `reals` and `integers` (#298): the kernel reads and
+  // writes the storage's own buffer, with no copy in and no new array out.
+  struct Column {
+    Vec2 *data = nullptr;
+    int count = 0;
+    Vec2 &operator[](int n) const { return data[n]; }
+    int size() const { return count; }
+  };
+  Column positions, velocities, vectors;
+  std::vector<Vec2> gaps, all_gaps;
   std::vector<Group> groups;
   std::vector<double> parameters;
   double *reals = nullptr;

@@ -65,7 +65,7 @@
 3. Смотрим одиночного бойца, плотный строй, траву, снег, осаду, портрет и смену знамени. Для нового типа проверяем соседство с предыдущими классами, а не только большой портрет.
 4. Используем готовые атласы и пакетную отрисовку. Сверяем совпадение GDScript и native. Для правок боевой отрисовки сравниваем кадр, draw calls, память и тяжёлые сцены одинаковой численности до и после. Тесты запуска и сравнение кадров оцениваются отдельно от замеров FPS.
 
-Исходники лежат в [heraldic_source](../../tools/battle/heraldic_source/), упаковщик — [render_dominion_heraldic.cjs](../../tools/battle/render_dominion_heraldic.cjs), сцены просмотра — [фигуры и оружие](../../tools/battle/dominion_preview.gd) и [головы и направление](../../tools/battle/dominion_head_preview.gd). [Журнал ассетов](../ASSETS.md).
+Исходники лежат в [heraldic_source](../../tools/battle/heraldic_source/), упаковщик — [render_heraldic_faction.cjs](../../tools/battle/render_heraldic_faction.cjs) (`dominion`), сцены просмотра — [фигуры и оружие](../../tools/battle/dominion_preview.gd) и [головы и направление](../../tools/battle/dominion_head_preview.gd). [Журнал ассетов](../ASSETS.md).
 
 ## Открытый визуальный долг
 

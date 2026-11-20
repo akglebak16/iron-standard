@@ -31,7 +31,7 @@ OpenAI права на результат принадлежат пользов�
 отдельным слоем для блока; у тела без головы вырез залит кровью, у головы — низ шеи.
 `body.png` остаётся эталоном стиля и масштаба.
 
-Сборка: `node godot/tools/battle/render_dominion_heraldic.cjs` (инструмент sharp
+Сборка: `node godot/tools/battle/render_heraldic_faction.cjs dominion` (инструмент sharp
 0.35.5, только для подготовки ассетов; при необходимости задать NODE_PATH).
 Скрипт кадрирует, ориентирует и укладывает готовые рисунки, не вызывает модель.
 Генератор ставит голову шеей в общую точку (76, 78) в вырез воротника. Центры записываются в `dominion_heraldic_heads.gd`.
@@ -69,7 +69,7 @@ OpenAI права на результат принадлежат пользов�
 без всадника). Части нарисованы генератором картинок OpenAI (ChatGPT) по промптам из
 `tools/battle/heraldic_source/horses-prompts.md`: `horses.png` (длинные низкие кони без ног),
 `riders-torsos.png`, `riders-heads.png`, `riders-shields.png` (с нуля по пехотным листам), `lance.png`.
-Сборка: `node godot/tools/battle/render_dominion_cavalry.cjs` (sharp); голова лежит поверх торса и
+Сборка: тем же `node godot/tools/battle/render_heraldic_faction.cjs dominion` (sharp); голова лежит поверх торса и
 заходит на кольчужный воротник на 3 px ниже переднего края выреза. Геометрия —
 `apps/godot/visuals/dominion_heraldic_cavalry_geometry.gd`. 11-я строка — всадник без коня
 (разрубленный падает отдельно, конь — из `dominion_heraldic_horses.png`).
@@ -82,6 +82,8 @@ OpenAI права на результат принадлежат пользов�
 (шаблоны — `shareness/skills/unit-parts/PROMPTS.md`): `nord-torsos.png`, `nord-heads.png`, `nord-shields.png`,
 `bow.png`; кони — общий `horses.png`, меч/топор/копьё — `weapons.png`. Сборка:
 `node godot/tools/battle/render_heraldic_faction.cjs nord` (sharp), геометрия — `nord_heraldic_geometry.gd`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коня): `nord-torsos-v1…v3.png`, `nord-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `nord-prompts.md`, раздел «Варианты»).
 Под знаменем игрока синее сукно перекрашивается в цвет знамени (`dominion_heraldic_art.gd`, `FACTIONS`).
 Эталоны теста палитр знамени перенесены на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`): вырезаны из
 `portrait.png` с наложением `banner_N_portrait_v0.png`, как это делает игра.
@@ -93,6 +95,8 @@ OpenAI права на результат принадлежат пользов�
 (ChatGPT) по `tools/battle/heraldic_source/emp-prompts.md`: `emp-torsos.png`, `emp-heads.png`, `emp-shields.png`,
 `emp-horse.png` (свой бардированный конь: багряная попона с золотыми солнцами). Оружие — общее (`weapons.png`, `lance.png`).
 Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emp`, геометрия — `emp_heraldic_geometry.gd`.
+Варианты (страницы 1–3: другие лица и детали одежды и брони; конь свой, `emp-horse.png`, его масть не меняется): `emp-torsos-v1…v3.png`,
+`emp-heads-v1…v3.png`, тем же генератором правкой основных листов (промпты в `emp-prompts.md`, раздел «Варианты»).
 Под знаменем игрока багряное сукно перекрашивается в цвет знамени; срез шеи не трогается (кровь того же оттенка).
 Эталоны теста палитр знамени теперь на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`).
 
@@ -102,6 +106,8 @@ OpenAI права на результат принадлежат пользов�
 (3 конных, 12 строк). Части — генератор картинок OpenAI (ChatGPT) по шаблонам `shareness/skills/unit-parts/PROMPTS.md`:
 `khan-torsos.png`, `khan-heads.png`, `khan-shields.png` (малые круглые), `sabre.png`. Кони — общий `horses.png`.
 Сборка: `node godot/tools/battle/render_heraldic_faction.cjs khan`, геометрия — `khan_heraldic_geometry.gd`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `khan-torsos-v1…v3.png`, `khan-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `khan-prompts.md`, раздел «Варианты»).
 Под знаменем игрока бирюзовое сукно перекрашивается в цвет знамени.
 
 ### Нежить (z1 Мертвец, s1 Скелет, s1a Скелет-лучник, s2 Мёртвый воин, s2c Мёртвый всадник, s3 Умертвие)
@@ -110,6 +116,8 @@ OpenAI права на результат принадлежат пользов�
 (всадник на костяном коне из общего `horses.png`). Части — генератор картинок OpenAI (ChatGPT) по шаблонам
 `shareness/skills/unit-parts/PROMPTS.md`: `undead-torsos.png`, `undead-heads.png` (у Скелета шея в тряпке, чтобы
 не просвечивал вырез), `undead-shields.png`, `club.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs undead`.
+Варианты (страницы 1–3: другие мертвецы и черепа, другие лохмотья и детали доспеха; костяной конь не меняется):
+`undead-torsos-v1…v3.png`, `undead-heads-v1…v3.png`, тем же генератором правкой основных листов (промпты в `undead-prompts.md`, раздел «Варианты»).
 
 ### Главный герой и спутники (#232)
 
@@ -138,16 +146,22 @@ OpenAI права на результат принадлежат пользов�
 `apps/godot/visuals/assets/emi_heraldic_0.png` … `_3.png` (5 пеших) и `emi_heraldic_cavalry_0.png` … `_3.png` (3 всадника).
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/emi-prompts.md`: `emi-torsos.png`, `emi-heads.png`,
 `emi-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emi`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `emi-torsos-v1…v3.png`, `emi-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `emi-prompts.md`, раздел «Варианты»).
 
 ### Варшавско-Познаньский пакт (p1 Ополченец, p2 Пехотинец, p3 Кнехт, p2s Пикинёр, p3s Ландскнехт, p2a Лучник, p3a Стрелок, p2c Панцирный всадник, p3c Гусар)
 
 `apps/godot/visuals/assets/pact_heraldic_0.png` … `_3.png` (7 пеших) и `pact_heraldic_cavalry_0.png` … `_3.png` (2 всадника).
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/pact-prompts.md`: `pact-torsos.png`, `pact-heads.png`,
 `pact-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs pact`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `pact-torsos-v1…v3.png`, `pact-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `pact-prompts.md`, раздел «Варианты»).
 
 ### Разбойники (b1 Грабитель, b2 Разбойник, b1a Браконьер, b3 Головорез, b2c Конный налётчик)
 
 `apps/godot/visuals/assets/bandit_heraldic_0.png` … `_3.png` (4 пеших) и `bandit_heraldic_cavalry_0.png` … `_3.png` (налётчик).
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/bandit-prompts.md`: `bandit-torsos.png`,
 `bandit-heads.png`, `bandit-shields.png`, булава `mace.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs bandit`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `bandit-torsos-v1…v3.png`, `bandit-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `bandit-prompts.md`, раздел «Варианты»).
 

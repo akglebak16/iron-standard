@@ -16,7 +16,7 @@ test/release runner вызывает его автоматически.
 решением об их подключении.
 
 Подготовка геральдических атласов использует sharp 0.35.5 (Apache-2.0),
-только локальный authoring-инструмент: `tools/battle/render_dominion_heraldic.cjs`.
+только локальный authoring-инструмент: `tools/battle/render_heraldic_faction.cjs`.
 Для запуска можно передать NODE_PATH к установленному sharp. В игре, тестах и
 release-сборке sharp не нужен: готовые атласы хранятся в репозитории.
 Лицензия инструмента: `tools/battle/heraldic_source/sharp-LICENSE.txt`.

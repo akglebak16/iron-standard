@@ -44,7 +44,7 @@ NEW PROPORTIONS, critical: each horse is seen from the SIDE in a slight three-qu
 Первый вариант (целиком `riders-body.png`, потом правками на части) дал голую шею,
 стоячий воротник и бармицу, обрезанную у скул. Поэтому части генерируются с нуля, каждая
 по образцу пехотного листа того же типа. Масштаб к пехоте подгоняет сборщик
-(`render_dominion_cavalry.cjs`), плюмаж в высоту головы не считается.
+(`render_heraldic_faction.cjs dominion`), плюмаж в высоту головы не считается.
 
 ### `riders-torsos.png` — приложить `torsos.png`, затем `body.png`
 
