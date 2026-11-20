@@ -143,3 +143,9 @@ OpenAI права на результат принадлежат пользов�
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/pact-prompts.md`: `pact-torsos.png`, `pact-heads.png`,
 `pact-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs pact`.
 
+### Разбойники (b1 Грабитель, b2 Разбойник, b1a Браконьер, b3 Головорез, b2c Конный налётчик)
+
+`apps/godot/visuals/assets/bandit_heraldic_0.png` … `_3.png` (4 пеших) и `bandit_heraldic_cavalry_0.png` … `_3.png` (налётчик).
+Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/bandit-prompts.md`: `bandit-torsos.png`,
+`bandit-heads.png`, `bandit-shields.png`, булава `mace.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs bandit`.
+
