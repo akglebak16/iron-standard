@@ -138,6 +138,8 @@ OpenAI права на результат принадлежат пользов�
 `apps/godot/visuals/assets/emi_heraldic_0.png` … `_3.png` (5 пеших) и `emi_heraldic_cavalry_0.png` … `_3.png` (3 всадника).
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/emi-prompts.md`: `emi-torsos.png`, `emi-heads.png`,
 `emi-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emi`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `emi-torsos-v1…v3.png`, `emi-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `emi-prompts.md`, раздел «Варианты»).
 
 ### Варшавско-Познаньский пакт (p1 Ополченец, p2 Пехотинец, p3 Кнехт, p2s Пикинёр, p3s Ландскнехт, p2a Лучник, p3a Стрелок, p2c Панцирный всадник, p3c Гусар)
 

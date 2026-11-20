@@ -57,3 +57,13 @@ Square canvas, STRICT 3x3 grid of equal cells, one shield centered in each used 
 8 m3c: small round gilded steel shield with a burnt-orange centre and a brass boss.
 9 EMPTY.
 ```
+
+## Варианты
+
+Листы `emi-torsos-v1…v3.png` и `emi-heads-v1…v3.png` — правка `emi-torsos.png` / `emi-heads.png` (вложение) тем же
+генератором, по образцу вариантов Галлии (`kin-prompts.md`). Туловища: v1 — выгоревшая ткань с заплатами, полосатая
+отделка, железные пряжки, кремовый кушак; v2 — ремни и наплечники, орнаментальная кайма, латунные заклёпки, сумки;
+v3 — выцветшая ткань, кремовая отделка ворота и перевязь, латунные бляхи, видна шнуровка ламелляра. В промпт добавлено
+«The rim at the back of the neck opening stays cream or orange, NOT grey». Головы: v1 — пожилые с проседью; v2 —
+молодые, короткие бороды или щетина; v3 — широкие лица, густые чёрные бороды или усы, шрамы. Закрывающие лицо уборы
+меняют одну мелочь: v1 кремовая обмотка, v2 полосатая лента, v3 латунное навершие.

@@ -95,6 +95,7 @@ FACTIONS.kin={
  ],
 };
 FACTIONS.emi={
+ variants:true,
  troops:[
   {id:'m1',weapon:'sabre',shield:'small',steel:false},
   {id:'m2',weapon:'sabre',shield:'round',steel:false},
