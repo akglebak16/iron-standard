@@ -5079,6 +5079,11 @@
       "source": "apps/godot/visuals/settlements_heraldic_geometry.gd",
       "destination": "apps/godot/visuals/settlements_heraldic_geometry.gd",
       "introduced_revision": "local-settlements-heraldic"
+    },
+    {
+      "source": "apps/godot/visuals/kin_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/kin_heraldic_geometry.gd",
+      "introduced_revision": "local-kin-heraldic"
     }
   ]
 }

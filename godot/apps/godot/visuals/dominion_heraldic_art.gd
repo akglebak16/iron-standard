@@ -10,6 +10,8 @@ const EMP_IDS := ["e1", "e2", "e3", "e2s", "e3s", "e2a", "e3a"]
 const EMP_CAVALRY_IDS := ["e3c"]
 const KHAN_IDS := ["k1", "k2", "k2a"]
 const KHAN_CAVALRY_IDS := ["k2c", "k3h", "k3c"]
+const KIN_IDS := ["f1", "f2", "f3", "f2s", "f3s", "f2a", "f3a"]
+const KIN_CAVALRY_IDS := ["f2c", "f3c"]
 const UNDEAD_IDS := ["z1", "s1", "s1a", "s2", "s3"]
 const UNDEAD_CAVALRY_IDS := ["s2c"]
 const PARTS := ["body", "weapon", "portrait", "headless", "head", "flash", "corpse", "corpse_headless"]
@@ -67,6 +69,18 @@ const KHAN_CAVALRY_PAGES := [
 	preload("res://apps/godot/visuals/assets/khan_heraldic_cavalry_2.png"),
 	preload("res://apps/godot/visuals/assets/khan_heraldic_cavalry_3.png"),
 ]
+const KIN_PAGES := [
+	preload("res://apps/godot/visuals/assets/kin_heraldic_0.png"),
+	preload("res://apps/godot/visuals/assets/kin_heraldic_1.png"),
+	preload("res://apps/godot/visuals/assets/kin_heraldic_2.png"),
+	preload("res://apps/godot/visuals/assets/kin_heraldic_3.png"),
+]
+const KIN_CAVALRY_PAGES := [
+	preload("res://apps/godot/visuals/assets/kin_heraldic_cavalry_0.png"),
+	preload("res://apps/godot/visuals/assets/kin_heraldic_cavalry_1.png"),
+	preload("res://apps/godot/visuals/assets/kin_heraldic_cavalry_2.png"),
+	preload("res://apps/godot/visuals/assets/kin_heraldic_cavalry_3.png"),
+]
 const UNDEAD_PAGES := [
 	preload("res://apps/godot/visuals/assets/undead_heraldic_0.png"),
 	preload("res://apps/godot/visuals/assets/undead_heraldic_1.png"),
@@ -91,6 +105,7 @@ const CAVALRY = preload("res://apps/godot/visuals/dominion_heraldic_cavalry_geom
 const NORD = preload("res://apps/godot/visuals/nord_heraldic_geometry.gd").DATA
 const EMP = preload("res://apps/godot/visuals/emp_heraldic_geometry.gd").DATA
 const KHAN = preload("res://apps/godot/visuals/khan_heraldic_geometry.gd").DATA
+const KIN = preload("res://apps/godot/visuals/kin_heraldic_geometry.gd").DATA
 const UNDEAD = preload("res://apps/godot/visuals/undead_heraldic_geometry.gd").DATA
 ## Dominion foot figures predate the stored grips; newer factions record theirs in the geometry.
 const GRIPS := {"axe": Vector2(115, 116), "halberd": Vector2(118, 116), "xbow": Vector2(96, 128)}
@@ -112,6 +127,9 @@ const FACTIONS := {
 	# Khanate teal; gold, fur and felt keep their colours.
 	"khan": {"foot": KHAN_IDS, "cavalry": KHAN_CAVALRY_IDS, "pages": KHAN_PAGES, "cavalry_pages": KHAN_CAVALRY_PAGES,
 		"hue": [0.42, 0.53], "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true},
+	# Gallian royal purple; cream, gilding and steel keep their colours.
+	"kin": {"foot": KIN_IDS, "cavalry": KIN_CAVALRY_IDS, "pages": KIN_PAGES, "cavalry_pages": KIN_CAVALRY_PAGES,
+		"hue": [0.68, 0.84], "min_value": 0.2, "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true},
 	# Undead moss-green rags; bone, rust and the walking dead's grey-green skin keep their colours.
 	"undead": {"foot": UNDEAD_IDS, "cavalry": UNDEAD_CAVALRY_IDS, "pages": UNDEAD_PAGES, "cavalry_pages": UNDEAD_CAVALRY_PAGES,
 		"hue": [0.17, 0.30], "min_value": 0.2, "trim": false, "skip_rows": [1, 4, 5], "neck_line": 0, "mount_row": true},
@@ -141,6 +159,7 @@ static func geometry(troop: String) -> Dictionary:
 		"nord": return NORD.get(troop, {})
 		"emp": return EMP.get(troop, {})
 		"khan": return KHAN.get(troop, {})
+		"kin": return KIN.get(troop, {})
 		"undead": return UNDEAD.get(troop, {})
 	return {}
 

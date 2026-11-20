@@ -125,3 +125,9 @@ OpenAI права на результат принадлежат пользов�
 Генератор картинок OpenAI (ChatGPT) по `godot/tools/map/settlement_source/prompts.md`: `towns.png`, `castles.png`,
 `villages.png`. Сборка: `node godot/tools/map/render_heraldic_settlements.cjs`.
 
+### Королевство Галлия (f1 Ополченец, f2 Сержант, f3 Латник, f2s Копейщик, f3s Протазанщик, f2a Лучник, f3a Йомен, f2c Конный сержант, f3c Рыцарь)
+
+`apps/godot/visuals/assets/kin_heraldic_0.png` … `_3.png` (7 пеших) и `kin_heraldic_cavalry_0.png` … `_3.png` (2 всадника
+на общих конях). Части — генератор картинок OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/kin-prompts.md`:
+`kin-torsos.png`, `kin-heads.png`, `kin-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs kin`.
+
