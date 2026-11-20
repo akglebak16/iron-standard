@@ -98,9 +98,9 @@ FACTIONS.emi={
   {id:'m3',weapon:'sabre',shield:'round',steel:true},
   {id:'m2s',weapon:'spear',shield:'small',steel:false},
   {id:'m2a',weapon:'bow',shield:false,steel:false},
-  {id:'m2c',weapon:'sabre',shield:'small',steel:false,horse:'dun'},
-  {id:'m3h',weapon:'bow',shield:false,steel:true,horse:'dun'},
-  {id:'m3c',weapon:'lance',shield:'small',steel:true,horse:'black'},
+  {id:'m2c',weapon:'sabre',shield:'small',steel:false,horse:'dun',riderDy:7},
+  {id:'m3h',weapon:'bow',shield:false,steel:true,horse:'dun',riderDy:4},
+  {id:'m3c',weapon:'lance',shield:'small',steel:true,horse:'black',riderDy:6},
  ],
 };
 FACTIONS.pact={
@@ -122,7 +122,7 @@ FACTIONS.bandit={
   {id:'b2',weapon:'axe',shield:'round',steel:false},
   {id:'b1a',weapon:'bow',shield:false,steel:false},
   {id:'b3',weapon:'mace',shield:'round',steel:true},
-  {id:'b2c',weapon:'sword',shield:false,steel:false,horse:'bay'},
+  {id:'b2c',weapon:'sword',shield:false,steel:false,horse:'bay',riderDy:8},
  ],
 };
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];

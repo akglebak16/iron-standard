@@ -95,54 +95,54 @@ const DATA = {
 	"m2c": {
 		"center": [
 			80,
-			75
+			82
 		],
 		"neck": [
 			80,
-			101
+			108
 		],
 		"canonical_facing": 1,
 		"shield_center": [
 			50,
-			149
+			156
 		],
 		"grip": [
 			129,
-			139
+			146
 		]
 	},
 	"m3h": {
 		"center": [
 			80,
-			75
+			79
 		],
 		"neck": [
 			80,
-			101
+			105
 		],
 		"canonical_facing": 1,
 		"grip": [
 			136,
-			139
+			143
 		]
 	},
 	"m3c": {
 		"center": [
 			80,
-			75
+			81
 		],
 		"neck": [
 			80,
-			101
+			107
 		],
 		"canonical_facing": 1,
 		"shield_center": [
 			50,
-			149
+			155
 		],
 		"grip": [
 			129,
-			139
+			145
 		]
 	}
 }
