@@ -5089,6 +5089,11 @@
       "source": "apps/godot/visuals/emi_heraldic_geometry.gd",
       "destination": "apps/godot/visuals/emi_heraldic_geometry.gd",
       "introduced_revision": "local-heraldic-factions"
+    },
+    {
+      "source": "apps/godot/visuals/pact_heraldic_geometry.gd",
+      "destination": "apps/godot/visuals/pact_heraldic_geometry.gd",
+      "introduced_revision": "local-heraldic-factions"
     }
   ]
 }

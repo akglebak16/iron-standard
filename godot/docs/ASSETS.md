@@ -137,3 +137,9 @@ OpenAI права на результат принадлежат пользов�
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/emi-prompts.md`: `emi-torsos.png`, `emi-heads.png`,
 `emi-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emi`.
 
+### Варшавско-Познаньский пакт (p1 Ополченец, p2 Пехотинец, p3 Кнехт, p2s Пикинёр, p3s Ландскнехт, p2a Лучник, p3a Стрелок, p2c Панцирный всадник, p3c Гусар)
+
+`apps/godot/visuals/assets/pact_heraldic_0.png` … `_3.png` (7 пеших) и `pact_heraldic_cavalry_0.png` … `_3.png` (2 всадника).
+Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/pact-prompts.md`: `pact-torsos.png`, `pact-heads.png`,
+`pact-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs pact`.
+

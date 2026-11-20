@@ -14,6 +14,8 @@ const KIN_IDS := ["f1", "f2", "f3", "f2s", "f3s", "f2a", "f3a"]
 const KIN_CAVALRY_IDS := ["f2c", "f3c"]
 const EMI_IDS := ["m1", "m2", "m3", "m2s", "m2a"]
 const EMI_CAVALRY_IDS := ["m2c", "m3h", "m3c"]
+const PACT_IDS := ["p1", "p2", "p3", "p2s", "p3s", "p2a", "p3a"]
+const PACT_CAVALRY_IDS := ["p2c", "p3c"]
 const UNDEAD_IDS := ["z1", "s1", "s1a", "s2", "s3"]
 const UNDEAD_CAVALRY_IDS := ["s2c"]
 const PARTS := ["body", "weapon", "portrait", "headless", "head", "flash", "corpse", "corpse_headless"]
@@ -95,6 +97,18 @@ const EMI_CAVALRY_PAGES := [
 	preload("res://apps/godot/visuals/assets/emi_heraldic_cavalry_2.png"),
 	preload("res://apps/godot/visuals/assets/emi_heraldic_cavalry_3.png"),
 ]
+const PACT_PAGES := [
+	preload("res://apps/godot/visuals/assets/pact_heraldic_0.png"),
+	preload("res://apps/godot/visuals/assets/pact_heraldic_1.png"),
+	preload("res://apps/godot/visuals/assets/pact_heraldic_2.png"),
+	preload("res://apps/godot/visuals/assets/pact_heraldic_3.png"),
+]
+const PACT_CAVALRY_PAGES := [
+	preload("res://apps/godot/visuals/assets/pact_heraldic_cavalry_0.png"),
+	preload("res://apps/godot/visuals/assets/pact_heraldic_cavalry_1.png"),
+	preload("res://apps/godot/visuals/assets/pact_heraldic_cavalry_2.png"),
+	preload("res://apps/godot/visuals/assets/pact_heraldic_cavalry_3.png"),
+]
 const UNDEAD_PAGES := [
 	preload("res://apps/godot/visuals/assets/undead_heraldic_0.png"),
 	preload("res://apps/godot/visuals/assets/undead_heraldic_1.png"),
@@ -121,6 +135,7 @@ const EMP = preload("res://apps/godot/visuals/emp_heraldic_geometry.gd").DATA
 const KHAN = preload("res://apps/godot/visuals/khan_heraldic_geometry.gd").DATA
 const KIN = preload("res://apps/godot/visuals/kin_heraldic_geometry.gd").DATA
 const EMI = preload("res://apps/godot/visuals/emi_heraldic_geometry.gd").DATA
+const PACT = preload("res://apps/godot/visuals/pact_heraldic_geometry.gd").DATA
 const UNDEAD = preload("res://apps/godot/visuals/undead_heraldic_geometry.gd").DATA
 ## Dominion foot figures predate the stored grips; newer factions record theirs in the geometry.
 const GRIPS := {"axe": Vector2(115, 116), "halberd": Vector2(118, 116), "xbow": Vector2(96, 128)}
@@ -148,6 +163,9 @@ const FACTIONS := {
 	# Emirate burnt orange: skin shares its hue, so only strongly saturated pixels are cloth.
 	"emi": {"foot": EMI_IDS, "cavalry": EMI_CAVALRY_IDS, "pages": EMI_PAGES, "cavalry_pages": EMI_CAVALRY_PAGES,
 		"hue": [0.02, 0.10], "min_saturation": 0.62, "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true, "spare_wound": true},
+	# Pact crimson (white eagles and fields keep their colour); blood shares the hue: "spare_wound".
+	"pact": {"foot": PACT_IDS, "cavalry": PACT_CAVALRY_IDS, "pages": PACT_PAGES, "cavalry_pages": PACT_CAVALRY_PAGES,
+		"hue": [0.95, 0.03], "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true, "spare_wound": true},
 	# Undead moss-green rags; bone, rust and the walking dead's grey-green skin keep their colours.
 	"undead": {"foot": UNDEAD_IDS, "cavalry": UNDEAD_CAVALRY_IDS, "pages": UNDEAD_PAGES, "cavalry_pages": UNDEAD_CAVALRY_PAGES,
 		"hue": [0.17, 0.30], "min_value": 0.2, "trim": false, "skip_rows": [1, 4, 5], "neck_line": 0, "mount_row": true},
@@ -179,6 +197,7 @@ static func geometry(troop: String) -> Dictionary:
 		"khan": return KHAN.get(troop, {})
 		"kin": return KIN.get(troop, {})
 		"emi": return EMI.get(troop, {})
+		"pact": return PACT.get(troop, {})
 		"undead": return UNDEAD.get(troop, {})
 	return {}
 
