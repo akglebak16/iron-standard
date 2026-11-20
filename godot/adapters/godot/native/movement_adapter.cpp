@@ -89,20 +89,24 @@ public:
     const int64_t groups_known =
         begin ? PackedFloat64Array(context.get("groups", PackedFloat64Array())).size() / 15
               : int64_t(kernel.groups.size());
-    // Validate indices before the engine-independent kernel dereferences them.
+    // Validate indices before the engine-independent kernel dereferences them. Raw pointers: operator[] of a
+    // godot-cpp packed array is a call into the engine per element, and this runs over every row on every
+    // return from the batch (#263).
+    const int64_t *ints = integers.ptr();
+    const Vector2 *position_values = positions.ptr(), *velocity_values = velocities.ptr();
     for (int row = 0; row < count; ++row) {
-      if (integers[I_UNIT_HANDLE * capacity + row] <= 0 ||
-          (integers[I_UNIT_HANDLE * capacity + row] & 0xffffffffLL) < 1 ||
-          (integers[I_UNIT_HANDLE * capacity + row] & 0xffffffffLL) > 131072 ||
-          integers[I_SIDE * capacity + row] < 0 ||
-          integers[I_SIDE * capacity + row] > 1 ||
-          integers[I_GROUP_KIND * capacity + row] < 0 ||
-          integers[I_GROUP_KIND * capacity + row] > 2 ||
+      if (ints[I_UNIT_HANDLE * capacity + row] <= 0 ||
+          (ints[I_UNIT_HANDLE * capacity + row] & 0xffffffffLL) < 1 ||
+          (ints[I_UNIT_HANDLE * capacity + row] & 0xffffffffLL) > 131072 ||
+          ints[I_SIDE * capacity + row] < 0 ||
+          ints[I_SIDE * capacity + row] > 1 ||
+          ints[I_GROUP_KIND * capacity + row] < 0 ||
+          ints[I_GROUP_KIND * capacity + row] > 2 ||
           // #243: the command is the side, or 2 for the player's allies on side 0.
-          (integers[I_COMMAND * capacity + row] != integers[I_SIDE * capacity + row] &&
-           !(integers[I_COMMAND * capacity + row] == 2 && integers[I_SIDE * capacity + row] == 0)) ||
-          integers[I_COMMAND * capacity + row] * 3 + 2 >= groups_known ||
-          !positions[row].is_finite() || !velocities[row].is_finite())
+          (ints[I_COMMAND * capacity + row] != ints[I_SIDE * capacity + row] &&
+           !(ints[I_COMMAND * capacity + row] == 2 && ints[I_SIDE * capacity + row] == 0)) ||
+          ints[I_COMMAND * capacity + row] * 3 + 2 >= groups_known ||
+          !position_values[row].is_finite() || !velocity_values[row].is_finite())
         return {};
     }
     if (begin) {
