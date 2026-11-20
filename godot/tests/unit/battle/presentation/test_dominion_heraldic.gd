@@ -69,13 +69,13 @@ func _initialize() -> void:
 		if Skins.FACTIONS[Skins.home_of(troop)].get("mount_row", false):
 			assert(Skins.sprite(troop, Skins.MOUNT_PART, 0) != null, "%s: the faction's own horse lies on" % troop)
 		assert(horse.get_used_rect().size.x > 200 and horse.get_pixel(80, 60).a == 0.0, "%s: the horse lies without its rider" % troop)
-	# Gallia's four pages are different men in different kit on differently coloured horses, and a
+	# Gallia's and the Emirate's four pages are different men in different kit on differently coloured horses, and a
 	# fallen horse keeps its rider's coat.
-	var faces := Skins.sprite("f1", "portrait", 0).get_image().get_data()
-	assert(faces != Skins.sprite("f1", "portrait", 1).get_image().get_data(), "f1: variant 1 is another man")
-	var bay := Skins.sprite("f2c", Skins.MOUNT_PART, 0).get_image().get_data()
-	var other := Skins.sprite("f2c", Skins.MOUNT_PART, 2).get_image().get_data()
-	assert(bay != other, "f2c: variant 2 rides another coat")
+	for pair in [["f1", "f2c"], ["m1", "m2c"]]:
+		var faces := Skins.sprite(pair[0], "portrait", 0).get_image().get_data()
+		assert(faces != Skins.sprite(pair[0], "portrait", 1).get_image().get_data(), "%s: variant 1 is another man" % pair[0])
+		var bay := Skins.sprite(pair[1], Skins.MOUNT_PART, 0).get_image().get_data()
+		assert(bay != Skins.sprite(pair[1], Skins.MOUNT_PART, 2).get_image().get_data(), "%s: variant 2 rides another coat" % pair[1])
 	var rider_look: Dictionary = Art.MANIFEST.troops["f2c|kin"].look.duplicate(true)
 	var rider_unit := {"id": 3, "look": rider_look, "faction": "kin", "hero": false, "companion": false, "mounted": true, "side": 0}
 	var expected := Skins.sprite("f2c", Skins.MOUNT_PART, 2).get_image()
