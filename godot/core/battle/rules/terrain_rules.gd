@@ -1,7 +1,8 @@
 extends RefCounted
 ## Rules of the battle terrain (TERRAIN.md 4.4, stage Р1а), read from the terrain grid in O(1) and without allocating.
 ## The fighter-level part (speed, charge, shooting range, sight) is mirrored bit for bit in movement_kernel.hpp
-## (terrain_speed, no_charge, range_scale, hidden); test_native_movement.gd compares them on a field with terrain.
+## (terrain_speed, no_charge, range_scale, hidden), and so is the AI's use of it in target choice (stage Р3: aim_weight
+## and the cell speed in "I will not catch him"); test_native_movement.gd compares them on a field with terrain.
 ## The blow-level part (higher ground, the bank of a ford, cover from arrows) runs only here, for both backends.
 ## Every function takes State.terrain_rules: null on an open, flat field, where no rule changes anything.
 const Config = preload("res://core/battle/config.gd")
@@ -64,6 +65,21 @@ static func hit_chance(grid: TerrainGrid, at: Vector2) -> float:
 		TerrainGrid.Cover.FOREST: return Config.TERRAIN_FOREST_HIT_CHANCE
 		TerrainGrid.Cover.BRUSH: return Config.TERRAIN_BRUSH_HIT_CHANCE
 	return 1.0
+
+## Stage Р3 (TERRAIN.md 7): a shooter's target weight with the terrain, only ever raised. A target in cover looks
+## farther by the inverse of the arrow's chance to reach it (forest, brush), and on a field with relief a target the
+## shooter does not stand higher than (TERRAIN_HIGHER_STEP) looks TERRAIN_HIGH_RANGE_MULTIPLIER farther: the same as a
+## lower target being nearer in the range units of the higher-ground rule. consider() in movement_kernel.hpp does the same.
+static func aim_weight(grid: TerrainGrid, at: Vector2, target: Vector2, weighted: float) -> float:
+	var to := grid.index(target)
+	var cover: int = grid.cover[to]
+	if cover == TerrainGrid.Cover.FOREST:
+		weighted /= Config.TERRAIN_FOREST_HIT_CHANCE
+	elif cover == TerrainGrid.Cover.BRUSH:
+		weighted /= Config.TERRAIN_BRUSH_HIT_CHANCE
+	if grid.relief and grid.elevation[grid.index(at)] - grid.elevation[to] < Config.TERRAIN_HIGHER_STEP:
+		weighted *= Config.TERRAIN_HIGH_RANGE_MULTIPLIER
+	return weighted
 
 static func _wading(cover: int) -> bool:
 	return cover == TerrainGrid.Cover.FORD or cover == TerrainGrid.Cover.WATER

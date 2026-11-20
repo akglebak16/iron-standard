@@ -1,0 +1,3840 @@
+{
+ "issue": 261,
+ "umbrella": 250,
+ "command": "node godot/tools/benchmark.cjs dist/godot/migration-release/IronStandard.exe --n=1000|200 --scenario=… [--terrain=edge] --ticks=3600 --warmup=120 --seed=4242 --profile-phases --repeat=5|3 --execution-context=host",
+ "note": "baseline: main de53b56 code (dirty only by *.import line endings). diagnostic: same code + temporary profiler marks (not committed); n_* rows are counts per tick (mean_ms reads as count), sub-phases are subsets of their phase and averaged only over ticks where they occur. diagnostic_raw_pointer_validation: diagnostic + movement_adapter.cpp row validation through ptr() instead of operator[] (experiment for part 2).",
+ "baseline": {
+  "cavalry": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d",
+    "source_sha256": "462121edae84fb67293a5c31c9cb090bf83e9a6ab2913e54f7d5dc02ab8566bc",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:21:38.216Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    2713,
+    2713,
+    2713,
+    2713,
+    2713
+   ],
+   "live": [
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    2.96452414301511,
+    2.94177073350534,
+    2.94301511242167,
+    2.95972392185772,
+    2.91380022115739
+   ],
+   "tick_p95_ms": [
+    6.133,
+    6.078,
+    6.018,
+    6.115,
+    5.969
+   ],
+   "tick_p99_ms": [
+    7.671,
+    7.651,
+    7.411,
+    7.583,
+    7.219
+   ],
+   "snapshot_p95_ms": [
+    1.18,
+    1.149,
+    1.111,
+    1.148,
+    1.113
+   ],
+   "events": {
+    "0": 15600,
+    "1": 3615,
+    "2": 8088,
+    "3": 1676,
+    "12": 1,
+    "18": 218,
+    "19": 137,
+    "25": 1
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 1.8774,
+     "median_p95_ms": 3.691,
+     "median_p99_ms": 4.388,
+     "share_of_mean_tick": 0.6379,
+     "repeat_means_ms": [
+      1.897,
+      1.8773,
+      1.8774,
+      1.896,
+      1.8618
+     ],
+     "repeat_p95_ms": [
+      3.739,
+      3.691,
+      3.636,
+      3.709,
+      3.642
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.5291,
+     "median_p95_ms": 1.266,
+     "median_p99_ms": 1.346,
+     "share_of_mean_tick": 0.1798,
+     "repeat_means_ms": [
+      0.5291,
+      0.5301,
+      0.5302,
+      0.5287,
+      0.5246
+     ],
+     "repeat_p95_ms": [
+      1.267,
+      1.287,
+      1.266,
+      1.264,
+      1.261
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.374,
+     "median_p95_ms": 1.272,
+     "median_p99_ms": 1.525,
+     "share_of_mean_tick": 0.1271,
+     "repeat_means_ms": [
+      0.3775,
+      0.3744,
+      0.373,
+      0.374,
+      0.37
+     ],
+     "repeat_p95_ms": [
+      1.307,
+      1.279,
+      1.272,
+      1.272,
+      1.245
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0744,
+     "median_p95_ms": 0.005,
+     "median_p99_ms": 2.804,
+     "share_of_mean_tick": 0.0253,
+     "repeat_means_ms": [
+      0.0737,
+      0.0744,
+      0.0757,
+      0.0749,
+      0.0732
+     ],
+     "repeat_p95_ms": [
+      0.006,
+      0.005,
+      0.005,
+      0.005,
+      0.004
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.06,
+     "median_p95_ms": 0.195,
+     "median_p99_ms": 0.225,
+     "share_of_mean_tick": 0.0204,
+     "repeat_means_ms": [
+      0.0607,
+      0.0597,
+      0.06,
+      0.0601,
+      0.059
+     ],
+     "repeat_p95_ms": [
+      0.197,
+      0.195,
+      0.195,
+      0.198,
+      0.194
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0105,
+     "median_p95_ms": 0.014,
+     "median_p99_ms": 0.019,
+     "share_of_mean_tick": 0.0036,
+     "repeat_means_ms": [
+      0.0107,
+      0.0105,
+      0.0109,
+      0.0104,
+      0.0101
+     ],
+     "repeat_p95_ms": [
+      0.015,
+      0.014,
+      0.014,
+      0.014,
+      0.012
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0077,
+     "median_p95_ms": 0.011,
+     "median_p99_ms": 0.013,
+     "share_of_mean_tick": 0.0026,
+     "repeat_means_ms": [
+      0.0079,
+      0.0076,
+      0.0078,
+      0.0077,
+      0.0075
+     ],
+     "repeat_p95_ms": [
+      0.011,
+      0.011,
+      0.011,
+      0.011,
+      0.01
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.0045,
+     "median_p95_ms": 0.006,
+     "median_p99_ms": 0.008,
+     "share_of_mean_tick": 0.0015,
+     "repeat_means_ms": [
+      0.0046,
+      0.0045,
+      0.0045,
+      0.0045,
+      0.0044
+     ],
+     "repeat_p95_ms": [
+      0.006,
+      0.006,
+      0.006,
+      0.006,
+      0.005
+     ]
+    }
+   ]
+  },
+  "edge": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d",
+    "source_sha256": "462121edae84fb67293a5c31c9cb090bf83e9a6ab2913e54f7d5dc02ab8566bc",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:24:39.768Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    3600,
+    3600,
+    3600,
+    3600,
+    3600
+   ],
+   "live": [
+    [
+     827,
+     2001
+    ],
+    [
+     827,
+     2001
+    ],
+    [
+     827,
+     2001
+    ],
+    [
+     827,
+     2001
+    ],
+    [
+     827,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    2.41577527777778,
+    2.392045,
+    2.4323075,
+    2.40985777777778,
+    2.40703194444444
+   ],
+   "tick_p95_ms": [
+    4.334,
+    4.216,
+    4.369,
+    4.255,
+    4.296
+   ],
+   "tick_p99_ms": [
+    8.049,
+    7.997,
+    8.094,
+    7.984,
+    8.046
+   ],
+   "snapshot_p95_ms": [
+    1.361,
+    1.301,
+    1.378,
+    1.313,
+    1.333
+   ],
+   "events": {
+    "0": 7423,
+    "1": 3179,
+    "2": 448,
+    "3": 1174,
+    "5": 9244,
+    "9": 3,
+    "13": 3687,
+    "18": 97,
+    "19": 31,
+    "25": 7
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 1.2668,
+     "median_p95_ms": 2.146,
+     "median_p99_ms": 2.582,
+     "share_of_mean_tick": 0.5257,
+     "repeat_means_ms": [
+      1.2668,
+      1.2574,
+      1.2671,
+      1.2686,
+      1.2606
+     ],
+     "repeat_p95_ms": [
+      2.146,
+      2.121,
+      2.149,
+      2.146,
+      2.141
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.4755,
+     "median_p95_ms": 0.633,
+     "median_p99_ms": 0.712,
+     "share_of_mean_tick": 0.1973,
+     "repeat_means_ms": [
+      0.4768,
+      0.4737,
+      0.4789,
+      0.475,
+      0.4755
+     ],
+     "repeat_p95_ms": [
+      0.635,
+      0.628,
+      0.637,
+      0.627,
+      0.633
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.2584,
+     "median_p95_ms": 1.203,
+     "median_p99_ms": 1.379,
+     "share_of_mean_tick": 0.1072,
+     "repeat_means_ms": [
+      0.2588,
+      0.2536,
+      0.2653,
+      0.2562,
+      0.2584
+     ],
+     "repeat_p95_ms": [
+      1.215,
+      1.185,
+      1.254,
+      1.194,
+      1.203
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.1612,
+     "median_p95_ms": 0.367,
+     "median_p99_ms": 0.512,
+     "share_of_mean_tick": 0.0669,
+     "repeat_means_ms": [
+      0.1613,
+      0.1575,
+      0.1644,
+      0.1606,
+      0.1612
+     ],
+     "repeat_p95_ms": [
+      0.368,
+      0.36,
+      0.378,
+      0.367,
+      0.367
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.1344,
+     "median_p95_ms": 0.366,
+     "median_p99_ms": 0.629,
+     "share_of_mean_tick": 0.0558,
+     "repeat_means_ms": [
+      0.1348,
+      0.1335,
+      0.1377,
+      0.1339,
+      0.1344
+     ],
+     "repeat_p95_ms": [
+      0.372,
+      0.366,
+      0.375,
+      0.366,
+      0.366
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.093,
+     "median_p95_ms": 0.005,
+     "median_p99_ms": 5.341,
+     "share_of_mean_tick": 0.0386,
+     "repeat_means_ms": [
+      0.0931,
+      0.093,
+      0.0944,
+      0.0919,
+      0.093
+     ],
+     "repeat_p95_ms": [
+      0.005,
+      0.004,
+      0.005,
+      0.004,
+      0.005
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0116,
+     "median_p95_ms": 0.014,
+     "median_p99_ms": 0.02,
+     "share_of_mean_tick": 0.0048,
+     "repeat_means_ms": [
+      0.0117,
+      0.0113,
+      0.0121,
+      0.0114,
+      0.0116
+     ],
+     "repeat_p95_ms": [
+      0.014,
+      0.013,
+      0.016,
+      0.013,
+      0.014
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.009,
+     "median_p95_ms": 0.011,
+     "median_p99_ms": 0.014,
+     "share_of_mean_tick": 0.0037,
+     "repeat_means_ms": [
+      0.0091,
+      0.0089,
+      0.0091,
+      0.0089,
+      0.009
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.011,
+      0.011,
+      0.011,
+      0.011
+     ]
+    }
+   ]
+  },
+  "mixed": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d",
+    "source_sha256": "462121edae84fb67293a5c31c9cb090bf83e9a6ab2913e54f7d5dc02ab8566bc",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:22:50.965Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    3600,
+    3600,
+    3600,
+    3600,
+    3600
+   ],
+   "live": [
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    2.23830555555556,
+    2.25250388888889,
+    2.28232805555556,
+    2.25857722222222,
+    2.27628805555556
+   ],
+   "tick_p95_ms": [
+    4.258,
+    4.268,
+    4.291,
+    4.294,
+    4.324
+   ],
+   "tick_p99_ms": [
+    7.677,
+    7.767,
+    7.958,
+    7.783,
+    7.793
+   ],
+   "snapshot_p95_ms": [
+    1.304,
+    1.307,
+    1.304,
+    1.305,
+    1.317
+   ],
+   "events": {
+    "0": 6714,
+    "1": 2572,
+    "2": 752,
+    "3": 1052,
+    "5": 8021,
+    "9": 2,
+    "13": 3351,
+    "18": 404,
+    "19": 467,
+    "25": 9
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 1.1522,
+     "median_p95_ms": 2.144,
+     "median_p99_ms": 2.684,
+     "share_of_mean_tick": 0.5101,
+     "repeat_means_ms": [
+      1.1413,
+      1.1485,
+      1.1571,
+      1.1522,
+      1.1657
+     ],
+     "repeat_p95_ms": [
+      2.139,
+      2.138,
+      2.144,
+      2.153,
+      2.193
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.4754,
+     "median_p95_ms": 0.628,
+     "median_p99_ms": 0.68,
+     "share_of_mean_tick": 0.2105,
+     "repeat_means_ms": [
+      0.4726,
+      0.4754,
+      0.478,
+      0.4744,
+      0.4755
+     ],
+     "repeat_p95_ms": [
+      0.624,
+      0.629,
+      0.629,
+      0.627,
+      0.628
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.2457,
+     "median_p95_ms": 1.192,
+     "median_p99_ms": 1.374,
+     "share_of_mean_tick": 0.1088,
+     "repeat_means_ms": [
+      0.2418,
+      0.2433,
+      0.2513,
+      0.2457,
+      0.2466
+     ],
+     "repeat_p95_ms": [
+      1.18,
+      1.188,
+      1.204,
+      1.192,
+      1.193
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.1376,
+     "median_p95_ms": 0.35,
+     "median_p99_ms": 0.513,
+     "share_of_mean_tick": 0.0609,
+     "repeat_means_ms": [
+      0.1356,
+      0.1368,
+      0.141,
+      0.1376,
+      0.1383
+     ],
+     "repeat_p95_ms": [
+      0.344,
+      0.35,
+      0.363,
+      0.35,
+      0.357
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.129,
+     "median_p95_ms": 0.366,
+     "median_p99_ms": 0.627,
+     "share_of_mean_tick": 0.0571,
+     "repeat_means_ms": [
+      0.1278,
+      0.1283,
+      0.1315,
+      0.129,
+      0.1301
+     ],
+     "repeat_p95_ms": [
+      0.364,
+      0.366,
+      0.371,
+      0.366,
+      0.367
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0966,
+     "median_p95_ms": 0.004,
+     "median_p99_ms": 5.431,
+     "share_of_mean_tick": 0.0428,
+     "repeat_means_ms": [
+      0.0962,
+      0.0968,
+      0.0991,
+      0.0965,
+      0.0966
+     ],
+     "repeat_p95_ms": [
+      0.004,
+      0.004,
+      0.005,
+      0.004,
+      0.004
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0113,
+     "median_p95_ms": 0.013,
+     "median_p99_ms": 0.018,
+     "share_of_mean_tick": 0.005,
+     "repeat_means_ms": [
+      0.0112,
+      0.0112,
+      0.0119,
+      0.0113,
+      0.0113
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.013,
+      0.016,
+      0.013,
+      0.013
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0088,
+     "median_p95_ms": 0.011,
+     "median_p99_ms": 0.013,
+     "share_of_mean_tick": 0.0039,
+     "repeat_means_ms": [
+      0.0087,
+      0.0088,
+      0.009,
+      0.0088,
+      0.0088
+     ],
+     "repeat_p95_ms": [
+      0.01,
+      0.011,
+      0.011,
+      0.011,
+      0.011
+     ]
+    }
+   ]
+  },
+  "mixed200": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d",
+    "source_sha256": "462121edae84fb67293a5c31c9cb090bf83e9a6ab2913e54f7d5dc02ab8566bc",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:25:02.318Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    3433,
+    3433,
+    3433,
+    3433,
+    3433
+   ],
+   "live": [
+    [
+     82,
+     401
+    ],
+    [
+     82,
+     401
+    ],
+    [
+     82,
+     401
+    ],
+    [
+     82,
+     401
+    ],
+    [
+     82,
+     401
+    ]
+   ],
+   "tick_mean_ms": [
+    0.347060879697058,
+    0.344729973783863,
+    0.356399941741917,
+    0.380982522575007,
+    0.344965627730848
+   ],
+   "tick_p95_ms": [
+    0.74,
+    0.737,
+    0.768,
+    0.816,
+    0.736
+   ],
+   "tick_p99_ms": [
+    1.136,
+    1.131,
+    1.324,
+    1.427,
+    1.155
+   ],
+   "snapshot_p95_ms": [
+    0.285,
+    0.284,
+    0.3,
+    0.35,
+    0.282
+   ],
+   "events": {
+    "0": 1858,
+    "1": 626,
+    "2": 167,
+    "3": 318,
+    "5": 1846,
+    "9": 1,
+    "12": 1,
+    "13": 850,
+    "18": 21,
+    "19": 40,
+    "25": 3
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 0.1529,
+     "median_p95_ms": 0.319,
+     "median_p99_ms": 0.422,
+     "share_of_mean_tick": 0.4405,
+     "repeat_means_ms": [
+      0.1529,
+      0.1508,
+      0.1556,
+      0.1654,
+      0.1506
+     ],
+     "repeat_p95_ms": [
+      0.319,
+      0.313,
+      0.332,
+      0.341,
+      0.311
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.0604,
+     "median_p95_ms": 0.109,
+     "median_p99_ms": 0.122,
+     "share_of_mean_tick": 0.1741,
+     "repeat_means_ms": [
+      0.0603,
+      0.0604,
+      0.0619,
+      0.0657,
+      0.0603
+     ],
+     "repeat_p95_ms": [
+      0.109,
+      0.108,
+      0.11,
+      0.115,
+      0.108
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.0537,
+     "median_p95_ms": 0.212,
+     "median_p99_ms": 0.323,
+     "share_of_mean_tick": 0.1548,
+     "repeat_means_ms": [
+      0.0537,
+      0.0535,
+      0.0556,
+      0.0598,
+      0.0534
+     ],
+     "repeat_p95_ms": [
+      0.212,
+      0.208,
+      0.214,
+      0.223,
+      0.203
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.0295,
+     "median_p95_ms": 0.083,
+     "median_p99_ms": 0.145,
+     "share_of_mean_tick": 0.0851,
+     "repeat_means_ms": [
+      0.0295,
+      0.0295,
+      0.0305,
+      0.0334,
+      0.0292
+     ],
+     "repeat_p95_ms": [
+      0.083,
+      0.082,
+      0.086,
+      0.1,
+      0.082
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0185,
+     "median_p95_ms": 0.003,
+     "median_p99_ms": 0.649,
+     "share_of_mean_tick": 0.0534,
+     "repeat_means_ms": [
+      0.018,
+      0.0179,
+      0.0187,
+      0.0198,
+      0.0185
+     ],
+     "repeat_p95_ms": [
+      0.003,
+      0.003,
+      0.004,
+      0.006,
+      0.003
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.0168,
+     "median_p95_ms": 0.168,
+     "median_p99_ms": 0.261,
+     "share_of_mean_tick": 0.0484,
+     "repeat_means_ms": [
+      0.0168,
+      0.0165,
+      0.0176,
+      0.0188,
+      0.0167
+     ],
+     "repeat_p95_ms": [
+      0.167,
+      0.166,
+      0.17,
+      0.193,
+      0.168
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0094,
+     "median_p95_ms": 0.011,
+     "median_p99_ms": 0.014,
+     "share_of_mean_tick": 0.0272,
+     "repeat_means_ms": [
+      0.0093,
+      0.0094,
+      0.0097,
+      0.0105,
+      0.0094
+     ],
+     "repeat_p95_ms": [
+      0.011,
+      0.011,
+      0.012,
+      0.018,
+      0.011
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0041,
+     "median_p95_ms": 0.005,
+     "median_p99_ms": 0.006,
+     "share_of_mean_tick": 0.0118,
+     "repeat_means_ms": [
+      0.004,
+      0.0041,
+      0.0042,
+      0.0047,
+      0.0041
+     ],
+     "repeat_p95_ms": [
+      0.005,
+      0.005,
+      0.005,
+      0.008,
+      0.005
+     ]
+    }
+   ]
+  },
+  "volley": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d",
+    "source_sha256": "462121edae84fb67293a5c31c9cb090bf83e9a6ab2913e54f7d5dc02ab8566bc",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:23:22.908Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    973,
+    973,
+    973,
+    973,
+    973
+   ],
+   "live": [
+    [
+     1343,
+     1889
+    ],
+    [
+     1343,
+     1889
+    ],
+    [
+     1343,
+     1889
+    ],
+    [
+     1343,
+     1889
+    ],
+    [
+     1343,
+     1889
+    ]
+   ],
+   "tick_mean_ms": [
+    2.17777595066804,
+    2.23788283658787,
+    2.17140596094553,
+    2.16670298047276,
+    2.24546145940391
+   ],
+   "tick_p95_ms": [
+    4.784,
+    4.784,
+    4.701,
+    4.726,
+    4.95
+   ],
+   "tick_p99_ms": [
+    9.976,
+    10.498,
+    9.562,
+    9.85,
+    9.751
+   ],
+   "snapshot_p95_ms": [
+    1.776,
+    1.618,
+    1.6,
+    1.608,
+    1.762
+   ],
+   "events": {
+    "0": 2483,
+    "3": 553,
+    "5": 2819,
+    "12": 1,
+    "13": 692,
+    "18": 1673,
+    "19": 1510,
+    "25": 313
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 0.8382,
+     "median_p95_ms": 1.897,
+     "median_p99_ms": 2.312,
+     "share_of_mean_tick": 0.3849,
+     "repeat_means_ms": [
+      0.8382,
+      0.8527,
+      0.8348,
+      0.8358,
+      0.8548
+     ],
+     "repeat_p95_ms": [
+      1.897,
+      1.903,
+      1.874,
+      1.889,
+      1.92
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.4742,
+     "median_p95_ms": 0.573,
+     "median_p99_ms": 0.634,
+     "share_of_mean_tick": 0.2177,
+     "repeat_means_ms": [
+      0.4738,
+      0.4824,
+      0.4734,
+      0.4742,
+      0.4792
+     ],
+     "repeat_p95_ms": [
+      0.561,
+      0.615,
+      0.573,
+      0.563,
+      0.574
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.3364,
+     "median_p95_ms": 1.254,
+     "median_p99_ms": 1.392,
+     "share_of_mean_tick": 0.1545,
+     "repeat_means_ms": [
+      0.3364,
+      0.35,
+      0.3352,
+      0.3341,
+      0.3631
+     ],
+     "repeat_p95_ms": [
+      1.254,
+      1.301,
+      1.254,
+      1.24,
+      1.342
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.3024,
+     "median_p95_ms": 1.07,
+     "median_p99_ms": 1.472,
+     "share_of_mean_tick": 0.1389,
+     "repeat_means_ms": [
+      0.3024,
+      0.3088,
+      0.3005,
+      0.2975,
+      0.3185
+     ],
+     "repeat_p95_ms": [
+      1.072,
+      1.062,
+      1.07,
+      1.066,
+      1.086
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.1558,
+     "median_p95_ms": 0.004,
+     "median_p99_ms": 8.611,
+     "share_of_mean_tick": 0.0715,
+     "repeat_means_ms": [
+      0.155,
+      0.1683,
+      0.1564,
+      0.1544,
+      0.1558
+     ],
+     "repeat_p95_ms": [
+      0.004,
+      0.006,
+      0.004,
+      0.004,
+      0.005
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.0484,
+     "median_p95_ms": 0.146,
+     "median_p99_ms": 0.243,
+     "share_of_mean_tick": 0.0222,
+     "repeat_means_ms": [
+      0.0484,
+      0.0503,
+      0.0477,
+      0.0474,
+      0.0491
+     ],
+     "repeat_p95_ms": [
+      0.14,
+      0.146,
+      0.133,
+      0.146,
+      0.149
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0115,
+     "median_p95_ms": 0.014,
+     "median_p99_ms": 0.019,
+     "share_of_mean_tick": 0.0053,
+     "repeat_means_ms": [
+      0.0115,
+      0.0123,
+      0.0113,
+      0.0113,
+      0.0122
+     ],
+     "repeat_p95_ms": [
+      0.014,
+      0.02,
+      0.014,
+      0.014,
+      0.018
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0088,
+     "median_p95_ms": 0.011,
+     "median_p99_ms": 0.014,
+     "share_of_mean_tick": 0.004,
+     "repeat_means_ms": [
+      0.0088,
+      0.0094,
+      0.0087,
+      0.0086,
+      0.0091
+     ],
+     "repeat_p95_ms": [
+      0.011,
+      0.013,
+      0.011,
+      0.01,
+      0.012
+     ]
+    }
+   ]
+  }
+ },
+ "diagnostic": {
+  "cavalry": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "94b9542cc044c8f8a0cdb80577131676e19a6bd20b1bd15cb6ec2c267d2f414f",
+    "source_sha256": "4984140f00c1e7e86890c5f5e03f5b10daad558e395cbfdaeb04b06a3a63893c",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:26:29.019Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    2713,
+    2713,
+    2713
+   ],
+   "live": [
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    3.05616697382971,
+    3.14563840766679,
+    3.088290084777
+   ],
+   "tick_p95_ms": [
+    6.181,
+    6.663,
+    6.276
+   ],
+   "tick_p99_ms": [
+    7.493,
+    9.752,
+    7.671
+   ],
+   "snapshot_p95_ms": [
+    1.124,
+    1.335,
+    1.13
+   ],
+   "events": {
+    "0": 15600,
+    "1": 3615,
+    "2": 8088,
+    "3": 1676,
+    "12": 1,
+    "18": 218,
+    "19": 137,
+    "25": 1
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "n_kernel_calls",
+     "median_mean_ms": 14.387,
+     "median_p95_ms": 25,
+     "median_p99_ms": 30,
+     "share_of_mean_tick": 4.6586,
+     "repeat_means_ms": [
+      14.387,
+      14.387,
+      14.387
+     ],
+     "repeat_p95_ms": [
+      25,
+      25,
+      25
+     ]
+    },
+    {
+     "phase": "n_hurt",
+     "median_mean_ms": 6.0116,
+     "median_p95_ms": 12,
+     "median_p99_ms": 15,
+     "share_of_mean_tick": 1.9466,
+     "repeat_means_ms": [
+      6.0116,
+      6.0116,
+      6.0116
+     ],
+     "repeat_p95_ms": [
+      12,
+      12,
+      12
+     ]
+    },
+    {
+     "phase": "mo_assess",
+     "median_mean_ms": 2.2211,
+     "median_p95_ms": 3.789,
+     "median_p99_ms": 3.87,
+     "share_of_mean_tick": 0.7192,
+     "repeat_means_ms": [
+      2.1868,
+      2.2211,
+      2.2307
+     ],
+     "repeat_p95_ms": [
+      3.685,
+      4.024,
+      3.789
+     ]
+    },
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 1.9897,
+     "median_p95_ms": 3.903,
+     "median_p99_ms": 4.539,
+     "share_of_mean_tick": 0.6443,
+     "repeat_means_ms": [
+      1.9762,
+      2.0132,
+      1.9897
+     ],
+     "repeat_p95_ms": [
+      3.825,
+      4.081,
+      3.903
+     ]
+    },
+    {
+     "phase": "x_kernel_calls",
+     "median_mean_ms": 1.6048,
+     "median_p95_ms": 3.196,
+     "median_p99_ms": 3.687,
+     "share_of_mean_tick": 0.5196,
+     "repeat_means_ms": [
+      1.5931,
+      1.6199,
+      1.6048
+     ],
+     "repeat_p95_ms": [
+      3.163,
+      3.327,
+      3.196
+     ]
+    },
+    {
+     "phase": "mo_rows",
+     "median_mean_ms": 1.2746,
+     "median_p95_ms": 2.141,
+     "median_p99_ms": 2.957,
+     "share_of_mean_tick": 0.4127,
+     "repeat_means_ms": [
+      1.2559,
+      1.3807,
+      1.2746
+     ],
+     "repeat_p95_ms": [
+      2.029,
+      2.995,
+      2.141
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.5355,
+     "median_p95_ms": 1.265,
+     "median_p99_ms": 1.343,
+     "share_of_mean_tick": 0.1734,
+     "repeat_means_ms": [
+      0.5312,
+      0.5411,
+      0.5355
+     ],
+     "repeat_p95_ms": [
+      1.263,
+      1.311,
+      1.265
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.3909,
+     "median_p95_ms": 1.284,
+     "median_p99_ms": 1.585,
+     "share_of_mean_tick": 0.1266,
+     "repeat_means_ms": [
+      0.38,
+      0.4134,
+      0.3909
+     ],
+     "repeat_p95_ms": [
+      1.242,
+      1.482,
+      1.284
+     ]
+    },
+    {
+     "phase": "c_filters",
+     "median_mean_ms": 0.34,
+     "median_p95_ms": 0.549,
+     "median_p99_ms": 0.843,
+     "share_of_mean_tick": 0.1101,
+     "repeat_means_ms": [
+      0.3308,
+      0.3686,
+      0.34
+     ],
+     "repeat_p95_ms": [
+      0.535,
+      0.779,
+      0.549
+     ]
+    },
+    {
+     "phase": "mo_panic_layout",
+     "median_mean_ms": 0.2912,
+     "median_p95_ms": 0.856,
+     "median_p99_ms": 1.281,
+     "share_of_mean_tick": 0.0943,
+     "repeat_means_ms": [
+      0.2892,
+      0.4235,
+      0.2912
+     ],
+     "repeat_p95_ms": [
+      0.856,
+      0.84,
+      0.861
+     ]
+    },
+    {
+     "phase": "c_copy_rows",
+     "median_mean_ms": 0.2755,
+     "median_p95_ms": 0.409,
+     "median_p99_ms": 0.469,
+     "share_of_mean_tick": 0.0892,
+     "repeat_means_ms": [
+      0.2737,
+      0.2756,
+      0.2755
+     ],
+     "repeat_p95_ms": [
+      0.409,
+      0.419,
+      0.408
+     ]
+    },
+    {
+     "phase": "c_loop",
+     "median_mean_ms": 0.2398,
+     "median_p95_ms": 0.441,
+     "median_p99_ms": 0.621,
+     "share_of_mean_tick": 0.0776,
+     "repeat_means_ms": [
+      0.227,
+      0.2607,
+      0.2398
+     ],
+     "repeat_p95_ms": [
+      0.406,
+      0.609,
+      0.441
+     ]
+    },
+    {
+     "phase": "x_cb_attack",
+     "median_mean_ms": 0.2148,
+     "median_p95_ms": 0.464,
+     "median_p99_ms": 0.626,
+     "share_of_mean_tick": 0.0696,
+     "repeat_means_ms": [
+      0.2136,
+      0.2165,
+      0.2148
+     ],
+     "repeat_p95_ms": [
+      0.453,
+      0.474,
+      0.464
+     ]
+    },
+    {
+     "phase": "x_cb_charge",
+     "median_mean_ms": 0.1817,
+     "median_p95_ms": 0.522,
+     "median_p99_ms": 0.742,
+     "share_of_mean_tick": 0.0588,
+     "repeat_means_ms": [
+      0.181,
+      0.19,
+      0.1817
+     ],
+     "repeat_p95_ms": [
+      0.522,
+      0.559,
+      0.521
+     ]
+    },
+    {
+     "phase": "x_hurt",
+     "median_mean_ms": 0.1627,
+     "median_p95_ms": 0.473,
+     "median_p99_ms": 0.695,
+     "share_of_mean_tick": 0.0527,
+     "repeat_means_ms": [
+      0.1621,
+      0.1673,
+      0.1627
+     ],
+     "repeat_p95_ms": [
+      0.467,
+      0.498,
+      0.473
+     ]
+    },
+    {
+     "phase": "x_call_min",
+     "median_mean_ms": 0.0733,
+     "median_p95_ms": 0.095,
+     "median_p99_ms": 0.116,
+     "share_of_mean_tick": 0.0237,
+     "repeat_means_ms": [
+      0.0732,
+      0.0733,
+      0.0735
+     ],
+     "repeat_p95_ms": [
+      0.095,
+      0.097,
+      0.095
+     ]
+    },
+    {
+     "phase": "m_morale",
+     "median_mean_ms": 0.0718,
+     "median_p95_ms": 0.003,
+     "median_p99_ms": 2.635,
+     "share_of_mean_tick": 0.0232,
+     "repeat_means_ms": [
+      0.0703,
+      0.0755,
+      0.0718
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.003,
+      0.003
+     ]
+    },
+    {
+     "phase": "t_doctrine",
+     "median_mean_ms": 0.0279,
+     "median_p95_ms": 0.168,
+     "median_p99_ms": 0.192,
+     "share_of_mean_tick": 0.009,
+     "repeat_means_ms": [
+      0.0279,
+      0.0283,
+      0.0279
+     ],
+     "repeat_p95_ms": [
+      0.168,
+      0.17,
+      0.168
+     ]
+    },
+    {
+     "phase": "t_brains",
+     "median_mean_ms": 0.0267,
+     "median_p95_ms": 0.059,
+     "median_p99_ms": 0.074,
+     "share_of_mean_tick": 0.0087,
+     "repeat_means_ms": [
+      0.026,
+      0.0269,
+      0.0267
+     ],
+     "repeat_p95_ms": [
+      0.057,
+      0.059,
+      0.059
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0112,
+     "median_p95_ms": 0.018,
+     "median_p99_ms": 0.028,
+     "share_of_mean_tick": 0.0036,
+     "repeat_means_ms": [
+      0.0107,
+      0.0115,
+      0.0112
+     ],
+     "repeat_p95_ms": [
+      0.015,
+      0.019,
+      0.018
+     ]
+    },
+    {
+     "phase": "t_follow_hero",
+     "median_mean_ms": 0.0101,
+     "median_p95_ms": 0.014,
+     "median_p99_ms": 0.019,
+     "share_of_mean_tick": 0.0033,
+     "repeat_means_ms": [
+      0.0098,
+      0.0101,
+      0.0101
+     ],
+     "repeat_p95_ms": [
+      0.014,
+      0.015,
+      0.014
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0083,
+     "median_p95_ms": 0.011,
+     "median_p99_ms": 0.015,
+     "share_of_mean_tick": 0.0027,
+     "repeat_means_ms": [
+      0.0081,
+      0.0083,
+      0.0083
+     ],
+     "repeat_p95_ms": [
+      0.011,
+      0.013,
+      0.011
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0064,
+     "median_p95_ms": 0.005,
+     "median_p99_ms": 0.098,
+     "share_of_mean_tick": 0.0021,
+     "repeat_means_ms": [
+      0.0064,
+      0.0068,
+      0.0064
+     ],
+     "repeat_p95_ms": [
+      0.004,
+      0.006,
+      0.005
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.0048,
+     "median_p95_ms": 0.008,
+     "median_p99_ms": 0.011,
+     "share_of_mean_tick": 0.0015,
+     "repeat_means_ms": [
+      0.0046,
+      0.0053,
+      0.0048
+     ],
+     "repeat_p95_ms": [
+      0.006,
+      0.008,
+      0.008
+     ]
+    },
+    {
+     "phase": "c_index_rebuild",
+     "median_mean_ms": 0.0013,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.003,
+     "share_of_mean_tick": 0.0004,
+     "repeat_means_ms": [
+      0.0013,
+      0.0013,
+      0.0013
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.0013,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.003,
+     "share_of_mean_tick": 0.0004,
+     "repeat_means_ms": [
+      0.0012,
+      0.0013,
+      0.0013
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    }
+   ]
+  },
+  "mixed": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "94b9542cc044c8f8a0cdb80577131676e19a6bd20b1bd15cb6ec2c267d2f414f",
+    "source_sha256": "4984140f00c1e7e86890c5f5e03f5b10daad558e395cbfdaeb04b06a3a63893c",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:27:14.256Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    3600,
+    3600,
+    3600
+   ],
+   "live": [
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    2.39001833333333,
+    2.330695,
+    2.28013305555556
+   ],
+   "tick_p95_ms": [
+    4.646,
+    4.397,
+    4.334
+   ],
+   "tick_p99_ms": [
+    8.214,
+    8.023,
+    7.815
+   ],
+   "snapshot_p95_ms": [
+    1.49,
+    1.663,
+    1.286
+   ],
+   "events": {
+    "0": 6714,
+    "1": 2572,
+    "2": 752,
+    "3": 1052,
+    "5": 8021,
+    "9": 2,
+    "13": 3351,
+    "18": 404,
+    "19": 467,
+    "25": 9
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "n_kernel_calls",
+     "median_mean_ms": 5.7011,
+     "median_p95_ms": 13,
+     "median_p99_ms": 18,
+     "share_of_mean_tick": 2.4461,
+     "repeat_means_ms": [
+      5.7011,
+      5.7011,
+      5.7011
+     ],
+     "repeat_p95_ms": [
+      13,
+      13,
+      13
+     ]
+    },
+    {
+     "phase": "mo_assess",
+     "median_mean_ms": 2.7564,
+     "median_p95_ms": 3.719,
+     "median_p99_ms": 3.786,
+     "share_of_mean_tick": 1.1826,
+     "repeat_means_ms": [
+      2.7654,
+      2.7564,
+      2.6119
+     ],
+     "repeat_p95_ms": [
+      3.719,
+      4.628,
+      3.632
+     ]
+    },
+    {
+     "phase": "n_hurt",
+     "median_mean_ms": 2.6802,
+     "median_p95_ms": 6,
+     "median_p99_ms": 8,
+     "share_of_mean_tick": 1.15,
+     "repeat_means_ms": [
+      2.6802,
+      2.6802,
+      2.6802
+     ],
+     "repeat_p95_ms": [
+      6,
+      6,
+      6
+     ]
+    },
+    {
+     "phase": "mo_rows",
+     "median_mean_ms": 1.9893,
+     "median_p95_ms": 2.533,
+     "median_p99_ms": 3.554,
+     "share_of_mean_tick": 0.8535,
+     "repeat_means_ms": [
+      2.0444,
+      1.9893,
+      1.9201
+     ],
+     "repeat_p95_ms": [
+      2.533,
+      2.974,
+      2.352
+     ]
+    },
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 1.1919,
+     "median_p95_ms": 2.226,
+     "median_p99_ms": 2.878,
+     "share_of_mean_tick": 0.5114,
+     "repeat_means_ms": [
+      1.2197,
+      1.1919,
+      1.168
+     ],
+     "repeat_p95_ms": [
+      2.318,
+      2.226,
+      2.192
+     ]
+    },
+    {
+     "phase": "x_kernel_calls",
+     "median_mean_ms": 1.0503,
+     "median_p95_ms": 1.907,
+     "median_p99_ms": 2.435,
+     "share_of_mean_tick": 0.4507,
+     "repeat_means_ms": [
+      1.0723,
+      1.0503,
+      1.0304
+     ],
+     "repeat_p95_ms": [
+      1.962,
+      1.907,
+      1.859
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.4873,
+     "median_p95_ms": 0.637,
+     "median_p99_ms": 0.748,
+     "share_of_mean_tick": 0.2091,
+     "repeat_means_ms": [
+      0.4873,
+      0.4879,
+      0.4759
+     ],
+     "repeat_p95_ms": [
+      0.637,
+      0.711,
+      0.627
+     ]
+    },
+    {
+     "phase": "c_filters",
+     "median_mean_ms": 0.4095,
+     "median_p95_ms": 0.544,
+     "median_p99_ms": 0.792,
+     "share_of_mean_tick": 0.1757,
+     "repeat_means_ms": [
+      0.4431,
+      0.4095,
+      0.4084
+     ],
+     "repeat_p95_ms": [
+      0.705,
+      0.544,
+      0.538
+     ]
+    },
+    {
+     "phase": "mo_panic_layout",
+     "median_mean_ms": 0.3594,
+     "median_p95_ms": 1.085,
+     "median_p99_ms": 1.224,
+     "share_of_mean_tick": 0.1542,
+     "repeat_means_ms": [
+      0.4041,
+      0.3594,
+      0.3584
+     ],
+     "repeat_p95_ms": [
+      1.365,
+      1.083,
+      1.085
+     ]
+    },
+    {
+     "phase": "c_copy_rows",
+     "median_mean_ms": 0.3297,
+     "median_p95_ms": 0.419,
+     "median_p99_ms": 0.494,
+     "share_of_mean_tick": 0.1415,
+     "repeat_means_ms": [
+      0.3365,
+      0.3297,
+      0.3269
+     ],
+     "repeat_p95_ms": [
+      0.422,
+      0.419,
+      0.411
+     ]
+    },
+    {
+     "phase": "c_loop",
+     "median_mean_ms": 0.2637,
+     "median_p95_ms": 0.399,
+     "median_p99_ms": 0.519,
+     "share_of_mean_tick": 0.1131,
+     "repeat_means_ms": [
+      0.295,
+      0.2598,
+      0.2637
+     ],
+     "repeat_p95_ms": [
+      0.512,
+      0.399,
+      0.387
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.2436,
+     "median_p95_ms": 1.176,
+     "median_p99_ms": 1.372,
+     "share_of_mean_tick": 0.1045,
+     "repeat_means_ms": [
+      0.2619,
+      0.2435,
+      0.2436
+     ],
+     "repeat_p95_ms": [
+      1.27,
+      1.166,
+      1.176
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.141,
+     "median_p95_ms": 0.359,
+     "median_p99_ms": 0.517,
+     "share_of_mean_tick": 0.0605,
+     "repeat_means_ms": [
+      0.151,
+      0.141,
+      0.1392
+     ],
+     "repeat_p95_ms": [
+      0.4,
+      0.359,
+      0.356
+     ]
+    },
+    {
+     "phase": "x_cb_attack",
+     "median_mean_ms": 0.1392,
+     "median_p95_ms": 0.36,
+     "median_p99_ms": 0.536,
+     "share_of_mean_tick": 0.0597,
+     "repeat_means_ms": [
+      0.1461,
+      0.1392,
+      0.1366
+     ],
+     "repeat_p95_ms": [
+      0.386,
+      0.356,
+      0.36
+     ]
+    },
+    {
+     "phase": "m_morale",
+     "median_mean_ms": 0.0964,
+     "median_p95_ms": 0.003,
+     "median_p99_ms": 5.329,
+     "share_of_mean_tick": 0.0414,
+     "repeat_means_ms": [
+      0.0983,
+      0.0964,
+      0.0923
+     ],
+     "repeat_p95_ms": [
+      0.003,
+      0.003,
+      0.002
+     ]
+    },
+    {
+     "phase": "x_hurt",
+     "median_mean_ms": 0.0918,
+     "median_p95_ms": 0.302,
+     "median_p99_ms": 0.479,
+     "share_of_mean_tick": 0.0394,
+     "repeat_means_ms": [
+      0.0994,
+      0.0918,
+      0.0917
+     ],
+     "repeat_p95_ms": [
+      0.332,
+      0.299,
+      0.302
+     ]
+    },
+    {
+     "phase": "x_call_min",
+     "median_mean_ms": 0.0899,
+     "median_p95_ms": 0.264,
+     "median_p99_ms": 0.396,
+     "share_of_mean_tick": 0.0386,
+     "repeat_means_ms": [
+      0.0914,
+      0.0899,
+      0.0885
+     ],
+     "repeat_p95_ms": [
+      0.272,
+      0.264,
+      0.263
+     ]
+    },
+    {
+     "phase": "x_cb_charge",
+     "median_mean_ms": 0.0659,
+     "median_p95_ms": 0.2,
+     "median_p99_ms": 0.323,
+     "share_of_mean_tick": 0.0283,
+     "repeat_means_ms": [
+      0.0659,
+      0.0659,
+      0.0604
+     ],
+     "repeat_p95_ms": [
+      0.207,
+      0.2,
+      0.191
+     ]
+    },
+    {
+     "phase": "t_doctrine",
+     "median_mean_ms": 0.0595,
+     "median_p95_ms": 0.324,
+     "median_p99_ms": 0.386,
+     "share_of_mean_tick": 0.0255,
+     "repeat_means_ms": [
+      0.0598,
+      0.0595,
+      0.0568
+     ],
+     "repeat_p95_ms": [
+      0.332,
+      0.318,
+      0.324
+     ]
+    },
+    {
+     "phase": "t_brains",
+     "median_mean_ms": 0.0467,
+     "median_p95_ms": 0.212,
+     "median_p99_ms": 0.307,
+     "share_of_mean_tick": 0.0201,
+     "repeat_means_ms": [
+      0.0479,
+      0.0467,
+      0.0445
+     ],
+     "repeat_p95_ms": [
+      0.212,
+      0.226,
+      0.144
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.02,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.004,
+     "share_of_mean_tick": 0.0086,
+     "repeat_means_ms": [
+      0.02,
+      0.02,
+      0.0195
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0122,
+     "median_p95_ms": 0.018,
+     "median_p99_ms": 0.029,
+     "share_of_mean_tick": 0.0052,
+     "repeat_means_ms": [
+      0.0123,
+      0.0122,
+      0.0109
+     ],
+     "repeat_p95_ms": [
+      0.018,
+      0.022,
+      0.013
+     ]
+    },
+    {
+     "phase": "t_follow_hero",
+     "median_mean_ms": 0.0122,
+     "median_p95_ms": 0.015,
+     "median_p99_ms": 0.021,
+     "share_of_mean_tick": 0.0052,
+     "repeat_means_ms": [
+      0.0122,
+      0.0122,
+      0.0116
+     ],
+     "repeat_p95_ms": [
+      0.015,
+      0.017,
+      0.014
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0093,
+     "median_p95_ms": 0.012,
+     "median_p99_ms": 0.016,
+     "share_of_mean_tick": 0.004,
+     "repeat_means_ms": [
+      0.0094,
+      0.0093,
+      0.0088
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.014,
+      0.011
+     ]
+    },
+    {
+     "phase": "x_cb_gone",
+     "median_mean_ms": 0.007,
+     "median_p95_ms": 0.006,
+     "median_p99_ms": 0.006,
+     "share_of_mean_tick": 0.003,
+     "repeat_means_ms": [
+      0.0097,
+      0.0067,
+      0.007
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.006,
+      0.006
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0063,
+     "median_p95_ms": 0.004,
+     "median_p99_ms": 0.173,
+     "share_of_mean_tick": 0.0027,
+     "repeat_means_ms": [
+      0.0064,
+      0.0063,
+      0.0057
+     ],
+     "repeat_p95_ms": [
+      0.004,
+      0.005,
+      0.003
+     ]
+    },
+    {
+     "phase": "c_index_rebuild",
+     "median_mean_ms": 0.0012,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.003,
+     "share_of_mean_tick": 0.0005,
+     "repeat_means_ms": [
+      0.0013,
+      0.0012,
+      0.0012
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    }
+   ]
+  },
+  "volley": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "94b9542cc044c8f8a0cdb80577131676e19a6bd20b1bd15cb6ec2c267d2f414f",
+    "source_sha256": "4984140f00c1e7e86890c5f5e03f5b10daad558e395cbfdaeb04b06a3a63893c",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "5383d0e9a090c9b0fc279ec27b15ca8a2243fa122727a0036b550e6fe8f0f392"
+    }
+   },
+   "measuredAt": "2026-11-20T09:27:33.176Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    973,
+    973,
+    973
+   ],
+   "live": [
+    [
+     1343,
+     1889
+    ],
+    [
+     1343,
+     1889
+    ],
+    [
+     1343,
+     1889
+    ]
+   ],
+   "tick_mean_ms": [
+    2.17197738951696,
+    2.16615519013361,
+    2.15181603288798
+   ],
+   "tick_p95_ms": [
+    4.757,
+    4.696,
+    4.695
+   ],
+   "tick_p99_ms": [
+    9.608,
+    9.489,
+    9.55
+   ],
+   "snapshot_p95_ms": [
+    1.554,
+    1.56,
+    1.572
+   ],
+   "events": {
+    "0": 2483,
+    "3": 553,
+    "5": 2819,
+    "12": 1,
+    "13": 692,
+    "18": 1673,
+    "19": 1510,
+    "25": 313
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "n_hurt",
+     "median_mean_ms": 4.281,
+     "median_p95_ms": 11,
+     "median_p99_ms": 15,
+     "share_of_mean_tick": 1.9763,
+     "repeat_means_ms": [
+      4.281,
+      4.281,
+      4.281
+     ],
+     "repeat_p95_ms": [
+      11,
+      11,
+      11
+     ]
+    },
+    {
+     "phase": "n_kernel_calls",
+     "median_mean_ms": 3.8972,
+     "median_p95_ms": 12,
+     "median_p99_ms": 16,
+     "share_of_mean_tick": 1.7991,
+     "repeat_means_ms": [
+      3.8972,
+      3.8972,
+      3.8972
+     ],
+     "repeat_p95_ms": [
+      12,
+      12,
+      12
+     ]
+    },
+    {
+     "phase": "mo_rows",
+     "median_mean_ms": 3.8299,
+     "median_p95_ms": 4.757,
+     "median_p99_ms": 4.757,
+     "share_of_mean_tick": 1.7681,
+     "repeat_means_ms": [
+      3.8299,
+      3.8914,
+      3.8079
+     ],
+     "repeat_p95_ms": [
+      4.757,
+      4.852,
+      4.611
+     ]
+    },
+    {
+     "phase": "mo_panic_layout",
+     "median_mean_ms": 2.4721,
+     "median_p95_ms": 3.354,
+     "median_p99_ms": 3.354,
+     "share_of_mean_tick": 1.1412,
+     "repeat_means_ms": [
+      2.4816,
+      2.452,
+      2.4721
+     ],
+     "repeat_p95_ms": [
+      3.354,
+      3.333,
+      3.357
+     ]
+    },
+    {
+     "phase": "mo_assess",
+     "median_mean_ms": 1.7914,
+     "median_p95_ms": 3.283,
+     "median_p99_ms": 3.283,
+     "share_of_mean_tick": 0.827,
+     "repeat_means_ms": [
+      1.7914,
+      1.8222,
+      1.7865
+     ],
+     "repeat_p95_ms": [
+      3.283,
+      3.335,
+      3.236
+     ]
+    },
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 0.8401,
+     "median_p95_ms": 1.922,
+     "median_p99_ms": 2.333,
+     "share_of_mean_tick": 0.3878,
+     "repeat_means_ms": [
+      0.8508,
+      0.8401,
+      0.8352
+     ],
+     "repeat_p95_ms": [
+      1.973,
+      1.903,
+      1.922
+     ]
+    },
+    {
+     "phase": "x_kernel_calls",
+     "median_mean_ms": 0.7646,
+     "median_p95_ms": 1.68,
+     "median_p99_ms": 2.029,
+     "share_of_mean_tick": 0.353,
+     "repeat_means_ms": [
+      0.7746,
+      0.7646,
+      0.7591
+     ],
+     "repeat_p95_ms": [
+      1.728,
+      1.675,
+      1.68
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.4708,
+     "median_p95_ms": 0.56,
+     "median_p99_ms": 0.586,
+     "share_of_mean_tick": 0.2174,
+     "repeat_means_ms": [
+      0.4708,
+      0.471,
+      0.4694
+     ],
+     "repeat_p95_ms": [
+      0.561,
+      0.56,
+      0.559
+     ]
+    },
+    {
+     "phase": "c_filters",
+     "median_mean_ms": 0.433,
+     "median_p95_ms": 0.499,
+     "median_p99_ms": 0.553,
+     "share_of_mean_tick": 0.1999,
+     "repeat_means_ms": [
+      0.4305,
+      0.4362,
+      0.433
+     ],
+     "repeat_p95_ms": [
+      0.496,
+      0.503,
+      0.499
+     ]
+    },
+    {
+     "phase": "c_copy_rows",
+     "median_mean_ms": 0.3532,
+     "median_p95_ms": 0.4,
+     "median_p99_ms": 0.442,
+     "share_of_mean_tick": 0.1631,
+     "repeat_means_ms": [
+      0.3532,
+      0.3537,
+      0.3483
+     ],
+     "repeat_p95_ms": [
+      0.402,
+      0.4,
+      0.39
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.328,
+     "median_p95_ms": 1.222,
+     "median_p99_ms": 1.329,
+     "share_of_mean_tick": 0.1514,
+     "repeat_means_ms": [
+      0.328,
+      0.3306,
+      0.3268
+     ],
+     "repeat_p95_ms": [
+      1.21,
+      1.238,
+      1.222
+     ]
+    },
+    {
+     "phase": "c_loop",
+     "median_mean_ms": 0.3112,
+     "median_p95_ms": 0.414,
+     "median_p99_ms": 0.462,
+     "share_of_mean_tick": 0.1436,
+     "repeat_means_ms": [
+      0.3112,
+      0.3136,
+      0.3098
+     ],
+     "repeat_p95_ms": [
+      0.414,
+      0.414,
+      0.416
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.2987,
+     "median_p95_ms": 1.069,
+     "median_p99_ms": 1.427,
+     "share_of_mean_tick": 0.1379,
+     "repeat_means_ms": [
+      0.2988,
+      0.2987,
+      0.2974
+     ],
+     "repeat_p95_ms": [
+      1.072,
+      1.069,
+      1.061
+     ]
+    },
+    {
+     "phase": "x_hurt",
+     "median_mean_ms": 0.2057,
+     "median_p95_ms": 0.672,
+     "median_p99_ms": 0.963,
+     "share_of_mean_tick": 0.095,
+     "repeat_means_ms": [
+      0.2073,
+      0.2057,
+      0.2048
+     ],
+     "repeat_p95_ms": [
+      0.721,
+      0.672,
+      0.671
+     ]
+    },
+    {
+     "phase": "m_morale",
+     "median_mean_ms": 0.1417,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 8.359,
+     "share_of_mean_tick": 0.0654,
+     "repeat_means_ms": [
+      0.1417,
+      0.1429,
+      0.1412
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "x_cb_attack",
+     "median_mean_ms": 0.096,
+     "median_p95_ms": 0.235,
+     "median_p99_ms": 0.294,
+     "share_of_mean_tick": 0.0443,
+     "repeat_means_ms": [
+      0.096,
+      0.0949,
+      0.096
+     ],
+     "repeat_p95_ms": [
+      0.236,
+      0.226,
+      0.235
+     ]
+    },
+    {
+     "phase": "x_call_min",
+     "median_mean_ms": 0.0872,
+     "median_p95_ms": 0.299,
+     "median_p99_ms": 0.397,
+     "share_of_mean_tick": 0.0402,
+     "repeat_means_ms": [
+      0.0875,
+      0.0872,
+      0.0864
+     ],
+     "repeat_p95_ms": [
+      0.299,
+      0.299,
+      0.301
+     ]
+    },
+    {
+     "phase": "t_brains",
+     "median_mean_ms": 0.03,
+     "median_p95_ms": 0.12,
+     "median_p99_ms": 0.219,
+     "share_of_mean_tick": 0.0138,
+     "repeat_means_ms": [
+      0.0299,
+      0.0304,
+      0.03
+     ],
+     "repeat_p95_ms": [
+      0.116,
+      0.12,
+      0.12
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0108,
+     "median_p95_ms": 0.003,
+     "median_p99_ms": 0.2,
+     "share_of_mean_tick": 0.005,
+     "repeat_means_ms": [
+      0.0106,
+      0.0109,
+      0.0108
+     ],
+     "repeat_p95_ms": [
+      0.003,
+      0.003,
+      0.003
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0108,
+     "median_p95_ms": 0.012,
+     "median_p99_ms": 0.015,
+     "share_of_mean_tick": 0.005,
+     "repeat_means_ms": [
+      0.0108,
+      0.0109,
+      0.0107
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.012,
+      0.012
+     ]
+    },
+    {
+     "phase": "t_follow_hero",
+     "median_mean_ms": 0.0107,
+     "median_p95_ms": 0.013,
+     "median_p99_ms": 0.015,
+     "share_of_mean_tick": 0.005,
+     "repeat_means_ms": [
+      0.0107,
+      0.0108,
+      0.0107
+     ],
+     "repeat_p95_ms": [
+      0.013,
+      0.013,
+      0.013
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0086,
+     "median_p95_ms": 0.01,
+     "median_p99_ms": 0.012,
+     "share_of_mean_tick": 0.0039,
+     "repeat_means_ms": [
+      0.0086,
+      0.0086,
+      0.0085
+     ],
+     "repeat_p95_ms": [
+      0.01,
+      0.01,
+      0.01
+     ]
+    },
+    {
+     "phase": "t_doctrine",
+     "median_mean_ms": 0.0067,
+     "median_p95_ms": 0.012,
+     "median_p99_ms": 0.014,
+     "share_of_mean_tick": 0.0031,
+     "repeat_means_ms": [
+      0.0067,
+      0.0067,
+      0.0066
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.012,
+      0.012
+     ]
+    },
+    {
+     "phase": "c_index_rebuild",
+     "median_mean_ms": 0.0012,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.003,
+     "share_of_mean_tick": 0.0006,
+     "repeat_means_ms": [
+      0.0012,
+      0.0012,
+      0.0012
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.0011,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.002,
+     "share_of_mean_tick": 0.0005,
+     "repeat_means_ms": [
+      0.0011,
+      0.0011,
+      0.0012
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    }
+   ]
+  }
+ },
+ "diagnostic_raw_pointer_validation": {
+  "cavalry": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "94b9542cc044c8f8a0cdb80577131676e19a6bd20b1bd15cb6ec2c267d2f414f",
+    "source_sha256": "bd7a63971296f1d44907d5ce610387546e6d8fd76a35957c1a7a2a36bfee1c4e",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "6a0448b5126dbea62791bd908f2c75441e477b8da5b77bd5e21cf4ca6f3474d4"
+    }
+   },
+   "measuredAt": "2026-11-20T09:29:31.622Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    2713,
+    2713,
+    2713
+   ],
+   "live": [
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ],
+    [
+     325,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    2.20110984150387,
+    2.17834611131589,
+    2.18744710652414
+   ],
+   "tick_p95_ms": [
+    4.637,
+    4.549,
+    4.588
+   ],
+   "tick_p99_ms": [
+    5.659,
+    5.417,
+    5.571
+   ],
+   "snapshot_p95_ms": [
+    1.123,
+    1.097,
+    1.086
+   ],
+   "events": {
+    "0": 15600,
+    "1": 3615,
+    "2": 8088,
+    "3": 1676,
+    "12": 1,
+    "18": 218,
+    "19": 137,
+    "25": 1
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "n_kernel_calls",
+     "median_mean_ms": 14.387,
+     "median_p95_ms": 25,
+     "median_p99_ms": 30,
+     "share_of_mean_tick": 6.5771,
+     "repeat_means_ms": [
+      14.387,
+      14.387,
+      14.387
+     ],
+     "repeat_p95_ms": [
+      25,
+      25,
+      25
+     ]
+    },
+    {
+     "phase": "n_hurt",
+     "median_mean_ms": 6.0116,
+     "median_p95_ms": 12,
+     "median_p99_ms": 15,
+     "share_of_mean_tick": 2.7482,
+     "repeat_means_ms": [
+      6.0116,
+      6.0116,
+      6.0116
+     ],
+     "repeat_p95_ms": [
+      12,
+      12,
+      12
+     ]
+    },
+    {
+     "phase": "mo_assess",
+     "median_mean_ms": 2.1187,
+     "median_p95_ms": 3.77,
+     "median_p99_ms": 3.819,
+     "share_of_mean_tick": 0.9686,
+     "repeat_means_ms": [
+      2.1187,
+      2.1403,
+      2.1063
+     ],
+     "repeat_p95_ms": [
+      3.77,
+      3.822,
+      3.699
+     ]
+    },
+    {
+     "phase": "mo_rows",
+     "median_mean_ms": 1.1941,
+     "median_p95_ms": 1.894,
+     "median_p99_ms": 2.795,
+     "share_of_mean_tick": 0.5459,
+     "repeat_means_ms": [
+      1.1949,
+      1.1823,
+      1.1941
+     ],
+     "repeat_p95_ms": [
+      2.008,
+      1.87,
+      1.894
+     ]
+    },
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 1.1513,
+     "median_p95_ms": 2.188,
+     "median_p99_ms": 2.578,
+     "share_of_mean_tick": 0.5263,
+     "repeat_means_ms": [
+      1.1556,
+      1.1428,
+      1.1513
+     ],
+     "repeat_p95_ms": [
+      2.211,
+      2.179,
+      2.188
+     ]
+    },
+    {
+     "phase": "x_kernel_calls",
+     "median_mean_ms": 0.802,
+     "median_p95_ms": 1.536,
+     "median_p99_ms": 1.711,
+     "share_of_mean_tick": 0.3666,
+     "repeat_means_ms": [
+      0.8042,
+      0.7953,
+      0.802
+     ],
+     "repeat_p95_ms": [
+      1.557,
+      1.536,
+      1.535
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.5189,
+     "median_p95_ms": 1.247,
+     "median_p99_ms": 1.313,
+     "share_of_mean_tick": 0.2372,
+     "repeat_means_ms": [
+      0.5232,
+      0.5189,
+      0.5185
+     ],
+     "repeat_p95_ms": [
+      1.259,
+      1.247,
+      1.244
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.3578,
+     "median_p95_ms": 1.204,
+     "median_p99_ms": 1.347,
+     "share_of_mean_tick": 0.1636,
+     "repeat_means_ms": [
+      0.3611,
+      0.3568,
+      0.3578
+     ],
+     "repeat_p95_ms": [
+      1.207,
+      1.195,
+      1.204
+     ]
+    },
+    {
+     "phase": "c_filters",
+     "median_mean_ms": 0.3117,
+     "median_p95_ms": 0.516,
+     "median_p99_ms": 0.579,
+     "share_of_mean_tick": 0.1425,
+     "repeat_means_ms": [
+      0.3117,
+      0.3089,
+      0.3147
+     ],
+     "repeat_p95_ms": [
+      0.516,
+      0.509,
+      0.525
+     ]
+    },
+    {
+     "phase": "mo_panic_layout",
+     "median_mean_ms": 0.2884,
+     "median_p95_ms": 0.861,
+     "median_p99_ms": 1.227,
+     "share_of_mean_tick": 0.1318,
+     "repeat_means_ms": [
+      0.2896,
+      0.2832,
+      0.2884
+     ],
+     "repeat_p95_ms": [
+      0.978,
+      0.802,
+      0.861
+     ]
+    },
+    {
+     "phase": "c_copy_rows",
+     "median_mean_ms": 0.2672,
+     "median_p95_ms": 0.405,
+     "median_p99_ms": 0.442,
+     "share_of_mean_tick": 0.1222,
+     "repeat_means_ms": [
+      0.2679,
+      0.2672,
+      0.263
+     ],
+     "repeat_p95_ms": [
+      0.405,
+      0.411,
+      0.404
+     ]
+    },
+    {
+     "phase": "c_loop",
+     "median_mean_ms": 0.2053,
+     "median_p95_ms": 0.37,
+     "median_p99_ms": 0.427,
+     "share_of_mean_tick": 0.0938,
+     "repeat_means_ms": [
+      0.2108,
+      0.2044,
+      0.2053
+     ],
+     "repeat_p95_ms": [
+      0.403,
+      0.368,
+      0.37
+     ]
+    },
+    {
+     "phase": "x_cb_attack",
+     "median_mean_ms": 0.193,
+     "median_p95_ms": 0.419,
+     "median_p99_ms": 0.557,
+     "share_of_mean_tick": 0.0882,
+     "repeat_means_ms": [
+      0.1934,
+      0.1916,
+      0.193
+     ],
+     "repeat_p95_ms": [
+      0.419,
+      0.417,
+      0.42
+     ]
+    },
+    {
+     "phase": "x_cb_charge",
+     "median_mean_ms": 0.1679,
+     "median_p95_ms": 0.488,
+     "median_p99_ms": 0.665,
+     "share_of_mean_tick": 0.0768,
+     "repeat_means_ms": [
+      0.1698,
+      0.1679,
+      0.1678
+     ],
+     "repeat_p95_ms": [
+      0.497,
+      0.487,
+      0.488
+     ]
+    },
+    {
+     "phase": "x_hurt",
+     "median_mean_ms": 0.1509,
+     "median_p95_ms": 0.435,
+     "median_p99_ms": 0.651,
+     "share_of_mean_tick": 0.069,
+     "repeat_means_ms": [
+      0.1514,
+      0.1498,
+      0.1509
+     ],
+     "repeat_p95_ms": [
+      0.442,
+      0.433,
+      0.435
+     ]
+    },
+    {
+     "phase": "m_morale",
+     "median_mean_ms": 0.0682,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 2.533,
+     "share_of_mean_tick": 0.0312,
+     "repeat_means_ms": [
+      0.0682,
+      0.0683,
+      0.0679
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "x_call_min",
+     "median_mean_ms": 0.028,
+     "median_p95_ms": 0.037,
+     "median_p99_ms": 0.058,
+     "share_of_mean_tick": 0.0128,
+     "repeat_means_ms": [
+      0.028,
+      0.028,
+      0.0281
+     ],
+     "repeat_p95_ms": [
+      0.037,
+      0.037,
+      0.037
+     ]
+    },
+    {
+     "phase": "t_doctrine",
+     "median_mean_ms": 0.0258,
+     "median_p95_ms": 0.158,
+     "median_p99_ms": 0.168,
+     "share_of_mean_tick": 0.0118,
+     "repeat_means_ms": [
+      0.026,
+      0.0254,
+      0.0258
+     ],
+     "repeat_p95_ms": [
+      0.158,
+      0.157,
+      0.159
+     ]
+    },
+    {
+     "phase": "t_brains",
+     "median_mean_ms": 0.0245,
+     "median_p95_ms": 0.052,
+     "median_p99_ms": 0.069,
+     "share_of_mean_tick": 0.0112,
+     "repeat_means_ms": [
+      0.0248,
+      0.0245,
+      0.0244
+     ],
+     "repeat_p95_ms": [
+      0.052,
+      0.052,
+      0.051
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0099,
+     "median_p95_ms": 0.012,
+     "median_p99_ms": 0.014,
+     "share_of_mean_tick": 0.0045,
+     "repeat_means_ms": [
+      0.0101,
+      0.0099,
+      0.0099
+     ],
+     "repeat_p95_ms": [
+      0.013,
+      0.012,
+      0.012
+     ]
+    },
+    {
+     "phase": "t_follow_hero",
+     "median_mean_ms": 0.0096,
+     "median_p95_ms": 0.014,
+     "median_p99_ms": 0.015,
+     "share_of_mean_tick": 0.0044,
+     "repeat_means_ms": [
+      0.0096,
+      0.0096,
+      0.0094
+     ],
+     "repeat_p95_ms": [
+      0.014,
+      0.014,
+      0.013
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0075,
+     "median_p95_ms": 0.01,
+     "median_p99_ms": 0.011,
+     "share_of_mean_tick": 0.0034,
+     "repeat_means_ms": [
+      0.0076,
+      0.0075,
+      0.0075
+     ],
+     "repeat_p95_ms": [
+      0.011,
+      0.01,
+      0.01
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0061,
+     "median_p95_ms": 0.003,
+     "median_p99_ms": 0.097,
+     "share_of_mean_tick": 0.0028,
+     "repeat_means_ms": [
+      0.0061,
+      0.0059,
+      0.0061
+     ],
+     "repeat_p95_ms": [
+      0.004,
+      0.003,
+      0.003
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.0043,
+     "median_p95_ms": 0.005,
+     "median_p99_ms": 0.007,
+     "share_of_mean_tick": 0.002,
+     "repeat_means_ms": [
+      0.0043,
+      0.0043,
+      0.0043
+     ],
+     "repeat_p95_ms": [
+      0.006,
+      0.005,
+      0.005
+     ]
+    },
+    {
+     "phase": "c_index_rebuild",
+     "median_mean_ms": 0.0012,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.003,
+     "share_of_mean_tick": 0.0005,
+     "repeat_means_ms": [
+      0.0012,
+      0.0012,
+      0.0012
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.0012,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.002,
+     "share_of_mean_tick": 0.0005,
+     "repeat_means_ms": [
+      0.0012,
+      0.0012,
+      0.0011
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    }
+   ]
+  },
+  "mixed": {
+   "revision": "de53b56d1073530950a958d60d135247978067d6",
+   "dirty": true,
+   "build": {
+    "executable_sha256": "94b9542cc044c8f8a0cdb80577131676e19a6bd20b1bd15cb6ec2c267d2f414f",
+    "source_sha256": "bd7a63971296f1d44907d5ce610387546e6d8fd76a35957c1a7a2a36bfee1c4e",
+    "dependencies": {
+     "iron_contacts.windows.x86_64.dll": "6a0448b5126dbea62791bd908f2c75441e477b8da5b77bd5e21cf4ca6f3474d4"
+    }
+   },
+   "measuredAt": "2026-11-20T09:30:11.431Z",
+   "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+   "engine": "4.7.2-stable (official)",
+   "measured_ticks": [
+    3600,
+    3600,
+    3600
+   ],
+   "live": [
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ],
+    [
+     945,
+     2001
+    ]
+   ],
+   "tick_mean_ms": [
+    1.921385,
+    1.92949111111111,
+    1.92489166666667
+   ],
+   "tick_p95_ms": [
+    3.57,
+    3.603,
+    3.555
+   ],
+   "tick_p99_ms": [
+    7.355,
+    7.356,
+    7.369
+   ],
+   "snapshot_p95_ms": [
+    1.268,
+    1.254,
+    1.26
+   ],
+   "events": {
+    "0": 6714,
+    "1": 2572,
+    "2": 752,
+    "3": 1052,
+    "5": 8021,
+    "9": 2,
+    "13": 3351,
+    "18": 404,
+    "19": 467,
+    "25": 9
+   },
+   "events_equal_across_repeats": true,
+   "phases": [
+    {
+     "phase": "n_kernel_calls",
+     "median_mean_ms": 5.7011,
+     "median_p95_ms": 13,
+     "median_p99_ms": 18,
+     "share_of_mean_tick": 2.9618,
+     "repeat_means_ms": [
+      5.7011,
+      5.7011,
+      5.7011
+     ],
+     "repeat_p95_ms": [
+      13,
+      13,
+      13
+     ]
+    },
+    {
+     "phase": "n_hurt",
+     "median_mean_ms": 2.6802,
+     "median_p95_ms": 6,
+     "median_p99_ms": 8,
+     "share_of_mean_tick": 1.3924,
+     "repeat_means_ms": [
+      2.6802,
+      2.6802,
+      2.6802
+     ],
+     "repeat_p95_ms": [
+      6,
+      6,
+      6
+     ]
+    },
+    {
+     "phase": "mo_assess",
+     "median_mean_ms": 2.5927,
+     "median_p95_ms": 3.57,
+     "median_p99_ms": 3.654,
+     "share_of_mean_tick": 1.3469,
+     "repeat_means_ms": [
+      2.5809,
+      2.5927,
+      2.6149
+     ],
+     "repeat_p95_ms": [
+      3.57,
+      3.542,
+      3.59
+     ]
+    },
+    {
+     "phase": "mo_rows",
+     "median_mean_ms": 1.8521,
+     "median_p95_ms": 2.179,
+     "median_p99_ms": 2.219,
+     "share_of_mean_tick": 0.9622,
+     "repeat_means_ms": [
+      1.8826,
+      1.8147,
+      1.8521
+     ],
+     "repeat_p95_ms": [
+      2.219,
+      2.121,
+      2.179
+     ]
+    },
+    {
+     "phase": "ai_movement_combat",
+     "median_mean_ms": 0.8276,
+     "median_p95_ms": 1.395,
+     "median_p99_ms": 1.69,
+     "share_of_mean_tick": 0.43,
+     "repeat_means_ms": [
+      0.8288,
+      0.8276,
+      0.8274
+     ],
+     "repeat_p95_ms": [
+      1.395,
+      1.393,
+      1.403
+     ]
+    },
+    {
+     "phase": "x_kernel_calls",
+     "median_mean_ms": 0.6954,
+     "median_p95_ms": 1.093,
+     "median_p99_ms": 1.242,
+     "share_of_mean_tick": 0.3613,
+     "repeat_means_ms": [
+      0.6969,
+      0.6954,
+      0.695
+     ],
+     "repeat_p95_ms": [
+      1.094,
+      1.093,
+      1.089
+     ]
+    },
+    {
+     "phase": "contacts",
+     "median_mean_ms": 0.4694,
+     "median_p95_ms": 0.623,
+     "median_p99_ms": 0.681,
+     "share_of_mean_tick": 0.2439,
+     "repeat_means_ms": [
+      0.4692,
+      0.4694,
+      0.4709
+     ],
+     "repeat_p95_ms": [
+      0.623,
+      0.617,
+      0.623
+     ]
+    },
+    {
+     "phase": "c_filters",
+     "median_mean_ms": 0.4024,
+     "median_p95_ms": 0.532,
+     "median_p99_ms": 0.59,
+     "share_of_mean_tick": 0.209,
+     "repeat_means_ms": [
+      0.3985,
+      0.4053,
+      0.4024
+     ],
+     "repeat_p95_ms": [
+      0.532,
+      0.537,
+      0.532
+     ]
+    },
+    {
+     "phase": "mo_panic_layout",
+     "median_mean_ms": 0.3465,
+     "median_p95_ms": 1.052,
+     "median_p99_ms": 1.2,
+     "share_of_mean_tick": 0.18,
+     "repeat_means_ms": [
+      0.344,
+      0.3465,
+      0.3505
+     ],
+     "repeat_p95_ms": [
+      1.036,
+      1.052,
+      1.055
+     ]
+    },
+    {
+     "phase": "c_copy_rows",
+     "median_mean_ms": 0.3284,
+     "median_p95_ms": 0.416,
+     "median_p99_ms": 0.463,
+     "share_of_mean_tick": 0.1706,
+     "repeat_means_ms": [
+      0.3257,
+      0.3297,
+      0.3284
+     ],
+     "repeat_p95_ms": [
+      0.415,
+      0.416,
+      0.422
+     ]
+    },
+    {
+     "phase": "c_loop",
+     "median_mean_ms": 0.2531,
+     "median_p95_ms": 0.367,
+     "median_p99_ms": 0.425,
+     "share_of_mean_tick": 0.1315,
+     "repeat_means_ms": [
+      0.2453,
+      0.2537,
+      0.2531
+     ],
+     "repeat_p95_ms": [
+      0.359,
+      0.367,
+      0.367
+     ]
+    },
+    {
+     "phase": "storage_compaction",
+     "median_mean_ms": 0.2398,
+     "median_p95_ms": 1.162,
+     "median_p99_ms": 1.301,
+     "share_of_mean_tick": 0.1246,
+     "repeat_means_ms": [
+      0.2364,
+      0.2409,
+      0.2398
+     ],
+     "repeat_p95_ms": [
+      1.15,
+      1.175,
+      1.162
+     ]
+    },
+    {
+     "phase": "projectiles",
+     "median_mean_ms": 0.1366,
+     "median_p95_ms": 0.346,
+     "median_p99_ms": 0.496,
+     "share_of_mean_tick": 0.0709,
+     "repeat_means_ms": [
+      0.1363,
+      0.1428,
+      0.1366
+     ],
+     "repeat_p95_ms": [
+      0.346,
+      0.363,
+      0.346
+     ]
+    },
+    {
+     "phase": "x_cb_attack",
+     "median_mean_ms": 0.1305,
+     "median_p95_ms": 0.343,
+     "median_p99_ms": 0.496,
+     "share_of_mean_tick": 0.0678,
+     "repeat_means_ms": [
+      0.1302,
+      0.1305,
+      0.1309
+     ],
+     "repeat_p95_ms": [
+      0.34,
+      0.343,
+      0.345
+     ]
+    },
+    {
+     "phase": "m_morale",
+     "median_mean_ms": 0.0913,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 5.255,
+     "share_of_mean_tick": 0.0474,
+     "repeat_means_ms": [
+      0.0919,
+      0.0901,
+      0.0913
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "x_hurt",
+     "median_mean_ms": 0.0888,
+     "median_p95_ms": 0.293,
+     "median_p99_ms": 0.462,
+     "share_of_mean_tick": 0.0461,
+     "repeat_means_ms": [
+      0.0884,
+      0.0889,
+      0.0888
+     ],
+     "repeat_p95_ms": [
+      0.294,
+      0.293,
+      0.29
+     ]
+    },
+    {
+     "phase": "x_cb_charge",
+     "median_mean_ms": 0.0587,
+     "median_p95_ms": 0.179,
+     "median_p99_ms": 0.308,
+     "share_of_mean_tick": 0.0305,
+     "repeat_means_ms": [
+      0.0584,
+      0.0587,
+      0.0587
+     ],
+     "repeat_p95_ms": [
+      0.175,
+      0.18,
+      0.179
+     ]
+    },
+    {
+     "phase": "t_doctrine",
+     "median_mean_ms": 0.0553,
+     "median_p95_ms": 0.312,
+     "median_p99_ms": 0.339,
+     "share_of_mean_tick": 0.0287,
+     "repeat_means_ms": [
+      0.0556,
+      0.0552,
+      0.0553
+     ],
+     "repeat_p95_ms": [
+      0.312,
+      0.313,
+      0.311
+     ]
+    },
+    {
+     "phase": "x_call_min",
+     "median_mean_ms": 0.0465,
+     "median_p95_ms": 0.206,
+     "median_p99_ms": 0.318,
+     "share_of_mean_tick": 0.0241,
+     "repeat_means_ms": [
+      0.0465,
+      0.0465,
+      0.0464
+     ],
+     "repeat_p95_ms": [
+      0.205,
+      0.206,
+      0.207
+     ]
+    },
+    {
+     "phase": "t_brains",
+     "median_mean_ms": 0.0439,
+     "median_p95_ms": 0.135,
+     "median_p99_ms": 0.296,
+     "share_of_mean_tick": 0.0228,
+     "repeat_means_ms": [
+      0.0439,
+      0.0439,
+      0.044
+     ],
+     "repeat_p95_ms": [
+      0.137,
+      0.135,
+      0.134
+     ]
+    },
+    {
+     "phase": "tactics_siege",
+     "median_mean_ms": 0.0193,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.003,
+     "share_of_mean_tick": 0.01,
+     "repeat_means_ms": [
+      0.0191,
+      0.0193,
+      0.0196
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    },
+    {
+     "phase": "t_follow_hero",
+     "median_mean_ms": 0.0116,
+     "median_p95_ms": 0.014,
+     "median_p99_ms": 0.016,
+     "share_of_mean_tick": 0.006,
+     "repeat_means_ms": [
+      0.0116,
+      0.0116,
+      0.0116
+     ],
+     "repeat_p95_ms": [
+      0.014,
+      0.014,
+      0.014
+     ]
+    },
+    {
+     "phase": "hero",
+     "median_mean_ms": 0.0108,
+     "median_p95_ms": 0.012,
+     "median_p99_ms": 0.015,
+     "share_of_mean_tick": 0.0056,
+     "repeat_means_ms": [
+      0.0108,
+      0.0108,
+      0.0107
+     ],
+     "repeat_p95_ms": [
+      0.012,
+      0.012,
+      0.012
+     ]
+    },
+    {
+     "phase": "commands_interpolation",
+     "median_mean_ms": 0.0088,
+     "median_p95_ms": 0.01,
+     "median_p99_ms": 0.013,
+     "share_of_mean_tick": 0.0045,
+     "repeat_means_ms": [
+      0.0088,
+      0.0088,
+      0.0087
+     ],
+     "repeat_p95_ms": [
+      0.01,
+      0.01,
+      0.011
+     ]
+    },
+    {
+     "phase": "x_cb_gone",
+     "median_mean_ms": 0.0077,
+     "median_p95_ms": 0.007,
+     "median_p99_ms": 0.007,
+     "share_of_mean_tick": 0.004,
+     "repeat_means_ms": [
+      0.0077,
+      0.008,
+      0.007
+     ],
+     "repeat_p95_ms": [
+      0.007,
+      0.009,
+      0.006
+     ]
+    },
+    {
+     "phase": "morale_result_events",
+     "median_mean_ms": 0.0056,
+     "median_p95_ms": 0.003,
+     "median_p99_ms": 0.169,
+     "share_of_mean_tick": 0.0029,
+     "repeat_means_ms": [
+      0.0056,
+      0.0056,
+      0.0055
+     ],
+     "repeat_p95_ms": [
+      0.003,
+      0.003,
+      0.003
+     ]
+    },
+    {
+     "phase": "c_index_rebuild",
+     "median_mean_ms": 0.0012,
+     "median_p95_ms": 0.002,
+     "median_p99_ms": 0.002,
+     "share_of_mean_tick": 0.0006,
+     "repeat_means_ms": [
+      0.0012,
+      0.0012,
+      0.0012
+     ],
+     "repeat_p95_ms": [
+      0.002,
+      0.002,
+      0.002
+     ]
+    }
+   ]
+  }
+ }
+}

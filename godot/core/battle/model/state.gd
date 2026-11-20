@@ -66,6 +66,10 @@ var terrain_rules: TerrainGrid = null
 ## The grid for the native movement kernel (Movement._step_batch context), built once in set_terrain(); empty without rules.
 var terrain_context := {}
 var terrain_template := "open" # data/terrain_templates.gd: the template the field was filled by.
+## Stage Р3: the static terrain layer of the field assessment (simulation/ai/field_assessment.gd survey), for the grid
+## it was made from; built with the field by the factory, or on the first assessment after set_terrain().
+var terrain_survey := {}
+var terrain_survey_grid: TerrainGrid = null
 var arena_size := Config.ARENA_SIZE
 var groups: Array = []
 var projectiles: Array = []

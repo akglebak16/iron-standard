@@ -10,13 +10,19 @@ extends RefCounted
 ##
 ## Sectors of the threat are taken against the group's front: its direction while it keeps a formation (holding,
 ## following, a formed line, stage 1v), the mean facing of its men in a loose charge, where the group direction is
-## only the heading of the order. Terrain (TERRAIN.md 7) joins the threat here.
+## only the heading of the order.
+##
+## Terrain layer (stage Р3, TERRAIN.md 7), for the commander (stage 1g) and the debug overlay; the threat and morale do
+## not read it yet. Per group: mean height byte and the shares of its men in the forest, the brush and wading (ford or
+## water). Per field ("terrain"): the static survey of the grid — hill tops, forests and crossings (fords, bridges),
+## the narrow places — built once per field (survey_of: the factory builds it with the field, never in a tick).
 ##
 ## Unit classes come from properties (mounted, attack_range, anti_cavalry), never from troop IDs.
 const Config = preload("res://core/battle/config.gd")
 const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
+const TerrainGrid = preload("res://core/battle/model/terrain_grid.gd")
 
 static func unit_class(mounted: bool, ranged: bool, anti_cavalry: bool) -> int:
 	if mounted:
@@ -44,6 +50,11 @@ static func assess(battle: State) -> Dictionary:
 	var laterals := PackedVector2Array(); laterals.resize(slots)
 	var facings := PackedVector2Array(); facings.resize(slots)
 	var loose := PackedByteArray(); loose.resize(slots) # Loose charge: the front is the men's mean facing.
+	var grid: TerrainGrid = battle.terrain_rules
+	var height_sum := PackedFloat64Array(); height_sum.resize(slots)
+	var forest := PackedInt32Array(); forest.resize(slots)
+	var brush := PackedInt32Array(); brush.resize(slots)
+	var wading := PackedInt32Array(); wading.resize(slots)
 	for slot in slots:
 		lateral_min[slot] = INF
 		lateral_max[slot] = -INF
@@ -88,6 +99,13 @@ static func assess(battle: State) -> Dictionary:
 			var facing: float = reals[R.FACING * capacity + row]
 			facings[slot] += Vector2(cos(facing), sin(facing))
 		position_sum[slot] += at
+		if grid != null:
+			var cell := grid.index(at)
+			height_sum[slot] += grid.elevation[cell]
+			match grid.cover[cell]:
+				TerrainGrid.Cover.FOREST: forest[slot] += 1
+				TerrainGrid.Cover.BRUSH: brush[slot] += 1
+				TerrainGrid.Cover.FORD, TerrainGrid.Cover.WATER: wading[slot] += 1
 		var lateral := at.dot(laterals[slot])
 		lateral_min[slot] = minf(lateral_min[slot], lateral)
 		lateral_max[slot] = maxf(lateral_max[slot], lateral)
@@ -129,10 +147,113 @@ static func assess(battle: State) -> Dictionary:
 				"engaged": ready > 0 and float(engaged[slot]) / ready >= Config.AI_FIELD_ENGAGED_SHARE,
 				"morale": morale[slot] / ready if ready > 0 else 0.0,
 				"morale_share": morale[slot] / base_morale[slot] if base_morale[slot] > 0.0 else 0.0,
-				"matchup": matchups[slot], "threat_front": threat.x, "threat_flank": threat.y, "threat_rear": threat.z})
+				"matchup": matchups[slot], "threat_front": threat.x, "threat_flank": threat.y, "threat_rear": threat.z,
+				"height": height_sum[slot] / ready if ready > 0 else 0.0,
+				"forest_share": float(forest[slot]) / ready if ready > 0 else 0.0,
+				"brush_share": float(brush[slot]) / ready if ready > 0 else 0.0,
+				"wading_share": float(wading[slot]) / ready if ready > 0 else 0.0})
 		sides.append({"side": side, "count": side_count, "strength": side_power, "fleeing": side_fleeing,
 			"center": side_sum / side_count if side_count > 0 else Vector2.INF, "groups": groups})
-	return {"sides": sides}
+	return {"sides": sides, "terrain": survey_of(battle).duplicate(true)}
+
+## The static terrain layer of the field (stage Р3), cached in the state for the grid of the terrain rules.
+static func survey_of(battle: State) -> Dictionary:
+	if battle.terrain_survey.is_empty() or battle.terrain_survey_grid != battle.terrain_rules:
+		battle.terrain_survey = survey(battle.terrain_rules)
+		battle.terrain_survey_grid = battle.terrain_rules
+	return battle.terrain_survey
+
+## Hill tops (highest first, {at, height}), forests and crossings ({center, rect, cells}; a crossing also has
+## "bridge"), largest first, and the shares of forest, brush and water of the field. `grid` null: the open field.
+static func survey(grid: TerrainGrid) -> Dictionary:
+	var result := {"relief": false, "tops": [], "forests": [], "crossings": [], "forest_share": 0.0, "brush_share": 0.0, "water_share": 0.0}
+	if grid == null:
+		return result
+	var total := float(grid.width * grid.height)
+	result.relief = grid.relief
+	result.forest_share = grid.count(TerrainGrid.Cover.FOREST) / total
+	result.brush_share = grid.count(TerrainGrid.Cover.BRUSH) / total
+	result.water_share = grid.count(TerrainGrid.Cover.WATER) / total
+	if grid.relief:
+		result.tops = _tops(grid)
+	result.forests = _patches(grid, TerrainGrid.Cover.FOREST, TerrainGrid.Cover.FOREST)
+	result.crossings = _patches(grid, TerrainGrid.Cover.FORD, TerrainGrid.Cover.BRIDGE)
+	return result
+
+## Local maxima of the height at least AI_TERRAIN_SURVEY_HILL, highest first, AI_TERRAIN_SURVEY_TOP_SPACING apart.
+static func _tops(grid: TerrainGrid) -> Array:
+	var width := grid.width
+	var heights := grid.elevation
+	var candidates: Array[Vector3i] = []
+	for y in grid.height:
+		for x in width:
+			var level: int = heights[y * width + x]
+			if level < Config.AI_TERRAIN_SURVEY_HILL:
+				continue
+			var top := true
+			for ny in range(maxi(0, y - 1), mini(grid.height, y + 2)):
+				for nx in range(maxi(0, x - 1), mini(width, x + 2)):
+					if heights[ny * width + nx] > level:
+						top = false
+			if top:
+				candidates.append(Vector3i(x, y, level))
+	candidates.sort_custom(func(a: Vector3i, b: Vector3i): return a.z > b.z or a.z == b.z and a.y * width + a.x < b.y * width + b.x)
+	var tops := []
+	for candidate in candidates:
+		var at: Vector2 = grid.cell_center(candidate.x, candidate.y)
+		var apart := true
+		for top: Dictionary in tops:
+			if at.distance_to(top.at) < Config.AI_TERRAIN_SURVEY_TOP_SPACING:
+				apart = false
+				break
+		if apart:
+			tops.append({"at": at, "height": candidate.z})
+			if tops.size() >= Config.AI_TERRAIN_SURVEY_TOPS:
+				break
+	return tops
+
+## Patches of cells of cover `kind` or `other` joined by their sides, at least AI_TERRAIN_SURVEY_PATCH cells, the
+## largest AI_TERRAIN_SURVEY_PATCHES of them (equal ones in grid order).
+static func _patches(grid: TerrainGrid, kind: int, other: int) -> Array:
+	var width := grid.width
+	var cover := grid.cover
+	var seen := PackedByteArray(); seen.resize(cover.size())
+	var queue := PackedInt32Array()
+	var patches := []
+	for start in cover.size():
+		if seen[start] or (cover[start] != kind and cover[start] != other):
+			continue
+		seen[start] = 1
+		queue.resize(1)
+		queue[0] = start
+		var head := 0
+		var lower := Vector2i(width, grid.height)
+		var upper := Vector2i(-1, -1)
+		var sum := Vector2.ZERO
+		var bridge := false
+		while head < queue.size():
+			var cell: int = queue[head]
+			head += 1
+			var x := cell % width
+			var y := cell / width
+			lower = Vector2i(mini(lower.x, x), mini(lower.y, y))
+			upper = Vector2i(maxi(upper.x, x), maxi(upper.y, y))
+			sum += grid.cell_center(x, y)
+			bridge = bridge or cover[cell] == TerrainGrid.Cover.BRIDGE
+			for next in [cell - 1 if x > 0 else -1, cell + 1 if x + 1 < width else -1, cell - width, cell + width]:
+				if next >= 0 and next < cover.size() and not seen[next] and (cover[next] == kind or cover[next] == other):
+					seen[next] = 1
+					queue.append(next)
+		if queue.size() < Config.AI_TERRAIN_SURVEY_PATCH:
+			continue
+		var cell_size := Config.TERRAIN_CELL
+		var patch := {"center": sum / queue.size(), "cells": queue.size(),
+			"rect": Rect2(Vector2(lower) * cell_size, Vector2(upper - lower + Vector2i.ONE) * cell_size)}
+		if kind != other:
+			patch.bridge = bridge
+		patches.append(patch)
+	patches.sort_custom(func(a: Dictionary, b: Dictionary): return a.cells > b.cells)
+	return patches.slice(0, Config.AI_TERRAIN_SURVEY_PATCHES)
 
 static func _group(battle: State, side: int, kind: int):
 	if battle.groups.size() <= side or battle.groups[side].size() <= kind: return null

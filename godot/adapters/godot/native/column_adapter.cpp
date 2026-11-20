@@ -112,11 +112,12 @@ public:
     grid.cell = cell;
     grid.cover = cover.ptr();
     grid.elevation = elevation.ptr();
-    out.resize(points.size());
-    for (int64_t i = 0; i < points.size(); ++i) {
-      const Vector2 at = points[i];
-      out.set(i, int(grid.cover_at(at.x, at.y)) | int(grid.height_at(at.x, at.y)) << 8);
-    }
+    const int64_t count = points.size();
+    out.resize(count);
+    const Vector2 *at = points.ptr();
+    int32_t *cells = out.ptrw();
+    for (int64_t i = 0; i < count; ++i)
+      cells[i] = int(grid.cover_at(at[i].x, at[i].y)) | int(grid.height_at(at[i].x, at[i].y)) << 8;
     return out;
   }
   PackedInt32Array densest_ready(const Array &columns, int side, double low_x,
@@ -148,10 +149,12 @@ public:
         padding < 0 || !std::isfinite(height))
       return result;
     std::vector<iron::Vec2> targets;
-    for (int k = 0; k < impacts.size(); ++k) {
-      if (!impacts[k].is_finite())
+    const int64_t impact_count = impacts.size();
+    const Vector2 *impact = impacts.ptr();
+    for (int64_t k = 0; k < impact_count; ++k) {
+      if (!impact[k].is_finite())
         return result;
-      targets.push_back({impacts[k].x, impacts[k].y});
+      targets.push_back({impact[k].x, impact[k].y});
     }
     const auto *positions = c.positions.ptr();
     auto batches = projectile_queries.query(
@@ -201,30 +204,34 @@ public:
     Input c(columns);
     if (!c.valid)
       return {};
-    for (int k = 0; k < rows.size(); ++k)
-      if (rows[k] < k || rows[k] >= c.count ||
-          (k > 0 && rows[k] <= rows[k - 1]))
+    // Raw pointers throughout: operator[] and size() of a godot-cpp packed array are calls into the engine, and
+    // the field loops below read every kept row once per field (#263).
+    const int kept = int(rows.size());
+    const int32_t *row = rows.ptr();
+    for (int k = 0; k < kept; ++k)
+      if (row[k] < k || row[k] >= c.count ||
+          (k > 0 && row[k] <= row[k - 1]))
         return {};
     auto *p = c.positions.ptrw(), *v = c.velocities.ptrw(),
          *vf = c.vectors.ptrw();
     auto *r = c.reals.ptrw();
     auto *i = c.integers.ptrw();
-    for (int k = 0; k < rows.size(); ++k) {
-      int from = rows[k];
+    for (int k = 0; k < kept; ++k) {
+      int from = row[k];
       p[k] = p[from];
       v[k] = v[from];
     }
     for (int f = 0; f < R_COUNT; ++f)
-      for (int k = 0; k < rows.size(); ++k)
-        r[f * c.capacity + k] = r[f * c.capacity + rows[k]];
+      for (int k = 0; k < kept; ++k)
+        r[f * c.capacity + k] = r[f * c.capacity + row[k]];
     for (int f = 0; f < I_COUNT; ++f)
-      for (int k = 0; k < rows.size(); ++k)
-        i[f * c.capacity + k] = i[f * c.capacity + rows[k]];
+      for (int k = 0; k < kept; ++k)
+        i[f * c.capacity + k] = i[f * c.capacity + row[k]];
     for (int f = 0; f < V_COUNT; ++f)
-      for (int k = 0; k < rows.size(); ++k)
-        vf[f * c.capacity + k] = vf[f * c.capacity + rows[k]];
-    c.positions.resize(rows.size());
-    c.velocities.resize(rows.size());
+      for (int k = 0; k < kept; ++k)
+        vf[f * c.capacity + k] = vf[f * c.capacity + row[k]];
+    c.positions.resize(kept);
+    c.velocities.resize(kept);
     Array out;
     out.push_back(c.positions);
     out.push_back(c.velocities);
@@ -240,9 +247,10 @@ public:
     if (!c.valid)
       return {};
     auto view = c.view();
+    const int64_t history = previous.size();
     for (int row = 0; row < c.count; ++row)
       if (view.i(I_HISTORY_INDEX, row) < 0 ||
-          view.i(I_HISTORY_INDEX, row) >= previous.size())
+          view.i(I_HISTORY_INDEX, row) >= history)
         return {};
     auto *out = previous.ptrw();
     auto *pos = c.positions.ptr();
@@ -289,11 +297,16 @@ public:
     if (!c.valid)
       return {};
     auto view = c.view();
+    // Sizes and raw pointers outside the row loops: packed-array operator[] and size() call into the engine (#263).
+    const int64_t special_count = special.size(), definition_count = definitions.size(),
+                  previous_count = previous.size();
     for (int row = 0; row < c.count; ++row)
       if (view.i(I_HISTORY_INDEX, row) < 0 ||
-          view.i(I_HISTORY_INDEX, row) >= special.size() ||
-          view.i(I_HISTORY_INDEX, row) >= definitions.size())
+          view.i(I_HISTORY_INDEX, row) >= special_count ||
+          view.i(I_HISTORY_INDEX, row) >= definition_count)
         return {};
+    const int32_t *special_flags = special.ptr();
+    const Vector2 *previous_positions = previous.ptr();
     PackedVector2Array prev;
     PackedInt32Array sides, groups, flags, histories;
     PackedInt64Array ids;
@@ -311,19 +324,20 @@ public:
     auto *s = sides.ptrw(), *g = groups.ptrw(), *f = flags.ptrw(),
          *h = histories.ptrw();
     auto *d = dynamic.ptrw();
+    int64_t *id = ids.ptrw();
     const Vector2 *positions = c.positions.ptr(),
                   *velocities = c.velocities.ptr();
     for (int row = 0; row < c.count; ++row) {
       RenderRow value(view, row, {velocities[row].x, velocities[row].y},
-                      special[view.i(I_HISTORY_INDEX, row)]);
+                      special_flags[view.i(I_HISTORY_INDEX, row)]);
       h[row] = value.history;
-      ids.set(row, view.i(I_ID, row));
+      id[row] = view.i(I_ID, row);
       selected[row] = definitions[value.history];
       s[row] = value.side;
       g[row] = value.group;
       f[row] = value.flags;
-      o[row] = value.history < previous.size() ? previous[value.history]
-                                               : positions[row];
+      o[row] = value.history < previous_count ? previous_positions[value.history]
+                                              : positions[row];
       for (int k = 0; k < 5; ++k)
         d[row * 5 + k] = value.dynamic[k];
     }

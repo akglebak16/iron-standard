@@ -7,10 +7,16 @@ extends RefCounted
 ## - infantry holding: a screen point where its spearmen cover the own archers against closing riders;
 ## - cavalry in a charge: the shock cycle, run-up and impact, then a rally behind or beyond the target and a new run-up.
 ## Fighters are sampled with a fixed stride (at most AI_SQUAD_SAMPLE_LIMIT), from the motion columns.
+## Stage Р3 (TERRAIN.md 7), only on a field with terrain rules (State.terrain_rules; the open field is untouched):
+## - infantry in the forest charges loose;
+## - shock cavalry rallies where its run-up crosses no forest or ford, and an AI flank waypoint moves to open ground;
+## - AI archers standing in range take the nearest high ground or forest edge (the player's stand where he ordered).
+## The terrain is read cell by cell from the grid, without allocating.
 const Config = preload("res://core/battle/config.gd")
 const State = preload("res://core/battle/model/state.gd")
 const Group = preload("res://core/battle/model/group.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
+const TerrainGrid = preload("res://core/battle/model/terrain_grid.gd")
 const MELEE_MODE := 2 # MotionStore.MODES.find(Config.AI_MODE_MELEE), checked in the doctrine test.
 const RANK_MODE := 6 # MotionStore.MODES.find(Config.AI_MODE_RANK).
 
@@ -28,6 +34,7 @@ class Sample:
 	var velocity_sum := Vector2.ZERO
 	var engaged := 0 # In melee mode within AI_FIELD_CONTACT_DISTANCE of the target.
 	var waiting := 0 # Keeping a place in a formed line (rank mode).
+	var forest := 0 # Standing in a forest cell (stage Р3; counted only on a field with terrain rules).
 	var targets := PackedVector2Array()
 	var points := PackedVector2Array() # Sampled fighter positions.
 
@@ -60,7 +67,9 @@ class Sample:
 		var offset := offset_sum / ready
 		return position_sum / ready - Vector2(-sin(direction), cos(direction)) * offset.x - Vector2(cos(direction), sin(direction)) * offset.y
 
-static func step(battle: State, dt: float) -> void:
+## `ai0`, `ai1`: the player's and the enemy command are led by an AI brain (their hold points are the brain's, not the
+## player's orders); the allies (#243) always have their own AI commander.
+static func step(battle: State, dt: float, ai0 := false, ai1 := false) -> void:
 	if battle.groups.size() < 2:
 		return
 	for command in battle.groups.size(): # the player, the enemy and the player's allies (#243)
@@ -78,7 +87,8 @@ static func step(battle: State, dt: float) -> void:
 			group.doctrine_backing = group.backing
 			match kind:
 				Config.GROUP_INFANTRY: _infantry(battle, group, command)
-				Config.GROUP_CAVALRY: _cavalry(battle, group)
+				Config.GROUP_ARCHERS: _archers(battle, group, command, ai0 if command == Config.COMMAND_PLAYER else ai1 if command == Config.COMMAND_ENEMY else true)
+				Config.GROUP_CAVALRY: _cavalry(battle, group, command)
 
 static func _infantry(battle: State, group: Group, command: int) -> void:
 	if group.order != Config.ORDER_CHARGE or group.backing:
@@ -123,6 +133,9 @@ static func _infantry(battle: State, group: Group, command: int) -> void:
 ## few fighters; formed otherwise.
 static func formed_wanted(battle: State, group: Group, sample: Sample) -> bool:
 	if group.loose or group.mingled or sample.ready < Config.AI_FORMATION_MIN_UNITS:
+		return false
+	# Stage Р3: a line does not hold together among the trees.
+	if sample.forest > 0 and sample.forest >= sample.ready * Config.AI_TERRAIN_FOREST_LOOSE_SHARE:
 		return false
 	if sample.aimed > 0 and sample.fleeing > sample.aimed * Config.AI_FORMATION_PURSUIT_SHARE:
 		return false
@@ -190,10 +203,12 @@ static func _screen(battle: State, group: Group, command: int) -> void:
 	group.screen_lateral = Vector2(-toward.y, toward.x)
 
 ## Shock cavalry: after AI_CAVALRY_MELEE_SECONDS stuck in foot melee, rally away from the targets and charge again.
-static func _cavalry(battle: State, group: Group) -> void:
+static func _cavalry(battle: State, group: Group, command: int) -> void:
 	if group.order != Config.ORDER_CHARGE or group.backing:
 		group.rally = false
 		group.contact_seconds = 0.0
+		if battle.terrain_rules != null and group.tactic_state == Config.AI_TACTIC_FLANK and group.waypoint != group.open_waypoint:
+			_open_waypoint(battle, group, command)
 		return
 	var sample := sample_group(battle, group, true, false, group.rally)
 	if sample.ready == 0:
@@ -219,6 +234,8 @@ static func _cavalry(battle: State, group: Group) -> void:
 	var rally_point := (at + away * Config.AI_CAVALRY_RALLY_DISTANCE).clamp(edge, battle.arena_size - edge)
 	if battle.wall != null and not _clear_of_wall(battle, at, rally_point):
 		return # At the wall and in the gates the riders fight on loose, as before.
+	if battle.terrain_rules != null:
+		rally_point = _open_rally(battle.terrain_rules, at, away, aim, rally_point, battle.arena_size - edge)
 	group.center = rally_point
 	if aim != Vector2.INF and aim != group.center:
 		group.direction = (aim - group.center).angle()
@@ -226,6 +243,139 @@ static func _cavalry(battle: State, group: Group) -> void:
 	group.contact_seconds = 0.0
 	group.doctrine_seconds = 0.0
 	group.layout()
+
+## Stage Р3: the first of the turned ways away whose rally point and run-up to `aim` are open ground; `plain` (the
+## straight way away) when none is.
+static func _open_rally(grid: TerrainGrid, at: Vector2, away: Vector2, aim: Vector2, plain: Vector2, far_edge: Vector2) -> Vector2:
+	var edge := Vector2.ONE * Config.AI_CAVALRY_RALLY_EDGE
+	for turn: float in Config.AI_TERRAIN_RALLY_TURNS:
+		var point := (at + away.rotated(turn) * Config.AI_CAVALRY_RALLY_DISTANCE).clamp(edge, far_edge)
+		if open_run(grid, point, aim, INF):
+			return point
+	return plain
+
+## Stage Р3: the flank waypoint of an AI cavalry group moves towards the middle of the field until the riders can
+## charge from it: open ground there and on the run-up of AI_CAVALRY_CHARGE_DISTANCE towards the enemy. Checked once per
+## waypoint the brain sets; it stays where it was when no cell within AI_TERRAIN_WAYPOINT_SHIFTS will do.
+static func _open_waypoint(battle: State, group: Group, command: int) -> void:
+	var grid := battle.terrain_rules
+	var foe := battle.centroid(1 - State.side_of(command))
+	var start := group.waypoint
+	var toward := signf(battle.arena_size.y * 0.5 - start.y)
+	for shift in Config.AI_TERRAIN_WAYPOINT_SHIFTS + 1:
+		var point := Vector2(start.x, start.y + toward * shift * Config.TERRAIN_CELL)
+		if open_run(grid, point, foe, Config.AI_CAVALRY_CHARGE_DISTANCE):
+			group.waypoint = point
+			break
+	group.open_waypoint = group.waypoint
+
+## Stage Р3: no forest, ford or water (no charge there, TerrainRules.no_charge) at `from` and every TERRAIN_CELL on the
+## straight way to `to`, at most `length` of it (INF: the whole way; `to` INF: only `from`).
+static func open_run(grid: TerrainGrid, from: Vector2, to: Vector2, length: float) -> bool:
+	if _no_charge(grid.cover[grid.index(from)]):
+		return false
+	if not to.is_finite() or to == from:
+		return true
+	var way := to - from
+	var reach := minf(way.length(), length)
+	var step := way.normalized() * Config.TERRAIN_CELL
+	for k in range(1, floori(reach / Config.TERRAIN_CELL) + 1):
+		if _no_charge(grid.cover[grid.index(from + step * k)]):
+			return false
+	return true
+
+static func _no_charge(cover: int) -> bool:
+	return cover == TerrainGrid.Cover.FOREST or cover == TerrainGrid.Cover.FORD or cover == TerrainGrid.Cover.WATER
+
+## Stage Р3: AI archers holding in range of the enemy take the nearest high ground or forest edge. The post is sought
+## once, when the brain's hold point has stood still for one decision (with no such ground they stay posted where they
+## stand); the brain moves the centre again when it advances or charges, and the post is sought anew where it stops.
+static func _archers(battle: State, group: Group, command: int, ai: bool) -> void:
+	if battle.terrain_rules == null or battle.wall != null or not ai or group.order != Config.ORDER_HOLD or group.backing:
+		group.post = Vector2.INF
+		group.post_anchor = Vector2.INF
+		return
+	if group.post.is_finite() and group.center == group.post:
+		return
+	group.post = Vector2.INF
+	if group.center != group.post_anchor:
+		group.post_anchor = group.center
+		return
+	var post := _post(battle, group, command)
+	if post.is_finite():
+		group.center = post
+	group.post = group.center
+
+## The nearest cell within AI_TERRAIN_POST_RADIUS higher than the nearest enemy by TERRAIN_HIGHER_STEP, else the nearest
+## forest edge, keeping the brain's distance to the enemy (it neither advances nor charges from there); INF when the
+## archers already stand on such ground or there is none.
+static func _post(battle: State, group: Group, command: int) -> Vector2:
+	var grid := battle.terrain_rules
+	var foe_groups: Array = battle.foe_groups(command)
+	var anchor := group.center
+	var near := _nearest_foe(foe_groups, anchor)
+	if not near.is_finite():
+		return Vector2.INF
+	var distance := anchor.distance_to(near)
+	if distance > Config.AI_ARCHER_ADVANCE_DISTANCE or distance < Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE:
+		return Vector2.INF
+	var wanted := grid.elevation[grid.index(near)] + Config.TERRAIN_HIGHER_STEP
+	var home := grid.index(anchor)
+	if grid.relief and grid.elevation[home] >= wanted:
+		return Vector2.INF
+	var in_forest: bool = grid.cover[home] == TerrainGrid.Cover.FOREST
+	var cells := ceili(Config.AI_TERRAIN_POST_RADIUS / Config.TERRAIN_CELL)
+	var cx := clampi(floori(anchor.x / Config.TERRAIN_CELL), 0, grid.width - 1)
+	var cy := clampi(floori(anchor.y / Config.TERRAIN_CELL), 0, grid.height - 1)
+	var best_high := Vector2.INF
+	var best_high_distance := INF
+	var best_edge := Vector2.INF
+	var best_edge_distance := INF
+	for y in range(maxi(0, cy - cells), mini(grid.height, cy + cells + 1)):
+		for x in range(maxi(0, cx - cells), mini(grid.width, cx + cells + 1)):
+			var point: Vector2 = grid.cell_center(x, y)
+			var away := anchor.distance_to(point)
+			if away > Config.AI_TERRAIN_POST_RADIUS or (away >= best_high_distance and away >= best_edge_distance):
+				continue
+			var cell := y * grid.width + x
+			var cover: int = grid.cover[cell]
+			if cover == TerrainGrid.Cover.WATER or cover == TerrainGrid.Cover.FORD or cover == TerrainGrid.Cover.ROCK:
+				continue
+			var high: bool = grid.relief and grid.elevation[cell] >= wanted and away < best_high_distance
+			if not high and (in_forest or cover != TerrainGrid.Cover.FOREST or away >= best_edge_distance or not _edge(grid, x, y)):
+				continue
+			# The brain's distance to the enemy, measured to the enemy man nearest to the hold point.
+			var reach := point.distance_to(near)
+			if reach > Config.AI_ARCHER_ADVANCE_DISTANCE or reach < Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE:
+				continue
+			if high:
+				best_high = point
+				best_high_distance = away
+			else:
+				best_edge = point
+				best_edge_distance = away
+	return best_high if best_high.is_finite() else best_edge
+
+## A forest cell with open ground (not forest) next to it.
+static func _edge(grid: TerrainGrid, x: int, y: int) -> bool:
+	var forest := TerrainGrid.Cover.FOREST
+	var row := y * grid.width
+	return (x + 1 < grid.width and grid.cover[row + x + 1] != forest) or (x > 0 and grid.cover[row + x - 1] != forest) \
+		or (y + 1 < grid.height and grid.cover[row + grid.width + x] != forest) or (y > 0 and grid.cover[row - grid.width + x] != forest)
+
+## The enemy squads' sampled fighter nearest to `point` (the brain's squad picture, tactics.gd _scan); INF without one.
+static func _nearest_foe(foe_groups: Array, point: Vector2) -> Vector2:
+	var best := Vector2.INF
+	var best_distance := INF
+	for foe: Group in foe_groups:
+		if foe.scan_count < Config.AI_SQUAD_MIN_UNITS:
+			continue
+		for at in foe.scan_points:
+			var d := point.distance_squared_to(at)
+			if d < best_distance:
+				best_distance = d
+				best = at
+	return best
 
 ## Both points on one side of the siege wall and at least AI_FORMATION_WALL_DISTANCE from it.
 static func _clear_of_wall(battle: State, a: Vector2, b: Vector2) -> bool:
@@ -240,6 +390,7 @@ static func sample_group(battle: State, group: Group, targets := true, points :=
 	var motion = battle.motion
 	var flags: PackedInt64Array = motion.integer_fields
 	var reals: PackedFloat64Array = motion.real_fields
+	var grid: TerrainGrid = battle.terrain_rules if targets else null
 	var vectors: PackedVector2Array = motion.vector_fields
 	var positions: PackedVector2Array = motion.positions
 	var velocities: PackedVector2Array = motion.velocities
@@ -266,6 +417,8 @@ static func sample_group(battle: State, group: Group, targets := true, points :=
 			sample.velocity_sum += velocities[row]
 		if not targets:
 			continue
+		if grid != null and grid.cover[grid.index(at)] == TerrainGrid.Cover.FOREST:
+			sample.forest += 1
 		var mode: int = flags[fields.MODE * capacity + row]
 		if mode == RANK_MODE:
 			sample.waiting += 1

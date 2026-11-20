@@ -19,6 +19,7 @@ const SiegeSetup = preload("res://core/battle/data/siege_setup.gd")
 const TerrainTemplates = preload("res://core/battle/data/terrain_templates.gd")
 const AiProfiles = preload("res://core/battle/simulation/ai/profiles.gd")
 const ArenaLayout = preload("res://core/battle/rules/arena_layout.gd")
+const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 
 static func create(setup: Setup, catalog: Catalog, gear_catalog: GearCatalog = null, perk_catalog: PerkCatalog = null, companion_catalog: CompanionCatalog = null, contact_solver := Callable(), movement_solver := Callable(), column_backend: RefCounted = null) -> Session:
 	if setup == null or catalog == null or not setup.hero_position.is_finite() or not AiProfiles.valid(setup):
@@ -113,6 +114,7 @@ static func _lay_terrain(setup: Setup, state: State) -> void:
 	state.set_terrain(field.grid)
 	state.terrain_template = field.template
 	state.set_plants(field.plants)
+	FieldAssessment.survey_of(state) # Stage Р3: the static terrain layer, here and not in a tick.
 
 ## The unit cap of the player's side split between his own army and his allies' (#243) by their head counts: the side
 ## puts as many fighters on the field as one merged army would. [own cap, allied cap]; without allies the whole cap.
