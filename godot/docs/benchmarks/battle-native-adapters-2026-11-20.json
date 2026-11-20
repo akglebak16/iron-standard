@@ -1,0 +1,585 @@
+{
+ "issue": 263,
+ "umbrella": 250,
+ "command": "node godot/tools/benchmark.cjs dist/godot/migration-release/IronStandard.exe --n=1000|200 --scenario=… [--terrain=edge] --ticks=3600 --warmup=120 --seed=4242 --profile-phases --repeat=5 --execution-context=host; main (de53b56) and branch builds alternate per scenario",
+ "view_command": "IronStandard.exe --resolution 1920x1080 --disable-vsync --max-fps 0 -- --view-benchmark --measure-seconds=30 --camera=wide|field --mode=battle --n=1000 --audio=on --seed=4242",
+ "cpu_benchmark": {
+  "cavalry": {
+   "tick_p95": [
+    6.641,
+    4.514
+   ],
+   "tick_mean": [
+    3.15241503870254,
+    2.22059970512348
+   ],
+   "tick_p99": [
+    8.2,
+    6.079
+   ],
+   "ai_mean": [
+    2.01488868411353,
+    1.19366089200147
+   ],
+   "ai_p95": [
+    3.97,
+    2.292
+   ],
+   "comp_mean": [
+    0.40787762624401,
+    0.314185403612237
+   ],
+   "comp_p95": [
+    1.412,
+    1.039
+   ],
+   "snap_p95": [
+    1.282,
+    1.217
+   ],
+   "same_battle": true,
+   "repeats_p95": [
+    [
+     6.021,
+     6.641,
+     6.657,
+     6.68,
+     6.442
+    ],
+    [
+     4.303,
+     4.359,
+     4.525,
+     4.514,
+     4.632
+    ]
+   ],
+   "repeats_mean": [
+    [
+     2.9307,
+     3.1524,
+     3.2007,
+     3.1657,
+     3.0918
+    ],
+    [
+     2.0952,
+     2.0995,
+     2.237,
+     2.2206,
+     2.26
+    ]
+   ],
+   "revision": [
+    "de53b56d1073530950a958d60d135247978067d6",
+    "de53b56d1073530950a958d60d135247978067d6"
+   ],
+   "dirty": [
+    true,
+    true
+   ],
+   "executable_sha256": [
+    "80a67ebf29e135e7591a2c8c9cba035dbc83d04554ea5e2a89974968e0435c2b",
+    "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d"
+   ],
+   "dependencies": [
+    {
+     "iron_contacts.windows.x86_64.dll": "516f4ea883cc75ae886bff53a6e563190bb5a6799d5ee5f69ddf439183147c9f"
+    },
+    {
+     "iron_contacts.windows.x86_64.dll": "e020105c5b007780d386e6017935d7c430dfbafb775795d80527fcda09f17deb"
+    }
+   ],
+   "measured_ticks": 2713,
+   "events": {
+    "0": 15600,
+    "1": 3615,
+    "2": 8088,
+    "3": 1676,
+    "12": 1,
+    "18": 218,
+    "19": 137,
+    "25": 1
+   }
+  },
+  "mixed": {
+   "tick_p95": [
+    4.336,
+    3.668
+   ],
+   "tick_mean": [
+    2.25875305555556,
+    2.10249611111111
+   ],
+   "tick_p99": [
+    7.657,
+    8.056
+   ],
+   "ai_mean": [
+    1.15238277777778,
+    0.902622777777778
+   ],
+   "ai_p95": [
+    2.179,
+    1.545
+   ],
+   "comp_mean": [
+    0.241184722222222,
+    0.211359166666667
+   ],
+   "comp_p95": [
+    1.175,
+    1.017
+   ],
+   "snap_p95": [
+    1.323,
+    1.459
+   ],
+   "same_battle": true,
+   "repeats_p95": [
+    [
+     4.314,
+     4.323,
+     4.336,
+     4.412,
+     4.337
+    ],
+    [
+     4.026,
+     3.52,
+     3.668,
+     3.958,
+     3.414
+    ]
+   ],
+   "repeats_mean": [
+    [
+     2.2505,
+     2.2794,
+     2.2568,
+     2.3111,
+     2.2588
+    ],
+    [
+     2.1141,
+     2.0228,
+     2.1025,
+     2.113,
+     1.9381
+    ]
+   ],
+   "revision": [
+    "de53b56d1073530950a958d60d135247978067d6",
+    "de53b56d1073530950a958d60d135247978067d6"
+   ],
+   "dirty": [
+    true,
+    true
+   ],
+   "executable_sha256": [
+    "80a67ebf29e135e7591a2c8c9cba035dbc83d04554ea5e2a89974968e0435c2b",
+    "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d"
+   ],
+   "dependencies": [
+    {
+     "iron_contacts.windows.x86_64.dll": "516f4ea883cc75ae886bff53a6e563190bb5a6799d5ee5f69ddf439183147c9f"
+    },
+    {
+     "iron_contacts.windows.x86_64.dll": "e020105c5b007780d386e6017935d7c430dfbafb775795d80527fcda09f17deb"
+    }
+   ],
+   "measured_ticks": 3600,
+   "events": {
+    "0": 6714,
+    "1": 2572,
+    "2": 752,
+    "3": 1052,
+    "5": 8021,
+    "9": 2,
+    "13": 3351,
+    "18": 404,
+    "19": 467,
+    "25": 9
+   }
+  },
+  "volley": {
+   "tick_p95": [
+    4.747,
+    3.853
+   ],
+   "tick_mean": [
+    2.18635457348407,
+    1.88303494347379
+   ],
+   "tick_p99": [
+    9.793,
+    9.633
+   ],
+   "ai_mean": [
+    0.850705035971223,
+    0.616615621788284
+   ],
+   "ai_p95": [
+    1.917,
+    1.23
+   ],
+   "comp_mean": [
+    0.333984583761562,
+    0.272812949640288
+   ],
+   "comp_p95": [
+    1.254,
+    1.024
+   ],
+   "snap_p95": [
+    1.701,
+    1.597
+   ],
+   "same_battle": true,
+   "repeats_p95": [
+    [
+     4.747,
+     5.293,
+     4.722,
+     4.733,
+     4.833
+    ],
+    [
+     3.809,
+     3.892,
+     3.853,
+     4.162,
+     3.838
+    ]
+   ],
+   "repeats_mean": [
+    [
+     2.2041,
+     2.2538,
+     2.1605,
+     2.1643,
+     2.1864
+    ],
+    [
+     1.8562,
+     1.8954,
+     1.883,
+     1.9197,
+     1.8789
+    ]
+   ],
+   "revision": [
+    "de53b56d1073530950a958d60d135247978067d6",
+    "de53b56d1073530950a958d60d135247978067d6"
+   ],
+   "dirty": [
+    true,
+    true
+   ],
+   "executable_sha256": [
+    "80a67ebf29e135e7591a2c8c9cba035dbc83d04554ea5e2a89974968e0435c2b",
+    "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d"
+   ],
+   "dependencies": [
+    {
+     "iron_contacts.windows.x86_64.dll": "516f4ea883cc75ae886bff53a6e563190bb5a6799d5ee5f69ddf439183147c9f"
+    },
+    {
+     "iron_contacts.windows.x86_64.dll": "e020105c5b007780d386e6017935d7c430dfbafb775795d80527fcda09f17deb"
+    }
+   ],
+   "measured_ticks": 973,
+   "events": {
+    "0": 2483,
+    "3": 553,
+    "5": 2819,
+    "12": 1,
+    "13": 692,
+    "18": 1673,
+    "19": 1510,
+    "25": 313
+   }
+  },
+  "edge": {
+   "tick_p95": [
+    4.466,
+    3.391
+   ],
+   "tick_mean": [
+    2.44468333333333,
+    1.99538888888889
+   ],
+   "tick_p99": [
+    8.063,
+    7.827
+   ],
+   "ai_mean": [
+    1.28066972222222,
+    0.902663611111111
+   ],
+   "ai_p95": [
+    2.205,
+    1.402
+   ],
+   "comp_mean": [
+    0.265555,
+    0.216028333333333
+   ],
+   "comp_p95": [
+    1.251,
+    1.005
+   ],
+   "snap_p95": [
+    1.385,
+    1.338
+   ],
+   "same_battle": true,
+   "repeats_p95": [
+    [
+     4.252,
+     4.24,
+     4.466,
+     4.577,
+     4.601
+    ],
+    [
+     3.387,
+     3.357,
+     4.982,
+     3.525,
+     3.391
+    ]
+   ],
+   "repeats_mean": [
+    [
+     2.4032,
+     2.4007,
+     2.4447,
+     2.4692,
+     2.561
+    ],
+    [
+     1.9895,
+     1.9954,
+     2.3894,
+     2.0237,
+     1.9875
+    ]
+   ],
+   "revision": [
+    "de53b56d1073530950a958d60d135247978067d6",
+    "de53b56d1073530950a958d60d135247978067d6"
+   ],
+   "dirty": [
+    true,
+    true
+   ],
+   "executable_sha256": [
+    "80a67ebf29e135e7591a2c8c9cba035dbc83d04554ea5e2a89974968e0435c2b",
+    "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d"
+   ],
+   "dependencies": [
+    {
+     "iron_contacts.windows.x86_64.dll": "516f4ea883cc75ae886bff53a6e563190bb5a6799d5ee5f69ddf439183147c9f"
+    },
+    {
+     "iron_contacts.windows.x86_64.dll": "e020105c5b007780d386e6017935d7c430dfbafb775795d80527fcda09f17deb"
+    }
+   ],
+   "measured_ticks": 3600,
+   "events": {
+    "0": 7423,
+    "1": 3179,
+    "2": 448,
+    "3": 1174,
+    "5": 9244,
+    "9": 3,
+    "13": 3687,
+    "18": 97,
+    "19": 31,
+    "25": 7
+   }
+  },
+  "mixed200": {
+   "tick_p95": [
+    0.744,
+    0.713
+   ],
+   "tick_mean": [
+    0.347381881736091,
+    0.342638508593067
+   ],
+   "tick_p99": [
+    1.186,
+    1.262
+   ],
+   "ai_mean": [
+    0.151185551995339,
+    0.138870375764637
+   ],
+   "ai_p95": [
+    0.314,
+    0.285
+   ],
+   "comp_mean": [
+    0.016742499271774,
+    0.0151316632682785
+   ],
+   "comp_p95": [
+    0.168,
+    0.147
+   ],
+   "snap_p95": [
+    0.285,
+    0.305
+   ],
+   "same_battle": true,
+   "repeats_p95": [
+    [
+     0.759,
+     0.737,
+     0.744,
+     0.726,
+     0.754
+    ],
+    [
+     0.689,
+     0.702,
+     0.713,
+     0.8,
+     0.845
+    ]
+   ],
+   "repeats_mean": [
+    [
+     0.3586,
+     0.3472,
+     0.3474,
+     0.3415,
+     0.3507
+    ],
+    [
+     0.3306,
+     0.3323,
+     0.3426,
+     0.372,
+     0.3936
+    ]
+   ],
+   "revision": [
+    "de53b56d1073530950a958d60d135247978067d6",
+    "de53b56d1073530950a958d60d135247978067d6"
+   ],
+   "dirty": [
+    true,
+    true
+   ],
+   "executable_sha256": [
+    "80a67ebf29e135e7591a2c8c9cba035dbc83d04554ea5e2a89974968e0435c2b",
+    "dfea9995c6f2252bb25ce17c57660b8ce12bfc3e95b1ff6446795db233299b7d"
+   ],
+   "dependencies": [
+    {
+     "iron_contacts.windows.x86_64.dll": "516f4ea883cc75ae886bff53a6e563190bb5a6799d5ee5f69ddf439183147c9f"
+    },
+    {
+     "iron_contacts.windows.x86_64.dll": "e020105c5b007780d386e6017935d7c430dfbafb775795d80527fcda09f17deb"
+    }
+   ],
+   "measured_ticks": 3433,
+   "events": {
+    "0": 1858,
+    "1": 626,
+    "2": 167,
+    "3": 318,
+    "5": 1846,
+    "9": 1,
+    "12": 1,
+    "13": 850,
+    "18": 21,
+    "19": 40,
+    "25": 3
+   }
+  }
+ },
+ "view": [
+  {
+   "run": "view-1-250-main-wide.json",
+   "frame": {
+    "count": 5253,
+    "mean_ms": 5.71183304778222,
+    "p50_ms": 5.374,
+    "p95_ms": 9.052,
+    "p99_ms": 11.1
+   },
+   "draw_calls_mean": 375.052160670093,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-2-250-battle-native-2fb633-wide.json",
+   "frame": {
+    "count": 5410,
+    "mean_ms": 5.54557818853974,
+    "p50_ms": 5.304,
+    "p95_ms": 8.219,
+    "p99_ms": 10.861
+   },
+   "draw_calls_mean": 375.97134935305,
+   "worker": true,
+   "simulation_ticks_measured": 1799
+  },
+  {
+   "run": "view-3-250-battle-native-2fb633-field.json",
+   "frame": {
+    "count": 4930,
+    "mean_ms": 6.08621460446247,
+    "p50_ms": 5.827,
+    "p95_ms": 9.148,
+    "p99_ms": 12.158
+   },
+   "draw_calls_mean": 429.380324543611,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-4-250-main-field.json",
+   "frame": {
+    "count": 4617,
+    "mean_ms": 6.49817847086853,
+    "p50_ms": 6.088,
+    "p95_ms": 10.252,
+    "p99_ms": 12.976
+   },
+   "draw_calls_mean": 430.946935239333,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-5-250-main-wide.json",
+   "frame": {
+    "count": 4242,
+    "mean_ms": 7.07363319189062,
+    "p50_ms": 6.526,
+    "p95_ms": 10.859,
+    "p99_ms": 13.588
+   },
+   "draw_calls_mean": 380.297736916549,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-6-250-battle-native-2fb633-wide.json",
+   "frame": {
+    "count": 4725,
+    "mean_ms": 6.34973312169312,
+    "p50_ms": 6.095,
+    "p95_ms": 10.345,
+    "p99_ms": 13.28
+   },
+   "draw_calls_mean": 368.019047619048,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  }
+ ]
+}

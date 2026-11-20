@@ -81,6 +81,10 @@ VSync; второй повтор меняет порядок версий. Па�
 Этапы 1а и «1а-стрелки» эпика ИИ: release-цена правил бойца в фазе движения (три сборки по очереди: до 1а,
 после 1а, после стрелков) и арена залпов «до/после» — [ai-stage1a-archers-2026-11-16.md](ai-stage1a-archers-2026-11-16.md).
 
+Бой на C++, часть 2 (#263): адаптеры native читают packed-массивы через `ptr()`, а не `operator[]` godot-cpp;
+release A/B против `main` (конница 1000×1000 p95 тика 6,64 → 4,51 мс при том же бое) и отрисовка —
+[battle-native-adapters-2026-11-20.md](battle-native-adapters-2026-11-20.md).
+
 `compare_view.cjs` поддерживает `--backend=release`, `--measure-seconds=60`,
 `--camera=wide|near|hero` и `--repeat=5`. Например:
 
