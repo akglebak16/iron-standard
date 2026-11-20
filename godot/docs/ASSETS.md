@@ -93,6 +93,8 @@ OpenAI права на результат принадлежат пользов�
 (ChatGPT) по `tools/battle/heraldic_source/emp-prompts.md`: `emp-torsos.png`, `emp-heads.png`, `emp-shields.png`,
 `emp-horse.png` (свой бардированный конь: багряная попона с золотыми солнцами). Оружие — общее (`weapons.png`, `lance.png`).
 Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emp`, геометрия — `emp_heraldic_geometry.gd`.
+Варианты (страницы 1–3: другие лица и детали одежды и брони; конь свой, `emp-horse.png`, его масть не меняется): `emp-torsos-v1…v3.png`,
+`emp-heads-v1…v3.png`, тем же генератором правкой основных листов (промпты в `emp-prompts.md`, раздел «Варианты»).
 Под знаменем игрока багряное сукно перекрашивается в цвет знамени; срез шеи не трогается (кровь того же оттенка).
 Эталоны теста палитр знамени теперь на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`).
 
