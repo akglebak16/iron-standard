@@ -31,7 +31,7 @@ OpenAI права на результат принадлежат пользов�
 отдельным слоем для блока; у тела без головы вырез залит кровью, у головы — низ шеи.
 `body.png` остаётся эталоном стиля и масштаба.
 
-Сборка: `node godot/tools/battle/render_dominion_heraldic.cjs` (инструмент sharp
+Сборка: `node godot/tools/battle/render_heraldic_faction.cjs dominion` (инструмент sharp
 0.35.5, только для подготовки ассетов; при необходимости задать NODE_PATH).
 Скрипт кадрирует, ориентирует и укладывает готовые рисунки, не вызывает модель.
 Генератор ставит голову шеей в общую точку (76, 78) в вырез воротника. Центры записываются в `dominion_heraldic_heads.gd`.
@@ -69,7 +69,7 @@ OpenAI права на результат принадлежат пользов�
 без всадника). Части нарисованы генератором картинок OpenAI (ChatGPT) по промптам из
 `tools/battle/heraldic_source/horses-prompts.md`: `horses.png` (длинные низкие кони без ног),
 `riders-torsos.png`, `riders-heads.png`, `riders-shields.png` (с нуля по пехотным листам), `lance.png`.
-Сборка: `node godot/tools/battle/render_dominion_cavalry.cjs` (sharp); голова лежит поверх торса и
+Сборка: тем же `node godot/tools/battle/render_heraldic_faction.cjs dominion` (sharp); голова лежит поверх торса и
 заходит на кольчужный воротник на 3 px ниже переднего края выреза. Геометрия —
 `apps/godot/visuals/dominion_heraldic_cavalry_geometry.gd`. 11-я строка — всадник без коня
 (разрубленный падает отдельно, конь — из `dominion_heraldic_horses.png`).
