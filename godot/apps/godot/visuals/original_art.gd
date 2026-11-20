@@ -306,14 +306,15 @@ static func _region_image(texture: AtlasTexture) -> Image:
 	return (_sheet_images[key] as Image).get_region(Rect2i(texture.region))
 
 ## Draw the fallen mount without its rider for a severed-rider corpse.
-static func mount_corpse(unit: Dictionary, size: Vector2i, troop_id := "") -> Image:
+static func mount_corpse(unit: Dictionary, size: Vector2i, troop_id := "", variant := 0) -> Image:
 	if (unit.get("hero", false) or unit.get("companion", false)) and HeroHeraldic.supports(unit.look) and size == HeroHeraldic.MOUNTED_FRAME:
 		var coat := DominionHeraldic.horse(String(unit.look.get("horse", "bay")))
 		coat.convert(Image.FORMAT_RGBA8)
 		return coat
 	if DominionHeraldic.is_cavalry(troop_id) and DominionHeraldic.supports(troop_id, _faction(unit)):
-		# The faction's own horse when its atlas carries one, otherwise the shared coat.
-		var own := DominionHeraldic.sprite(troop_id, DominionHeraldic.MOUNT_PART, 0, _player_banner if _faction(unit) == "player" else -1)
+		# The faction's own horse when its atlas carries one, otherwise the shared coat. Variant pages
+		# may carry another coat, so the fallen horse keeps the rider's variant.
+		var own := DominionHeraldic.sprite(troop_id, DominionHeraldic.MOUNT_PART, variant, _player_banner if _faction(unit) == "player" else -1)
 		var horse: Image = own.get_image() if own != null else DominionHeraldic.horse(String(unit.look.get("horse", "bay")))
 		horse.convert(Image.FORMAT_RGBA8)
 		if horse.get_size() == size: return horse

@@ -55,3 +55,15 @@ Square canvas, STRICT 3x3 grid of equal cells, one shield centered in each used 
 8 f2c: kite shield, purple field with a cream diagonal bend, steel rim.
 9 f3c: kite shield, purple field with three cream fleurs-de-lis, gilded rim.
 ```
+
+## Варианты
+
+Листы `kin-torsos-v1…v3.png` и `kin-heads-v1…v3.png` — правка `kin-torsos.png` / `kin-heads.png` (вложение) тем же
+генератором. Общее для туловищ: «Draw a VARIANT of the SAME sheet: the same nine troops in the SAME cells… Every torso keeps
+EXACTLY its troop's armour type, its main colours, its silhouette… Only the DETAILS change: …» и обычный хвост про стиль
+и сетку 3×3. Детали: v1 — поношенная ткань с заплатами, полосатая отделка, простые железные пряжки, лилия меньше или на
+плече; v2 — ремни и наплечники, шахматная кайма, латунные заклёпки, поясные сумки; v3 — выцветшая ткань, кремовая
+отделка ворота и перевязь, латунные бляхи, ряды заклёпок.
+Головы: «the same nine helmets… but DIFFERENT MEN under them»: v1 — пожилые ветераны с проседью; v2 — молодые, бритые,
+светлые или рыжие; v3 — темноволосые, густые усы или раздвоенные бороды, шрамы. Закрытые шлемы меняют только намёт
+или навершие: v1 кремовый намёт, v2 полосатый намёт, v3 золочёная шишка.
