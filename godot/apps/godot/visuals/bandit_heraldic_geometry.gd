@@ -72,16 +72,16 @@ const DATA = {
 	"b2c": {
 		"center": [
 			80,
-			75
+			83
 		],
 		"neck": [
 			80,
-			101
+			109
 		],
 		"canonical_facing": 1,
 		"grip": [
 			129,
-			139
+			147
 		]
 	}
 }
