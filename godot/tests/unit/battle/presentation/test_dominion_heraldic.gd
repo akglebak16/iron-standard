@@ -69,6 +69,18 @@ func _initialize() -> void:
 		if Skins.FACTIONS[Skins.home_of(troop)].get("mount_row", false):
 			assert(Skins.sprite(troop, Skins.MOUNT_PART, 0) != null, "%s: the faction's own horse lies on" % troop)
 		assert(horse.get_used_rect().size.x > 200 and horse.get_pixel(80, 60).a == 0.0, "%s: the horse lies without its rider" % troop)
+	# Gallia's four pages are different men in different kit on differently coloured horses, and a
+	# fallen horse keeps its rider's coat.
+	var faces := Skins.sprite("f1", "portrait", 0).get_image().get_data()
+	assert(faces != Skins.sprite("f1", "portrait", 1).get_image().get_data(), "f1: variant 1 is another man")
+	var bay := Skins.sprite("f2c", Skins.MOUNT_PART, 0).get_image().get_data()
+	var other := Skins.sprite("f2c", Skins.MOUNT_PART, 2).get_image().get_data()
+	assert(bay != other, "f2c: variant 2 rides another coat")
+	var rider_look: Dictionary = Art.MANIFEST.troops["f2c|kin"].look.duplicate(true)
+	var rider_unit := {"id": 3, "look": rider_look, "faction": "kin", "hero": false, "companion": false, "mounted": true, "side": 0}
+	var expected := Skins.sprite("f2c", Skins.MOUNT_PART, 2).get_image()
+	expected.convert(Image.FORMAT_RGBA8)
+	assert(Art.mount_corpse(rider_unit, Vector2i(240, 244), "f2c", 2).get_data() == expected.get_data(), "f2c: the fallen horse keeps the rider's coat")
 	# A heraldic troop is drawn so only for its own side or for the player who hired it.
 	for pair in [["m2a", "emi"], ["p1", "pact"], ["b1", "bandit"], ["f1", "kin"]]:
 		assert(Skins.supports(pair[0], pair[1]) and Skins.supports(pair[0], "player"))

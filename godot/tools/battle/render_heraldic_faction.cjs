@@ -2,6 +2,8 @@
 // (heraldic_source/<faction>-torsos.png, -heads.png, -shields.png; horses.png; weapons.png, bow.png).
 // Rules: shareness/skills/unit-parts/SKILL.md («Правила по опыту»). The head lies OVER the torso and
 // laps HEAD_OVERLAP px past the front rim of the collar opening: no joint, no gap.
+// `variants: true`: pages 1–3 take <faction>-torsos-vN.png / -heads-vN.png when they exist (other men,
+// other armour details, same troop) and rotate natural horse coats, so a squad is not twenty clones.
 // Usage: NODE_PATH=<node_modules with sharp> node render_heraldic_faction.cjs nord [--out DIR]
 const fs=require('fs'),path=require('path'),sharp=require('sharp');
 const dir=__dirname,src=path.join(dir,'heraldic_source');
@@ -79,6 +81,7 @@ FACTIONS.undead={
  ],
 };
 FACTIONS.kin={
+ variants:true,
  troops:[
   {id:'f1',weapon:'sword',shield:'round',steel:false},
   {id:'f2',weapon:'sword',shield:'kite',steel:true},
@@ -125,6 +128,8 @@ FACTIONS.bandit={
   {id:'b2c',weapon:'sword',shield:false,steel:false,horse:'bay',riderDy:8},
  ],
 };
+// Natural coats a variant may switch to.
+const NATURAL_COATS=['bay','chestnut','dun','black','grey'];
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];
 const FOOT={W:152,H:176},HORSE={W:240,H:244};
 const RIDER=[4,23];
@@ -149,22 +154,24 @@ async function raw(buffer){return sharp(buffer).ensureAlpha().raw().toBuffer();}
 const pngOf=size=>data=>sharp(data,{raw:{width:size.W,height:size.H,channels:4}}).png().toBuffer();
 async function stamp(buffer,width,height,left,top){return {input:await sharp(buffer).resize(width,height,{fit:'fill'}).png().toBuffer(),left,top};}
 const sum=(d,p)=>d[p]+d[p+1]+d[p+2];
-const dark=(d,p)=>d[p+3]>128&&sum(d,p)<215;
+const dark=(d,p,limit=215)=>d[p+3]>128&&sum(d,p)<limit;
+
 // The collar opening is a dark hollow on the centre line: outline, back of the collar, hollow.
-async function neckHole(buffer){
+// Variant sheets pass a lower `limit`: their back of the collar may be grey (≈200), not cream.
+async function neckHole(buffer,limit=215){
  const {data,info}=await sharp(buffer).ensureAlpha().raw().toBuffer({resolveWithObject:true});
  const w=info.width,h=info.height,cx=w>>1;
  let y=0;
  while(y<h&&data[(y*w+cx)*4+3]<=128)y++;
- while(y<h&&dark(data,(y*w+cx)*4))y++;
- while(y<h&&!dark(data,(y*w+cx)*4))y++;
+ while(y<h&&dark(data,(y*w+cx)*4,limit))y++;
+ while(y<h&&!dark(data,(y*w+cx)*4,limit))y++;
  const top=y;
- while(y<h&&dark(data,(y*w+cx)*4))y++;
+ while(y<h&&dark(data,(y*w+cx)*4,limit))y++;
  const bottom=y-1,cy=(top+bottom)/2;
  if(bottom-top<3||top>h/3)throw Error('torso part without a collar opening');
  const row=Math.round(cy);let l=cx,r=cx;
- while(l>0&&dark(data,(row*w+l-1)*4))l--;
- while(r<w-1&&dark(data,(row*w+r+1)*4))r++;
+ while(l>0&&dark(data,(row*w+l-1)*4,limit))l--;
+ while(r<w-1&&dark(data,(row*w+r+1)*4,limit))r++;
  return {hole:[(l+r+1)/2,cy+.5,r-l+1,bottom-top+1]};
 }
 // Horizontal centre of a head part: the middle of its outline across the face band (35–80 % of the
@@ -218,7 +225,8 @@ async function horseStamp(buffer,caparison){
 }
 
 // One figure (foot or mounted): every layer placed in its frame, plus its geometry.
-async function figure(spec,index,sheets,art,caparison){
+async function figure(spec,index,sheets,art,caparison,variant=0){
+ // Variants (factions with `variants: true`): own torso/head sheets and a rotated natural horse coat.
  const mounted=!!spec.horse,size=mounted?HORSE:FOOT,frame=frameOf(size);
  // A rider can be nudged in the saddle: `riderDx` forward, `riderDy` down (a quiver widens a torso,
  // which then comes out shorter and sits too high).
@@ -228,7 +236,7 @@ async function figure(spec,index,sheets,art,caparison){
  const torsoPart=await cell(sheets.torsos,col,row,3,3);
  const headPart=await cell(sheets.heads,col,row,3,3);
  const t=await sharp(torsoPart).metadata(),h=await sharp(headPart).metadata();
- const {hole}=await neckHole(torsoPart);
+ const {hole}=await neckHole(torsoPart,variant?150:215);
  // A crest or plume adds height only: such heads set their own height so the helmet keeps its size.
  const torsoScale=TORSO_WIDTH/t.width,headScale=(spec.headHeight||HEAD_HEIGHT)/h.height;
  const torso={input:await sharp(torsoPart).resize(Math.round(t.width*torsoScale),Math.round(t.height*torsoScale)).png().toBuffer(),
@@ -281,7 +289,9 @@ async function figure(spec,index,sheets,art,caparison){
  geometry.grip=[handX,handY+11];
  return finish([await stamp(weapon,ww,wh,left,top),await stamp(glove,20,22,handX-13,handY)]);
  async function finish(weaponLayer){
-  const coat=COATS.indexOf(spec.horse);
+  // Each variant rides its own coat, so a squadron is not four copies of one horse; the faction's own
+  // horse art (cataphract) and the bone horse stay as drawn.
+  const coat=COATS.indexOf(NATURAL_COATS.includes(spec.horse)&&!spec.horseArt?NATURAL_COATS[(NATURAL_COATS.indexOf(spec.horse)+variant)%NATURAL_COATS.length]:spec.horse);
   const horseArt=spec.horseArt?await cell(path.join(src,spec.horseArt),0,0,1,1):mounted?await cell(path.join(src,'horses.png'),coat%3,Math.floor(coat/3),3,3):null;
   const horse=mounted?await horseStamp(horseArt,spec.horse==='barded'&&!spec.horseArt?caparison:null):null;
   return {spec,size,frame,png:pngOf(size),torso,head,shield,weaponLayer,horse,opening,neck,tuck,geometry};
@@ -321,21 +331,30 @@ async function rows(f,variant){
 async function main(){
  const config=FACTIONS[faction];
  if(!config)throw Error('Unknown faction: '+faction+' (known: '+Object.keys(FACTIONS).join(', ')+')');
- const sheets={torsos:path.join(src,`${faction}-torsos.png`),heads:path.join(src,`${faction}-heads.png`),shields:path.join(src,`${faction}-shields.png`)};
+ // Variant N (1-3) takes its own torsos and heads (<faction>-torsos-vN.png, -heads-vN.png) when they
+ // exist: other faces and armour details on the same troop, so twenty men are not twenty clones.
+ const sheet=(part,variant)=>{const own=path.join(src,`${faction}-${part}-v${variant}.png`);return variant&&fs.existsSync(own)?own:path.join(src,`${faction}-${part}.png`);};
+ const sheetsOf=variant=>({torsos:sheet('torsos',variant),heads:sheet('heads',variant),shields:path.join(src,`${faction}-shields.png`)});
  const art={};
  for(const [kind,w] of Object.entries(WEAPONS))if(fs.existsSync(path.join(src,w.art[0])))art[kind]=await cell(path.join(src,w.art[0]),...w.art.slice(1));
  art.steelGlove=await cell(path.join(src,'gloves.png'),0,0,2,2);
  art.leatherGlove=await cell(path.join(src,'gloves.png'),1,0,2,2);
  art.steelSupport=await cell(path.join(src,'gloves.png'),0,1,2,2);
  art.leatherSupport=await cell(path.join(src,'gloves.png'),1,1,2,2);
- const figures=[];
- for(let i=0;i<config.troops.length;i++)figures.push(await figure(config.troops[i],i,sheets,art,config.caparison));
+ const byVariant=[];
+ for(let variant=0;variant<4;variant++){
+  const list=[];
+  for(let i=0;i<config.troops.length;i++)list.push(await figure(config.troops[i],i,sheetsOf(config.variants?variant:0),art,config.caparison,config.variants?variant:0));
+  byVariant.push(list);
+ }
+ const figures=byVariant[0];
  const foot=figures.filter(f=>!f.spec.horse),cavalry=figures.filter(f=>f.spec.horse);
  const geometry=Object.fromEntries(figures.map(f=>[f.spec.id,f.geometry]));
  fs.writeFileSync(path.join(geometryOut,`${faction}_heraldic_geometry.gd`),'extends RefCounted\n## Generated by tools/battle/render_heraldic_faction.cjs from heraldic_source parts.\nconst DATA = '+JSON.stringify(geometry,null,'\t')+'\n');
- for(const [list,size,name,count] of [[foot,FOOT,`${faction}_heraldic`,10],[cavalry,HORSE,`${faction}_heraldic_cavalry`,12]]){
-  if(!list.length)continue;
+ for(const [mounted,size,name,count] of [[false,FOOT,`${faction}_heraldic`,10],[true,HORSE,`${faction}_heraldic_cavalry`,12]]){
+  if(!(mounted?cavalry:foot).length)continue;
   for(let variant=0;variant<4;variant++){
+   const list=byVariant[variant].filter(f=>!!f.spec.horse===mounted);
    const overlays=[];
    for(let i=0;i<list.length;i++){const r=await rows(list[i],variant);r.forEach((input,row)=>overlays.push({input,left:i*size.W,top:row*size.H}));}
    await sharp({create:{width:size.W*list.length,height:size.H*count,channels:4,background:'#00000000'}}).composite(overlays).png().toFile(path.join(output,`${name}_${variant}.png`));
