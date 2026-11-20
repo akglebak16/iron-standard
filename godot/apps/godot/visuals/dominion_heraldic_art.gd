@@ -12,6 +12,8 @@ const KHAN_IDS := ["k1", "k2", "k2a"]
 const KHAN_CAVALRY_IDS := ["k2c", "k3h", "k3c"]
 const KIN_IDS := ["f1", "f2", "f3", "f2s", "f3s", "f2a", "f3a"]
 const KIN_CAVALRY_IDS := ["f2c", "f3c"]
+const EMI_IDS := ["m1", "m2", "m3", "m2s", "m2a"]
+const EMI_CAVALRY_IDS := ["m2c", "m3h", "m3c"]
 const UNDEAD_IDS := ["z1", "s1", "s1a", "s2", "s3"]
 const UNDEAD_CAVALRY_IDS := ["s2c"]
 const PARTS := ["body", "weapon", "portrait", "headless", "head", "flash", "corpse", "corpse_headless"]
@@ -81,6 +83,18 @@ const KIN_CAVALRY_PAGES := [
 	preload("res://apps/godot/visuals/assets/kin_heraldic_cavalry_2.png"),
 	preload("res://apps/godot/visuals/assets/kin_heraldic_cavalry_3.png"),
 ]
+const EMI_PAGES := [
+	preload("res://apps/godot/visuals/assets/emi_heraldic_0.png"),
+	preload("res://apps/godot/visuals/assets/emi_heraldic_1.png"),
+	preload("res://apps/godot/visuals/assets/emi_heraldic_2.png"),
+	preload("res://apps/godot/visuals/assets/emi_heraldic_3.png"),
+]
+const EMI_CAVALRY_PAGES := [
+	preload("res://apps/godot/visuals/assets/emi_heraldic_cavalry_0.png"),
+	preload("res://apps/godot/visuals/assets/emi_heraldic_cavalry_1.png"),
+	preload("res://apps/godot/visuals/assets/emi_heraldic_cavalry_2.png"),
+	preload("res://apps/godot/visuals/assets/emi_heraldic_cavalry_3.png"),
+]
 const UNDEAD_PAGES := [
 	preload("res://apps/godot/visuals/assets/undead_heraldic_0.png"),
 	preload("res://apps/godot/visuals/assets/undead_heraldic_1.png"),
@@ -106,6 +120,7 @@ const NORD = preload("res://apps/godot/visuals/nord_heraldic_geometry.gd").DATA
 const EMP = preload("res://apps/godot/visuals/emp_heraldic_geometry.gd").DATA
 const KHAN = preload("res://apps/godot/visuals/khan_heraldic_geometry.gd").DATA
 const KIN = preload("res://apps/godot/visuals/kin_heraldic_geometry.gd").DATA
+const EMI = preload("res://apps/godot/visuals/emi_heraldic_geometry.gd").DATA
 const UNDEAD = preload("res://apps/godot/visuals/undead_heraldic_geometry.gd").DATA
 ## Dominion foot figures predate the stored grips; newer factions record theirs in the geometry.
 const GRIPS := {"axe": Vector2(115, 116), "halberd": Vector2(118, 116), "xbow": Vector2(96, 128)}
@@ -130,6 +145,9 @@ const FACTIONS := {
 	# Gallian royal purple; cream, gilding and steel keep their colours.
 	"kin": {"foot": KIN_IDS, "cavalry": KIN_CAVALRY_IDS, "pages": KIN_PAGES, "cavalry_pages": KIN_CAVALRY_PAGES,
 		"hue": [0.68, 0.84], "min_value": 0.2, "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true},
+	# Emirate burnt orange: skin shares its hue, so only strongly saturated pixels are cloth.
+	"emi": {"foot": EMI_IDS, "cavalry": EMI_CAVALRY_IDS, "pages": EMI_PAGES, "cavalry_pages": EMI_CAVALRY_PAGES,
+		"hue": [0.02, 0.10], "min_saturation": 0.62, "trim": false, "skip_rows": [1, 5], "neck_line": 0, "mount_row": true, "spare_wound": true},
 	# Undead moss-green rags; bone, rust and the walking dead's grey-green skin keep their colours.
 	"undead": {"foot": UNDEAD_IDS, "cavalry": UNDEAD_CAVALRY_IDS, "pages": UNDEAD_PAGES, "cavalry_pages": UNDEAD_CAVALRY_PAGES,
 		"hue": [0.17, 0.30], "min_value": 0.2, "trim": false, "skip_rows": [1, 4, 5], "neck_line": 0, "mount_row": true},
@@ -160,6 +178,7 @@ static func geometry(troop: String) -> Dictionary:
 		"emp": return EMP.get(troop, {})
 		"khan": return KHAN.get(troop, {})
 		"kin": return KIN.get(troop, {})
+		"emi": return EMI.get(troop, {})
 		"undead": return UNDEAD.get(troop, {})
 	return {}
 
@@ -221,6 +240,8 @@ static func _page(variant: int, banner: int, home: String, cavalry: bool) -> Tex
 		var hue_low: float = spec.hue[0]
 		var hue_high: float = spec.hue[1]
 		var min_value: float = spec.get("min_value", 0.0)
+		# Cloth close to skin in hue (emirate orange) is told apart by saturation.
+		var min_saturation: float = spec.get("min_saturation", 0.35)
 		var spare_wound: bool = spec.get("spare_wound", false)
 		var neck := Vector2(80, 101) if cavalry else Vector2(76, 78)
 		var image: Image = source[variant].get_image()
@@ -241,7 +262,7 @@ static func _page(variant: int, banner: int, home: String, cavalry: bool) -> Tex
 				var source_colour := Color8(bytes[p], bytes[p + 1], bytes[p + 2], bytes[p + 3])
 				var replacement := source_colour
 				var in_hue := (source_colour.h > hue_low and source_colour.h < hue_high) if hue_low < hue_high else (source_colour.h > hue_low or source_colour.h < hue_high)
-				if in_hue and source_colour.s > 0.35 and source_colour.v > min_value:
+				if in_hue and source_colour.s > min_saturation and source_colour.v > min_value:
 					replacement = primary * clampf(source_colour.v / 0.68, 0.45, 1.35)
 				elif spec.trim and source_colour.h > 0.08 and source_colour.h < 0.20 and source_colour.s < 0.32 and source_colour.v < 0.32:
 					replacement = trim * clampf(source_colour.v / 0.22, 0.55, 1.2)
