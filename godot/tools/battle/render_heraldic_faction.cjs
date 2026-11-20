@@ -154,6 +154,7 @@ FACTIONS.pact={
  ],
 };
 FACTIONS.bandit={
+ variants:true,
  troops:[
   {id:'b1',weapon:'club',shield:false,steel:false},
   {id:'b2',weapon:'axe',shield:'round',steel:false},

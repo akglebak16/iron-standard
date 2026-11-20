@@ -54,3 +54,15 @@ Square canvas, STRICT 3x3 grid of equal cells, one shield centered in each used 
 Generate the image with the built-in image generator and save it as mace.png. Production sprite asset, transparent background, same clean HERALDIC GRAPHIC art style as the attached weapons.png: navy outlines, broad cel-shaded steel, dark brown wood, restrained dull brass, no realistic texture.
 ONE upright medieval flanged mace in the center of a square canvas: a straight dark wooden haft wrapped with leather at the lower third where the hand holds it, a steel head of six flat flanges at the top, a small steel knob at the bottom. It fills most of the canvas height. No hands, no labels, no frames, no shadows. Keep detail economical so it reads at 15-40px.
 ```
+
+## Варианты
+
+Листы `bandit-torsos-v1…v3.png` и `bandit-heads-v1…v3.png` — правка `bandit-torsos.png` / `bandit-heads.png` (вложение)
+тем же генератором, по образцу вариантов Галлии (`kin-prompts.md`): те же клетки, тип одежды и брони, цвета и силуэт,
+другие люди и детали. Туловища: v1 — поношенная ткань с тёмными заплатами, отделка тонкими полосами, простые железные
+пряжки, завязанный кушак; v2 — добавленные ремни или небольшие наплечники, кайма с мелким клетчатым или геометрическим
+узором, заклёпки, поясные сумки; v3 — выцветшая ткань, контрастная отделка ворота, перевязь через грудь у тканевых,
+круглые металлические бляхи, видимые ряды заклёпок на кольчуге. В промпт добавлено «The rim at the back of the neck
+opening keeps the colour it has in the attached sheet, NOT grey». Головы: v1 — пожилые, бороды с проседью, морщины;
+v2 — молодые, бритые или со щетиной, светлые волосы; v3 — широкие лица, тёмные волосы, густые усы или бороды, кое-где
+шрам. Закрывающие лицо уборы меняют одну мелочь: v1 — цвет обмотки, v2 — тонкая полосатая лента, v3 — навершие.

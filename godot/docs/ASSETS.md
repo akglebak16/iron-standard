@@ -154,4 +154,6 @@ OpenAI права на результат принадлежат пользов�
 `apps/godot/visuals/assets/bandit_heraldic_0.png` … `_3.png` (4 пеших) и `bandit_heraldic_cavalry_0.png` … `_3.png` (налётчик).
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/bandit-prompts.md`: `bandit-torsos.png`,
 `bandit-heads.png`, `bandit-shields.png`, булава `mace.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs bandit`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `bandit-torsos-v1…v3.png`, `bandit-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `bandit-prompts.md`, раздел «Варианты»).
 
