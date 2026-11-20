@@ -7,6 +7,7 @@ const State = preload("res://core/battle/model/state.gd")
 const Group = preload("res://core/battle/model/group.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const DecisionTrace = preload("res://core/battle/simulation/ai/decision_trace.gd")
+const Commander = preload("res://core/battle/simulation/ai/commander.gd")
 const FLEEING := 1
 const HERO := 2
 const WAVERING := 4
@@ -23,11 +24,13 @@ static func build(battle: State, trace: DecisionTrace, assessment: Dictionary, a
 			var entry := {"kind": kind, "order": group.order, "backing": group.backing, "tactic_state": group.tactic_state,
 				"center": group.center, "direction": group.direction, "waypoint": group.waypoint,
 				"kited": group.kited, "focus_kind": group.focus_kind, "last": recorded.last[side][kind],
+				"task_point": Commander.task_point(battle, side, kind),
 				"morale_state": group.morale_state, "morale_pressure": group.morale_pressure, "fleeing_share": group.morale_fleeing_share}
 			if assessed.size() > side:
 				entry.assessment = assessed[side].groups[kind].duplicate(true)
 			groups.append(entry)
-		var side_entry := {"side": side, "profile": profiles[side], "plan": recorded.plans[side], "groups": groups,
+		var side_entry := {"side": side, "profile": profiles[side], "plan": recorded.plans[side],
+			"plan_details": recorded.plan_details[side], "groups": groups,
 			"missile_losses": battle.missile_losses[side]}
 		if assessed.size() > side:
 			side_entry.assessment = {"count": assessed[side].count, "strength": assessed[side].strength,

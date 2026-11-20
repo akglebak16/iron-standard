@@ -93,6 +93,14 @@ var formation_centers := PackedVector2Array([Vector2.INF, Vector2.INF, Vector2.I
 ## Observation port (ADR-022): brains write decision records here only while the session traces them.
 ## No rule reads it; it is not part of snapshots or results.
 var ai_trace: DecisionTrace = null
+## Field assessment (simulation/ai/field_assessment.gd) of the latest morale check, kept for the commanders (stage 1g,
+## DESIGN.md 4.2.2): they read it instead of a pass of their own over the fighters. Empty before the first check;
+## assessment_serial counts the checks. Nothing but the commanders reads it, so the reference battle stays the same.
+var assessment: Dictionary = {}
+var assessment_serial := 0
+## Per command (the player's side, the enemy, the allies): the commander's plan and tasks (commander.gd), created by the
+## commander on its first step; null for a command no commander leads. A battle is never saved mid-fight.
+var commanders: Array = [null, null, null]
 var _events: Array[Dictionary] = []
 
 func contact_geometry() -> Dictionary:
@@ -243,6 +251,7 @@ func add_grouped_unit(unit: Unit, kind: int) -> void:
 	if not add_unit(unit): return
 	unit.group_kind = kind
 	groups[unit.command][kind].units.append(unit)
+	groups[unit.command][kind].enlist(unit)
 
 func place_units() -> void:
 	for side_groups in groups:

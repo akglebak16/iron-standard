@@ -21,7 +21,10 @@ func _test_periods() -> void:
 	for tick in 600:
 		if schedule.commander_due(0, tick):
 			commander += 1
-			assert(schedule.commander_due(1, tick), "Both commanders share one field assessment")
+		var deciding := 0
+		for command in Config.AI_CMD_COMMANDS:
+			if schedule.commander_due(command, tick): deciding += 1
+		assert(deciding <= 1, "Commanders of different commands decide on different ticks (stage 1g)")
 		for side in 2:
 			for group in Config.GROUP_KINDS:
 				if schedule.squad_due(side, group, tick):
@@ -44,8 +47,9 @@ func _test_stagger() -> void:
 	for tick in 120:
 		var due := schedule.due_squads(tick)
 		assert(due.size() <= 1, "At most one group decides per tick with six groups")
-		if schedule.commander_due(0, tick):
-			assert(due.is_empty(), "Group decisions never land on the commander tick")
+		for command in Config.AI_CMD_COMMANDS:
+			if schedule.commander_due(command, tick):
+				assert(due.is_empty(), "Group decisions never land on a commander tick")
 		for slot in due:
 			assert(schedule.squad_due(slot / Config.GROUP_KINDS, slot % Config.GROUP_KINDS, tick))
 
@@ -66,3 +70,13 @@ func _test_other_sizes() -> void:
 			assert(not seen.has(slot))
 			seen[slot] = true
 	assert(seen.size() == 16, "Every group of both sides decides once per period")
+	var offsets := {}
+	for command in schedule.commands:
+		var offset := schedule.commander_offset(command)
+		assert(offset >= 0 and offset < schedule.commander_period_ticks and schedule.due_squads(offset).is_empty())
+		assert(not offsets.has(offset), "Every command decides on a tick of its own")
+		offsets[offset] = true
+		var decisions := 0
+		for tick in 600:
+			if schedule.commander_due(command, tick): decisions += 1
+		assert(decisions == 10, "One decision per command and second")

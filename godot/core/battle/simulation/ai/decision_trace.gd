@@ -11,6 +11,9 @@ const Config = preload("res://core/battle/config.gd")
 var tick := 0
 var elapsed_seconds := 0.0
 var plans: Array[String] = ["", ""]
+## Per side: why the plan was chosen (commander, stage 1g): the two best plan scores and a reason code; empty for the
+## reference brain, which has no plans to weigh.
+var plan_details: Array[Dictionary] = [{}, {}]
 var _last: Array = []
 var _recent: Array[Dictionary] = []
 var _count := 0
@@ -25,8 +28,9 @@ func begin_tick(at_tick: int, elapsed: float) -> void:
 	tick = at_tick
 	elapsed_seconds = elapsed
 
-func set_plan(side: int, plan: String) -> void:
+func set_plan(side: int, plan: String, details: Dictionary = {}) -> void:
 	plans[side] = plan
+	plan_details[side] = details
 
 ## A repeated decision with the same reason is the same decision still in force and is not recorded again.
 func record(side: int, group: int, decision: String, reason: String, values: Dictionary = {}) -> void:
@@ -49,5 +53,5 @@ func record_count() -> int:
 
 ## Detached copy; changing it does not change the trace.
 func snapshot() -> Dictionary:
-	return {"tick": tick, "elapsed_seconds": elapsed_seconds, "plans": plans.duplicate(),
+	return {"tick": tick, "elapsed_seconds": elapsed_seconds, "plans": plans.duplicate(), "plan_details": plan_details.duplicate(true),
 		"last": _last.duplicate(true), "recent": _recent.duplicate(true), "records": _count}

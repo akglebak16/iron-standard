@@ -225,6 +225,19 @@ const AI_PROFILE_REFERENCE := "reference" # The current timer-and-threshold brai
 const AI_COMMANDER_PERIOD_SECONDS := 0.5 # Decision schedule: one side commander decision this often.
 const AI_SQUAD_PERIOD_SECONDS := 0.25 # Decision schedule: one decision per group this often, staggered by group number.
 const AI_TRACE_RECENT := 32 # Decision records kept for the debug snapshot.
+# Army commander, stage 1g (DESIGN.md 4.2, simulation/ai/commander.gd). Decisions every AI_COMMANDER_PERIOD_SECONDS by
+# the decision schedule, tasks of the groups executed every tick. These numbers steer the AI only (no damage, speed or
+# force of any troop); the arena checks them.
+const AI_PROFILE_COMMANDER := "commander"
+const AI_CMD_COMMANDS := 3 # Commands with a commander tick of their own: the player's side, the enemy, the allies.
+const AI_CMD_RESERVE_WEIGHT := 0.5 # Waiting reserve figures count for this share of their strength (they come later).
+const AI_CMD_UNDER_FIRE_SPEED_SHARE := 0.9 # Of the group's own mean speed, marching within reach of enemy shooters.
+const AI_CMD_ARCHER_RANGE_SHARE := 0.85 # Archers stand this share of their range from the nearest enemy squad...
+const AI_CMD_ARCHER_LINE_GAP := 150.0 # ...but no farther than this behind their own infantry line.
+const AI_CMD_ATTACK_RATIO := [0.8, 1.3] # Attack score ramps up with the strength ratio R between these.
+const AI_CMD_OUTSHOT := [0.2, 0.6] # Outshot F: from the first value on, attack is scored at least the floor below.
+const AI_CMD_OUTSHOT_FLOOR := 0.6 # Attack score floor under fire (times the outshot ramp), for R of at least...
+const AI_CMD_OUTSHOT_MIN_RATIO := 0.7 # ...this strength ratio: being outshot, walking in beats standing.
 # Field assessment (DESIGN.md 4.1). Unit classes for the "who beats whom" matrix, read from properties, not troop IDs.
 const AI_CLASS_FOOT := 0
 const AI_CLASS_SPEAR := 1 # Foot with anti_cavalry.

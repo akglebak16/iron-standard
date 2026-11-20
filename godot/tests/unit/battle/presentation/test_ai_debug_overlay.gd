@@ -1,11 +1,13 @@
 extends SceneTree
 ## AI debug overlay (ADR-022): F3 in the battle view turns the trace on and off, the panel names plans,
-## orders and reasons in Russian, every code of the reference brain has a translation, and the overlay
+## orders and reasons in Russian, every code of the reference brain and of the commander (stage 1g) has a translation,
+## the commander's plan scores read as a line, and the overlay
 ## leaves the battle as it is.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const Overlay = preload("res://apps/godot/presentation/battle/hud/ai_debug_overlay.gd")
 const PresentationPreferences = preload("res://apps/godot/composition/presentation_preferences.gd")
 const Tactics = preload("res://core/battle/rules/tactics.gd")
+const Commander = preload("res://core/battle/simulation/ai/commander.gd")
 const Config = preload("res://core/battle/config.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 
@@ -50,20 +52,24 @@ func _press(view, key: Key) -> void:
 	event.pressed = true
 	view._unhandled_input(event)
 
-## Every plan, decision and reason code of the reference brain and every fighter mode has a Russian label.
+## Every plan, decision and reason code of both brains and every fighter mode has a Russian label.
 func _check_translations() -> void:
-	var brain: Script = Tactics
-	var constants := brain.get_script_constant_map()
-	for name in constants:
-		var code = constants[name]
-		if name.begins_with("PLAN_"): assert(Overlay.PLANS.has(code), "No label for plan %s" % code)
-		elif name.begins_with("DECISION_"): assert(Overlay.DECISIONS.has(code), "No label for decision %s" % code)
-		elif name.begins_with("REASON_"): assert(Overlay.REASONS.has(code), "No label for reason %s" % code)
+	for brain: Script in [Tactics, Commander]:
+		var constants := brain.get_script_constant_map()
+		for name in constants:
+			var code = constants[name]
+			if name.begins_with("PLAN_"): assert(Overlay.PLANS.has(code), "No label for plan %s" % code)
+			elif name.begins_with("DECISION_"): assert(Overlay.DECISIONS.has(code), "No label for decision %s" % code)
+			elif name.begins_with("REASON_"): assert(Overlay.REASONS.has(code), "No label for reason %s" % code)
 	for order in [Config.ORDER_HOLD, Config.ORDER_FOLLOW, Config.ORDER_CHARGE, Config.ORDER_RETREAT]:
 		assert(Overlay.ORDERS.has(order))
 	for mode in MotionStore.MODES:
 		assert(Overlay.MODE_COLORS.has(mode))
 	assert(Overlay.PROFILES.has(Config.AI_PROFILE_PLAYER) and Overlay.PROFILES.has(Config.AI_PROFILE_REFERENCE))
+	assert(Overlay.PROFILES.has(Config.AI_PROFILE_COMMANDER))
+	var plan := Overlay.plan_line({"best": [{"plan": "attack", "score": 0.6}], "reason": "outshot", "ratio": 0.77, "outshot": 0.75})
+	assert(plan == " (атака 0.60; нас перестреливают; перевес 0.77, перестрелка +0.75)", plan)
+	assert(Overlay.plan_line({}) == "", "The reference brain weighs no plans")
 	assert(Overlay.mode_color(Config.AI_MODE_MELEE, true) == Overlay.FLEEING_COLOR)
 	var line := Overlay.group_line({"kind": 0, "order": "charge", "backing": false, "kited": true,
 		"last": {"decision": "call_off", "reason": "hopeless_chase", "elapsed_seconds": 4.0}}, 6.5)

@@ -45,6 +45,8 @@ func _check_cell(cell: Dictionary) -> void:
 		assert(run.profiles == [Config.AI_PROFILE_PLAYER, Config.AI_PROFILE_REFERENCE], "The kite side 0 follows player orders")
 		assert(run.kite.chase_share >= 0.0 and run.kite.chase_share <= 1.0)
 		assert(cell.summary.has("kite"))
+	elif cell.scenario in Arena.PLAYER_HOLDS:
+		assert(run.profiles == [Config.AI_PROFILE_PLAYER, Config.AI_PROFILE_REFERENCE], "The hold side 0 follows player orders")
 	else:
 		assert(run.profiles == [Config.AI_PROFILE_REFERENCE, Config.AI_PROFILE_REFERENCE])
 		assert(run.never_engaged[0] < 1.0 and run.never_engaged[1] < 1.0, "AI against AI fights in %s" % cell.scenario)
