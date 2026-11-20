@@ -80,6 +80,7 @@ const FACTIONS={
  },
 };
 FACTIONS.emp={
+ variants:true,
  // The cataphract rides a horse with the faction's own caparison (crimson, gold suns).
  troops:[
   {id:'e1',weapon:'sword',shield:'kite',steel:false},
