@@ -53,8 +53,12 @@ func _initialize() -> void:
 			assert(entry.weapon.get_image().get_pixelv(Vector2i(entry.pivot)).a > 0.5, "%s: the weapon pivots in the hand" % troop)
 			assert(_visible_bytes(entry.corpse) == _visible_bytes(entry.portrait))
 			assert(entry.weapon_kind == look.weapon)
+			# Riders without a shield (the khanate's horse archer, the dead rider) have nothing to block with.
 			var guard := Art.guard_layers(unit, troop, variant)
-			assert(not guard.is_empty() and guard.shield.get_size() == Vector2(240, 244), "%s blocks with its shield" % troop)
+			if Skins.geometry(troop).has("shield_center"):
+				assert(not guard.is_empty() and guard.shield.get_size() == Vector2(240, 244), "%s blocks with its shield" % troop)
+			else:
+				assert(guard.is_empty(), "%s has no shield to raise" % troop)
 		# Cut from the saddle: the rider alone, and the horse lying on its own.
 		var foot := unit.duplicate(true)
 		foot.mounted = false
