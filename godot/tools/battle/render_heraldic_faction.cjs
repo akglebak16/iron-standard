@@ -140,6 +140,7 @@ FACTIONS.emi={
  ],
 };
 FACTIONS.pact={
+ variants:true,
  troops:[
   {id:'p1',weapon:'sword',shield:'round',steel:false},
   {id:'p2',weapon:'sword',shield:'kite',steel:true},
