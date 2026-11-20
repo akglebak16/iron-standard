@@ -93,6 +93,7 @@ FACTIONS.emp={
  ],
 };
 FACTIONS.khan={
+ variants:true,
  troops:[
   {id:'k1',weapon:'sabre',shield:'small',steel:false},
   {id:'k2',weapon:'spear',shield:'small',steel:true,headHeight:68},
