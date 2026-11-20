@@ -1,0 +1,525 @@
+{
+ "issue": 298,
+ "umbrella": 250,
+ "command": "node godot/tools/benchmark.cjs dist/godot/migration-release/IronStandard.exe --n=1000 --scenario=cavalry|mixed|volley [--terrain=edge] --ticks=3600 --warmup=120 --seed=4242 --profile-phases --repeat=5 --execution-context=host; per scenario main (bea0036) -> branch -> branch -> main",
+ "view_command": "IronStandard.exe --resolution 1920x1080 --disable-vsync --max-fps 0 -- --view-benchmark --measure-seconds=30 --camera=wide|field --mode=battle --n=1000 --audio=on --seed=4242; main, branch, branch, main per camera",
+ "note": "dirty=true: main only *.import line endings; branch = the #298 diff on top of bea0036 plus the same noise",
+ "builds": {
+  "main": {
+   "source": {
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "source_sha256": "60dc9f15b90f6556155ef919a4973c2873690c256aecd41344104c1614e834fe",
+    "dirty": true
+   },
+   "dependencies": {
+    "iron_contacts.windows.x86_64.dll": "98bda5130f227b9d762b001d0f677498bc03ee5518fbac01afd6a783449456f5"
+   },
+   "executable_sha256": "299ed11a532eb8ebb43217d77aa5f253d4354066aa5b6b458ef07dfe2dad636e",
+   "built_at": "2026-11-20T15:44:27.400Z",
+   "smoke_passed": true,
+   "stale_source": false
+  },
+  "branch": {
+   "source": {
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "source_sha256": "a061a400a010cac9d2f946fc2d20ec937d2798b9c681b10822237e4e4ad42083",
+    "dirty": true
+   },
+   "dependencies": {
+    "iron_contacts.windows.x86_64.dll": "718bd2d3c1bfda64603b989917a4cdd885c502c85a2cddba9e83ea3a08abea2c"
+   },
+   "executable_sha256": "d4e71b6edc27c454010f662f6a2fee32cad7f3b618ab69a2c69b2531c782b0f1",
+   "built_at": "2026-11-20T15:43:47.745Z",
+   "smoke_passed": true,
+   "stale_source": false
+  }
+ },
+ "cpu_benchmark": {
+  "cavalry": {
+   "main": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 2.108,
+    "tick_p95": 4.36,
+    "tick_p99": 5.401,
+    "snapshot_p95": 1.084,
+    "p95_by_run": [
+     4.373,
+     4.683,
+     4.571,
+     6.15,
+     4.404,
+     4.329,
+     4.311,
+     4.323,
+     4.343,
+     4.347
+    ],
+    "interactions_per_tick": 12.9,
+    "measured_ticks": 2713,
+    "ai_movement_combat": [
+     1.124,
+     2.154
+    ],
+    "contacts": [
+     0.526,
+     1.256
+    ],
+    "storage_compaction": [
+     0.297,
+     0.986
+    ],
+    "projectiles": [
+     0.005,
+     0.006
+    ],
+    "morale_result_events": [
+     0.075,
+     0.005
+    ],
+    "tactics_siege": [
+     0.061,
+     0.205
+    ]
+   },
+   "branch": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 1.794,
+    "tick_p95": 3.799,
+    "tick_p99": 4.702,
+    "snapshot_p95": 1.102,
+    "p95_by_run": [
+     3.795,
+     3.78,
+     3.823,
+     3.799,
+     3.799,
+     3.789,
+     3.871,
+     3.831,
+     3.794,
+     4.102
+    ],
+    "interactions_per_tick": 12.9,
+    "measured_ticks": 2713,
+    "ai_movement_combat": [
+     0.828,
+     1.589
+    ],
+    "contacts": [
+     0.521,
+     1.247
+    ],
+    "storage_compaction": [
+     0.29,
+     0.957
+    ],
+    "projectiles": [
+     0.004,
+     0.006
+    ],
+    "morale_result_events": [
+     0.074,
+     0.005
+    ],
+    "tactics_siege": [
+     0.06,
+     0.201
+    ]
+   },
+   "same_battle": true
+  },
+  "mixed": {
+   "main": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 1.956,
+    "tick_p95": 3.463,
+    "tick_p99": 7.704,
+    "snapshot_p95": 1.376,
+    "p95_by_run": [
+     3.479,
+     3.46,
+     3.401,
+     3.437,
+     3.356,
+     3.631,
+     3.466,
+     3.576,
+     3.434,
+     3.529
+    ],
+    "interactions_per_tick": 4.55,
+    "measured_ticks": 3600,
+    "ai_movement_combat": [
+     0.853,
+     1.434
+    ],
+    "contacts": [
+     0.49,
+     0.651
+    ],
+    "storage_compaction": [
+     0.205,
+     0.978
+    ],
+    "projectiles": [
+     0.143,
+     0.376
+    ],
+    "morale_result_events": [
+     0.102,
+     0.005
+    ],
+    "tactics_siege": [
+     0.138,
+     0.387
+    ]
+   },
+   "branch": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 1.788,
+    "tick_p95": 3.136,
+    "tick_p99": 7.356,
+    "snapshot_p95": 1.321,
+    "p95_by_run": [
+     3.089,
+     3.18,
+     3.025,
+     3.079,
+     3.091,
+     3.043,
+     3.227,
+     3.291,
+     3.368,
+     3.215
+    ],
+    "interactions_per_tick": 4.55,
+    "measured_ticks": 3600,
+    "ai_movement_combat": [
+     0.713,
+     1.133
+    ],
+    "contacts": [
+     0.476,
+     0.623
+    ],
+    "storage_compaction": [
+     0.199,
+     0.951
+    ],
+    "projectiles": [
+     0.14,
+     0.361
+    ],
+    "morale_result_events": [
+     0.1,
+     0.005
+    ],
+    "tactics_siege": [
+     0.134,
+     0.376
+    ]
+   },
+   "same_battle": true
+  },
+  "volley": {
+   "main": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 1.886,
+    "tick_p95": 3.87,
+    "tick_p99": 9.648,
+    "snapshot_p95": 1.583,
+    "p95_by_run": [
+     4.126,
+     4.666,
+     3.791,
+     3.784,
+     3.779,
+     4.036,
+     3.855,
+     4.014,
+     3.872,
+     3.868
+    ],
+    "interactions_per_tick": 3.79,
+    "measured_ticks": 973,
+    "ai_movement_combat": [
+     0.62,
+     1.242
+    ],
+    "contacts": [
+     0.472,
+     0.562
+    ],
+    "storage_compaction": [
+     0.274,
+     1.038
+    ],
+    "projectiles": [
+     0.303,
+     1.073
+    ],
+    "morale_result_events": [
+     0.155,
+     0.004
+    ],
+    "tactics_siege": [
+     0.048,
+     0.136
+    ]
+   },
+   "branch": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 1.788,
+    "tick_p95": 3.575,
+    "tick_p99": 9.692,
+    "snapshot_p95": 1.571,
+    "p95_by_run": [
+     3.771,
+     3.564,
+     3.621,
+     3.544,
+     3.486,
+     3.526,
+     3.586,
+     3.51,
+     3.607,
+     4.015
+    ],
+    "interactions_per_tick": 3.79,
+    "measured_ticks": 973,
+    "ai_movement_combat": [
+     0.535,
+     0.947
+    ],
+    "contacts": [
+     0.468,
+     0.555
+    ],
+    "storage_compaction": [
+     0.262,
+     0.98
+    ],
+    "projectiles": [
+     0.297,
+     1.058
+    ],
+    "morale_result_events": [
+     0.157,
+     0.004
+    ],
+    "tactics_siege": [
+     0.048,
+     0.135
+    ]
+   },
+   "same_battle": true
+  },
+  "mixed--terrain=edge": {
+   "main": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 2.03,
+    "tick_p95": 3.429,
+    "tick_p99": 8.262,
+    "snapshot_p95": 1.268,
+    "p95_by_run": [
+     3.467,
+     3.508,
+     3.512,
+     4.5,
+     4.621,
+     3.39,
+     3.341,
+     3.347,
+     3.365,
+     3.345
+    ],
+    "interactions_per_tick": 5.14,
+    "measured_ticks": 3600,
+    "ai_movement_combat": [
+     0.908,
+     1.435
+    ],
+    "contacts": [
+     0.485,
+     0.623
+    ],
+    "storage_compaction": [
+     0.204,
+     0.966
+    ],
+    "projectiles": [
+     0.159,
+     0.369
+    ],
+    "morale_result_events": [
+     0.113,
+     0.004
+    ],
+    "tactics_siege": [
+     0.142,
+     0.399
+    ]
+   },
+   "branch": {
+    "runs": 10,
+    "revision": "bea0036395756f5913291f9cf88e981504c35f72",
+    "tick_mean": 1.909,
+    "tick_p95": 3.252,
+    "tick_p99": 8.036,
+    "snapshot_p95": 1.381,
+    "p95_by_run": [
+     3.415,
+     3.302,
+     3.473,
+     3.438,
+     3.137,
+     3.331,
+     3.201,
+     3.119,
+     3.109,
+     3.137
+    ],
+    "interactions_per_tick": 5.14,
+    "measured_ticks": 3600,
+    "ai_movement_combat": [
+     0.776,
+     1.175
+    ],
+    "contacts": [
+     0.488,
+     0.631
+    ],
+    "storage_compaction": [
+     0.206,
+     0.954
+    ],
+    "projectiles": [
+     0.165,
+     0.387
+    ],
+    "morale_result_events": [
+     0.113,
+     0.005
+    ],
+    "tactics_siege": [
+     0.143,
+     0.398
+    ]
+   },
+   "same_battle": true
+  }
+ },
+ "view": [
+  {
+   "run": "view-1-main-wide.json",
+   "frame": {
+    "count": 5407,
+    "mean_ms": 5.54960273719253,
+    "p50_ms": 5.32,
+    "p95_ms": 8.096,
+    "p99_ms": 9.958
+   },
+   "draw_calls_mean": 377.011466617348,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-2-branch-wide.json",
+   "frame": {
+    "count": 5598,
+    "mean_ms": 5.35949553411933,
+    "p50_ms": 5.199,
+    "p95_ms": 7.837,
+    "p99_ms": 9.49
+   },
+   "draw_calls_mean": 375.351375491247,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-3-branch-wide.json",
+   "frame": {
+    "count": 5578,
+    "mean_ms": 5.37895105772678,
+    "p50_ms": 5.197,
+    "p95_ms": 7.917,
+    "p99_ms": 9.801
+   },
+   "draw_calls_mean": 374.180351380423,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-4-main-wide.json",
+   "frame": {
+    "count": 5601,
+    "mean_ms": 5.35647527227281,
+    "p50_ms": 5.155,
+    "p95_ms": 8.018,
+    "p99_ms": 9.823
+   },
+   "draw_calls_mean": 374.478664524192,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-5-main-field.json",
+   "frame": {
+    "count": 5231,
+    "mean_ms": 5.73571286560887,
+    "p50_ms": 5.456,
+    "p95_ms": 8.229,
+    "p99_ms": 10.898
+   },
+   "draw_calls_mean": 430.942458420952,
+   "worker": true,
+   "simulation_ticks_measured": 1799
+  },
+  {
+   "run": "view-6-branch-field.json",
+   "frame": {
+    "count": 5260,
+    "mean_ms": 5.70367661596958,
+    "p50_ms": 5.457,
+    "p95_ms": 8.272,
+    "p99_ms": 10.552
+   },
+   "draw_calls_mean": 431.23174904943,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  },
+  {
+   "run": "view-7-branch-field.json",
+   "frame": {
+    "count": 5131,
+    "mean_ms": 5.8473997271487,
+    "p50_ms": 5.586,
+    "p95_ms": 8.434,
+    "p99_ms": 10.684
+   },
+   "draw_calls_mean": 431.026895342039,
+   "worker": true,
+   "simulation_ticks_measured": 1801
+  },
+  {
+   "run": "view-8-main-field.json",
+   "frame": {
+    "count": 5211,
+    "mean_ms": 5.75708232584917,
+    "p50_ms": 5.535,
+    "p95_ms": 8.292,
+    "p99_ms": 9.699
+   },
+   "draw_calls_mean": 431.278065630397,
+   "worker": true,
+   "simulation_ticks_measured": 1800
+  }
+ ]
+}

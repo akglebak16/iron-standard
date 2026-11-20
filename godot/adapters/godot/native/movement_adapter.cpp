@@ -10,6 +10,7 @@
 #include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 #include <godot_cpp/variant/string_name.hpp>
+#include <type_traits>
 namespace godot {
 class IronMovementKernel : public RefCounted {
   GDCLASS(IronMovementKernel, RefCounted)
@@ -23,13 +24,12 @@ class IronMovementKernel : public RefCounted {
     for (int n = 0; n < in.size(); ++n)
       out[n] = {p[n].x, p[n].y};
   }
-  static PackedVector2Array write_vectors(const std::vector<iron::Vec2> &in) {
-    PackedVector2Array out;
-    out.resize(in.size());
-    Vector2 *p = out.ptrw();
-    for (int n = 0; n < int(in.size()); ++n)
-      p[n] = {in[n].x, in[n].y};
-    return out;
+  // The kernel works in the storage's own vector buffers (#298): Vector2 must be the kernel's two floats.
+  static_assert(std::is_same_v<real_t, float> && sizeof(Vector2) == sizeof(iron::Vec2) &&
+                    alignof(Vector2) == alignof(iron::Vec2),
+                "the movement kernel borrows PackedVector2Array buffers as iron::Vec2");
+  static iron::battle::MovementKernel::Column borrow(PackedVector2Array &column, int64_t count) {
+    return {reinterpret_cast<iron::Vec2 *>(column.ptrw()), int(count)};
   }
 
 protected:
@@ -167,16 +167,18 @@ public:
     }
     // Release the handoff packet aliases before requesting writable pointers.
     // Core has relinquished these buffers for this synchronous call; a retained
-    // external value still forces normal COW and remains unchanged.
-    columns[3] = Variant();
-    columns[4] = Variant();
+    // external value still forces normal COW and remains unchanged. Every column,
+    // the vector ones too, is then written in place and handed back as the same
+    // array: no copy in, no new array out on each return from the batch (#298).
+    for (int slot = 1; slot < 6; ++slot)
+      columns[slot] = Variant();
     kernel.capacity = int(capacity);
     kernel.reals = reals.ptrw();
     kernel.integers = integers.ptrw();
     kernel.dt = dt;
-    read_vectors(positions, kernel.positions);
-    read_vectors(velocities, kernel.velocities);
-    read_vectors(vectors, kernel.vectors);
+    kernel.positions = borrow(positions, count);
+    kernel.velocities = borrow(velocities, count);
+    kernel.vectors = borrow(vectors, capacity * V_COUNT);
     kernel.random = [&rng]() { return rng->randf(); };
     if (begin) {
       kernel.begin();
@@ -188,13 +190,15 @@ public:
     out.push_back(result.reason);
     out.push_back(result.unit);
     out.push_back(result.target);
-    out.push_back(write_vectors(kernel.positions));
-    out.push_back(write_vectors(kernel.velocities));
+    out.push_back(positions);
+    out.push_back(velocities);
     out.push_back(reals);
     out.push_back(integers);
-    out.push_back(write_vectors(kernel.vectors));
+    out.push_back(vectors);
+    // The row count stays for the next call's check; the borrowed buffers do not.
     kernel.reals = nullptr;
     kernel.integers = nullptr;
+    kernel.positions.data = kernel.velocities.data = kernel.vectors.data = nullptr;
     kernel.random = {};
     return out;
   }
