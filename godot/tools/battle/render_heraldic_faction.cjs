@@ -106,6 +106,7 @@ FACTIONS.khan={
  ],
 };
 FACTIONS.undead={
+ variants:true,
  troops:[
   {id:'z1',weapon:'club',shield:false,steel:false},
   {id:'s1',weapon:'sword',shield:'round',steel:false},
