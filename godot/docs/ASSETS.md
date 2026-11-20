@@ -130,6 +130,8 @@ OpenAI права на результат принадлежат пользов�
 `apps/godot/visuals/assets/kin_heraldic_0.png` … `_3.png` (7 пеших) и `kin_heraldic_cavalry_0.png` … `_3.png` (2 всадника
 на общих конях). Части — генератор картинок OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/kin-prompts.md`:
 `kin-torsos.png`, `kin-heads.png`, `kin-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs kin`.
+Варианты (страницы 1–3: другие лица и детали брони, другие масти коней): `kin-torsos-v1…v3.png`, `kin-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `kin-prompts.md`, раздел «Варианты»).
 
 ### Эмират Хайрат (m1 Воин пустыни, m2 Гулям, m3 Страж эмира, m2s Копейщик-бербер, m2a Лучник пустыни, m2c Лёгкий всадник, m3h Конный лучник, m3c Мамлюк)
 
