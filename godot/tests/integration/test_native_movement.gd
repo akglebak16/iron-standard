@@ -24,7 +24,9 @@ const MORALE_RULES := ["standing", "slowed", "rallied", "fled"]
 const MORALE_LOW_BASE := 30.0 # Base morale of the shaken half: never back above MORALE_STEADY_SHARE of it.
 # TERRAIN.md 4.4 (stage Р1а): every fighter-level terrain rule must decide something in the compared battle, and the
 # battle must differ from the same battle on the open field (otherwise equal columns would prove nothing).
-const TERRAIN_RULES := ["speed", "no_charge", "hidden", "range", "differs"]
+# Stage Р3: the AI's terrain weights in target choice (aim_weight, the cell speed in "I will not catch him").
+const TERRAIN_RULES := ["speed", "no_charge", "hidden", "range", "differs", "aim", "outrun"]
+const AIM_PROOF_RATIO := 1.2 # Stage Р3 "aim": the enemy in cover is this much nearer than the shooter's target.
 const TERRAIN_TICKS := 720 # The approach and the clash, where every rule fires; the rest of the battle adds only time.
 func _initialize() -> void:
 	var catalog := Catalog.new()
@@ -204,7 +206,7 @@ func _initialize() -> void:
 		if scenario == "morale":
 			for key in MORALE_RULES: assert(fired[key], "the stage 1b rule %s must fire in the compared battle: %s" % [key, fired])
 		if scenario == "terrain":
-			for key in TERRAIN_RULES: assert(fired[key], "the stage Р1а rule %s must fire in the compared battle: %s" % [key, fired])
+			for key in TERRAIN_RULES: assert(fired[key], "the stage Р1а/Р3 rule %s must fire in the compared battle: %s" % [key, fired])
 	print("Native movement parity tests passed")
 	quit(0)
 
@@ -240,6 +242,10 @@ static func _check_terrain(state, fired: Dictionary) -> void:
 		var target = state.unit_for(unit.target_handle)
 		if target == null or target.dead or target.gone: continue
 		var distance: float = unit.position.distance_to(target.position)
+		# Stage Р3: a melee fighter weighing a receding target at the speed of his own cell towards it.
+		if unit.attack_range <= 0.0 and distance > 0.0 and target.velocity.dot(target.position - unit.position) / distance > unit.speed * Config.TERRAIN_MIN_SPEED \
+				and TerrainRules.speed_scale(grid, unit.position, target.position - unit.position, distance) != 1.0:
+			fired.outrun = true
 		if unit.mounted and unit.attack_range <= 0.0 and unit.ai_mode == Config.AI_MODE_MELEE and unit.charge_cooldown <= 0.0 and unit.velocity.length() > Config.CHARGE_MIN_SPEED \
 				and distance < unit.collision_radius + target.collision_radius + unit.melee_reach + Config.CHARGE_EXTRA_REACH and TerrainRules.no_charge(grid, unit.position):
 			fired.no_charge = true
@@ -248,14 +254,20 @@ static func _check_terrain(state, fired: Dictionary) -> void:
 			fired.range = true
 		var nearest = null
 		var best := INF
+		var covered := false # Stage Р3: an enemy in cover he sees, well nearer than his target in the open.
+		var open_target: bool = TerrainRules.hit_chance(grid, target.position) == 1.0
 		for enemy in state.active_units:
 			if enemy.side == unit.side or enemy.dead or enemy.gone: continue
 			var d: float = unit.position.distance_to(enemy.position)
 			if d < best:
 				best = d
 				nearest = enemy
+			if open_target and d * AIM_PROOF_RATIO < distance and TerrainRules.hit_chance(grid, enemy.position) < 1.0 and not TerrainRules.hidden(grid, enemy.position, d):
+				covered = true
 		if nearest != null and nearest != target and TerrainRules.hidden(grid, nearest.position, best):
 			fired.hidden = true
+		if covered:
+			fired.aim = true
 
 static func _place(state, group, at: Vector2, facing: float) -> void:
 	group.center = at

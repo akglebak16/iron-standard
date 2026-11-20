@@ -141,7 +141,7 @@ func advance(dt: float) -> void:
 	if _state.has_allies():
 		Tactics.enemy_step(_state, Config.COMMAND_ALLY, _elapsed_seconds, dt) # the allies' own commander (#243)
 	Tactics.follow_hero(_state, _hero)
-	SquadDoctrine.step(_state, dt)
+	SquadDoctrine.step(_state, dt, _brains[0] != null, _brains[1] != null)
 	Tactics.relayout(_state, dt)
 	_state.profiler.mark("tactics_siege")
 	_handle_swap()

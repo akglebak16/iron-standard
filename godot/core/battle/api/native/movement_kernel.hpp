@@ -82,6 +82,17 @@ private:
   bool hidden(Vec2 enemy, double raw) const {
     return terrain.valid() && raw > p(TERRAIN_FOREST_SIGHT) && terrain.cover_at(enemy.x, enemy.y) == FOREST;
   }
+  // TerrainRules.aim_weight (stage Р3): a shooter prefers a target he hits better, not in cover and lower than himself.
+  double aim_weight(Vec2 at, Vec2 enemy, double d) const {
+    const uint8_t cover = terrain.cover_at(enemy.x, enemy.y);
+    if (cover == FOREST)
+      d /= p(TERRAIN_FOREST_HIT_CHANCE);
+    else if (cover == BRUSH)
+      d /= p(TERRAIN_BRUSH_HIT_CHANCE);
+    if (relief && int(terrain.height_at(at.x, at.y)) - int(terrain.height_at(enemy.x, enemy.y)) < p(TERRAIN_HIGHER_STEP))
+      d *= p(TERRAIN_HIGH_RANGE_MULTIPLIER);
+    return d;
+  }
   struct Cell {
     int x, y;
     std::vector<int> units;
@@ -170,9 +181,13 @@ private:
         if (own > 0 && raw > 0) {
           Vec2 delta = positions[e] - at;
           float toward = velocities[e].x * delta.x + velocities[e].y * delta.y;
-          double excess = double(toward) / raw - own;
+          double along = double(toward) / raw, speed = own;
+          // Stage Р3: his own speed is the speed of his cell towards the enemy (SpatialIndex.melee_weight).
+          if (terrain.valid() && along > own * p(TERRAIN_MIN_SPEED))
+            speed = own * terrain_speed(at, delta, raw);
+          double excess = along - speed;
           if (excess > 0)
-            d *= 1.0 + p(TARGET_OUTRUN_MULTIPLIER) * excess / own;
+            d *= 1.0 + p(TARGET_OUTRUN_MULTIPLIER) * excess / speed;
         }
         // Stage 1v: a spearman facing a melee rider looks farther to him.
         if (cavalry && i(I_ANTI_CAVALRY, e) && !i(I_MOUNTED, e) &&
@@ -197,6 +212,8 @@ private:
         if (r(R_ATTACK_RANGE, e) <= 0 && r(R_SHIELD_BLOCK, e) > 0)
           d *= p(TARGET_SHIELDED_MULTIPLIER);
         d *= 1.0 + p(TARGET_FRONT_SPREAD) * front_share(own_id, i(I_ID, e));
+        if (terrain.valid())
+          d = aim_weight(at, positions[e], d);
       }
       // Sight (stage Р1а) only for a candidate that would win: the same choice, fewer grid reads.
       if ((d < score || (d == score && (best < 0 || e < best))) &&

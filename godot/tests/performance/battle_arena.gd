@@ -27,7 +27,7 @@ const Combat = preload("res://core/battle/rules/combat.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 const Templates = preload("res://core/battle/data/terrain_templates.gd")
 
-const VERSION := 6 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table.
+const VERSION := 7 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table. 7: shooters on high ground (Р3).
 const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears", "equal"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
@@ -216,6 +216,8 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var contact_at := -1.0
 	var progress := {}
 	var stuck := {}
+	var high_samples := [0, 0]
+	var shooter_samples := [0, 0]
 	var started := Time.get_ticks_msec()
 	var tick := 0
 	while tick < max_ticks:
@@ -236,6 +238,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
 			_sample_idle(state, engaged, idle_samples, unit_samples, doctrine_samples)
 			sample_stuck(state, progress, stuck, tick * TICK_SECONDS)
+			sample_high(state, high_samples, shooter_samples)
 			sample_rallies(morale)
 			for side in 2:
 				var rally: bool = state.groups[side][Config.GROUP_CAVALRY].get("rally") == true # Absent before stage 1v.
@@ -272,6 +275,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
 		"contact_seconds": contact_at, "stuck": [float(stuck_sides[0]) / initial[0], float(stuck_sides[1]) / initial[1]],
 		"arena_size": [state.arena_size.x, state.arena_size.y], "terrain": state.terrain_template,
+		"archers_high": [float(high_samples[0]) / shooter_samples[0] if shooter_samples[0] > 0 else -1.0, float(high_samples[1]) / shooter_samples[1] if shooter_samples[1] > 0 else -1.0],
 		"wall_ms": Time.get_ticks_msec() - started}
 	result.doctrine = {"rallies": rallies}
 	for key in DOCTRINE_MODES:
@@ -545,6 +549,25 @@ static func sample_stuck(state, progress: Dictionary, stuck: Dictionary, now: fl
 	for id in progress.keys():
 		if not seen.has(id): progress.erase(id)
 
+## Shooters on high ground (TERRAIN.md 8, stage Р3), sampled with the idle metric: of the living shooters with a
+## target, those standing at least TERRAIN_HIGHER_STEP above their target's cell. Only on a field with relief.
+static func sample_high(state, high: Array, shooters: Array) -> void:
+	var grid = state.terrain_rules
+	if grid == null or not grid.relief: return
+	var flags: PackedInt64Array = state.motion.integer_fields
+	var capacity: int = state.motion.capacity
+	var I = MotionStore.I
+	for row in state.active_units.size():
+		if flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.FLEEING * capacity + row] or flags[I.HERO * capacity + row]:
+			continue
+		var unit = state.active_units[row]
+		if unit.attack_range <= 0.0: continue
+		var target = state.unit_for(flags[I.TARGET_HANDLE * capacity + row])
+		if target == null or target.dead: continue
+		shooters[unit.side] += 1
+		if grid.elevation[grid.index(unit.position)] - grid.elevation[grid.index(target.position)] >= Config.TERRAIN_HIGHER_STEP:
+			high[unit.side] += 1
+
 static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var count := runs.size()
 	var wins := [0, 0]
@@ -552,6 +575,7 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var draws := 0
 	var sums := {"duration_seconds": 0.0, "losses": [0.0, 0.0], "fled": [0.0, 0.0], "never_engaged": [0.0, 0.0], "idle_time": [0.0, 0.0], "stuck": [0.0, 0.0]}
 	var contact := [0.0, 0]
+	var high := [[0.0, 0], [0.0, 0]]
 	var ai_mean := 0.0
 	var ai_p95 := 0.0
 	var kite_share := 0.0
@@ -598,6 +622,10 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		if float(run.get("contact_seconds", -1.0)) >= 0.0:
 			contact[0] += float(run.contact_seconds)
 			contact[1] += 1
+		for side in 2:
+			if float(run.get("archers_high", [-1.0, -1.0])[side]) >= 0.0:
+				high[side][0] += float(run.archers_high[side])
+				high[side][1] += 1
 		for key in ["losses", "fled", "never_engaged", "idle_time", "stuck"]:
 			if run.has(key):
 				for side in 2: sums[key][side] += run[key][side]
@@ -616,6 +644,7 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	for key in ["losses", "fled", "never_engaged", "idle_time", "stuck"]:
 		summary[key] = [sums[key][0] / count, sums[key][1] / count]
 	summary.contact_seconds = contact[0] / contact[1] if contact[1] > 0 else -1.0
+	summary.archers_high = [high[0][0] / high[0][1] if high[0][1] > 0 else -1.0, high[1][0] / high[1][1] if high[1][1] > 0 else -1.0]
 	if not runs.is_empty() and runs[0].has("arena_size"): summary.arena_size = runs[0].arena_size
 	if not runs.is_empty(): summary.terrain = runs[0].get("terrain", "open")
 	if doctrine_runs > 0:
@@ -653,6 +682,8 @@ static func table(report: Dictionary) -> String:
 		if s.has("arena_size"):
 			# Wins by side: side 0 stands on the left (on the hill of center_hill) whichever army it is (--mirror).
 			lines.append("  field %dx%d %s: first melee contact %.1f s, stuck %.3f/%.3f, wins by side %d/%d" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.stuck[0], s.stuck[1], s.wins[0], s.wins[1]])
+		if s.has("archers_high") and (s.archers_high[0] >= 0.0 or s.archers_high[1] >= 0.0):
+			lines.append("  shooters on high ground %.3f/%.3f" % [s.archers_high[0], s.archers_high[1]])
 		if s.has("volleys"):
 			var v: Dictionary = s.volleys
 			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])
