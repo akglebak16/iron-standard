@@ -146,6 +146,8 @@ OpenAI права на результат принадлежат пользов�
 `apps/godot/visuals/assets/pact_heraldic_0.png` … `_3.png` (7 пеших) и `pact_heraldic_cavalry_0.png` … `_3.png` (2 всадника).
 Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/pact-prompts.md`: `pact-torsos.png`, `pact-heads.png`,
 `pact-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs pact`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `pact-torsos-v1…v3.png`, `pact-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `pact-prompts.md`, раздел «Варианты»).
 
 ### Разбойники (b1 Грабитель, b2 Разбойник, b1a Браконьер, b3 Головорез, b2c Конный налётчик)
 
