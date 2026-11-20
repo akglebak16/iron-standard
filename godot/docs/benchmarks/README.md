@@ -113,3 +113,6 @@ node godot/tools/compare_view.cjs dist/godot/toolchain/Godot_v4.7.2-stable_win64
 Этап Р1а: правила местности в ядре боя — цена кода (`battle_benchmark.gd --terrain=neutral`: правила включены и ничего
 не меняют), A/B против `main`, отрисовка и арена с победами на холме при равных силах (`--scenarios=equal`,
 `--terrain=center_hill` и `center_hill_right`) — [terrain-r1a-2026-11-19.md](terrain-r1a-2026-11-19.md).
+
+Бой на C++ (#250, #261): замер всех фаз тика 1000×1000 по сценариям (конница, смешанный, стрелки, лес на фланге,
+200×200), что внутри дорогих фаз и план переноса по частям — [battle-native-plan-2026-11-20.md](battle-native-plan-2026-11-20.md).
