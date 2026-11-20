@@ -134,13 +134,16 @@ static func assess(battle: State) -> Dictionary:
 			side_fleeing += fleeing[slot]
 			side_sum += position_sum[slot]
 			var classes := PackedInt32Array()
-			for klass in Config.AI_CLASSES: classes.append(class_count[slot * Config.AI_CLASSES + klass])
+			var class_strength := PackedFloat64Array()
+			for klass in Config.AI_CLASSES:
+				classes.append(class_count[slot * Config.AI_CLASSES + klass])
+				class_strength.append(class_power[slot * Config.AI_CLASSES + klass])
 			var group = _group(battle, side, kind)
 			var frame := _frame(group, facings[slot])
 			var threat := _threat(slot, kinds, count, centers, matchups, frame)
 			var ready: int = count[slot]
 			groups.append({"side": side, "kind": kind, "count": ready, "fleeing": fleeing[slot], "wavering": wavering[slot],
-				"strength": power[slot], "classes": classes, "center": centers[slot],
+				"strength": power[slot], "classes": classes, "class_strength": class_strength, "center": centers[slot],
 				"direction": group.direction if group != null else 0.0, "frame": frame,
 				"front_width": lateral_max[slot] - lateral_min[slot] if ready > 0 else 0.0,
 				"engaged_share": float(engaged[slot]) / ready if ready > 0 else 0.0,

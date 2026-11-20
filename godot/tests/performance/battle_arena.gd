@@ -10,7 +10,9 @@ extends SceneTree
 ## Profiles are BattleSetup AI profiles (ADR-022): the first plays side 0, the second side 1; --mirror adds a
 ## run with sides swapped for every seed, so a profile is not favoured by its side. The hero leaves the
 ## field before the battle, except in "kite", where he rides a scripted circle in front of the enemy line
-## and side 0 follows player orders (it holds), as in tests/integration/test_ai_kite.gd.
+## and side 0 follows player orders (it holds), as in tests/integration/test_ai_kite.gd. In "hold" and
+## "hold_archers" (stage 1g, DESIGN.md 4.2.1) side 0 follows player orders too and stands where it deployed, the
+## hero gone: the second profile attacks a standing line with archers. These are not mirrored.
 const Loader = preload("res://adapters/content/catalog_loader.gd")
 const Catalog = preload("res://core/troops/data/catalog.gd")
 const Factory = preload("res://core/battle/application/factory.gd")
@@ -27,8 +29,10 @@ const Combat = preload("res://core/battle/rules/combat.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 const Templates = preload("res://core/battle/data/terrain_templates.gd")
 
-const VERSION := 7 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table. 7: shooters on high ground (Р3).
-const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears", "equal"]
+const VERSION := 7 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table. 7: shooters on high ground (Р3). 8: hold scenarios and the time under fire before the first melee contact (1g).
+const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears", "equal", "hold", "hold_archers"]
+# Side 0 follows player orders: it stands where it deployed, the hero has left; side 1 plays the second profile.
+const PLAYER_HOLDS := ["kite", "hold", "hold_archers"]
 const SIZES := [100, 500, 1000]
 const TICK_SECONDS := 1.0 / 60.0
 const SAMPLE_TICKS := 30 # Idle sampling every 0.5 s.
@@ -118,8 +122,8 @@ static func run_matrix(options: Dictionary, catalog: Catalog) -> Dictionary:
 		for size in options.sizes:
 			var runs: Array[Dictionary] = []
 			for run in int(options.runs):
-				# The kite has a scripted player side; mirroring it would only repeat the battle.
-				for swapped in ([false, true] if options.mirror and scenario != "kite" else [false]):
+				# The kite and the hold scenarios have a player side; mirroring them would only repeat the battle.
+				for swapped in ([false, true] if options.mirror and scenario not in PLAYER_HOLDS else [false]):
 					var battle := run_battle(scenario, int(size), int(options.seed) + run, options, catalog, swapped)
 					if battle.has("error"): return {"error": "%s %d: %s" % [scenario, size, battle.error]}
 					runs.append(battle)
@@ -143,7 +147,7 @@ static func setup_for(scenario: String, size: int, seed: int, profiles: Array, s
 	setup.player_ai_profile = profiles[1 if swapped else 0]
 	setup.enemy_ai_profile = profiles[0 if swapped else 1]
 	setup.terrain = Templates.sample(str(options_terrain)) if scenario != "siege" else {}
-	if scenario == "kite":
+	if scenario in PLAYER_HOLDS:
 		setup.player_ai_profile = Config.AI_PROFILE_PLAYER
 		setup.enemy_ai_profile = profiles[1]
 	return setup
@@ -155,10 +159,12 @@ static func _armies(scenario: String, size: int) -> Array:
 		"archers":
 			var archers := roundi(size * 0.6)
 			return [[{"type": "n1", "n": size - archers}, {"type": "n2a", "n": archers}], [{"type": "e1", "n": size - archers}, {"type": "e2a", "n": archers}]]
-		"kite":
+		"kite", "hold_archers":
+			# hold_archers (stage 1g): the kite army without the hero holds its ground against foot without bows.
 			var foot := size / 2
 			return [[{"type": "n1", "n": foot}, {"type": "n2a", "n": size - foot}], [{"type": "e1", "n": size}]]
-		"equal":
+		"equal", "hold":
+			# hold (stage 1g): the same army as in "equal", side 0 holds its ground against the AI.
 			# TERRAIN.md 8 (stage Р1а): the same mixed army on both sides, so the wins by side measure the ground alone.
 			var army := [{"type": "n1", "n": size / 2}, {"type": "n2a", "n": size / 3}, {"type": "n3c", "n": size - size / 2 - size / 3}]
 			return [army, army.duplicate(true)]
@@ -273,7 +279,9 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 		"fled": [float(fled[0]) / initial[0], float(fled[1]) / initial[1]],
 		"never_engaged": [float(never[0]) / initial[0], float(never[1]) / initial[1]],
 		"idle_time": [float(idle_samples[0]) / maxi(1, unit_samples[0]), float(idle_samples[1]) / maxi(1, unit_samples[1])],
-		"contact_seconds": contact_at, "stuck": [float(stuck_sides[0]) / initial[0], float(stuck_sides[1]) / initial[1]],
+		"contact_seconds": contact_at,
+		"under_fire_seconds": [under_fire_seconds(volleys, 0, contact_at, tick), under_fire_seconds(volleys, 1, contact_at, tick)],
+		"stuck": [float(stuck_sides[0]) / initial[0], float(stuck_sides[1]) / initial[1]],
 		"arena_size": [state.arena_size.x, state.arena_size.y], "terrain": state.terrain_template,
 		"archers_high": [float(high_samples[0]) / shooter_samples[0] if shooter_samples[0] > 0 else -1.0, float(high_samples[1]) / shooter_samples[1] if shooter_samples[1] > 0 else -1.0],
 		"wall_ms": Time.get_ticks_msec() - started}
@@ -293,10 +301,18 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 ## it (expected damage per arrow: damage x TARGET_VOLLEY_HIT_SHARE), "dead" when the target died while the arrow
 ## was still in flight. An arrow landing on the tick its target dies counts as landed. Volleys: 1 s windows per
 ## side with at least VOLLEY_MIN_SHOTS shots; the first volley is each side's first such window.
+## Stage 1g (DESIGN.md 4.2.1): seconds a side was shot at before the first melee contact of the battle (to the end
+## without one); 0 when it was never shot at. The attacker of a holding line spends them walking under the arrows.
+static func under_fire_seconds(tracker: Dictionary, side: int, contact_at: float, ticks: int) -> float:
+	var first: int = tracker.first_shot_at[side]
+	if first < 0: return 0.0
+	var until := contact_at if contact_at >= 0.0 else ticks * TICK_SECONDS
+	return maxf(0.0, until - first * TICK_SECONDS)
+
 static func volley_tracker() -> Dictionary:
 	return {"ids": {}, "flight": [], "expected": {}, "shots": 0, "aimed": 0, "doomed": 0, "dead": 0,
 		"window": [{}, {}], "window_start": [-1, -1], "window_shots": [0, 0], "volleys": 0, "volley_targets": 0,
-		"volley_shots": 0, "first": [{}, {}]}
+		"volley_shots": 0, "first": [{}, {}], "first_shot_at": [-1, -1]}
 
 static func track_shot(tracker: Dictionary, state, shooter_id: int, tick: int) -> void:
 	var ids: Dictionary = tracker.ids
@@ -305,6 +321,8 @@ static func track_shot(tracker: Dictionary, state, shooter_id: int, tick: int) -
 	var shooter = ids.get(shooter_id)
 	if shooter == null or shooter.hero: return
 	tracker.shots += 1
+	if tracker.first_shot_at[1 - shooter.side] < 0:
+		tracker.first_shot_at[1 - shooter.side] = tick # The other side is under fire from now on.
 	var target = state.unit_for(shooter.target_handle)
 	if target == null: return
 	tracker.aimed += 1
@@ -573,7 +591,7 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var wins := [0, 0]
 	var profile_wins := [0, 0]
 	var draws := 0
-	var sums := {"duration_seconds": 0.0, "losses": [0.0, 0.0], "fled": [0.0, 0.0], "never_engaged": [0.0, 0.0], "idle_time": [0.0, 0.0], "stuck": [0.0, 0.0]}
+	var sums := {"duration_seconds": 0.0, "losses": [0.0, 0.0], "fled": [0.0, 0.0], "never_engaged": [0.0, 0.0], "idle_time": [0.0, 0.0], "stuck": [0.0, 0.0], "under_fire_seconds": [0.0, 0.0]}
 	var contact := [0.0, 0]
 	var high := [[0.0, 0], [0.0, 0]]
 	var ai_mean := 0.0
@@ -626,7 +644,7 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 			if float(run.get("archers_high", [-1.0, -1.0])[side]) >= 0.0:
 				high[side][0] += float(run.archers_high[side])
 				high[side][1] += 1
-		for key in ["losses", "fled", "never_engaged", "idle_time", "stuck"]:
+		for key in ["losses", "fled", "never_engaged", "idle_time", "stuck", "under_fire_seconds"]:
 			if run.has(key):
 				for side in 2: sums[key][side] += run[key][side]
 		if run.has("ai_phase") and not run.ai_phase.is_empty():
@@ -641,7 +659,7 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 		"win_rate": [float(wins[0]) / count, float(wins[1]) / count],
 		"profile_win_rate": [float(profile_wins[0]) / count, float(profile_wins[1]) / count],
 		"duration_seconds": sums.duration_seconds / count, "ai_phase_mean_ms": ai_mean / count, "ai_phase_worst_p95_ms": ai_p95}
-	for key in ["losses", "fled", "never_engaged", "idle_time", "stuck"]:
+	for key in ["losses", "fled", "never_engaged", "idle_time", "stuck", "under_fire_seconds"]:
 		summary[key] = [sums[key][0] / count, sums[key][1] / count]
 	summary.contact_seconds = contact[0] / contact[1] if contact[1] > 0 else -1.0
 	summary.archers_high = [high[0][0] / high[0][1] if high[0][1] > 0 else -1.0, high[1][0] / high[1][1] if high[1][1] > 0 else -1.0]
@@ -681,7 +699,7 @@ static func table(report: Dictionary) -> String:
 			s.idle_time[0], s.idle_time[1], s.duration_seconds, s.ai_phase_mean_ms, s.ai_phase_worst_p95_ms])
 		if s.has("arena_size"):
 			# Wins by side: side 0 stands on the left (on the hill of center_hill) whichever army it is (--mirror).
-			lines.append("  field %dx%d %s: first melee contact %.1f s, stuck %.3f/%.3f, wins by side %d/%d" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.stuck[0], s.stuck[1], s.wins[0], s.wins[1]])
+			lines.append("  field %dx%d %s: first melee contact %.1f s, under fire before it %.1f/%.1f s, stuck %.3f/%.3f, wins by side %d/%d" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.get("under_fire_seconds", [0.0, 0.0])[0], s.get("under_fire_seconds", [0.0, 0.0])[1], s.stuck[0], s.stuck[1], s.wins[0], s.wins[1]])
 		if s.has("archers_high") and (s.archers_high[0] >= 0.0 or s.archers_high[1] >= 0.0):
 			lines.append("  shooters on high ground %.3f/%.3f" % [s.archers_high[0], s.archers_high[1]])
 		if s.has("volleys"):

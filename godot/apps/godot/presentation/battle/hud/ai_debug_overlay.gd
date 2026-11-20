@@ -1,14 +1,15 @@
 extends RefCounted
 ## AI debug overlay (DESIGN.md 4.8, ADR-022), toggled with F3 in battle: commander plan and profile of both sides,
 ## order, morale, assessment and the latest decision with its reason for every group, fighters coloured by
-## their decision mode, group centers with facing, waypoints and threat. It reads only the AI debug snapshot
+## their decision mode, group centers with facing, waypoints, the commander's march points (stage 1g) and threat. It reads only the AI debug snapshot
 ## and never takes part in the battle. Texts and colours belong here, the codes come from the battle.
 const Config = preload("res://core/battle/config.gd")
 const TOGGLE_KEY := KEY_F3
 const SIDE_NAMES := ["Свои", "Враги"]
 const GROUP_NAMES := ["Пехота", "Стрелки", "Конница"]
-const PROFILES := {"": "приказы игрока", "reference": "эталон"}
-const PLANS := {"": "—", "deploy": "развёртывание", "advance": "сближение", "engage": "бой", "hold_walls": "держать стены", "sortie": "вылазка"}
+const PROFILES := {"": "приказы игрока", "reference": "эталон", "commander": "командир"}
+const PLANS := {"": "—", "deploy": "развёртывание", "advance": "сближение", "engage": "бой", "hold_walls": "держать стены", "sortie": "вылазка",
+	"attack": "атака"}
 const MORALE_STATES := ["стойкие", "колеблются", "бегут"] # Config.MORALE_GROUP_STEADY, _WAVERING, _ROUTED.
 const ORDERS := {"hold": "держать", "follow": "за героем", "charge": "в атаку", "back": "отход"}
 const DECISIONS := {"wait": "ждёт", "advance": "идёт вперёд", "stand": "стоит", "charge": "в атаку", "flank": "обход фланга",
@@ -18,7 +19,9 @@ const REASONS := {"deploying": "строится", "squad_in_reach": "отряд
 	"on_enemy": "на центр врага", "enemy_close": "враг близко", "no_infantry": "нет своей пехоты",
 	"out_of_range": "враг вне выстрела", "in_range": "враг на выстреле", "flank_timer": "время обхода",
 	"waypoint_reached": "вышли на точку", "hopeless_chase": "безнадёжная погоня", "sortie_timer": "время вылазки",
-	"attackers_inside": "враг за стеной"}
+	"attackers_inside": "враг за стеной", "on_flank_way": "идёт на точку обхода", "out_of_fire": "строем, вне выстрела",
+	"under_fire": "быстро, под стрелами", "to_range": "на дальность выстрела", "with_line": "за своей линией",
+	"outshot": "нас перестреливают", "stronger": "мы сильнее", "only_plan": "других планов пока нет"}
 const MODE_COLORS := {"": Color(0.6, 0.6, 0.6, 0.8), "slot": Color(0.75, 0.82, 0.9, 0.8), "melee": Color(0.95, 0.2, 0.15, 0.9),
 	"shoot": Color(1.0, 0.85, 0.15, 0.9), "shootslot": Color(1.0, 0.55, 0.1, 0.9), "skirm": Color(0.7, 0.35, 0.95, 0.9),
 	"rank": Color(0.3, 0.5, 0.95, 0.85), "brace": Color(0.2, 0.85, 0.75, 0.9), "fallback": Color(0.55, 0.85, 0.3, 0.9)}
@@ -29,6 +32,7 @@ const SIDE_COLORS := [Color(0.35, 0.65, 1.0, 0.85), Color(1.0, 0.4, 0.3, 0.85)]
 const UNIT_MARK_RADIUS := 4.5
 const UNIT_MARK_EDGE := Color(0, 0, 0, 0.7)
 const GROUP_RING_RADIUS := 26.0
+const TASK_MARK_RADIUS := 5.0 # The commander's march point of a group (stage 1g).
 const FACING_LENGTH := 60.0
 const LINE_WIDTH := 2.0
 const LABEL_OFFSET := Vector2(30, -30)
@@ -89,6 +93,7 @@ static func text(debug: Dictionary) -> String:
 	var lines: Array[String] = ["ИИ [F3] · %.1f с · оценка поля: тик %d" % [debug.elapsed_seconds, debug.assessment_tick]]
 	for entry in debug.sides:
 		var head := "%s — %s, план: %s" % [SIDE_NAMES[entry.side], PROFILES.get(entry.profile, entry.profile), PLANS.get(entry.plan, entry.plan)]
+		head += plan_line(entry.get("plan_details", {}))
 		if entry.has("assessment"):
 			head += " · бойцов %d, сила %.1f, бежит %d" % [entry.assessment.count, entry.assessment.strength, entry.assessment.fleeing]
 		if entry.missile_losses >= 0.05:
@@ -98,6 +103,15 @@ static func text(debug: Dictionary) -> String:
 			lines.append("  " + group_line(group, debug.elapsed_seconds))
 	lines.append(MODE_LEGEND)
 	return "\n".join(lines)
+
+## The commander's choice (stage 1g): the two best plan scores, the reason, the strength ratio and the outshot share;
+## empty for the reference brain, which weighs no plans.
+static func plan_line(details: Dictionary) -> String:
+	if details.is_empty(): return ""
+	var scores: Array[String] = []
+	for best in details.get("best", []):
+		scores.append("%s %.2f" % [PLANS.get(best.plan, best.plan), best.score])
+	return " (%s; %s; перевес %.2f, перестрелка %+.2f)" % [", ".join(scores), REASONS.get(details.reason, details.reason), details.ratio, details.outshot]
 
 static func group_line(group: Dictionary, now: float) -> String:
 	var order: String = ORDERS.get("back" if group.backing else group.order, group.order)
@@ -142,6 +156,10 @@ func draw_world(canvas: CanvasItem) -> void:
 				canvas.draw_dashed_line(center, group.waypoint, side_color, LINE_WIDTH, 8.0)
 			if group.order == Config.ORDER_HOLD and group.center.distance_to(center) > GROUP_RING_RADIUS:
 				canvas.draw_dashed_line(center, group.center, side_color, 1.0, 6.0)
+			var task_point: Vector2 = group.get("task_point", Vector2.INF)
+			if task_point.is_finite():
+				canvas.draw_dashed_line(group.center, task_point, side_color.lightened(0.3), 1.0, 4.0)
+				canvas.draw_circle(task_point, TASK_MARK_RADIUS, side_color.lightened(0.3))
 			var title := "%s: %s, %s" % [GROUP_NAMES[group.kind], ORDERS.get(group.order, group.order), morale_state_name(group.get("morale_state", 0))]
 			if not group.last.is_empty(): title += " · " + REASONS.get(group.last.reason, group.last.reason)
 			canvas.draw_string_outline(font, center + LABEL_OFFSET, title, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, 4, Color(0, 0, 0, 0.85))

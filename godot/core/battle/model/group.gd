@@ -42,6 +42,11 @@ var open_waypoint: Vector2 = Vector2.INF # AI cavalry: the flank waypoint after 
 var morale_state: int = Config.MORALE_GROUP_STEADY
 var morale_pressure: float = 0.0 # Weighted enemy threat against own strength (field assessment).
 var morale_fleeing_share: float = 0.0
+# Constant for a battle, kept as fighters join the group (State.add_grouped_unit: the deployment, waves, companions), for
+# the commander (stage 1g) without a pass over the fighters: the longest range and the mean speed of its men.
+var reach: float = 0.0
+var speed_sum: float = 0.0
+var speed_count: int = 0
 var _slot_direction := INF
 var _slot_lateral := Vector2.DOWN
 var _slot_forward := Vector2.RIGHT
@@ -52,6 +57,17 @@ func _init(group_side: int, group_kind: int, at: Vector2, facing: float) -> void
 	center = at
 	direction = facing
 	doctrine_timer = (group_side * 3 + group_kind) * Config.AI_SQUAD_PERIOD_SECONDS / 6.0
+
+## Records a fighter joining the group in its constant summary (range, speed); the hero leads, he is not counted.
+func enlist(unit: Unit) -> void:
+	if unit.hero: return
+	reach = maxf(reach, unit.attack_range)
+	speed_sum += unit.speed
+	speed_count += 1
+
+## Mean speed of the men who joined the group; 0 without any.
+func mean_speed() -> float:
+	return speed_sum / speed_count if speed_count > 0 else 0.0
 
 func active_units() -> Array[Unit]:
 	return units.filter(func(u: Unit): return not u.dead and not u.gone and not u.fleeing and not u.hero)

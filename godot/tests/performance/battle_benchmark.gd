@@ -20,6 +20,7 @@ var profile_phases := false
 var profile_details := false
 var contact_backend := "native"
 var movement_backend := "native"
+var ai_profile := Config.AI_PROFILE_REFERENCE # Stage 1g: the enemy's AI profile (BattleSetup), e.g. "commander".
 var _tree: SceneTree
 
 func run(tree: SceneTree) -> void:
@@ -39,6 +40,7 @@ func run(tree: SceneTree) -> void:
 			profile_details = true
 		elif arg.begins_with("--movement="): movement_backend = arg.trim_prefix("--movement=")
 		elif arg.begins_with("--contacts="): contact_backend = arg.trim_prefix("--contacts=")
+		elif arg.begins_with("--ai-profile="): ai_profile = arg.trim_prefix("--ai-profile=")
 	if size < 1 or ticks < 1 or warmup < 0 or scenario not in ["approach", "contact", "volley", "cavalry", "siege", "mixed"]:
 		fail("Invalid benchmark parameters")
 		return
@@ -54,6 +56,7 @@ func run(tree: SceneTree) -> void:
 	setup.enemy_unit_cap = size
 	setup.siege = scenario == "siege"
 	setup.terrain = Templates.sample(terrain)
+	setup.enemy_ai_profile = ai_profile
 	var types := ["n1", "e1"]
 	if scenario == "volley": types = ["n2a", "e2a"]
 	elif scenario == "cavalry": types = ["n3c", "e3c"]
@@ -152,7 +155,7 @@ func run(tree: SceneTree) -> void:
 	for phase in phases: phase_stats[phase] = stats(phases[phase])
 	var report := {"engine": Engine.get_version_info().string, "debug": OS.is_debug_build(),
 		"cpu": OS.get_processor_name(), "logical_processors": OS.get_processor_count(),
-		"scenario": scenario, "terrain": session._state.terrain_template, "seed": seed_value, "requested_per_side": size, "ordinary_initial": initial,
+		"scenario": scenario, "ai_profile": ai_profile, "terrain": session._state.terrain_template, "seed": seed_value, "requested_per_side": size, "ordinary_initial": initial,
 		"special_initial": 1, "weight": 1, "warmup_ticks": warmup, "requested_ticks": ticks,
 		"sampling_version": 2, "warmup_snapshots": true, "warmup_events_discarded": true,
 		"measured_ticks": simulation.size(), "live_min": live_min, "live_max": live_max,

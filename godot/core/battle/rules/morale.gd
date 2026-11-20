@@ -109,7 +109,9 @@ static func _group_losses(battle: State) -> PackedFloat64Array:
 	losses.resize(2 * Config.GROUP_KINDS)
 	if battle.groups.size() < 2:
 		return losses
-	var sides: Array = FieldAssessment.assess(battle).sides
+	battle.assessment = FieldAssessment.assess(battle) # Kept for the commanders (stage 1g): no pass of their own.
+	battle.assessment_serial += 1
+	var sides: Array = battle.assessment.sides
 	for side in 2:
 		for kind in mini(Config.GROUP_KINDS, battle.groups[side].size()):
 			var summary: Dictionary = sides[side].groups[kind]
