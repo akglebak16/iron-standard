@@ -77,6 +77,19 @@ FACTIONS.undead={
   {id:'s3',weapon:'sword',shield:'kite',steel:true},
  ],
 };
+FACTIONS.kin={
+ troops:[
+  {id:'f1',weapon:'sword',shield:'round',steel:false},
+  {id:'f2',weapon:'sword',shield:'kite',steel:true},
+  {id:'f3',weapon:'sword',shield:'kite',steel:true},
+  {id:'f2s',weapon:'spear',shield:'round',steel:false},
+  {id:'f3s',weapon:'halberd',shield:false,steel:true},
+  {id:'f2a',weapon:'bow',shield:false,steel:false},
+  {id:'f3a',weapon:'bow',shield:false,steel:true},
+  {id:'f2c',weapon:'sword',shield:'kite',steel:true,horse:'chestnut'},
+  {id:'f3c',weapon:'lance',shield:'kite',steel:true,horse:'grey'},
+ ],
+};
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];
 const FOOT={W:152,H:176},HORSE={W:240,H:244};
 const RIDER=[4,23];
