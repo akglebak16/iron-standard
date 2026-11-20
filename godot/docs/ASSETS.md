@@ -82,6 +82,8 @@ OpenAI права на результат принадлежат пользов�
 (шаблоны — `shareness/skills/unit-parts/PROMPTS.md`): `nord-torsos.png`, `nord-heads.png`, `nord-shields.png`,
 `bow.png`; кони — общий `horses.png`, меч/топор/копьё — `weapons.png`. Сборка:
 `node godot/tools/battle/render_heraldic_faction.cjs nord` (sharp), геометрия — `nord_heraldic_geometry.gd`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коня): `nord-torsos-v1…v3.png`, `nord-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `nord-prompts.md`, раздел «Варианты»).
 Под знаменем игрока синее сукно перекрашивается в цвет знамени (`dominion_heraldic_art.gd`, `FACTIONS`).
 Эталоны теста палитр знамени перенесены на f3 (`tests/unit/visuals/fixtures/banner_*_f3.png`): вырезаны из
 `portrait.png` с наложением `banner_N_portrait_v0.png`, как это делает игра.

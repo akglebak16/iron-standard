@@ -67,6 +67,7 @@ const FACTIONS={
   ],
  },
  nord:{
+  variants:true,
   // Order = cells of the part sheets (reading order); the last one rides.
   troops:[
    {id:'n1',weapon:'axe',shield:true,steel:false},
