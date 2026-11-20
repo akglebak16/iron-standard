@@ -131,3 +131,9 @@ OpenAI права на результат принадлежат пользов�
 на общих конях). Части — генератор картинок OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/kin-prompts.md`:
 `kin-torsos.png`, `kin-heads.png`, `kin-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs kin`.
 
+### Эмират Хайрат (m1 Воин пустыни, m2 Гулям, m3 Страж эмира, m2s Копейщик-бербер, m2a Лучник пустыни, m2c Лёгкий всадник, m3h Конный лучник, m3c Мамлюк)
+
+`apps/godot/visuals/assets/emi_heraldic_0.png` … `_3.png` (5 пеших) и `emi_heraldic_cavalry_0.png` … `_3.png` (3 всадника).
+Части — OpenAI (ChatGPT/Codex) по `godot/tools/battle/heraldic_source/emi-prompts.md`: `emi-torsos.png`, `emi-heads.png`,
+`emi-shields.png`. Сборка: `node godot/tools/battle/render_heraldic_faction.cjs emi`.
+

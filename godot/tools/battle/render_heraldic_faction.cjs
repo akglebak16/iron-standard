@@ -90,6 +90,18 @@ FACTIONS.kin={
   {id:'f3c',weapon:'lance',shield:'kite',steel:true,horse:'grey'},
  ],
 };
+FACTIONS.emi={
+ troops:[
+  {id:'m1',weapon:'sabre',shield:'small',steel:false},
+  {id:'m2',weapon:'sabre',shield:'round',steel:false},
+  {id:'m3',weapon:'sabre',shield:'round',steel:true},
+  {id:'m2s',weapon:'spear',shield:'small',steel:false},
+  {id:'m2a',weapon:'bow',shield:false,steel:false},
+  {id:'m2c',weapon:'sabre',shield:'small',steel:false,horse:'dun'},
+  {id:'m3h',weapon:'bow',shield:false,steel:true,horse:'dun'},
+  {id:'m3c',weapon:'lance',shield:'small',steel:true,horse:'black'},
+ ],
+};
 const COATS=['bay','chestnut','dun','black','grey','barded','bone'];
 const FOOT={W:152,H:176},HORSE={W:240,H:244};
 const RIDER=[4,23];
