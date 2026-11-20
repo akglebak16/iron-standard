@@ -102,6 +102,8 @@ OpenAI права на результат принадлежат пользов�
 (3 конных, 12 строк). Части — генератор картинок OpenAI (ChatGPT) по шаблонам `shareness/skills/unit-parts/PROMPTS.md`:
 `khan-torsos.png`, `khan-heads.png`, `khan-shields.png` (малые круглые), `sabre.png`. Кони — общий `horses.png`.
 Сборка: `node godot/tools/battle/render_heraldic_faction.cjs khan`, геометрия — `khan_heraldic_geometry.gd`.
+Варианты (страницы 1–3: другие лица и детали одежды, другие масти коней): `khan-torsos-v1…v3.png`, `khan-heads-v1…v3.png`,
+тем же генератором правкой основных листов (промпты в `khan-prompts.md`, раздел «Варианты»).
 Под знаменем игрока бирюзовое сукно перекрашивается в цвет знамени.
 
 ### Нежить (z1 Мертвец, s1 Скелет, s1a Скелет-лучник, s2 Мёртвый воин, s2c Мёртвый всадник, s3 Умертвие)
