@@ -69,6 +69,10 @@ func _check_translations() -> void:
 	assert(Overlay.PROFILES.has(Config.AI_PROFILE_COMMANDER))
 	var plan := Overlay.plan_line({"best": [{"plan": "attack", "score": 0.6}], "reason": "outshot", "ratio": 0.77, "outshot": 0.75})
 	assert(plan == " (атака 0.60; нас перестреливают; перевес 0.77, перестрелка +0.75)", plan)
+	# Part 2 (#267): patience and the enemy coming.
+	plan = Overlay.plan_line({"best": [{"plan": "defence", "score": 0.38}, {"plan": "attack", "score": 0.53}], "reason": "plan_kept",
+		"ratio": 1.0, "outshot": 0.0, "patience": 0.43, "advancing": true})
+	assert(plan == " (оборона 0.38, атака 0.53; план ещё в силе; перевес 1.00, перестрелка +0.00, терпение 0.43, враг идёт)", plan)
 	assert(Overlay.plan_line({}) == "", "The reference brain weighs no plans")
 	assert(Overlay.mode_color(Config.AI_MODE_MELEE, true) == Overlay.FLEEING_COLOR)
 	var line := Overlay.group_line({"kind": 0, "order": "charge", "backing": false, "kited": true,

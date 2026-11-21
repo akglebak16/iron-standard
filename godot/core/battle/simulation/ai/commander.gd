@@ -1,5 +1,5 @@
 extends RefCounted
-## Army commander, stage 1g part 1 (DESIGN.md 4.2, decisions 49–57, issue #266): the "commander" AI profile next to the
+## Army commander, stage 1g parts 1–2 (DESIGN.md 4.2, decisions 49–57 and 66–71, #266, #267): the "commander" AI profile next to the
 ## frozen "reference" brain (rules/tactics.gd). The brain contract of profiles.gd: enemy_step(battle, command, elapsed,
 ## dt) for a field battle; siege_step is the reference siege brain until stage 1d.
 ##
@@ -13,12 +13,23 @@ extends RefCounted
 ## squad picture of the reference brain (stage K scan every AI_SQUAD_SCAN_SECONDS, sampled), the constant summary of a
 ## group (its range and mean speed, Group.enlist) and the waiting reserve. No pass over the fighters, no RNG.
 ##
-## Part 1 has one plan, the attack (DESIGN.md 4.2.3): the infantry line marches at AI_INFANTRY_ADVANCE_SPEED while out of
-## reach of the enemy shooters and at AI_CMD_UNDER_FIRE_SPEED_SHARE of its own mean speed within their reach (or while
-## the side loses men to missiles), and charges the nearest squad at AI_INFANTRY_CHARGE_DISTANCE, with no timer; the
-## archers follow and stand at AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, at most
-## AI_CMD_ARCHER_LINE_GAP behind their own line; the cavalry flanks as the reference brain does (part 4, #269, changes
-## that). The defence, waiting and retreat plans, the plan switch and patience come with part 2 (#267).
+## Plans (DESIGN.md 4.2.3), scored from the strength ratio R, the outshot F, the position P (0 until part 8), the
+## patience T and whether the enemy comes:
+## - attack (part 1): the infantry line marches at AI_INFANTRY_ADVANCE_SPEED while out of reach of the enemy shooters and
+##   at AI_CMD_UNDER_FIRE_SPEED_SHARE of its own mean speed within their reach (or while the side loses men to
+##   missiles), and charges the nearest squad at AI_INFANTRY_CHARGE_DISTANCE, with no timer; the archers follow and
+##   stand at AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, at most AI_CMD_ARCHER_LINE_GAP
+##   behind their own line; the cavalry flanks as the reference brain does (part 4, #269, changes that);
+## - defence (part 2): the line holds where it stands (its deployment line at the start), the archers behind it, the
+##   cavalry in reserve on its deployment flank; the cavalry counter-charges once the enemy is bound by the line or rides
+##   within its charge distance;
+## - waiting (part 2): the own shooters are stronger; the line walks up only until its archers, behind it, reach the
+##   nearest enemy squad, and stands; the cavalry in reserve.
+## The plan is kept AI_CMD_PLAN_HOLD_SECONDS and gives way only to one scored AI_CMD_SWITCH_MARGIN higher; a side with a
+## group bound by the fight does not leave the attack. Patience grows while the side holds or waits and the enemy does
+## not come; it weakens both and raises the attack of a side not weaker than AI_CMD_PATIENCE_RATIO. Leaving the attack
+## calls off the charge of every group not yet bound by the fight: it re-forms where its men stand (the stage K call-off,
+## generalised). The retreat comes with part 3 (#268).
 ##
 ## The command decides for itself which side it is on (State.side_of): the same code leads either side (4.2.9).
 ## Trace codes (ADR-022) are written only while State.ai_trace is set and are translated by presentation; the codes
@@ -33,11 +44,15 @@ const DecisionTrace = preload("res://core/battle/simulation/ai/decision_trace.gd
 
 const PLAN_DEPLOY := Tactics.PLAN_DEPLOY
 const PLAN_ATTACK := "attack"
+const PLAN_DEFENCE := "defence"
+const PLAN_WAITING := "waiting"
+const PLANS: Array[String] = [PLAN_ATTACK, PLAN_DEFENCE, PLAN_WAITING]
 const DECISION_WAIT := Tactics.DECISION_WAIT
 const DECISION_ADVANCE := Tactics.DECISION_ADVANCE
 const DECISION_STAND := Tactics.DECISION_STAND
 const DECISION_CHARGE := Tactics.DECISION_CHARGE
 const DECISION_FLANK := Tactics.DECISION_FLANK
+const DECISION_STAND_DOWN := "stand_down" # A charging group not bound by the fight re-forms: the plan changed.
 const REASON_DEPLOYING := Tactics.REASON_DEPLOYING
 const REASON_SQUAD_IN_REACH := Tactics.REASON_SQUAD_IN_REACH
 const REASON_FIGHTER_IN_REACH := Tactics.REASON_FIGHTER_IN_REACH
@@ -53,8 +68,18 @@ const REASON_UNDER_FIRE := "under_fire" # The line hurries through the reach of 
 const REASON_TO_RANGE := "to_range" # Archers walk up to their shooting distance.
 const REASON_WITH_LINE := "with_line" # Archers keep up with their own line.
 const REASON_OUTSHOT := "outshot" # Plan reason: the enemy shooters are stronger, walking in beats standing.
-const REASON_STRONGER := "stronger" # Plan reason: the side is clearly stronger.
-const REASON_ONLY_PLAN := "only_plan" # Plan reason: no other plan in this part (defence and waiting come with part 2).
+const REASON_STRONGER := "stronger" # Plan reason: the side is stronger.
+const REASON_PATIENCE := "patience" # Plan reason: patience ran out, the attack outweighs standing.
+const REASON_NOT_STRONGER := "not_stronger" # Plan reason: defence, the side is not stronger and not outshot.
+const REASON_ENEMY_COMING := "enemy_coming" # Plan reason: defence, the enemy walks in himself.
+const REASON_OUTSHOOTING := "outshooting" # Plan reason: waiting, the own shooters are stronger.
+const REASON_ENGAGED := "engaged" # Plan reason: a better plan waits, a group is bound by the fight.
+const REASON_PLAN_KEPT := "plan_kept" # Plan reason: a better plan waits, the plan is too young or not better enough.
+const REASON_PLAN_CHANGED := "plan_changed" # Group: the charge is called off, the plan changed.
+const REASON_HOLD_LINE := "hold_line" # Group: holds its place in the defence.
+const REASON_ARCHERS_REACH := "archers_reach" # Infantry: waits where its archers reach the enemy.
+const REASON_RESERVE := "reserve" # Cavalry: in reserve on the flank.
+const REASON_COUNTER := "counter" # Cavalry: counter-charge, the enemy is bound by the own line.
 
 ## A group's task from the latest decision, executed every tick.
 class Task:
@@ -90,12 +115,29 @@ class Mind:
 	var outshot := 0.0 # Outshot F at the latest decision.
 	var squads := false # The enemy has squads (stage K): charges are measured to squads, not to single fighters.
 	var tasks: Array[Task] = []
+	var scores := {} # Plan code -> score at the latest decision.
+	var reasons := {} # Plan code -> why it scored so.
+	var position := 0.0 # Position P at the latest decision: 0 until part 8 (#273).
+	var waited := 0.0 # Seconds of holding or waiting with the enemy not coming: the patience T, times AI_CMD_PATIENCE_SECONDS.
+	var advancing := false # The enemy centre closed in faster than AI_CMD_ADVANCING_SPEED between the latest two assessments.
+	var engaged := false # A group of the side is bound by the fight (field assessment).
+	var homes := PackedVector2Array() # Group centres at the first decision: where the army deployed.
+	var anchors := PackedVector2Array() # Where the groups stand in the defence and waiting plans.
+	var _decided_at := -1.0
+	var _foe_center := Vector2.INF
+	var _foe_serial := -1
 	var _reserve_sizes := PackedInt32Array([-1, -1])
 	var _reserve_strength := PackedFloat64Array([0.0, 0.0])
 
 	func _init() -> void:
 		for kind in Config.GROUP_KINDS:
 			tasks.append(Task.new())
+		homes.resize(Config.GROUP_KINDS)
+		anchors.resize(Config.GROUP_KINDS)
+
+	## Patience T: 0..1.
+	func patience() -> float:
+		return minf(waited / Config.AI_CMD_PATIENCE_SECONDS, 1.0)
 
 	## Strength of the figures still waiting off the field: weight 1, full health, by tier (FieldAssessment), counted
 	## again only when a wave has taken some of them.
@@ -148,18 +190,29 @@ static func decide(battle: State, command: int, elapsed: float) -> void:
 	if foe == Vector2.INF:
 		return
 	mind.decisions += 1
+	var groups: Array = battle.groups[command]
+	if mind.plan == PLAN_DEPLOY:
+		for kind in Config.GROUP_KINDS:
+			mind.homes[kind] = groups[kind].center
+	_observe(battle, side, mind, elapsed)
 	_score(battle, side, mind)
-	var plan: String = mind.best[0].plan
+	var plan := _choose(mind, elapsed)
+	var foe_groups: Array = battle.foe_groups(command)
+	mind.squads = Tactics._has_squads(foe_groups)
 	if plan != mind.plan:
 		mind.plan = plan
 		mind.plan_since = elapsed
-	var foe_groups: Array = battle.foe_groups(command)
-	mind.squads = Tactics._has_squads(foe_groups)
-	_attack(battle, command, mind, foe, foe_groups, elapsed)
+		if plan != PLAN_ATTACK:
+			_hold_ground(battle, command, mind, foe, foe_groups)
+	match mind.plan:
+		PLAN_DEFENCE: _defend(battle, command, mind, foe, foe_groups)
+		PLAN_WAITING: _wait(battle, command, mind, foe, foe_groups)
+		_: _attack(battle, command, mind, foe, foe_groups, elapsed)
 	var trace := _trace(battle, command)
 	if trace != null:
 		trace.set_plan(side, mind.plan, {"best": mind.best.duplicate(true), "reason": mind.reason, "ratio": mind.ratio,
-			"outshot": mind.outshot, "since": mind.plan_since, "decisions": mind.decisions})
+			"outshot": mind.outshot, "patience": mind.patience(), "advancing": mind.advancing, "engaged": mind.engaged,
+			"since": mind.plan_since, "decisions": mind.decisions})
 
 ## Every tick, O(groups): the centres march on their task points, a group charges once the enemy is close enough.
 static func execute(battle: State, command: int, dt: float) -> void:
@@ -189,26 +242,90 @@ static func execute(battle: State, command: int, dt: float) -> void:
 			_charge(battle, command, group, reason)
 			task.active = false
 
-## Plan scores (DESIGN.md 4.2.3) from the field assessment of the latest morale check. Part 1 has only the attack:
-##   attack = ramp(R; AI_CMD_ATTACK_RATIO), raised under fire (F above the first AI_CMD_OUTSHOT value, R at least
-##   AI_CMD_OUTSHOT_MIN_RATIO) to AI_CMD_OUTSHOT_FLOOR x ramp(F; AI_CMD_OUTSHOT).
-## The position P is 0 until part 8 (#273), the patience T comes with part 2.
+## What the side sees between two decisions: whether a group of it is bound by the fight, whether the enemy comes (his
+## centre closing in faster than AI_CMD_ADVANCING_SPEED between the latest two assessments, which are
+## MORALE_TICK_SECONDS apart), and the patience: the time it held or waited since the previous decision, the enemy not
+## coming and nothing bound by the fight.
+static func _observe(battle: State, side: int, mind: Mind, elapsed: float) -> void:
+	var since := elapsed - mind._decided_at if mind._decided_at >= 0.0 else 0.0
+	mind._decided_at = elapsed
+	var sides: Array = battle.assessment.get("sides", [])
+	mind.engaged = false
+	if sides.size() >= 2:
+		for group: Dictionary in sides[side].groups:
+			if group.engaged:
+				mind.engaged = true
+		if battle.assessment_serial != mind._foe_serial:
+			var center: Vector2 = sides[1 - side].center
+			var own: Vector2 = sides[side].center
+			if mind._foe_serial >= 0 and mind._foe_center.is_finite() and center.is_finite() and own.is_finite() and own != center:
+				var seconds := (battle.assessment_serial - mind._foe_serial) * Config.MORALE_TICK_SECONDS
+				mind.advancing = (center - mind._foe_center).dot((own - center).normalized()) / seconds > Config.AI_CMD_ADVANCING_SPEED
+			mind._foe_center = center
+			mind._foe_serial = battle.assessment_serial
+	if (mind.plan == PLAN_DEFENCE or mind.plan == PLAN_WAITING) and not mind.advancing and not mind.engaged:
+		mind.waited += since
+
+## Plan scores (DESIGN.md 4.2.3) from the field assessment of the latest morale check, with ramp(x; a, b) below:
+##   attack = ramp(R; AI_CMD_ATTACK_RATIO) x (1 - AI_CMD_ATTACK_POSITION x max(P, 0)), raised under fire (F above the
+##     first AI_CMD_OUTSHOT value, R at least AI_CMD_OUTSHOT_MIN_RATIO) to AI_CMD_OUTSHOT_FLOOR x ramp(F; AI_CMD_OUTSHOT),
+##     plus AI_CMD_PATIENCE_ATTACK x T for R of at least AI_CMD_PATIENCE_RATIO;
+##   defence = ramp(R; AI_CMD_DEFENCE_RATIO) x (1 - ramp(F; AI_CMD_OUTSHOT)) x (AI_CMD_DEFENCE_FLOOR + the rest x
+##     max(P, 0)), times (1 - AI_CMD_PATIENCE_DEFENCE x T) while the enemy does not come;
+##   waiting = ramp(-F; AI_CMD_WAIT_OUTSHOOT) x (1 - T).
+## The position P is 0 until part 8 (#273); the retreat comes with part 3 (#268).
 static func _score(battle: State, side: int, mind: Mind) -> void:
 	mind.ratio = strength_ratio(battle, side, mind)
 	mind.outshot = outshot(battle.assessment, side)
-	var by_ratio := ramp(mind.ratio, Config.AI_CMD_ATTACK_RATIO[0], Config.AI_CMD_ATTACK_RATIO[1])
-	var attack := by_ratio
-	mind.reason = REASON_ONLY_PLAN
+	var patience := mind.patience()
+	var good_ground := maxf(mind.position, 0.0)
+	var attack := ramp(mind.ratio, Config.AI_CMD_ATTACK_RATIO[0], Config.AI_CMD_ATTACK_RATIO[1]) * (1.0 - Config.AI_CMD_ATTACK_POSITION * good_ground)
+	var attack_reason := REASON_STRONGER
 	if mind.outshot > Config.AI_CMD_OUTSHOT[0] and mind.ratio >= Config.AI_CMD_OUTSHOT_MIN_RATIO:
 		var floor_value: float = Config.AI_CMD_OUTSHOT_FLOOR * ramp(mind.outshot, Config.AI_CMD_OUTSHOT[0], Config.AI_CMD_OUTSHOT[1])
 		if floor_value > attack:
 			attack = floor_value
-			mind.reason = REASON_OUTSHOT
-	if mind.reason == REASON_ONLY_PLAN and by_ratio >= 1.0:
-		mind.reason = REASON_STRONGER
-	var scores: Array[Dictionary] = [{"plan": PLAN_ATTACK, "score": attack}]
-	scores.sort_custom(func(a: Dictionary, b: Dictionary): return a.score > b.score)
+			attack_reason = REASON_OUTSHOT
+	var eager := 0.0
+	if mind.ratio >= Config.AI_CMD_PATIENCE_RATIO:
+		eager = Config.AI_CMD_PATIENCE_ATTACK * patience
+	var outshot_share := ramp(mind.outshot, Config.AI_CMD_OUTSHOT[0], Config.AI_CMD_OUTSHOT[1])
+	var steady_defence := ramp(mind.ratio, Config.AI_CMD_DEFENCE_RATIO[0], Config.AI_CMD_DEFENCE_RATIO[1]) * (1.0 - outshot_share) \
+		* (Config.AI_CMD_DEFENCE_FLOOR + (1.0 - Config.AI_CMD_DEFENCE_FLOOR) * good_ground)
+	var defence := steady_defence
+	if not mind.advancing:
+		defence *= 1.0 - Config.AI_CMD_PATIENCE_DEFENCE * patience
+	var steady_waiting := ramp(-mind.outshot, Config.AI_CMD_WAIT_OUTSHOOT[0], Config.AI_CMD_WAIT_OUTSHOOT[1])
+	var waiting := steady_waiting * (1.0 - patience)
+	mind.scores = {PLAN_ATTACK: attack + eager, PLAN_DEFENCE: defence, PLAN_WAITING: waiting}
+	# Patience is the reason of an attack that would lose to standing without it.
+	if patience > 0.0 and attack < maxf(steady_defence, steady_waiting):
+		attack_reason = REASON_PATIENCE
+	mind.reasons = {PLAN_ATTACK: attack_reason, PLAN_DEFENCE: REASON_ENEMY_COMING if mind.advancing else REASON_NOT_STRONGER,
+		PLAN_WAITING: REASON_OUTSHOOTING}
+	var scores: Array[Dictionary] = []
+	for plan in PLANS:
+		scores.append({"plan": plan, "score": mind.scores[plan]})
+	# Ties go to the earlier plan of PLANS (the sort is not stable by itself).
+	scores.sort_custom(func(a: Dictionary, b: Dictionary): return a.score > b.score or a.score == b.score and PLANS.find(a.plan) < PLANS.find(b.plan))
 	mind.best.assign(scores.slice(0, 2))
+
+## The plan to follow (hysteresis, DESIGN.md 4.2.3): the best one at the first decision; later a plan is kept at least
+## AI_CMD_PLAN_HOLD_SECONDS and gives way only to one scored AI_CMD_SWITCH_MARGIN higher, and the attack is not left
+## while a group is bound by the fight. Sets the reason of the decision.
+static func _choose(mind: Mind, elapsed: float) -> String:
+	var best: String = mind.best[0].plan
+	if mind.plan == PLAN_DEPLOY or best == mind.plan:
+		mind.reason = mind.reasons[best]
+		return best
+	if mind.plan == PLAN_ATTACK and mind.engaged:
+		mind.reason = REASON_ENGAGED
+		return mind.plan
+	if elapsed - mind.plan_since < Config.AI_CMD_PLAN_HOLD_SECONDS or mind.scores[best] < mind.scores[mind.plan] + Config.AI_CMD_SWITCH_MARGIN:
+		mind.reason = REASON_PLAN_KEPT
+		return mind.plan
+	mind.reason = mind.reasons[best]
+	return best
 
 ## R: own strength over the enemy's (field assessment: weight x health x tier), each with AI_CMD_RESERVE_WEIGHT of its
 ## waiting reserve; 1 before the first assessment.
@@ -251,7 +368,6 @@ static func _attack(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 	var trace := _trace(battle, command)
 	var groups: Array = battle.groups[command]
 	var infantry: Group = groups[Config.GROUP_INFANTRY]
-	var archers: Group = groups[Config.GROUP_ARCHERS]
 	var cavalry: Group = groups[Config.GROUP_CAVALRY]
 	var has_infantry := infantry.has_active_units()
 	var objective := Tactics._objective(infantry, foe_groups, foe)
@@ -268,46 +384,7 @@ static func _attack(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 		if trace != null:
 			trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE, REASON_UNDER_FIRE if fire else REASON_OUT_OF_FIRE,
 				{"speed": task.speed, "focus_kind": infantry.focus_kind})
-	# Archers: up to their shooting distance from the nearest enemy squad, not far behind their line.
-	task = mind.tasks[Config.GROUP_ARCHERS]
-	task.clear()
-	if archers.order != Config.ORDER_CHARGE and archers.has_active_units():
-		task.active = true
-		task.charge_within = Config.AI_ARCHER_CHARGE_DISTANCE if has_infantry else Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE
-		var near := nearest_squad_point(foe_groups, archers.center)
-		var aim := near if near.is_finite() else foe
-		var reach := archers.reach if archers.reach > 0.0 else Config.AI_ARCHER_ADVANCE_DISTANCE
-		var gap := archers.center.distance_to(aim)
-		var point := archers.center
-		var reason := REASON_IN_RANGE
-		if gap > reach * Config.AI_CMD_ARCHER_RANGE_SHARE:
-			point += (aim - archers.center) / gap * (gap - reach * Config.AI_CMD_ARCHER_RANGE_SHARE)
-			reason = REASON_TO_RANGE
-		if has_infantry:
-			# Behind the line: at most AI_CMD_ARCHER_LINE_GAP and, while the line has not charged, at least
-			# ARCHER_REAR_OFFSET (where they deploy), never stepping back for it.
-			var line := _line_center(battle, side, infantry)
-			var forward := (objective - line).normalized() if objective.is_finite() and objective != line else Vector2.ZERO
-			var behind := (line - point).dot(forward)
-			if behind > Config.AI_CMD_ARCHER_LINE_GAP and infantry.order != Config.ORDER_CHARGE:
-				point += forward * (behind - Config.AI_CMD_ARCHER_LINE_GAP)
-				reason = REASON_WITH_LINE
-			elif behind < Config.ARCHER_REAR_OFFSET and infantry.order != Config.ORDER_CHARGE and point != archers.center:
-				point -= forward * (Config.ARCHER_REAR_OFFSET - behind)
-				if (point - archers.center).dot(forward) <= 0.0:
-					point = archers.center
-				reason = REASON_WITH_LINE
-		# Stage Р3: archers on the high ground or a forest edge the doctrine chose stay there while in range.
-		if archers.post.is_finite() and archers.center == archers.post and gap <= reach:
-			point = archers.center
-			reason = REASON_IN_RANGE
-		var fire := under_fire(battle, side, archers.center, foe_groups)
-		task.point = point if point != archers.center else Vector2.INF
-		task.face = aim
-		task.speed = march_speed(archers, fire, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED)
-		if trace != null:
-			trace.record(side, Config.GROUP_ARCHERS, DECISION_ADVANCE if task.point.is_finite() else DECISION_STAND, reason,
-				{"distance": gap, "speed": task.speed})
+	_archers_to_range(battle, command, mind, foe, foe_groups, objective)
 	# Cavalry: the reference flank (part 4, #269, chooses the weak edge, hunts shooters and keeps a reserve).
 	task = mind.tasks[Config.GROUP_CAVALRY]
 	task.clear()
@@ -334,6 +411,181 @@ static func _attack(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 	task.charge_within = Config.AI_CAVALRY_CHARGE_DISTANCE
 	task.fighters = true
 	task.arrival = Config.AI_CAVALRY_WAYPOINT_ARRIVAL
+
+## Archers (attack and waiting): up to AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, not far
+## behind their line: at most AI_CMD_ARCHER_LINE_GAP and, while the line has not charged, at least ARCHER_REAR_OFFSET
+## (where they deploy), never stepping back for it.
+static func _archers_to_range(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array, objective: Vector2) -> void:
+	var side := State.side_of(command)
+	var trace := _trace(battle, command)
+	var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
+	var archers: Group = battle.groups[command][Config.GROUP_ARCHERS]
+	var has_infantry := infantry.has_active_units()
+	var task: Task = mind.tasks[Config.GROUP_ARCHERS]
+	task.clear()
+	if archers.order == Config.ORDER_CHARGE or not archers.has_active_units():
+		return
+	task.active = true
+	task.charge_within = Config.AI_ARCHER_CHARGE_DISTANCE if has_infantry else Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE
+	var near := nearest_squad_point(foe_groups, archers.center)
+	var aim := near if near.is_finite() else foe
+	var reach := archers.reach if archers.reach > 0.0 else Config.AI_ARCHER_ADVANCE_DISTANCE
+	var gap := archers.center.distance_to(aim)
+	var point := archers.center
+	var reason := REASON_IN_RANGE
+	if gap > reach * Config.AI_CMD_ARCHER_RANGE_SHARE:
+		point += (aim - archers.center) / gap * (gap - reach * Config.AI_CMD_ARCHER_RANGE_SHARE)
+		reason = REASON_TO_RANGE
+	if has_infantry:
+		var line := _line_center(battle, side, infantry)
+		var forward := (objective - line).normalized() if objective.is_finite() and objective != line else Vector2.ZERO
+		var behind := (line - point).dot(forward)
+		if behind > Config.AI_CMD_ARCHER_LINE_GAP and infantry.order != Config.ORDER_CHARGE:
+			point += forward * (behind - Config.AI_CMD_ARCHER_LINE_GAP)
+			reason = REASON_WITH_LINE
+		elif behind < Config.ARCHER_REAR_OFFSET and infantry.order != Config.ORDER_CHARGE and point != archers.center:
+			point -= forward * (Config.ARCHER_REAR_OFFSET - behind)
+			if (point - archers.center).dot(forward) <= 0.0:
+				point = archers.center
+			reason = REASON_WITH_LINE
+	# Stage Р3: archers on the high ground or a forest edge the doctrine chose stay there while in range.
+	if archers.post.is_finite() and archers.center == archers.post and gap <= reach:
+		point = archers.center
+		reason = REASON_IN_RANGE
+	var fire := under_fire(battle, side, archers.center, foe_groups)
+	task.point = point if point != archers.center else Vector2.INF
+	task.face = aim
+	task.speed = march_speed(archers, fire, Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED if has_infantry else Config.AI_ARCHER_ADVANCE_ALONE_SPEED)
+	if trace != null:
+		trace.record(side, Config.GROUP_ARCHERS, DECISION_ADVANCE if task.point.is_finite() else DECISION_STAND, reason,
+			{"distance": gap, "speed": task.speed})
+
+## Leaving the attack (DESIGN.md 4.2.3, the stage K call-off generalised): every charging group not bound by the fight
+## re-forms where its men stand; the groups then hold or wait from where they are (the infantry and the archers) or
+## from their deployment place (the cavalry, a reserve on its flank). A cavalry not yet charging leaves its flank way.
+static func _hold_ground(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array) -> void:
+	var side := State.side_of(command)
+	var sides: Array = battle.assessment.get("sides", [])
+	var groups: Array = battle.groups[command]
+	for kind in Config.GROUP_KINDS:
+		var group: Group = groups[kind]
+		if group.order == Config.ORDER_CHARGE:
+			var bound: bool = sides.size() >= 2 and sides[side].groups[kind].engaged
+			if not bound and group.has_active_units():
+				_stand_down(battle, command, group, foe, foe_groups)
+		mind.anchors[kind] = group.center
+	var cavalry: Group = groups[Config.GROUP_CAVALRY]
+	mind.anchors[Config.GROUP_CAVALRY] = mind.homes[Config.GROUP_CAVALRY]
+	if cavalry.order != Config.ORDER_CHARGE:
+		cavalry.tactic_state = Config.AI_TACTIC_WAIT
+
+## A charge called off by the plan: back into formation where the men stand, facing the enemy squad to fight.
+static func _stand_down(battle: State, command: int, group: Group, foe: Vector2, foe_groups: Array) -> void:
+	group.order = Config.ORDER_HOLD
+	group.kite_seconds = 0.0
+	group.kite_gap = INF
+	group.center = group.centroid()
+	if group.kind == Config.GROUP_CAVALRY:
+		group.tactic_state = Config.AI_TACTIC_WAIT
+	var aim := Tactics._objective(group, foe_groups, foe)
+	if aim.is_finite() and aim != group.center:
+		group.direction = (aim - group.center).angle()
+	group.squad_distance = Tactics._squad_distance(group.center, foe_groups)
+	group.layout()
+	var trace := _trace(battle, command)
+	if trace != null:
+		trace.record(State.side_of(command), group.kind, DECISION_STAND_DOWN, REASON_PLAN_CHANGED)
+
+## The defence plan: the line holds its anchor facing the nearest squad and fights there by the "hold" rule (no charge
+## of its own), the archers stand behind it and shoot, the cavalry waits in reserve.
+static func _defend(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array) -> void:
+	var side := State.side_of(command)
+	var trace := _trace(battle, command)
+	var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
+	var archers: Group = battle.groups[command][Config.GROUP_ARCHERS]
+	var has_infantry := infantry.has_active_units()
+	var task: Task = mind.tasks[Config.GROUP_INFANTRY]
+	task.clear()
+	if has_infantry and infantry.order != Config.ORDER_CHARGE:
+		var objective := Tactics._objective(infantry, foe_groups, foe)
+		task.active = true
+		task.point = mind.anchors[Config.GROUP_INFANTRY]
+		task.face = objective
+		task.speed = march_speed(infantry, under_fire(battle, side, infantry.center, foe_groups), Config.AI_INFANTRY_ADVANCE_SPEED)
+		if trace != null:
+			trace.record(side, Config.GROUP_INFANTRY, DECISION_STAND, REASON_HOLD_LINE)
+	task = mind.tasks[Config.GROUP_ARCHERS]
+	task.clear()
+	if archers.order != Config.ORDER_CHARGE and archers.has_active_units():
+		var near := nearest_squad_point(foe_groups, archers.center)
+		task.active = true
+		task.point = mind.anchors[Config.GROUP_ARCHERS]
+		# Stage Р3: archers on the high ground or a forest edge the doctrine chose stay there.
+		if archers.post.is_finite() and archers.center == archers.post:
+			task.point = Vector2.INF
+		task.face = near if near.is_finite() else foe
+		task.speed = march_speed(archers, under_fire(battle, side, archers.center, foe_groups), Config.AI_ARCHER_ADVANCE_WITH_INFANTRY_SPEED)
+		task.charge_within = Config.AI_ARCHER_CHARGE_DISTANCE if has_infantry else Config.AI_ARCHER_NO_INFANTRY_CHARGE_DISTANCE
+		if trace != null:
+			trace.record(side, Config.GROUP_ARCHERS, DECISION_STAND, REASON_HOLD_LINE)
+	_reserve(battle, command, mind, foe, foe_groups)
+
+## The waiting plan: the own shooters are stronger. The line walks up (never back) until its archers, standing
+## ARCHER_REAR_OFFSET behind it, are AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, and holds
+## there; the archers keep to the attack rule behind it; the cavalry waits in reserve.
+static func _wait(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array) -> void:
+	var side := State.side_of(command)
+	var trace := _trace(battle, command)
+	var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
+	var archers: Group = battle.groups[command][Config.GROUP_ARCHERS]
+	var objective := Tactics._objective(infantry, foe_groups, foe)
+	var task: Task = mind.tasks[Config.GROUP_INFANTRY]
+	task.clear()
+	if infantry.has_active_units() and infantry.order != Config.ORDER_CHARGE:
+		# Measured from the centre, not from the men's mean of the assessment: that one is up to a second old.
+		var near := nearest_squad_point(foe_groups, infantry.center)
+		var aim := near if near.is_finite() else objective
+		var reach := archers.reach if archers.reach > 0.0 else Config.AI_ARCHER_ADVANCE_DISTANCE
+		var wanted := maxf(reach * Config.AI_CMD_ARCHER_RANGE_SHARE - Config.ARCHER_REAR_OFFSET, Config.AI_INFANTRY_CHARGE_DISTANCE)
+		var gap := infantry.center.distance_to(aim)
+		var anchor := mind.anchors[Config.GROUP_INFANTRY]
+		if gap > wanted and aim.is_finite():
+			anchor = infantry.center + (aim - infantry.center) / gap * (gap - wanted)
+			mind.anchors[Config.GROUP_INFANTRY] = anchor
+		task.active = true
+		task.point = anchor
+		task.face = objective
+		task.speed = march_speed(infantry, under_fire(battle, side, infantry.center, foe_groups), Config.AI_INFANTRY_ADVANCE_SPEED)
+		if trace != null:
+			trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE if infantry.center.distance_to(anchor) > 1.0 else DECISION_STAND,
+				REASON_ARCHERS_REACH, {"distance": gap})
+	_archers_to_range(battle, command, mind, foe, foe_groups, objective)
+	_reserve(battle, command, mind, foe, foe_groups)
+
+## Cavalry in reserve (defence and waiting): back to its deployment place on the flank, facing the nearest squad; it
+## charges once an enemy fighter comes within AI_CAVALRY_CHARGE_DISTANCE or, as a counter-charge, once the own infantry
+## or archers are bound by the fight.
+static func _reserve(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array) -> void:
+	var side := State.side_of(command)
+	var trace := _trace(battle, command)
+	var cavalry: Group = battle.groups[command][Config.GROUP_CAVALRY]
+	var task: Task = mind.tasks[Config.GROUP_CAVALRY]
+	task.clear()
+	if cavalry.order == Config.ORDER_CHARGE or not cavalry.has_active_units():
+		return
+	var sides: Array = battle.assessment.get("sides", [])
+	if sides.size() >= 2 and (sides[side].groups[Config.GROUP_INFANTRY].engaged or sides[side].groups[Config.GROUP_ARCHERS].engaged):
+		_charge(battle, command, cavalry, REASON_COUNTER)
+		return
+	var near := nearest_squad_point(foe_groups, cavalry.center)
+	task.active = true
+	task.point = mind.anchors[Config.GROUP_CAVALRY]
+	task.face = near if near.is_finite() else foe
+	task.speed = Config.AI_CAVALRY_FLANK_SPEED
+	task.charge_within = Config.AI_CAVALRY_CHARGE_DISTANCE
+	task.fighters = true
+	if trace != null:
+		trace.record(side, Config.GROUP_CAVALRY, DECISION_STAND, REASON_RESERVE)
 
 ## Within reach of an enemy squad's shooters (its sampled fighters, the group's longest range), or losing men to missiles.
 static func under_fire(battle: State, side: int, at: Vector2, foe_groups: Array) -> bool:

@@ -238,6 +238,19 @@ const AI_CMD_ATTACK_RATIO := [0.8, 1.3] # Attack score ramps up with the strengt
 const AI_CMD_OUTSHOT := [0.2, 0.6] # Outshot F: from the first value on, attack is scored at least the floor below.
 const AI_CMD_OUTSHOT_FLOOR := 0.6 # Attack score floor under fire (times the outshot ramp), for R of at least...
 const AI_CMD_OUTSHOT_MIN_RATIO := 0.7 # ...this strength ratio: being outshot, walking in beats standing.
+# Part 2 (#267): defence, waiting, the plan switch and patience (DESIGN.md 4.2.3).
+const AI_CMD_ATTACK_POSITION := 0.5 # Attack score x (1 - this x P): a good own position is worth keeping (P is 0 until part 8).
+const AI_CMD_DEFENCE_RATIO := [1.4, 0.9] # Defence score falls with the strength ratio R between these (a falling ramp)...
+const AI_CMD_DEFENCE_FLOOR := 0.6 # ...times this on even ground, the position P adds up to the rest...
+# ...times (1 - ramp(F; AI_CMD_OUTSHOT)): holding the ground under stronger enemy shooters is no defence.
+const AI_CMD_WAIT_OUTSHOOT := [0.1, 0.4] # Waiting score ramps up with -F between these: own shooters are stronger.
+const AI_CMD_PATIENCE_SECONDS := 45.0 # Patience T: seconds of holding or waiting, the enemy not coming, for T = 1.
+const AI_CMD_PATIENCE_ATTACK := 0.3 # Attack score + this x T, for a side not weaker than...
+const AI_CMD_PATIENCE_RATIO := 0.8 # ...this strength ratio (a weaker side keeps standing: the player comes to it).
+const AI_CMD_PATIENCE_DEFENCE := 0.5 # Defence score x (1 - this x T) while the enemy is not coming; waiting x (1 - T).
+const AI_CMD_PLAN_HOLD_SECONDS := 4.0 # A plan is kept at least this long...
+const AI_CMD_SWITCH_MARGIN := 0.15 # ...and gives way only to a plan scored this much higher (hysteresis).
+const AI_CMD_ADVANCING_SPEED := 15.0 # The enemy comes: his centre closes in faster than this between two assessments.
 # Field assessment (DESIGN.md 4.1). Unit classes for the "who beats whom" matrix, read from properties, not troop IDs.
 const AI_CLASS_FOOT := 0
 const AI_CLASS_SPEAR := 1 # Foot with anti_cavalry.
