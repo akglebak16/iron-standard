@@ -93,4 +93,21 @@ assert(analyze(new Map([
 ]),workerManifest).some(i=>i.rule==='worker-boundary'));
 assert(analyze(new Map(),workerManifest).some(i=>i.rule==='worker-boundary'));
 assert.equal(analyze(new Map([['adapters/worker.gd','extends RefCounted\nvar clock = Time.get_ticks_usec\nvar thread = Thread.new()\nvar done = Semaphore.new()']]),workerManifest).length,0);
+// ADR-026: the numbers of a moved rule stay in its owners; tests read them freely; the native phase needs its files.
+const moraleRule = {rule:'battle-morale-check',adr:'ADR-026',phase:'reference',symbols:['MORALE_PANIC_LOSS'],
+  owners:{reference:['core/a/config.gd','core/a/morale.gd'],native:['core/a/config.gd','core/a/morale.gd','core/a/native/morale_kernel.hpp']},
+  checks:{reference:[],native:['tests/test_native_morale.gd']}};
+const ruled = {...manifest,ruleOwners:[moraleRule]};
+const ruleSources = {'core/a/config.gd':'const MORALE_PANIC_LOSS := 4.0','core/a/morale.gd':'var loss = Config.MORALE_PANIC_LOSS','tests/test_morale.gd':'var loss = Config.MORALE_PANIC_LOSS'};
+assert.equal(analyze(new Map(Object.entries(ruleSources)),ruled).filter(i=>i.rule==='rule-owner').length,0);
+assert(analyze(new Map(Object.entries({...ruleSources,'core/a/commander.gd':'var loss = Config.MORALE_PANIC_LOSS * 2'})),ruled).some(i=>i.rule==='rule-owner'&&i.file==='core/a/commander.gd'));
+assert(analyze(new Map(Object.entries({...ruleSources,'core/a/native/other_kernel.hpp':'double loss = p[MORALE_PANIC_LOSS];'})),ruled).some(i=>i.rule==='rule-owner'&&i.file==='core/a/native/other_kernel.hpp'));
+assert.equal(analyze(new Map(Object.entries({...ruleSources,'core/a/commander.gd':'# MORALE_PANIC_LOSS is the morale rule\nvar label = "MORALE_PANIC_LOSS"'})),ruled).filter(i=>i.rule==='rule-owner').length,0);
+const nativeRule = {...manifest,ruleOwners:[{...moraleRule,phase:'native'}]};
+assert(analyze(new Map(Object.entries(ruleSources)),nativeRule).some(i=>i.rule==='rule-owner'&&i.target==='battle-morale-check:missing'));
+assert.equal(analyze(new Map(Object.entries({...ruleSources,'core/a/native/morale_kernel.hpp':'#include <vector>\nint panic(const double *p) { return int(p[MORALE_PANIC_LOSS]); }','tests/test_native_morale.gd':'extends SceneTree'})),nativeRule).filter(i=>i.rule==='rule-owner').length,0);
+assert.deepEqual(manifestIssues({...owned,ruleOwners:[moraleRule]}),[]);
+for (const broken of [{...moraleRule,adr:'none'},{...moraleRule,phase:'later'},{...moraleRule,symbols:[]},{...moraleRule,owners:{reference:['core/a/morale.gd']}},{...moraleRule,checks:{reference:[]}}])
+  assert(manifestIssues({...owned,ruleOwners:[broken]}).length > 0, `Broken rule owner passed: ${JSON.stringify(broken)}`);
+assert(manifestIssues({...owned,ruleOwners:[moraleRule,moraleRule]}).some(e=>e.includes('Duplicate/missing rule owner')));
 console.log('Architecture checker negative tests passed');

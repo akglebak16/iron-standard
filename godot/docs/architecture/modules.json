@@ -14,6 +14,22 @@
       "writers": ["core/campaign/application/battle_encounter.gd"]
     }
   ],
+  "ruleOwners": [
+    {
+      "rule": "battle-morale-check",
+      "adr": "ADR-026",
+      "phase": "reference",
+      "owners": {
+        "reference": ["core/battle/config.gd", "core/battle/rules/morale.gd"],
+        "native": ["core/battle/config.gd", "core/battle/rules/morale.gd", "core/battle/api/morale_parameters.gd", "core/battle/simulation/native/morale_parameters.hpp", "core/battle/api/native/morale_kernel.hpp"]
+      },
+      "checks": {
+        "reference": [],
+        "native": ["tests/integration/test_native_morale.gd"]
+      },
+      "symbols": ["MORALE_TICK_SECONDS", "MORALE_OPPONENT_FLOOR", "MORALE_FORCE_FLEE_START_SHARE", "MORALE_FORCE_FLEE_ENEMY_SHARE", "MORALE_FORCE_FLEE_MIN_START", "MORALE_BAD_ODDS", "MORALE_BAD_ODDS_LOSS", "MORALE_VERY_BAD_ODDS", "MORALE_VERY_BAD_ODDS_LOSS", "MORALE_STRONG_ODDS", "MORALE_STRONG_RECOVERY", "MORALE_EVEN_ODDS", "MORALE_EVEN_RECOVERY", "MORALE_WEAK_RECOVERY", "MORALE_WAVER_SHARE", "MORALE_STEADY_SHARE", "MORALE_RALLY_SHARE", "MORALE_ROUT_RECOVERY", "MORALE_RALLY_LIMIT", "MORALE_RALLY_LEADER_RADIUS", "MORALE_RALLY_LEADER_BONUS", "MORALE_RALLY_EDGE", "MORALE_PURSUIT_RADIUS", "MORALE_PANIC_RADIUS", "MORALE_PANIC_LOSS", "MORALE_PANIC_CAP", "MORALE_PANIC_SHARE_LOSS", "MORALE_THREAT_STRENGTH_FLOOR", "MORALE_THREAT_REAR_WEIGHT", "MORALE_THREAT_FRONT_FREE", "MORALE_THREAT_FRONT_WEIGHT", "MORALE_THREAT_LOSS", "MORALE_THREAT_FREE", "MORALE_THREAT_CAP", "MORALE_GROUP_ROUTED_SHARE", "MORALE_GROUP_WAVERING_SHARE"]
+    }
+  ],
   "allowedRoots": ["core", "runtime", "apps", "adapters", "content", "tests", "docs", "tools"],
   "forbiddenPaths": ["app/", "battle/", "campaign/", "troops/", "equipment/", "characters/", "core/battle/presentation/", "core/campaign/presentation/", "apps/godot/composition/save_store.gd", "apps/godot/composition/encounter_aftermath.gd", "apps/godot/composition/world_battle_bridge.gd"],
   "purePrefixes": [],
