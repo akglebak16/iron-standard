@@ -1,6 +1,8 @@
 extends RefCounted
 ## Optional pure column operations; injected by the composition root.
-func copy_rows(_columns: RefCounted, _rows: PackedInt32Array) -> void: pass
+## State.compact_inactive (#322): rows of the dead and gone, ascending; then a stable compaction without them.
+func retired_rows(_columns: RefCounted) -> PackedInt32Array: return PackedInt32Array()
+func drop_rows(_columns: RefCounted, _retired: PackedInt32Array) -> void: pass
 func capture(_columns: RefCounted, previous: PackedVector2Array) -> PackedVector2Array: return previous
 func summary(_columns: RefCounted) -> Array: return []
 func wall_status(_columns: RefCounted, _inside_x: float, _alert_x: float, _defender_x: float) -> Array: return []

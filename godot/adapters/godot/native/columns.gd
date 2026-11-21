@@ -7,9 +7,27 @@ static func create() -> RefCounted:
 	return port
 static func _values(columns: RefCounted) -> Array:
 	return [columns.capacity, columns.positions, columns.velocities, columns.real_fields, columns.integer_fields, columns.vector_fields]
-func copy_rows(columns: RefCounted, rows: PackedInt32Array) -> void:
-	var out: Array = _kernel.copy_rows(_values(columns), rows)
-	assert(out.size() == 5)
+func retired_rows(columns: RefCounted) -> PackedInt32Array:
+	return _kernel.retired_rows(_values(columns))
+func drop_rows(columns: RefCounted, retired: PackedInt32Array) -> void:
+	# Synchronous ownership handoff, as in movement.gd (#298): every column leaves the store, so the native
+	# adapter is its only owner and compacts it in place without a copy-on-write copy (#322). A rejection
+	# leaves the packet slots untouched and the columns go back unchanged.
+	var packet := _values(columns)
+	columns.positions = PackedVector2Array()
+	columns.velocities = PackedVector2Array()
+	columns.real_fields = PackedFloat64Array()
+	columns.integer_fields = PackedInt64Array()
+	columns.vector_fields = PackedVector2Array()
+	var out: Array = _kernel.drop_rows(packet, retired)
+	if out.size() != 5:
+		columns.positions = packet[1]
+		columns.velocities = packet[2]
+		columns.real_fields = packet[3]
+		columns.integer_fields = packet[4]
+		columns.vector_fields = packet[5]
+		assert(false, "native storage compaction rejected its rows")
+		return
 	columns.positions = out[0]
 	columns.velocities = out[1]
 	columns.real_fields = out[2]

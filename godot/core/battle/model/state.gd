@@ -31,6 +31,10 @@ var units: Array[Unit] = []
 var active_units: Array[Unit] = []
 var _visible_units: Array[Unit] = []
 var retired_render_units: Array[Unit] = []
+## Above this many removals a list is compacted in one pass rather than shifted per removal (#322).
+const BULK_DROP := 32
+## Named casualties who left the field after their row retired; the next compaction hides them (ADR-013).
+var _gone_named: Array[Unit] = []
 var pending_retirements := 0
 var _next_unit_id := 0
 var handles := GenerationHandles.new()
@@ -336,46 +340,121 @@ func render_units() -> Array[Unit]:
 	return _visible_units
 
 ## Stable compaction preserves iteration/tie order. History owns result data.
+## Only the retired fighters and the rows after the first of them are touched (#322): the native column backend
+## finds the retired rows and compacts the columns in place; the lists drop exactly the units the old filters
+## dropped, without a lambda per unit.
 func compact_inactive(tick: int) -> int:
-	var write := 0
 	var before := active_units.size()
-	var rows := PackedInt32Array()
-	var flags := motion.integer_fields
-	var dead_offset := MotionStore.I.DEAD * motion.capacity
-	var gone_offset := MotionStore.I.GONE * motion.capacity
-	for read in before:
-		var unit := active_units[read]
-		if flags[dead_offset + read] or flags[gone_offset + read]:
-			handles.release(unit.unit_handle)
-			unit.detach_motion()
-			unit.battle_index = -1
-			unit.retired_tick = tick
-			if not unit.gone and (unit.hero or unit.companion): retired_render_units.append(unit)
-			continue
-		rows.append(read)
-		if write != read:
+	var rows: PackedInt32Array = column_backend.retired_rows(motion) if column_backend != null else _retired_rows()
+	pending_retirements = 0
+	if rows.is_empty(): return 0
+	var retired: Array[Unit] = []
+	var retired_groups: Array[Group] = []
+	var hidden: Array[Unit] = []
+	for row in rows:
+		var unit := active_units[row]
+		retired_groups.append(_listed_group(unit))
+		handles.release(unit.unit_handle)
+		unit.detach_motion()
+		unit.battle_index = -1
+		unit.retired_tick = tick
+		if not unit.gone and (unit.hero or unit.companion): retired_render_units.append(unit)
+		else: hidden.append(unit)
+		retired.append(unit)
+	if column_backend != null: column_backend.drop_rows(motion, rows)
+	var write := rows[0]
+	for n in rows.size():
+		var end := rows[n + 1] if n + 1 < rows.size() else before
+		for read in range(rows[n] + 1, end):
+			var unit := active_units[read]
 			if column_backend == null: motion.copy_row(read, write)
 			active_units[write] = unit
 			unit.battle_index = write
-		write += 1
-	pending_retirements = 0
-	if write == before: return 0
-	if column_backend != null: column_backend.copy_rows(motion, rows)
+			write += 1
 	var compacted := handles.compact_dense()
 	assert(compacted == write, "Active rows and handles must compact in the same stable order")
 	active_units.resize(write)
 	motion.resize(write)
-	_visible_units.assign(_visible_units.filter(func(u: Unit): return u.battle_index >= 0 or (not u.gone and (u.hero or u.companion))))
-	for side in groups:
-		for group: Group in side:
-			group.units.assign(group.units.filter(func(u: Unit): return u.battle_index >= 0))
+	# Visible: active fighters and named casualties until they leave the field (ADR-013).
+	hidden.append_array(_gone_named)
+	_gone_named.clear()
+	_drop_listed(_visible_units, hidden)
+	if retired.size() > BULK_DROP:
+		for command_groups in groups:
+			for group: Group in command_groups: _keep_active(group.units)
+	else:
+		for k in retired.size():
+			_drop_from_group(retired[k], retired_groups[k])
 	if movement_index != null: movement_index.rebuild()
 	if projectile_index != null: projectile_index.rebuild()
 	return before - write
 
+## The reference backend's pass over the flags, the same rows the native retired_rows returns.
+func _retired_rows() -> PackedInt32Array:
+	var rows := PackedInt32Array()
+	var flags := motion.integer_fields
+	var dead_offset := MotionStore.I.DEAD * motion.capacity
+	var gone_offset := MotionStore.I.GONE * motion.capacity
+	for read in active_units.size():
+		if flags[dead_offset + read] or flags[gone_offset + read]: rows.append(read)
+	return rows
+
+## The group a fighter should be listed in, read while its row is still bound; null outside the groups.
+func _listed_group(unit: Unit) -> Group:
+	var command := unit.command
+	var kind := unit.group_kind
+	if command < 0 or command >= groups.size() or kind < 0 or kind >= Config.GROUP_KINDS: return null
+	return groups[command][kind]
+
+## Removes `unit` from its group, or from whichever group lists it: groups keep only active fighters.
+func _drop_from_group(unit: Unit, group: Group) -> void:
+	if group != null:
+		var listed := group.units.size()
+		group.units.erase(unit)
+		if group.units.size() < listed: return
+	for command_groups in groups:
+		for other: Group in command_groups:
+			other.units.erase(unit)
+
+## Removes `drops` from `list` in one pass: they come in list order, so each native search starts after the last hit.
+static func _drop_listed(list: Array[Unit], drops: Array[Unit]) -> void:
+	var hits := PackedInt32Array()
+	var from := 0
+	for unit in drops:
+		var at := list.find(unit, from)
+		if at < 0: at = list.find(unit)
+		if at < 0: continue
+		hits.append(at)
+		from = at + 1
+	hits.sort()
+	if hits.size() <= BULK_DROP:
+		for n in range(hits.size() - 1, -1, -1):
+			list.remove_at(hits[n])
+		return
+	# Many at once (the undead crumbling with their necromancer): one pass instead of a shift per removal.
+	var write := hits[0]
+	var next := 0
+	for read in range(hits[0], list.size()):
+		if next < hits.size() and hits[next] == read:
+			next += 1
+			continue
+		list[write] = list[read]
+		write += 1
+	list.resize(write)
+
+## Group lists keep only active fighters: one pass by battle_index, for a compaction with many casualties.
+static func _keep_active(list: Array[Unit]) -> void:
+	var write := 0
+	for unit in list:
+		if unit.battle_index >= 0:
+			list[write] = unit
+			write += 1
+	list.resize(write)
+
 func mark_gone(unit: Unit) -> void:
 	if unit.gone: return
 	unit.gone = true
+	if unit.battle_index < 0: _gone_named.append(unit)
 	retired_render_units.erase(unit)
 	pending_retirements += 1
 	handles.release(unit.unit_handle)
