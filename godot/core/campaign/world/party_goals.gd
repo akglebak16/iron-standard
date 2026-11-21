@@ -12,12 +12,14 @@ extends RefCounted
 ## the rally point of its wave (muster) and storms its target with the others (assault); raids burn villages ahead of the
 ## wave; with nothing else to do the dead roam around their front. The living defend the towns and castles the waves go
 ## for, from the inside (`doomed`).
+## Since #312 (DESIGN.md §5.7, parties act together) a lord or vassal goes to help a running fight of its faction that it
+## sees and can turn (`assist`); the fights come in through `battles`, a short list built once per world step.
 const Config = preload("res://core/campaign/config.gd")
 const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 
 ## Goals that react to what a party sees; they may interrupt a plan before its hold time is over.
-const REACTIVE := ["hunt", "flee"]
+const REACTIVE := ["hunt", "flee", "assist"]
 ## Goals carried out by riding to a settlement or a point and lingering there.
 const PLANS := ["defend", "patrol", "raid", "rest", "escort", "follow", "roam", "guard", "muster", "assault"]
 const PLAYER_ID := -1  # gid of a hunt after the player's party
@@ -36,6 +38,7 @@ var ruins: Callable = Callable()         # (faction) -> own former settlements h
 var modifiers: Callable = Callable()     # (party) -> {goal: multiplier, "risk": exponent}; stage 3: traits, difficulty
 var passable: Callable = Callable()      # (Vector2) -> bool, for threat-map havens
 var doomed: Callable = Callable()        # () -> {settlement id: mode} targets of the undead waves (stage 2c), optional
+var battles: Callable = Callable()       # () -> running fights (WorldSkirmish.battles, #312), optional
 var width := 5200.0
 var height := 3400.0
 
@@ -244,6 +247,7 @@ func candidates(p: Dictionary, ctx := {}) -> Array:
 		_sort(out)
 		return out
 	_flee(p, me, prof, mods, seen, out)
+	_assist(p, prof, mods, out)
 	_defend(p, me, prof, mods, out)
 	_patrol(p, prof, mods, ctx, out)
 	_raid(p, me, prof, mods, out)
@@ -348,6 +352,66 @@ func _flee(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, seen: D
 		s = w * Config.GOAL_FLEE_RESIDUAL
 	if s > 0.0:
 		out.append({"goal": "flee", "gid": null, "x": float(seen.from.x), "y": float(seen.from.y), "score": s})
+
+## Help in battle (#312, DESIGN.md §5.7.3): a running fight with the party's faction on a side that the party would join
+## by the rule of world_skirmish.hour_tick (hostile to someone on the other side, to no one on this one). Factors: how much
+## the side needs help, whether the party turns it (no goal when even with it the side is hopeless), whether it gets there
+## before the fight is over, and own parties already on the way. Distance is weighed by the time it takes against the
+## hours the fight has left, not again as the distance factor; the enemy at the fight by the odds, not as threat-map risk.
+func _assist(p: Dictionary, prof: Dictionary, mods: Dictionary, out: Array) -> void:
+	var w := weight(prof, mods, "assist")
+	if w <= 0.0 or not battles.is_valid():
+		return
+	var list: Array = battles.call()
+	if list.is_empty():
+		return
+	var reach := Config.GOAL_ASSIST_RANGE
+	var me := -1.0  # own strength and speed only once a fight is in reach: most evaluations see none
+	var vm := 0.0
+	var fac := String(p.fac)
+	for b in list:
+		if absf(b.x - p.x) > reach or absf(b.y - p.y) > reach:
+			continue
+		var d := Vector2(b.x - p.x, b.y - p.y).length()
+		if d > reach:
+			continue
+		var side := side_for(p, b.sides, fac)
+		if side < 0:
+			continue
+		if me < 0.0:
+			me = strength.call(p)
+			vm = maxf(0.001, speed.call(p))
+		var own: float = b.strength[side]
+		var foe: float = b.strength[1 - side]
+		var need := ramp(foe / maxf(0.001, own), Config.GOAL_ASSIST_NEED.x, Config.GOAL_ASSIST_NEED.y, Config.GOAL_ASSIST_NEED_FLOOR, 1.0)
+		var odds := ramp((own + me) / maxf(0.001, foe), Config.GOAL_ASSIST_ODDS.x, Config.GOAL_ASSIST_ODDS.y)
+		if odds <= 0.0:
+			continue
+		var in_time := ramp(d / vm / maxf(0.5, float(b.left)), Config.GOAL_ASSIST_IN_TIME.x, Config.GOAL_ASSIST_IN_TIME.y, 1.0, 0.0)
+		if in_time <= 0.0:
+			continue
+		var s := w * combine4(need, odds, in_time, crowd_factor("assist", b.id, p))
+		if s > 0.0:
+			out.append({"goal": "assist", "gid": b.id, "x": b.x, "y": b.y, "score": s})
+
+## The side of a fight (0, 1) that p would join by the rule of world_skirmish.hour_tick and where its faction `fac` fights
+## (part 1 helps only its own), or -1.
+func side_for(p: Dictionary, sides: Array, fac: String) -> int:
+	for side in 2:
+		var mine := false
+		var clean := true
+		for q in sides[side]:
+			if q.fac == fac:
+				mine = true
+			if hostile.call(p, q):
+				clean = false
+				break
+		if not mine or not clean:
+			continue
+		for q in sides[1 - side]:
+			if hostile.call(p, q):
+				return side
+	return -1
 
 ## Own settlements a party belongs to (not camps): the settlements of its faction.
 func own_settlements(fac: String) -> Array:

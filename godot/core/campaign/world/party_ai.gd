@@ -5,6 +5,8 @@ extends RefCounted
 ## faction vassals, the player's retinues (orders of world_vassals.gd are weight sets), bandits, caravans and the dead —
 ## and this file carries the goal out: routes, chases, arrivals. Faction campaigns are operations of world_wars.gd (stage 2b).
 ## The dead follow the director of the invasion (stage 2c, world_undead.gd): their wave and front come in the context.
+## Help in battle (#312, DESIGN.md §5.7): the running fights of world_skirmish reach the evaluator as a list built once per
+## step on first request; a helper rides to the fight and hour_tick takes it in once it is close.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const Config = preload("res://core/campaign/config.gd")
@@ -29,6 +31,7 @@ var enemies: Callable = Callable()     # (faction) -> hostile factions on the th
 var _map_cache: RefCounted = null
 var _enemy_cache := {}
 var _doom_cache: Variant = null
+var _battle_cache: Variant = null
 
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
@@ -46,6 +49,7 @@ func _init(r: Roster, p: RefCounted) -> void:
 	goals.threat_map = _threat
 	goals.enemies = _enemies_of
 	goals.doomed = _doomed
+	goals.battles = _battles
 
 ## Breaks the links to the world so a disposed campaign is freed.
 func dispose() -> void:
@@ -55,6 +59,7 @@ func dispose() -> void:
 	_map_cache = null
 	_enemy_cache = {}
 	_doom_cache = null
+	_battle_cache = null
 
 func _at_war(a: String, b: String) -> bool:
 	return Rules.at_war(a, b, roster.diplomatic_wars)
@@ -64,6 +69,13 @@ func _allies(p: Dictionary) -> float:
 
 func _ruins(f: String) -> Array:
 	return undead.ruins_for(f) if undead != null else []
+
+## Running fights for help in battle (#312); cached per world step like the threat map. Fights change only in the
+## contact phase and in hour_tick, both after the evaluations of the step.
+func _battles() -> Array:
+	if _battle_cache == null:
+		_battle_cache = skirmish.battles() if skirmish != null else []
+	return _battle_cache
 
 ## Towns and castles the undead waves go for (stage 2c); cached per world step like the threat map.
 func _doomed() -> Dictionary:
@@ -100,6 +112,7 @@ func _fresh() -> void:
 	_map_cache = null
 	_enemy_cache = {}
 	_doom_cache = null
+	_battle_cache = null
 
 func step(dh: float) -> void:
 	_fresh()
@@ -237,6 +250,8 @@ func ai_party(p: Dictionary, dh: float) -> void:
 		_chase(p, dh)
 	elif p.get("goal", "") == "escort":
 		_escort(p, dh)
+	elif p.get("goal", "") == "assist":
+		_assist(p)
 	if p.pi < p.path.size():
 		if roster.move_along(p, dh):
 			_arrived(p)
@@ -381,6 +396,11 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 			p.tid = null
 			p.state = "roam"
 			roster.path_to(p, c.x, c.y)
+		"assist":
+			p.tid = null
+			p.tpl = false
+			p.state = "roam"
+			roster.path_to(p, c.x, c.y)
 		"follow":
 			if p.kind == "cvass":
 				if _dist(player, p) > Config.GOAL_RETINUE_FOLLOW_KEEP:
@@ -457,6 +477,16 @@ func _chase(p: Dictionary, dh: float) -> void:
 			if p.rp <= 0.0:
 				p.rp = Config.GOAL_CHASE_REPATH_HOURS
 				roster.path_to(p, t.x, t.y)
+
+## Help in battle: the ride ends when the fight is over before the party got there. Only the ride: after its own fight
+## a helper keeps what world_skirmish gave it (a loser flees).
+func _assist(p: Dictionary) -> void:
+	if p.state != "roam" or (skirmish != null and skirmish.has_fight(p.get("gid"))):
+		return
+	p.path = []
+	p.pi = 0
+	p.wait = 0.0
+	p.state = "idle"
 
 ## Escort: keeps close to the caravan; the goal ends when the caravan is gone.
 func _escort(p: Dictionary, dh: float) -> void:
@@ -542,7 +572,7 @@ func _arrived(p: Dictionary) -> void:
 				p.wait = float(roster.rint(Config.GOAL_PATROL_WAIT.x, Config.GOAL_PATROL_WAIT.y)) if p.kind != "cvass" else 0.0
 			"defend":
 				p.wait = float(Config.GOAL_DEFEND_WAIT)
-			"escort":
+			"escort", "assist":
 				p.wait = Config.GOAL_WAIT_PER_THINK
 			"muster":
 				p.wait = float(Config.UNDEAD_MUSTER_WAIT)

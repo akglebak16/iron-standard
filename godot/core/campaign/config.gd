@@ -150,14 +150,21 @@ const GOAL_FOLLOW_KEEP := 80.0       # a vassal rides to its lord when farther t
 const GOAL_FOLLOW_OFFSET := 45.0
 const GOAL_ROAM_RANGE := Vector2(80.0, 340.0) # bandits roam this far around their camp
 const GOAL_ROAM_TRIES := 4           # random roam points tried until one has a route
+# Help in battle (DESIGN.md §5.7, #312): a lord or vassal goes to a running fight of its faction (world_skirmish) that it
+# sees and can turn. Which side it joins is still decided by world_skirmish.hour_tick once it is close.
+const GOAL_ASSIST_RANGE := 400.0      # fights this close are seen (between the sight 260 and the scouting range 450)
+const GOAL_ASSIST_NEED := Vector2(0.5, 1.2) # enemy / own side strength: help is least needed at x, fully at y ...
+const GOAL_ASSIST_NEED_FLOOR := 0.3   # ... and a side that wins anyway still gets help this much (a sooner end)
+const GOAL_ASSIST_ODDS := Vector2(0.8, 1.4) # (own side + the party) / enemy: hopeless at x (no goal), sure at y
+const GOAL_ASSIST_IN_TIME := Vector2(0.75, 1.25) # hours on the way / hours the fight has left: in time at x, too late at y
 # Goal weights by kind of party (data, not code). Missing goals weigh 0. hunt_ratio / flee_ratio are strength
 # thresholds relative to own strength, sight / flee_sight the radii. outlaws_only: only bandits and the dead are feared;
 # map_pressure false: only an enemy in sight makes the party flee (caravans would otherwise run from every band around).
 # Stage 3 multiplies these by traits and difficulty.
 const GOAL_PROFILES := {
-	"lord": {"hunt": 1.0, "flee": 1.0, "defend": 0.9, "patrol": 0.45, "raid": 0.5, "rest": 0.5,
+	"lord": {"hunt": 1.0, "flee": 1.0, "defend": 0.9, "patrol": 0.45, "raid": 0.5, "rest": 0.5, "assist": 1.0,
 		"hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
-	"vassal": {"hunt": 1.0, "flee": 1.0, "defend": 0.6, "patrol": 0.45, "escort": 0.7, "follow": 0.45, "rest": 0.4,
+	"vassal": {"hunt": 1.0, "flee": 1.0, "defend": 0.6, "patrol": 0.45, "escort": 0.7, "follow": 0.45, "rest": 0.4, "assist": 0.9,
 		"hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
 	"bandit": {"hunt": 1.0, "flee": 1.0, "roam": 0.4,
 		"hunt_ratio": 0.9, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
