@@ -157,7 +157,19 @@ func _table(rows: Array, meta: Dictionary) -> String:
 		["поджогов деревень", "villages_burnt"], ["время лордов по целям", "lord_goals"],
 		["у края без цели, партия·ч", "edge_idle_party_hours"], ["застряли ≥6 ч", "edge_stuck_6h"],
 		["бегств", "flees_measured"], ["бег в большую угрозу", "flees_into_more_threat"], ["угроза в конце бегства", "flee_threat_ratio"],
-		["угроза в клетке карты угроз", "threat_safe_cell_ratio"], ["перестройка карты, мкс", "threat_rebuild_usec"], ["секунд", "wall_seconds"]]
+		["угроза в клетке карты угроз", "threat_safe_cell_ratio"], ["перестройка карты, мкс", "threat_rebuild_usec"],
+		["схваток", "fights"], ["длилась, ч ср.", "fight_hours_mean"], ["отрядов на старте ср.", "fight_size_mean"],
+		["со своими рядом (≤400)", "fights_own_near"], ["своим по силам прийти издалека", "fights_own_near_far"],
+		["вступили после начала", "joined"], ["из них пришли издалека (>90)", "joined_far"], ["из них войска похода", "joined_army"],
+		["свои: могли помочь", "could_own"], ["по силам", "feasible_own"], ["помогли", "helped_own"], ["доля", "help_rate_own"],
+		["доля из тех, кому по силам", "help_rate_feasible_own"], ["свои издалека (>90), по силам", "far_feasible_own"],
+		["пришли", "helped_far_own"], ["доля", "help_rate_far_own"],
+		["свои издалека, по силам и в срок", "timely_own"], ["пришли", "helped_timely_own"], ["доля", "help_rate_timely_own"],
+		["из них своя сторона слабее без них", "needed_own"], ["пришли", "helped_needed_own"], ["доля", "help_rate_needed_own"],
+		["враг моего врага: могли", "could_other"], ["помогли", "helped_other"], ["разбойники: могли", "could_bandit"], ["помогли", "helped_bandit"],
+		["нежить: могла", "could_dead"], ["помогла", "helped_dead"],
+		["караванов", "caravans"], ["дошли", "caravans_arrived"], ["взяты", "caravans_taken"], ["доля взятых", "caravans_taken_share"],
+		["секунд", "wall_seconds"]]
 	lines.append("| Показатель | " + " | ".join(rows.map(func(r): return "seed %d" % r.seed)) + " |")
 	lines.append("|---|" + "---|".repeat(rows.size()))
 	for c in cols.slice(1):

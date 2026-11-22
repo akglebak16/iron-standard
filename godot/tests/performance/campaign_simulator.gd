@@ -13,6 +13,9 @@ extends RefCounted
 ## neighbouring pairs at war (neighbours by world_wars.borders, which only reads the map), states at war with every
 ## neighbour, the most fronts of one state and the war weariness when the world keeps it (world_wars.weary). It also
 ## times every world hour and every day tick (hour 0: world_wars.war_day among others) as the game runs them.
+## Since #307 (parties act together, DESIGN.md §5.7) it follows every fight of world_skirmish: who could have helped a side
+## (a free party within HELP_RADIUS that would join it by the rule of world_skirmish.hour_tick: hostile to the other side,
+## not to this one), whether helping was within its strength, and who joined later; and the fate of every caravan.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -34,6 +37,10 @@ const FLEE_SAFE_RADIUS := 300.0     # search radius of the threat-map alternativ
 const HOST_RADIUS := 150.0          # a follower this close to the marshal keeps up with the host (OP_MUSTER_RADIUS)
 const UNDEAD_STAND_STREAK_HOURS := 12 # an undead party standing idle this long in a row counts as stuck
 const UNDEAD_BURN_RADIUS := 60.0      # a village that caught fire with an undead party this close was burnt by the dead
+const HELP_RADIUS := 400.0          # a free party this close to a fight could have come to help (#307, GOAL_ASSIST_RANGE)
+const JOIN_RADIUS := 90.0           # world_skirmish.hour_tick takes in parties this close
+const SKIRMISH_LOSS := 0.06          # world_skirmish.LOSS: share a side loses per hour against equal strength
+const CARAVAN_ARRIVE := 60.0        # a caravan gone this close to its destination arrived; elsewhere it was taken
 
 var world: RefCounted
 var steps := 0
@@ -73,6 +80,10 @@ var _undead_stand := {}  # party id -> hours standing idle in a row
 var _diplo: Array = []  # a row a day at 12:00: wars, neighbour pairs at war, states at war with all neighbours, weariness
 var _tick_usec := {"hour": [], "day": []}  # cost of WorldState.hour_tick: ordinary hours and the day tick (hour 0)
 var _ops := {"campaigns": 0, "kept": 0, "lords_out": 0, "retreat_weak": 0, "retreat_home": 0, "relief": 0, "march_hours": 0, "march_share": 0.0}
+var _fights := {}       # fight id -> {t0, size, start: {party id: side}, could: {party id: {side, kind, feasible, far}}, joined: {party id: side}}
+var _fight_log: Array = []
+var _caravans := {}     # caravan id -> {x, y, sid}
+var _caravan_log := {"seen": 0, "arrived": 0, "taken": 0}
 var heat_cols := 0
 var heat_rows := 0
 var heat_lords := PackedInt32Array()
@@ -188,6 +199,42 @@ func observe_step() -> void:
 			last.state = p.state
 			if p.state == "flee":
 				_measure_flee(p)
+	_observe_fight_starts()
+	_observe_fights()
+	_observe_caravans()
+
+## New fights of world_skirmish with the parties they started with (contact happens inside the step).
+func _observe_fight_starts() -> void:
+	for f in world.skirmish.fights:
+		if _fights.has(int(f.id)):
+			continue
+		var start := {}
+		for id in f.A:
+			start[int(id)] = 0
+		for id in f.B:
+			start[int(id)] = 1
+		_fights[int(f.id)] = {"t0": steps, "start": start, "could": {}, "joined": {}, "size": start.size()}
+
+## Caravans that left the map: at their destination they arrived, anywhere else they were taken.
+func _observe_caravans() -> void:
+	var now := {}
+	for p in world.roster.parties:
+		if p.kind != "caravan":
+			continue
+		now[int(p.id)] = true
+		if not _caravans.has(int(p.id)):
+			_caravan_log.seen += 1
+		_caravans[int(p.id)] = {"x": float(p.x), "y": float(p.y), "sid": p.get("sid")}
+	for id in _caravans.keys():
+		if now.has(id):
+			continue
+		var c: Dictionary = _caravans[id]
+		var s: Dictionary = world.map.settlement_by_id(c.sid) if c.sid != null else {}
+		if not s.is_empty() and Vector2(s.x - c.x, s.y - c.y).length() < CARAVAN_ARRIVE:
+			_caravan_log.arrived += 1
+		else:
+			_caravan_log.taken += 1
+		_caravans.erase(id)
 
 ## A flight of the current AI: where it runs (end of its path) against the threat-map alternative.
 func _measure_flee(p: Dictionary) -> void:
@@ -523,6 +570,147 @@ func _observe_edges() -> void:
 		if not seen.has(id):
 			_edge_streak.erase(id)
 
+## After every step: who joined each fight since the start, and who could have come to help.
+## A helper is a party that would join a side by the rule of hour_tick (hostile to someone on the other side, to no one on
+## this one), free (not hidden, in a fight, locked or in a faction campaign), and not a caravan, a camp or a retinue. Its
+## kind: "own" — a lord or vassal of a faction on that side; "other" — a lord or vassal of another faction (the enemy of
+## my enemy); "bandit", "dead", "party" (anything else). Feasible: the side with it is at least as strong as the other.
+## Timely: feasible, farther than JOIN_RADIUS, and the ride takes no longer than the fight has left (_hours_left).
+## Needed: timely while the side without it is the weaker one.
+func _observe_fights() -> void:
+	var live := {}
+	for f in world.skirmish.fights:
+		var id := int(f.id)
+		live[id] = true
+		var rec: Variant = _fights.get(id)
+		if rec == null:
+			continue
+		var sides: Array = world.skirmish.sides(f)
+		var strength := [0.0, 0.0]
+		var men := [0, 0]
+		var facs := [{}, {}]
+		for side in 2:
+			for q in sides[side]:
+				strength[side] += world.roster.strength_of(q)
+				men[side] += Rules.troop_count(q.troops)
+				facs[side][q.fac] = true
+				if not rec.start.has(int(q.id)) and not rec.joined.has(int(q.id)):
+					rec.joined[int(q.id)] = side
+					if q.get("army", false):
+						rec.army = int(rec.get("army", 0)) + 1
+		if sides[0].is_empty() or sides[1].is_empty():
+			continue
+		var left := minf(_hours_left(men[0], float(f.a0), strength[1] / maxf(1.0, strength[0])),
+			_hours_left(men[1], float(f.b0), strength[0] / maxf(1.0, strength[1])))
+		for p in world.roster.parties:
+			if p.hide or p.get("fight") or p.get("lock", false) or p.get("army", false) or p.kind == "caravan" or p.kind == "camp" or p.kind == "cvass":
+				continue
+			var d := Vector2(p.x - float(f.x), p.y - float(f.y)).length()
+			if d > HELP_RADIUS:
+				continue
+			var ha: bool = sides[0].any(func(q): return world.roster.hostile(p, q))
+			var hb: bool = sides[1].any(func(q): return world.roster.hostile(p, q))
+			if ha == hb:
+				continue
+			var side := 0 if hb else 1
+			var kind := "other"
+			if p.fac == "undead":
+				kind = "dead"
+			elif p.kind == "bandit":
+				kind = "bandit"
+			elif not Rules.is_noble(p):
+				kind = "party"
+			elif facs[side].has(p.fac):
+				kind = "own"
+			var c: Dictionary = rec.could.get(int(p.id), {"side": side, "kind": kind, "feasible": false, "far": false, "timely": false, "needed": false})
+			var turns: bool = strength[side] + world.roster.strength_of(p) >= strength[1 - side]
+			c.feasible = c.feasible or turns
+			c.far = c.far or d > JOIN_RADIUS
+			var timely: bool = turns and d > JOIN_RADIUS and d / maxf(0.001, world.roster.speed_of(p)) <= left
+			c.timely = c.timely or timely
+			c.needed = c.needed or (timely and strength[side] < strength[1 - side])
+			rec.could[int(p.id)] = c
+	for id in _fights.keys():
+		if not live.has(id):
+			_close_fight(id)
+
+## Hours until a side breaks at the loss rate of world_skirmish.hour_tick without the random spread (a copy, so the observer
+## measures the same on code without WorldSkirmish.hours_left).
+static func _hours_left(men: int, men0: float, odds: float) -> float:
+	var floor_men := men0 * 0.25
+	if men <= 0 or float(men) <= floor_men:
+		return 0.0
+	if floor_men <= 0.0:
+		return INF
+	var l := clampf(SKIRMISH_LOSS * odds, SKIRMISH_LOSS / 8.0, SKIRMISH_LOSS * 2.5)
+	return log(floor_men / men) / log(1.0 - l)
+
+func _close_fight(id: int) -> void:
+	var rec: Dictionary = _fights[id]
+	_fights.erase(id)
+	rec.hours = (steps - int(rec.t0)) * 0.2
+	_fight_log.append(rec)
+
+## Fight records folded into the numbers of the summary.
+func _help_summary() -> Dictionary:
+	for id in _fights.keys():
+		_close_fight(id)
+	var out := {"fights": _fight_log.size(), "fights_own_near": 0, "fights_own_near_far": 0, "fight_hours_mean": 0.0, "fight_size_mean": 0.0,
+		"joined": 0, "joined_far": 0, "joined_army": 0, "far_feasible_own": 0, "helped_far_own": 0, "timely_own": 0, "helped_timely_own": 0, "needed_own": 0, "helped_needed_own": 0}
+	for k in ["own", "other", "bandit", "dead", "party"]:
+		out["could_" + k] = 0
+		out["feasible_" + k] = 0
+		out["helped_" + k] = 0
+		out["helped_feasible_" + k] = 0
+	for rec in _fight_log:
+		out.fight_hours_mean += float(rec.hours)
+		out.fight_size_mean += float(rec.size)
+		out.joined += rec.joined.size()
+		out.joined_army += int(rec.get("army", 0))
+		var own := false
+		var own_far := false
+		for pid in rec.could:
+			var c: Dictionary = rec.could[pid]
+			var k := String(c.kind)
+			out["could_" + k] += 1
+			var helped: bool = rec.joined.get(pid, -1) == int(c.side)
+			if helped:
+				out["helped_" + k] += 1
+				if c.far:
+					out.joined_far += 1
+			if c.feasible:
+				out["feasible_" + k] += 1
+				if helped:
+					out["helped_feasible_" + k] += 1
+			if k == "own":
+				own = true
+				if c.far and c.feasible:
+					out.far_feasible_own += 1
+					if helped:
+						out.helped_far_own += 1
+				if c.get("timely", false):
+					out.timely_own += 1
+					if helped:
+						out.helped_timely_own += 1
+				if c.get("needed", false):
+					out.needed_own += 1
+					if helped:
+						out.helped_needed_own += 1
+				own_far = own_far or (c.far and c.feasible)
+		if own:
+			out.fights_own_near += 1
+		if own_far:
+			out.fights_own_near_far += 1
+	out.fight_hours_mean /= maxf(1.0, _fight_log.size())
+	out.fight_size_mean /= maxf(1.0, _fight_log.size())
+	out.help_rate_far_own = float(out.helped_far_own) / maxf(1.0, out.far_feasible_own)
+	out.help_rate_timely_own = float(out.helped_timely_own) / maxf(1.0, out.timely_own)
+	out.help_rate_needed_own = float(out.helped_needed_own) / maxf(1.0, out.needed_own)
+	for k in ["own", "other", "bandit", "dead"]:
+		out["help_rate_" + k] = float(out["helped_" + k]) / maxf(1.0, out["could_" + k])
+		out["help_rate_feasible_" + k] = float(out["helped_feasible_" + k]) / maxf(1.0, out["feasible_" + k])
+	return out
+
 func _heat_index(x: float, y: float) -> int:
 	return clampi(floori(y / HEAT_CELL), 0, heat_rows - 1) * heat_cols + clampi(floori(x / HEAT_CELL), 0, heat_cols - 1)
 
@@ -740,6 +928,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 	var diplo := _diplo_summary()
 	var jitter := _jitter()
 	var lord_j: Dictionary = jitter.get("lord", {})
+	var help := _help_summary()
 	var summary := {
 		"seed": seed_value, "days": days, "hours": hours, "wall_seconds": wall_usec / 1e6,
 		"wars_declared": declared.size(), "wars_peace": peace.size(), "wars_ended": ended.size(), "war_days_mean": mean_dur,
@@ -791,7 +980,10 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"threat_safe_cell_better": float(_flees.safe_better) / maxf(1.0, _flees.measured),
 		"threat_rebuild_usec": float(_threat_cost.usec) / maxf(1.0, _threat_cost.samples),
 		"threat_cells_per_party": float(_threat_cost.cells) / maxf(1.0, _threat_cost.sources),
+		"caravans": _caravan_log.seen, "caravans_arrived": _caravan_log.arrived, "caravans_taken": _caravan_log.taken,
+		"caravans_taken_share": float(_caravan_log.taken) / maxf(1.0, _caravan_log.arrived + _caravan_log.taken),
 	}
+	summary.merge(help)
 	return {
 		"summary": summary,
 		"config": {"seed": seed_value, "days": days, "culture": CULTURE, "player": "away", "heat_cell": HEAT_CELL, "edge_margin": EDGE_MARGIN,

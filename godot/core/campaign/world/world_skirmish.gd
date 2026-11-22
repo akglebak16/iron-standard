@@ -1,6 +1,9 @@
 extends RefCounted
 ## Fights between map parties that last for hours (warContact, skirmHour, skEnd, warAllyStr, warRally in src/05g_war.js)
 ## and allies of the enemy joining the player's battle (encHelpers, encMerge, encSplit).
+## Since #312 (DESIGN.md §5.7) `battles` tells the AI which fights go on, how strong each side is and how long it may
+## last: parties of the map come to help (party_goals.gd, goal "assist"); which side they join is still decided here,
+## in hour_tick, once they are close.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 
@@ -143,6 +146,57 @@ func _end(sk: Dictionary, a: Array, b: Array, winner: int) -> void:
 			var ang := atan2(p.y - w[0].y, p.x - w[0].x) if not w.is_empty() else roster.rnd(0.0, TAU)
 			p.state = "flee"
 			roster.path_to(p, clampf(p.x + cos(ang) * 240.0, 60.0, WW - 60.0), clampf(p.y + sin(ang) * 240.0, 60.0, WH - 60.0))
+
+## Running fights as the AI sees them (DESIGN.md §5.7, #312): [{id, x, y, sides: [[parties], [parties]],
+## strength: [a, b], left: hours until a side breaks}]. One pass over the parties picks the fighters by their `fight`
+## field; fights with an empty side are left out. Only reads.
+func battles() -> Array:
+	if fights.is_empty():
+		return []
+	var by_id := {}
+	for sk in fights:
+		by_id[sk.id] = {"sk": sk, "a": [], "b": []}
+	for p in roster.parties:
+		var id = p.get("fight")
+		if id == null or not by_id.has(id):
+			continue
+		var e: Dictionary = by_id[id]
+		if p.id in e.sk.A:
+			e.a.append(p)
+		elif p.id in e.sk.B:
+			e.b.append(p)
+	var out: Array = []
+	for sk in fights:
+		var e: Dictionary = by_id[sk.id]
+		if e.a.is_empty() or e.b.is_empty():
+			continue
+		var sa := 0.0
+		var sb := 0.0
+		for p in e.a:
+			sa += roster.strength_of(p)
+		for p in e.b:
+			sb += roster.strength_of(p)
+		var left := minf(hours_left(_count(e.a), float(sk.a0), sb / maxf(1.0, sa)), hours_left(_count(e.b), float(sk.b0), sa / maxf(1.0, sb)))
+		out.append({"id": sk.id, "x": sk.x, "y": sk.y, "sides": [e.a, e.b], "strength": [sa, sb], "left": left})
+	return out
+
+## Hours until a side of `men` (of `men0` at the start) breaks at the loss rate of hour_tick against `odds` (enemy
+## strength / own strength), without the random spread.
+static func hours_left(men: int, men0: float, odds: float) -> float:
+	var floor_men := men0 * 0.25
+	if men <= 0 or float(men) <= floor_men:
+		return 0.0
+	if floor_men <= 0.0:
+		return INF
+	var l := clampf(LOSS * odds, LOSS / 8.0, LOSS * 2.5)
+	return log(floor_men / men) / log(1.0 - l)
+
+## Whether the fight `id` still goes on.
+func has_fight(id: Variant) -> bool:
+	for sk in fights:
+		if sk.id == id:
+			return true
+	return false
 
 ## Friendly strength nearby, weighed when a party decides whether to attack.
 func ally_strength(p: Dictionary) -> float:
