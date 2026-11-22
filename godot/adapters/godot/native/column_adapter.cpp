@@ -10,11 +10,14 @@
 #include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
+#include <vector>
 namespace godot {
 class IronColumnKernel : public RefCounted {
   GDCLASS(IronColumnKernel, RefCounted)
   iron::battle::ProjectileQueries projectile_queries;
   iron::battle::CrowdQueries crowd_queries;
+  // Reused scratch rows of the storage compaction (#322).
+  std::vector<int> retired, moved;
 
 protected:
   static void _bind_methods() {
@@ -32,8 +35,10 @@ protected:
     ClassDB::bind_method(
         D_METHOD("nearest_ready", "columns", "position", "side"),
         &IronColumnKernel::nearest_ready);
-    ClassDB::bind_method(D_METHOD("copy_rows", "columns", "rows"),
-                         &IronColumnKernel::copy_rows);
+    ClassDB::bind_method(D_METHOD("retired_rows", "columns"),
+                         &IronColumnKernel::retired_rows);
+    ClassDB::bind_method(D_METHOD("drop_rows", "columns", "retired"),
+                         &IronColumnKernel::drop_rows);
     ClassDB::bind_method(D_METHOD("capture", "columns", "previous"),
                          &IronColumnKernel::capture);
     ClassDB::bind_method(D_METHOD("terrain_cells", "cover", "elevation",
@@ -199,37 +204,73 @@ public:
                                                  {position.x, position.y}));
     return result;
   }
-  Array copy_rows(const Array &columns, const PackedInt32Array &rows) {
+  // State.compact_inactive (#322): the rows of fighters who died or left the field, ascending. One pass over the
+  // flags here instead of a GDScript loop over every active fighter.
+  PackedInt32Array retired_rows(const Array &columns) {
+    using namespace iron::battle;
+    Input c(columns);
+    PackedInt32Array out;
+    if (!c.valid)
+      return out;
+    auto view = c.view();
+    retired.clear();
+    for (int row = 0; row < c.count; ++row)
+      if (view.i(I_DEAD, row) || view.i(I_GONE, row))
+        retired.push_back(row);
+    out.resize(int64_t(retired.size()));
+    int32_t *rows = out.ptrw();
+    for (size_t k = 0; k < retired.size(); ++k)
+      rows[k] = retired[k];
+    return out;
+  }
+  // Stable compaction without the `retired` rows (ascending): every kept row moves down in its order, the rows
+  // before the first retired one stay where they are. Rows past the kept count keep stale values, as before.
+  // The caller hands the columns over for the call (columns.gd), so after the checks this packet is their only
+  // owner and ptrw() writes in place, without a copy-on-write copy (#322, the #298 handoff). A rejection leaves
+  // the packet untouched.
+  Array drop_rows(Array columns, const PackedInt32Array &dropped_rows) {
     using namespace iron::battle;
     Input c(columns);
     if (!c.valid)
       return {};
     // Raw pointers throughout: operator[] and size() of a godot-cpp packed array are calls into the engine, and
-    // the field loops below read every kept row once per field (#263).
-    const int kept = int(rows.size());
-    const int32_t *row = rows.ptr();
-    for (int k = 0; k < kept; ++k)
-      if (row[k] < k || row[k] >= c.count ||
-          (k > 0 && row[k] <= row[k - 1]))
+    // the field loops below read every moved row once per field (#263).
+    const int dropped = int(dropped_rows.size());
+    const int32_t *gone = dropped_rows.ptr();
+    for (int k = 0; k < dropped; ++k)
+      if (gone[k] < 0 || gone[k] >= c.count || (k > 0 && gone[k] <= gone[k - 1]))
         return {};
+    for (int slot = 1; slot < 6; ++slot)
+      columns[slot] = Variant();
+    const int first = dropped > 0 ? gone[0] : c.count;
+    moved.clear();
+    for (int k = 0, read = first; read < c.count; ++read) {
+      if (k < dropped && gone[k] == read) {
+        ++k;
+        continue;
+      }
+      moved.push_back(read);
+    }
+    const int kept = first + int(moved.size());
+    const int *row = moved.data();
+    const int count = int(moved.size());
     auto *p = c.positions.ptrw(), *v = c.velocities.ptrw(),
          *vf = c.vectors.ptrw();
     auto *r = c.reals.ptrw();
     auto *i = c.integers.ptrw();
-    for (int k = 0; k < kept; ++k) {
-      int from = row[k];
-      p[k] = p[from];
-      v[k] = v[from];
+    for (int k = 0; k < count; ++k) {
+      p[first + k] = p[row[k]];
+      v[first + k] = v[row[k]];
     }
     for (int f = 0; f < R_COUNT; ++f)
-      for (int k = 0; k < kept; ++k)
-        r[f * c.capacity + k] = r[f * c.capacity + row[k]];
+      for (int k = 0; k < count; ++k)
+        r[f * c.capacity + first + k] = r[f * c.capacity + row[k]];
     for (int f = 0; f < I_COUNT; ++f)
-      for (int k = 0; k < kept; ++k)
-        i[f * c.capacity + k] = i[f * c.capacity + row[k]];
+      for (int k = 0; k < count; ++k)
+        i[f * c.capacity + first + k] = i[f * c.capacity + row[k]];
     for (int f = 0; f < V_COUNT; ++f)
-      for (int k = 0; k < kept; ++k)
-        vf[f * c.capacity + k] = vf[f * c.capacity + row[k]];
+      for (int k = 0; k < count; ++k)
+        vf[f * c.capacity + first + k] = vf[f * c.capacity + row[k]];
     c.positions.resize(kept);
     c.velocities.resize(kept);
     Array out;

@@ -64,8 +64,11 @@ func relocate(handle: int, destination: int) -> bool:
 ## Drop released dense rows in stable order in one pass. Generations never change.
 ## The owning store performs the same stable compaction before publishing a query.
 func compact_dense() -> int:
-	var write := 0
-	for read in _slots.size():
+	# Rows before the first released one keep their indices: start there (#322).
+	var first := _slots.find(-1)
+	if first < 0: first = _slots.size()
+	var write := first
+	for read in range(first, _slots.size()):
 		var slot := _slots[read]
 		if slot < 0: continue
 		_slots[write] = slot
