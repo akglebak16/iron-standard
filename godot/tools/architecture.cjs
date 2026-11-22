@@ -7,6 +7,8 @@ const PURE_FORBIDDEN = ['FileAccess', 'DirAccess', 'ResourceLoader', 'ResourceSa
 const NATIVE_SUFFIX = /\.(cpp|hpp|h)$/;
 const ASSET_SUFFIX = /\.(png|jpe?g|svg|webp|ogg|wav|mp3|ttf|otf|json|res|gdextension|tscn|tres)$/;
 const REFERENCED_SUFFIX = /\.(gd|tscn|tres|cpp|hpp|h|gdextension|png|jpe?g|svg|webp|ogg|wav|mp3|ttf|otf|json|res)$/;
+// ADR-026: a rule of the battle (its numbers) lives only in its owner files; `phase` says which set applies now.
+const RULE_PHASES = ['reference', 'native'];
 const NATIVE_VALUE_HEADERS = new Set(['algorithm','array','cmath','cstddef','cstdint','cstring','limits','numeric','tuple','type_traits','utility','vector','functional','unordered_map']);
 
 // A file entry grants exactly that file, not similarly named internal scripts.
@@ -39,6 +41,19 @@ function manifestIssues(manifest) {
     if (new Set(m.allowed).size !== m.allowed.length) errors.push(`Duplicate allowed dependency: ${m.name}`);
   }
   for (const m of manifest.modules) for (const name of m.allowed) if (!names.has(name) || name === m.name) errors.push(`Invalid allowed dependency: ${m.name} -> ${name}`);
+  const rules = new Set();
+  for (const r of manifest.ruleOwners || []) {
+    if (!r.rule || rules.has(r.rule)) errors.push(`Duplicate/missing rule owner: ${r.rule}`);
+    rules.add(r.rule);
+    if (!/^ADR-\d{3}$/.test(r.adr || '')) errors.push(`Rule owner lacks its ADR: ${r.rule}`);
+    if (!RULE_PHASES.includes(r.phase)) errors.push(`Invalid rule owner phase: ${r.rule}: ${r.phase}`);
+    for (const phase of RULE_PHASES) {
+      const owners = r.owners?.[phase];
+      if (!Array.isArray(owners) || !owners.length || !owners.every(safe)) errors.push(`Invalid rule owners: ${r.rule}: ${phase}`);
+      if (!Array.isArray(r.checks?.[phase]) || !r.checks[phase].every(safe)) errors.push(`Invalid rule checks: ${r.rule}: ${phase}`);
+    }
+    if (!Array.isArray(r.symbols) || !r.symbols.length || new Set(r.symbols).size !== r.symbols.length || !r.symbols.every(x => /^[A-Za-z_][A-Za-z_0-9]*$/.test(x))) errors.push(`Invalid rule symbols: ${r.rule}`);
+  }
   return errors;
 }
 
@@ -209,6 +224,17 @@ function analyze(files, manifest) {
       }
     }
   }
+  // ADR-026: the numbers of a moved rule appear only in its owners (definition, reference, kernel and its
+  // parameters); tests and tools may read them. A third place would let the rule drift from its comparison.
+  for (const rule of manifest.ruleOwners || []) {
+    const owners = rule.owners?.[rule.phase] || [];
+    const symbols = new Set(rule.symbols || []);
+    for (const [file, ts] of parsed) {
+      if (test(file) || owners.some(o => covers(file, o))) continue;
+      for (const t of ts) if (!t.string && symbols.has(t.value)) add(file, 'rule-owner', `${rule.rule}:${t.value}`);
+    }
+    for (const file of [...owners, ...(rule.checks?.[rule.phase] || [])]) if (!files.has(file)) add(file, 'rule-owner', `${rule.rule}:missing`);
+  }
   // Transitive engine access must not be concealed in another core helper.
   // An execution adapter may use Thread/Semaphore/Time, but its job graph must
   // remain pure. Scene/resource/input access belongs to the main thread.
@@ -287,6 +313,8 @@ function check() {
   const directories = new Set(fs.readdirSync(ROOT, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name));
   for (const dir of manifest.requiredDirectories) if (fs.existsSync(path.join(ROOT, dir))) directories.add(dir);
   const issues = analyze(files, manifest);
+  const adrs = fs.readdirSync(path.join(ROOT, 'docs/architecture'));
+  for (const rule of manifest.ruleOwners || []) if (!adrs.some(f => f.startsWith(`${rule.adr}-`) && f.endsWith('.md'))) throw new Error(`Rule owner ADR is missing: ${rule.rule}: ${rule.adr}`);
   const exceptions = new Map(manifest.exceptions.map(e => [e.key, e]));
   for (const e of exceptions.values()) if (!e.reason || !Number.isInteger(e.removeByStage)) throw new Error(`Invalid exception: ${e.key}`);
   const active = new Set(issues.map(i => i.key));
