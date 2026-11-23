@@ -210,7 +210,7 @@ var companion_id: String:
 		if _motion != null: _motion.integer_fields[MotionStore.I.COMPANION * _motion.capacity + battle_index] = int(not value.is_empty())
 var companion: bool:
 	get:
-		return not companion_id.is_empty()
+		return not _companion_id.is_empty()
 var faction: String = ""
 var appearance: Dictionary = {}
 var _detached_collision_radius: float = Config.FOOT_COLLISION_RADIUS

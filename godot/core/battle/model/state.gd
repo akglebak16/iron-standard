@@ -513,14 +513,21 @@ func kill(target: Unit, source: Unit = null, rng: RandomNumberGenerator = null, 
 	var positions := motion.positions
 	var target_position := target.position
 	var candidates: PackedInt32Array = column_backend.nearby(motion, target_position, Config.DEATH_MORALE_RADIUS) if column_backend != null else PackedInt32Array(range(active_units.size()))
+	# Straight over the columns by row (an active unit's battle_index is its row): morale is a column since ADR-026, and
+	# this loop runs for every neighbour of every death; the Unit properties would cost a call per field.
+	var flags := motion.integer_fields
+	var capacity := motion.capacity
+	var morale_at: int = MotionStore.R.MORALE * capacity
+	var base_at: int = MotionStore.R.BASE_MORALE * capacity
+	var ally_loss: float = Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
+	var side := target.side
 	for row in candidates:
-		var unit: Unit = active_units[row]
-		if positions[unit.battle_index].distance_to(target_position) > Config.DEATH_MORALE_RADIUS or unit.dead or unit.gone:
+		if positions[row].distance_to(target_position) > Config.DEATH_MORALE_RADIUS or flags[MotionStore.I.DEAD * capacity + row] or flags[MotionStore.I.GONE * capacity + row]:
 			continue
-		if unit.side == target.side:
-			unit.morale -= Config.LEADER_DEATH_MORALE if target.leader or target.hero else Config.ALLY_DEATH_MORALE + target.tier * Config.ALLY_DEATH_MORALE_PER_TIER
+		if flags[MotionStore.I.SIDE * capacity + row] == side:
+			motion.real_fields[morale_at + row] -= ally_loss
 		else:
-			unit.morale = minf(unit.base_morale, unit.morale + Config.ENEMY_DEATH_MORALE_BONUS)
+			motion.real_fields[morale_at + row] = minf(motion.real_fields[base_at + row], motion.real_fields[morale_at + row] + Config.ENEMY_DEATH_MORALE_BONUS)
 	if target.companion:
 		for unit: Unit in active_units:
 			if unit.side == target.side and positions[unit.battle_index].distance_to(target_position) < Config.DEATH_MORALE_RADIUS:
