@@ -14,3 +14,9 @@ func densest_ready(_columns: RefCounted, _side: int, _low_x: float, _high_x: flo
 func projectile_candidates(_columns: RefCounted, _impacts: PackedVector2Array, _arena: Vector2, _padding: float, _height: float, _cell: float) -> Array: return []
 ## TERRAIN.md 3.4: the terrain grid read by the native reader at `points` (cover | height << 8); empty without one.
 func terrain_cells(_cover: PackedByteArray, _elevation: PackedByteArray, _width: int, _cell: float, _points: PackedVector2Array) -> PackedInt32Array: return PackedInt32Array()
+## ADR-026, FieldAssessment.assess: the pass over the fighters as per-slot sums (morale_kernel.hpp, MoraleKernel::Sum);
+## empty leaves the pass to GDScript.
+func field_sums(_columns: RefCounted, _laterals: PackedVector2Array, _loose: PackedByteArray, _cover: PackedByteArray, _elevation: PackedByteArray, _width: int) -> PackedFloat64Array: return PackedFloat64Array()
+## ADR-026, Morale.tick after the group losses: [active side 0, active side 1, notices (row, kind), rallied groups
+## (command * GROUP_KINDS + kind)], with the morale columns written; empty leaves the check to GDScript.
+func morale_check(_columns: RefCounted, _losses: PackedFloat64Array, _starting: PackedInt64Array, _arena_width: float, _grouped: bool, _cell: float) -> Array: return []
