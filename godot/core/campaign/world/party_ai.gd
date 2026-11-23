@@ -7,10 +7,13 @@ extends RefCounted
 ## The dead follow the director of the invasion (stage 2c, world_undead.gd): their wave and front come in the context.
 ## Help in battle (#312, DESIGN.md §5.7): the running fights of world_skirmish reach the evaluator as a list built once per
 ## step on first request; a helper rides to the fight and hour_tick takes it in once it is close.
+## Calls for help (#313): lords and vassals that a stronger enemy chases or that flee call; the calls are gathered in the
+## same pass over the parties as the fights (`_beacons`), and an own party that answers rides to the caller (`rescue`).
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const Config = preload("res://core/campaign/config.gd")
 const Goals = preload("res://core/campaign/world/party_goals.gd")
+const Skirmish = preload("res://core/campaign/world/world_skirmish.gd")
 
 const WW := 5200.0
 const WH := 3400.0
@@ -32,6 +35,10 @@ var _map_cache: RefCounted = null
 var _enemy_cache := {}
 var _doom_cache: Variant = null
 var _battle_cache: Variant = null
+var _call_cache: Variant = null  # calls for help of the step, with _battle_cache (_beacons)
+var _caught := {}                # lord or vassal id -> the party, while it is in a fight (an answer rides on to it)
+var _call_of := {}               # caller id -> its call
+var _answers := {}               # caller id -> own parties riding to it (goal "rescue")
 
 func _init(r: Roster, p: RefCounted) -> void:
 	roster = r
@@ -50,6 +57,8 @@ func _init(r: Roster, p: RefCounted) -> void:
 	goals.enemies = _enemies_of
 	goals.doomed = _doomed
 	goals.battles = _battles
+	goals.calls = _calls
+	goals.call_detail = _call_detail
 
 ## Breaks the links to the world so a disposed campaign is freed.
 func dispose() -> void:
@@ -60,6 +69,10 @@ func dispose() -> void:
 	_enemy_cache = {}
 	_doom_cache = null
 	_battle_cache = null
+	_call_cache = null
+	_caught = {}
+	_call_of = {}
+	_answers = {}
 
 func _at_war(a: String, b: String) -> bool:
 	return Rules.at_war(a, b, roster.diplomatic_wars)
@@ -73,9 +86,105 @@ func _ruins(f: String) -> Array:
 ## Running fights for help in battle (#312); cached per world step like the threat map. Fights change only in the
 ## contact phase and in hour_tick, both after the evaluations of the step.
 func _battles() -> Array:
-	if _battle_cache == null:
-		_battle_cache = skirmish.battles() if skirmish != null else []
+	_beacons()
 	return _battle_cache
+
+## Calls for help of the step (#313): [{id, fac, x, y}]; what the call needs (own, foe, left) comes from _call_detail.
+func _calls() -> Array:
+	_beacons()
+	return _call_cache
+
+## The beacons of a world step (DESIGN.md §5.7.2), built on first request in one pass over the parties: the fighters for
+## WorldSkirmish.battles, the hunters and the fleeing lords and vassals for the calls. A caller is a free lord or vassal
+## (not hidden, locked or in a fight) that hostile parties hunt or that flees. The same pass notes who already rides to
+## which caller (`_answers`). Only reads; strengths and the threat map are asked for in _call_detail, when somebody who
+## could answer is near.
+func _beacons() -> void:
+	if _call_cache != null:
+		return
+	var fighters: Array = []
+	var hunters := {}  # hunted party id -> its hunters
+	var free := {}     # party id -> a free lord or vassal
+	var fleeing: Array = []
+	for p in roster.parties:
+		if p.get("fight"):
+			fighters.append(p)
+			if Rules.is_noble(p):
+				_caught[p.id] = p  # caught already: an answer rides on to its fight
+			continue
+		var st = p.get("state")
+		if st == "roam" and p.get("goal") == "rescue":
+			var g = p.get("gid")
+			if _answers.has(g):
+				_answers[g].append(p)
+			else:
+				_answers[g] = [p]
+		if st == "hunt":
+			var t = p.get("tid")
+			if t != null:
+				if hunters.has(t):
+					hunters[t].append(p)
+				else:
+					hunters[t] = [p]
+		if Rules.is_noble(p) and not p.hide and not p.get("lock", false):
+			free[p.id] = p
+			if st == "flee":
+				fleeing.append(p)
+	_battle_cache = skirmish.battles(fighters) if skirmish != null else []
+	_call_cache = []
+	for id in hunters:
+		var c: Dictionary = free.get(id, {})
+		if not c.is_empty():
+			_call(c, hunters[id])
+	for c in fleeing:
+		if not hunters.has(c.id):
+			_call(c, [])
+
+func _call(c: Dictionary, hunters: Array) -> void:
+	var e := {"id": c.id, "fac": c.fac, "x": c.x, "y": c.y, "party": c, "hunters": hunters}
+	_call_cache.append(e)
+	_call_of[c.id] = e
+
+## What a call needs, worked out once per step and only for calls somebody could answer: the caller's strength (`own`),
+## its enemy (`foe`: the hunters, or for a flight without hunters the enemies felt around it on the threat map), `left`
+## (hours until the nearest hunter reaches it standing and its side breaks, WorldSkirmish.hours_left; a small party
+## against small hunters is settled at once) and the nearest hunter (`fx`, `fy`). {} when the caller is not the weaker
+## one: then it is no call.
+func _call_detail(e: Dictionary) -> Dictionary:
+	if e.has("own"):
+		return e
+	if e.has("none"):
+		return {}
+	var c: Dictionary = e.party
+	var hunters: Array = e.hunters
+	var own := maxf(0.001, roster.strength_of(c))
+	var foe := 0.0
+	var reach := INF
+	var small := Rules.troop_count(c.troops) < 12 * Rules.MK
+	var near: Dictionary = {}
+	for h in hunters:
+		foe += roster.strength_of(h)
+		var t := _dist(h, c) / maxf(0.001, roster.speed_of(h))
+		if t < reach:
+			reach = t
+			near = h
+		small = small and Rules.troop_count(h.troops) < 12 * Rules.MK
+	if hunters.is_empty():
+		var m: RefCounted = _threat()
+		if m != null:
+			foe = m.threat(c.x, c.y, _enemies_of(String(c.fac)))
+		reach = 0.0
+	if foe <= own:
+		e.none = true
+		return {}
+	var men := Rules.troop_count(c.troops)
+	e.own = own
+	e.foe = foe
+	e.left = reach + (0.0 if small else Skirmish.hours_left(men, float(men), foe / own))
+	if not near.is_empty():
+		e.fx = near.x  # the nearest hunter: a flight does not run past it
+		e.fy = near.y
+	return e
 
 ## Towns and castles the undead waves go for (stage 2c); cached per world step like the threat map.
 func _doomed() -> Dictionary:
@@ -113,6 +222,10 @@ func _fresh() -> void:
 	_enemy_cache = {}
 	_doom_cache = null
 	_battle_cache = null
+	_call_cache = null
+	_caught = {}
+	_call_of = {}
+	_answers = {}
 
 func step(dh: float) -> void:
 	_fresh()
@@ -248,10 +361,14 @@ func ai_party(p: Dictionary, dh: float) -> void:
 			return
 	if p.state == "hunt":
 		_chase(p, dh)
+	elif p.state == "flee" and p.get("goal", "") == "flee" and Rules.is_noble(p):
+		_meet(p, dh)
 	elif p.get("goal", "") == "escort":
 		_escort(p, dh)
 	elif p.get("goal", "") == "assist":
 		_assist(p)
+	elif p.get("goal", "") == "rescue":
+		_rescue(p, dh)
 	if p.pi < p.path.size():
 		if roster.move_along(p, dh):
 			_arrived(p)
@@ -371,7 +488,7 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 				if not t.is_empty():
 					skirmish.rally(p, t)
 		"flee":
-			_flee(p, Vector2(c.x, c.y), ctx)
+			_flee(p, Vector2(c.x, c.y), ctx, c.get("friends", []), float(c.get("foe", 0.0)))
 		"rest", "raid", "assault":
 			var s: Dictionary = roster.map.settlement_by_id(c.gid)
 			p.tid = null
@@ -400,6 +517,12 @@ func _apply(p: Dictionary, c: Dictionary, ctx: Dictionary) -> void:
 			p.tid = null
 			p.tpl = false
 			p.state = "roam"
+			roster.path_to(p, c.x, c.y)
+		"rescue":
+			p.tid = null
+			p.tpl = false
+			p.state = "roam"
+			p.rp = Config.GOAL_CHASE_REPATH_HOURS
 			roster.path_to(p, c.x, c.y)
 		"follow":
 			if p.kind == "cvass":
@@ -441,13 +564,14 @@ func _roam_to(p: Dictionary, x: float, y: float, r: Vector2) -> void:
 	p.path = []
 	p.pi = 0
 
-## Flight to a safe own place (DESIGN.md §5.1): an own settlement away from the enemy, else the safest cell nearby.
-func _flee(p: Dictionary, from: Vector2, ctx: Dictionary) -> void:
+## Flight to a safe own place (DESIGN.md §5.1): an own settlement away from the enemy, a strong own party in sight (#313),
+## else the safest cell nearby.
+func _flee(p: Dictionary, from: Vector2, ctx: Dictionary, friends: Array = [], foe := 0.0) -> void:
 	var havens: Array = []
 	for s in goals.own_settlements(String(p.fac)):
 		havens.append({"id": s.id, "x": s.x, "y": s.y})
 	havens.append_array(ctx.get("havens", []))
-	var t := goals.flee_target(p, from, havens)
+	var t := goals.flee_target(p, from, havens, friends, foe)
 	p.tid = null
 	p.tpl = false
 	p.state = "flee"
@@ -487,6 +611,54 @@ func _assist(p: Dictionary) -> void:
 	p.pi = 0
 	p.wait = 0.0
 	p.state = "idle"
+
+## Answer to a call for help (#313): rides to the caller, re-planned as it moves (the caller runs to meet it), and on to its
+## fight when it is caught. The ride ends when the call is over: the caller is safe, inside, or gone. Only the ride: after
+## its own fight a helper keeps what world_skirmish gave it (a loser flees).
+func _rescue(p: Dictionary, dh: float) -> void:
+	if p.state == "hunt" or p.state == "flee":
+		return
+	_beacons()
+	var c: Dictionary = _caught.get(p.get("gid"), {})
+	var e: Variant = _call_of.get(p.get("gid"))
+	if e != null and not _call_detail(e).is_empty():
+		c = e.party
+	if c.is_empty():
+		if p.state == "roam":
+			p.path = []
+			p.pi = 0
+			p.state = "idle"
+		p.wait = 0.0
+		return
+	p.rp = float(p.get("rp", 0.0)) - dh
+	if p.rp <= 0.0:
+		p.rp = Config.GOAL_CHASE_REPATH_HOURS
+		if _dist(c, p) > Config.GOAL_ESCORT_KEEP:
+			p.state = "roam"
+			roster.path_to(p, c.x, c.y)
+
+## A fleeing lord or vassal whose call is answered turns its flight towards the nearest own party riding to it, when that
+## one is closer than the end of its flight and safe to run to (#313): the two meet half-way.
+func _meet(p: Dictionary, dh: float) -> void:
+	p.rp = float(p.get("rp", 0.0)) - dh
+	if p.rp > 0.0:
+		return
+	p.rp = Config.GOAL_CHASE_REPATH_HOURS
+	_beacons()
+	var riders: Array = _answers.get(p.id, [])
+	if riders.is_empty() or p.path.is_empty():
+		return
+	var call := _call_detail(_call_of.get(p.id, {"none": true}))
+	if call.is_empty():
+		return
+	var from := Vector2(float(call.fx), float(call.fy)) if call.has("fx") else Vector2(p.x, p.y)
+	var t := goals.meet_target(p, from, riders, float(call.foe))
+	if t.is_empty():
+		return
+	var here := Vector2(p.x, p.y)
+	var end: Vector2 = p.path[p.path.size() - 1]
+	if here.distance_to(Vector2(t.x, t.y)) < here.distance_to(end):
+		roster.path_to(p, t.x, t.y)
 
 ## Escort: keeps close to the caravan; the goal ends when the caravan is gone.
 func _escort(p: Dictionary, dh: float) -> void:
@@ -572,7 +744,7 @@ func _arrived(p: Dictionary) -> void:
 				p.wait = float(roster.rint(Config.GOAL_PATROL_WAIT.x, Config.GOAL_PATROL_WAIT.y)) if p.kind != "cvass" else 0.0
 			"defend":
 				p.wait = float(Config.GOAL_DEFEND_WAIT)
-			"escort", "assist":
+			"escort", "assist", "rescue":
 				p.wait = Config.GOAL_WAIT_PER_THINK
 			"muster":
 				p.wait = float(Config.UNDEAD_MUSTER_WAIT)

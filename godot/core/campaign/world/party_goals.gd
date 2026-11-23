@@ -14,12 +14,15 @@ extends RefCounted
 ## for, from the inside (`doomed`).
 ## Since #312 (DESIGN.md §5.7, parties act together) a lord or vassal goes to help a running fight of its faction that it
 ## sees and can turn (`assist`); the fights come in through `battles`, a short list built once per world step.
+## Since #313 a lord or vassal that a stronger enemy chases or that flees calls for help (`calls`, the same kind of list):
+## own lords and vassals answer it (`rescue`), and the fleeing party runs to a strong own party nearby, not only to an
+## own settlement (flee_target), so the two meet half-way.
 const Config = preload("res://core/campaign/config.gd")
 const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 
 ## Goals that react to what a party sees; they may interrupt a plan before its hold time is over.
-const REACTIVE := ["hunt", "flee", "assist"]
+const REACTIVE := ["hunt", "flee", "assist", "rescue"]
 ## Goals carried out by riding to a settlement or a point and lingering there.
 const PLANS := ["defend", "patrol", "raid", "rest", "escort", "follow", "roam", "guard", "muster", "assault"]
 const PLAYER_ID := -1  # gid of a hunt after the player's party
@@ -39,6 +42,9 @@ var modifiers: Callable = Callable()     # (party) -> {goal: multiplier, "risk":
 var passable: Callable = Callable()      # (Vector2) -> bool, for threat-map havens
 var doomed: Callable = Callable()        # () -> {settlement id: mode} targets of the undead waves (stage 2c), optional
 var battles: Callable = Callable()       # () -> running fights (WorldSkirmish.battles, #312), optional
+var calls: Callable = Callable()         # () -> calls for help [{id, fac, x, y, ...}] (party_ai.gd, #313), optional
+var call_detail: Callable = Callable()   # (call) -> the call with own, foe, left, or {} when it is none; optional (the
+										 # calls already carry them)
 var width := 5200.0
 var height := 3400.0
 
@@ -248,6 +254,7 @@ func candidates(p: Dictionary, ctx := {}) -> Array:
 		return out
 	_flee(p, me, prof, mods, seen, out)
 	_assist(p, prof, mods, out)
+	_rescue(p, prof, mods, out)
 	_defend(p, me, prof, mods, out)
 	_patrol(p, prof, mods, ctx, out)
 	_raid(p, me, prof, mods, out)
@@ -265,7 +272,9 @@ func candidates(p: Dictionary, ctx := {}) -> Array:
 static func _sort(out: Array) -> void:
 	out.sort_custom(func(a, b): return a.score > b.score)
 
-## Parties in sight: weaker ones as prey, the pressure of stronger ones (1 = an enemy `flee_ratio` times stronger).
+## Parties in sight: weaker ones as prey, the pressure of stronger ones (1 = an enemy `flee_ratio` times stronger) and the
+## strength of the strongest of them (`foe`). A lord or vassal also notes the free lords and vassals of its faction in sight
+## that are not already at hand (`friends`, #313): a flight may run to them.
 func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictionary:
 	var army := bool(ctx.get("army", false))
 	var sight := Config.GOAL_ARMY_HUNT_RADIUS if army else float(prof.sight)
@@ -277,6 +286,9 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 	var fief: Dictionary = ctx.get("fief", {})
 	var prey: Array = []
 	var pressure := 0.0
+	var foe := 0.0
+	var friends: Array = []
+	var friendly := not army and Rules.is_noble(p)
 	var from := Vector2(p.x, p.y)
 	var look := maxf(sight, flee_sight)
 	var px: float = p.x
@@ -288,7 +300,11 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 		if is_same(o, p) or o.hide or o.kind == "camp" or o.get("lock", false) or (skip_busy and o.get("fight", false)):
 			continue
 		var d := Vector2(o.x - px, o.y - py).length()
-		if d > look or not hostile.call(p, o):
+		if d > look:
+			continue
+		if not hostile.call(p, o):
+			if friendly and o.fac == p.fac and d >= Config.GOAL_FLEE_FRIEND_MIN and (o.kind == "lord" or o.kind == "vassal") and not o.get("fight"):
+				friends.append(o)
 			continue
 		var so: float = strength.call(o)
 		if so < me * hunt_ratio:
@@ -298,6 +314,7 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 			var k := so / (me * flee_ratio)
 			if k > pressure:
 				pressure = k
+				foe = so
 				from = Vector2(o.x, o.y)
 	if player_target.is_valid():
 		var pl: Dictionary = player_target.call(p)
@@ -310,8 +327,9 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 				var k := sp / (me * Config.GOAL_PLAYER_FLEE_RATIO)
 				if k > pressure:
 					pressure = k
+					foe = sp
 					from = Vector2(pl.x, pl.y)
-	return {"prey": prey, "pressure": pressure, "from": from, "sight": sight}
+	return {"prey": prey, "pressure": pressure, "foe": foe, "friends": friends, "from": from, "sight": sight}
 
 func _hunt(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, ctx: Dictionary, seen: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "hunt")
@@ -338,20 +356,26 @@ func _hunt(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, ctx: Di
 
 ## Fleeing scores by the pressure of stronger enemies in sight and on the threat map. A flight already under way
 ## keeps a residual score until its hold time is over, so a party does not turn back at the edge of sight.
+## The candidate carries what flee_target needs: the enemy strength (the strongest in sight, or the enemies felt on the
+## threat map) and the own parties in sight (#313).
 func _flee(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, seen: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "flee")
 	if w <= 0.0:
 		return
 	var pressure := float(seen.pressure)
+	var foe := float(seen.get("foe", 0.0))
 	if bool(prof.get("map_pressure", true)):
-		pressure = maxf(pressure, risk_at(p, p.x, p.y, me) * Config.GOAL_FLEE_MAP_SHARE / float(prof.flee_ratio))
+		var felt := risk_at(p, p.x, p.y, me)
+		pressure = maxf(pressure, felt * Config.GOAL_FLEE_MAP_SHARE / float(prof.flee_ratio))
+		foe = maxf(foe, felt * me * Config.GOAL_FLEE_MAP_SHARE)
 	var s := 0.0
 	if pressure > 1.0:
 		s = w * ramp(pressure, 1.0, Config.GOAL_FLEE_FULL_PRESSURE, 0.5, 1.0)
 	elif p.get("goal", "") == "flee" and goal_active(p) and float(p.get("ga", 0.0)) < Config.GOAL_HOLD_HOURS:
 		s = w * Config.GOAL_FLEE_RESIDUAL
 	if s > 0.0:
-		out.append({"goal": "flee", "gid": null, "x": float(seen.from.x), "y": float(seen.from.y), "score": s})
+		out.append({"goal": "flee", "gid": null, "x": float(seen.from.x), "y": float(seen.from.y), "score": s, "foe": foe,
+			"friends": seen.get("friends", [])})
 
 ## Help in battle (#312, DESIGN.md §5.7.3): a running fight with the party's faction on a side that the party would join
 ## by the rule of world_skirmish.hour_tick (hostile to someone on the other side, to no one on this one). Factors: how much
@@ -412,6 +436,82 @@ func side_for(p: Dictionary, sides: Array, fac: String) -> int:
 			if hostile.call(p, q):
 				return side
 	return -1
+
+## Where a fleeing party meets the own parties that answer its call (#313): the best of them as a haven (flee_target), or
+## {} when none is safe to run to. The caller re-plans its flight to it, so the two ride towards each other.
+func meet_target(p: Dictionary, from: Vector2, friends: Array, foe: float) -> Dictionary:
+	var t := _friend_haven(p, from, risk_at(p, p.x, p.y, own_strength(p)), friends, foe)
+	t.erase("cost")
+	return t
+
+## The best own party to flee to, with its cost on the scale of flee_target: together with p at least as strong as the
+## enemy, within the haven range, not past the enemy, and clearly safer than here in their joint strength.
+func _friend_haven(p: Dictionary, from: Vector2, here_risk: float, friends: Array, foe: float) -> Dictionary:
+	var best := {}
+	if friends.is_empty():
+		return best
+	var here := Vector2(p.x, p.y)
+	var away := here - from
+	var best_cost := INF
+	var alone := maxf(0.001, float(strength.call(p)))
+	for o in friends:
+		var both: float = alone + float(strength.call(o))
+		if both < foe * Config.GOAL_FLEE_FRIEND_ODDS:
+			continue
+		var at := Vector2(o.x, o.y)
+		var d := here.distance_to(at)
+		if d > Config.GOAL_FLEE_HAVEN_RANGE or d < 1.0:
+			continue
+		if away.length() > 0.0 and (at - here).dot(away) < 0.0 and at.distance_to(from) < here.distance_to(from):
+			continue
+		var risk := risk_at(p, at.x, at.y, both)
+		if here_risk > 0.0 and risk >= here_risk * Config.GOAL_FLEE_SAFER:
+			continue
+		var mid := (here + at) * 0.5
+		var cost := (risk + risk_at(p, mid.x, mid.y, both)) * Config.GOAL_FLEE_THREAT_COST + d / Config.GOAL_FLEE_HAVEN_RANGE
+		if cost < best_cost:
+			best_cost = cost
+			best = {"x": at.x, "y": at.y, "sid": null, "pid": o.id, "cost": cost}
+	return best
+
+## Calls for help (#313, DESIGN.md §5.7.2): an own lord or vassal in danger — a stronger enemy chases it, or it flees. The
+## same factors as help in battle: how much it needs help (enemy / its strength), whether the party turns it (no goal when
+## even together they are hopeless), whether the party gets there before the caller is caught and beaten (`left`), and own
+## parties already on the way. The calls of other factions are left to part 3 (the enemy of my enemy).
+func _rescue(p: Dictionary, prof: Dictionary, mods: Dictionary, out: Array) -> void:
+	var w := weight(prof, mods, "assist")
+	if w <= 0.0 or not calls.is_valid():
+		return
+	var list: Array = calls.call()
+	if list.is_empty():
+		return
+	var reach := Config.GOAL_ASSIST_RANGE
+	var me := -1.0  # own strength and speed only once a call is in reach
+	var vm := 0.0
+	for c in list:
+		if c.fac != p.fac or c.id == p.id or absf(c.x - p.x) > reach or absf(c.y - p.y) > reach:
+			continue
+		var d := Vector2(c.x - p.x, c.y - p.y).length()
+		if d > reach:
+			continue
+		var info: Dictionary = call_detail.call(c) if call_detail.is_valid() else c
+		if info.is_empty():
+			continue
+		if me < 0.0:
+			me = strength.call(p)
+			vm = maxf(0.001, speed.call(p))
+		var own: float = info.own
+		var foe: float = info.foe
+		var need := ramp(foe / maxf(0.001, own), Config.GOAL_ASSIST_NEED.x, Config.GOAL_ASSIST_NEED.y, Config.GOAL_ASSIST_NEED_FLOOR, 1.0)
+		var odds := ramp((own + me) / maxf(0.001, foe), Config.GOAL_ASSIST_ODDS.x, Config.GOAL_ASSIST_ODDS.y)
+		if odds <= 0.0:
+			continue
+		var in_time := ramp(d / vm / maxf(0.5, float(info.left)), Config.GOAL_ASSIST_IN_TIME.x, Config.GOAL_ASSIST_IN_TIME.y, 1.0, 0.0)
+		if in_time <= 0.0:
+			continue
+		var s := w * combine4(need, odds, in_time, crowd_factor("rescue", c.id, p))
+		if s > 0.0:
+			out.append({"goal": "rescue", "gid": c.id, "x": c.x, "y": c.y, "score": s})
 
 ## Own settlements a party belongs to (not camps): the settlements of its faction.
 func own_settlements(fac: String) -> Array:
@@ -692,7 +792,10 @@ func choose(p: Dictionary, cands: Array, rng: RandomNumberGenerator) -> Dictiona
 ## Where to flee from `from`: the own settlement that is clearly safer than here, with the least enemies around it and
 ## on the way, and not towards the enemy; else the safest threat-map cell nearby if it is safer than here; else straight
 ## away from the enemy. Returns {x, y, sid}.
-func flee_target(p: Dictionary, from: Vector2, havens: Array) -> Dictionary:
+## Since #313 an own lord or vassal in sight (`friends`, from scan) is a haven too, when together they stand up to the
+## enemy (`foe`): its place and the way there are weighed in their joint strength, since it answers the call and comes to
+## meet the fleeing party. Such a haven returns {x, y, sid: null, pid}.
+func flee_target(p: Dictionary, from: Vector2, havens: Array, friends: Array = [], foe := 0.0) -> Dictionary:
 	var me := own_strength(p)
 	var here := Vector2(p.x, p.y)
 	var here_risk := risk_at(p, here.x, here.y, me)
@@ -714,7 +817,11 @@ func flee_target(p: Dictionary, from: Vector2, havens: Array) -> Dictionary:
 		if cost < best_cost:
 			best_cost = cost
 			best = {"x": at.x, "y": at.y, "sid": h.get("id")}
+	var friend := _friend_haven(p, from, here_risk, friends, foe)
+	if not friend.is_empty() and float(friend.cost) < best_cost:
+		best = friend
 	if not best.is_empty():
+		best.erase("cost")
 		return best
 	var m := _map()
 	if m != null:
