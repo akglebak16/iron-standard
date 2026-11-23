@@ -25,6 +25,7 @@ static func build(battle: State, trace: DecisionTrace, assessment: Dictionary, a
 				"center": group.center, "direction": group.direction, "waypoint": group.waypoint,
 				"kited": group.kited, "focus_kind": group.focus_kind, "last": recorded.last[side][kind],
 				"task_point": Commander.task_point(battle, side, kind),
+				"role": Commander.role_of(battle, side) if kind == Config.GROUP_CAVALRY else "",
 				"morale_state": group.morale_state, "morale_pressure": group.morale_pressure, "fleeing_share": group.morale_fleeing_share}
 			if assessed.size() > side:
 				entry.assessment = assessed[side].groups[kind].duplicate(true)

@@ -1,5 +1,5 @@
 extends RefCounted
-## Army commander, stage 1g parts 1–2 (DESIGN.md 4.2, decisions 49–57 and 66–71, #266, #267): the "commander" AI profile next to the
+## Army commander, stage 1g parts 1, 2 and 4 (DESIGN.md 4.2, decisions 49–57, 66–71 and 72–77, #266, #267, #269): the "commander" AI profile next to the
 ## frozen "reference" brain (rules/tactics.gd). The brain contract of profiles.gd: enemy_step(battle, command, elapsed,
 ## dt) for a field battle; siege_step is the reference siege brain until stage 1d.
 ##
@@ -19,12 +19,24 @@ extends RefCounted
 ##   at AI_CMD_UNDER_FIRE_SPEED_SHARE of its own mean speed within their reach (or while the side loses men to
 ##   missiles), and charges the nearest squad at AI_INFANTRY_CHARGE_DISTANCE, with no timer; the archers follow and
 ##   stand at AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, at most AI_CMD_ARCHER_LINE_GAP
-##   behind their own line; the cavalry flanks as the reference brain does (part 4, #269, changes that);
+##   behind their own line; the cavalry hunts the enemy shooters or rides round the weak edge of his line (part 4);
 ## - defence (part 2): the line holds where it stands (its deployment line at the start), the archers behind it, the
-##   cavalry in reserve on its deployment flank; the cavalry counter-charges once the enemy is bound by the line or rides
+##   cavalry in reserve behind its deployment flank; the cavalry counter-charges once the enemy is bound by the line or rides
 ##   within its charge distance;
 ## - waiting (part 2): the own shooters are stronger; the line walks up only until its archers, behind it, reach the
 ##   nearest enemy squad, and stands; the cavalry in reserve.
+## Cavalry roles (part 4, DESIGN.md 4.2.4), chosen on every decision and kept in Mind.role:
+## - flank: round the weak edge of the enemy line (no enemy cavalry near it, room to the field edge, a short ride),
+##   keeping AI_CMD_FLANK_CLEARANCE in front of the line while it crosses, then out and past the edge; the way is
+##   worked out again on every decision, so it follows the enemy; the charge comes at the end of the way or once an
+##   enemy fighter is within AI_CAVALRY_CHARGE_DISTANCE;
+## - hunt: the enemy shooters are strong, the side is outshot or losing men to missiles, and the enemy cavalry near
+##   the shooters is weak or bound by the fight: the same way round the weak edge, then in behind the shooters; the
+##   charge comes once the shooters are within AI_CAVALRY_CHARGE_DISTANCE, whatever else is nearer;
+## - counter: an enemy group threatens the own infantry or archers from a flank or the rear (field assessment
+##   sectors) by more than AI_CMD_COUNTER_THREAT of their strength: the cavalry rides at it and charges it in reach;
+## - reserve: in the defence and the waiting plans, AI_CMD_RESERVE_BEHIND behind the edge of the own line on the side it
+##   deployed (part 2 kept it where it deployed); it counter-charges as in part 2 or takes the counter role.
 ## The plan is kept AI_CMD_PLAN_HOLD_SECONDS and gives way only to one scored AI_CMD_SWITCH_MARGIN higher; a side with a
 ## group bound by the fight does not leave the attack. Patience grows while the side holds or waits and the enemy does
 ## not come; it weakens both and raises the attack of a side not weaker than AI_CMD_PATIENCE_RATIO. Leaving the attack
@@ -60,9 +72,7 @@ const REASON_CONTACT_AFTER_CALL_OFF := Tactics.REASON_CONTACT_AFTER_CALL_OFF
 const REASON_ENEMY_CLOSE := Tactics.REASON_ENEMY_CLOSE
 const REASON_NO_INFANTRY := Tactics.REASON_NO_INFANTRY
 const REASON_IN_RANGE := Tactics.REASON_IN_RANGE
-const REASON_FLANK_TIMER := Tactics.REASON_FLANK_TIMER
 const REASON_WAYPOINT_REACHED := Tactics.REASON_WAYPOINT_REACHED
-const REASON_ON_FLANK_WAY := "on_flank_way" # Cavalry rides to its flank waypoint.
 const REASON_OUT_OF_FIRE := "out_of_fire" # The line marches in formation, out of reach of the enemy shooters.
 const REASON_UNDER_FIRE := "under_fire" # The line hurries through the reach of the enemy shooters.
 const REASON_TO_RANGE := "to_range" # Archers walk up to their shooting distance.
@@ -80,6 +90,18 @@ const REASON_HOLD_LINE := "hold_line" # Group: holds its place in the defence.
 const REASON_ARCHERS_REACH := "archers_reach" # Infantry: waits where its archers reach the enemy.
 const REASON_RESERVE := "reserve" # Cavalry: in reserve on the flank.
 const REASON_COUNTER := "counter" # Cavalry: counter-charge, the enemy is bound by the own line.
+# Cavalry roles (part 4): Mind.role, the trace decision of the role and its reasons.
+const ROLE_RESERVE := "reserve"
+const ROLE_FLANK := "flank"
+const ROLE_HUNT := "hunt"
+const ROLE_COUNTER := "counter"
+const DECISION_HUNT := "hunt" # Cavalry rides at the enemy shooters.
+const DECISION_COUNTER := "counter" # Cavalry rides at an enemy group threatening the own flank or rear.
+const REASON_WEAK_EDGE := "weak_edge" # Flank: round the edge of the enemy line where his cavalry is not.
+const REASON_SHOOTERS_BARE := "shooters_bare" # Hunt: the enemy shooters are strong and their cover is weak.
+const REASON_FLANK_THREAT := "flank_threat" # Counter: an enemy group threatens a flank or the rear of the own line.
+const REASON_SHOOTERS_CLOSE := "shooters_close" # Charge: the hunted shooters are within reach.
+const REASON_TARGET_CLOSE := "target_close" # Charge: the group the cavalry rides at is within reach.
 
 ## A group's task from the latest decision, executed every tick.
 class Task:
@@ -91,6 +113,7 @@ class Task:
 	var charge_within := INF # Charges once the enemy is closer than this...
 	var fighters := false # ...measured to the nearest fighter (true) or to the nearest squad (the reference measure).
 	var arrival := -1.0 # Also charges within this of its point (the cavalry at its flank waypoint).
+	var target: Group = null # Also charges once this enemy squad (its sampled men) is within charge_within.
 
 	func clear() -> void:
 		active = false
@@ -101,6 +124,7 @@ class Task:
 		charge_within = INF
 		fighters = false
 		arrival = -1.0
+		target = null
 
 ## The commander's state for one command, kept in State.commanders.
 class Mind:
@@ -123,9 +147,13 @@ class Mind:
 	var engaged := false # A group of the side is bound by the fight (field assessment).
 	var homes := PackedVector2Array() # Group centres at the first decision: where the army deployed.
 	var anchors := PackedVector2Array() # Where the groups stand in the defence and waiting plans.
+	var role := "" # The cavalry role of the latest decision (ROLE_*); "" without cavalry or while it charges.
+	var edge := 0 # The edge of the enemy line the cavalry rides round: +1 or -1 along Front.lateral, 0 not chosen yet.
+	var way := Vector2.INF # The latest way point given to the cavalry (before the terrain doctrine moves it).
 	var _decided_at := -1.0
 	var _foe_center := Vector2.INF
 	var _foe_serial := -1
+	var _foe_seen_at := -1.0 # The decision time the latest assessment was first seen at.
 	var _reserve_sizes := PackedInt32Array([-1, -1])
 	var _reserve_strength := PackedFloat64Array([0.0, 0.0])
 
@@ -151,6 +179,35 @@ class Mind:
 			_reserve_sizes[side] = waiting.size()
 			_reserve_strength[side] = total
 		return _reserve_strength[side]
+
+## The enemy line the cavalry rides round (part 4), from the squad picture: his infantry squad (else his largest squad on
+## foot), its centre, the way from it towards the own side and the lateral extent of its sampled men across that way.
+class Front:
+	var center := Vector2.INF # INF: no enemy line.
+	var forward := Vector2.RIGHT # From the enemy line towards the own side.
+	var lateral := Vector2.DOWN
+	var low := 0.0 # Lateral coordinates of the line's edges: edge(-1) and edge(+1).
+	var high := 0.0
+
+	func valid() -> bool:
+		return center.is_finite()
+
+	func edge(side: int) -> float:
+		return high if side > 0 else low
+
+	## Along the way towards the own side (positive: in front of the line).
+	func ahead(point: Vector2) -> float:
+		return (point - center).dot(forward)
+
+	func across(point: Vector2) -> float:
+		return (point - center).dot(lateral)
+
+	func at(ahead_of: float, across_of: float) -> Vector2:
+		return center + forward * ahead_of + lateral * across_of
+
+	## The lane of riders going round edge `side`: AI_CMD_FLANK_OUTWARD out of it.
+	func lane(side: int) -> float:
+		return edge(side) + side * Config.AI_CMD_FLANK_OUTWARD
 
 static func mind_of(battle: State, command: int) -> Mind:
 	var mind: Mind = battle.commanders[command]
@@ -243,9 +300,9 @@ static func execute(battle: State, command: int, dt: float) -> void:
 			task.active = false
 
 ## What the side sees between two decisions: whether a group of it is bound by the fight, whether the enemy comes (his
-## centre closing in faster than AI_CMD_ADVANCING_SPEED between the latest two assessments, which are
-## MORALE_TICK_SECONDS apart), and the patience: the time it held or waited since the previous decision, the enemy not
-## coming and nothing bound by the fight.
+## centre closing in faster than AI_CMD_ADVANCING_SPEED between the latest two assessments, timed by the decision clock:
+## the commander reads the result of the morale check, not its numbers, ADR-026), and the patience: the time it held or
+## waited since the previous decision, the enemy not coming and nothing bound by the fight.
 static func _observe(battle: State, side: int, mind: Mind, elapsed: float) -> void:
 	var since := elapsed - mind._decided_at if mind._decided_at >= 0.0 else 0.0
 	mind._decided_at = elapsed
@@ -258,11 +315,12 @@ static func _observe(battle: State, side: int, mind: Mind, elapsed: float) -> vo
 		if battle.assessment_serial != mind._foe_serial:
 			var center: Vector2 = sides[1 - side].center
 			var own: Vector2 = sides[side].center
-			if mind._foe_serial >= 0 and mind._foe_center.is_finite() and center.is_finite() and own.is_finite() and own != center:
-				var seconds := (battle.assessment_serial - mind._foe_serial) * Config.MORALE_TICK_SECONDS
+			var seconds := elapsed - mind._foe_seen_at
+			if mind._foe_serial >= 0 and seconds > 0.0 and mind._foe_center.is_finite() and center.is_finite() and own.is_finite() and own != center:
 				mind.advancing = (center - mind._foe_center).dot((own - center).normalized()) / seconds > Config.AI_CMD_ADVANCING_SPEED
 			mind._foe_center = center
 			mind._foe_serial = battle.assessment_serial
+			mind._foe_seen_at = elapsed
 	if (mind.plan == PLAN_DEFENCE or mind.plan == PLAN_WAITING) and not mind.advancing and not mind.engaged:
 		mind.waited += since
 
@@ -385,32 +443,224 @@ static func _attack(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 			trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE, REASON_UNDER_FIRE if fire else REASON_OUT_OF_FIRE,
 				{"speed": task.speed, "focus_kind": infantry.focus_kind})
 	_archers_to_range(battle, command, mind, foe, foe_groups, objective)
-	# Cavalry: the reference flank (part 4, #269, chooses the weak edge, hunts shooters and keeps a reserve).
-	task = mind.tasks[Config.GROUP_CAVALRY]
+	_cavalry_attack(battle, command, mind, foe_groups, elapsed)
+
+## Cavalry in the attack (part 4): a counter-strike on a group threatening the own flank or rear, else the hunt for the
+## enemy shooters, else the way round the weak edge of the enemy line; a hunt already close to its shooters goes on.
+static func _cavalry_attack(battle: State, command: int, mind: Mind, foe_groups: Array, elapsed: float) -> void:
+	var side := State.side_of(command)
+	var trace := _trace(battle, command)
+	var cavalry: Group = battle.groups[command][Config.GROUP_CAVALRY]
+	var task: Task = mind.tasks[Config.GROUP_CAVALRY]
 	task.clear()
+	mind.role = ""
 	if cavalry.order == Config.ORDER_CHARGE or not cavalry.has_active_units():
 		return
-	if cavalry.tactic_state == Config.AI_TACTIC_WAIT:
-		if elapsed <= Config.AI_CAVALRY_FLANK_DELAY_SECONDS:
-			if trace != null:
-				trace.record(side, Config.GROUP_CAVALRY, DECISION_WAIT, REASON_DEPLOYING)
-			return
-		var own := battle.centroid(side)
-		if own == Vector2.INF:
-			return
-		cavalry.tactic_state = Config.AI_TACTIC_FLANK
-		var flank_side := 1.0 if cavalry.center.y >= battle.arena_size.y * 0.5 else -1.0
-		cavalry.waypoint = Vector2(lerpf(own.x, foe.x, Config.AI_CAVALRY_FLANK_PROGRESS), clampf(foe.y + flank_side * Config.AI_CAVALRY_FLANK_OFFSET, Config.AI_CAVALRY_FLANK_EDGE, battle.arena_size.y - Config.AI_CAVALRY_FLANK_EDGE))
+	if elapsed <= Config.AI_CAVALRY_FLANK_DELAY_SECONDS:
 		if trace != null:
-			trace.record(side, Config.GROUP_CAVALRY, DECISION_FLANK, REASON_FLANK_TIMER, {"waypoint": cavalry.waypoint, "flank_side": flank_side})
-	elif trace != null:
-		trace.record(side, Config.GROUP_CAVALRY, DECISION_FLANK, REASON_ON_FLANK_WAY, {"waypoint": cavalry.waypoint})
+			trace.record(side, Config.GROUP_CAVALRY, DECISION_WAIT, REASON_DEPLOYING)
+		return
+	var riders := own_riders(battle, side, cavalry)
+	var shooters := hunted_shooters(battle, side, mind, foe_groups, riders)
+	var threat := counter_target(battle, side, foe_groups)
+	if threat != null and not (shooters != null and squad_gap(cavalry.center, shooters) < 2.0 * Config.AI_CAVALRY_CHARGE_DISTANCE):
+		_counter(battle, command, mind, threat)
+		return
+	var front := front_of(battle, side, foe_groups)
+	if not front.valid():
+		_counter(battle, command, mind, _nearest_squad(foe_groups, cavalry.center))
+		return
+	choose_edge(battle, mind, front, cavalry.center, foe_groups, riders)
+	var past := front.ahead(cavalry.center) <= -0.5 * Config.AI_CMD_FLANK_BEHIND # Behind the enemy front already.
+	var outside := mind.edge * front.across(cavalry.center) >= mind.edge * front.edge(mind.edge) + 0.5 * Config.AI_CMD_FLANK_OUTWARD
+	var point := front.at(-Config.AI_CMD_FLANK_BEHIND, front.lane(mind.edge))
+	if not (past or outside):
+		point = front.at(maxf(front.ahead(cavalry.center), Config.AI_CMD_FLANK_CLEARANCE), front.lane(mind.edge)) # Cross out of reach.
 	task.active = true
 	task.on_waypoint = true
 	task.speed = Config.AI_CAVALRY_FLANK_SPEED
 	task.charge_within = Config.AI_CAVALRY_CHARGE_DISTANCE
-	task.fighters = true
-	task.arrival = Config.AI_CAVALRY_WAYPOINT_ARRIVAL
+	if shooters != null:
+		mind.role = ROLE_HUNT
+		task.target = shooters
+		if past:
+			var away := shooters.scan_center - front.center
+			away = away.normalized() if away.length_squared() > 1.0 else -front.forward
+			point = shooters.scan_center + away * Config.AI_CMD_HUNT_BEHIND
+			task.arrival = Config.AI_CAVALRY_WAYPOINT_ARRIVAL
+	else:
+		mind.role = ROLE_FLANK
+		task.fighters = true
+		if past or outside:
+			task.arrival = Config.AI_CAVALRY_WAYPOINT_ARRIVAL
+	_send_cavalry(battle, mind, cavalry, point)
+	if trace != null:
+		trace.record(side, Config.GROUP_CAVALRY, DECISION_HUNT if shooters != null else DECISION_FLANK,
+			REASON_SHOOTERS_BARE if shooters != null else REASON_WEAK_EDGE, {"edge": mind.edge, "waypoint": cavalry.waypoint})
+
+## The cavalry rides at `target` and charges it within AI_CAVALRY_CHARGE_DISTANCE (a counter-strike); nothing to do
+## without a target.
+static func _counter(battle: State, command: int, mind: Mind, target: Group) -> void:
+	var cavalry: Group = battle.groups[command][Config.GROUP_CAVALRY]
+	var task: Task = mind.tasks[Config.GROUP_CAVALRY]
+	task.clear()
+	mind.role = ""
+	if target == null:
+		return
+	mind.role = ROLE_COUNTER
+	task.active = true
+	task.on_waypoint = true
+	task.speed = Config.AI_CAVALRY_FLANK_SPEED
+	task.charge_within = Config.AI_CAVALRY_CHARGE_DISTANCE
+	task.target = target
+	_send_cavalry(battle, mind, cavalry, nearest_squad_point([target], cavalry.center))
+	var trace := _trace(battle, command)
+	if trace != null:
+		trace.record(State.side_of(command), Config.GROUP_CAVALRY, DECISION_COUNTER, REASON_FLANK_THREAT, {"target_kind": target.kind, "waypoint": cavalry.waypoint})
+
+## Sets the cavalry way point, kept within AI_CAVALRY_FLANK_EDGE of the field edge. A point within
+## AI_CAVALRY_WAYPOINT_ARRIVAL of the latest one leaves the waypoint as it is, so the terrain doctrine (stage Р3, decision
+## 45) does not have to move it to open ground again on every decision.
+static func _send_cavalry(battle: State, mind: Mind, cavalry: Group, point: Vector2) -> void:
+	var margin := Vector2.ONE * Config.AI_CAVALRY_FLANK_EDGE
+	point = point.clamp(margin, battle.arena_size - margin)
+	cavalry.tactic_state = Config.AI_TACTIC_FLANK
+	if not mind.way.is_finite() or mind.way.distance_to(point) >= Config.AI_CAVALRY_WAYPOINT_ARRIVAL:
+		mind.way = point
+		cavalry.waypoint = point
+
+## The enemy line (Front) from the squad picture; not valid without an enemy squad on foot.
+static func front_of(battle: State, side: int, foe_groups: Array) -> Front:
+	var front := Front.new()
+	var line: Group = null
+	for foe: Group in foe_groups:
+		if not Tactics._is_squad(foe) or foe.kind == Config.GROUP_CAVALRY:
+			continue
+		var infantry := foe.kind == Config.GROUP_INFANTRY
+		var line_infantry := line != null and line.kind == Config.GROUP_INFANTRY
+		if line == null or (infantry and not line_infantry) or (infantry == line_infantry and foe.scan_count > line.scan_count):
+			line = foe
+	if line == null:
+		return front
+	var own := battle.centroid(side)
+	if not own.is_finite() or own.distance_squared_to(line.scan_center) < 1.0:
+		return front
+	front.center = line.scan_center
+	front.forward = (own - line.scan_center).normalized()
+	front.lateral = Vector2(-front.forward.y, front.forward.x)
+	front.low = INF
+	front.high = -INF
+	for point in line.scan_points:
+		var across := front.across(point)
+		front.low = minf(front.low, across)
+		front.high = maxf(front.high, across)
+	return front
+
+## Picks the edge of the enemy line to ride round from `from`, keeping the chosen one unless the other is scored
+## AI_CMD_FLANK_EDGE_MARGIN higher (DESIGN.md 4.2.4).
+static func choose_edge(battle: State, mind: Mind, front: Front, from: Vector2, foe_groups: Array, riders: float) -> void:
+	var low := edge_score(battle, front, -1, from, foe_groups, riders)
+	var high := edge_score(battle, front, 1, from, foe_groups, riders)
+	var best := 1 if high > low else -1
+	var kept := high if mind.edge == 1 else low
+	if mind.edge == 0 or maxf(low, high) > kept + Config.AI_CMD_FLANK_EDGE_MARGIN:
+		mind.edge = best
+
+## Score of riding round edge `edge` (+1 or -1) of the enemy line from `from`: minus the enemy riders within
+## AI_CMD_FLANK_CAVALRY_RADIUS of the edge over the own `riders`, minus 1 with the field edge closer than
+## AI_CMD_FLANK_FIELD_EDGE, minus AI_CMD_FLANK_PATH_WEIGHT per AI_CMD_FLANK_PATH_UNIT of the ride.
+static func edge_score(battle: State, front: Front, edge: int, from: Vector2, foe_groups: Array, riders: float) -> float:
+	var corner := front.at(0.0, front.edge(edge))
+	var score := 0.0
+	for foe: Group in foe_groups:
+		if foe.kind == Config.GROUP_CAVALRY and Tactics._is_squad(foe):
+			var near := 1.0 - foe.scan_center.distance_to(corner) / Config.AI_CMD_FLANK_CAVALRY_RADIUS
+			if near > 0.0:
+				score -= near * foe.scan_count / maxf(riders, 1.0)
+	var room := minf(minf(corner.x, battle.arena_size.x - corner.x), minf(corner.y, battle.arena_size.y - corner.y))
+	if room < Config.AI_CMD_FLANK_FIELD_EDGE:
+		score -= 1.0
+	var end := front.at(-Config.AI_CMD_FLANK_BEHIND, front.lane(edge))
+	var cross := front.at(maxf(front.ahead(from), Config.AI_CMD_FLANK_CLEARANCE), front.lane(edge))
+	var ride := from.distance_to(cross) + cross.distance_to(end)
+	return score - Config.AI_CMD_FLANK_PATH_WEIGHT * ride / Config.AI_CMD_FLANK_PATH_UNIT
+
+## The enemy shooters worth a hunt (DESIGN.md 4.2.4), or null: their strength is at least AI_CMD_HUNT_RANGED_SHARE of
+## the enemy's, the side is outshot or losing men to missiles, and the enemy riders near them and not bound by the
+## fight are fewer than AI_CMD_HUNT_ESCORT_SHARE of the own `riders`.
+static func hunted_shooters(battle: State, side: int, mind: Mind, foe_groups: Array, riders: float) -> Group:
+	var sides: Array = battle.assessment.get("sides", [])
+	if sides.size() < 2 or foe_groups.size() <= Config.GROUP_ARCHERS:
+		return null
+	var shooters: Group = foe_groups[Config.GROUP_ARCHERS]
+	var enemy: Dictionary = sides[1 - side]
+	if not Tactics._is_squad(shooters) or enemy.strength <= 0.0 or _shooters(enemy) < Config.AI_CMD_HUNT_RANGED_SHARE * enemy.strength:
+		return null
+	if mind.outshot <= 0.0 and battle.missile_losses[side] < Config.AI_MISSILE_PRESSURE_LOSSES:
+		return null
+	var escort := 0.0
+	for foe: Group in foe_groups:
+		if foe.kind != Config.GROUP_CAVALRY or not Tactics._is_squad(foe) or foe.scan_center.distance_to(shooters.scan_center) >= Config.AI_CMD_HUNT_ESCORT_RADIUS:
+			continue
+		if enemy.groups[Config.GROUP_CAVALRY].engaged:
+			continue
+		escort += foe.scan_count
+	return shooters if escort < Config.AI_CMD_HUNT_ESCORT_SHARE * riders else null
+
+## The enemy squad that threatens the own infantry or archers most from a flank or the rear (field assessment: its
+## strength against theirs, fading to nothing at AI_FIELD_THREAT_RADIUS, the sectors of 4.1), when that threat is more
+## than AI_CMD_COUNTER_THREAT of their strength; null otherwise or without an assessment.
+static func counter_target(battle: State, side: int, foe_groups: Array) -> Group:
+	var sides: Array = battle.assessment.get("sides", [])
+	if sides.size() < 2:
+		return null
+	var best := Config.AI_CMD_COUNTER_THREAT
+	var target: Group = null
+	for own_kind in [Config.GROUP_INFANTRY, Config.GROUP_ARCHERS]:
+		var own: Dictionary = sides[side].groups[own_kind]
+		if own.count == 0 or own.strength <= 0.0:
+			continue
+		for foe_kind in mini(Config.GROUP_KINDS, foe_groups.size()):
+			var foe: Dictionary = sides[1 - side].groups[foe_kind]
+			if foe.count == 0 or not Tactics._is_squad(foe_groups[foe_kind]):
+				continue
+			var offset: Vector2 = foe.center - own.center
+			var distance := offset.length()
+			if distance >= Config.AI_FIELD_THREAT_RADIUS or distance <= 0.0:
+				continue
+			if absf(wrapf(offset.angle() - float(own.frame), -PI, PI)) <= Config.AI_FIELD_FRONT_ARC:
+				continue
+			var share: float = foe.matchup[own_kind] * (1.0 - distance / Config.AI_FIELD_THREAT_RADIUS) / own.strength
+			if share > best:
+				best = share
+				target = foe_groups[foe_kind]
+	return target
+
+## Ready riders of the own cavalry: the latest assessment, all its men without one.
+static func own_riders(battle: State, side: int, cavalry: Group) -> float:
+	var sides: Array = battle.assessment.get("sides", [])
+	if sides.size() >= 2:
+		return float(sides[side].groups[Config.GROUP_CAVALRY].count)
+	return float(cavalry.units.size())
+
+## From `point` to the nearest sampled man of the squad; INF when it is no squad.
+static func squad_gap(point: Vector2, squad: Group) -> float:
+	if not Tactics._is_squad(squad):
+		return INF
+	var best := INF
+	for at in squad.scan_points:
+		best = minf(best, point.distance_squared_to(at))
+	return sqrt(best)
+
+static func _nearest_squad(foe_groups: Array, point: Vector2) -> Group:
+	var best: Group = null
+	var best_gap := INF
+	for foe: Group in foe_groups:
+		var gap := squad_gap(point, foe)
+		if gap < best_gap:
+			best_gap = gap
+			best = foe
+	return best
 
 ## Archers (attack and waiting): up to AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, not far
 ## behind their line: at most AI_CMD_ARCHER_LINE_GAP and, while the line has not charged, at least ARCHER_REAR_OFFSET
@@ -574,18 +824,43 @@ static func _reserve(battle: State, command: int, mind: Mind, foe: Vector2, foe_
 	if cavalry.order == Config.ORDER_CHARGE or not cavalry.has_active_units():
 		return
 	var sides: Array = battle.assessment.get("sides", [])
+	mind.role = ""
 	if sides.size() >= 2 and (sides[side].groups[Config.GROUP_INFANTRY].engaged or sides[side].groups[Config.GROUP_ARCHERS].engaged):
 		_charge(battle, command, cavalry, REASON_COUNTER)
 		return
+	var threat := counter_target(battle, side, foe_groups)
+	if threat != null:
+		_counter(battle, command, mind, threat)
+		return
+	cavalry.tactic_state = Config.AI_TACTIC_WAIT
+	mind.role = ROLE_RESERVE
 	var near := nearest_squad_point(foe_groups, cavalry.center)
 	task.active = true
-	task.point = mind.anchors[Config.GROUP_CAVALRY]
+	task.point = reserve_point(battle, command, mind, foe)
 	task.face = near if near.is_finite() else foe
 	task.speed = Config.AI_CAVALRY_FLANK_SPEED
 	task.charge_within = Config.AI_CAVALRY_CHARGE_DISTANCE
 	task.fighters = true
 	if trace != null:
 		trace.record(side, Config.GROUP_CAVALRY, DECISION_STAND, REASON_RESERVE)
+
+## Where the reserve stands (DESIGN.md 4.2.4): AI_CMD_RESERVE_BEHIND behind the edge of the own line on the side the
+## cavalry deployed, facing the enemy; its deployment place without an infantry line.
+static func reserve_point(battle: State, command: int, mind: Mind, foe: Vector2) -> Vector2:
+	var side := State.side_of(command)
+	var home := mind.anchors[Config.GROUP_CAVALRY]
+	var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
+	var line := mind.anchors[Config.GROUP_INFANTRY]
+	if not infantry.has_active_units() or not line.is_finite() or not foe.is_finite() or foe.distance_squared_to(line) < 1.0:
+		return home
+	var forward := (foe - line).normalized()
+	var lateral := Vector2(-forward.y, forward.x)
+	var flank := signf((home - line).dot(lateral))
+	var half := 0.0
+	var sides: Array = battle.assessment.get("sides", [])
+	if sides.size() >= 2:
+		half = 0.5 * float(sides[side].groups[Config.GROUP_INFANTRY].front_width)
+	return line + lateral * flank * half - forward * Config.AI_CMD_RESERVE_BEHIND
 
 ## Within reach of an enemy squad's shooters (its sampled fighters, the group's longest range), or losing men to missiles.
 static func under_fire(battle: State, side: int, at: Vector2, foe_groups: Array) -> bool:
@@ -635,6 +910,12 @@ static func _charge_reason(battle: State, command: int, group: Group, task: Task
 		return ""
 	var side := State.side_of(command)
 	var distance: float
+	if task.target != null:
+		var gap := squad_gap(group.center, task.target)
+		if gap < task.charge_within:
+			return REASON_SHOOTERS_CLOSE if task.target.kind == Config.GROUP_ARCHERS and role_of(battle, command) == ROLE_HUNT else REASON_TARGET_CLOSE
+		if not task.fighters:
+			return ""
 	if task.fighters:
 		distance = Tactics._nearest_foe_distance(battle, group.center, 1 - side)
 	else:
@@ -663,6 +944,11 @@ static func task_point(battle: State, command: int, kind: int) -> Vector2:
 		return Vector2.INF
 	var task: Task = mind.tasks[kind]
 	return battle.groups[command][kind].waypoint if task.on_waypoint else task.point
+
+## The cavalry role the commander of `command` gave at its latest decision (ROLE_*), "" without one (the overlay).
+static func role_of(battle: State, command: int) -> String:
+	var mind: Mind = battle.commanders[command] if command < battle.commanders.size() else null
+	return mind.role if mind != null else ""
 
 ## The debug trace is kept per side; the allies (#243) are not traced, as with the reference brain.
 static func _trace(battle: State, command: int) -> DecisionTrace:

@@ -13,18 +13,23 @@ const PLANS := {"": "—", "deploy": "развёртывание", "advance": "�
 const MORALE_STATES := ["стойкие", "колеблются", "бегут"] # Config.MORALE_GROUP_STEADY, _WAVERING, _ROUTED.
 const ORDERS := {"hold": "держать", "follow": "за героем", "charge": "в атаку", "back": "отход"}
 const DECISIONS := {"wait": "ждёт", "advance": "идёт вперёд", "stand": "стоит", "charge": "в атаку", "flank": "обход фланга",
-	"call_off": "отмена погони", "sortie": "вылазка", "stand_down": "отмена атаки"}
+	"call_off": "отмена погони", "sortie": "вылазка", "stand_down": "отмена атаки", "hunt": "охота на стрелков",
+	"counter": "встречный удар"}
 const REASONS := {"deploying": "строится", "squad_in_reach": "отряд врага рядом", "fighter_in_reach": "враг рядом",
 	"contact_after_call_off": "вплотную после отмены погони", "force_timer": "по таймеру", "on_focus": "на выбранный отряд",
 	"on_enemy": "на центр врага", "enemy_close": "враг близко", "no_infantry": "нет своей пехоты",
 	"out_of_range": "враг вне выстрела", "in_range": "враг на выстреле", "flank_timer": "время обхода",
 	"waypoint_reached": "вышли на точку", "hopeless_chase": "безнадёжная погоня", "sortie_timer": "время вылазки",
-	"attackers_inside": "враг за стеной", "on_flank_way": "идёт на точку обхода", "out_of_fire": "строем, вне выстрела",
+	"attackers_inside": "враг за стеной", "out_of_fire": "строем, вне выстрела",
 	"under_fire": "быстро, под стрелами", "to_range": "на дальность выстрела", "with_line": "за своей линией",
 	"outshot": "нас перестреливают", "stronger": "мы сильнее", "patience": "терпение кончилось",
 	"not_stronger": "мы не сильнее", "enemy_coming": "враг идёт сам", "outshooting": "наши стрелки сильнее",
 	"engaged": "бой не бросаем", "plan_kept": "план ещё в силе", "plan_changed": "план сменился", "hold_line": "держит место",
-	"archers_reach": "стоит, где свои стрелки достают", "reserve": "в резерве", "counter": "встречный удар"}
+	"archers_reach": "стоит, где свои стрелки достают", "reserve": "в резерве", "counter": "встречный удар",
+	"weak_edge": "по слабому краю врага", "shooters_bare": "стрелки врага без прикрытия",
+	"flank_threat": "враг грозит флангу или тылу", "shooters_close": "стрелки врага рядом", "target_close": "цель рядом"}
+## Cavalry roles of the commander (stage 1g part 4, Commander.ROLE_*).
+const ROLES := {"reserve": "резерв", "flank": "обход", "hunt": "охота на стрелков", "counter": "встречный удар"}
 const MODE_COLORS := {"": Color(0.6, 0.6, 0.6, 0.8), "slot": Color(0.75, 0.82, 0.9, 0.8), "melee": Color(0.95, 0.2, 0.15, 0.9),
 	"shoot": Color(1.0, 0.85, 0.15, 0.9), "shootslot": Color(1.0, 0.55, 0.1, 0.9), "skirm": Color(0.7, 0.35, 0.95, 0.9),
 	"rank": Color(0.3, 0.5, 0.95, 0.85), "brace": Color(0.2, 0.85, 0.75, 0.9), "fallback": Color(0.55, 0.85, 0.3, 0.9)}
@@ -125,6 +130,7 @@ static func group_line(group: Dictionary, now: float) -> String:
 	var order: String = ORDERS.get("back" if group.backing else group.order, group.order)
 	var line := "%s: %s" % [GROUP_NAMES[group.kind], order]
 	if group.kited: line += " (бросил погоню)"
+	if not str(group.get("role", "")).is_empty(): line += ", роль: " + ROLES.get(group.role, group.role)
 	var assessment: Dictionary = group.get("assessment", {})
 	if not assessment.is_empty():
 		if assessment.count == 0 and assessment.fleeing == 0: return line + " · нет бойцов"

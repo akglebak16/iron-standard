@@ -1,9 +1,10 @@
 extends SceneTree
-## Army commander, stage 1g parts 1–2 (DESIGN.md 4.2, #266, #267): the "commander" profile, decisions on its own tick of
-## the schedule and execution every tick, the attack plan (march speed by the enemy shooters' reach, no charge timer,
-## archers behind their line), the defence and waiting plans, the plan switch with hysteresis and patience, the call-off
-## of a charge when the plan changes, the same code for both sides, the field assessment kept by the morale check, the
-## plan scores in the trace, and a battle that the trace does not change.
+## Army commander, stage 1g parts 1, 2 and 4 (DESIGN.md 4.2, #266, #267, #269): the "commander" profile, decisions on its
+## own tick of the schedule and execution every tick, the attack plan (march speed by the enemy shooters' reach, no charge
+## timer, archers behind their line), the defence and waiting plans, the plan switch with hysteresis and patience, the
+## call-off of a charge when the plan changes, the cavalry roles (the way round the weak edge, the hunt for shooters, the
+## counter-strike), the same code for both sides, the field assessment kept by the morale check, the plan scores and the
+## cavalry role in the trace, and a battle that the trace does not change.
 const Commander = preload("res://core/battle/simulation/ai/commander.gd")
 const Profiles = preload("res://core/battle/simulation/ai/profiles.gd")
 const Tactics = preload("res://core/battle/rules/tactics.gd")
@@ -42,6 +43,9 @@ func _initialize() -> void:
 	_test_hysteresis()
 	_test_stand_down()
 	_test_patience()
+	_test_weak_edge()
+	_test_hunt()
+	_test_counter_strike()
 	var catalog := Catalog.new()
 	assert(Loader.populate(catalog))
 	_test_session(catalog)
@@ -233,13 +237,18 @@ func _test_both_sides() -> void:
 		assert(a.plan == b.plan and a.reason == b.reason and is_equal_approx(a.ratio, b.ratio))
 		var expected := Commander.PLAN_ATTACK if case[1] > 0 else (Commander.PLAN_DEFENCE if case[2] == 4 else Commander.PLAN_WAITING)
 		assert(a.plan == expected, "Plan %s for %s" % [a.plan, str(case)])
+		assert(a.role == b.role)
 		for kind in Config.GROUP_KINDS:
 			var one: Commander.Task = a.tasks[kind]
 			var other: Commander.Task = b.tasks[kind]
 			assert(one.active == other.active and is_equal_approx(one.speed, other.speed) and one.charge_within == other.charge_within)
-			assert(one.point.is_finite() == other.point.is_finite())
+			assert(one.point.is_finite() == other.point.is_finite() and one.on_waypoint == other.on_waypoint)
 			if one.point.is_finite():
 				assert(absf(one.point.x - (right.arena_size.x - other.point.x)) < 1e-3 and absf(one.point.y - other.point.y) < 1e-3, "Mirrored task of group %d" % kind)
+			if one.on_waypoint:
+				var way: Vector2 = right.groups[Config.COMMAND_ENEMY][kind].waypoint
+				var mirrored: Vector2 = left.groups[Config.COMMAND_PLAYER][kind].waypoint
+				assert(absf(way.x - (right.arena_size.x - mirrored.x)) < 1e-2 and absf(way.y - mirrored.y) < 1e-2, "Mirrored way %s and %s" % [way, mirrored])
 	for kind in Config.GROUP_KINDS:
 		assert(Commander.task_point(State.new(), Config.COMMAND_ENEMY, kind) == Vector2.INF, "No commander, no march point")
 
@@ -305,8 +314,9 @@ func _test_plan_scores() -> void:
 	mind = _decide(battle, Config.COMMAND_ENEMY)
 	assert(mind.scores[Commander.PLAN_ATTACK] == 1.0 and mind.scores[Commander.PLAN_WAITING] == 1.0 and mind.plan == Commander.PLAN_ATTACK)
 
-## The defence: the line, the archers and the cavalry hold where the army deployed; the line has no charge of its own
-## (it fights by the "hold" rule), the cavalry charges a rider within AI_CAVALRY_CHARGE_DISTANCE; nothing marches.
+## The defence: the line and the archers hold where the army deployed, the cavalry stands in reserve AI_CMD_RESERVE_BEHIND
+## behind the edge of the line on its own flank; the line has no charge of its own (it fights by the "hold" rule), the
+## cavalry charges a rider within AI_CAVALRY_CHARGE_DISTANCE.
 func _test_defence() -> void:
 	var battle := _field(Config.COMMAND_ENEMY)
 	battle.ai_trace = DecisionTrace.new()
@@ -315,8 +325,15 @@ func _test_defence() -> void:
 	assert(mind.plan == Commander.PLAN_DEFENCE)
 	var homes := []
 	for kind in Config.GROUP_KINDS:
-		homes.append(battle.groups[1][kind].center)
-		assert(mind.homes[kind] == homes[kind] and mind.tasks[kind].active and mind.tasks[kind].point == homes[kind], "Group %d holds" % kind)
+		assert(mind.homes[kind] == battle.groups[1][kind].center and mind.tasks[kind].active)
+		homes.append(mind.tasks[kind].point)
+		if kind != Config.GROUP_CAVALRY:
+			assert(homes[kind] == battle.groups[1][kind].center, "Group %d holds" % kind)
+	# The reserve: the line stands at x 1700 (men y 800..900) facing -x, the riders deployed below it (y 1220).
+	var reserve: Vector2 = homes[Config.GROUP_CAVALRY]
+	var edge := 850.0 + 0.5 * float(battle.assessment.sides[1].groups[Config.GROUP_INFANTRY].front_width)
+	assert(reserve.distance_to(Vector2(1700.0 + Config.AI_CMD_RESERVE_BEHIND, edge)) < 2.0, "Reserve at %s" % reserve) # The enemy centre is a little off the axis.
+	assert(Commander.role_of(battle, Config.COMMAND_ENEMY) == Commander.ROLE_RESERVE)
 	assert(mind.tasks[Config.GROUP_INFANTRY].charge_within == INF, "The line does not charge by itself")
 	assert(mind.tasks[Config.GROUP_CAVALRY].charge_within == Config.AI_CAVALRY_CHARGE_DISTANCE and mind.tasks[Config.GROUP_CAVALRY].fighters)
 	for i in 600:
@@ -329,7 +346,7 @@ func _test_defence() -> void:
 	assert(battle.ai_trace.last(1, Config.GROUP_CAVALRY).reason == Commander.REASON_RESERVE)
 	assert(battle.ai_trace.plans[1] == Commander.PLAN_DEFENCE)
 	# An enemy rider comes within the charge distance of the reserve: it charges.
-	_shift(battle, Config.COMMAND_PLAYER, Config.GROUP_CAVALRY, Vector2(1850 - 300 - Config.AI_CAVALRY_CHARGE_DISTANCE + 30.0, 380.0))
+	_shift(battle, Config.COMMAND_PLAYER, Config.GROUP_CAVALRY, reserve + Vector2(-Config.AI_CAVALRY_CHARGE_DISTANCE + 30.0, 0.0) - Vector2(300.0, 850.0))
 	Commander.execute(battle, Config.COMMAND_ENEMY, DT)
 	assert(battle.groups[1][Config.GROUP_CAVALRY].order == Config.ORDER_CHARGE)
 	assert(battle.groups[1][Config.GROUP_INFANTRY].order == Config.ORDER_HOLD)
@@ -403,7 +420,7 @@ func _test_hysteresis() -> void:
 	assert(mind.plan == Commander.PLAN_DEFENCE, "Not bound any more: the defence")
 
 ## Leaving the attack: a charging group not bound by the fight re-forms where its men stand (order "hold", centre at its
-## men, facing the enemy), with the trace record; the flanking cavalry gives up its way and goes back to its flank.
+## men, facing the enemy), with the trace record; the flanking cavalry gives up its way and goes back to the reserve behind its flank.
 func _test_stand_down() -> void:
 	var battle := _eager(_field(Config.COMMAND_ENEMY, 1000.0), Config.COMMAND_ENEMY)
 	battle.ai_trace = DecisionTrace.new()
@@ -411,7 +428,6 @@ func _test_stand_down() -> void:
 	assert(mind.plan == Commander.PLAN_ATTACK)
 	var infantry: Group = battle.groups[1][Config.GROUP_INFANTRY]
 	var cavalry: Group = battle.groups[1][Config.GROUP_CAVALRY]
-	var home: Vector2 = mind.homes[Config.GROUP_CAVALRY]
 	assert(cavalry.tactic_state == Config.AI_TACTIC_FLANK)
 	infantry.order = Config.ORDER_CHARGE
 	infantry.center = Vector2(700, 900) # A charge moves the centre away from the men (at x 1000).
@@ -427,7 +443,9 @@ func _test_stand_down() -> void:
 	assert(battle.ai_trace.snapshot().recent.any(func(entry: Dictionary): return entry.group == Config.GROUP_INFANTRY and entry.decision == Commander.DECISION_STAND_DOWN and entry.reason == Commander.REASON_PLAN_CHANGED))
 	assert(last.reason == Commander.REASON_HOLD_LINE)
 	assert(mind.tasks[Config.GROUP_INFANTRY].point.distance_to(infantry.center) < 1e-3, "The line holds where it re-formed")
-	assert(cavalry.tactic_state == Config.AI_TACTIC_WAIT and mind.tasks[Config.GROUP_CAVALRY].point == home, "The cavalry goes back to its flank")
+	var reserve := Commander.reserve_point(battle, Config.COMMAND_ENEMY, mind, battle.centroid(0))
+	assert(cavalry.tactic_state == Config.AI_TACTIC_WAIT and mind.tasks[Config.GROUP_CAVALRY].point == reserve, "The cavalry goes back to the reserve")
+	assert(reserve.y > infantry.center.y, "On its own flank")
 	# A charging group bound by the fight keeps charging: the plan does not change while the side is engaged.
 	battle = _eager(_field(Config.COMMAND_ENEMY, 1000.0), Config.COMMAND_ENEMY)
 	_decide(battle, Config.COMMAND_ENEMY, 10.0)
@@ -482,6 +500,119 @@ func _test_patience() -> void:
 			assert(mind.advancing and mind.waited == waited and mind.reason == Commander.REASON_ENEMY_COMING, "Second %d" % second)
 	assert(not mind.advancing and mind.waited > waited, "The enemy stopped: patience runs again")
 
+## Spreads the enemy infantry of `command`'s foe across y 600..1100 (a wide line: its edges are 500 apart) and puts his
+## riders from `riders` down (field coordinates of the right side, mirrored for the left); then the morale check.
+func _wide_line(battle: State, command: int, riders: Vector2) -> void:
+	var mirror := State.side_of(command) == 0
+	var foe := 1 - command
+	var infantry: Group = battle.groups[foe][Config.GROUP_INFANTRY]
+	for i in infantry.units.size():
+		infantry.units[i].position = _at(battle, 500, 600 + i * 100, mirror)
+	var cavalry: Group = battle.groups[foe][Config.GROUP_CAVALRY]
+	for i in cavalry.units.size():
+		cavalry.units[i].position = _at(battle, riders.x, riders.y + i * 20, mirror)
+	cavalry.center = _at(battle, riders.x, riders.y + 20, mirror)
+	Morale.tick(battle)
+
+## Part 4: in the attack the cavalry rides round the edge of the enemy line away from his riders, crossing
+## AI_CMD_FLANK_CLEARANCE or more in front of the line, then on the lane AI_CMD_FLANK_OUTWARD out of the edge to
+## AI_CMD_FLANK_BEHIND past his front, charging at its end; when the enemy riders move to that edge, the way follows.
+func _test_weak_edge() -> void:
+	for command in [Config.COMMAND_ENEMY, Config.COMMAND_PLAYER]:
+		var mirror := State.side_of(command) == 0
+		var battle := _eager(_field(command), command)
+		battle.ai_trace = DecisionTrace.new()
+		_wide_line(battle, command, Vector2(450, 1230)) # Off the high edge (y 1100).
+		var mind := _decide(battle, command)
+		var cavalry: Group = battle.groups[command][Config.GROUP_CAVALRY]
+		var task: Commander.Task = mind.tasks[Config.GROUP_CAVALRY]
+		assert(mind.plan == Commander.PLAN_ATTACK and mind.role == Commander.ROLE_FLANK and task.active and task.on_waypoint)
+		var way := _at(battle, cavalry.waypoint.x, cavalry.waypoint.y, mirror) # Back to right-side coordinates.
+		assert(way.y < 600.0 - 0.5 * Config.AI_CMD_FLANK_OUTWARD and way.x >= 500.0 + Config.AI_CMD_FLANK_CLEARANCE, "Crosses to the low edge in front of the line: %s" % way)
+		assert(task.arrival < 0.0 and task.fighters, "No charge on the crossing point, but at an enemy in reach")
+		var last := battle.ai_trace.last(State.side_of(command), Config.GROUP_CAVALRY)
+		assert(last.decision == Commander.DECISION_FLANK and last.reason == Commander.REASON_WEAK_EDGE)
+		# Out of the edge: on along the lane to past the enemy front, charging at its end.
+		cavalry.center = cavalry.waypoint
+		mind = _decide(battle, command, 10.5)
+		way = _at(battle, cavalry.waypoint.x, cavalry.waypoint.y, mirror)
+		assert(way.x < 500.0 and way.y < 600.0 - 0.5 * Config.AI_CMD_FLANK_OUTWARD, "Past the low edge: %s" % way)
+		assert(task.arrival == Config.AI_CAVALRY_WAYPOINT_ARRIVAL)
+		# The enemy riders go to the low edge: the way turns to the high one.
+		cavalry.center = _at(battle, 1850, 1220, mirror)
+		_wide_line(battle, command, Vector2(450, 380))
+		mind = _decide(battle, command, 11.0)
+		way = _at(battle, cavalry.waypoint.x, cavalry.waypoint.y, mirror)
+		assert(way.y > 1100.0 + 0.5 * Config.AI_CMD_FLANK_OUTWARD, "The way follows the enemy: %s" % way)
+
+## Part 4: the hunt. Strong enemy shooters, the side outshot, no enemy riders near the shooters: the cavalry rides round
+## the weak edge and in behind the shooters, and charges once they are within AI_CAVALRY_CHARGE_DISTANCE, though the
+## enemy infantry is nearer; riders close to the shooters cover them, and the cavalry rides round the edge instead.
+func _test_hunt() -> void:
+	for command in [Config.COMMAND_ENEMY, Config.COMMAND_PLAYER]:
+		var side := State.side_of(command)
+		var mirror := side == 0
+		var battle := _field(command, 1700.0, 1, 4) # One own archer against four: outshot, the attack.
+		battle.ai_trace = DecisionTrace.new()
+		Morale.tick(battle)
+		var mind := _decide(battle, command)
+		assert(mind.plan == Commander.PLAN_ATTACK and mind.outshot > 0.0)
+		assert(mind.role == Commander.ROLE_FLANK, "The enemy riders stand by his shooters: no hunt")
+		_shift(battle, 1 - command, Config.GROUP_CAVALRY, Vector2(0, 700))
+		Morale.tick(battle)
+		mind = _decide(battle, command, 10.5)
+		var task: Commander.Task = mind.tasks[Config.GROUP_CAVALRY]
+		var shooters: Group = battle.groups[1 - command][Config.GROUP_ARCHERS]
+		assert(mind.role == Commander.ROLE_HUNT and task.target == shooters and not task.fighters, "Hunt")
+		assert(battle.ai_trace.last(side, Config.GROUP_CAVALRY).reason == Commander.REASON_SHOOTERS_BARE)
+		# Behind the enemy front: in behind the shooters, away from their infantry.
+		var cavalry: Group = battle.groups[command][Config.GROUP_CAVALRY]
+		cavalry.center = _at(battle, 150, 500, mirror)
+		mind = _decide(battle, command, 11.0)
+		var foot: Group = battle.groups[1 - command][Config.GROUP_INFANTRY]
+		var away := (shooters.scan_center - foot.scan_center).normalized()
+		assert(cavalry.waypoint.distance_to(shooters.scan_center + away * Config.AI_CMD_HUNT_BEHIND) < 1.0, "Behind the shooters: %s" % cavalry.waypoint)
+		assert(task.arrival == Config.AI_CAVALRY_WAYPOINT_ARRIVAL)
+		# The enemy infantry is in reach, the shooters are not: no charge yet.
+		cavalry.center = _at(battle, 680, 1000, mirror) # 309 from the lowest shooter, 206 from the lowest foot.
+		Commander.execute(battle, command, DT)
+		assert(cavalry.order == Config.ORDER_HOLD, "Infantry in reach does not start the hunt's charge")
+		cavalry.center = _at(battle, 450, 1050, mirror) # 187 from the lowest shooter.
+		Commander.execute(battle, command, DT)
+		assert(cavalry.order == Config.ORDER_CHARGE and battle.ai_trace.last(side, Config.GROUP_CAVALRY).reason == Commander.REASON_SHOOTERS_CLOSE)
+
+## Part 4: the counter-strike. Enemy riders on the flank of the own line threaten it by more than AI_CMD_COUNTER_THREAT of
+## its strength: the reserve (defence) or the cavalry in the attack rides at them and charges them in reach.
+func _test_counter_strike() -> void:
+	for eager in [false, true]:
+		for command in [Config.COMMAND_ENEMY, Config.COMMAND_PLAYER]:
+			var side := State.side_of(command)
+			var mirror := side == 0
+			var battle := _field(command)
+			if eager:
+				_eager(battle, command)
+			battle.ai_trace = DecisionTrace.new()
+			Morale.tick(battle)
+			var mind := _decide(battle, command)
+			assert(mind.plan == (Commander.PLAN_ATTACK if eager else Commander.PLAN_DEFENCE))
+			assert(mind.role == (Commander.ROLE_FLANK if eager else Commander.ROLE_RESERVE))
+			# Enemy riders 230 off the side of the own line, 400 from the own riders.
+			var foe_riders: Group = battle.groups[1 - command][Config.GROUP_CAVALRY]
+			_shift(battle, 1 - command, Config.GROUP_CAVALRY, _at(battle, 1600, 1060, mirror) - foe_riders.units[0].position)
+			Morale.tick(battle)
+			mind = _decide(battle, command, 10.5)
+			var task: Commander.Task = mind.tasks[Config.GROUP_CAVALRY]
+			assert(mind.role == Commander.ROLE_COUNTER and task.target == foe_riders, "Counter-strike (attack %s)" % eager)
+			var last := battle.ai_trace.last(side, Config.GROUP_CAVALRY)
+			assert(last.decision == Commander.DECISION_COUNTER and last.reason == Commander.REASON_FLANK_THREAT)
+			var cavalry: Group = battle.groups[command][Config.GROUP_CAVALRY]
+			for step in 180:
+				Commander.execute(battle, command, DT)
+				if cavalry.order == Config.ORDER_CHARGE:
+					break
+			assert(cavalry.order == Config.ORDER_CHARGE and battle.ai_trace.last(side, Config.GROUP_CAVALRY).reason == Commander.REASON_TARGET_CLOSE)
+			assert(battle.groups[command][Config.GROUP_INFANTRY].order == Config.ORDER_HOLD)
+
 ## A real battle with the commander on both sides: the trace does not change it, a seed repeats it, and the commander
 ## attacks within a minute (no charge timer: the first charge comes from the distance or from patience).
 func _test_session(catalog: Catalog) -> void:
@@ -507,6 +638,7 @@ func _test_session(catalog: Catalog) -> void:
 				var debug: Dictionary = session.ai_debug_snapshot()
 				assert(debug.sides[1].plan in Commander.PLANS and not debug.sides[1].plan_details.is_empty())
 				assert(debug.sides[1].profile == Config.AI_PROFILE_COMMANDER)
+				assert(debug.sides[1].groups[Config.GROUP_CAVALRY].has("role") and debug.sides[1].groups[Config.GROUP_INFANTRY].role == "")
 		assert(charged_at > 0, "The commander's infantry charges within 60 s")
 		runs.append(var_to_str(session.snapshot()))
 	assert(runs[0] == runs[1], "The trace does not change the battle")

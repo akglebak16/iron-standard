@@ -29,7 +29,7 @@ const Combat = preload("res://core/battle/rules/combat.gd")
 const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessment.gd")
 const Templates = preload("res://core/battle/data/terrain_templates.gd")
 
-const VERSION := 7 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table. 7: shooters on high ground (Р3). 8: hold scenarios and the time under fire before the first melee contact (1g).
+const VERSION := 9 # 2: volley metrics. 3: stage 1v doctrine metrics. 4: stage 1b morale metrics. 5: contact time, stuck (TERRAIN Р0). 6: terrain rules (Р1а): undrawn templates, wins by side in the table. 7: shooters on high ground (Р3). 8: hold scenarios and the time under fire before the first melee contact (1g; the number stayed 7 by mistake). 9: the first blow of the cavalry, on whom and when, and its first blow on shooters (1g part 4).
 const SCENARIOS := ["mixed", "infantry_cavalry", "archers", "siege", "kite", "spears", "equal", "hold", "hold_archers"]
 # Side 0 follows player orders: it stands where it deployed, the hero has left; side 1 plays the second profile.
 const PLAYER_HOLDS := ["kite", "hold", "hold_archers"]
@@ -219,6 +219,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	var input := HeroInput.new()
 	var volleys := volley_tracker()
 	var morale := morale_tracker(state, initial)
+	var riders := cavalry_tracker()
 	var contact_at := -1.0
 	var progress := {}
 	var stuck := {}
@@ -240,6 +241,8 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 				track_morale(morale, state, event, tick)
 			if contact_at < 0.0 and event.kind in [Event.Kind.HIT, Event.Kind.BLOCK] and event.attack in CONTACT_ATTACKS:
 				contact_at = tick * TICK_SECONDS
+			if event.kind in [Event.Kind.HIT, Event.Kind.BLOCK] and event.attack in CONTACT_ATTACKS:
+				track_cavalry(riders, morale, state, event, tick)
 		advance_volleys(volleys, tick)
 		if tick % SAMPLE_TICKS == 0 and decided_at < 0.0:
 			_sample_idle(state, engaged, idle_samples, unit_samples, doctrine_samples)
@@ -291,6 +294,7 @@ static func run_battle(scenario: String, size: int, seed: int, options: Dictiona
 	if options.phase_profile: result.ai_phase = Benchmark.stats(ai_samples) if not ai_samples.is_empty() else {}
 	result.volleys = volley_report(volleys)
 	result.morale = morale_report(morale)
+	result.cavalry = riders.duplicate(true)
 	if kite:
 		result.kite = {"chase_share": float(chased_long.size()) / maxi(1, initial[1]),
 			"reached_archers_seconds": reached_archers}
@@ -387,6 +391,26 @@ static func volley_report(tracker: Dictionary) -> Dictionary:
 		"shots_per_target": float(tracker.volley_shots) / tracker.volley_targets if tracker.volley_targets > 0 else 0.0,
 		"first_volley_shots": float(first_shots) / first_sides if first_sides > 0 else 0.0,
 		"first_volley_targets": float(first_targets) / first_sides if first_sides > 0 else 0.0}
+
+## Cavalry metrics (DESIGN.md 4.2.4, stage 1g part 4), read from HIT and BLOCK events of melee blows: per side, the
+## time and the target class (FieldAssessment.unit_class) of the first blow of a rider (mounted, no ranged attack) and
+## the time of his side's first blow on a shooter on foot; -1 when it never came. A first blow on cavalry is the
+## cavalry meeting the enemy cavalry instead of reaching the line or the shooters.
+static func cavalry_tracker() -> Dictionary:
+	return {"first_seconds": [-1.0, -1.0], "first_class": [-1, -1], "shooters_seconds": [-1.0, -1.0]}
+
+static func track_cavalry(tracker: Dictionary, morale: Dictionary, state, event: Dictionary, tick: int) -> void:
+	var source = _morale_unit(morale, state, int(event.get("source_id", -1)))
+	if source == null or source.hero or source.companion or not source.mounted or source.attack_range > 0.0: return
+	var target = _morale_unit(morale, state, int(event.target_id))
+	if target == null: return
+	var side: int = source.side
+	var seconds := tick * TICK_SECONDS
+	if float(tracker.first_seconds[side]) < 0.0:
+		tracker.first_seconds[side] = seconds
+		tracker.first_class[side] = FieldAssessment.unit_class(target.mounted, target.attack_range > 0.0, target.anti_cavalry)
+	if float(tracker.shooters_seconds[side]) < 0.0 and not target.mounted and target.attack_range > 0.0:
+		tracker.shooters_seconds[side] = seconds
 
 ## Morale metrics (DESIGN.md 4.5, stage 1b), read from WAVERED, FLED and DOWN events and the state only. Who flees
 ## (share of each unit class that ever fled) and when (first flight, the flight that makes 10% of the side, mean time),
@@ -611,7 +635,20 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 	var morale_times := {"first_flight_seconds": [[0.0, 0], [0.0, 0]], "tenth_flight_seconds": [[0.0, 0], [0.0, 0]], "mean_flight_seconds": [[0.0, 0], [0.0, 0]]}
 	var morale_class := [[[0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0]], [[0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0], [0.0, 0]]]
 	var morale_runs := 0
+	# Cavalry (stage 1g part 4): battles where the side's riders struck at all, struck cavalry first, reached shooters.
+	var cavalry := {"struck": [0, 0], "on_cavalry_first": [0, 0], "first_seconds": [0.0, 0.0], "on_shooters": [0, 0], "shooters_seconds": [0.0, 0.0]}
+	var cavalry_runs := 0
 	for run in runs:
+		if run.has("cavalry"):
+			cavalry_runs += 1
+			for side in 2:
+				if float(run.cavalry.first_seconds[side]) >= 0.0:
+					cavalry.struck[side] += 1
+					cavalry.first_seconds[side] += float(run.cavalry.first_seconds[side])
+					if int(run.cavalry.first_class[side]) in [Config.AI_CLASS_CAVALRY, Config.AI_CLASS_HORSE_ARCHER]: cavalry.on_cavalry_first[side] += 1
+				if float(run.cavalry.shooters_seconds[side]) >= 0.0:
+					cavalry.on_shooters[side] += 1
+					cavalry.shooters_seconds[side] += float(run.cavalry.shooters_seconds[side])
 		if run.has("morale"):
 			morale_runs += 1
 			for side in 2:
@@ -679,6 +716,13 @@ static func summarize(runs: Array[Dictionary]) -> Dictionary:
 			for klass in Config.AI_CLASSES:
 				morale.class_fled[side].append(morale_class[side][klass][0] / morale_class[side][klass][1] if morale_class[side][klass][1] > 0 else -1.0)
 		summary.morale = morale
+	if cavalry_runs > 0:
+		var riders := {"runs": cavalry_runs, "struck": cavalry.struck.duplicate(), "on_cavalry_first": cavalry.on_cavalry_first.duplicate(),
+			"on_shooters": cavalry.on_shooters.duplicate(), "first_seconds": [-1.0, -1.0], "shooters_seconds": [-1.0, -1.0]}
+		for side in 2:
+			if cavalry.struck[side] > 0: riders.first_seconds[side] = cavalry.first_seconds[side] / cavalry.struck[side]
+			if cavalry.on_shooters[side] > 0: riders.shooters_seconds[side] = cavalry.shooters_seconds[side] / cavalry.on_shooters[side]
+		summary.cavalry = riders
 	if volley_runs > 0:
 		summary.volleys = {"runs": volley_runs}
 		for key in volley_keys: summary.volleys[key] = volley_sums[key] / volley_runs
@@ -702,6 +746,9 @@ static func table(report: Dictionary) -> String:
 			lines.append("  field %dx%d %s: first melee contact %.1f s, under fire before it %.1f/%.1f s, stuck %.3f/%.3f, wins by side %d/%d" % [int(s.arena_size[0]), int(s.arena_size[1]), s.get("terrain", "open"), s.contact_seconds, s.get("under_fire_seconds", [0.0, 0.0])[0], s.get("under_fire_seconds", [0.0, 0.0])[1], s.stuck[0], s.stuck[1], s.wins[0], s.wins[1]])
 		if s.has("archers_high") and (s.archers_high[0] >= 0.0 or s.archers_high[1] >= 0.0):
 			lines.append("  shooters on high ground %.3f/%.3f" % [s.archers_high[0], s.archers_high[1]])
+		if s.has("cavalry") and (s.cavalry.struck[0] > 0 or s.cavalry.struck[1] > 0):
+			var c: Dictionary = s.cavalry
+			lines.append("  cavalry: struck %d/%d, cavalry first %d/%d, first blow %.1f/%.1f s, on shooters %d/%d at %.1f/%.1f s" % [c.struck[0], c.struck[1], c.on_cavalry_first[0], c.on_cavalry_first[1], c.first_seconds[0], c.first_seconds[1], c.on_shooters[0], c.on_shooters[1], c.shooters_seconds[0], c.shooters_seconds[1]])
 		if s.has("volleys"):
 			var v: Dictionary = s.volleys
 			lines.append("  volleys: first %.0f shots -> %.1f targets, %.1f targets per volley, %.1f shots per target, doomed %.3f, dead %.3f" % [v.first_volley_shots, v.first_volley_targets, v.targets_per_volley, v.shots_per_target, v.doomed_share, v.dead_share])
