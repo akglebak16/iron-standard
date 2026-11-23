@@ -3,8 +3,9 @@ extends RefCounted
 ## arena and the debug overlay. Computed only on request, in one pass over the packed unit columns plus a
 ## pass over the six group summaries. Reads the state, mutates nothing and draws no RNG.
 ##
-## Input: State columns (side, group, flags, mode, health, weight, range, target distance, position, facing) and the
-## unit fields morale, base_morale, tier, anti_cavalry and wavering. Output: detached dictionaries.
+## Input: State columns (side, group, flags, mode, health, weight, range, target distance, position, facing, morale,
+## base morale, tier, anti_cavalry, wavering). Output: detached dictionaries. The pass over the fighters runs in the
+## native morale kernel when the column backend has one (ADR-026); the GDScript loop is its reference.
 ## Frequency: once per morale check (rules/morale.gd, stage 1b) and per commander decision. Thread safety: call
 ## between ticks.
 ##
@@ -23,6 +24,11 @@ const State = preload("res://core/battle/model/state.gd")
 const Unit = preload("res://core/battle/model/unit.gd")
 const MotionStore = preload("res://core/battle/model/unit_columns.gd")
 const TerrainGrid = preload("res://core/battle/model/terrain_grid.gd")
+
+# Per slot of the native sums (morale_kernel.hpp, MoraleKernel::Sum), then the class strengths and the class counts.
+enum { SUM_COUNT, SUM_FLEEING, SUM_WAVERING, SUM_ENGAGED, SUM_POWER, SUM_MORALE, SUM_BASE_MORALE, SUM_POSITION_X,
+	SUM_POSITION_Y, SUM_LATERAL_MIN, SUM_LATERAL_MAX, SUM_FACING_X, SUM_FACING_Y, SUM_HEIGHT, SUM_FOREST, SUM_BRUSH,
+	SUM_WADING, SUM_CLASSES }
 
 static func unit_class(mounted: bool, ranged: bool, anti_cavalry: bool) -> int:
 	if mounted:
@@ -70,7 +76,34 @@ static func assess(battle: State) -> Dictionary:
 	var I = MotionStore.I
 	var R = MotionStore.R
 	var melee_mode := MotionStore.MODES.find(Config.AI_MODE_MELEE)
-	for row in battle.active_units.size():
+	# ADR-026: the native kernel makes the same pass over the columns and returns the per-slot sums; the loop below is
+	# its reference (test_native_morale.gd compares the dictionaries bit for bit).
+	var sums := PackedFloat64Array()
+	if battle.column_backend != null:
+		sums = battle.column_backend.field_sums(motion, laterals, loose, grid.cover if grid != null else PackedByteArray(), grid.elevation if grid != null else PackedByteArray(), grid.width if grid != null else 0)
+	var fields := SUM_CLASSES + 2 * Config.AI_CLASSES
+	if sums.size() == slots * fields:
+		for slot in slots:
+			var at := slot * fields
+			count[slot] = int(sums[at + SUM_COUNT])
+			fleeing[slot] = int(sums[at + SUM_FLEEING])
+			wavering[slot] = int(sums[at + SUM_WAVERING])
+			engaged[slot] = int(sums[at + SUM_ENGAGED])
+			power[slot] = sums[at + SUM_POWER]
+			morale[slot] = sums[at + SUM_MORALE]
+			base_morale[slot] = sums[at + SUM_BASE_MORALE]
+			position_sum[slot] = Vector2(sums[at + SUM_POSITION_X], sums[at + SUM_POSITION_Y])
+			lateral_min[slot] = sums[at + SUM_LATERAL_MIN]
+			lateral_max[slot] = sums[at + SUM_LATERAL_MAX]
+			facings[slot] = Vector2(sums[at + SUM_FACING_X], sums[at + SUM_FACING_Y])
+			height_sum[slot] = sums[at + SUM_HEIGHT]
+			forest[slot] = int(sums[at + SUM_FOREST])
+			brush[slot] = int(sums[at + SUM_BRUSH])
+			wading[slot] = int(sums[at + SUM_WADING])
+			for klass in Config.AI_CLASSES:
+				class_power[slot * Config.AI_CLASSES + klass] = sums[at + SUM_CLASSES + klass]
+				class_count[slot * Config.AI_CLASSES + klass] = int(sums[at + SUM_CLASSES + Config.AI_CLASSES + klass])
+	for row in (0 if sums.size() == slots * fields else battle.active_units.size()):
 		if flags[I.DEAD * capacity + row] or flags[I.GONE * capacity + row] or flags[I.HERO * capacity + row]:
 			continue
 		var kind: int = flags[I.GROUP_KIND * capacity + row]

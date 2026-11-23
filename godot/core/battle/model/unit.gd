@@ -56,10 +56,32 @@ var max_hp: float:
 		if _motion == null: _detached_max_hp = value
 		else: _motion.real_fields[MotionStore.R.MAX_HP * _motion.capacity + battle_index] = value
 var armor: float
-var morale: float
-var base_morale: float
-var morale_immune: bool = false # Skips the periodic morale and rout check.
-var tier: int
+## ADR-026: the morale of a fighter lives in the columns, where the native morale kernel reads and writes it.
+var _detached_morale: float = 0.0
+var morale: float:
+	get: return _detached_morale if _motion == null else _motion.real_fields[MotionStore.R.MORALE * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_morale = value
+		else: _motion.real_fields[MotionStore.R.MORALE * _motion.capacity + battle_index] = value
+var _detached_base_morale: float = 0.0
+var base_morale: float:
+	get: return _detached_base_morale if _motion == null else _motion.real_fields[MotionStore.R.BASE_MORALE * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_base_morale = value
+		else: _motion.real_fields[MotionStore.R.BASE_MORALE * _motion.capacity + battle_index] = value
+## Skips the periodic morale and rout check.
+var _detached_morale_immune: bool = false
+var morale_immune: bool:
+	get: return _detached_morale_immune if _motion == null else bool(_motion.integer_fields[MotionStore.I.MORALE_IMMUNE * _motion.capacity + battle_index])
+	set(value):
+		if _motion == null: _detached_morale_immune = value
+		else: _motion.integer_fields[MotionStore.I.MORALE_IMMUNE * _motion.capacity + battle_index] = int(value)
+var _detached_tier: int = 0
+var tier: int:
+	get: return _detached_tier if _motion == null else _motion.integer_fields[MotionStore.I.TIER * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_tier = value
+		else: _motion.integer_fields[MotionStore.I.TIER * _motion.capacity + battle_index] = value
 var _detached_weight: float = 1.0
 var weight: float:
 	get: return _detached_weight if _motion == null else _motion.real_fields[MotionStore.R.WEIGHT * _motion.capacity + battle_index]
@@ -165,12 +187,30 @@ var wavering: bool:
 	set(value):
 		if _motion == null: _detached_wavering = value
 		else: _motion.integer_fields[MotionStore.I.WAVERING * _motion.capacity + battle_index] = int(value)
-var waver_noticed: bool = false # The WAVERED notice goes out once per fighter, however often he wavers.
-var rallies: int = 0 # Times he turned back from a flight (MORALE_RALLY_LIMIT).
-var companion_id: String = "" # Stable campaign identity for the result, distinct from a troop type.
+## The WAVERED notice goes out once per fighter, however often he wavers.
+var _detached_waver_noticed: bool = false
+var waver_noticed: bool:
+	get: return _detached_waver_noticed if _motion == null else bool(_motion.integer_fields[MotionStore.I.WAVER_NOTICED * _motion.capacity + battle_index])
+	set(value):
+		if _motion == null: _detached_waver_noticed = value
+		else: _motion.integer_fields[MotionStore.I.WAVER_NOTICED * _motion.capacity + battle_index] = int(value)
+## Times he turned back from a flight (MORALE_RALLY_LIMIT).
+var _detached_rallies: int = 0
+var rallies: int:
+	get: return _detached_rallies if _motion == null else _motion.integer_fields[MotionStore.I.RALLIES * _motion.capacity + battle_index]
+	set(value):
+		if _motion == null: _detached_rallies = value
+		else: _motion.integer_fields[MotionStore.I.RALLIES * _motion.capacity + battle_index] = value
+## Stable campaign identity for the result, distinct from a troop type; the column keeps only whether there is one.
+var _companion_id: String = ""
+var companion_id: String:
+	get: return _companion_id
+	set(value):
+		_companion_id = value
+		if _motion != null: _motion.integer_fields[MotionStore.I.COMPANION * _motion.capacity + battle_index] = int(not value.is_empty())
 var companion: bool:
 	get:
-		return not companion_id.is_empty()
+		return not _companion_id.is_empty()
 var faction: String = ""
 var appearance: Dictionary = {}
 var _detached_collision_radius: float = Config.FOOT_COLLISION_RADIUS
@@ -374,6 +414,13 @@ func bind_motion(store: MotionStore) -> void:
 	store.integer_fields[MotionStore.I.LEASHED * store.capacity + battle_index] = int(_detached_leashed)
 	store.integer_fields[MotionStore.I.ANTI_CAVALRY * store.capacity + battle_index] = int(_detached_anti_cavalry)
 	store.integer_fields[MotionStore.I.WAVERING * store.capacity + battle_index] = int(_detached_wavering)
+	store.real_fields[MotionStore.R.MORALE * store.capacity + battle_index] = _detached_morale
+	store.real_fields[MotionStore.R.BASE_MORALE * store.capacity + battle_index] = _detached_base_morale
+	store.integer_fields[MotionStore.I.MORALE_IMMUNE * store.capacity + battle_index] = int(_detached_morale_immune)
+	store.integer_fields[MotionStore.I.TIER * store.capacity + battle_index] = _detached_tier
+	store.integer_fields[MotionStore.I.WAVER_NOTICED * store.capacity + battle_index] = int(_detached_waver_noticed)
+	store.integer_fields[MotionStore.I.RALLIES * store.capacity + battle_index] = _detached_rallies
+	store.integer_fields[MotionStore.I.COMPANION * store.capacity + battle_index] = int(not _companion_id.is_empty())
 	store.vector_fields[MotionStore.V.SLOT_OFFSET * store.capacity + battle_index] = _detached_slot_offset
 	store.vector_fields[MotionStore.V.PLAN_DESTINATION * store.capacity + battle_index] = _detached_plan_destination
 	store.integer_fields[MotionStore.I.MODE * store.capacity + battle_index] = _detached_mode
@@ -408,6 +455,12 @@ func detach_motion() -> void:
 	_detached_leashed = leashed
 	_detached_anti_cavalry = anti_cavalry
 	_detached_wavering = wavering
+	_detached_morale = morale
+	_detached_base_morale = base_morale
+	_detached_morale_immune = morale_immune
+	_detached_tier = tier
+	_detached_waver_noticed = waver_noticed
+	_detached_rallies = rallies
 	_detached_id = id
 	_detached_side = side
 	_detached_group_kind = group_kind

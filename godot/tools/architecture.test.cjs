@@ -110,4 +110,16 @@ assert.deepEqual(manifestIssues({...owned,ruleOwners:[moraleRule]}),[]);
 for (const broken of [{...moraleRule,adr:'none'},{...moraleRule,phase:'later'},{...moraleRule,symbols:[]},{...moraleRule,owners:{reference:['core/a/morale.gd']}},{...moraleRule,checks:{reference:[]}}])
   assert(manifestIssues({...owned,ruleOwners:[broken]}).length > 0, `Broken rule owner passed: ${JSON.stringify(broken)}`);
 assert(manifestIssues({...owned,ruleOwners:[moraleRule,moraleRule]}).some(e=>e.includes('Duplicate/missing rule owner')));
+// Part 3 (#326): the live contract runs the morale check in its native phase, with the kernel, its parameter packet and
+// the comparison among the owners; the schedule (MORALE_TICK_SECONDS) is no number of the check: it stays in GDScript
+// and other modules may read it (the commander of #267 did, as the time between two assessments).
+{
+  const live = JSON.parse(require('fs').readFileSync(require('path').join(__dirname,'../docs/architecture/modules.json'),'utf8'))
+    .ruleOwners.find(r => r.rule === 'battle-morale-check');
+  assert.equal(live.phase, 'native');
+  for (const file of ['core/battle/api/native/morale_kernel.hpp','core/battle/simulation/native/morale_parameters.hpp','core/battle/api/morale_parameters.gd'])
+    assert(live.owners.native.includes(file), file);
+  assert.deepEqual(live.checks.native, ['tests/integration/test_native_morale.gd']);
+  assert(!live.symbols.includes('MORALE_TICK_SECONDS'));
+}
 console.log('Architecture checker negative tests passed');

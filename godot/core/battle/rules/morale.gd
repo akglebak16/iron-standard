@@ -20,7 +20,31 @@ const FieldAssessment = preload("res://core/battle/simulation/ai/field_assessmen
 # 3 x 3 cells around a point hold everyone within either radius. A rout of a dense block must not query every neighbour.
 const CELL := 150.0
 
+# MoraleKernel::Notice of the native check, in its order.
+const NOTICES := [Event.Kind.WAVERED, Event.Kind.FLED, Event.Kind.RALLIED]
+
+## One morale check. The group losses (and the field assessment under them) come first: they read nothing the rest of
+## the check writes. ADR-026: the rest runs in the native morale kernel when the column backend has one; check_reference()
+## is its GDScript reference, compared bit for bit by test_native_morale.gd.
 static func tick(battle: State) -> void:
+	var group_loss := _group_losses(battle)
+	if battle.column_backend != null:
+		var starting := PackedInt64Array([battle.starting_units[0], battle.starting_units[1]])
+		var result: Array = battle.column_backend.morale_check(battle.motion, group_loss, starting, battle.arena_size.x, battle.groups.size() >= 2, CELL)
+		if not result.is_empty():
+			battle.active_counts = [result[0], result[1]]
+			var units := battle.active_units
+			var notices: PackedInt32Array = result[2]
+			for at in range(0, notices.size(), 2):
+				battle.record_unit_notice(NOTICES[notices[at + 1]], units[notices[at]])
+			var rallied: PackedInt32Array = result[3]
+			for code in rallied:
+				battle.groups[code / Config.GROUP_KINDS][code % Config.GROUP_KINDS].layout()
+			return
+	check_reference(battle, group_loss)
+
+## The check after the group losses, in GDScript: the reference of the native kernel (morale_kernel.hpp).
+static func check_reference(battle: State, group_loss: PackedFloat64Array) -> void:
 	var motion := battle.motion
 	var capacity := motion.capacity
 	var flags := motion.integer_fields
@@ -42,7 +66,6 @@ static func tick(battle: State) -> void:
 		var friends: int = active[side]
 		var enemies: float = maxf(Config.MORALE_OPPONENT_FLOOR, active[1 - side])
 		collapsed[side] = friends <= battle.starting_units[side] * Config.MORALE_FORCE_FLEE_START_SHARE and friends < enemies * Config.MORALE_FORCE_FLEE_ENEMY_SHARE and battle.starting_units[side] > Config.MORALE_FORCE_FLEE_MIN_START
-	var group_loss := _group_losses(battle)
 	# Odds of each side, as before stage 1b: the same for every fighter of the side.
 	var bad := [false, false]
 	var very_bad := [false, false]

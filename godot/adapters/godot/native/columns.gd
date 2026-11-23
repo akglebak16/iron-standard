@@ -1,9 +1,14 @@
 extends "res://core/battle/api/column_backend.gd"
+const MoraleParameters = preload("res://core/battle/api/morale_parameters.gd")
 var _kernel: RefCounted
+var _morale: RefCounted # ADR-026: the native morale check and field assessment pass; null leaves both to GDScript.
 static func create() -> RefCounted:
 	if not ClassDB.class_exists("IronColumnKernel"): return null
 	var port = new()
 	port._kernel = ClassDB.instantiate("IronColumnKernel")
+	if ClassDB.class_exists("IronMoraleKernel"):
+		port._morale = ClassDB.instantiate("IronMoraleKernel")
+		if not port._morale.configure(MoraleParameters.values()): port._morale = null
 	return port
 static func _values(columns: RefCounted) -> Array:
 	return [columns.capacity, columns.positions, columns.velocities, columns.real_fields, columns.integer_fields, columns.vector_fields]
@@ -54,3 +59,24 @@ func projectile_candidates(columns: RefCounted, impacts: PackedVector2Array, are
 
 func terrain_cells(cover: PackedByteArray, elevation: PackedByteArray, width: int, cell: float, points: PackedVector2Array) -> PackedInt32Array:
 	return _kernel.terrain_cells(cover, elevation, width, cell, points)
+
+func field_sums(columns: RefCounted, laterals: PackedVector2Array, loose: PackedByteArray, cover: PackedByteArray, elevation: PackedByteArray, width: int) -> PackedFloat64Array:
+	if _morale == null: return PackedFloat64Array()
+	return _morale.assess(_values(columns), laterals, loose, cover, elevation, width)
+
+func morale_check(columns: RefCounted, losses: PackedFloat64Array, starting: PackedInt64Array, arena_width: float, grouped: bool, cell: float) -> Array:
+	if _morale == null: return []
+	# Synchronous ownership handoff of the two columns the check writes, as in movement.gd (#298): the native adapter is
+	# their only owner and writes them in place. A rejection leaves the packet untouched and they go back unchanged.
+	var packet := _values(columns)
+	columns.real_fields = PackedFloat64Array()
+	columns.integer_fields = PackedInt64Array()
+	var out: Array = _morale.check(packet, losses, starting, arena_width, grouped, cell)
+	if out.size() != 6:
+		columns.real_fields = packet[3]
+		columns.integer_fields = packet[4]
+		assert(false, "native morale check rejected its columns")
+		return []
+	columns.real_fields = out[4]
+	columns.integer_fields = out[5]
+	return out.slice(0, 4)
