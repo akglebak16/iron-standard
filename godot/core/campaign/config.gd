@@ -157,6 +157,10 @@ const GOAL_ASSIST_NEED := Vector2(0.5, 1.2) # enemy / own side strength: help is
 const GOAL_ASSIST_NEED_FLOOR := 0.3   # ... and a side that wins anyway still gets help this much (a sooner end)
 const GOAL_ASSIST_ODDS := Vector2(0.8, 1.4) # (own side + the party) / enemy: hopeless at x (no goal), sure at y
 const GOAL_ASSIST_IN_TIME := Vector2(0.75, 1.25) # hours on the way / hours the fight has left: in time at x, too late at y
+# Calls for help (#313): a lord or vassal chased by a stronger enemy, or fleeing, calls; own lords and vassals answer with the
+# factors of GOAL_ASSIST_* and the weight of "assist". The fleeing party may run to a strong own party in sight.
+const GOAL_FLEE_FRIEND_MIN := 90.0    # an own party closer than this is already at hand (world_skirmish.hour_tick joins at 90)
+const GOAL_FLEE_FRIEND_ODDS := 1.0    # it is a haven when together they are at least this share of the enemy's strength
 # Goal weights by kind of party (data, not code). Missing goals weigh 0. hunt_ratio / flee_ratio are strength
 # thresholds relative to own strength, sight / flee_sight the radii. outlaws_only: only bandits and the dead are feared;
 # map_pressure false: only an enemy in sight makes the party flee (caravans would otherwise run from every band around).

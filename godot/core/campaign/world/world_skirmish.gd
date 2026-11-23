@@ -3,7 +3,7 @@ extends RefCounted
 ## and allies of the enemy joining the player's battle (encHelpers, encMerge, encSplit).
 ## Since #312 (DESIGN.md §5.7) `battles` tells the AI which fights go on, how strong each side is and how long it may
 ## last: parties of the map come to help (party_goals.gd, goal "assist"); which side they join is still decided here,
-## in hour_tick, once they are close.
+## in hour_tick, once they are close. Since #313 the calls for help of parties in danger come from party_ai.gd.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 
@@ -149,14 +149,15 @@ func _end(sk: Dictionary, a: Array, b: Array, winner: int) -> void:
 
 ## Running fights as the AI sees them (DESIGN.md §5.7, #312): [{id, x, y, sides: [[parties], [parties]],
 ## strength: [a, b], left: hours until a side breaks}]. One pass over the parties picks the fighters by their `fight`
-## field; fights with an empty side are left out. Only reads.
-func battles() -> Array:
+## field; fights with an empty side are left out. Only reads. `fighters`: the parties to look at instead of the whole
+## roster, when the caller has already picked those with a `fight` in its own pass (party_ai.gd, the beacons of a step).
+func battles(fighters: Variant = null) -> Array:
 	if fights.is_empty():
 		return []
 	var by_id := {}
 	for sk in fights:
 		by_id[sk.id] = {"sk": sk, "a": [], "b": []}
-	for p in roster.parties:
+	for p in (roster.parties if fighters == null else fighters):
 		var id = p.get("fight")
 		if id == null or not by_id.has(id):
 			continue
