@@ -112,7 +112,7 @@ for (const broken of [{...moraleRule,adr:'none'},{...moraleRule,phase:'later'},{
 assert(manifestIssues({...owned,ruleOwners:[moraleRule,moraleRule]}).some(e=>e.includes('Duplicate/missing rule owner')));
 // Part 3 (#326): the live contract runs the morale check in its native phase, with the kernel, its parameter packet and
 // the comparison among the owners; the schedule (MORALE_TICK_SECONDS) is no number of the check: it stays in GDScript
-// and the commander reads it as the time between two assessments.
+// and other modules may read it (the commander of #267 did, as the time between two assessments).
 {
   const live = JSON.parse(require('fs').readFileSync(require('path').join(__dirname,'../docs/architecture/modules.json'),'utf8'))
     .ruleOwners.find(r => r.rule === 'battle-morale-check');
