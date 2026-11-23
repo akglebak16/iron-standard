@@ -61,6 +61,7 @@ func _check_translations() -> void:
 			if name.begins_with("PLAN_"): assert(Overlay.PLANS.has(code), "No label for plan %s" % code)
 			elif name.begins_with("DECISION_"): assert(Overlay.DECISIONS.has(code), "No label for decision %s" % code)
 			elif name.begins_with("REASON_"): assert(Overlay.REASONS.has(code), "No label for reason %s" % code)
+			elif name.begins_with("ROLE_"): assert(Overlay.ROLES.has(code), "No label for cavalry role %s" % code)
 	for order in [Config.ORDER_HOLD, Config.ORDER_FOLLOW, Config.ORDER_CHARGE, Config.ORDER_RETREAT]:
 		assert(Overlay.ORDERS.has(order))
 	for mode in MotionStore.MODES:
@@ -78,4 +79,8 @@ func _check_translations() -> void:
 	var line := Overlay.group_line({"kind": 0, "order": "charge", "backing": false, "kited": true,
 		"last": {"decision": "call_off", "reason": "hopeless_chase", "elapsed_seconds": 4.0}}, 6.5)
 	assert(line == "Пехота: в атаку (бросил погоню) · отмена погони: безнадёжная погоня (2.5 с назад)", line)
+	# Part 4 (#269): the cavalry role and why.
+	line = Overlay.group_line({"kind": 2, "order": "hold", "backing": false, "kited": false, "role": Commander.ROLE_HUNT,
+		"last": {"decision": Commander.DECISION_HUNT, "reason": Commander.REASON_SHOOTERS_BARE, "elapsed_seconds": 9.0}}, 10.0)
+	assert(line == "Конница: держать, роль: охота на стрелков · охота на стрелков: стрелки врага без прикрытия (1.0 с назад)", line)
 	assert(Overlay.text({}) == "")

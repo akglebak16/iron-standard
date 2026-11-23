@@ -251,6 +251,32 @@ const AI_CMD_PATIENCE_DEFENCE := 0.5 # Defence score x (1 - this x T) while the 
 const AI_CMD_PLAN_HOLD_SECONDS := 4.0 # A plan is kept at least this long...
 const AI_CMD_SWITCH_MARGIN := 0.15 # ...and gives way only to a plan scored this much higher (hysteresis).
 const AI_CMD_ADVANCING_SPEED := 15.0 # The enemy comes: his centre closes in faster than this between two assessments.
+# Cavalry roles of the commander (part 4, #269, DESIGN.md 4.2.4). Only the commander reads them.
+# Way round the weak edge of the enemy line: each edge is scored minus the enemy cavalry strength (over the own) within
+# AI_CMD_FLANK_CAVALRY_RADIUS of it, minus 1 where the field edge is closer than AI_CMD_FLANK_FIELD_EDGE (no room to ride
+# round), minus AI_CMD_FLANK_PATH_WEIGHT per AI_CMD_FLANK_PATH_UNIT of the ride; the chosen edge changes only for one
+# scored AI_CMD_FLANK_EDGE_MARGIN higher. The riders keep AI_CMD_FLANK_CLEARANCE in front of the enemy line while they
+# cross to that edge, ride AI_CMD_FLANK_OUTWARD out of it and AI_CMD_FLANK_BEHIND past its front.
+const AI_CMD_FLANK_CAVALRY_RADIUS := 500.0
+const AI_CMD_FLANK_FIELD_EDGE := 300.0
+const AI_CMD_FLANK_PATH_WEIGHT := 0.5
+const AI_CMD_FLANK_PATH_UNIT := 1000.0
+const AI_CMD_FLANK_EDGE_MARGIN := 0.25
+const AI_CMD_FLANK_CLEARANCE := 400.0
+const AI_CMD_FLANK_OUTWARD := 250.0
+const AI_CMD_FLANK_BEHIND := 100.0
+# Hunting shooters: the enemy shooters make at least AI_CMD_HUNT_RANGED_SHARE of his strength, the side is outshot or
+# losing men to missiles, and the enemy cavalry within AI_CMD_HUNT_ESCORT_RADIUS of his shooters (not bound by the fight)
+# is less than AI_CMD_HUNT_ESCORT_SHARE of the own: the riders go round the weak edge to AI_CMD_HUNT_BEHIND beyond the
+# shooters (away from their infantry) and charge them within AI_CAVALRY_CHARGE_DISTANCE.
+const AI_CMD_HUNT_RANGED_SHARE := 0.25
+const AI_CMD_HUNT_ESCORT_RADIUS := 400.0
+const AI_CMD_HUNT_ESCORT_SHARE := 0.5
+const AI_CMD_HUNT_BEHIND := 150.0
+# Counter-strike: an enemy group threatening the own infantry or archers from a flank or the rear (field assessment
+# sectors) by more than AI_CMD_COUNTER_THREAT of that group's strength is the cavalry's target.
+const AI_CMD_COUNTER_THREAT := 0.3
+const AI_CMD_RESERVE_BEHIND := 250.0 # The reserve stands this far behind the edge of the own line, on its deployment side.
 # Field assessment (DESIGN.md 4.1). Unit classes for the "who beats whom" matrix, read from properties, not troop IDs.
 const AI_CLASS_FOOT := 0
 const AI_CLASS_SPEAR := 1 # Foot with anti_cavalry.
