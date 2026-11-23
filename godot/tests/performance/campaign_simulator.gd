@@ -16,6 +16,10 @@ extends RefCounted
 ## Since #307 (parties act together, DESIGN.md §5.7) it follows every fight of world_skirmish: who could have helped a side
 ## (a free party within HELP_RADIUS that would join it by the rule of world_skirmish.hour_tick: hostile to the other side,
 ## not to this one), whether helping was within its strength, and who joined later; and the fate of every caravan.
+## Since #313 (calls for help, DESIGN.md §5.7) it follows every lord or vassal in danger — chased by a hostile party or
+## fleeing: whether an own lord or vassal was near enough to help, whether one reached it (closer than JOIN_RADIUS), whether
+## it was caught (a fight) and got help there, and whether it was lost. It also tells which side of a fight won, so the
+## share of fights won by the side that was weaker at the start shows whether help turns fights.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -82,6 +86,8 @@ var _tick_usec := {"hour": [], "day": []}  # cost of WorldState.hour_tick: ordin
 var _ops := {"campaigns": 0, "kept": 0, "lords_out": 0, "retreat_weak": 0, "retreat_home": 0, "relief": 0, "march_hours": 0, "march_share": 0.0}
 var _fights := {}       # fight id -> {t0, size, start: {party id: side}, could: {party id: {side, kind, feasible, far}}, joined: {party id: side}}
 var _fight_log: Array = []
+var _danger := {}       # party id -> danger episode {fac, t0, foe, near, met, quiet, fight, side}
+var _danger_log: Array = []
 var _caravans := {}     # caravan id -> {x, y, sid}
 var _caravan_log := {"seen": 0, "arrived": 0, "taken": 0}
 var heat_cols := 0
@@ -201,6 +207,7 @@ func observe_step() -> void:
 				_measure_flee(p)
 	_observe_fight_starts()
 	_observe_fights()
+	_observe_danger()
 	_observe_caravans()
 
 ## New fights of world_skirmish with the parties they started with (contact happens inside the step).
@@ -600,6 +607,8 @@ func _observe_fights() -> void:
 						rec.army = int(rec.get("army", 0)) + 1
 		if sides[0].is_empty() or sides[1].is_empty():
 			continue
+		if not rec.has("s0"):
+			rec.s0 = strength.duplicate()
 		var left := minf(_hours_left(men[0], float(f.a0), strength[1] / maxf(1.0, strength[0])),
 			_hours_left(men[1], float(f.b0), strength[0] / maxf(1.0, strength[1])))
 		for p in world.roster.parties:
@@ -645,11 +654,124 @@ static func _hours_left(men: int, men0: float, odds: float) -> float:
 	var l := clampf(SKIRMISH_LOSS * odds, SKIRMISH_LOSS / 8.0, SKIRMISH_LOSS * 2.5)
 	return log(floor_men / men) / log(1.0 - l)
 
+## A fight is over: its side still standing won. world_skirmish sends the losers fleeing (or removes them), so a side whose
+## parties are all gone, fleeing or in another fight lost; -1 when that does not tell (both or neither).
 func _close_fight(id: int) -> void:
 	var rec: Dictionary = _fights[id]
 	_fights.erase(id)
 	rec.hours = (steps - int(rec.t0)) * 0.2
+	var standing := [0, 0]
+	var members: Dictionary = rec.start.duplicate()
+	members.merge(rec.joined)
+	for pid in members:
+		var p: Dictionary = world.roster.party_by_id(pid)
+		if not p.is_empty() and p.get("state") != "flee" and p.get("fight") == null:
+			standing[int(members[pid])] += 1
+	rec.winner = 0 if standing[0] > 0 and standing[1] == 0 else (1 if standing[1] > 0 and standing[0] == 0 else -1)
 	_fight_log.append(rec)
+	for pid in _danger.keys():
+		var e: Dictionary = _danger[pid]
+		if e.get("fight") == id:
+			e.helped = rec.joined.values().has(int(e.side))
+			e.lost = world.roster.party_by_id(pid).is_empty()
+			_end_danger(pid)
+
+## After every step: lords and vassals in danger (#313). Danger: a hostile party hunts it, or it flees. An episode starts
+## when a free lord or vassal (not hidden, locked, in a fight or in a faction campaign) is in danger. It notes whether a
+## free own lord or vassal stood within HELP_RADIUS and could turn it (both together at least as strong as the hunters, or
+## the threat-map enemies when nobody hunts it), and whether one came closer than JOIN_RADIUS. It ends quiet (an hour
+## without danger), lost (the party is gone) or caught (a fight; its outcome is taken when the fight closes).
+func _observe_danger() -> void:
+	var hunted := {}  # party id -> strength of its hunters
+	var nobles: Array = []
+	for p in world.roster.parties:
+		if p.state == "hunt" and p.get("tid") != null:
+			hunted[p.tid] = float(hunted.get(p.tid, 0.0)) + world.roster.strength_of(p)
+		if Rules.is_noble(p) and not p.hide:
+			nobles.append(p)
+	var by_id := {}
+	for p in nobles:
+		by_id[int(p.id)] = p
+	for pid in _danger.keys():
+		var e: Dictionary = _danger[pid]
+		if e.get("fight") != null:
+			continue
+		var p: Dictionary = by_id.get(pid, {})
+		if p.is_empty():
+			e.lost = world.roster.party_by_id(pid).is_empty()  # else it is inside a settlement: safe
+			_end_danger(pid)
+			continue
+		if p.get("fight") != null:
+			var sk: Dictionary = world.skirmish.fight_of(p)
+			e.fight = int(sk.id) if not sk.is_empty() else null
+			e.side = 0 if not sk.is_empty() and p.id in sk.A else 1
+			if e.fight == null:
+				_end_danger(pid)
+			continue
+		for o in nobles:
+			if o.fac == p.fac and not is_same(o, p) and o.get("fight") == null and Vector2(o.x - p.x, o.y - p.y).length() <= JOIN_RADIUS:
+				e.met = true
+				break
+	for p in nobles:
+		if p.get("fight") != null or p.get("lock", false) or p.get("army", false):
+			continue
+		var danger: bool = hunted.has(p.id) or p.state == "flee"
+		var e: Variant = _danger.get(int(p.id))
+		if e != null:
+			e.quiet = 0 if danger else int(e.quiet) + 1
+			if int(e.quiet) >= 5:
+				_end_danger(int(p.id))
+			continue
+		if not danger:
+			continue
+		var own: float = world.roster.strength_of(p)
+		var foe := float(hunted.get(p.id, 0.0))
+		if foe <= 0.0:
+			foe = world.threat_map().threat(p.x, p.y, world.threat_enemies(p.fac))
+		var near := false
+		for o in nobles:
+			if o.fac != p.fac or is_same(o, p) or o.get("fight") != null or o.get("lock", false) or o.get("army", false):
+				continue
+			if Vector2(o.x - p.x, o.y - p.y).length() <= HELP_RADIUS and own + world.roster.strength_of(o) >= foe:
+				near = true
+				break
+		_danger[int(p.id)] = {"fac": p.fac, "t0": steps, "foe": foe, "own": own, "near": near, "met": false, "quiet": 0,
+			"fight": null, "side": -1, "helped": false, "lost": false, "chased": hunted.has(p.id)}
+
+func _end_danger(pid: int) -> void:
+	var e: Dictionary = _danger[pid]
+	_danger.erase(pid)
+	e.hours = (steps - int(e.t0)) * 0.2
+	_danger_log.append(e)
+
+## Danger episodes folded into the numbers of the summary.
+func _danger_summary() -> Dictionary:
+	for pid in _danger.keys():
+		_end_danger(pid)
+	var out := {"danger": _danger_log.size(), "danger_chased": 0, "danger_near": 0, "danger_near_met": 0, "danger_caught": 0,
+		"danger_caught_helped": 0, "danger_lost": 0, "danger_near_lost": 0, "danger_hours_mean": 0.0}
+	for e in _danger_log:
+		out.danger_hours_mean += float(e.hours)
+		if e.chased:
+			out.danger_chased += 1
+		if e.near:
+			out.danger_near += 1
+			if e.met:
+				out.danger_near_met += 1
+			if e.lost:
+				out.danger_near_lost += 1
+		if e.fight != null:
+			out.danger_caught += 1
+			if e.helped:
+				out.danger_caught_helped += 1
+		if e.lost:
+			out.danger_lost += 1
+	out.danger_hours_mean /= maxf(1.0, _danger_log.size())
+	out.danger_near_met_rate = float(out.danger_near_met) / maxf(1.0, out.danger_near)
+	out.danger_near_lost_rate = float(out.danger_near_lost) / maxf(1.0, out.danger_near)
+	out.danger_caught_helped_rate = float(out.danger_caught_helped) / maxf(1.0, out.danger_caught)
+	out.danger_lost_rate = float(out.danger_lost) / maxf(1.0, _danger_log.size())
+	return out
 
 ## Fight records folded into the numbers of the summary.
 func _help_summary() -> Dictionary:
@@ -703,6 +825,28 @@ func _help_summary() -> Dictionary:
 			out.fights_own_near_far += 1
 	out.fight_hours_mean /= maxf(1.0, _fight_log.size())
 	out.fight_size_mean /= maxf(1.0, _fight_log.size())
+	# who won: the side weaker at the start, and fights where someone joined the weaker side
+	out.fight_size_end_mean = 0.0
+	out.weak_fights = 0
+	out.weak_won = 0
+	out.weak_joined = 0
+	out.weak_joined_won = 0
+	for rec in _fight_log:
+		out.fight_size_end_mean += float(rec.size + rec.joined.size())
+		if not rec.has("s0") or int(rec.get("winner", -1)) < 0 or rec.s0[0] == rec.s0[1]:
+			continue
+		var weak := 0 if rec.s0[0] < rec.s0[1] else 1
+		out.weak_fights += 1
+		var won: bool = int(rec.winner) == weak
+		if won:
+			out.weak_won += 1
+		if rec.joined.values().has(weak):
+			out.weak_joined += 1
+			if won:
+				out.weak_joined_won += 1
+	out.fight_size_end_mean /= maxf(1.0, _fight_log.size())
+	out.weak_won_rate = float(out.weak_won) / maxf(1.0, out.weak_fights)
+	out.weak_joined_rate = float(out.weak_joined) / maxf(1.0, out.weak_fights)
 	out.help_rate_far_own = float(out.helped_far_own) / maxf(1.0, out.far_feasible_own)
 	out.help_rate_timely_own = float(out.helped_timely_own) / maxf(1.0, out.timely_own)
 	out.help_rate_needed_own = float(out.helped_needed_own) / maxf(1.0, out.needed_own)
@@ -929,6 +1073,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 	var jitter := _jitter()
 	var lord_j: Dictionary = jitter.get("lord", {})
 	var help := _help_summary()
+	help.merge(_danger_summary())
 	var summary := {
 		"seed": seed_value, "days": days, "hours": hours, "wall_seconds": wall_usec / 1e6,
 		"wars_declared": declared.size(), "wars_peace": peace.size(), "wars_ended": ended.size(), "war_days_mean": mean_dur,

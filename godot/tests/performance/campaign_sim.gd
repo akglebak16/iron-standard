@@ -168,6 +168,13 @@ func _table(rows: Array, meta: Dictionary) -> String:
 		["из них своя сторона слабее без них", "needed_own"], ["пришли", "helped_needed_own"], ["доля", "help_rate_needed_own"],
 		["враг моего врага: могли", "could_other"], ["помогли", "helped_other"], ["разбойники: могли", "could_bandit"], ["помогли", "helped_bandit"],
 		["нежить: могла", "could_dead"], ["помогла", "helped_dead"],
+		["отрядов в схватке к концу ср.", "fight_size_end_mean"], ["схваток со слабой стороной", "weak_fights"],
+		["слабая сторона победила, доля", "weak_won_rate"], ["к слабой стороне пришли, доля", "weak_joined_rate"],
+		["пришли и победили", "weak_joined_won"],
+		["под угрозой (гонятся или бежит)", "danger"], ["из них гонятся", "danger_chased"], ["длилась, ч ср.", "danger_hours_mean"],
+		["свой рядом (≤400) и по силам", "danger_near"], ["свой дошёл (≤90)", "danger_near_met"], ["доля", "danger_near_met_rate"],
+		["погиб, хотя свой был рядом, доля", "danger_near_lost_rate"], ["догнали (схватка)", "danger_caught"],
+		["в схватке пришла помощь, доля", "danger_caught_helped_rate"], ["погибли", "danger_lost"], ["доля", "danger_lost_rate"],
 		["караванов", "caravans"], ["дошли", "caravans_arrived"], ["взяты", "caravans_taken"], ["доля взятых", "caravans_taken_share"],
 		["секунд", "wall_seconds"]]
 	lines.append("| Показатель | " + " | ".join(rows.map(func(r): return "seed %d" % r.seed)) + " |")
