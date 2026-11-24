@@ -277,6 +277,17 @@ const AI_CMD_HUNT_BEHIND := 150.0
 # sectors) by more than AI_CMD_COUNTER_THREAT of that group's strength is the cavalry's target.
 const AI_CMD_COUNTER_THREAT := 0.3
 const AI_CMD_RESERVE_BEHIND := 250.0 # The reserve stands this far behind the edge of the own line, on its deployment side.
+# Shield wall (part 5, #270, DESIGN.md 4.2.4): an infantry group of the commander with at least AI_CMD_WALL_SHIELD_SHARE
+# shield bearers (troop data "shb", foot without a ranged attack) raises a wall under fire. Its slots stand
+# AI_CMD_WALL_SPACING closer (Group.layout) and a shield bearer in it holds an arrow from the front (BLOCK_ARC)
+# AI_CMD_WALL_ARROW_BLOCK more often (block.gd, still at most SHIELD_ARROW_MAX_BLOCK); it marches as fast as without one.
+# The wall stays in a charge while the line is formed and comes down once the line goes loose or the group has been out
+# of fire AI_CMD_WALL_CLEAR_SECONDS. Only the commander raises it: the player's groups and the reference brain never
+# stand in a wall until question 19 of DESIGN.md is answered.
+const AI_CMD_WALL_SHIELD_SHARE := 0.5
+const AI_CMD_WALL_SPACING := 0.8
+const AI_CMD_WALL_ARROW_BLOCK := 0.15
+const AI_CMD_WALL_CLEAR_SECONDS := 2.0
 # Field assessment (DESIGN.md 4.1). Unit classes for the "who beats whom" matrix, read from properties, not troop IDs.
 const AI_CLASS_FOOT := 0
 const AI_CLASS_SPEAR := 1 # Foot with anti_cavalry.

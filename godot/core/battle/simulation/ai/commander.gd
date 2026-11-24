@@ -1,5 +1,5 @@
 extends RefCounted
-## Army commander, stage 1g parts 1, 2 and 4 (DESIGN.md 4.2, decisions 49–57, 66–71 and 72–77, #266, #267, #269): the "commander" AI profile next to the
+## Army commander, stage 1g parts 1, 2, 4 and 5 (DESIGN.md 4.2, decisions 49–57, 66–71, 72–77 and 82–86, #266, #267, #269, #270): the "commander" AI profile next to the
 ## frozen "reference" brain (rules/tactics.gd). The brain contract of profiles.gd: enemy_step(battle, command, elapsed,
 ## dt) for a field battle; siege_step is the reference siege brain until stage 1d.
 ##
@@ -37,6 +37,10 @@ extends RefCounted
 ##   sectors) by more than AI_CMD_COUNTER_THREAT of their strength: the cavalry rides at it and charges it in reach;
 ## - reserve: in the defence and the waiting plans, AI_CMD_RESERVE_BEHIND behind the edge of the own line on the side it
 ##   deployed (part 2 kept it where it deployed); it counter-charges as in part 2 or takes the counter role.
+## Shield wall (part 5, DESIGN.md 4.2.4), decided with the infantry task in every plan: an infantry group with at least
+## AI_CMD_WALL_SHIELD_SHARE shield bearers raises a wall (Group.wall) under fire: closer slots, and its shields hold arrows
+## better (block.gd); it marches as fast as without one. The wall stays in a charge while the line is formed and comes
+## down once it goes loose or the group has been out of fire AI_CMD_WALL_CLEAR_SECONDS.
 ## The plan is kept AI_CMD_PLAN_HOLD_SECONDS and gives way only to one scored AI_CMD_SWITCH_MARGIN higher; a side with a
 ## group bound by the fight does not leave the attack. Patience grows while the side holds or waits and the enemy does
 ## not come; it weakens both and raises the attack of a side not weaker than AI_CMD_PATIENCE_RATIO. Leaving the attack
@@ -102,6 +106,12 @@ const REASON_SHOOTERS_BARE := "shooters_bare" # Hunt: the enemy shooters are str
 const REASON_FLANK_THREAT := "flank_threat" # Counter: an enemy group threatens a flank or the rear of the own line.
 const REASON_SHOOTERS_CLOSE := "shooters_close" # Charge: the hunted shooters are within reach.
 const REASON_TARGET_CLOSE := "target_close" # Charge: the group the cavalry rides at is within reach.
+# Shield wall (part 5): the trace decisions when the wall goes up or comes down, and their reasons.
+const DECISION_WALL_UP := "wall_up"
+const DECISION_WALL_DOWN := "wall_down"
+const REASON_SHIELD_WALL := "shield_wall" # Infantry: marches or stands in a shield wall under fire.
+const REASON_WALL_OUT_OF_FIRE := "wall_out_of_fire" # Wall down: out of fire long enough.
+const REASON_WALL_CHARGE := "wall_charge" # Wall down: the charging line went loose.
 
 ## A group's task from the latest decision, executed every tick.
 class Task:
@@ -148,6 +158,7 @@ class Mind:
 	var homes := PackedVector2Array() # Group centres at the first decision: where the army deployed.
 	var anchors := PackedVector2Array() # Where the groups stand in the defence and waiting plans.
 	var role := "" # The cavalry role of the latest decision (ROLE_*); "" without cavalry or while it charges.
+	var fire_at := -INF # The decision time the infantry was last under fire (the shield wall, part 5).
 	var edge := 0 # The edge of the enemy line the cavalry rides round: +1 or -1 along Front.lateral, 0 not chosen yet.
 	var way := Vector2.INF # The latest way point given to the cavalry (before the terrain doctrine moves it).
 	var _decided_at := -1.0
@@ -261,9 +272,12 @@ static func decide(battle: State, command: int, elapsed: float) -> void:
 		mind.plan_since = elapsed
 		if plan != PLAN_ATTACK:
 			_hold_ground(battle, command, mind, foe, foe_groups)
+	var infantry: Group = groups[Config.GROUP_INFANTRY]
+	if infantry.has_active_units():
+		shield_wall(battle, command, mind, infantry, under_fire(battle, side, infantry.center, foe_groups), elapsed)
 	match mind.plan:
-		PLAN_DEFENCE: _defend(battle, command, mind, foe, foe_groups)
-		PLAN_WAITING: _wait(battle, command, mind, foe, foe_groups)
+		PLAN_DEFENCE: _defend(battle, command, mind, foe, foe_groups, elapsed)
+		PLAN_WAITING: _wait(battle, command, mind, foe, foe_groups, elapsed)
 		_: _attack(battle, command, mind, foe, foe_groups, elapsed)
 	var trace := _trace(battle, command)
 	if trace != null:
@@ -440,8 +454,9 @@ static func _attack(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 		task.speed = march_speed(infantry, fire, Config.AI_INFANTRY_ADVANCE_SPEED)
 		task.charge_within = Config.AI_KITE_RECHARGE_DISTANCE if infantry.kited else Config.AI_INFANTRY_CHARGE_DISTANCE
 		if trace != null:
-			trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE, REASON_UNDER_FIRE if fire else REASON_OUT_OF_FIRE,
-				{"speed": task.speed, "focus_kind": infantry.focus_kind})
+			var reason := REASON_SHIELD_WALL if infantry.wall and fire else REASON_UNDER_FIRE if fire else REASON_OUT_OF_FIRE
+			trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE, reason,
+				{"speed": task.speed, "focus_kind": infantry.focus_kind, "wall": infantry.wall})
 	_archers_to_range(battle, command, mind, foe, foe_groups, objective)
 	_cavalry_attack(battle, command, mind, foe_groups, elapsed)
 
@@ -748,7 +763,7 @@ static func _stand_down(battle: State, command: int, group: Group, foe: Vector2,
 
 ## The defence plan: the line holds its anchor facing the nearest squad and fights there by the "hold" rule (no charge
 ## of its own), the archers stand behind it and shoot, the cavalry waits in reserve.
-static func _defend(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array) -> void:
+static func _defend(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array, elapsed: float) -> void:
 	var side := State.side_of(command)
 	var trace := _trace(battle, command)
 	var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
@@ -758,12 +773,13 @@ static func _defend(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 	task.clear()
 	if has_infantry and infantry.order != Config.ORDER_CHARGE:
 		var objective := Tactics._objective(infantry, foe_groups, foe)
+		var fire := under_fire(battle, side, infantry.center, foe_groups)
 		task.active = true
 		task.point = mind.anchors[Config.GROUP_INFANTRY]
 		task.face = objective
-		task.speed = march_speed(infantry, under_fire(battle, side, infantry.center, foe_groups), Config.AI_INFANTRY_ADVANCE_SPEED)
+		task.speed = march_speed(infantry, fire, Config.AI_INFANTRY_ADVANCE_SPEED)
 		if trace != null:
-			trace.record(side, Config.GROUP_INFANTRY, DECISION_STAND, REASON_HOLD_LINE)
+			trace.record(side, Config.GROUP_INFANTRY, DECISION_STAND, REASON_SHIELD_WALL if infantry.wall and fire else REASON_HOLD_LINE, {"wall": infantry.wall})
 	task = mind.tasks[Config.GROUP_ARCHERS]
 	task.clear()
 	if archers.order != Config.ORDER_CHARGE and archers.has_active_units():
@@ -783,7 +799,7 @@ static func _defend(battle: State, command: int, mind: Mind, foe: Vector2, foe_g
 ## The waiting plan: the own shooters are stronger. The line walks up (never back) until its archers, standing
 ## ARCHER_REAR_OFFSET behind it, are AI_CMD_ARCHER_RANGE_SHARE of their range from the nearest enemy squad, and holds
 ## there; the archers keep to the attack rule behind it; the cavalry waits in reserve.
-static func _wait(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array) -> void:
+static func _wait(battle: State, command: int, mind: Mind, foe: Vector2, foe_groups: Array, elapsed: float) -> void:
 	var side := State.side_of(command)
 	var trace := _trace(battle, command)
 	var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
@@ -802,13 +818,14 @@ static func _wait(battle: State, command: int, mind: Mind, foe: Vector2, foe_gro
 		if gap > wanted and aim.is_finite():
 			anchor = infantry.center + (aim - infantry.center) / gap * (gap - wanted)
 			mind.anchors[Config.GROUP_INFANTRY] = anchor
+		var fire := under_fire(battle, side, infantry.center, foe_groups)
 		task.active = true
 		task.point = anchor
 		task.face = objective
-		task.speed = march_speed(infantry, under_fire(battle, side, infantry.center, foe_groups), Config.AI_INFANTRY_ADVANCE_SPEED)
+		task.speed = march_speed(infantry, fire, Config.AI_INFANTRY_ADVANCE_SPEED)
 		if trace != null:
 			trace.record(side, Config.GROUP_INFANTRY, DECISION_ADVANCE if infantry.center.distance_to(anchor) > 1.0 else DECISION_STAND,
-				REASON_ARCHERS_REACH, {"distance": gap})
+				REASON_SHIELD_WALL if infantry.wall and fire else REASON_ARCHERS_REACH, {"distance": gap, "wall": infantry.wall})
 	_archers_to_range(battle, command, mind, foe, foe_groups, objective)
 	_reserve(battle, command, mind, foe, foe_groups)
 
@@ -875,9 +892,39 @@ static func under_fire(battle: State, side: int, at: Vector2, foe_groups: Array)
 				return true
 	return false
 
-## Marching speed of a group: `calm` out of fire, AI_CMD_UNDER_FIRE_SPEED_SHARE of its mean speed under fire (never slower).
+## Marching speed of a group: `calm` out of fire, AI_CMD_UNDER_FIRE_SPEED_SHARE of its mean speed under fire (never slower),
+## in a shield wall as well (part 5: a slower wall stood longer under the arrows and lost more men).
 static func march_speed(group: Group, fire: bool, calm: float) -> float:
 	return maxf(calm, Config.AI_CMD_UNDER_FIRE_SPEED_SHARE * group.mean_speed()) if fire else calm
+
+## The shield wall of the infantry group (part 5, DESIGN.md 4.2.4), on every decision of the plan: it goes up under fire
+## when at least AI_CMD_WALL_SHIELD_SHARE of the men who joined the group bear shields, and comes down once the group has
+## been out of fire AI_CMD_WALL_CLEAR_SECONDS; in a charge it stays while the line is formed (the squad doctrine) and
+## comes down once the line goes loose (mingled in a long melee, in a pursuit, in the forest). The slots close up or open
+## again whenever the wall changes.
+static func shield_wall(battle: State, command: int, mind: Mind, infantry: Group, fire: bool, elapsed: float) -> void:
+	if fire:
+		mind.fire_at = elapsed
+	var charging := infantry.order == Config.ORDER_CHARGE
+	var reason := ""
+	if not infantry.wall and fire and not charging and infantry.shield_share() >= Config.AI_CMD_WALL_SHIELD_SHARE:
+		reason = REASON_SHIELD_WALL
+	elif infantry.wall and elapsed - mind.fire_at >= Config.AI_CMD_WALL_CLEAR_SECONDS:
+		reason = REASON_WALL_OUT_OF_FIRE
+	elif infantry.wall and charging and not infantry.formed:
+		reason = REASON_WALL_CHARGE
+	if not reason.is_empty():
+		_set_wall(battle, command, infantry, not infantry.wall, reason)
+
+## Raises or lowers the wall of `group`: its men take closer (or wider) slots round the same centre. The centre is the
+## front of the formation, not the men's mean: moving it to their mean would throw the line back by half its depth, out
+## of the enemy's reach again, and the wall would go up and down on the spot.
+static func _set_wall(battle: State, command: int, group: Group, raised: bool, reason: String) -> void:
+	group.wall = raised
+	group.layout()
+	var trace := _trace(battle, command)
+	if trace != null:
+		trace.record(State.side_of(command), group.kind, DECISION_WALL_UP if raised else DECISION_WALL_DOWN, reason)
 
 ## The enemy squads' sampled fighter nearest to `point` (stage K squad picture); INF without squads.
 static func nearest_squad_point(foe_groups: Array, point: Vector2) -> Vector2:

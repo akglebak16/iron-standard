@@ -47,6 +47,10 @@ var morale_fleeing_share: float = 0.0
 var reach: float = 0.0
 var speed_sum: float = 0.0
 var speed_count: int = 0
+var shield_count: int = 0 # Shield bearers on foot without a ranged attack (troop data "shb"), for the shield wall.
+# Stage 1g part 5 (#270): the commander raised a shield wall. The slots stand closer (layout) and the shields of its men
+# hold arrows from the front better (block.gd); only the commander sets it.
+var wall: bool = false
 var _slot_direction := INF
 var _slot_lateral := Vector2.DOWN
 var _slot_forward := Vector2.RIGHT
@@ -64,10 +68,16 @@ func enlist(unit: Unit) -> void:
 	reach = maxf(reach, unit.attack_range)
 	speed_sum += unit.speed
 	speed_count += 1
+	if unit.shield_block > 0.0 and unit.attack_range <= 0.0 and not unit.mounted:
+		shield_count += 1
 
 ## Mean speed of the men who joined the group; 0 without any.
 func mean_speed() -> float:
 	return speed_sum / speed_count if speed_count > 0 else 0.0
+
+## Share of shield bearers on foot among the men who joined the group; 0 without any.
+func shield_share() -> float:
+	return float(shield_count) / speed_count if speed_count > 0 else 0.0
 
 func active_units() -> Array[Unit]:
 	return units.filter(func(u: Unit): return not u.dead and not u.gone and not u.fleeing and not u.hero)
@@ -88,6 +98,8 @@ func layout(initial: bool = false) -> void:
 	var rows: int = ceili(float(count) / columns)
 	var width: int = ceili(float(count) / rows)
 	var spacing: float = Config.FORMATION_SPACING[kind]
+	if wall:
+		spacing *= Config.AI_CMD_WALL_SPACING
 	var perpendicular := Vector2(-sin(direction), cos(direction))
 	if initial:
 		active.sort_custom(func(a: Unit, b: Unit):

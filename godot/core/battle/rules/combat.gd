@@ -92,7 +92,9 @@ static func arrow_hit(battle: State, shot: Dictionary, target: Unit, rng: Random
 			})
 			return 0
 	var incoming: float = (shot.origin - target.position).angle()
-	if Block.check(target, incoming, true, rng):
+	# Stage 1g part 5 (#270): a shield bearer in the commander's shield wall holds arrows better.
+	var wall: bool = target.shield_block > 0.0 and not target.hero and target.group_kind >= 0 and target.command < battle.groups.size() and battle.group_of(target).wall
+	if Block.check(target, incoming, true, rng, wall):
 		battle.record_event(Event.Kind.BLOCK, target, shot.source, Event.Attack.PROJECTILE, 0, Vector2(cos(incoming) * PROJECTILE_BLOCK_CONTACT_X, 0))
 		return 0
 	var raw: float = shot.damage * rng.randf_range(Config.ARROW_DAMAGE_MIN, Config.ARROW_DAMAGE_MAX)

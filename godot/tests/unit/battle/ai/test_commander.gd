@@ -1,9 +1,9 @@
 extends SceneTree
-## Army commander, stage 1g parts 1, 2 and 4 (DESIGN.md 4.2, #266, #267, #269): the "commander" profile, decisions on its
+## Army commander, stage 1g parts 1, 2, 4 and 5 (DESIGN.md 4.2, #266, #267, #269, #270): the "commander" profile, decisions on its
 ## own tick of the schedule and execution every tick, the attack plan (march speed by the enemy shooters' reach, no charge
 ## timer, archers behind their line), the defence and waiting plans, the plan switch with hysteresis and patience, the
 ## call-off of a charge when the plan changes, the cavalry roles (the way round the weak edge, the hunt for shooters, the
-## counter-strike), the same code for both sides, the field assessment kept by the morale check, the plan scores and the
+## counter-strike), the shield wall under fire, the same code for both sides, the field assessment kept by the morale check, the plan scores and the
 ## cavalry role in the trace, and a battle that the trace does not change.
 const Commander = preload("res://core/battle/simulation/ai/commander.gd")
 const Profiles = preload("res://core/battle/simulation/ai/profiles.gd")
@@ -26,6 +26,7 @@ const DT := 1.0 / 60.0
 const FOOT_SPEED := 60.0
 const ARCHER_REACH := 400.0
 const FOE_REACH := 500.0
+const SHIELD := 0.18
 
 func _initialize() -> void:
 	_test_profile()
@@ -46,6 +47,7 @@ func _initialize() -> void:
 	_test_weak_edge()
 	_test_hunt()
 	_test_counter_strike()
+	_test_shield_wall()
 	var catalog := Catalog.new()
 	assert(Loader.populate(catalog))
 	_test_session(catalog)
@@ -55,12 +57,13 @@ func _initialize() -> void:
 ## A synthetic field: the AI `command` on the right half (mirrored: on the left), its enemy near the other edge.
 ## Own: infantry (6) at x 1700, archers (4, range ARCHER_REACH) at 1800, three riders at 1850. Enemy: infantry (6) at
 ## 500, archers (4, range FOE_REACH) at 400, three riders at 300. All men alike (tier 1, full health): equal strength.
-func _field(command: int, own_infantry_x := 1700.0, own_archers := 4, foe_archers := 4, own_infantry := 6) -> State:
+## `own_shields`: so many of the own infantry bear shields (shield_block SHIELD, the shield wall of part 5).
+func _field(command: int, own_infantry_x := 1700.0, own_archers := 4, foe_archers := 4, own_infantry := 6, own_shields := 0) -> State:
 	var battle := State.new()
 	battle.setup_groups()
 	var side := State.side_of(command)
 	var mirror := side == 0
-	for i in own_infantry: _add(battle, side, Config.GROUP_INFANTRY, _at(battle, own_infantry_x, 800 + i * 20, mirror))
+	for i in own_infantry: _add(battle, side, Config.GROUP_INFANTRY, _at(battle, own_infantry_x, 800 + i * 20, mirror), FOOT_SPEED, 0.0, SHIELD if i < own_shields else 0.0)
 	for i in own_archers: _add(battle, side, Config.GROUP_ARCHERS, _at(battle, 1800, 810 + i * 20, mirror), 50.0, ARCHER_REACH)
 	for i in 3:
 		var rider := _add(battle, side, Config.GROUP_CAVALRY, _at(battle, 1850, 1200 + i * 20, mirror), 100.0)
@@ -78,10 +81,11 @@ func _field(command: int, own_infantry_x := 1700.0, own_archers := 4, foe_archer
 func _at(battle: State, x: float, y: float, mirror: bool) -> Vector2:
 	return Vector2(battle.arena_size.x - x if mirror else x, y)
 
-func _add(battle: State, side: int, kind: int, at: Vector2, speed := FOOT_SPEED, reach := 0.0) -> Unit:
+func _add(battle: State, side: int, kind: int, at: Vector2, speed := FOOT_SPEED, reach := 0.0, shield := 0.0) -> Unit:
 	var unit := Unit.new(battle.units.size(), side, at, 100, 0, 1)
 	unit.speed = speed
 	unit.attack_range = reach
+	unit.shield_block = shield
 	battle.add_grouped_unit(unit, kind)
 	return unit
 
@@ -643,3 +647,64 @@ func _test_session(catalog: Catalog) -> void:
 		runs.append(var_to_str(session.snapshot()))
 	assert(runs[0] == runs[1], "The trace does not change the battle")
 	assert(runs[0] == runs[2], "A seed repeats its battle")
+
+## Part 5 (#270): an infantry group with at least AI_CMD_WALL_SHIELD_SHARE shield bearers raises a shield wall under fire:
+## closer slots, the march as quick as under fire without a wall, the reason in the trace. Fewer shields, no wall; out of fire for
+## AI_CMD_WALL_CLEAR_SECONDS it comes down; in a charge it stays while the line is formed and comes down once it goes loose.
+## The same for both sides.
+func _test_shield_wall() -> void:
+	for command in [Config.COMMAND_ENEMY, Config.COMMAND_PLAYER]:
+		var side := State.side_of(command)
+		var battle := _eager(_field(command, 1700.0, 4, 4, 6, 3), command)
+		battle.ai_trace = DecisionTrace.new()
+		var infantry: Group = battle.groups[command][Config.GROUP_INFANTRY]
+		assert(is_equal_approx(infantry.shield_share(), 0.5))
+		var mind := _decide(battle, command)
+		assert(not infantry.wall, "Out of fire, no wall")
+		assert(is_equal_approx(mind.tasks[Config.GROUP_INFANTRY].speed, Config.AI_INFANTRY_ADVANCE_SPEED))
+		infantry.layout()
+		var open_gap := _slot_gap(infantry)
+		battle.missile_losses[side] = Config.AI_MISSILE_PRESSURE_LOSSES + 1.0
+		mind = _decide(battle, command, 10.5)
+		assert(infantry.wall, "Under fire with half shield bearers: the wall goes up (command %d)" % command)
+		assert(is_equal_approx(_slot_gap(infantry), open_gap * Config.AI_CMD_WALL_SPACING), "The wall closes up its slots")
+		assert(is_equal_approx(mind.tasks[Config.GROUP_INFANTRY].speed, Config.AI_CMD_UNDER_FIRE_SPEED_SHARE * FOOT_SPEED), "The wall is no slower")
+		var last := battle.ai_trace.last(side, Config.GROUP_INFANTRY)
+		assert(last.decision == Commander.DECISION_ADVANCE and last.reason == Commander.REASON_SHIELD_WALL and last.values.wall)
+		assert(battle.ai_trace.snapshot().recent.any(func(record: Dictionary): return record.decision == Commander.DECISION_WALL_UP), "The wall goes up in the trace")
+		# Out of fire: the wall stays AI_CMD_WALL_CLEAR_SECONDS, then comes down and the slots open again.
+		battle.missile_losses[side] = 0.0
+		_decide(battle, command, 11.0)
+		assert(infantry.wall, "Not out of fire long enough")
+		_decide(battle, command, 10.5 + Config.AI_CMD_WALL_CLEAR_SECONDS)
+		assert(not infantry.wall and is_equal_approx(_slot_gap(infantry), open_gap), "Out of fire: the wall comes down")
+		assert(battle.ai_trace.snapshot().recent.any(func(record: Dictionary): return record.decision == Commander.DECISION_WALL_DOWN and record.reason == Commander.REASON_WALL_OUT_OF_FIRE))
+		# A charge: the wall stays with a formed line under fire and comes down when the line goes loose.
+		battle.missile_losses[side] = Config.AI_MISSILE_PRESSURE_LOSSES + 1.0
+		_decide(battle, command, 13.0)
+		assert(infantry.wall)
+		infantry.order = Config.ORDER_CHARGE
+		infantry.formed = true
+		battle.missile_losses[side] = Config.AI_MISSILE_PRESSURE_LOSSES + 1.0
+		_decide(battle, command, 13.5)
+		assert(infantry.wall, "A formed line charges in its wall")
+		infantry.formed = false
+		battle.missile_losses[side] = Config.AI_MISSILE_PRESSURE_LOSSES + 1.0
+		_decide(battle, command, 14.0)
+		assert(not infantry.wall, "A loose charge drops the wall")
+		assert(battle.ai_trace.last(side, Config.GROUP_INFANTRY).reason == Commander.REASON_WALL_CHARGE)
+	# Fewer than half shield bearers: no wall under fire.
+	var few := _eager(_field(Config.COMMAND_ENEMY, 1700.0, 4, 4, 6, 2), Config.COMMAND_ENEMY)
+	few.missile_losses[1] = Config.AI_MISSILE_PRESSURE_LOSSES + 1.0
+	var plain := _decide(few, Config.COMMAND_ENEMY)
+	assert(not few.groups[1][Config.GROUP_INFANTRY].wall, "Too few shields for a wall")
+	assert(is_equal_approx(plain.tasks[Config.GROUP_INFANTRY].speed, Config.AI_CMD_UNDER_FIRE_SPEED_SHARE * FOOT_SPEED))
+
+## The smallest distance between two slots of the group.
+func _slot_gap(group: Group) -> float:
+	var best := INF
+	for a: Unit in group.units:
+		for b: Unit in group.units:
+			if a != b:
+				best = minf(best, a.slot_offset.distance_to(b.slot_offset))
+	return best

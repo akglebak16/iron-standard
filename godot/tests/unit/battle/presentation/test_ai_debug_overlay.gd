@@ -83,4 +83,8 @@ func _check_translations() -> void:
 	line = Overlay.group_line({"kind": 2, "order": "hold", "backing": false, "kited": false, "role": Commander.ROLE_HUNT,
 		"last": {"decision": Commander.DECISION_HUNT, "reason": Commander.REASON_SHOOTERS_BARE, "elapsed_seconds": 9.0}}, 10.0)
 	assert(line == "Конница: держать, роль: охота на стрелков · охота на стрелков: стрелки врага без прикрытия (1.0 с назад)", line)
+	# Part 5 (#270): the shield wall and why.
+	line = Overlay.group_line({"kind": 0, "order": "hold", "backing": false, "kited": false, "wall": true,
+		"last": {"decision": Commander.DECISION_ADVANCE, "reason": Commander.REASON_SHIELD_WALL, "elapsed_seconds": 9.5}}, 10.0)
+	assert(line == "Пехота: держать, стена щитов · идёт вперёд: стеной щитов, под стрелами (0.5 с назад)", line)
 	assert(Overlay.text({}) == "")
