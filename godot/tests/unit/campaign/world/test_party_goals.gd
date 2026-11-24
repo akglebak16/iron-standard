@@ -303,7 +303,7 @@ func _check_plans() -> void:
 	assert(not _of(cv, "escort", caravan.id).is_empty(), "a vassal escorts an own caravan in danger")
 	assert(_of(cv, "rest", town.id).is_empty(), "vassals stand by villages and castles, not towns")
 	assert(not _of(cv, "follow", me.id).is_empty())
-	assert(_of(g.candidates(me), "escort").is_empty(), "lords do not escort")
+	assert(not _of(g.candidates(me), "escort", caravan.id).is_empty(), "lords escort own caravans too (#315)")
 
 func _check_flee_target() -> void:
 	_reset()

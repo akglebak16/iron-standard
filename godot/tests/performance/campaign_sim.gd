@@ -176,6 +176,13 @@ func _table(rows: Array, meta: Dictionary) -> String:
 		["погиб, хотя свой был рядом, доля", "danger_near_lost_rate"], ["догнали (схватка)", "danger_caught"],
 		["в схватке пришла помощь, доля", "danger_caught_helped_rate"], ["погибли", "danger_lost"], ["доля", "danger_lost_rate"],
 		["караванов", "caravans"], ["дошли", "caravans_arrived"], ["взяты", "caravans_taken"], ["доля взятых", "caravans_taken_share"],
+		["взяты при охране (свой ≤90)", "caravans_taken_guarded"], ["взяты под угрозой", "caravans_taken_danger"],
+		["время каравана под охраной, доля", "caravan_guarded_share"], ["время под угрозой разбойников и нежити", "caravan_threat_share"],
+		["из него под охраной", "caravan_threat_guarded_share"],
+		["караван под угрозой (гонятся или бежит)", "cdanger"], ["из них гонятся", "cdanger_chased"],
+		["свой рядом (≤400) и по силам", "cdanger_near"], ["свой дошёл (≤90)", "cdanger_met"], ["доля", "cdanger_met_rate"],
+		["из тех, где свой был рядом", "cdanger_near_met_rate"], ["караван погиб", "cdanger_lost"], ["доля", "cdanger_lost_rate"],
+		["погиб, хотя свой дошёл, доля", "cdanger_met_lost_rate"],
 		["секунд", "wall_seconds"]]
 	lines.append("| Показатель | " + " | ".join(rows.map(func(r): return "seed %d" % r.seed)) + " |")
 	lines.append("|---|" + "---|".repeat(rows.size()))
