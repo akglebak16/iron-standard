@@ -206,9 +206,29 @@ function main() {
   }
   process.exit(v === 'failure' ? 1 : 0);
 
+  // База PR — merge-base с origin/main. Явный refspec: в клоне одной ветки (`--branch X --single-branch`, облако)
+  // `git fetch origin main` пишет только FETCH_HEAD и origin/main не появляется. В shallow-клоне общего предка
+  // может не быть в загруженной истории — догружаем её частями, пока merge-base не найдётся.
+  function mergeBase() {
+    const MAIN = 'refs/remotes/origin/main';
+    const shallow = () => { try { return git('rev-parse', '--is-shallow-repository') === 'true'; } catch { return false; } };
+    const fetchMain = (...extra) => git('fetch', '--quiet', ...extra, 'origin', `+refs/heads/main:${MAIN}`);
+    try { fetchMain(...(shallow() ? ['--depth=50'] : [])); }
+    catch (e) { console.warn(`! Не удалось обновить origin/main (${e.message}); беру локальный.`); }
+    const tryBase = () => { const r = run('git', ['merge-base', MAIN, 'HEAD']); return r.status === 0 ? r.stdout.trim() : null; };
+    let base = tryBase();
+    for (const depth of [200, 1000, 5000]) {
+      if (base || !shallow()) break;
+      try { git('fetch', '--quiet', `--deepen=${depth}`, 'origin', `+refs/heads/main:${MAIN}`, `+refs/heads/${branch}:refs/remotes/origin/${branch}`); }
+      catch (e) { console.warn(`! Не удалось догрузить историю (${e.message}).`); break; }
+      base = tryBase();
+    }
+    if (!base) fail('Не нашёл общего предка ветки и origin/main: нет origin/main или история обрезана (shallow-клон) — сделай `git fetch origin main` без --depth.');
+    return base;
+  }
+
   function check() {
-    try { git('fetch', '--quiet', 'origin', 'main'); } catch (e) { console.warn(`! Не удалось обновить origin/main (${e.message}); беру локальный.`); }
-    const base = git('merge-base', 'origin/main', 'HEAD');
+    const base = mergeBase();
     const changed = git('diff', '--name-only', base, 'HEAD').split('\n').filter(Boolean);
     const godot = needsGodot(changed);
     let engine = args.find(a => !a.startsWith('--')) || process.env.GODOT || '';
