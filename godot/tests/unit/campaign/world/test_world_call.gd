@@ -174,12 +174,14 @@ func _check_flight() -> void:
 	assert(m.get("pid") == friend.id, "the caller turns to the own lord riding to it: %s" % [m])
 	assert(g.meet_target(me, Vector2(foe.x, foe.y), [behind], 200.0).is_empty(), "not to one that comes from past the enemy")
 	assert(g.meet_target(me, Vector2(foe.x, foe.y), [], 200.0).is_empty(), "nobody rides to it: the flight stays as it is")
-	# caravans and bands do not look for own parties (caravans: part 4, bands: part 6)
+	# a caravan looks for own lords and vassals in sight too (#315); bands do not (part 6)
 	var caravan := _party("caravan", "red", 1000.0, 1100.0, 10)
-	_party("bandit", "bandit", 950.0, 1100.0, 200)
+	var band := _party("bandit", "bandit", 950.0, 1100.0, 200)
 	_map()
 	var cf := _of(g.candidates(caravan), "flee")
-	assert(not cf.is_empty() and cf.friends.is_empty(), "a caravan flees as before")
+	assert(not cf.is_empty() and me in cf.friends and friend in cf.friends, "a caravan flees and sees own lords in sight: %s" % [cf])
+	var bf := _of(g.candidates(band), "flee")
+	assert(bf.is_empty() or bf.friends.is_empty(), "a band does not look for own parties")
 
 # ---------- live world ----------
 

@@ -17,6 +17,10 @@ extends RefCounted
 ## Since #313 a lord or vassal that a stronger enemy chases or that flees calls for help (`calls`, the same kind of list):
 ## own lords and vassals answer it (`rescue`), and the fleeing party runs to a strong own party nearby, not only to an
 ## own settlement (flee_target), so the two meet half-way.
+## Since #315 lords escort the caravans of their faction too, not only faction vassals, and the danger to a caravan is read
+## on the threat map at its place and ahead on its route (`caravan_danger`); the caravans come in through `caravans`, a list
+## of the same pass. A caravan that an outlaw hunts or that flees calls like a lord (the calls), and it flees to a strong own
+## party in sight too.
 const Config = preload("res://core/campaign/config.gd")
 const ThreatMap = preload("res://core/campaign/world/threat_map.gd")
 const Rules = preload("res://core/campaign/world/party_rules.gd")
@@ -45,6 +49,7 @@ var battles: Callable = Callable()       # () -> running fights (WorldSkirmish.b
 var calls: Callable = Callable()         # () -> calls for help [{id, fac, x, y, ...}] (party_ai.gd, #313), optional
 var call_detail: Callable = Callable()   # (call) -> the call with own, foe, left, or {} when it is none; optional (the
 										 # calls already carry them)
+var caravans: Callable = Callable()      # () -> caravans on the map (party_ai.gd, #315), optional: else read from `parties`
 var width := 5200.0
 var height := 3400.0
 
@@ -52,6 +57,7 @@ var height := 3400.0
 var claims := {}
 var _own := {}  # faction -> own settlements, until reset()
 var _foes := {}  # faction -> Array hostile to it on the threat map, until reset(); "!" + faction: only the outlaws among them
+var _danger := {}  # caravan id -> caravan_danger() of this step, until reset()
 # The party candidates() works on, with what risk_at/crowd_factor would otherwise recompute for every settlement.
 var _cp: Dictionary = {}
 var _cp_map: ThreatMap = null
@@ -64,6 +70,7 @@ var _cp_ready := false  # the map and the foes are asked for at the first risk_a
 func reset() -> void:
 	_own = {}
 	_foes = {}
+	_danger = {}
 	_cp = {}
 	_cp_map = null
 	_cp_foes = []
@@ -274,7 +281,7 @@ static func _sort(out: Array) -> void:
 
 ## Parties in sight: weaker ones as prey, the pressure of stronger ones (1 = an enemy `flee_ratio` times stronger) and the
 ## strength of the strongest of them (`foe`). A lord or vassal also notes the free lords and vassals of its faction in sight
-## that are not already at hand (`friends`, #313): a flight may run to them.
+## that are not already at hand (`friends`, #313): a flight may run to them; since #315 so does a caravan.
 func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictionary:
 	var army := bool(ctx.get("army", false))
 	var sight := Config.GOAL_ARMY_HUNT_RADIUS if army else float(prof.sight)
@@ -288,7 +295,7 @@ func scan(p: Dictionary, me: float, prof: Dictionary, ctx: Dictionary) -> Dictio
 	var pressure := 0.0
 	var foe := 0.0
 	var friends: Array = []
-	var friendly := not army and Rules.is_noble(p)
+	var friendly: bool = not army and (Rules.is_noble(p) or p.kind == "caravan")
 	var from := Vector2(p.x, p.y)
 	var look := maxf(sight, flee_sight)
 	var px: float = p.x
@@ -644,23 +651,75 @@ func _rest(p: Dictionary, me: float, prof: Dictionary, mods: Dictionary, out: Ar
 		if score > 0.0:
 			out.append({"goal": "rest", "gid": s.id, "x": s.x, "y": s.y, "score": score})
 
-## Guarding an own caravan that has enemies around it.
+## Escort of an own caravan in danger (#315, DESIGN.md §5.7): the outlaws it fears are felt at its place or ahead on its
+## route (caravan_danger). Factors: the danger, whether the party turns it (no goal when even together with the caravan it is
+## hopeless against what is felt, GOAL_ASSIST_ODDS), the distance and own parties already escorting it. A caravan is
+## escorted through own lands only (an own settlement within GOAL_ESCORT_HOME): beyond them an escort would end far from
+## home with nothing to do. Lords and faction vassals escort; the caravans come from `caravans` (a list of the step), else
+## from the parties.
 func _escort(p: Dictionary, prof: Dictionary, mods: Dictionary, out: Array) -> void:
 	var w := weight(prof, mods, "escort")
 	if w <= 0.0 or _map() == null:
 		return
-	for c in parties:
-		if c.kind != "caravan" or c.fac != p.fac or c.hide:
+	var reach := Config.GOAL_ESCORT_RANGE
+	var me := -1.0  # own strength only once a caravan in danger is in reach
+	for c in (caravans.call() if caravans.is_valid() else parties):
+		if c.kind != "caravan" or c.fac != p.fac or c.hide or absf(c.x - p.x) > reach or absf(c.y - p.y) > reach:
 			continue
 		var d := Vector2(c.x - p.x, c.y - p.y).length()
-		if d > Config.GOAL_ESCORT_RANGE:
+		if d > reach:
 			continue
-		var danger := ramp(risk_at(c, c.x, c.y, maxf(0.001, strength.call(c))), Config.GOAL_ESCORT_DANGER.x, Config.GOAL_ESCORT_DANGER.y)
+		var cd := caravan_danger(c)
+		if float(cd.home) > Config.GOAL_ESCORT_HOME:
+			continue
+		var danger := ramp(float(cd.danger), Config.GOAL_ESCORT_DANGER.x, Config.GOAL_ESCORT_DANGER.y)
 		if danger <= 0.0:
 			continue
-		var score := w * combine([danger, distance_factor(d, Config.GOAL_ESCORT_RANGE), crowd_factor("escort", c.id, p)])
+		if me < 0.0:
+			me = strength.call(p)
+		var odds := ramp((float(cd.own) + me) / maxf(0.001, float(cd.foe)), Config.GOAL_ASSIST_ODDS.x, Config.GOAL_ASSIST_ODDS.y)
+		if odds <= 0.0:
+			continue
+		var score := w * combine4(danger, odds, distance_factor(d, reach), crowd_factor("escort", c.id, p))
 		if score > 0.0:
 			out.append({"goal": "escort", "gid": c.id, "x": c.x, "y": c.y, "score": score})
+
+## Danger to a caravan (#315): the outlaws it fears (foes: bandits and the dead) felt on the threat map at its place and at
+## points every GOAL_ESCORT_AHEAD_STEP ahead on its route, up to GOAL_ESCORT_AHEAD; the worst of them. Returns {danger: in
+## caravan strengths, foe: that strength, own: the caravan's strength, home: distance to the nearest own settlement};
+## worked out once per step and caravan.
+func caravan_danger(c: Dictionary) -> Dictionary:
+	var cached: Variant = _danger.get(c.id)
+	if cached != null:
+		return cached
+	var own := maxf(0.001, float(strength.call(c)))
+	var home := INF
+	for s in own_settlements(String(c.fac)):
+		home = minf(home, Vector2(s.x - c.x, s.y - c.y).length())
+	var out := {"danger": 0.0, "foe": 0.0, "own": own, "home": home}
+	var m := _map()
+	if m != null:
+		var fs := foes(c)
+		var worst := m.threat(c.x, c.y, fs)
+		var path: Array = c.get("path", [])
+		var i := int(c.get("pi", 0))
+		var at := Vector2(c.x, c.y)
+		var walked := 0.0
+		var mark := Config.GOAL_ESCORT_AHEAD_STEP
+		while i < path.size() and mark <= Config.GOAL_ESCORT_AHEAD:
+			var to: Vector2 = path[i]
+			var seg := at.distance_to(to)
+			while seg > 0.0 and walked + seg >= mark and mark <= Config.GOAL_ESCORT_AHEAD:
+				var q := at.lerp(to, (mark - walked) / seg)
+				worst = maxf(worst, m.threat(q.x, q.y, fs))
+				mark += Config.GOAL_ESCORT_AHEAD_STEP
+			walked += seg
+			at = to
+			i += 1
+		out.danger = worst / own
+		out.foe = worst
+	_danger[c.id] = out
+	return out
 
 ## Following a leader: a faction vassal its lord, a retinue the player (ctx.lead).
 func _follow(p: Dictionary, prof: Dictionary, mods: Dictionary, ctx: Dictionary, out: Array) -> void:
