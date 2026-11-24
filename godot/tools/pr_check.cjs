@@ -138,9 +138,11 @@ function main() {
   };
   const api = (method, route, body) => {
     if (apiMode === undefined) {
-      const g = run('gh', ['auth', 'status'], {timeout: 15000});
-      const token = !g.error && g.status === 0 ? null : process.env.GH_TOKEN || process.env.GITHUB_TOKEN || credentialToken();
-      apiMode = !g.error && g.status === 0 ? {gh: true} : token ? {token} : null;
+      // Пробуем настоящим запросом, а не `gh auth status`: в облаке вход даёт прокси, и статус входа врёт.
+      const g = run('gh', ['api', 'user'], {timeout: 30000});
+      const ghOk = !g.error && g.status === 0;
+      const token = ghOk ? null : process.env.GH_TOKEN || process.env.GITHUB_TOKEN || credentialToken();
+      apiMode = ghOk ? {gh: true} : token ? {token} : null;
     }
     if (!apiMode) throw new Error('нет ни gh со входом, ни токена GitHub (GH_TOKEN или сохранённый вход git)');
     const input = body === undefined ? '' : JSON.stringify(body);
