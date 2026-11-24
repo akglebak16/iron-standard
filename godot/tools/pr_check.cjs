@@ -2,7 +2,9 @@
 // «Godot — архитектура и Windows» (.github/workflows/godot.yml) и «PR — привязка к issue», но на своём ПК.
 // Результат вешается прямо на PR: галка `local/pr-check` на коммите головы и комментарий со сводкой.
 //
-//   node godot/tools/pr_check.cjs <Godot_v4.7.2-stable_win64_console.exe>   (или переменная окружения GODOT)
+//   node godot/tools/pr_check.cjs            — на Windows больше ничего не нужно: закреплённый Godot 4.7.2 с export
+//                                              templates скрипт сам скачает один раз в dist/godot/engine/
+//   node godot/tools/pr_check.cjs <Godot>    — свой Godot (или переменная окружения GODOT); для сборки ему нужны templates
 //
 //   --no-post                 только прогнать и напечатать сводку, на GitHub ничего не отправлять
 //   --post-only               отправить на PR результат последнего прогона (godot/.godot/pr-check.json),
@@ -25,6 +27,14 @@ const cp = require('child_process');
 const CONTEXT = 'local/pr-check';
 const MARKER = '<!-- pr-check -->';
 const ISSUE_LINK = /\b(close[sd]?|fix(e[sd])?|resolve[sd]?)\s*:?\s+(#|https:\/\/github\.com\/[^\s]+\/issues\/)[0-9]+/i;
+const ENGINE_VERSION = '4.7.2';  // как в engine_bootstrap.ps1 и бывшем CI
+const pinnedEngine = repoRoot => path.join(repoRoot, 'dist', 'godot', 'engine', ENGINE_VERSION, `Godot_v${ENGINE_VERSION}-stable_win64_console.exe`);
+// Запрос к API без gh: отдельный процесс node, чтобы весь скрипт оставался синхронным.
+const FETCH = `const b = require('fs').readFileSync(0, 'utf8');
+fetch(process.env.PR_CHECK_URL, {method: process.env.PR_CHECK_METHOD, body: b || undefined, headers: {
+  Authorization: 'Bearer ' + process.env.PR_CHECK_TOKEN, Accept: 'application/vnd.github+json', 'User-Agent': 'iron-standard-pr-check'}})
+  .then(async r => { const t = await r.text(); if (!r.ok) { process.stderr.write(r.status + ' ' + t); process.exit(1); } process.stdout.write(t); })
+  .catch(e => { process.stderr.write(String(e)); process.exit(1); });`;
 const TOOL_TESTS = ['architecture.test.cjs', 'test_selection.test.cjs', 'test_schedule.test.cjs', 'build_identity.test.cjs', 'pr_check.test.cjs'];
 
 // ---- чистые функции (их проверяет pr_check.test.cjs) ----
@@ -96,7 +106,7 @@ function summary(report) {
   return lines.join('\n');
 }
 
-module.exports = {hasIssueLink, needsGodot, parseRepo, parseKnownRed, splitFailures, verdict, statusDescription, summary, CONTEXT, MARKER};
+module.exports = {pinnedEngine, ENGINE_VERSION, hasIssueLink, needsGodot, parseRepo, parseKnownRed, splitFailures, verdict, statusDescription, summary, CONTEXT, MARKER};
 
 // ---- запуск ----
 
@@ -118,14 +128,28 @@ function main() {
   };
   const fail = message => { console.error(`\n✗ ${message}`); process.exit(1); };
 
-  // gh — для PR, статуса и комментария. Нет gh или нет входа — проверка идёт, сводку вставляют в PR руками.
-  const gh = (a, input) => {
-    const r = run('gh', a, input === undefined ? {} : {input});
-    if (r.error) throw new Error(`gh не найден: ${r.error.message}`);
-    if (r.status !== 0) throw new Error(`gh ${a.slice(0, 3).join(' ')}: ${(r.stderr || '').trim()}`);
-    return r.stdout;
+  // GitHub API для PR, статуса и комментария. Сначала gh (если он есть и в нём выполнен вход), иначе — токен из
+  // GH_TOKEN / GITHUB_TOKEN или тот, что уже хранит git (Git Credential Manager на Windows): ставить и логинить gh не нужно.
+  let apiMode;
+  const credentialToken = () => {
+    const r = run('git', ['credential', 'fill'], {input: 'protocol=https\nhost=github.com\n\n', timeout: 15000,
+      env: {...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never'}});
+    return r.status === 0 ? (/^password=(.+)$/m.exec(r.stdout) || [])[1] : null;
   };
-  const ghJson = (a, input) => JSON.parse(gh(a, input) || 'null');
+  const api = (method, route, body) => {
+    if (apiMode === undefined) {
+      const g = run('gh', ['auth', 'status'], {timeout: 15000});
+      const token = !g.error && g.status === 0 ? null : process.env.GH_TOKEN || process.env.GITHUB_TOKEN || credentialToken();
+      apiMode = !g.error && g.status === 0 ? {gh: true} : token ? {token} : null;
+    }
+    if (!apiMode) throw new Error('нет ни gh со входом, ни токена GitHub (GH_TOKEN или сохранённый вход git)');
+    const input = body === undefined ? '' : JSON.stringify(body);
+    const r = apiMode.gh
+      ? run('gh', ['api', '-X', method, route, ...(input ? ['--input', '-'] : [])], {input})
+      : run(process.execPath, ['-e', FETCH], {input, env: {...process.env, PR_CHECK_URL: `https://api.github.com/${route}`, PR_CHECK_METHOD: method, PR_CHECK_TOKEN: apiMode.token}});
+    if (r.error || r.status !== 0) throw new Error(`${method} ${route.split('?')[0]}: ${(r.stderr || r.error?.message || '').trim().slice(0, 300)}`);
+    return r.stdout ? JSON.parse(r.stdout) : null;
+  };
 
   const dirty = git('status', '--porcelain', '--untracked-files=normal');
   if (dirty) fail(`Есть незакоммиченные изменения — закоммить их, иначе проверка не про то, что уйдёт в PR:\n${dirty}`);
@@ -146,7 +170,7 @@ function main() {
   let pr = null, postError = null;
   try {
     const owner = repo.split('/')[0];
-    const list = ghJson(['api', `repos/${repo}/pulls?state=open&head=${owner}:${encodeURIComponent(branch)}`]);
+    const list = api('GET', `repos/${repo}/pulls?state=open&head=${owner}:${encodeURIComponent(branch)}`);
     pr = list[0] || null;
   } catch (e) { postError = e.message; }
   report.pr = pr ? pr.number : null;
@@ -158,7 +182,7 @@ function main() {
   console.log(`\n${text}\n`);
 
   if (noPost) console.log('--no-post: на GitHub ничего не отправлено.');
-  else if (postError) console.log(`! Не удалось связаться с GitHub (${postError}). Вставь сводку выше в комментарий к PR руками.`);
+  else if (postError) console.log(`! Не удалось связаться с GitHub (${postError}). Сводка выше — для комментария к PR.`);
   else if (!pr) console.log(`PR из ветки ${branch} не найден. Открой его (gh pr create) и запусти: node godot/tools/pr_check.cjs --post-only`);
   else {
     let remoteHead = '';
@@ -166,16 +190,15 @@ function main() {
     if (remoteHead !== head) fail(`Голова ветки на GitHub (${(remoteHead || 'нет').slice(0, 10)}) не совпадает с проверенной ${head.slice(0, 10)}: запушь ветку и запусти --post-only.`);
     // Статус и комментарий — независимо: облачный прокси, например, пускает комментарии, но не статусы.
     try {
-      gh(['api', '-X', 'POST', `repos/${repo}/statuses/${head}`, '-f', `state=${v}`, '-f', `context=${CONTEXT}`, '-f', `description=${statusDescription(report).slice(0, 140)}`]);
+      api('POST', `repos/${repo}/statuses/${head}`, {state: v, context: CONTEXT, description: statusDescription(report).slice(0, 140)});
       console.log(`→ PR #${pr.number}: статус «${CONTEXT}» = ${v}.`);
     } catch (e) { console.log(`! Статус не поставлен (${e.message}). Сводка в комментарии всё равно говорит итог.`); }
     try {
-      const me = ghJson(['api', 'user']).login;
-      const comments = ghJson(['api', `repos/${repo}/issues/${pr.number}/comments?per_page=100`]);
+      const me = api('GET', 'user').login;
+      const comments = api('GET', `repos/${repo}/issues/${pr.number}/comments?per_page=100`);
       const own = comments.find(c => c.user?.login === me && (c.body || '').startsWith(MARKER));
-      const body = JSON.stringify({body: text});
-      if (own) gh(['api', '-X', 'PATCH', `repos/${repo}/issues/comments/${own.id}`, '--input', '-'], body);
-      else gh(['api', '-X', 'POST', `repos/${repo}/issues/${pr.number}/comments`, '--input', '-'], body);
+      if (own) api('PATCH', `repos/${repo}/issues/comments/${own.id}`, {body: text});
+      else api('POST', `repos/${repo}/issues/${pr.number}/comments`, {body: text});
       console.log(`→ PR #${pr.number}: сводка ${own ? 'обновлена' : 'добавлена'} в комментарии.`);
     } catch (e) { console.log(`! Комментарий не отправлен (${e.message}). Вставь сводку выше в PR руками.`); }
   }
@@ -186,7 +209,7 @@ function main() {
     const base = git('merge-base', 'origin/main', 'HEAD');
     const changed = git('diff', '--name-only', base, 'HEAD').split('\n').filter(Boolean);
     const godot = needsGodot(changed);
-    const engine = args.find(a => !a.startsWith('--')) || process.env.GODOT || '';
+    let engine = args.find(a => !a.startsWith('--')) || process.env.GODOT || '';
     const knownRed = parseKnownRed(values('--known-red'));
     const r = {head, base, branch, godot, engine: null, engineVersion: null, steps: [], tests: null, failures: [], knownRed: [],
       machine: process.platform === 'win32' ? 'Windows' : process.platform, date: new Date().toISOString()};
@@ -207,9 +230,19 @@ function main() {
     for (const t of TOOL_TESTS) if (fs.existsSync(tool(t)) && !step(t, node, [tool(t)]).ok) { save(); return r; }
     if (!step('Архитектура и запрет новых исключений', node, [tool('architecture.cjs'), `--base=${base}`]).ok) { save(); return r; }
 
-    // godot-tests-and-release: только с Godot.
+    // godot-tests-and-release. На Windows без явного Godot берём закреплённый, как CI: скрипт сам скачает его один раз
+    // в dist/godot/engine/ (engine_bootstrap.ps1) и подготовит native-инструменты (native_bootstrap.ps1).
+    if (process.platform === 'win32') {
+      const ps = run('where', ['pwsh']).status === 0 ? 'pwsh' : 'powershell';
+      const psFile = f => ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', tool(f)];
+      if (!engine) {
+        if (!step('Закреплённый Godot ' + ENGINE_VERSION + ' и export templates', ps, psFile('engine_bootstrap.ps1')).ok) { save(); return r; }
+        engine = pinnedEngine(repoRoot);
+      }
+      if (!step('Пакетное ядро контактов (native_bootstrap)', ps, psFile('native_bootstrap.ps1')).ok) { save(); return r; }
+    }
     if (!engine) {
-      console.log('\n⏳ Godot не указан (аргумент или GODOT) — Godot-тесты, сборка и release-smoke не прогнаны.');
+      console.log('\n⏳ Это не Windows и Godot не указан (аргумент или GODOT) — Godot-тесты, сборка и release-smoke не прогнаны.');
       save(); return r;
     }
     r.engine = path.basename(engine);
@@ -217,9 +250,9 @@ function main() {
     r.engineVersion = (ver.stdout || '').trim().split('\n').pop() || null;
     for (const k of knownRed) {
       try {
-        const issue = ghJson(['api', `repos/${repo}/issues/${k.issue}`]);
+        const issue = api('GET', `repos/${repo}/issues/${k.issue}`);
         if (issue.state !== 'open') fail(`--known-red: issue #${k.issue} закрыт — значит тест ${k.test} должен быть зелёным.`);
-      } catch (e) { if (!/gh не найден/.test(e.message)) throw e; console.warn(`! Не проверил, что #${k.issue} открыт: ${e.message}`); }
+      } catch (e) { console.warn(`! Не проверил, что #${k.issue} открыт: ${e.message}`); }
     }
     const testStep = step('Godot-тесты, затронутые правкой', node, [tool('test.cjs'), engine, `--changed=${base}`]);
     try {

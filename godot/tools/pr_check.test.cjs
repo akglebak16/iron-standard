@@ -47,4 +47,11 @@ assert.match(text, /aaaaaaaaaa/);
 assert.match(text, /tests\/d\.gd/);
 assert.match(text, /#295/);
 assert.match(p.summary({...base, engine: null, tests: null}), /не прогнаны/);
+// Закреплённая версия Godot одна и та же в скрипте, в его загрузчике и в CI по кнопке.
+const fs = require('fs'), path = require('path');
+const ps1 = fs.readFileSync(path.join(__dirname, 'engine_bootstrap.ps1'), 'utf8');
+assert.match(ps1, new RegExp(`\\$Version = '${p.ENGINE_VERSION.replaceAll('.', '\\.')}'`));
+const ci = fs.readFileSync(path.join(__dirname, '..', '..', '.github', 'workflows', 'godot.yml'), 'utf8');
+assert.match(ci, new RegExp(`\\$version = '${p.ENGINE_VERSION.replaceAll('.', '\\.')}'`));
+assert.ok(p.pinnedEngine('/r').replaceAll('\\', '/').endsWith(`dist/godot/engine/${p.ENGINE_VERSION}/Godot_v${p.ENGINE_VERSION}-stable_win64_console.exe`));
 console.log('PR check helpers passed');
