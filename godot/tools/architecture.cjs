@@ -42,6 +42,7 @@ function manifestIssues(manifest) {
   }
   for (const m of manifest.modules) for (const name of m.allowed) if (!names.has(name) || name === m.name) errors.push(`Invalid allowed dependency: ${m.name} -> ${name}`);
   const rules = new Set();
+  const ruleSymbols = new Map(); // ADR-027: one number belongs to one rule, or two owners would argue over it.
   for (const r of manifest.ruleOwners || []) {
     if (!r.rule || rules.has(r.rule)) errors.push(`Duplicate/missing rule owner: ${r.rule}`);
     rules.add(r.rule);
@@ -53,6 +54,10 @@ function manifestIssues(manifest) {
       if (!Array.isArray(r.checks?.[phase]) || !r.checks[phase].every(safe)) errors.push(`Invalid rule checks: ${r.rule}: ${phase}`);
     }
     if (!Array.isArray(r.symbols) || !r.symbols.length || new Set(r.symbols).size !== r.symbols.length || !r.symbols.every(x => /^[A-Za-z_][A-Za-z_0-9]*$/.test(x))) errors.push(`Invalid rule symbols: ${r.rule}`);
+    for (const x of Array.isArray(r.symbols) ? r.symbols : []) {
+      if (ruleSymbols.has(x) && ruleSymbols.get(x) !== r.rule) errors.push(`Rule symbol in two rules: ${x}: ${ruleSymbols.get(x)}, ${r.rule}`);
+      else ruleSymbols.set(x, r.rule);
+    }
   }
   return errors;
 }
