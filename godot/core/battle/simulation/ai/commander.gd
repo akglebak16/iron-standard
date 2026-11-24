@@ -1,5 +1,5 @@
 extends RefCounted
-## Army commander, stage 1g parts 1, 2, 4 and 5 (DESIGN.md 4.2, decisions 49–57, 66–71, 72–77 and 82–86, #266, #267, #269, #270): the "commander" AI profile next to the
+## Army commander, stage 1g parts 1, 2, 4 and 5 (DESIGN.md 4.2, decisions 49–57, 66–71, 72–77 and 86–91, #266, #267, #269, #270): the "commander" AI profile next to the
 ## frozen "reference" brain (rules/tactics.gd). The brain contract of profiles.gd: enemy_step(battle, command, elapsed,
 ## dt) for a field battle; siege_step is the reference siege brain until stage 1d.
 ##
