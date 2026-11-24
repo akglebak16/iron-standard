@@ -164,16 +164,20 @@ function main() {
     let remoteHead = '';
     try { remoteHead = git('ls-remote', 'origin', `refs/heads/${branch}`).split(/\s+/)[0]; } catch { /* ниже сообщим */ }
     if (remoteHead !== head) fail(`Голова ветки на GitHub (${(remoteHead || 'нет').slice(0, 10)}) не совпадает с проверенной ${head.slice(0, 10)}: запушь ветку и запусти --post-only.`);
+    // Статус и комментарий — независимо: облачный прокси, например, пускает комментарии, но не статусы.
     try {
       gh(['api', '-X', 'POST', `repos/${repo}/statuses/${head}`, '-f', `state=${v}`, '-f', `context=${CONTEXT}`, '-f', `description=${statusDescription(report).slice(0, 140)}`]);
+      console.log(`→ PR #${pr.number}: статус «${CONTEXT}» = ${v}.`);
+    } catch (e) { console.log(`! Статус не поставлен (${e.message}). Сводка в комментарии всё равно говорит итог.`); }
+    try {
       const me = ghJson(['api', 'user']).login;
       const comments = ghJson(['api', `repos/${repo}/issues/${pr.number}/comments?per_page=100`]);
       const own = comments.find(c => c.user?.login === me && (c.body || '').startsWith(MARKER));
       const body = JSON.stringify({body: text});
       if (own) gh(['api', '-X', 'PATCH', `repos/${repo}/issues/comments/${own.id}`, '--input', '-'], body);
       else gh(['api', '-X', 'POST', `repos/${repo}/issues/${pr.number}/comments`, '--input', '-'], body);
-      console.log(`→ PR #${pr.number}: статус «${CONTEXT}» = ${v}, сводка ${own ? 'обновлена' : 'добавлена'} в комментарии.`);
-    } catch (e) { console.log(`! Не удалось отправить результат на PR (${e.message}). Вставь сводку выше в комментарий руками.`); }
+      console.log(`→ PR #${pr.number}: сводка ${own ? 'обновлена' : 'добавлена'} в комментарии.`);
+    } catch (e) { console.log(`! Комментарий не отправлен (${e.message}). Вставь сводку выше в PR руками.`); }
   }
   process.exit(v === 'failure' ? 1 : 0);
 
