@@ -1,25 +1,9 @@
 name: Godot — архитектура и Windows
+# С #255 проверки PR идут локально: `node godot/tools/pr_check.cjs <Godot>` вешает на PR статус `local/pr-check`.
+# Здесь — только запуск по кнопке (Actions → Run workflow), полный набор тестов: на Windows-раннерах кончается
+# бюджет Actions приватного репозитория. Вернуть автозапуск на PR можно, когда бюджет есть, — решение Глеба.
 on:
-  pull_request:
-  # После слияния в main тесты не идут: этот запуск только прогревает кеши (импорт, native), чтобы их подхватывали PR.
-  # GitHub отдаёт в PR кеши своей ветки и main, но не чужих PR, поэтому без прогрева на main каждый PR импортировал всё с нуля.
-  push:
-    branches: [main]
-    paths:
-      - 'godot/**/*.import'
-      - 'godot/**/*.png'
-      - 'godot/**/*.svg'
-      - 'godot/**/*.ogg'
-      - 'godot/**/*.wav'
-      - 'godot/**/*.ttf'
-      - 'godot/**/*.otf'
-      - 'godot/**/*.cpp'
-      - 'godot/**/*.hpp'
-      - 'godot/tools/native_*'
-      - '.github/workflows/godot.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '17 3 * * *'  # раз в сутки полный набор тестов
 permissions:
   contents: read
 concurrency:
@@ -71,6 +55,7 @@ jobs:
       - run: node godot/tools/test_selection.test.cjs
       - run: node godot/tools/test_schedule.test.cjs
       - run: node godot/tools/build_identity.test.cjs
+      - run: node godot/tools/pr_check.test.cjs
       - name: Архитектура и запрет новых исключений
         env:
           ARCH_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}

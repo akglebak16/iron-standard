@@ -11,9 +11,11 @@ description: Проверить, протестировать, собрать и
 5. Перед первым запуском в чистой Windows-копии: `pwsh -File godot/tools/native_bootstrap.ps1`. Runner сам собирает native DLL; бинарники и `dist/` в Git не добавляй. После правки native-кода обязательны `test_native_contacts` и release-smoke.
 6. После правки runner или выбора тестов: `node godot/tools/test_selection.test.cjs` и `node godot/tools/test_schedule.test.cjs`.
 7. Красный тест не обходи и не отключай: чини причину.
+8. **Работа над PR закончена — проверка одной командой, ИИ запускает её сам:** `node godot/tools/pr_check.cjs <Godot>` (или `GODOT=<Godot>`). Повторяет бывший CI (`godot-changes` → `godot-architecture` → `godot-tests-and-release`) против merge-base со свежим `origin/main` и проверку `Closes #N`, требует чистое дерево, пишет `godot/.godot/pr-check.json`, ставит на коммит головы PR статус `local/pr-check` и обновляет комментарий со сводкой. Флаги: `--no-post` — не отправлять на GitHub; `--post-only` — отправить последний прогон того же коммита (если PR открыли после прогона); `--known-red=tests/…/test_x.gd#N` — тест красный и на `main`, issue #N открыт. Без Godot (облако) шаги Godot пропускаются, статус — «ожидает», а не зелёный. Для статуса и комментария нужен `gh` с входом (`gh auth login`); без него сводку вставляют в PR руками.
 
 ## CI
-- В PR Godot-тесты выбираются по графу ссылок `res://` от изменённых файлов; правка `project.godot`, автозагрузок или native-кода запускает полный набор. Полный набор идёт ночью и по кнопке.
+- С #255 CI на GitHub для PR не запускается (бюджет Actions): «Godot — архитектура и Windows» — только по кнопке, полный набор. Проверка PR — `pr_check.cjs`, сливаем только с зелёным `local/pr-check` на последнем коммите.
+- Godot-тесты для PR выбираются по графу ссылок `res://` от изменённых файлов; правка `project.godot`, автозагрузок или native-кода запускает полный набор. Полный набор — `node godot/tools/test.cjs <Godot>` без `--changed` или CI по кнопке.
 - Бюджет полного набора — 3 минуты на тесты. Новый тест не должен зависеть от порядка запуска и писать вне `user://`.
 
 ## Замеры производительности
