@@ -20,6 +20,10 @@ extends RefCounted
 ## fleeing: whether an own lord or vassal was near enough to help, whether one reached it (closer than JOIN_RADIUS), whether
 ## it was caught (a fight) and got help there, and whether it was lost. It also tells which side of a fight won, so the
 ## share of fights won by the side that was weaker at the start shows whether help turns fights.
+## Since #315 (caravan escort, DESIGN.md §5.7) it follows the caravans more closely: how much of their time an own free lord
+## or vassal rides within JOIN_RADIUS of them (guarded), how much of it they spend where the outlaws on the threat map are at
+## least as strong as the caravan, and every caravan in danger (an outlaw hunts it or it flees) the way #313 follows lords:
+## an own lord or vassal near enough to turn it, one that reached it, and whether the caravan was lost.
 const ContentLoader = preload("res://adapters/content/catalog_loader.gd")
 const WorldState = preload("res://core/campaign/world/world_state.gd")
 const EuropeData = preload("res://core/campaign/data/europe_data.gd")
@@ -89,7 +93,10 @@ var _fight_log: Array = []
 var _danger := {}       # party id -> danger episode {fac, t0, foe, near, met, quiet, fight, side}
 var _danger_log: Array = []
 var _caravans := {}     # caravan id -> {x, y, sid}
-var _caravan_log := {"seen": 0, "arrived": 0, "taken": 0}
+var _caravan_log := {"seen": 0, "arrived": 0, "taken": 0, "taken_guarded": 0, "taken_danger": 0}
+var _caravan_time := {"steps": 0, "guarded": 0, "sampled": 0, "threat": 0, "threat_guarded": 0}
+var _cdanger := {}      # caravan id -> danger episode {t0, foe, own, near, met, quiet, chased, lost}
+var _cdanger_log: Array = []
 var heat_cols := 0
 var heat_rows := 0
 var heat_lords := PackedInt32Array()
@@ -222,26 +229,136 @@ func _observe_fight_starts() -> void:
 			start[int(id)] = 1
 		_fights[int(f.id)] = {"t0": steps, "start": start, "could": {}, "joined": {}, "size": start.size()}
 
-## Caravans that left the map: at their destination they arrived, anywhere else they were taken.
+## Caravans that left the map: at their destination they arrived, anywhere else they were taken (#315: with an own lord
+## or vassal at hand, or during a danger episode). Every step a caravan on the map counts as guarded when a free own lord or
+## vassal is within JOIN_RADIUS, and as threatened when the outlaws (bandits, the dead) it fears are at least as strong as
+## it at its place on the threat map.
 func _observe_caravans() -> void:
 	var now := {}
+	var hunted := {}  # party id -> strength of its hunters
+	var nobles: Array = []
+	var cars: Array = []
 	for p in world.roster.parties:
-		if p.kind != "caravan":
-			continue
-		now[int(p.id)] = true
-		if not _caravans.has(int(p.id)):
+		if p.state == "hunt" and p.get("tid") != null:
+			hunted[p.tid] = float(hunted.get(p.tid, 0.0)) + world.roster.strength_of(p)
+		if p.kind == "caravan":
+			cars.append(p)
+		elif Rules.is_noble(p) and not p.hide and p.get("fight") == null and not p.get("lock", false) and not p.get("army", false):
+			nobles.append(p)
+	# The threat map only when this step has built it already: built here, it would be frozen before the next hour tick
+	# spawns parties, and the world would no longer be the same with and without the observer.
+	var m: ThreatMap = world.threat if world.get("_threat_built") == world.get("_threat_step") else null
+	var outlaws := {}  # faction -> the outlaw layers it fears
+	for p in cars:
+		var id := int(p.id)
+		now[id] = true
+		if not _caravans.has(id):
 			_caravan_log.seen += 1
-		_caravans[int(p.id)] = {"x": float(p.x), "y": float(p.y), "sid": p.get("sid")}
+		var guard := false
+		for o in nobles:
+			if o.fac == p.fac and Vector2(o.x - p.x, o.y - p.y).length() <= JOIN_RADIUS:
+				guard = true
+				break
+		var own: float = maxf(0.001, world.roster.strength_of(p))
+		if not outlaws.has(p.fac):
+			outlaws[p.fac] = world.threat_enemies(p.fac).filter(func(f): return f == "bandit" or f == "undead")
+		var felt := m.threat(p.x, p.y, outlaws[p.fac]) if m != null else -1.0
+		if not p.hide:
+			_caravan_time.steps += 1
+			if guard:
+				_caravan_time.guarded += 1
+			if felt >= 0.0:
+				_caravan_time.sampled += 1
+			if felt >= own:
+				_caravan_time.threat += 1
+				if guard:
+					_caravan_time.threat_guarded += 1
+		_caravans[id] = {"x": float(p.x), "y": float(p.y), "sid": p.get("sid"), "guard": guard}
+		_observe_caravan_danger(p, hunted, nobles, own, felt)
 	for id in _caravans.keys():
 		if now.has(id):
 			continue
 		var c: Dictionary = _caravans[id]
 		var s: Dictionary = world.map.settlement_by_id(c.sid) if c.sid != null else {}
+		var e: Variant = _cdanger.get(id)
 		if not s.is_empty() and Vector2(s.x - c.x, s.y - c.y).length() < CARAVAN_ARRIVE:
 			_caravan_log.arrived += 1
 		else:
 			_caravan_log.taken += 1
+			if c.guard:
+				_caravan_log.taken_guarded += 1
+			if e != null:
+				_caravan_log.taken_danger += 1
+				e.lost = true
+		if e != null:
+			_end_cdanger(id)
 		_caravans.erase(id)
+
+## A caravan in danger (#315): an outlaw hunts it or it flees. As for lords (_observe_danger): whether a free own lord or
+## vassal stood within HELP_RADIUS and together with the caravan was at least as strong as the danger (the hunters, else the
+## outlaws felt on the threat map), whether one came within JOIN_RADIUS, and whether the caravan was lost. An episode ends
+## after a quiet hour or with the caravan.
+func _observe_caravan_danger(p: Dictionary, hunted: Dictionary, nobles: Array, own: float, felt: float) -> void:
+	var id := int(p.id)
+	var danger: bool = hunted.has(p.id) or p.state == "flee"
+	var e: Variant = _cdanger.get(id)
+	if e != null:
+		for o in nobles:
+			if o.fac == p.fac and Vector2(o.x - p.x, o.y - p.y).length() <= JOIN_RADIUS:
+				e.met = true
+				break
+		e.quiet = 0 if danger else int(e.quiet) + 1
+		if int(e.quiet) >= 5:
+			_end_cdanger(id)
+		return
+	if not danger or p.hide:
+		return
+	var foe := float(hunted.get(p.id, maxf(0.0, felt)))
+	var near := false
+	for o in nobles:
+		if o.fac == p.fac and Vector2(o.x - p.x, o.y - p.y).length() <= HELP_RADIUS and own + world.roster.strength_of(o) >= foe:
+			near = true
+			break
+	_cdanger[id] = {"t0": steps, "foe": foe, "own": own, "near": near, "met": false, "quiet": 0, "chased": hunted.has(p.id), "lost": false}
+
+func _end_cdanger(id: int) -> void:
+	var e: Dictionary = _cdanger[id]
+	_cdanger.erase(id)
+	e.hours = (steps - int(e.t0)) * 0.2
+	_cdanger_log.append(e)
+
+## Caravan numbers of the summary (#315).
+func _caravan_summary() -> Dictionary:
+	for id in _cdanger.keys():
+		_end_cdanger(id)
+	var out := {"caravans": _caravan_log.seen, "caravans_arrived": _caravan_log.arrived, "caravans_taken": _caravan_log.taken,
+		"caravans_taken_share": float(_caravan_log.taken) / maxf(1.0, _caravan_log.arrived + _caravan_log.taken),
+		"caravans_taken_guarded": _caravan_log.taken_guarded, "caravans_taken_danger": _caravan_log.taken_danger,
+		"caravan_guarded_share": float(_caravan_time.guarded) / maxf(1.0, _caravan_time.steps),
+		"caravan_threat_share": float(_caravan_time.threat) / maxf(1.0, _caravan_time.sampled),
+		"caravan_threat_guarded_share": float(_caravan_time.threat_guarded) / maxf(1.0, _caravan_time.threat),
+		"cdanger": _cdanger_log.size(), "cdanger_chased": 0, "cdanger_near": 0, "cdanger_met": 0, "cdanger_near_met": 0,
+		"cdanger_lost": 0, "cdanger_near_lost": 0, "cdanger_met_lost": 0}
+	for e in _cdanger_log:
+		if e.chased:
+			out.cdanger_chased += 1
+		if e.met:
+			out.cdanger_met += 1
+			if e.lost:
+				out.cdanger_met_lost += 1
+		if e.near:
+			out.cdanger_near += 1
+			if e.met:
+				out.cdanger_near_met += 1
+			if e.lost:
+				out.cdanger_near_lost += 1
+		if e.lost:
+			out.cdanger_lost += 1
+	out.cdanger_met_rate = float(out.cdanger_met) / maxf(1.0, _cdanger_log.size())
+	out.cdanger_near_met_rate = float(out.cdanger_near_met) / maxf(1.0, out.cdanger_near)
+	out.cdanger_lost_rate = float(out.cdanger_lost) / maxf(1.0, _cdanger_log.size())
+	out.cdanger_met_lost_rate = float(out.cdanger_met_lost) / maxf(1.0, out.cdanger_met)
+	return out
 
 ## A flight of the current AI: where it runs (end of its path) against the threat-map alternative.
 func _measure_flee(p: Dictionary) -> void:
@@ -1074,6 +1191,7 @@ func report(seed_value: int, days: int) -> Dictionary:
 	var lord_j: Dictionary = jitter.get("lord", {})
 	var help := _help_summary()
 	help.merge(_danger_summary())
+	help.merge(_caravan_summary())
 	var summary := {
 		"seed": seed_value, "days": days, "hours": hours, "wall_seconds": wall_usec / 1e6,
 		"wars_declared": declared.size(), "wars_peace": peace.size(), "wars_ended": ended.size(), "war_days_mean": mean_dur,
@@ -1125,8 +1243,6 @@ func report(seed_value: int, days: int) -> Dictionary:
 		"threat_safe_cell_better": float(_flees.safe_better) / maxf(1.0, _flees.measured),
 		"threat_rebuild_usec": float(_threat_cost.usec) / maxf(1.0, _threat_cost.samples),
 		"threat_cells_per_party": float(_threat_cost.cells) / maxf(1.0, _threat_cost.sources),
-		"caravans": _caravan_log.seen, "caravans_arrived": _caravan_log.arrived, "caravans_taken": _caravan_log.taken,
-		"caravans_taken_share": float(_caravan_log.taken) / maxf(1.0, _caravan_log.arrived + _caravan_log.taken),
 	}
 	summary.merge(help)
 	return {

@@ -122,4 +122,43 @@ assert(manifestIssues({...owned,ruleOwners:[moraleRule,moraleRule]}).some(e=>e.i
   assert.deepEqual(live.checks.native, ['tests/integration/test_native_morale.gd']);
   assert(!live.symbols.includes('MORALE_TICK_SECONDS'));
 }
+// ADR-027 (#330): damage and arrows have one rule entry each, so part 6a may turn native while the arrows stay on the
+// reference; a number belongs to one rule only, and nothing another module reads is owned (the lesson of ADR-026).
+{
+  const damageRule = {rule:'battle-damage',adr:'ADR-027',phase:'reference',symbols:['CHARGE_KNOCKBACK','MORALE_WAVER_DAMAGE_MULTIPLIER'],
+    owners:{reference:['core/a/config.gd','core/a/charge.gd'],native:['core/a/config.gd','core/a/charge.gd','core/a/native/combat_kernel.hpp']},
+    checks:{reference:[],native:['tests/test_native_combat.gd']}};
+  const arrowRule = {...damageRule,rule:'battle-projectiles',symbols:['ARROW_DAMAGE_MIN']};
+  assert.deepEqual(manifestIssues({...owned,ruleOwners:[moraleRule,damageRule,arrowRule]}),[]);
+  assert(manifestIssues({...owned,ruleOwners:[damageRule,{...arrowRule,symbols:['ARROW_DAMAGE_MIN','MORALE_WAVER_DAMAGE_MULTIPLIER']}]})
+    .some(e=>e.includes('Rule symbol in two rules: MORALE_WAVER_DAMAGE_MULTIPLIER')));
+  const both = {...manifest,ruleOwners:[damageRule,arrowRule]};
+  const sources = {'core/a/config.gd':'const CHARGE_KNOCKBACK := 60.0\nconst CHARGE_MIN_SPEED := 40.0','core/a/charge.gd':'var push = Config.CHARGE_KNOCKBACK\nvar fast = Config.CHARGE_MIN_SPEED',
+    'core/a/native/movement_kernel.hpp':'bool fast(const double *p) { return p[CHARGE_MIN_SPEED] > 0; }'};
+  assert.equal(analyze(new Map(Object.entries(sources)),both).filter(i=>i.rule==='rule-owner').length,0);
+  assert(analyze(new Map(Object.entries({...sources,'core/a/commander.gd':'var shock = Config.CHARGE_KNOCKBACK'})),both).some(i=>i.rule==='rule-owner'&&i.target==='battle-damage:CHARGE_KNOCKBACK'));
+  // The damage kernel of part 6a may not read an arrow number while the arrows are still on their reference.
+  const partSixA = {...manifest,ruleOwners:[{...damageRule,phase:'native'},arrowRule]};
+  const kernel = {...sources,'core/a/native/combat_kernel.hpp':'double push(const double *p) { return p[CHARGE_KNOCKBACK]; }','tests/test_native_combat.gd':'extends SceneTree'};
+  assert.equal(analyze(new Map(Object.entries(kernel)),partSixA).filter(i=>i.rule==='rule-owner').length,0);
+  assert(analyze(new Map(Object.entries({...kernel,'core/a/native/combat_kernel.hpp':'double arrow(const double *p) { return p[ARROW_DAMAGE_MIN]; }'})),partSixA)
+    .some(i=>i.rule==='rule-owner'&&i.target==='battle-projectiles:ARROW_DAMAGE_MIN'));
+  const rules = JSON.parse(require('fs').readFileSync(require('path').join(__dirname,'../docs/architecture/modules.json'),'utf8')).ruleOwners;
+  const damage = rules.find(r => r.rule === 'battle-damage'), arrows = rules.find(r => r.rule === 'battle-projectiles');
+  for (const live of [damage, arrows]) {
+    assert.equal(live.adr, 'ADR-027');
+    assert.equal(live.phase, 'reference', `${live.rule}: part 6 turns it native together with its kernel and comparison`);
+    for (const file of ['core/battle/api/native/combat_kernel.hpp','core/battle/simulation/native/combat_parameters.hpp','core/battle/api/combat_parameters.gd'])
+      assert(live.owners.native.includes(file), `${live.rule}: ${file}`);
+    // Read elsewhere: by the movement kernel, the field assessment, the shield marker, Unit, the hero's own blow and
+    // the equipment and siege modules. Owning one of them would turn main red at the first merge of such a reader.
+    for (const shared of ['CHARGE_MIN_SPEED','CHARGE_EXTRA_REACH','CHARGE_FRONT_ARC','CHARGE_COOLDOWN','SHOOT_MOVE_SPEED_LIMIT','BLOCK_ARC',
+      'AI_FIELD_FRONT_ARC','AI_FIELD_REAR_ARC','TERRAIN_FOREST_HIT_CHANCE','TERRAIN_BRUSH_HIT_CHANCE','TERRAIN_HIGHER_STEP','SPATIAL_CELL_SIZE',
+      'HERO_MELEE_DAMAGE_MIN','HERO_BLOCK_HOLD_CHANCE','DAMAGE_TYPE_BLUNT','SIEGE_COVER_DAMAGE_MULTIPLIER','MORALE_TICK_SECONDS'])
+      assert(!live.symbols.includes(shared), `${live.rule}: ${shared}`);
+  }
+  assert.deepEqual(damage.checks.native, ['tests/integration/test_native_combat.gd']);
+  assert.deepEqual(arrows.checks.native, ['tests/integration/test_native_projectiles.gd']);
+  assert(arrows.owners.reference.every(file => damage.owners.reference.includes(file)));
+}
 console.log('Architecture checker negative tests passed');

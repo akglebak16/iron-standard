@@ -146,6 +146,11 @@ const GOAL_PARTY_FULL := 34.0        # refill target of other parties resting in
 const GOAL_ESCORT_RANGE := 500.0
 const GOAL_ESCORT_DANGER := Vector2(0.5, 2.0) # enemy strength around a caravan, in caravan strengths: none at x, full at y
 const GOAL_ESCORT_KEEP := 40.0
+# Escort (#315, DESIGN.md §5.7): lords and faction vassals escort own caravans; the danger is read at the caravan and ahead on
+# its route, at points this far apart, up to GOAL_ESCORT_AHEAD (one threat radius: about 18 hours of a caravan's way).
+const GOAL_ESCORT_AHEAD := 300.0
+const GOAL_ESCORT_AHEAD_STEP := 100.0 # one threat-map cell
+const GOAL_ESCORT_HOME := 900.0       # caravans are escorted through own lands: an own settlement this close (the patrol range)
 const GOAL_FOLLOW_KEEP := 80.0       # a vassal rides to its lord when farther than this
 const GOAL_FOLLOW_OFFSET := 45.0
 const GOAL_ROAM_RANGE := Vector2(80.0, 340.0) # bandits roam this far around their camp
@@ -158,7 +163,8 @@ const GOAL_ASSIST_NEED_FLOOR := 0.3   # ... and a side that wins anyway still ge
 const GOAL_ASSIST_ODDS := Vector2(0.8, 1.4) # (own side + the party) / enemy: hopeless at x (no goal), sure at y
 const GOAL_ASSIST_IN_TIME := Vector2(0.75, 1.25) # hours on the way / hours the fight has left: in time at x, too late at y
 # Calls for help (#313): a lord or vassal chased by a stronger enemy, or fleeing, calls; own lords and vassals answer with the
-# factors of GOAL_ASSIST_* and the weight of "assist". The fleeing party may run to a strong own party in sight.
+# factors of GOAL_ASSIST_* and the weight of "assist". The fleeing party may run to a strong own party in sight. Since #315
+# a caravan that an outlaw hunts or that flees calls and runs to own parties the same way.
 const GOAL_FLEE_FRIEND_MIN := 90.0    # an own party closer than this is already at hand (world_skirmish.hour_tick joins at 90)
 const GOAL_FLEE_FRIEND_ODDS := 1.0    # it is a haven when together they are at least this share of the enemy's strength
 # Goal weights by kind of party (data, not code). Missing goals weigh 0. hunt_ratio / flee_ratio are strength
@@ -166,7 +172,7 @@ const GOAL_FLEE_FRIEND_ODDS := 1.0    # it is a haven when together they are at 
 # map_pressure false: only an enemy in sight makes the party flee (caravans would otherwise run from every band around).
 # Stage 3 multiplies these by traits and difficulty.
 const GOAL_PROFILES := {
-	"lord": {"hunt": 1.0, "flee": 1.0, "defend": 0.9, "patrol": 0.45, "raid": 0.5, "rest": 0.5, "assist": 1.0,
+	"lord": {"hunt": 1.0, "flee": 1.0, "defend": 0.9, "patrol": 0.45, "raid": 0.5, "rest": 0.5, "escort": 0.7, "assist": 1.0,
 		"hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},
 	"vassal": {"hunt": 1.0, "flee": 1.0, "defend": 0.6, "patrol": 0.45, "escort": 0.7, "follow": 0.45, "rest": 0.4, "assist": 0.9,
 		"hunt_ratio": 0.75, "flee_ratio": 1.2, "sight": 260.0, "flee_sight": 190.0},

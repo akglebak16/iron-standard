@@ -9,6 +9,8 @@ extends RefCounted
 ## step on first request; a helper rides to the fight and hour_tick takes it in once it is close.
 ## Calls for help (#313): lords and vassals that a stronger enemy chases or that flee call; the calls are gathered in the
 ## same pass over the parties as the fights (`_beacons`), and an own party that answers rides to the caller (`rescue`).
+## Caravan escort (#315): the same pass lists the caravans for the escort goal of lords and vassals, and a caravan that an
+## outlaw hunts or that flees calls like a lord.
 const Rules = preload("res://core/campaign/world/party_rules.gd")
 const Roster = preload("res://core/campaign/world/party_roster.gd")
 const Config = preload("res://core/campaign/config.gd")
@@ -36,6 +38,7 @@ var _enemy_cache := {}
 var _doom_cache: Variant = null
 var _battle_cache: Variant = null
 var _call_cache: Variant = null  # calls for help of the step, with _battle_cache (_beacons)
+var _caravan_cache: Array = []   # caravans on the map, with _call_cache (_beacons)
 var _caught := {}                # lord or vassal id -> the party, while it is in a fight (an answer rides on to it)
 var _call_of := {}               # caller id -> its call
 var _answers := {}               # caller id -> own parties riding to it (goal "rescue")
@@ -59,6 +62,7 @@ func _init(r: Roster, p: RefCounted) -> void:
 	goals.battles = _battles
 	goals.calls = _calls
 	goals.call_detail = _call_detail
+	goals.caravans = _caravans
 
 ## Breaks the links to the world so a disposed campaign is freed.
 func dispose() -> void:
@@ -70,6 +74,7 @@ func dispose() -> void:
 	_doom_cache = null
 	_battle_cache = null
 	_call_cache = null
+	_caravan_cache = []
 	_caught = {}
 	_call_of = {}
 	_answers = {}
@@ -94,11 +99,16 @@ func _calls() -> Array:
 	_beacons()
 	return _call_cache
 
+## Caravans on the map for the escort goal (#315), cached per world step with the calls.
+func _caravans() -> Array:
+	_beacons()
+	return _caravan_cache
+
 ## The beacons of a world step (DESIGN.md §5.7.2), built on first request in one pass over the parties: the fighters for
-## WorldSkirmish.battles, the hunters and the fleeing lords and vassals for the calls. A caller is a free lord or vassal
-## (not hidden, locked or in a fight) that hostile parties hunt or that flees. The same pass notes who already rides to
-## which caller (`_answers`). Only reads; strengths and the threat map are asked for in _call_detail, when somebody who
-## could answer is near.
+## WorldSkirmish.battles, the hunters and the fleeing lords and vassals for the calls, the caravans for the escort (#315).
+## A caller is a free lord, vassal or caravan (not hidden, locked or in a fight) that hostile parties hunt or that flees.
+## The same pass notes who already rides to which caller (`_answers`). Only reads; strengths and the threat map are asked
+## for in _call_detail, when somebody who could answer is near.
 func _beacons() -> void:
 	if _call_cache != null:
 		return
@@ -106,6 +116,7 @@ func _beacons() -> void:
 	var hunters := {}  # hunted party id -> its hunters
 	var free := {}     # party id -> a free lord or vassal
 	var fleeing: Array = []
+	_caravan_cache = []
 	for p in roster.parties:
 		if p.get("fight"):
 			fighters.append(p)
@@ -126,8 +137,11 @@ func _beacons() -> void:
 					hunters[t].append(p)
 				else:
 					hunters[t] = [p]
-		if Rules.is_noble(p) and not p.hide and not p.get("lock", false):
+		var caravan: bool = p.kind == "caravan"
+		if (caravan or Rules.is_noble(p)) and not p.hide and not p.get("lock", false):
 			free[p.id] = p
+			if caravan:
+				_caravan_cache.append(p)
 			if st == "flee":
 				fleeing.append(p)
 	_battle_cache = skirmish.battles(fighters) if skirmish != null else []
@@ -146,10 +160,10 @@ func _call(c: Dictionary, hunters: Array) -> void:
 	_call_of[c.id] = e
 
 ## What a call needs, worked out once per step and only for calls somebody could answer: the caller's strength (`own`),
-## its enemy (`foe`: the hunters, or for a flight without hunters the enemies felt around it on the threat map), `left`
-## (hours until the nearest hunter reaches it standing and its side breaks, WorldSkirmish.hours_left; a small party
-## against small hunters is settled at once) and the nearest hunter (`fx`, `fy`). {} when the caller is not the weaker
-## one: then it is no call.
+## its enemy (`foe`: the hunters, or for a flight without hunters the enemies felt around it on the threat map — for a
+## caravan only the outlaws it fears), `left` (hours until the nearest hunter reaches it standing and its side breaks,
+## WorldSkirmish.hours_left; a small party against small hunters and a caravan are settled at once) and the nearest hunter
+## (`fx`, `fy`). {} when the caller is not the weaker one: then it is no call.
 func _call_detail(e: Dictionary) -> Dictionary:
 	if e.has("own"):
 		return e
@@ -160,7 +174,8 @@ func _call_detail(e: Dictionary) -> Dictionary:
 	var own := maxf(0.001, roster.strength_of(c))
 	var foe := 0.0
 	var reach := INF
-	var small := Rules.troop_count(c.troops) < 12 * Rules.MK
+	var caravan: bool = c.kind == "caravan"
+	var small := caravan or Rules.troop_count(c.troops) < 12 * Rules.MK
 	var near: Dictionary = {}
 	for h in hunters:
 		foe += roster.strength_of(h)
@@ -168,11 +183,11 @@ func _call_detail(e: Dictionary) -> Dictionary:
 		if t < reach:
 			reach = t
 			near = h
-		small = small and Rules.troop_count(h.troops) < 12 * Rules.MK
+		small = caravan or (small and Rules.troop_count(h.troops) < 12 * Rules.MK)
 	if hunters.is_empty():
 		var m: RefCounted = _threat()
 		if m != null:
-			foe = m.threat(c.x, c.y, _enemies_of(String(c.fac)))
+			foe = m.threat(c.x, c.y, goals.foes(c) if caravan else _enemies_of(String(c.fac)))
 		reach = 0.0
 	if foe <= own:
 		e.none = true
@@ -223,6 +238,7 @@ func _fresh() -> void:
 	_doom_cache = null
 	_battle_cache = null
 	_call_cache = null
+	_caravan_cache = []
 	_caught = {}
 	_call_of = {}
 	_answers = {}
@@ -361,7 +377,7 @@ func ai_party(p: Dictionary, dh: float) -> void:
 			return
 	if p.state == "hunt":
 		_chase(p, dh)
-	elif p.state == "flee" and p.get("goal", "") == "flee" and Rules.is_noble(p):
+	elif p.state == "flee" and p.get("goal", "") == "flee" and (Rules.is_noble(p) or p.kind == "caravan"):
 		_meet(p, dh)
 	elif p.get("goal", "") == "escort":
 		_escort(p, dh)
@@ -630,15 +646,10 @@ func _rescue(p: Dictionary, dh: float) -> void:
 			p.state = "idle"
 		p.wait = 0.0
 		return
-	p.rp = float(p.get("rp", 0.0)) - dh
-	if p.rp <= 0.0:
-		p.rp = Config.GOAL_CHASE_REPATH_HOURS
-		if _dist(c, p) > Config.GOAL_ESCORT_KEEP:
-			p.state = "roam"
-			roster.path_to(p, c.x, c.y)
+	_guard(p, c, dh)
 
-## A fleeing lord or vassal whose call is answered turns its flight towards the nearest own party riding to it, when that
-## one is closer than the end of its flight and safe to run to (#313): the two meet half-way.
+## A fleeing lord, vassal or caravan (#315) whose call is answered turns its flight towards the nearest own party riding to
+## it, when that one is closer than the end of its flight and safe to run to (#313): the two meet half-way.
 func _meet(p: Dictionary, dh: float) -> void:
 	p.rp = float(p.get("rp", 0.0)) - dh
 	if p.rp > 0.0:
@@ -660,21 +671,60 @@ func _meet(p: Dictionary, dh: float) -> void:
 	if here.distance_to(Vector2(t.x, t.y)) < here.distance_to(end):
 		roster.path_to(p, t.x, t.y)
 
-## Escort: keeps close to the caravan; the goal ends when the caravan is gone.
+## Escort: keeps close to the caravan; the goal ends when the caravan is gone. The caravan is looked up in the caravans of
+## the step (#315), not in the whole roster: escorts are many more since lords escort too.
 func _escort(p: Dictionary, dh: float) -> void:
-	var c := roster.party_by_id(p.get("gid"))
+	var c: Dictionary = {}
+	var gid = p.get("gid")
+	for q in _caravans():
+		if q.id == gid:
+			c = q
+			break
 	if c.is_empty() or c.hide:
 		p.path = []
 		p.pi = 0
 		p.wait = 0.0
 		p.state = "idle"
 		return
+	_guard(p, c, dh)
+
+## Keeps with the party `c` it rides to, re-planned as it moves. A caravan's own fight is settled at once and without its
+## escort (world_skirmish.contact), so an escort or an answer to a caravan's call rides at the nearest outlaw hunting the
+## caravan that it can beat, and the hunter meets it first (#315).
+func _guard(p: Dictionary, c: Dictionary, dh: float) -> void:
 	p.rp = float(p.get("rp", 0.0)) - dh
-	if p.rp <= 0.0:
-		p.rp = Config.GOAL_CHASE_REPATH_HOURS
-		if _dist(c, p) > Config.GOAL_ESCORT_KEEP:
-			p.state = "roam"
-			roster.path_to(p, c.x, c.y)
+	if p.rp > 0.0:
+		return
+	p.rp = Config.GOAL_CHASE_REPATH_HOURS
+	var t := _hunter_of(p, c) if c.kind == "caravan" else {}
+	if not t.is_empty():
+		p.state = "roam"
+		roster.path_to(p, t.x, t.y)
+	elif _dist(c, p) > Config.GOAL_ESCORT_KEEP:
+		p.state = "roam"
+		roster.path_to(p, c.x, c.y)
+
+## The nearest party hunting the caravan `c` in this step (its call, _beacons) that p is hostile to and stronger than, or {}.
+func _hunter_of(p: Dictionary, c: Dictionary) -> Dictionary:
+	_beacons()
+	var e: Variant = _call_of.get(c.id)
+	if e == null or e.hunters.is_empty():
+		return {}
+	var me := -1.0
+	var best: Dictionary = {}
+	var best_d := INF
+	for h in e.hunters:
+		if h.hide or h.get("fight") or not roster.hostile(p, h):
+			continue
+		if me < 0.0:
+			me = roster.strength_of(p)
+		if roster.strength_of(h) >= me:
+			continue
+		var d := _dist(h, p)
+		if d < best_d:
+			best_d = d
+			best = h
+	return best
 
 func _arrived(p: Dictionary) -> void:
 	if p.state == "flee":

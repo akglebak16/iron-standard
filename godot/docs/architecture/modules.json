@@ -28,6 +28,34 @@
         "native": ["tests/integration/test_native_morale.gd"]
       },
       "symbols": ["MORALE_OPPONENT_FLOOR", "MORALE_FORCE_FLEE_START_SHARE", "MORALE_FORCE_FLEE_ENEMY_SHARE", "MORALE_FORCE_FLEE_MIN_START", "MORALE_BAD_ODDS", "MORALE_BAD_ODDS_LOSS", "MORALE_VERY_BAD_ODDS", "MORALE_VERY_BAD_ODDS_LOSS", "MORALE_STRONG_ODDS", "MORALE_STRONG_RECOVERY", "MORALE_EVEN_ODDS", "MORALE_EVEN_RECOVERY", "MORALE_WEAK_RECOVERY", "MORALE_WAVER_SHARE", "MORALE_STEADY_SHARE", "MORALE_RALLY_SHARE", "MORALE_ROUT_RECOVERY", "MORALE_RALLY_LIMIT", "MORALE_RALLY_LEADER_RADIUS", "MORALE_RALLY_LEADER_BONUS", "MORALE_RALLY_EDGE", "MORALE_PURSUIT_RADIUS", "MORALE_PANIC_RADIUS", "MORALE_PANIC_LOSS", "MORALE_PANIC_CAP", "MORALE_PANIC_SHARE_LOSS", "MORALE_THREAT_STRENGTH_FLOOR", "MORALE_THREAT_REAR_WEIGHT", "MORALE_THREAT_FRONT_FREE", "MORALE_THREAT_FRONT_WEIGHT", "MORALE_THREAT_LOSS", "MORALE_THREAT_FREE", "MORALE_THREAT_CAP", "MORALE_GROUP_ROUTED_SHARE", "MORALE_GROUP_WAVERING_SHARE"]
+    },
+    {
+      "rule": "battle-damage",
+      "adr": "ADR-027",
+      "phase": "reference",
+      "owners": {
+        "reference": ["core/battle/config.gd", "core/battle/rules/combat.gd", "core/battle/rules/combat_step.gd", "core/battle/rules/charge.gd", "core/battle/rules/block.gd", "core/battle/rules/damage.gd", "core/battle/rules/terrain_rules.gd", "core/battle/model/state.gd"],
+        "native": ["core/battle/config.gd", "core/battle/rules/combat.gd", "core/battle/rules/combat_step.gd", "core/battle/rules/charge.gd", "core/battle/rules/block.gd", "core/battle/rules/damage.gd", "core/battle/rules/terrain_rules.gd", "core/battle/model/state.gd", "core/battle/api/combat_parameters.gd", "core/battle/simulation/native/combat_parameters.hpp", "core/battle/api/native/combat_kernel.hpp"]
+      },
+      "checks": {
+        "reference": [],
+        "native": ["tests/integration/test_native_combat.gd"]
+      },
+      "symbols": ["REAR_ANGLE", "REAR_DAMAGE_MULTIPLIER", "RANGED_MELEE_DAMAGE_MULTIPLIER", "MELEE_DAMAGE_MIN", "MELEE_DAMAGE_MAX", "ANTI_CAVALRY_MULTIPLIER", "MORALE_WAVER_DAMAGE_MULTIPLIER", "MORALE_WAVER_BLOCK_MULTIPLIER", "SHIELD_ARROW_MAX_BLOCK", "SHIELD_ARROW_BONUS_MULTIPLIER", "UNSHIELDED_ARROW_BLOCK_MULTIPLIER", "HERO_MAX_BLOCK_CHANCE", "HERO_ACTIVE_BLOCK_BONUS", "HERO_IDLE_BLOCK_MULTIPLIER", "HERO_SHIELD_ACTIVE_ARROW_MULTIPLIER", "HERO_SHIELD_IDLE_ARROW_MULTIPLIER", "MIN_HIT_DAMAGE", "ARMOR_SCALE", "AI_MELEE_WINDUP_SECONDS", "AI_MELEE_COOLDOWN_MIN", "AI_MELEE_COOLDOWN_MAX", "AI_WIND_HIT_EXTRA_REACH", "CHARGE_BASE_DAMAGE", "CHARGE_SPEED_DAMAGE_DIVISOR", "CHARGE_ANTI_DAMAGE_MULTIPLIER", "CHARGE_BLOCK_DAMAGE_MULTIPLIER", "CHARGE_COUNTER_DAMAGE", "CHARGE_COUNTER_RANDOM_MIN", "CHARGE_COUNTER_RANDOM_MAX", "CHARGE_KNOCKBACK", "CHARGE_ATTACKER_VELOCITY_MULTIPLIER", "CHARGE_ATTACK_COOLDOWN", "MORALE_CHARGE_SHOCK", "HIT_MORALE_PER_DAMAGE", "MORALE_FLANK_HIT_MULTIPLIER", "MORALE_REAR_HIT_MULTIPLIER", "KILL_MORALE_BONUS", "DEATH_MORALE_RADIUS", "ALLY_DEATH_MORALE", "ALLY_DEATH_MORALE_PER_TIER", "LEADER_DEATH_MORALE", "ENEMY_DEATH_MORALE_BONUS", "COMPANION_DOWN_MORALE_LOSS", "HERO_DOWN_MORALE_LOSS", "LEADER_GLOBAL_MORALE_LOSS", "LEADER_BOND_RESERVE_LOSS", "TERRAIN_HIGH_STRIKE_MULTIPLIER", "TERRAIN_BANK_DEFENSE"]
+    },
+    {
+      "rule": "battle-projectiles",
+      "adr": "ADR-027",
+      "phase": "reference",
+      "owners": {
+        "reference": ["core/battle/config.gd", "core/battle/rules/combat.gd", "core/battle/rules/combat_step.gd"],
+        "native": ["core/battle/config.gd", "core/battle/rules/combat.gd", "core/battle/rules/combat_step.gd", "core/battle/api/combat_parameters.gd", "core/battle/simulation/native/combat_parameters.hpp", "core/battle/api/native/combat_kernel.hpp"]
+      },
+      "checks": {
+        "reference": [],
+        "native": ["tests/integration/test_native_projectiles.gd"]
+      },
+      "symbols": ["AIM_VELOCITY_LEAD", "SHOT_SPEED", "THROW_SPEED", "PROJECTILE_START_DELAY", "PROJECTILE_START_HEIGHT", "SHOT_BASE_SCATTER", "PROJECTILE_THROW_WEAPON", "PROJECTILE_CROSSBOW_WEAPON", "PROJECTILE_HIT_HEIGHT", "PROJECTILE_HIT_PADDING", "ARROW_DAMAGE_MIN", "ARROW_DAMAGE_MAX", "AI_SHOOT_COOLDOWN_MIN", "AI_SHOOT_COOLDOWN_MAX"]
     }
   ],
   "allowedRoots": ["core", "runtime", "apps", "adapters", "content", "tests", "docs", "tools"],
