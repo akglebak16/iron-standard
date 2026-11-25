@@ -20,7 +20,7 @@ func _initialize() -> void:
 	assert(Art.compose({"helm": "none", "armor": "tunic", "undead": "skel", "seed": 1}).body.get_size() == Vector2(152, 176))
 
 	# Every armour, helmet and weapon the hero can get, on foot and on horseback.
-	for armor in ["tunic", "fur", "mailfur", "padded", "mail", "mailtab", "scale", "goldscale", "lamellar", "goldlam", "plate"]:
+	for armor in ["tunic", "fur", "mailfur", "padded", "mail", "mailtab", "scale", "goldscale", "lamellar", "goldlam", "plate", "habit"]:
 		assert(Hero.supports({"armor": armor, "helm": "none"}), armor)
 	for helm in ["none", "nasal", "spectacle", "cap", "hood", "flat", "crest", "kettle", "mask", "furcap", "pointed", "great", "coif", "turban", "turbanm"]:
 		assert(_opaque(Art.compose(look.merged({"helm": helm}, true)).head) > 300, helm)

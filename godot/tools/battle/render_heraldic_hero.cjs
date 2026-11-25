@@ -22,12 +22,13 @@ const SHEETS={
  'hero-torsos-a.png':['torso:tunic','torso:fur','-','torso:padded','-','-'],
  'hero-mail.png':['torso:mailfur','torso:mail','torso:mailtab'],
  'hero-torsos-b.png':['torso:scale','torso:goldscale','torso:lamellar','torso:goldlam','torso:plate'],
+ 'hero-habit.png':['torso:habit'],
  'hero-heads-a.png':['head:none','head:nasal','head:spectacle','head:cap','head:hood','head:flat','-','head:kettle','head:mask'],
  'hero-heads-b.png':['head:furcap','head:pointed','head:great','head:coif','head:turban','head:turbanm','head:crest'],
  'hero-hair.png':['hair:hair','hair:beard1','hair:beard2','hair:stache'],
  'hero-shields.png':['shield:kite','shield:round','shield:small'],
 };
-const ARMORS=['tunic','fur','mailfur','padded','mail','mailtab','scale','goldscale','lamellar','goldlam','plate'];
+const ARMORS=['tunic','fur','mailfur','padded','mail','mailtab','scale','goldscale','lamellar','goldlam','plate','habit'];
 const HELMS=['none','nasal','spectacle','cap','hood','flat','crest','kettle','mask','furcap','pointed','great','coif','turban','turbanm'];
 const WEAPON_KINDS=['sword','axe','spear','halberd','sabre','club','xbow','lance','bow'];
 // Helmets whose face is open below the nose: a beard shows under them.
