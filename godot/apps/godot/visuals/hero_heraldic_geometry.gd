@@ -12,7 +12,8 @@ const DATA = {
 		"goldscale": 1,
 		"lamellar": 1,
 		"goldlam": 1,
-		"plate": -1
+		"plate": -1,
+		"habit": 5
 	},
 	"grip": {
 		"sword": [
@@ -143,168 +144,172 @@ const DATA = {
 			152,
 			176
 		],
-		"head:none": [
+		"torso:habit": [
 			304,
+			176
+		],
+		"head:none": [
+			456,
 			176
 		],
 		"head:nasal": [
-			456,
+			608,
 			176
 		],
 		"head:spectacle": [
-			608,
+			760,
 			176
 		],
 		"head:cap": [
-			760,
+			912,
 			176
 		],
 		"head:hood": [
-			912,
+			1064,
 			176
 		],
 		"head:flat": [
-			1064,
+			1216,
 			176
 		],
 		"head:crest": [
-			1216,
-			176
+			0,
+			352
 		],
 		"head:kettle": [
-			0,
+			152,
 			352
 		],
 		"head:mask": [
-			152,
+			304,
 			352
 		],
 		"head:furcap": [
-			304,
+			456,
 			352
 		],
 		"head:pointed": [
-			456,
+			608,
 			352
 		],
 		"head:great": [
-			608,
+			760,
 			352
 		],
 		"head:coif": [
-			760,
+			912,
 			352
 		],
 		"head:turban": [
-			912,
+			1064,
 			352
 		],
 		"head:turbanm": [
-			1064,
+			1216,
 			352
 		],
 		"hair:hair": [
-			1216,
-			352
+			0,
+			528
 		],
 		"hair:beard1": [
-			0,
+			152,
 			528
 		],
 		"hair:beard2": [
-			152,
+			304,
 			528
 		],
 		"hair:stache": [
-			304,
+			456,
 			528
 		],
 		"shield:kite": [
-			456,
+			608,
 			528
 		],
 		"shield:round": [
-			608,
+			760,
 			528
 		],
 		"shield:small": [
-			760,
+			912,
 			528
 		],
 		"wound": [
-			912,
+			1064,
 			528
 		],
 		"weapon:sword:leather": [
-			1064,
+			1216,
 			528
 		],
 		"weapon:sword:steel": [
-			1216,
-			528
+			0,
+			704
 		],
 		"weapon:axe:leather": [
-			0,
+			152,
 			704
 		],
 		"weapon:axe:steel": [
-			152,
+			304,
 			704
 		],
 		"weapon:spear:leather": [
-			304,
+			456,
 			704
 		],
 		"weapon:spear:steel": [
-			456,
+			608,
 			704
 		],
 		"weapon:halberd:leather": [
-			608,
+			760,
 			704
 		],
 		"weapon:halberd:steel": [
-			760,
+			912,
 			704
 		],
 		"weapon:sabre:leather": [
-			912,
-			704
-		],
-		"weapon:sabre:steel": [
 			1064,
 			704
 		],
-		"weapon:club:leather": [
+		"weapon:sabre:steel": [
 			1216,
 			704
 		],
-		"weapon:club:steel": [
+		"weapon:club:leather": [
 			0,
 			880
 		],
-		"weapon:xbow:leather": [
+		"weapon:club:steel": [
 			152,
 			880
 		],
-		"weapon:xbow:steel": [
+		"weapon:xbow:leather": [
 			304,
 			880
 		],
-		"weapon:lance:leather": [
+		"weapon:xbow:steel": [
 			456,
 			880
 		],
-		"weapon:lance:steel": [
+		"weapon:lance:leather": [
 			608,
 			880
 		],
-		"weapon:bow:leather": [
+		"weapon:lance:steel": [
 			760,
 			880
 		],
-		"weapon:bow:steel": [
+		"weapon:bow:leather": [
 			912,
+			880
+		],
+		"weapon:bow:steel": [
+			1064,
 			880
 		]
 	},

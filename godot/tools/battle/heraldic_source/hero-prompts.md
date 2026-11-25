@@ -35,6 +35,25 @@ Cells in reading order:
 6, 7, 8, 9 EMPTY.
 ```
 
+## Ряса (`hero-habit.png`) — вложения: `hero-torsos-a.png`, `body.png`
+
+Три варианта в верхнем ряду (все — `hero-habit-v1.png`); в игру взят средний (красный крест, зелёный ободок ворота),
+он один вырезан в `hero-habit.png`.
+
+```
+Production sprite sheet for an existing medieval strategy game. Attached hero-torsos-a.png is the EXACT FORMAT AND STYLE REFERENCE: torso layers of the player's hero in the same game. Draw 3 new torso layers that could sit in that sheet unnoticed: same HERALDIC GRAPHIC style, deep navy outlines of the same thickness, bold flat planes, 3-tone cel shading, same size, same proportions, same front view, same shoulder width and belt height, same economical broad cloth folds. body.png shows figures of the same game with heads, for scale only.
+Character: the same hero wearing a monk's habit. The habit is plain undyed wool, DARK BROWN #5a4232 with its own darker and lighter cel tones; leather and rope in muted tan and brown. The ONLY heraldic touches are KEY COLOURS the game recolours later, used EXACTLY and only as small flat cloth details: PURE RED #C62828 and PURE GREEN #2E7D32. Do NOT use red or green anywhere else.
+
+Square canvas, STRICT 3x3 grid of equal cells, one torso centered in each of cells 1, 2, 3 (top row) with generous transparent gaps; cells 4 to 9 EMPTY. Fully transparent background. No text, numbers, cell borders, ground, bases or shadows. No head, no neck, no arms, no hands, no legs, no shield, no weapon. No hood lying on the shoulders. Not photorealistic, not glossy 3D.
+
+Each torso goes from the waist up to the shoulders, rounded shoulders with short upper-arm stubs (wide habit sleeves cut off short) exactly like the reference torsos, no arms below them. At the waist a straight rope cord belt runs across the whole waist, tied in a simple knot in the middle, in place of the leather belt.
+NECK OPENING, critical: exactly like in hero-torsos-a.png. The collar lies FLAT on the shoulders and ends at shoulder level in a low, wide, slightly oval opening seen from the front: a thin rim with a navy outline and a DARK, almost black hollow inside. NO stand-up collar, NO cowl or cloth roll rising above the shoulders, nothing that could read as a neck.
+Cells in reading order (three variants of the same habit):
+1 habit: plain dark brown habit, a narrow red scapular strip down the middle of the chest with a green edge, rope belt.
+2 habit: plain dark brown habit with a small simple cross on the chest in red, thin green rim on the collar, rope belt.
+3 habit: dark brown habit with a short shoulder cape (mozzetta) lying flat over the shoulders, its edge trimmed green, small red cord knot at the belt.
+```
+
 ## Головы, волосы, щиты, кольчуги
 
 Итоговые промпты — в истории #232; суть:

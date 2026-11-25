@@ -121,10 +121,10 @@ OpenAI права на результат принадлежат пользов�
 
 ### Главный герой и спутники (#232)
 
-`apps/godot/visuals/assets/hero_heraldic_parts.png` (торсы 11 доспехов, 15 голов в шлемах, волосы, бороды, щиты,
+`apps/godot/visuals/assets/hero_heraldic_parts.png` (торсы 12 доспехов, 15 голов в шлемах, волосы, бороды, щиты,
 оружие с перчаткой) и `hero_heraldic_mounted.png` (копьё и лэнс в седле). Части — генератор картинок OpenAI (ChatGPT)
 по `godot/tools/battle/heraldic_source/hero-prompts.md`: `hero-torsos-a.png`, `hero-mail.png`, `hero-torsos-b.png`,
-`hero-heads-a.png`, `hero-heads-b.png`, `hero-hair.png`, `hero-shields.png`. Нарисованы ключевыми цветами, игра
+`hero-heads-a.png`, `hero-heads-b.png`, `hero-hair.png`, `hero-shields.png`, `hero-habit.png` (ряса, средний из трёх вариантов `hero-habit-v1.png`, промпт в `hero-prompts.md`). Нарисованы ключевыми цветами, игра
 перекрашивает их под стяг, кожу и волосы (`hero_heraldic_art.gd`). Сборка: `node godot/tools/battle/render_heraldic_hero.cjs`.
 
 ### Поселения карты (#254)
